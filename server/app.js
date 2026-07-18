@@ -15,3 +15,4 @@ import {
   existsSync,
   unlinkSync,
 } from "node:fs";
+import { resolve, join } from "node:path";

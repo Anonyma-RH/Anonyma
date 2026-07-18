@@ -16,3 +16,4 @@ import {
   unlinkSync,
 } from "node:fs";
 import { resolve, join } from "node:path";
+import { loadCatalog, syncCatalog } from "./catalog.js";

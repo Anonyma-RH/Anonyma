@@ -8,3 +8,10 @@ import {
   powershellInstaller,
 } from "./installers.js";
 import cookieParser from "cookie-parser";
+import {
+  mkdirSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+  unlinkSync,
+} from "node:fs";

@@ -7,3 +7,4 @@ import {
   shellInstaller,
   powershellInstaller,
 } from "./installers.js";
+import cookieParser from "cookie-parser";

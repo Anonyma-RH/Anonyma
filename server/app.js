@@ -19,3 +19,4 @@ import { resolve, join } from "node:path";
 import { loadCatalog, syncCatalog } from "./catalog.js";
 import { createRatesFeed } from "./rates.js";
 import { createMarketFeed } from "./market.js";
+import { configurationStatus, assertNoTestCredits } from "./readiness.js";

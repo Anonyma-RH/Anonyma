@@ -20,3 +20,4 @@ import { loadCatalog, syncCatalog } from "./catalog.js";
 import { createRatesFeed } from "./rates.js";
 import { createMarketFeed } from "./market.js";
 import { configurationStatus, assertNoTestCredits } from "./readiness.js";
+import { videoOptions } from "./video-options.js";

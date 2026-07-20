@@ -22,3 +22,27 @@ import { createMarketFeed } from "./market.js";
 import { configurationStatus, assertNoTestCredits } from "./readiness.js";
 import { videoOptions } from "./video-options.js";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import {
+  config,
+  database,
+  uid,
+  hash,
+  now,
+  fail,
+  balance,
+  credits,
+  usdUnits,
+  addCredit,
+  reserve,
+  settle,
+  release,
+  catalog,
+  callable,
+  imageCallable,
+  vision,
+  quote,
+  tokenCost,
+  generationPrice,
+  markupFactor,
+  transaction,
+} from "./core.js";

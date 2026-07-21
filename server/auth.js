@@ -6,3 +6,4 @@ import {
   getAddress,
   FetchRequest,
 } from "ethers";
+import nodemailer from "nodemailer";

@@ -384,3 +384,48 @@ export function validIPN(body, signature, secret) {
     .digest();
   return timingSafeEqual(expected, Buffer.from(signature, "hex"));
 }
+
+export async function refreshTokenHoldings(db, cfg, user) {
+  const rpc = new FetchRequest(cfg.rpc);
+  rpc.timeout = cfg.rpcTimeoutMs || 10000;
+  const provider = new JsonRpcProvider(rpc);
+  try {
+    const network = await provider.getNetwork();
+    if (Number(network.chainId) !== cfg.chain)
+      fail(503, "RPC chain does not match configuration.");
+    const contract = new Contract(
+      cfg.token,
+      [
+        "function balanceOf(address) view returns(uint256)",
+        "function decimals() view returns(uint8)",
+      ],
+      provider,
+    );
+    const [raw, decimals] = await Promise.all([
+      contract.balanceOf(user.wallet),
+      contract.decimals(),
+    ]);
+    const amount = Number(raw) / 10 ** Number(decimals);
+    if (!Number.isFinite(amount)) throw Error("Invalid token balance.");
+    // The wallet may have changed while the RPC was in flight. Never transfer
+    // the old wallet's discount to the newly linked wallet.
+    const current = db
+      .prepare(
+        "SELECT * FROM users WHERE id=? AND wallet=? AND deleted IS NULL",
+      )
+      .get(user.id, user.wallet);
+    if (!current) return;
+    const old = Number(current.token_balance);
+    const since =
+      amount >= 5000000
+        ? old >= 5000000
+          ? current.token_since || now()
+          : now()
+        : null;
+    db.prepare(
+      "UPDATE users SET token_balance=?,token_since=?,token_checked=? WHERE id=? AND wallet=? AND deleted IS NULL",
+    ).run(String(amount), since, now(), user.id, user.wallet);
+  } finally {
+    provider.destroy();
+  }
+}

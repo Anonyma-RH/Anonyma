@@ -372,3 +372,15 @@ export const canonical = (v) =>
             .map((k) => [k, canonical(v[k])]),
         )
       : v;
+export function validIPN(body, signature, secret) {
+  if (
+    !secret ||
+    typeof signature !== "string" ||
+    !/^[a-f0-9]{128}$/i.test(signature)
+  )
+    return false;
+  const expected = createHmac("sha512", secret)
+    .update(JSON.stringify(canonical(body)))
+    .digest();
+  return timingSafeEqual(expected, Buffer.from(signature, "hex"));
+}

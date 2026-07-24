@@ -150,3 +150,129 @@ export function transaction(db, fn) {
     throw e;
   }
 }
+export function balance(db, user) {
+  const total = db
+    .prepare("SELECT COALESCE(SUM(amount),0) n FROM ledger WHERE user_id=?")
+    .get(user).n;
+  const held = db
+    .prepare(
+      "SELECT COALESCE(SUM(amount),0) n FROM holds WHERE user_id=? AND status='held'",
+    )
+    .get(user).n;
+  return { total, held, available: total - held };
+}
+export function addCredit(
+  db,
+  user,
+  amount,
+  ref,
+  kind = "deposit",
+  description = "Credit deposit",
+) {
+  if (!Number.isSafeInteger(amount) || amount <= 0)
+    fail(400, "Credit amount must be a positive integer.");
+  db.prepare("INSERT OR IGNORE INTO ledger VALUES(?,?,?,?,?,?,?,?)").run(
+    uid("l_"),
+    user,
+    amount,
+    kind,
+    ref,
+    null,
+    description,
+    now(),
+  );
+}
+export function reserve(
+  db,
+  { id, user, amount, key, kind = "chat", ttl = 300000 },
+) {
+  return transaction(db, () => {
+    if (db.prepare("SELECT id FROM holds WHERE id=?").get(id))
+      fail(
+        409,
+        "This request has already been submitted.",
+        "duplicate_request",
+      );
+    if (!Number.isSafeInteger(amount) || amount < 0)
+      fail(400, "Invalid reservation");
+    if (balance(db, user).available < amount)
+      fail(
+        402,
+        "Not enough credits for this request. Add credits or reduce the output limit.",
+        "insufficient_credits",
+      );
+    if (key) {
+      const k = db
+        .prepare("SELECT * FROM api_keys WHERE id=? AND revoked IS NULL")
+        .get(key);
+      if (!k) fail(401, "Key revoked");
+      const spent = -db
+        .prepare(
+          "SELECT COALESCE(SUM(amount),0) n FROM ledger WHERE key_id=? AND amount<0 AND created>?",
+        )
+        .get(key, now() - 86400000).n;
+      const inflight = db
+        .prepare(
+          "SELECT COALESCE(SUM(amount),0) n FROM holds WHERE key_id=? AND status='held'",
+        )
+        .get(key).n;
+      if (k.cap != null && spent + inflight + amount > k.cap)
+        fail(
+          429,
+          "This API key would exceed its rolling 24-hour spending cap.",
+          "key_cap_exceeded",
+        );
+    }
+    db.prepare(
+      "INSERT INTO holds(id,user_id,amount,key_id,kind,created,expires) VALUES(?,?,?,?,?,?,?)",
+    ).run(id, user, amount, key || null, kind, now(), now() + ttl);
+    return amount;
+  });
+}
+export function settle(
+  db,
+  id,
+  actual,
+  description = "Model usage",
+  metadata = {},
+) {
+  return transaction(db, () => {
+    const h = db.prepare("SELECT * FROM holds WHERE id=?").get(id);
+    if (!h || h.status !== "held")
+      return h?.result ? JSON.parse(h.result) : { charged: 0 };
+    if (
+      !Number.isFinite(actual) ||
+      actual < 0 ||
+      !Number.isSafeInteger(Math.ceil(actual))
+    )
+      fail(502, "Usage cost could not be verified.", "invalid_cost");
+    const amount = Math.min(h.amount, Math.max(0, Math.ceil(actual)));
+    if (amount)
+      db.prepare("INSERT INTO ledger VALUES(?,?,?,?,?,?,?,?)").run(
+        uid("l_"),
+        h.user_id,
+        -amount,
+        h.kind,
+        id,
+        h.key_id,
+        description,
+        now(),
+      );
+    const result = {
+      ...metadata,
+      charged: amount,
+      credits_charged: credits(amount),
+      released: credits(h.amount - amount),
+    };
+    db.prepare("UPDATE holds SET status='settled',result=? WHERE id=?").run(
+      JSON.stringify(result),
+      id,
+    );
+    return result;
+  });
+}
+export function release(db, id) {
+  db.prepare(
+    "UPDATE holds SET status='released' WHERE id=? AND status='held'",
+  ).run(id);
+}

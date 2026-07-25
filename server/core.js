@@ -314,3 +314,49 @@ export function callable(m, cfg) {
     (cfg.testMode || !!cfg.gatewayKey)
   );
 }
+export function generationPrice(m, opts = {}) {
+  if (imageCallable(m)) return imagePrices[m.id];
+  const variants = m.pricing?.variants || [];
+  const v = variants.find((v) => v.quality === opts.quality) || variants[0];
+  const size = opts.size || `${opts.ratio || "16:9"}_${opts.duration || "5"}`;
+  const o =
+    v?.options?.find((o) => o.size === size) ||
+    v?.options?.find((o) => o.size === "default") ||
+    v?.options?.[0];
+  return Number(
+    o?.price ?? m.pricing?.per_generation ?? m.pricing?.base_price ?? 0,
+  );
+}
+export function tokenCost(m, input, output) {
+  return (
+    ((m.pricing?.input_per_1M_tokens || 0) * input +
+      (m.pricing?.output_per_1M_tokens || 0) * output) /
+    1e6
+  );
+}
+export function quote(m, messages, maxTokens = 4096, opts = {}) {
+  const input =
+    Math.ceil(JSON.stringify(messages).length / 2) +
+    messages.reduce(
+      (n, v) =>
+        n +
+        (Array.isArray(v.content)
+          ? v.content.filter((p) => p.type === "image_url").length * 4096
+          : 0),
+      0,
+    );
+  return usdUnits(
+    m.type === "chat" && !imageCallable(m)
+      ? tokenCost(m, input, maxTokens)
+      : generationPrice(m, opts) * (opts.n || 1),
+  );
+}
+export function discount(balance) {
+  const b = Number(balance);
+  // 25% off markup per 1% of the one-billion reference supply.
+  // The separate 14-day benefit is early model access, not a holding delay.
+  return Number.isFinite(b) ? Math.min(1, Math.max(0, b / 40000000)) : 0;
+}
+export function markupFactor(user, cfg) {
+  return 1 + (cfg.markup / 100) * (1 - discount(user.token_balance));
+}

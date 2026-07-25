@@ -276,3 +276,41 @@ export function release(db, id) {
     "UPDATE holds SET status='released' WHERE id=? AND status='held'",
   ).run(id);
 }
+const snapshot = JSON.parse(
+  readFileSync(
+    new URL("../data/models.snapshot.json", import.meta.url),
+    "utf8",
+  ),
+);
+export function catalog() {
+  return {
+    data: [
+      ...snapshot.data,
+      ...snapshot.dead.map((m) => ({ ...m, status: "unavailable" })),
+    ],
+    updatedAt: snapshot.updatedAt,
+    source: "Reference catalog snapshot · 19 Sep 2026",
+  };
+}
+export const vision = (m) =>
+  (m.architecture?.input_modalities || []).includes("image");
+export const imagePrices = {
+  "google/gemini-3.1-flash-lite-image": 0.041,
+  "google/gemini-2.5-flash-image": 0.047,
+  "google/gemini-3.1-flash-image": 0.083,
+  "google/gemini-3-pro-image": 0.163,
+};
+export function imageCallable(m) {
+  return Object.hasOwn(imagePrices, m.id);
+}
+export function callable(m, cfg) {
+  return (
+    m.status === "live" &&
+    !m.id.startsWith("private/") &&
+    (["chat", "video"].includes(m.type) || imageCallable(m)) &&
+    (m.type !== "video" || videoPresets(m).length > 0) &&
+    (!(m.architecture?.output_modalities || []).includes("image") ||
+      imageCallable(m)) &&
+    (cfg.testMode || !!cfg.gatewayKey)
+  );
+}

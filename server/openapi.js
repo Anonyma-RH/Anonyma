@@ -237,3 +237,108 @@ route("get", "/api/me", "Current session", {
   auth: null,
   response: ref("Session"),
 });
+for (const [path, summary, body, status] of [
+  [
+    "/api/auth/register",
+    "Create password account",
+    object(
+      {
+        username: { ...string, minLength: 3, maxLength: 32 },
+        password: { ...string, minLength: 10, maxLength: 256 },
+      },
+      ["username", "password"],
+    ),
+    201,
+  ],
+  [
+    "/api/auth/password",
+    "Sign in with password",
+    object({ username: string, password: string }, ["username", "password"]),
+    200,
+  ],
+  [
+    "/api/auth/email/send",
+    "Send email login, linking or recovery code",
+    object(
+      {
+        email: string,
+        purpose: { enum: ["login", "link", "recover"], default: "login" },
+      },
+      ["email"],
+    ),
+    200,
+  ],
+  [
+    "/api/auth/email/verify",
+    "Verify email code; recovery changes password",
+    object({ id: string, code: string, password: string }, ["id", "code"]),
+    200,
+  ],
+  [
+    "/api/auth/wallet/challenge",
+    "Create domain-bound wallet sign-in message",
+    object({ address: string, link: bool }, ["address"]),
+    200,
+  ],
+  [
+    "/api/auth/wallet/verify",
+    "Verify wallet signature",
+    object({ id: string, signature: string }, ["id", "signature"]),
+    200,
+  ],
+])
+  route("post", path, summary, {
+    auth: null,
+    body,
+    status,
+    description:
+      "Email/wallet linking requires an existing session. Sign-in responses set an HttpOnly session cookie. Codes and wallet challenges expire after 10 minutes.",
+    response: path.endsWith("/send")
+      ? object({ id: string, message: string })
+      : path.endsWith("/challenge")
+        ? object({ id: string, message: string })
+        : ref("Session"),
+  });
+for (const path of ["/api/auth/logout", "/api/auth/logout-all"])
+  route(
+    "post",
+    path,
+    "Revoke session" + (path.endsWith("-all") ? "s on all devices" : ""),
+    { body: object(), response: ref("Ok") },
+  );
+route("get", "/api/account/sessions", "List active sessions", {
+  response: object({
+    data: array(object({ created: integer, expires: integer })),
+  }),
+});
+route("post", "/api/account/token/refresh", "Refresh linked ERC20 holdings", {
+  body: object(),
+  response: ref("Session"),
+});
+for (const [path, summary] of [
+  [
+    "/api/config",
+    "Public service availability; configured does not mean verified",
+  ],
+  ["/api/models", "Model catalog including capability and pricing metadata"],
+  ["/api/market", "Public cryptocurrency market feed"],
+  ["/api/rates", "Crypto units per USD; validated rates cached for 60 seconds"],
+  ["/health", "Process health; HTTP 200 does not certify upstream readiness"],
+])
+  route("get", path, summary, { auth: null });
+route("get", "/api/conversations", "List latest 300 conversations", {
+  response: object({ data: array(object()) }),
+});
+route("post", "/api/conversations", "Create conversation", {
+  body: object({ title: string, mode: string }),
+  response: object({ id: string }),
+  status: 201,
+});
+route(
+  "get",
+  "/api/conversations/export",
+  "Download all saved conversations as JSON",
+);
+route("delete", "/api/conversations", "Delete all owned conversations", {
+  response: ref("Ok"),
+});

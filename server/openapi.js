@@ -423,3 +423,45 @@ route("post", "/api/videos", "Submit durable video job", {
   description:
     "Choose a published variant from model pricing. Image-to-video requires HTTPS image_url. Poll GET /api/videos; resolve media_id through /api/media. Uncertain submission becomes reconciliation and must not be submitted again.",
 });
+route("get", "/api/videos", "List latest 60 jobs", {
+  response: object({ data: array(ref("Video")) }),
+});
+route("get", "/api/media", "List private workspace library", {
+  response: object({ data: array(ref("Media")) }),
+});
+route("get", "/api/media/{id}", "Fetch owned or temporarily signed media", {
+  auth: null,
+  description:
+    "Requires owner cookie OR valid expires and sig query parameters on an API-issued URL. Returns image/video bytes with their MIME type; expired or unauthorized URLs return 404.",
+  query: [
+    { in: "query", name: "expires", schema: integer },
+    { in: "query", name: "sig", schema: string },
+  ],
+});
+paths["/api/media/{id}"].get.responses[200].content = {
+  "application/octet-stream": { schema: { type: "string", format: "binary" } },
+};
+route("delete", "/api/media/{id}", "Delete private media", {
+  response: ref("Ok"),
+});
+route(
+  "get",
+  "/api/account/ledger",
+  "Latest 50 ledger entries and current balance",
+);
+route("get", "/api/keys", "List key metadata; raw keys never returned");
+route("post", "/api/keys", "Create API key; secret returned once", {
+  body: object({
+    name: string,
+    cap: {
+      type: ["number", "null"],
+      minimum: 0,
+      maximum: 1e9,
+      description:
+        "Rolling 24-hour displayed-credit cap, including active holds.",
+    },
+  }),
+  status: 201,
+  response: object({ id: string, key: string, name: string, message: string }),
+});
+route("delete", "/api/keys/{id}", "Revoke API key", { response: ref("Ok") });

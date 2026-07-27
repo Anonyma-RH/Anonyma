@@ -342,3 +342,84 @@ route(
 route("delete", "/api/conversations", "Delete all owned conversations", {
   response: ref("Ok"),
 });
+route(
+  "get",
+  "/api/conversations/{id}",
+  "Read conversation and decoded messages",
+);
+route("patch", "/api/conversations/{id}", "Rename conversation", {
+  body: object({ title: string }, ["title"]),
+  response: ref("Ok"),
+});
+route("delete", "/api/conversations/{id}", "Delete conversation", {
+  response: ref("Ok"),
+});
+route("post", "/api/quote", "Estimate maximum reserved credits", {
+  body: object(
+    {
+      ...chat.properties,
+      ...generation,
+      n: integer,
+      ratio: string,
+      duration: { type: ["string", "number"] },
+      quality: string,
+      image_url: string,
+    },
+    ["model"],
+  ),
+  response: ref("Quote"),
+  description:
+    "Estimate only. Final charge follows usage and the documented failure-billing policy.",
+});
+route(
+  "get",
+  "/api/requests/{id}",
+  "Recover paid request reservation/receipt after a disconnect",
+  {
+    response: ref("RequestStatus"),
+    description:
+      "Use the original requestId, URL-encoded as a path segment. Owner-scoped. A 404 means no stored reservation; held means do not resubmit with a fresh ID. Receipt.charged uses integer ledger subunits; receipt.credits_charged uses displayed credits.",
+  },
+);
+route("post", "/api/chat", "Stream chat, code or compatible image output", {
+  body: ref("ChatRequest"),
+  stream: true,
+  description:
+    "Always SSE via fetch POST, not EventSource. Retains latest 20 messages. Parse data events across arbitrary byte boundaries; final usage event includes conversationId, askr and anonyma receipt, followed by [DONE]. Abort cancels work and settles delivered usage. Errors can follow HTTP 200. Use a stable requestId or Idempotency-Key; duplicates return 409, not a new charge.",
+});
+route("post", "/api/images", "Generate and save 1–4 images", {
+  body: object(
+    {
+      ...generation,
+      n: { ...integer, minimum: 1, maximum: 4, default: 1 },
+      images: array(string),
+    },
+    ["model", "prompt"],
+  ),
+  response: object({
+    data: array(ref("Media")),
+    receipt: object({ charged: integer, credits_charged: number }),
+    testMode: bool,
+    partial: bool,
+    warning: string,
+  }),
+  description:
+    "Reference images use supported data URLs or HTTPS URLs; 8 total, 1.5 MB each. A later batch failure returns saved images with a warning and charges only delivered progress.",
+});
+route("post", "/api/videos", "Submit durable video job", {
+  body: object(
+    {
+      ...generation,
+      prompt: { ...string, maxLength: 2000 },
+      ratio: string,
+      duration: { type: ["string", "number"] },
+      quality: string,
+      image_url: string,
+    },
+    ["model", "prompt"],
+  ),
+  response: object({ id: string, status: string }),
+  status: 202,
+  description:
+    "Choose a published variant from model pricing. Image-to-video requires HTTPS image_url. Poll GET /api/videos; resolve media_id through /api/media. Uncertain submission becomes reconciliation and must not be submitted again.",
+});

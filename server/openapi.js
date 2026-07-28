@@ -465,3 +465,71 @@ route("post", "/api/keys", "Create API key; secret returned once", {
   response: object({ id: string, key: string, name: string, message: string }),
 });
 route("delete", "/api/keys/{id}", "Revoke API key", { response: ref("Ok") });
+route(
+  "get",
+  "/api/payments/currencies",
+  "Discover processor payment currencies",
+);
+route("get", "/api/deposits", "List latest 50 invoices", {
+  response: object({ data: array(ref("Deposit")) }),
+});
+route("post", "/api/deposits", "Create cryptocurrency deposit invoice", {
+  body: object(
+    {
+      amount: { ...number, minimum: 5, maximum: 10000, description: "USD" },
+      currency: string,
+      requestId,
+    },
+    ["amount", "currency"],
+  ),
+  status: 201,
+  description:
+    "Use one stable requestId per invoice. Successful repeats return 200 and the original invoice. Display exact processor pay_address, pay_amount, pay_currency/network. Do not credit from a browser success state. Server verifies IPN or processor status and credits finished invoices once.",
+});
+route(
+  "get",
+  "/api/deposits/{id}",
+  "Read invoice and refresh pending processor status",
+  { response: ref("Deposit") },
+);
+route("post", "/api/payments/ipn", "NOWPayments signed callback", {
+  auth: "ipn",
+  body: object(
+    {
+      payment_id: { type: ["string", "number"] },
+      order_id: string,
+      payment_status: string,
+      price_amount: number,
+      price_currency: string,
+      pay_currency: string,
+    },
+    ["payment_id", "payment_status"],
+  ),
+  response: ref("Ok"),
+  description:
+    "Processor-only endpoint. HMAC-SHA512 of recursively key-sorted JSON using the private IPN secret. Unknown orders are acknowledged; invalid signatures or inconsistent invoice values are rejected.",
+});
+route("post", "/api/support", "Persist operator support ticket", {
+  body: object(
+    {
+      subject: { ...string, maxLength: 200 },
+      body: { ...string, maxLength: 10000 },
+    },
+    ["subject", "body"],
+  ),
+  status: 201,
+  response: object({ id: string, message: string }),
+  description:
+    "Stored locally for operator review; no external email is sent by this endpoint.",
+});
+route(
+  "get",
+  "/api/account/export",
+  "Download account JSON; financial raw fields use ledger subunits",
+);
+route("delete", "/api/account", "Close account and forfeit unused credits", {
+  body: object({ confirm: { const: "DELETE" } }, ["confirm"]),
+  response: ref("Ok"),
+  description:
+    "409 while holds or unresolved invoices exist. Revokes sessions and keys, removes content, retains immutable financial records under a tombstone ID.",
+});

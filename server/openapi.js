@@ -533,3 +533,51 @@ route("delete", "/api/account", "Close account and forfeit unused credits", {
   description:
     "409 while holds or unresolved invoices exist. Revokes sessions and keys, removes content, retains immutable financial records under a tombstone ID.",
 });
+route("get", "/v1", "Free API connection check", {
+  auth: null,
+  description:
+    "Optional Bearer key includes balance/key metadata. Terminal user agents receive plain text.",
+});
+route("get", "/v1/models", "List API-callable models", { auth: "bearer" });
+route("get", "/v1/balance", "API key balance", { auth: "bearer" });
+route("post", "/v1/chat/completions", "OpenAI-style chat completion", {
+  auth: "bearer",
+  body: ref("ApiChatRequest"),
+  response: ref("ChatCompletion"),
+  description:
+    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Unsupported optional parameters ignored. Tools, audio, embeddings and Responses are not implemented. Idempotency-Key prevents repeated charging. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged.",
+});
+paths["/v1/chat/completions"].post.responses[200].content["text/event-stream"] =
+  { schema: string };
+for (const [path, summary] of [
+  ["/install.sh", "POSIX CLI installer"],
+  ["/install.ps1", "PowerShell CLI installer"],
+  ["/cli.mjs", "Standalone CLI configured for this installation"],
+  ["/llms.txt", "Short API discovery document"],
+  ["/llms-full.txt", "Full build and API discovery document"],
+]) {
+  route("get", path, summary, { auth: null });
+  paths[path].get.responses[200].content = { "text/plain": { schema: string } };
+}
+route("get", "/api/openapi.json", "Machine-readable frontend API contract", {
+  auth: null,
+});
+export const openapi = {
+  openapi: "3.1.0",
+  info: {
+    title: "Anonyma Backend API",
+    version: "1.0.0",
+    description:
+      "Backend-first integration contract. Cookie routes must be served behind the same public origin as the frontend; no CORS is enabled. Use credentials: include and Content-Type: application/json for writes. Cookies are HttpOnly, SameSite=Lax, Secure on HTTPS. Timestamps are epoch milliseconds except OpenAI-compatible created seconds. USD 1 = 1000 displayed credits = 10000000 integer ledger subunits. Configuration is not live-service verification. Contract documents supported behavior; it is not a runtime schema validator.",
+  },
+  servers: [{ url: "/" }],
+  paths,
+  components: {
+    securitySchemes: {
+      session: { type: "apiKey", in: "cookie", name: "anonyma_session" },
+      bearer: { type: "http", scheme: "bearer" },
+      ipn: { type: "apiKey", in: "header", name: "x-nowpayments-sig" },
+    },
+    schemas,
+  },
+};

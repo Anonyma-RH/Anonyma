@@ -194,3 +194,34 @@ export async function generateImages(
     });
   }
 }
+export async function createVideo(cfg, body) {
+  if (cfg.testMode)
+    return { id: "local_" + Date.now(), status: "pending", estimated_cost: 0 };
+  const r = await fetch(cfg.gateway.replace(/\/$/, "") + "/v1/videos", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${cfg.gatewayKey}`,
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(120000),
+  });
+  if (!r.ok)
+    fail(502, `Video submission rejected (${r.status}).`, "provider_rejected");
+  return r.json();
+}
+export async function pollVideo(cfg, id, signal) {
+  if (cfg.testMode)
+    return { status: "completed", cost: 0.01, data: { test: true } };
+  const r = await fetch(
+    cfg.gateway.replace(/\/$/, "") + "/v1/videos/" + encodeURIComponent(id),
+    {
+      headers: { authorization: `Bearer ${cfg.gatewayKey}` },
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(20000)])
+        : AbortSignal.timeout(20000),
+    },
+  );
+  if (!r.ok) throw new Error(`Video poll failed (${r.status})`);
+  return r.json();
+}

@@ -225,3 +225,33 @@ export async function pollVideo(cfg, id, signal) {
   if (!r.ok) throw new Error(`Video poll failed (${r.status})`);
   return r.json();
 }
+export async function payment(cfg, path, body, signal) {
+  if (!cfg.paymentKey || cfg.testMode)
+    fail(
+      503,
+      cfg.testMode
+        ? "Live payments are disabled in local test mode."
+        : "Payment processing is not configured.",
+      "payments_unconfigured",
+    );
+  const r = await fetch(cfg.paymentBase + path, {
+    method: body ? "POST" : "GET",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": cfg.paymentKey,
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+    signal: signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(20000)])
+      : AbortSignal.timeout(20000),
+  });
+  if (!r.ok)
+    fail(
+      502,
+      `Payment processor returned ${r.status}.`,
+      r.status >= 400 && r.status < 500 && ![408, 429].includes(r.status)
+        ? "payment_rejected"
+        : "payment_error",
+    );
+  return r.json();
+}

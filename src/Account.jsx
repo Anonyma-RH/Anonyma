@@ -268,3 +268,630 @@ export function SignIn() {
     </main>
   );
 }
+export function Account() {
+  const { user, refresh, config } = useApp(),
+    navigate = useNavigate(),
+    loc = useLocation(),
+    [tab, setTab] = useState(
+      loc.pathname.endsWith("/deposit") ? "deposits" : "overview",
+    ),
+    [ledger, setLedger] = useState([]),
+    [keys, setKeys] = useState([]),
+    [deposits, setDeposits] = useState([]),
+    [sessions, setSessions] = useState([]),
+    [error, setError] = useState(""),
+    [message, setMessage] = useState(""),
+    [modal, setModal] = useState(""),
+    [activeInvoice, setActiveInvoice] = useState(null),
+    [busy, setBusy] = useState(false),
+    [keyName, setKeyName] = useState(""),
+    [keyCap, setKeyCap] = useState(""),
+    [secret, setSecret] = useState(""),
+    [email, setEmail] = useState(""),
+    [code, setCode] = useState(""),
+    [challenge, setChallenge] = useState(null),
+    [confirm, setConfirm] = useState("");
+  async function load() {
+    try {
+      const [l, k, d, s] = await Promise.all([
+        api("/api/account/ledger"),
+        api("/api/keys"),
+        api("/api/deposits"),
+        api("/api/account/sessions"),
+      ]);
+      setLedger(l.data);
+      setKeys(k.data);
+      setDeposits(d.data);
+      setSessions(s.data);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+  useEffect(() => {
+    if (user) load();
+  }, [user?.id]);
+  useEffect(() => {
+    if (loc.pathname.endsWith("/deposit")) setModal("deposit");
+  }, [loc.pathname]);
+  async function action(fn) {
+    setError("");
+    setBusy(true);
+    try {
+      await fn();
+      await refresh();
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (!user)
+    return (
+      <main className="signed-out">
+        <KeyRound size={38} />
+        <h1>Your account, all in one place.</h1>
+        <p>Sign in to manage credits, keys, history and privacy.</p>
+        <Link className="button" to="/signin?next=/account">
+          Sign in <ArrowRight size={16} />
+        </Link>
+      </main>
+    );
+  return (
+    <>
+      <main className="account-page">
+        <div className="account-heading">
+          <div>
+            <span className="eyebrow">YOUR WORKSPACE</span>
+            <h1>Account</h1>
+            <p className="muted">
+              {user.username || user.email || user.wallet?.slice(0, 10) + "…"}
+            </p>
+          </div>
+          <Button onClick={() => setModal("deposit")}>
+            <Plus size={16} /> Add credits
+          </Button>
+        </div>
+        <div className="balance-cards">
+          <article>
+            <span>Credit balance</span>
+            <strong>{fmt(user.balance, 4)}</strong>
+            <small>≈ ${(user.balance / 1000).toFixed(2)} in usage value</small>
+          </article>
+          <article>
+            <span>Available to spend</span>
+            <strong>{fmt(user.available, 4)}</strong>
+            <small>Shared by workspace and API keys</small>
+          </article>
+          <article>
+            <span>Reserved for requests</span>
+            <strong>{fmt(user.held, 4)}</strong>
+            <small>Released or settled when complete</small>
+          </article>
+        </div>
+        <div className="account-tabs">
+          {["overview", "keys", "deposits", "security", "data"].map((t) => (
+            <button
+              className={tab === t ? "active" : ""}
+              onClick={() => setTab(t)}
+              key={t}
+            >
+              {t === "keys" ? "API keys" : t === "data" ? "Data & privacy" : t}
+            </button>
+          ))}
+        </div>
+        <ErrorBox error={error} />
+        {message && <div className="success">{message}</div>}
+        {tab === "overview" && (
+          <section className="panel">
+            <div className="panel-title">
+              <h2>Recent activity</h2>
+              <Button variant="ghost small" onClick={() => action(load)}>
+                <RefreshCw size={14} /> Refresh
+              </Button>
+            </div>
+            {ledger.length ? (
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Activity</th>
+                      <th>Key</th>
+                      <th>Date</th>
+                      <th>Credits</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ledger.map((l) => (
+                      <tr key={l.id}>
+                        <td>
+                          <strong>{l.description}</strong>
+                          <small>
+                            {l.kind} · {l.ref.slice(0, 24)}
+                          </small>
+                          {l.receipt?.usage && (
+                            <small>
+                              {fmt(l.receipt.usage.prompt_tokens)} input ·{" "}
+                              {fmt(l.receipt.usage.completion_tokens)} output
+                              tokens
+                            </small>
+                          )}
+                        </td>
+                        <td>{l.key_name || "Workspace"}</td>
+                        <td>{date(l.created)}</td>
+                        <td className={l.amount > 0 ? "green" : ""}>
+                          {l.amount > 0 ? "+" : ""}
+                          {fmt(l.amount, 4)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <Empty title="No activity yet">
+                Add credits and make your first request.
+              </Empty>
+            )}
+          </section>
+        )}
+        {tab === "keys" && (
+          <section className="panel">
+            <div className="panel-title">
+              <div>
+                <h2>API keys</h2>
+                <p>One balance for your apps and your workspace.</p>
+              </div>
+              <Button
+                onClick={() => {
+                  setSecret("");
+                  setModal("key");
+                }}
+              >
+                <Plus size={15} /> Create key
+              </Button>
+            </div>
+            {keys.length ? (
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Key</th>
+                      <th>Rolling 24h spend / cap</th>
+                      <th>Status</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {keys.map((k) => (
+                      <tr key={k.id}>
+                        <td>{k.name}</td>
+                        <td>
+                          <code>{k.prefix}…</code>
+                        </td>
+                        <td>
+                          {fmt(k.spent, 4)} /{" "}
+                          {k.cap == null ? "Unlimited" : fmt(k.cap)}
+                        </td>
+                        <td>{k.revoked ? "Revoked" : "Active"}</td>
+                        <td>
+                          {!k.revoked && (
+                            <button
+                              className="text-link danger"
+                              onClick={() =>
+                                action(() =>
+                                  api("/api/keys/" + k.id, {
+                                    method: "DELETE",
+                                  }),
+                                )
+                              }
+                            >
+                              Revoke
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <Empty title="Connect your first application">
+                Create a key, set an optional cap, and copy it once.
+              </Empty>
+            )}
+            <p className="fineprint">
+              20 active keys maximum. Caps include spend during the previous 24
+              hours plus pending reservations. Revocation prevents new requests.
+            </p>
+            <Link to="/docs/api" className="text-link">
+              API documentation →
+            </Link>
+          </section>
+        )}
+        {tab === "deposits" && (
+          <section className="panel">
+            <div className="panel-title">
+              <h2>Deposits</h2>
+              <Button onClick={() => setModal("deposit")}>
+                <Plus size={15} /> Add credits
+              </Button>
+            </div>
+            {deposits.length ? (
+              <div className="deposit-list">
+                {deposits.map((d) => (
+                  <div key={d.id}>
+                    <div>
+                      <strong>
+                        ${d.amount.toFixed(2)} · {d.currency.toUpperCase()}
+                      </strong>
+                      <small>
+                        {date(d.created)} · {d.id}
+                      </small>
+                    </div>
+                    <span className="status-tag">{d.status}</span>
+                    {d.provider_id && (
+                      <Button
+                        variant="outline small"
+                        onClick={() => {
+                          setActiveInvoice({
+                            ...d.payload,
+                            id: d.id,
+                            payment_status: d.status,
+                          });
+                          setModal("deposit");
+                        }}
+                      >
+                        View invoice
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline small"
+                      onClick={() =>
+                        action(async () => {
+                          await api("/api/deposits/" + d.id);
+                          setMessage("Payment status refreshed.");
+                        })
+                      }
+                    >
+                      Refresh
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty title="No deposits yet">
+                Credits are added after verified payment confirmation.
+              </Empty>
+            )}
+          </section>
+        )}
+        {tab === "security" && (
+          <div className="security-grid">
+            <section className="panel">
+              <Mail size={24} />
+              <h2>Recovery email</h2>
+              <p>
+                {user.email ||
+                  "No email linked. Add one so you can recover a password account."}
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setModal("email");
+                  setChallenge(null);
+                  setEmail(user.email || "");
+                }}
+              >
+                Verify email
+              </Button>
+            </section>
+            <section className="panel">
+              <Wallet size={24} />
+              <h2>Linked wallet</h2>
+              <p className="break">
+                {user.wallet ||
+                  "Link a wallet for signature sign-in and optional token utility."}
+              </p>
+              <Button
+                variant="outline"
+                busy={busy}
+                onClick={() =>
+                  action(async () => {
+                    await walletSign(config, true);
+                    setMessage("Wallet linked.");
+                  })
+                }
+              >
+                {user.wallet ? "Change wallet" : "Link wallet"}
+              </Button>
+              {user.wallet && (
+                <>
+                  <p>
+                    Observed holdings: {fmt(user.tokenBalance)} tokens
+                    <br />
+                    Markup reduction: {fmt(user.discount * 100)}%
+                  </p>
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      action(async () => {
+                        await api("/api/account/token/refresh", {
+                          method: "POST",
+                          body: {},
+                        });
+                        setMessage("Wallet holdings refreshed.");
+                      })
+                    }
+                  >
+                    Refresh holdings
+                  </Button>
+                </>
+              )}
+            </section>
+            <section className="panel">
+              <ShieldCheck size={24} />
+              <h2>Active sessions</h2>
+              <p>
+                {sessions.length} signed-in session
+                {sessions.length === 1 ? "" : "s"}. Sessions expire after 30
+                days.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  action(async () => {
+                    await api("/api/auth/logout-all", {
+                      method: "POST",
+                      body: {},
+                    });
+                    navigate("/signin");
+                  })
+                }
+              >
+                Sign out everywhere
+              </Button>
+            </section>
+            <section className="panel">
+              <LogOut size={24} />
+              <h2>This device</h2>
+              <p>
+                Sign out here. Your saved conversations stay in your account.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  action(async () => {
+                    await api("/api/auth/logout", { method: "POST", body: {} });
+                    navigate("/");
+                  })
+                }
+              >
+                Sign out
+              </Button>
+            </section>
+          </div>
+        )}
+        {tab === "data" && (
+          <section className="panel">
+            <h2>Your data, your controls.</h2>
+            <p>
+              Export before deleting. Exports contain account data, usage
+              history and saved conversations.
+            </p>
+            <div className="button-row">
+              <a className="button outline" href="/api/account/export" download>
+                <Download size={16} /> Export account
+              </a>
+              <a
+                className="button outline"
+                href="/api/conversations/export"
+                download
+              >
+                <Download size={16} /> Export conversations
+              </a>
+            </div>
+            <hr />
+            <h3>Delete conversation history</h3>
+            <p>
+              Remove all saved conversations. Generated files can be managed
+              separately in the Library.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirm("");
+                setModal("history");
+              }}
+            >
+              Delete all conversations
+            </Button>
+            <hr />
+            <h3>Close account</h3>
+            <p>
+              Revokes keys and sessions, deletes private content, and forfeits
+              unused credits. Financial audit entries remain attached to a
+              tombstoned account identifier.
+            </p>
+            <Button
+              variant="danger-button"
+              onClick={() => {
+                setConfirm("");
+                setModal("delete");
+              }}
+            >
+              Close account
+            </Button>
+          </section>
+        )}
+      </main>
+      {modal === "deposit" && (
+        <Deposit
+          initialInvoice={activeInvoice}
+          onClose={() => {
+            setModal("");
+            setActiveInvoice(null);
+            load();
+            refresh();
+          }}
+        />
+      )}
+      {modal === "key" && (
+        <Modal title="Create API key" onClose={() => setModal("")}>
+          <ErrorBox error={error} />
+          {secret ? (
+            <>
+              <p>Copy this key now. It will never be shown again.</p>
+              <div className="secret-value">
+                <code>{secret}</code>
+                <CopyButton text={secret} />
+              </div>
+              <Button className="full" onClick={() => setModal("")}>
+                I've saved my key
+              </Button>
+            </>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                action(async () => {
+                  const j = await api("/api/keys", {
+                    method: "POST",
+                    body: {
+                      name: keyName,
+                      cap: keyCap === "" ? null : Number(keyCap),
+                    },
+                  });
+                  setSecret(j.key);
+                });
+              }}
+            >
+              <label>
+                Name
+                <input
+                  value={keyName}
+                  maxLength={60}
+                  onChange={(e) => setKeyName(e.target.value)}
+                  placeholder="My application"
+                />
+              </label>
+              <label>
+                Rolling 24-hour cap (credits)
+                <input
+                  type="number"
+                  min="0"
+                  step="0.0001"
+                  value={keyCap}
+                  onChange={(e) => setKeyCap(e.target.value)}
+                  placeholder="Leave empty for unlimited"
+                />
+              </label>
+              <Button className="full" busy={busy}>
+                Create key
+              </Button>
+            </form>
+          )}
+        </Modal>
+      )}
+      {modal === "email" && (
+        <Modal title="Verify recovery email" onClose={() => setModal("")}>
+          <ErrorBox error={error} />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              action(async () => {
+                if (challenge) {
+                  await api("/api/auth/email/verify", {
+                    method: "POST",
+                    body: { id: challenge.id, code },
+                  });
+                  setModal("");
+                  setMessage("Recovery email verified.");
+                } else
+                  setChallenge(
+                    await api("/api/auth/email/send", {
+                      method: "POST",
+                      body: { email, purpose: "link" },
+                    }),
+                  );
+              });
+            }}
+          >
+            <label>
+              Email
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={!!challenge}
+              />
+            </label>
+            {challenge && (
+              <>
+                <label>
+                  Code
+                  <input
+                    required
+                    pattern="[0-9]{6}"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                  />
+                </label>
+                {challenge.testCode && (
+                  <p className="test-note">
+                    Local test code: {challenge.testCode}
+                  </p>
+                )}
+              </>
+            )}
+            <Button busy={busy} className="full">
+              {challenge ? "Verify email" : "Send code"}
+            </Button>
+          </form>
+        </Modal>
+      )}
+      {["history", "delete"].includes(modal) && (
+        <Modal
+          title={
+            modal === "delete"
+              ? "Permanently close account"
+              : "Delete all conversations"
+          }
+          onClose={() => setModal("")}
+        >
+          <p>
+            This cannot be undone. Type DELETE to confirm
+            {modal === "delete" ? " and forfeit your unused credits" : ""}.
+          </p>
+          <ErrorBox error={error} />
+          <input
+            aria-label="Confirmation"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="DELETE"
+          />
+          <Button
+            busy={busy}
+            variant="danger-button full"
+            disabled={confirm !== "DELETE"}
+            onClick={() =>
+              action(async () => {
+                await api(
+                  modal === "delete" ? "/api/account" : "/api/conversations",
+                  { method: "DELETE", body: { confirm } },
+                );
+                setModal("");
+                if (modal === "delete") navigate("/");
+                else setMessage("Conversation history deleted.");
+              })
+            }
+          >
+            Permanently delete
+          </Button>
+        </Modal>
+      )}
+    </>
+  );
+}

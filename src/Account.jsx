@@ -1074,3 +1074,95 @@ export function Deposit({ onClose, initialInvoice = null }) {
     </Modal>
   );
 }
+export function Support() {
+  const { user, config } = useApp(),
+    [subject, setSubject] = useState(""),
+    [body, setBody] = useState(""),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [message, setMessage] = useState("");
+  return (
+    <>
+      <PageTitle
+        title="Here to"
+        accent="help."
+        description="Find an answer in the docs, or save a support request for this installation’s operator."
+      />
+      <main className="support-layout">
+        <aside>
+          <h2>Start here</h2>
+          <Link to="/docs/errors">Errors & troubleshooting →</Link>
+          <Link to="/docs/credits">Credits & deposits →</Link>
+          <Link to="/docs/keys">API keys & caps →</Link>
+          <Link to="/docs/security">Privacy & account controls →</Link>
+          {config?.supportEmail && (
+            <a href={"mailto:" + config.supportEmail}>Email support ↗</a>
+          )}
+          {config?.telegram && (
+            <a href={config.telegram} target="_blank" rel="noreferrer">
+              Telegram ↗
+            </a>
+          )}
+        </aside>
+        <form
+          className="panel"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setError("");
+            setBusy(true);
+            try {
+              const j = await api("/api/support", {
+                method: "POST",
+                body: { subject, body },
+              });
+              setMessage(`${j.message} Ticket ${j.id}`);
+              setBody("");
+              setSubject("");
+            } catch (e) {
+              setError(e.message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <h2>Support request</h2>
+          <ErrorBox error={error} />
+          {message && <div className="success">{message}</div>}
+          <label>
+            Subject
+            <input
+              required
+              maxLength={200}
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+            />
+          </label>
+          <label>
+            How can we help?
+            <textarea
+              rows={6}
+              required
+              maxLength={10000}
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+            />
+          </label>
+          {user ? (
+            <Button busy={busy}>
+              Save support request <ArrowRight size={16} />
+            </Button>
+          ) : (
+            <Link className="button" to="/signin?next=/support">
+              Sign in to contact support
+            </Link>
+          )}
+          <p className="fineprint">
+            Include a request or invoice ID where relevant. Never include a
+            password, secret API key or wallet recovery phrase.
+          </p>
+        </form>
+      </main>
+      <Footer />
+    </>
+  );
+}

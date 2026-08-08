@@ -895,3 +895,182 @@ export function Account() {
     </>
   );
 }
+export function Deposit({ onClose, initialInvoice = null }) {
+  const { config, refresh } = useApp(),
+    [amount, setAmount] = useState(20),
+    [currency, setCurrency] = useState("btc"),
+    [coins, setCoins] = useState([]),
+    [invoice, setInvoice] = useState(initialInvoice),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [time, setTime] = useState(Date.now());
+  const attempt = useRef(null);
+  useEffect(() => {
+    api("/api/payments/currencies")
+      .then((j) => setCoins(j.data))
+      .catch((e) => setError(e.message));
+  }, []);
+  useEffect(() => {
+    if (!invoice) return;
+    const timer = setInterval(() => setTime(Date.now()), 1000);
+    const poll = setInterval(async () => {
+      try {
+        const j = await api("/api/deposits/" + invoice.id);
+        setInvoice((v) => ({
+          ...v,
+          ...j.payload,
+          id: v.id,
+          payment_status: j.status,
+        }));
+        if (j.credited) refresh();
+      } catch (e) {
+        setError(e.message);
+      }
+    }, 15000);
+    return () => {
+      clearInterval(timer);
+      clearInterval(poll);
+    };
+  }, [invoice?.id]);
+  async function create(e) {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const signature = JSON.stringify([amount, currency]);
+      if (attempt.current?.signature !== signature)
+        attempt.current = { signature, id: crypto.randomUUID() };
+      setInvoice(
+        await api("/api/deposits", {
+          method: "POST",
+          body: { amount, currency, requestId: attempt.current.id },
+        }),
+      );
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const expiration = invoice?.expiration_estimate_date || invoice?.valid_until;
+  return (
+    <Modal title="Add credits" onClose={onClose}>
+      <ErrorBox error={error} />
+      {!config?.services?.payments && (
+        <div className="notice">
+          {config?.testMode
+            ? "Real payments are disabled in local test mode."
+            : "Payments are not available yet. Please try again after the service is connected."}
+        </div>
+      )}
+      {!invoice ? (
+        <form onSubmit={create}>
+          <p>1,000 credits = $1. No subscription. No expiry.</p>
+          <label>
+            Amount (USD)
+            <input
+              type="number"
+              min="5"
+              max="10000"
+              step=".01"
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value))}
+              required
+            />
+          </label>
+          <div className="pills">
+            {[5, 20, 50, 100].map((n) => (
+              <button
+                type="button"
+                key={n}
+                onClick={() => setAmount(n)}
+                className={n === amount ? "active" : ""}
+              >
+                ${n}
+              </button>
+            ))}
+          </div>
+          <label>
+            Payment currency / network
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            >
+              {coins.map((c) => (
+                <option key={c} value={c}>
+                  {c.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="deposit-quote">
+            <span>You'll receive</span>
+            <strong>{fmt(amount * 1000)} credits</strong>
+          </div>
+          <Button
+            className="full"
+            busy={busy}
+            disabled={!config?.services?.payments}
+          >
+            Create payment invoice <ArrowRight size={16} />
+          </Button>
+          <p className="fineprint">
+            Send only the specified currency and network. Wallet/network fees
+            may apply. Credits arrive after processor confirmation.
+          </p>
+        </form>
+      ) : (
+        <div className="invoice">
+          <span className="status-tag">{invoice.payment_status}</span>
+          <h3>
+            {invoice.payment_status === "waiting"
+              ? "Send exactly"
+              : "Invoice amount:"}{" "}
+            {invoice.pay_amount} {String(invoice.pay_currency).toUpperCase()}
+          </h3>
+          <div className="secret-value">
+            <code>{invoice.pay_address}</code>
+            <CopyButton text={invoice.pay_address} />
+          </div>
+          {invoice.payin_extra_id && <p>Memo/tag: {invoice.payin_extra_id}</p>}
+          {invoice.payment_status === "partially_paid" && (
+            <p className="notice">
+              This invoice is only partly paid. Verify the remaining amount with
+              support before sending more.
+            </p>
+          )}
+          {["failed", "expired", "refunded"].includes(
+            invoice.payment_status,
+          ) && (
+            <p className="notice">
+              This invoice is {invoice.payment_status}. Do not send another
+              payment to it.
+            </p>
+          )}
+          {expiration && (
+            <p>
+              Invoice expires in{" "}
+              {Math.max(0, Math.floor((new Date(expiration) - time) / 60000))}{" "}
+              minutes.
+            </p>
+          )}
+          <p>Payment ID: {invoice.payment_id}</p>
+          <p className="fineprint">
+            This screen updates every 15 seconds. The invoice status is checked
+            with the payment processor; it is never inferred from a timer.
+          </p>
+          {invoice.payment_status === "finished" && (
+            <div className="success">
+              <Check size={16} /> Payment confirmed. Credits added.
+            </div>
+          )}
+          <CopyButton
+            text={JSON.stringify(invoice, null, 2)}
+            label="Copy receipt"
+          />
+        </div>
+      )}
+    </Modal>
+  );
+}

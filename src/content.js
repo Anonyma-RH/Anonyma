@@ -295,3 +295,45 @@ export const articles = [
     ],
   },
 ];
+export const roadmap = [
+  [
+    "Available",
+    "Unified prepaid workspace",
+    "Chat, code, images, durable video jobs, saved history, shared ledger and developer API.",
+  ],
+  [
+    "Available",
+    "Account controls",
+    "Password, verified email, signed wallets, private library, exports and spending caps.",
+  ],
+  [
+    "Planned",
+    "Direct provider connections",
+    "Additional native integrations, provider failover and richer routing controls.",
+  ],
+  [
+    "Planned",
+    "Audio tools",
+    "Speech, transcription and music workflows beyond catalog discovery.",
+  ],
+  [
+    "Planned",
+    "Advanced context",
+    "Shared memory, collaborative workspaces and model fusion.",
+  ],
+  [
+    "Planned",
+    "More control",
+    "Reasoning controls, supported structured output and provider-specific retention options.",
+  ],
+  [
+    "Planned",
+    "Payment infrastructure",
+    "Additional processors and transparent fee controls.",
+  ],
+  [
+    "Research",
+    "Token ecosystem",
+    "Credit trading, withdrawals and buyback concepts have not been implemented or launched.",
+  ],
+];

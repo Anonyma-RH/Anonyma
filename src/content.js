@@ -238,3 +238,60 @@ export const docSections = [
     ],
   },
 ];
+export const articles = [
+  {
+    slug: "one-balance-many-models",
+    title: "One balance. Many models.",
+    category: "Guide",
+    intro: "How a prepaid gateway fits into your AI workflow.",
+    paragraphs: [
+      "Subscriptions reserve a fixed budget for one provider each month. A prepaid gateway instead charges individual requests against a shared balance. It can be useful for switching between specialized models or for irregular workloads.",
+      "Compare the rates and capabilities of the models you actually use. A cheap input-token price does not automatically mean a cheaper task: output length, reasoning tokens, retries and image or video generation all affect the final bill.",
+      "Prepaid access does not reproduce every feature of a provider’s consumer subscription. Bundled tools, proprietary search, file systems and editorial integrations may differ. Use the calculator as a usage estimate, not a promise of equal service.",
+    ],
+  },
+  {
+    slug: "choose-an-ai-model",
+    title: "Choosing the right model",
+    category: "Learn",
+    intro: "Match capabilities, context and price to the task.",
+    paragraphs: [
+      "Start with modality: text, image or video. For a text conversation with pictures, select a vision-capable chat model. A model visible in a broad upstream catalog is not necessarily executable through every endpoint.",
+      "Context length describes the provider model, while the application also limits message count and request size. These limits protect both latency and cost. A large context number alone is not a reason to send every document on every turn.",
+      "Compare two models with the same representative prompts and review their actual outputs. The comparison calculator estimates costs from supplied token counts; it does not measure factual accuracy, safety or creativity.",
+    ],
+  },
+  {
+    slug: "subscriptions-vs-usage",
+    title: "Subscriptions vs. pay per use",
+    category: "Comparison",
+    intro: "A fair comparison starts with your workload.",
+    paragraphs: [
+      "A fixed subscription can be convenient for frequent interactive use, while usage billing lets a shared balance cover many model families. Neither pricing model is always cheaper.",
+      "Estimate how many prompts you send and their typical input/output lengths. Then account for tasks beyond text: images and clips may be priced per generation and can dominate a small budget.",
+      "The savings calculator compares selected monthly list prices against token-rate estimates. It does not include every bundled subscription benefit, possible provider discounts, taxes or cryptocurrency transfer fees.",
+    ],
+  },
+  {
+    slug: "openai-compatible-clients",
+    title: "Bring your own AI client",
+    category: "Developers",
+    intro: "Use familiar SDKs with a different base URL.",
+    paragraphs: [
+      "An OpenAI-compatible chat endpoint lets existing clients send standard role/content messages with a model identifier. Set the base URL, create a server-side key and try a small request first.",
+      "Compatibility is a subset, not an assurance that every vendor endpoint works. This service supports chat completions and streaming; it does not provide Responses, embeddings, tool calls or Assistants.",
+      "Set a rolling key cap for each integration and revoke unused keys. Keep keys out of public browser bundles. Browser requests from third-party origins are intentionally not enabled.",
+    ],
+  },
+  {
+    slug: "crypto-deposits",
+    title: "How prepaid crypto deposits work",
+    category: "Guide",
+    intro: "From an invoice to spendable credits.",
+    paragraphs: [
+      "Choose an amount and a cryptocurrency supported by the payment processor. Each invoice provides an exact amount and receiving address for the selected network. An invoice is not proof of payment.",
+      "The processor watches the blockchain and sends a signed status notification. The service verifies the notification and credits a finished invoice only once, even if the processor retries the same callback.",
+      "Transfer fees, minimums and confirmation times vary. Underpayments and expired invoices require review; avoid sending a second transfer to an old invoice without checking its status. Credits cannot be withdrawn as cryptocurrency.",
+    ],
+  },
+];

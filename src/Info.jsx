@@ -98,3 +98,142 @@ export function HowItWorks() {
     </>
   );
 }
+export function Developers() {
+  const base = location.origin + "/v1";
+  const code = `curl ${base}/chat/completions \\\n  -H "Authorization: Bearer $ANONYMA_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"model":"google/gemini-2.5-flash","messages":[{"role":"user","content":"Hello"}],"stream":true}'`;
+  return (
+    <>
+      <PageTitle
+        eyebrow="FOR BUILDERS"
+        title="Every model."
+        accent="One endpoint."
+        description="An OpenAI-compatible chat API and a small terminal client, connected to your workspace balance."
+      />
+      <main className="landing-width developers-page">
+        <div className="developer-cards">
+          <article>
+            <Braces />
+            <h2>Drop into your code.</h2>
+            <p>
+              Use ordinary chat-completions clients with a custom base URL and
+              your API key. Streaming and usage receipts are built in.
+            </p>
+            <Link className="button" to="/docs/api">
+              API reference <ArrowUpRight size={16} />
+            </Link>
+          </article>
+          <article>
+            <Terminal />
+            <h2>Stay in your terminal.</h2>
+            <p>
+              Chat interactively, send a single prompt, switch models and check
+              your balance. Node 18 or newer is required.
+            </p>
+            <Link className="button outline" to="/docs/cli">
+              Install the CLI <ArrowUpRight size={16} />
+            </Link>
+          </article>
+        </div>
+        <div className="code-block">
+          <div>
+            First request
+            <CopyButton text={code} />
+          </div>
+          <pre>{code}</pre>
+        </div>
+        <div className="button-row">
+          <Link className="button" to="/account">
+            Create an API key
+          </Link>
+          <Link className="button outline" to="/docs/integrations">
+            SDKs & integrations
+          </Link>
+        </div>
+        <h2>Know the compatibility boundary.</h2>
+        <p>
+          Use model, messages, max_tokens and stream. Function calling,
+          structured-output schemas, Responses, Assistants, embeddings and audio
+          endpoints are not supported. Source consumer subscriptions can include
+          additional tools that a chat endpoint does not reproduce.
+        </p>
+        <div className="feature-grid">
+          <article className="feature-card">
+            <h3>Rolling spending caps</h3>
+            <p>
+              Each key can have a 24-hour credit ceiling that includes in-flight
+              reservations.
+            </p>
+          </article>
+          <article className="feature-card">
+            <h3>Usage you can account for</h3>
+            <p>
+              Final responses include token usage and credit charges, backed by
+              an append-only ledger.
+            </p>
+          </article>
+        </div>
+      </main>
+      <Footer />
+    </>
+  );
+}
+export function Methodology() {
+  return (
+    <>
+      <article className="prose article-page">
+        <div className="eyebrow">CLEAR ASSUMPTIONS</div>
+        <h1>How we compare models and costs.</h1>
+        <p className="lead">
+          Catalog data, estimates and comparisons answer different questions.
+          This page explains what each one can tell you.
+        </p>
+        <h2>Where the catalog comes from</h2>
+        <p>
+          The initial catalog is a public reference snapshot captured on 19
+          September 2026. It retains the model identifier, provider, modality,
+          context length, architecture and quoted rates. The source’s upstream
+          status is not a guarantee that a model can run on this installation.
+          Configured gateway snapshots can be refreshed by the operator.
+        </p>
+        <h2>How token prices are calculated</h2>
+        <p>
+          Text cost = input tokens × input rate ÷ 1,000,000 + output tokens ×
+          output rate ÷ 1,000,000. Multiply by request count for a workload
+          estimate. Provider-billed reasoning can be included in output usage.
+          Rates marked per generation use the selected model variant instead.
+        </p>
+        <h2>Reservations versus estimates</h2>
+        <p>
+          The workspace reserves a conservative input estimate plus the selected
+          maximum output. Actual settlement uses provider-reported usage where
+          available. If an interrupted stream lacks final usage, a visible
+          partial-output estimate is used and never exceeds the reservation.
+        </p>
+        <h2>What “savings” means</h2>
+        <p>
+          The calculator subtracts an estimated usage cost from selected
+          subscription list prices. It does not equate product features, compute
+          a benchmark, or guarantee that every user will save money.
+          Subscription bundles, included tools, taxes, transfer fees and
+          operator markup can differ.
+        </p>
+        <h2>Quality needs a task</h2>
+        <p>
+          There is no universal model winner in this interface. The comparison
+          workbench reports differences in listed capability and estimated cost.
+          Evaluate outputs on representative prompts and review important work
+          yourself.
+        </p>
+        <h2>Corrections</h2>
+        <p>
+          If a rate, model capability or description is wrong, include the model
+          ID and the source of the discrepancy in a support request.
+        </p>
+        <Link className="button outline" to="/support">
+          Report a correction
+        </Link>
+      </article>
+      <Footer />
+    </>
+  );
+}

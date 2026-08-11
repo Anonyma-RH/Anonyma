@@ -307,3 +307,75 @@ const alternatives = [
     "Research products can bundle search, citations, retrieval and source browsing. Ordinary chat endpoints do not automatically include those capabilities. Compare the whole task before relying on a usage-cost estimate.",
   ],
 ];
+export function Alternatives() {
+  const { slug } = useParams(),
+    item = alternatives.find((a) => slug?.includes(a[0]));
+  return (
+    <>
+      {item ? (
+        <article className="prose article-page">
+          <Link to="/alternatives">← All alternatives</Link>
+          <div className="eyebrow">{item[2]}</div>
+          <h1>An alternative to {item[1].toLowerCase()}.</h1>
+          <p className="lead">{item[3]}</p>
+          <h2>Where Anonyma fits</h2>
+          <p>
+            Use one prepaid account for supported chat, code, image and video
+            requests. The browser, API keys and CLI share a balance. There is no
+            recurring subscription; a reservation covers each request and a
+            receipt records the settled usage.
+          </p>
+          <h2>What to verify before switching</h2>
+          <p>
+            Check model availability, prompt sizes, output quality,
+            compatibility boundaries and the provider’s handling of your data.
+            This implementation does not provide built-in web search, arbitrary
+            file processing, tool calling or team workspaces.
+          </p>
+          <h2>Make a workload-based comparison</h2>
+          <p>
+            Use representative token counts in the calculator and run sample
+            tasks through the models you are considering. A price advantage on
+            one prompt size is not a claim of equal capabilities or universal
+            savings.
+          </p>
+          <div className="button-row">
+            <Link className="button" to="/calculator">
+              Estimate your costs
+            </Link>
+            <Link className="button outline" to="/methodology">
+              Read the methodology
+            </Link>
+          </div>
+        </article>
+      ) : (
+        <>
+          <PageTitle
+            title="Explore your"
+            accent="alternatives."
+            description="Compare workflows and billing models with explicit assumptions. Find what fits the work you actually do."
+          />
+          <main className="landing-width">
+            <div className="article-grid">
+              {alternatives.map((a) => (
+                <Link
+                  className="article-card"
+                  key={a[0]}
+                  to={"/alternatives/" + a[0]}
+                >
+                  <span className="eyebrow">{a[2]}</span>
+                  <h3>{a[1]}</h3>
+                  <p>{a[3]}</p>
+                  <span>
+                    Read comparison <ArrowUpRight size={14} />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </main>
+        </>
+      )}
+      <Footer />
+    </>
+  );
+}

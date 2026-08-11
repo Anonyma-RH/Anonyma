@@ -237,3 +237,73 @@ export function Methodology() {
     </>
   );
 }
+export function About() {
+  return (
+    <>
+      <PageTitle
+        title="More models."
+        accent="Less friction."
+        description="An independent prepaid AI workspace built to put model choice, costs and account controls in one place."
+      />
+      <article className="prose article-page">
+        <h2>The product</h2>
+        <p>
+          Anonyma connects a web workspace and developer endpoint to configured
+          AI and payment services. The software stores account state,
+          conversation history, private files and an auditable credit ledger
+          locally on the operator’s infrastructure.
+        </p>
+        <h2>The implementation</h2>
+        <p>
+          This project recreates the publicly observable functionality and
+          visual structure of HeyAskr for the requested build. It is
+          independently implemented and is not affiliated with or endorsed by
+          HeyAskr or the model providers listed in the catalog.
+        </p>
+        <h2>Operational transparency</h2>
+        <p>
+          Live provider, payment, email and blockchain services require real
+          configuration. Local test mode is visibly labeled. The operator must
+          supply its identity, finalized commercial terms and support contact
+          before a public launch.
+        </p>
+        <Link className="button" to="/how-it-works">
+          How it works <ArrowUpRight size={16} />
+        </Link>
+      </article>
+      <Footer />
+    </>
+  );
+}
+const alternatives = [
+  [
+    "openrouter",
+    "Model routing services",
+    "A gateway comparison",
+    "Compare endpoint compatibility, model availability, per-request costs, routing controls, account funding and saved-work features. Verify whether a client depends on unsupported tools or endpoints before moving it.",
+  ],
+  [
+    "chatgpt",
+    "Single-provider chat subscriptions",
+    "A workflow comparison",
+    "Start with your actual tasks: conversations, coding, images and files. Compare the complete workflow, including bundled tools and limits, rather than treating a token-priced API as an identical replacement for a consumer subscription.",
+  ],
+  [
+    "poe",
+    "Multi-model chat subscriptions",
+    "A billing comparison",
+    "A shared model interface can be priced as a fixed subscription, points or metered credits. Check how each option handles usage limits, model switching, saved work and integrations for your workload.",
+  ],
+  [
+    "claude",
+    "Writing and coding subscriptions",
+    "A task comparison",
+    "Estimate the input and output volume of your writing or coding sessions. Compare model quality on your tasks and check any project, editor or tool integrations you rely on.",
+  ],
+  [
+    "perplexity",
+    "Research subscriptions",
+    "A capability comparison",
+    "Research products can bundle search, citations, retrieval and source browsing. Ordinary chat endpoints do not automatically include those capabilities. Compare the whole task before relying on a usage-cost estimate.",
+  ],
+];

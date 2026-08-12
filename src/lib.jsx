@@ -133,3 +133,117 @@ export function ProviderIcon({ provider = "", size = 28 }) {
     </span>
   );
 }
+export function Button({
+  children,
+  busy,
+  variant = "",
+  className = "",
+  ...props
+}) {
+  return (
+    <button
+      className={`button ${variant} ${className}`}
+      disabled={busy || props.disabled}
+      {...props}
+    >
+      {busy ? <LoaderCircle size={16} className="spin" /> : null}
+      {children}
+    </button>
+  );
+}
+export function ErrorBox({ error }) {
+  return error ? (
+    <div className="error" role="alert">
+      <AlertCircle size={17} />
+      <span>{error}</span>
+    </div>
+  ) : null;
+}
+export function CopyButton({ text, label = "Copy", className = "" }) {
+  const [copied, set] = useState(false);
+  return (
+    <button
+      className={"copy-button " + className}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          set(true);
+          setTimeout(() => set(false), 1800);
+        } catch {
+          set(false);
+        }
+      }}
+    >
+      {copied ? <Check size={14} /> : <Copy size={14} />}{" "}
+      {copied ? "Copied" : label}
+    </button>
+  );
+}
+export function Modal({ title, onClose, children, wide = false }) {
+  const ref = useRef(null),
+    closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const previous = document.activeElement,
+      overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const controls = () =>
+      [
+        ...ref.current.querySelectorAll(
+          'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex="0"]',
+        ),
+      ].filter((e) => e.offsetParent !== null);
+    controls()[0]?.focus();
+    const handler = (e) => {
+      if (e.key === "Escape") closeRef.current();
+      if (e.key === "Tab") {
+        const items = controls();
+        if (!items.length) {
+          e.preventDefault();
+          return;
+        }
+        if (e.shiftKey && document.activeElement === items[0]) {
+          e.preventDefault();
+          items.at(-1).focus();
+        } else if (!e.shiftKey && document.activeElement === items.at(-1)) {
+          e.preventDefault();
+          items[0].focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => {
+      document.removeEventListener("keydown", handler);
+      document.body.style.overflow = overflow;
+      previous?.focus();
+    };
+  }, []);
+  return (
+    <div
+      className="modal-shade"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <section
+        ref={ref}
+        className={"modal " + (wide ? "wide" : "")}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <div className="modal-title">
+          <h2>{title}</h2>
+          <button
+            className="icon-button"
+            aria-label="Close dialog"
+            onClick={onClose}
+          >
+            <X />
+          </button>
+        </div>
+        {children}
+      </section>
+    </div>
+  );
+}

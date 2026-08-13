@@ -426,3 +426,53 @@ export function Empty({ title, children }) {
     </div>
   );
 }
+export function Download({ data, name, children }) {
+  return (
+    <button className="copy-button" onClick={() => download(data, name)}>
+      {children || "Download"}
+    </button>
+  );
+}
+export function download(data, name, type = "text/plain") {
+  const url = URL.createObjectURL(
+    new Blob(
+      [typeof data === "string" ? data : JSON.stringify(data, null, 2)],
+      { type },
+    ),
+  );
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+export async function walletSign(config, link = false) {
+  let provider = window.ethereum;
+  if (!provider) {
+    if (!config.walletProject)
+      throw Error(
+        "Install a browser wallet, or configure WalletConnect for mobile wallets.",
+      );
+    const { EthereumProvider } =
+      await import("@walletconnect/ethereum-provider");
+    provider = await EthereumProvider.init({
+      projectId: config.walletProject,
+      chains: [config.walletChain || 1],
+      showQrModal: true,
+    });
+    await provider.connect();
+  }
+  const [address] = await provider.request({ method: "eth_requestAccounts" });
+  const challenge = await api("/api/auth/wallet/challenge", {
+    method: "POST",
+    body: { address, link },
+  });
+  const signature = await provider.request({
+    method: "personal_sign",
+    params: [challenge.message, address],
+  });
+  return api("/api/auth/wallet/verify", {
+    method: "POST",
+    body: { id: challenge.id, signature },
+  });
+}

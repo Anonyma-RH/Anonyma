@@ -247,3 +247,182 @@ export function Modal({ title, onClose, children, wide = false }) {
     </div>
   );
 }
+export function Header() {
+  const { user, config } = useApp(),
+    [open, setOpen] = useState(false),
+    loc = useLocation();
+  useEffect(() => setOpen(false), [loc.pathname]);
+  return (
+    <>
+      <header className={`header${loc.pathname === "/" ? " header-home" : ""}`}>
+        <Link to="/" className="wordmark">
+          anonyma<span className="brand-dot">•</span>
+        </Link>
+        <nav className="desktop-nav">
+          <Link to="/how-it-works">How it works</Link>
+          <Link to="/models">Models</Link>
+          <Link to="/pricing">Pricing</Link>
+          <Link to="/calculator">Calculator</Link>
+          <details className="developer-menu">
+            <summary>
+              Developers <ChevronDown size={12} />
+            </summary>
+            <div>
+              <Link to="/developers">API & CLI</Link>
+              <Link to="/docs">Documentation</Link>
+              <Link to="/docs/api">API reference</Link>
+              <Link to="/docs/cli">Command line</Link>
+              <Link to="/roadmap">Roadmap</Link>
+            </div>
+          </details>
+        </nav>
+        <div className="header-actions">
+          <Link to="/token" className="token-badge">
+            <span className="tiny-dot" /> $ANON
+          </Link>
+          <Link to="/ask" className="button small">
+            Ask <ArrowUpRight size={15} />
+          </Link>
+          <Link
+            to={user ? "/account" : "/signin"}
+            className="button small outline account-link"
+          >
+            Account
+          </Link>
+          <button
+            aria-label="Open navigation"
+            className="icon-button mobile-menu"
+            onClick={() => setOpen(!open)}
+          >
+            {open ? <X /> : <Menu />}
+          </button>
+        </div>
+      </header>
+      {open && (
+        <nav className="mobile-nav">
+          {[
+            "How it works",
+            "Models",
+            "Pricing",
+            "Calculator",
+            "Docs",
+            "Roadmap",
+            "Account",
+          ].map((v) => (
+            <Link key={v} to={"/" + v.toLowerCase().replaceAll(" ", "-")}>
+              {v}
+            </Link>
+          ))}
+        </nav>
+      )}
+      {config?.testMode && (
+        <div className="test-banner">
+          LOCAL TEST MODE · Test credits and deterministic output · No real
+          payments or AI calls
+        </div>
+      )}
+    </>
+  );
+}
+export function Footer() {
+  const { config } = useApp();
+  const groups = [
+    [
+      "Product",
+      [
+        ["How it works", "/how-it-works"],
+        ["Models", "/models"],
+        ["Pricing", "/pricing"],
+        ["Calculator", "/calculator"],
+        ["API and CLI", "/developers"],
+        ["Token", "/token"],
+        ["Roadmap", "/roadmap"],
+        ["Docs", "/docs"],
+      ],
+    ],
+    [
+      "Research",
+      [
+        ["Compare", "/compare"],
+        ["Alternatives", "/alternatives"],
+        ["Learn", "/learn"],
+        ["Methodology", "/methodology"],
+      ],
+    ],
+    [
+      "Company",
+      [
+        ["About", "/about"],
+        ["Support", "/support"],
+        ["Contact", "/contact"],
+        ["Privacy", "/privacy"],
+        ["Terms", "/terms"],
+        ["Cookies", "/cookies"],
+      ],
+    ],
+  ];
+  return (
+    <footer className="site-footer">
+      <div className="footer-cta">
+        <h2>
+          Every <em>AI</em> model.
+          <br />
+          No <em>subscriptions</em>.<br />
+          Pay for what you use, with <em>crypto</em>.
+        </h2>
+        <Link className="button" to="/ask">
+          Start asking
+        </Link>
+      </div>
+      <div className="footer-grid">
+        <Link className="wordmark" to="/" aria-label="Anonyma home">
+          anonyma<span className="brand-dot">•</span>
+        </Link>
+        <nav className="footer-links" aria-label="Footer navigation">
+          {groups.map(([title, links]) => (
+            <div key={title}>
+              <strong>{title}</strong>
+              {links.map(([label, to]) => (
+                <Link key={to} to={to}>
+                  {label}
+                </Link>
+              ))}
+            </div>
+          ))}
+        </nav>
+        <div className="footer-contact">
+          <Link to="/token">Explore token benefits</Link>
+          {config?.supportEmail && (
+            <a href={`mailto:${config.supportEmail}`}>{config.supportEmail}</a>
+          )}
+          {config?.telegram && (
+            <a href={config.telegram} target="_blank" rel="noreferrer">
+              Telegram
+            </a>
+          )}
+          <span>© {new Date().getFullYear()} Anonyma</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+export function PageTitle({ eyebrow, title, accent, description }) {
+  return (
+    <div className="page-title">
+      {eyebrow && <div className="eyebrow">{eyebrow}</div>}
+      <h1>
+        {title} <span>{accent}</span>
+      </h1>
+      {description && <p>{description}</p>}
+    </div>
+  );
+}
+export function Empty({ title, children }) {
+  return (
+    <div className="empty">
+      <div className="empty-symbol">✧</div>
+      <h3>{title}</h3>
+      <p>{children}</p>
+    </div>
+  );
+}

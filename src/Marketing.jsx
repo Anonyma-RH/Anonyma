@@ -42,3 +42,4 @@ import {
   api,
 } from "./lib";
 import { faqs, docSections, articles, roadmap } from "./content";
+import { LiveMarket } from "./LiveMarket";

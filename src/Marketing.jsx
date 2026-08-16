@@ -416,3 +416,349 @@ export function Home() {
     </>
   );
 }
+export function Models({ pricing = false }) {
+  const { models, modelInfo } = useApp(),
+    [params, setParams] = useSearchParams(),
+    [query, setQuery] = useState(params.get("q") || ""),
+    [type, setType] = useState(
+      ["chat", "image", "video", "audio", "embedding"].includes(
+        params.get("task"),
+      )
+        ? params.get("task")
+        : "all",
+    ),
+    [provider, setProvider] = useState("all"),
+    [availability, setAvailability] = useState("all"),
+    [sort, setSort] = useState("popular"),
+    [variantPrices, setVariantPrices] = useState({}),
+    [limit, setLimit] = useState(60),
+    [currency, setCurrency] = useState("USD"),
+    [rates, setRates] = useState(null),
+    [error, setError] = useState("");
+  useEffect(() => {
+    setLimit(60);
+  }, [query, type, provider, availability]);
+  useEffect(() => {
+    if (currency !== "USD" && !rates)
+      api("/api/rates")
+        .then(setRates)
+        .catch((e) => {
+          setError(e.message);
+          setCurrency("USD");
+        });
+  }, [currency]);
+  const filtered = useMemo(
+    () =>
+      models
+        .filter(
+          (m) =>
+            (type === "all" ||
+              m.type === type ||
+              (type === "image" && m.imageCapable)) &&
+            (provider === "all" || m.owned_by === provider) &&
+            (availability === "all" ||
+              (availability === "runnable"
+                ? m.callable
+                : m.status === availability)) &&
+            `${m.id} ${m.name} ${m.owned_by}`
+              .toLowerCase()
+              .includes(query.toLowerCase()),
+        )
+        .sort((a, b) =>
+          sort === "name"
+            ? a.name.localeCompare(b.name)
+            : sort === "cheap"
+              ? modelPrice(a) - modelPrice(b)
+              : sort === "expensive"
+                ? modelPrice(b) - modelPrice(a)
+                : Number(b.popular) - Number(a.popular),
+        ),
+    [models, type, provider, availability, query, sort],
+  );
+  const providers = [
+    ...new Set(models.map((m) => m.owned_by).filter(Boolean)),
+  ].sort();
+  const price = (n) =>
+    currency === "USD"
+      ? dollars(n)
+      : rates
+        ? `${(n * rates.rates[currency]).toLocaleString("en", { maximumSignificantDigits: 6 })} ${currency}`
+        : "—";
+  return (
+    <>
+      <PageTitle
+        title={pricing ? "Transparent" : "Explore every"}
+        accent={pricing ? "pricing." : "model."}
+        description={
+          pricing
+            ? "Pay for what you use. Compare rates across models, with one balance for everything."
+            : "Discover the models behind the workspace. Compare capabilities, context windows and pricing."
+        }
+      />
+      <div className="catalog-badge">
+        <span className="tiny-dot" />{" "}
+        {models.filter((m) => m.status === "live").length} listed live upstream
+        · {models.filter((m) => m.callable).length} runnable here{" "}
+        <span className="muted">
+          {" "}
+          · {modelInfo?.live ? "updated" : "snapshot"}{" "}
+          {modelInfo?.updatedAt?.slice(0, 10)}
+        </span>
+      </div>
+      <main className="catalog-layout">
+        <aside className="filters">
+          <h3>
+            <SlidersHorizontal size={17} /> Filters
+          </h3>
+          <label>MODALITY</label>
+          {[
+            ["all", "All models"],
+            ["chat", "Chat & code"],
+            ["image", "Images"],
+            ["video", "Video"],
+            ["audio", "Audio"],
+            ["embedding", "Embeddings"],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setType(id)}
+              className={type === id ? "selected" : ""}
+            >
+              {label}
+              <span>
+                {
+                  models.filter(
+                    (m) =>
+                      id === "all" ||
+                      m.type === id ||
+                      (id === "image" && m.imageCapable),
+                  ).length
+                }
+              </span>
+            </button>
+          ))}
+          <label>PROVIDER</label>
+          <select
+            aria-label="Provider"
+            value={provider}
+            onChange={(e) => setProvider(e.target.value)}
+          >
+            <option value="all">All providers</option>
+            {providers.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+          <label>AVAILABILITY</label>
+          <select
+            aria-label="Availability"
+            value={availability}
+            onChange={(e) => setAvailability(e.target.value)}
+          >
+            <option value="all">All statuses</option>
+            <option value="runnable">Runnable here</option>
+            <option value="live">Listed live upstream</option>
+            <option value="planned">Planned</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+          {pricing && (
+            <>
+              <label>DISPLAY CURRENCY</label>
+              <select
+                aria-label="Currency"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+              >
+                {["USD", "USDT", "BTC", "ETH", "SOL"].map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+              {rates && (
+                <small>
+                  Rates: Coinbase ·{" "}
+                  {new Date(rates.updatedAt).toLocaleTimeString()}
+                </small>
+              )}
+            </>
+          )}
+          <p className="filter-note">
+            Catalog availability is separate from this installation’s configured
+            generation access. Audio and embeddings are discovery only.
+          </p>
+          <button
+            className="text-link"
+            onClick={() => {
+              setQuery("");
+              setType("all");
+              setProvider("all");
+              setAvailability("all");
+            }}
+          >
+            Reset filters
+          </button>
+        </aside>
+        <section className="catalog-results">
+          <div className="catalog-toolbar">
+            <div className="search-field">
+              <Search size={17} />
+              <input
+                placeholder="Search models or providers…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <select
+              aria-label="Sort models"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+            >
+              <option value="popular">Most popular</option>
+              <option value="cheap">Price: low to high</option>
+              <option value="expensive">Price: high to low</option>
+              <option value="name">Name A–Z</option>
+            </select>
+          </div>
+          <ErrorBox error={error} />
+          <div className="result-label">
+            {filtered.length} models{" "}
+            <span>
+              Prices in {currency}
+              {!pricing ? " · per 1M tokens or generation" : ""}
+            </span>
+          </div>
+          <div className="model-list">
+            {filtered.slice(0, limit).map((m) => (
+              <details className="model-row" key={m.id}>
+                <summary>
+                  <ProviderIcon provider={m.owned_by} />
+                  <div className="model-name">
+                    <strong>
+                      {m.name}
+                      {m.popular && <span className="popular">POPULAR</span>}
+                    </strong>
+                    <small>{m.id}</small>
+                  </div>
+                  <span className="model-type">{m.type || "planned"}</span>
+                  <span className="model-context">
+                    {m.context_length
+                      ? fmt(m.context_length / 1000, 0) + "K"
+                      : "—"}
+                  </span>
+                  <div className="model-price">
+                    <strong>
+                      {price(variantPrices[m.id] ?? modelPrice(m))}
+                    </strong>
+                    <small>
+                      {m.pricing?.type === "per_token"
+                        ? "input / 1M tokens"
+                        : "per generation"}
+                    </small>
+                  </div>
+                  {m.callable ? (
+                    <Link
+                      onClick={(e) => e.stopPropagation()}
+                      to={`/ask?mode=${m.imageCapable || m.type === "image" ? "image" : m.type === "video" ? "video" : "chat"}&model=${encodeURIComponent(m.id)}`}
+                      className={"run-link " + (!m.callable ? "muted" : "")}
+                    >
+                      {m.callable
+                        ? "Run"
+                        : m.status === "planned"
+                          ? "Planned"
+                          : "Details"}{" "}
+                      <ArrowUpRight size={13} />
+                    </Link>
+                  ) : (
+                    <button
+                      className="run-link muted"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const details = e.currentTarget.closest("details");
+                        details.open = !details.open;
+                      }}
+                    >
+                      {m.status === "planned" ? "Planned" : "Details"}
+                    </button>
+                  )}
+                </summary>
+                <div className="model-detail">
+                  <p>
+                    {m.description ||
+                      `${m.name} by ${m.owned_by}. ${m.vision ? "Supports image input." : ""}`}
+                  </p>
+                  <div>
+                    <span>
+                      Status:{" "}
+                      <b>
+                        {m.callable
+                          ? "Runnable"
+                          : m.status + " · catalog listing"}
+                      </b>
+                    </span>
+                    {m.context_length && (
+                      <span>
+                        Context: <b>{fmt(m.context_length)} tokens</b>
+                      </span>
+                    )}
+                    {m.pricing?.output_per_1M_tokens != null && (
+                      <span>
+                        Output:{" "}
+                        <b>
+                          {price(m.pricing.output_per_1M_tokens)} / 1M tokens
+                        </b>
+                      </span>
+                    )}
+                  </div>
+                  {m.pricing?.variants?.map((v) => (
+                    <p key={v.quality}>
+                      <b>{v.quality}:</b>{" "}
+                      {v.options
+                        .map((o) => `${o.size}: ${price(o.price)}`)
+                        .join(" · ")}
+                    </p>
+                  ))}
+                  {pricing && m.pricing?.variants?.length > 0 && (
+                    <label>
+                      Generation variant
+                      <select
+                        aria-label={`${m.name} generation variant`}
+                        onChange={(e) =>
+                          setVariantPrices((v) => ({
+                            ...v,
+                            [m.id]: Number(e.target.value),
+                          }))
+                        }
+                      >
+                        <option value={modelPrice(m)}>
+                          Default · {price(modelPrice(m))}
+                        </option>
+                        {m.pricing.variants.flatMap((v) =>
+                          v.options.map((o) => (
+                            <option key={v.quality + o.size} value={o.price}>
+                              {v.quality} · {o.size} · {price(o.price)}
+                            </option>
+                          )),
+                        )}
+                      </select>
+                    </label>
+                  )}
+                </div>
+              </details>
+            ))}
+          </div>
+          {!filtered.length && (
+            <div className="empty">No models match those filters.</div>
+          )}
+          {filtered.length > limit && (
+            <Button
+              variant="outline load-more"
+              onClick={() => setLimit(limit + 60)}
+            >
+              Show 60 more <ChevronDown size={16} />
+            </Button>
+          )}
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
+}

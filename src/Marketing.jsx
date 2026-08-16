@@ -1000,3 +1000,180 @@ export function Calculator() {
     </>
   );
 }
+export function Compare() {
+  const { models } = useApp(),
+    [params] = useSearchParams(),
+    [type, setType] = useState(
+      ["chat", "image", "video"].includes(params.get("type"))
+        ? params.get("type")
+        : "chat",
+    ),
+    [a, setA] = useState(params.get("a") || ""),
+    [b, setB] = useState(params.get("b") || ""),
+    [input, setInput] = useState(
+      Math.max(0, Number(params.get("input") || 1000)) || 0,
+    ),
+    [output, setOutput] = useState(
+      Math.max(0, Number(params.get("output") || 500)) || 0,
+    ),
+    [count, setCount] = useState(
+      Math.max(1, Number(params.get("count") || 1000)) || 1,
+    );
+  const list = models.filter((m) => m.type === type && m.status === "live"),
+    left = list.find((m) => m.id === a) || list[0],
+    right = list.find((m) => m.id === b) || list[1];
+  const cost = (m) =>
+    type === "chat"
+      ? (count *
+          ((m?.pricing?.input_per_1M_tokens || 0) * input +
+            (m?.pricing?.output_per_1M_tokens || 0) * output)) /
+        1e6
+      : count * generationPrice(m);
+  return (
+    <>
+      <PageTitle
+        eyebrow="COMPARE BEFORE YOU COMMIT"
+        title="Two models."
+        accent="One clear choice."
+        description="Compare capabilities and estimated costs side by side. Then try the models on your own task."
+      />
+      <main className="compare-page">
+        <div className="compare-share">
+          <CopyButton
+            label="Share comparison"
+            text={`${location.origin}/compare?${new URLSearchParams({ type, a: left?.id || "", b: right?.id || "", input, output, count })}`}
+          />
+        </div>
+        <div className="pills centered">
+          {["chat", "image", "video"].map((t) => (
+            <button
+              className={type === t ? "active" : ""}
+              onClick={() => {
+                setType(t);
+                setA("");
+                setB("");
+              }}
+              key={t}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="compare-select">
+          <select value={left?.id || ""} onChange={(e) => setA(e.target.value)}>
+            {list.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+          <button
+            className="icon-button"
+            aria-label="Swap models"
+            onClick={() => {
+              setA(right?.id);
+              setB(left?.id);
+            }}
+          >
+            <Shuffle />
+          </button>
+          <select
+            value={right?.id || ""}
+            onChange={(e) => setB(e.target.value)}
+          >
+            {list.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="compare-cards">
+          {[left, right].map((m, i) => (
+            <article className="compare-card" key={i}>
+              <ProviderIcon provider={m?.owned_by || ""} size={44} />
+              <h2>{m?.name}</h2>
+              <p>{m?.owned_by}</p>
+              <dl>
+                <dt>Context</dt>
+                <dd>
+                  {m?.context_length ? fmt(m.context_length) + " tokens" : "—"}
+                </dd>
+                <dt>Vision input</dt>
+                <dd>{m?.vision ? "Yes" : "Not listed"}</dd>
+                <dt>Input / generation</dt>
+                <dd>
+                  {dollars(modelPrice(m))}
+                  {type === "chat" ? " / 1M" : ""}
+                </dd>
+                {type === "chat" && (
+                  <>
+                    <dt>Output</dt>
+                    <dd>{dollars(m?.pricing?.output_per_1M_tokens)} / 1M</dd>
+                  </>
+                )}
+                <dt>Estimated total</dt>
+                <dd className="red">{dollars(cost(m))}</dd>
+              </dl>
+              <Link
+                className="button outline full"
+                to={`/ask?mode=${type}&model=${m?.id || ""}`}
+              >
+                Try model <ArrowUpRight size={15} />
+              </Link>
+            </article>
+          ))}
+        </div>
+        <div className="compare-inputs">
+          <label>
+            {type === "chat" ? "Requests" : "Generations"}
+            <input
+              type="number"
+              min="1"
+              value={count}
+              onChange={(e) => setCount(Math.max(1, Number(e.target.value)))}
+            />
+          </label>
+          {type === "chat" && (
+            <>
+              <label>
+                Input tokens / request
+                <input
+                  type="number"
+                  min="0"
+                  value={input}
+                  onChange={(e) =>
+                    setInput(Math.max(0, Number(e.target.value)))
+                  }
+                />
+              </label>
+              <label>
+                Output tokens / request
+                <input
+                  type="number"
+                  min="0"
+                  value={output}
+                  onChange={(e) =>
+                    setOutput(Math.max(0, Number(e.target.value)))
+                  }
+                />
+              </label>
+            </>
+          )}
+        </div>
+        <p className="comparison-verdict">
+          {cost(left) === cost(right)
+            ? "Estimated costs are equal."
+            : `${cost(left) < cost(right) ? left?.name : right?.name} is ${dollars(Math.abs(cost(left) - cost(right)))} less at these usage assumptions.`}
+        </p>
+        <p className="fineprint">
+          Price comparison is not a quality ranking. Image/video figures use
+          default variants. Actual output, reasoning and selected generation
+          settings can change the bill.
+        </p>
+        <ArticleGrid />
+      </main>
+      <Footer />
+    </>
+  );
+}

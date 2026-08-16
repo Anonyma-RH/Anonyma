@@ -770,3 +770,233 @@ const subscriptions = [
   ["Grok Premium+", 30, "xAI"],
   ["Midjourney Standard", 35, "Mistral"],
 ];
+export function Calculator() {
+  const { models } = useApp(),
+    [params] = useSearchParams(),
+    [selected, setSelected] = useState(
+      (params.get("subs") || "0,1,2").split(",").map(Number),
+    ),
+    [prompts, setPrompts] = useState(Number(params.get("prompts") || 1000)),
+    [size, setSize] = useState(params.get("size") || "typical"),
+    [model, setModel] = useState(params.get("model") || ""),
+    [message, setMessage] = useState("");
+  const chats = models.filter(
+    (m) => m.type === "chat" && m.pricing?.input_per_1M_tokens != null,
+  );
+  const m =
+    chats.find((m) => m.id === model) ||
+    chats.find((m) => m.id === "google/gemini-2.5-flash") ||
+    chats[0];
+  const [input, output] = {
+    short: [250, 125],
+    typical: [1000, 500],
+    long: [4000, 2000],
+  }[size];
+  const spend =
+    (prompts *
+      ((m?.pricing?.input_per_1M_tokens || 0) * input +
+        (m?.pricing?.output_per_1M_tokens || 0) * output)) /
+    1e6;
+  const monthly = selected.reduce((s, i) => s + subscriptions[i][1], 0),
+    saved = monthly - spend;
+  const link = () =>
+    `${location.origin}/calculator?${new URLSearchParams({ subs: selected.join(","), prompts, size, model: m?.id || "" })}`;
+  const save = () => {
+    const c = document.createElement("canvas");
+    c.width = 1200;
+    c.height = 630;
+    const g = c.getContext("2d");
+    g.fillStyle = "#100e0f";
+    g.fillRect(0, 0, 1200, 630);
+    g.fillStyle = "#f2f0ec";
+    g.font = "32px sans-serif";
+    g.fillText("ANONYMA / USAGE ESTIMATE", 64, 80);
+    g.font = "62px sans-serif";
+    g.fillText(`${dollars(spend)} estimated per month`, 64, 220);
+    g.fillStyle = "#c8102e";
+    g.fillText(`${dollars(saved)} estimated savings`, 64, 320);
+    g.fillStyle = "#aaa5a0";
+    g.font = "23px sans-serif";
+    g.fillText(
+      `${fmt(prompts)} prompts · ${input} input / ${output} output tokens`,
+      64,
+      420,
+    );
+    g.fillText(m?.name || "", 64, 465);
+    g.fillText(
+      "Different products and bundled benefits. Estimate, not a guarantee.",
+      64,
+      560,
+    );
+    const a = document.createElement("a");
+    a.download = "anonyma-savings.png";
+    a.href = c.toDataURL();
+    a.click();
+  };
+  return (
+    <>
+      <PageTitle
+        title="Stop subscribing."
+        accent="Start saving."
+        description="See what your AI usage could cost. Adjust your subscriptions, prompts and preferred model."
+      />
+      <main className="calculator-layout">
+        <section>
+          <h2>Your current subscriptions</h2>
+          <p className="muted">Select the plans you pay for each month.</p>
+          <div className="subscription-grid">
+            {subscriptions.map(([name, price, provider], i) => (
+              <button
+                className={
+                  "subscription " + (selected.includes(i) ? "active" : "")
+                }
+                key={name}
+                onClick={() =>
+                  setSelected(
+                    selected.includes(i)
+                      ? selected.filter((n) => n !== i)
+                      : [...selected, i],
+                  )
+                }
+              >
+                <ProviderIcon provider={provider} />
+                <div>
+                  <strong>{name}</strong>
+                  <small>${price}/mo</small>
+                </div>
+                <span className="check-box">
+                  {selected.includes(i) && <Check size={12} />}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="form-section">
+            <label>
+              Monthly prompts <b>{fmt(prompts)}</b>
+            </label>
+            <input
+              type="range"
+              aria-label="Monthly prompts"
+              min="10"
+              max="10000"
+              step="10"
+              value={prompts}
+              onChange={(e) => setPrompts(Number(e.target.value))}
+            />
+            <div className="range-labels">
+              <span>10</span>
+              <span>10,000</span>
+            </div>
+          </div>
+          <div className="form-section">
+            <label>Typical prompt size</label>
+            <div className="segments">
+              {["short", "typical", "long"].map((v) => (
+                <button
+                  className={size === v ? "active" : ""}
+                  key={v}
+                  onClick={() => setSize(v)}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+            <small>
+              {fmt(input)} input + {fmt(output)} output tokens per prompt
+            </small>
+          </div>
+          <div className="form-section">
+            <label>Your model</label>
+            <select
+              value={m?.id || ""}
+              onChange={(e) => setModel(e.target.value)}
+            >
+              {chats.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </section>
+        <aside className="calculator-result">
+          <span className="eyebrow">WITH ANONYMA</span>
+          <div className="result-money">
+            {dollars(spend)}
+            <small>/ month</small>
+          </div>
+          <p>Estimated usage cost. No monthly commitment.</p>
+          <div className="savings-box">
+            <span>
+              {saved >= 0 ? "You could save" : "Estimated extra cost"}
+            </span>
+            <strong>
+              {dollars(Math.abs(saved))}
+              <small> /mo</small>
+            </strong>
+            <small>
+              {monthly ? fmt((saved / monthly) * 100, 0) : 0}% compared with
+              your selected subscriptions
+            </small>
+          </div>
+          <div className="cost-bar-label">
+            <span>Subscriptions</span>
+            <b>{dollars(monthly)}</b>
+          </div>
+          <div className="cost-bar">
+            <i
+              style={{
+                width: (monthly / Math.max(monthly, spend, 1)) * 100 + "%",
+              }}
+            />
+          </div>
+          <div className="cost-bar-label">
+            <span>Anonyma estimate</span>
+            <b>{dollars(spend)}</b>
+          </div>
+          <div className="cost-bar red-bar">
+            <i
+              style={{
+                width: (spend / Math.max(monthly, spend, 1)) * 100 + "%",
+              }}
+            />
+          </div>
+          <Link to="/ask" className="button full">
+            Start with Anonyma <ArrowUpRight size={16} />
+          </Link>
+          <div className="result-actions">
+            <CopyButton text={link()} label="Copy link" />
+            <button
+              className="copy-button"
+              onClick={async () => {
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: "Anonyma savings estimate",
+                      url: link(),
+                    });
+                  } catch {}
+                } else {
+                  await navigator.clipboard.writeText(link());
+                  setMessage("Share link copied.");
+                }
+              }}
+            >
+              <ArrowUpRight size={14} /> Share
+            </button>
+            <button className="copy-button" onClick={save}>
+              <Download size={14} /> Save image
+            </button>
+          </div>
+          {message && <small>{message}</small>}
+          <p className="fineprint">
+            Based on catalog rates and your token assumptions. Subscriptions may
+            include features and benefits this gateway does not offer. Taxes,
+            transfer fees and configured platform markup are excluded.
+          </p>
+        </aside>
+      </main>
+      <Footer />
+    </>
+  );
+}

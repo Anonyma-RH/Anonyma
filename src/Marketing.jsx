@@ -762,3 +762,11 @@ export function Models({ pricing = false }) {
     </>
   );
 }
+const subscriptions = [
+  ["ChatGPT Plus", 20, "OpenAI"],
+  ["Claude Pro", 20, "Anthropic"],
+  ["Google AI Pro", 20, "Google"],
+  ["Perplexity Pro", 20, "DeepSeek"],
+  ["Grok Premium+", 30, "xAI"],
+  ["Midjourney Standard", 35, "Mistral"],
+];

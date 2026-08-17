@@ -1193,3 +1193,37 @@ export function ArticleGrid() {
     </div>
   );
 }
+export function Learn() {
+  const { slug } = useParams(),
+    a = articles.find((v) => v.slug === slug);
+  return (
+    <>
+      {a ? (
+        <article className="prose article-page">
+          <Link to="/learn">← All articles</Link>
+          <div className="eyebrow">{a.category}</div>
+          <h1>{a.title}</h1>
+          <p className="lead">{a.intro}</p>
+          {a.paragraphs.map((p) => (
+            <p key={p}>{p}</p>
+          ))}
+          <Link className="button" to="/compare">
+            Compare models <ArrowUpRight size={16} />
+          </Link>
+        </article>
+      ) : (
+        <>
+          <PageTitle
+            title="Learn. Compare."
+            accent="Make more."
+            description="Practical guides to models, costs and getting the most out of your workspace."
+          />
+          <main className="landing-width">
+            <ArticleGrid />
+          </main>
+        </>
+      )}
+      <Footer />
+    </>
+  );
+}

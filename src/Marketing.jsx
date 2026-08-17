@@ -1227,3 +1227,31 @@ export function Learn() {
     </>
   );
 }
+export function Roadmap() {
+  return (
+    <>
+      <PageTitle
+        title="Built in public."
+        accent="Moving forward."
+        description="What is available in this implementation, what is planned, and what still requires external services."
+      />
+      <main className="roadmap landing-width">
+        {roadmap.map(([status, title, text]) => (
+          <article key={title}>
+            <span className={"status-tag " + status.toLowerCase()}>
+              {status}
+            </span>
+            <h2>{title}</h2>
+            <p>{text}</p>
+          </article>
+        ))}
+        <p className="fineprint">
+          “Available” describes implemented software. Live generation, payments,
+          email and token utilities still require operator configuration.
+          Planned items are not launch promises.
+        </p>
+      </main>
+      <Footer />
+    </>
+  );
+}

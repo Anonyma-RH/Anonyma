@@ -1177,3 +1177,19 @@ export function Compare() {
     </>
   );
 }
+export function ArticleGrid() {
+  return (
+    <div className="article-grid">
+      {articles.map((a) => (
+        <Link to={"/learn/" + a.slug} className="article-card" key={a.slug}>
+          <span className="eyebrow">{a.category}</span>
+          <h3>{a.title}</h3>
+          <p>{a.intro}</p>
+          <span>
+            Read article <ArrowUpRight size={15} />
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}

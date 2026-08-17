@@ -1255,3 +1255,95 @@ export function Roadmap() {
     </>
   );
 }
+export function Token() {
+  const { config } = useApp();
+  const tiers = [
+    ["1,000,000", "0.1%", "2.5%", "Status tier"],
+    ["5,000,000", "0.5%", "12.5%", "No holding delay"],
+    ["10,000,000", "1%", "25%", "Priority tier"],
+    ["20,000,000", "2%", "50%", "Advanced tier"],
+    ["40,000,000", "4%", "100%", "Platform-markup waiver"],
+  ];
+  return (
+    <>
+      <PageTitle
+        eyebrow="OPTIONAL BY DESIGN"
+        title="A token with"
+        accent="a purpose."
+        description="A configurable utility layer for a prepaid AI workspace. Tokens and spendable credits are separate."
+      />
+      <main className="landing-width token-page">
+        <div className="notice">
+          <LockKeyhole size={19} />
+          <p>
+            {config?.services?.token
+              ? "A token contract is configured. Link your wallet in Account to check your holdings."
+              : "This installation has no configured token contract. No token has been launched or offered for sale here."}
+          </p>
+        </div>
+        <div className="token-summary">
+          <div>
+            <small>REFERENCE SUPPLY</small>
+            <strong>1,000,000,000</strong>
+          </div>
+          <div>
+            <small>ACCESS REQUIREMENT</small>
+            <strong>None</strong>
+          </div>
+          <div>
+            <small>CURRENT PLATFORM MARKUP</small>
+            <strong>{config?.markup || 0}%</strong>
+          </div>
+        </div>
+        <h2>Holding tiers</h2>
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Tokens held</th>
+                <th>Of reference supply</th>
+                <th>Markup reduction</th>
+                <th>Condition</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tiers.map((row) => (
+                <tr key={row[0]}>
+                  {row.map((v) => (
+                    <td key={v}>{v}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p>
+          These reductions apply only to a configured platform markup. Provider
+          costs remain payable. A 100% markup reduction does not mean free AI
+          generation. At a 0% platform markup, these tiers produce no additional
+          price reduction.
+        </p>
+        {config?.token && (
+          <p>
+            Configured contract: <code>{config.token}</code> · chain{" "}
+            {config.chain}
+          </p>
+        )}
+        <Link className="button" to="/account">
+          Connect your account <ArrowUpRight size={16} />
+        </Link>
+        <h2>Designed to stay optional</h2>
+        <p>
+          Use the workspace with ordinary prepaid credits. Wallet ownership is
+          verified with a message signature. Holdings are read through the
+          configured blockchain RPC; no transfers are requested by the sign-in
+          flow.
+        </p>
+        <Link to="/docs/wallets" className="text-link">
+          Read the utility and holding rules →
+        </Link>
+      </main>
+      <Footer />
+    </>
+  );
+}

@@ -1347,3 +1347,138 @@ export function Token() {
     </>
   );
 }
+export function Docs() {
+  const { slug } = useParams(),
+    [query, setQuery] = useState("");
+  const section = docSections.find((s) => s.id === slug),
+    base = location.origin + "/v1";
+  useEffect(() => {
+    const fn = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        document.getElementById("docs-search")?.focus();
+      }
+    };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, []);
+  const filtered = docSections.filter((s) =>
+    (s.title + " " + s.summary + " " + s.body.flat().join(" "))
+      .toLowerCase()
+      .includes(query.toLowerCase()),
+  );
+  const code = {
+    curl: `curl ${base}/chat/completions \\\n  -H "Authorization: Bearer $ANONYMA_API_KEY" \\\n  -H 'Content-Type: application/json' \\\n  -d '{"model":"google/gemini-2.5-flash","messages":[{"role":"user","content":"Hello"}],"max_tokens":512}'`,
+    python: `from openai import OpenAI\nimport os\nclient = OpenAI(base_url="${base}", api_key=os.environ["ANONYMA_API_KEY"])\nr = client.chat.completions.create(\n    model="google/gemini-2.5-flash",\n    messages=[{"role": "user", "content": "Hello"}],\n    max_tokens=512,\n)\nprint(r.choices[0].message.content)`,
+    node: `import OpenAI from 'openai';\nconst client = new OpenAI({ baseURL: '${base}', apiKey: process.env.ANONYMA_API_KEY });\nconst result = await client.chat.completions.create({\n  model: 'google/gemini-2.5-flash', messages: [{ role: 'user', content: 'Hello' }], max_tokens: 512\n});\nconsole.log(result.choices[0].message.content);`,
+  };
+  return (
+    <>
+      <div className="docs-subnav">
+        <Link to="/docs">Documentation</Link>
+        <Link to="/docs/getting-started">Quickstart</Link>
+        <Link to="/docs/api">API reference</Link>
+        <Link to="/docs/cli">CLI</Link>
+        <Link to="/support">Support</Link>
+      </div>
+      {!section ? (
+        <main className="docs-home">
+          <div className="docs-mark">✳</div>
+          <h1>
+            Everything you need
+            <br />
+            to <span className="array red">just ask.</span>
+          </h1>
+          <p>The guides, references, and details behind your workspace.</p>
+          <div className="search-field docs-search">
+            <Search size={19} />
+            <input
+              id="docs-search"
+              placeholder="Search the docs…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <kbd>⌘ K</kbd>
+          </div>
+          <div className="docs-grid">
+            {filtered.map((s, i) => (
+              <Link to={"/docs/" + s.id} key={s.id}>
+                <span className="eyebrow">{s.group}</span>
+                <h3>
+                  {s.title} <ArrowUpRight size={17} />
+                </h3>
+                <p>{s.summary}</p>
+              </Link>
+            ))}
+          </div>
+          {!filtered.length && (
+            <p>No results. Try “credits”, “keys” or “video”.</p>
+          )}
+        </main>
+      ) : (
+        <div className="docs-layout">
+          <aside>
+            <div className="search-field">
+              <Search size={15} />
+              <input
+                id="docs-search"
+                placeholder="Search docs"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            {filtered.map((s) => (
+              <Link
+                key={s.id}
+                className={slug === s.id ? "active" : ""}
+                to={"/docs/" + s.id}
+              >
+                {s.title}
+              </Link>
+            ))}
+            <a href="/llms-full.txt">Machine-readable docs ↗</a>
+          </aside>
+          <article className="prose">
+            <div className="eyebrow">{section.group}</div>
+            <h1>{section.title}</h1>
+            <p className="lead">{section.summary}</p>
+            {section.body.map(([heading, text]) => (
+              <section key={heading}>
+                <h2>{heading}</h2>
+                <p>{text}</p>
+              </section>
+            ))}
+            {["api", "integrations"].includes(slug) &&
+              Object.entries(code).map(([lang, text]) => (
+                <div className="code-block" key={lang}>
+                  <div>
+                    {lang}
+                    <CopyButton text={text} />
+                  </div>
+                  <pre>
+                    <code>{text}</code>
+                  </pre>
+                </div>
+              ))}
+            {slug === "cli" && (
+              <div className="code-block">
+                <div>
+                  Terminal
+                  <CopyButton
+                    text={`curl -fsSL ${location.origin}/cli.mjs -o anonyma.mjs\nnode anonyma.mjs config\nnode anonyma.mjs`}
+                  />
+                </div>
+                <pre>{`curl -fsSL ${location.origin}/cli.mjs -o anonyma.mjs\nnode anonyma.mjs config\nnode anonyma.mjs`}</pre>
+              </div>
+            )}
+            <div className="doc-bottom">
+              <Link to="/docs">← All documentation</Link>
+              <Link to="/support">Need help? →</Link>
+            </div>
+          </article>
+        </div>
+      )}
+      <Footer />
+    </>
+  );
+}

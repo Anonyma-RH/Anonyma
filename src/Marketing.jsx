@@ -1482,3 +1482,45 @@ export function Docs() {
     </>
   );
 }
+export function Legal({ type }) {
+  const data = {
+    privacy: [
+      "Privacy policy",
+      "This installation stores account identifiers, saved conversations, generated media, API-key metadata, and an append-only credit ledger. Requests are sent to the configured AI provider for processing. Payment invoice information is sent to the configured payment processor. The operator must publish its legal identity and contact details before public launch.",
+      "Passwords are hashed; API and session secrets are stored as cryptographic hashes. User content is not end-to-end encrypted. The service does not claim that every upstream provider offers zero retention.",
+      "Export or delete your saved data from Account. Closing an account removes private content and identifiers, but settled financial entries remain linked to a tombstoned identifier for audit. Contact the operator for additional privacy requests.",
+    ],
+    terms: [
+      "Terms of use",
+      "This software provides prepaid access to configured AI services. Generated outputs can be inaccurate and require your review. You are responsible for lawful input and use of outputs; upstream provider terms may apply.",
+      "Credits are usage units, not a cryptocurrency or investment. 1,000 credits equal $1 of configured service balance. Credits have no automatic expiry; withdrawals and account-to-account transfers are not supported. Account closure forfeits unused credits.",
+      "Model availability and pricing can change. Estimates are shown before generation and usage receipts afterward. The operator must finalize its legal entity, jurisdiction, refund policy and contact information before accepting public customers.",
+    ],
+    cookies: [
+      "Cookie information",
+      "The service uses an essential session cookie to keep you signed in. It is HttpOnly, SameSite=Lax, and Secure on HTTPS. It expires after 30 days or when you sign out or revoke sessions.",
+      "This implementation does not include advertising or third-party analytics cookies. Optional wallet connectors can use their own storage and network services. Your browser also stores interface preferences and CLI settings are stored locally on your machine.",
+      "You can remove the session cookie by signing out. Disabling essential cookies prevents authenticated workspace use.",
+    ],
+    changelog: [
+      "Changelog",
+      "19 September 2026 — Initial independent implementation: responsive marketing and workspace, three authentication methods, prepaid ledger, chat and media adapters, API keys, developer endpoint, CLI, catalog, pricing, comparisons and docs.",
+      "Provider connections, real payment processing, SMTP delivery and token utilities require operator configuration. Local test mode is explicitly marked and uses no live funds.",
+      "The public reference catalog is captured with a timestamp. Account-only reference screens and live provider billing have not been verified without external credentials.",
+    ],
+  };
+  const [title, ...paragraphs] = data[type] || data.terms;
+  return (
+    <>
+      <article className="prose article-page">
+        <div className="eyebrow">ANONYMA</div>
+        <h1>{title}</h1>
+        {paragraphs.map((p) => (
+          <p key={p}>{p}</p>
+        ))}
+        <Link to="/support">Contact support →</Link>
+      </article>
+      <Footer />
+    </>
+  );
+}

@@ -183,3 +183,100 @@ hr {
 ::selection {
   background: #c8102e55;
 }
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #f24c64;
+  outline-offset: 4px;
+}
+.red {
+  color: #db183a;
+}
+.green {
+  color: #60bc91;
+}
+.muted,
+.subtle {
+  color: var(--muted);
+}
+.subtle {
+  font-size: 13px;
+}
+.array {
+  font-family: Array, sans-serif;
+  font-weight: 400;
+}
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  color: #d62943;
+  line-height: 1.7;
+}
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--red);
+  border-radius: 5px;
+  background: var(--red);
+  font-size: 14px;
+  font-weight: 550;
+  padding: 12px 25px;
+  min-height: 44px;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+  color: #fff;
+  white-space: nowrap;
+}
+.button:hover:not(:disabled) {
+  background: #df1636;
+}
+.button.outline {
+  border-color: #ffffff22;
+  background: transparent;
+  color: #e4e0dc;
+}
+.button.outline:hover {
+  background: #ffffff08;
+  border-color: #ffffff40;
+}
+.button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+.button.small {
+  min-height: 36px;
+  padding: 8px 17px;
+  font-size: 12px;
+}
+.button.danger-button {
+  background: #451320;
+  border-color: #a71a34;
+  color: #ffb2c0;
+}
+.button.full {
+  width: 100%;
+}
+.button-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.icon-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 5px;
+  color: #a9a39f;
+  padding: 5px;
+}
+.icon-button:hover {
+  background: #ffffff0a;
+  color: #f2f0ec;
+}

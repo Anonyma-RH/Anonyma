@@ -280,3 +280,118 @@ a:focus-visible {
   background: #ffffff0a;
   color: #f2f0ec;
 }
+.text-link {
+  color: #dc3751;
+  font-size: 13px;
+  padding: 0;
+}
+.text-link:hover {
+  color: #ff6b82;
+}
+.copy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #aaa5a0;
+  padding: 5px 6px;
+}
+.copy-button:hover {
+  color: white;
+}
+.tiny-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #d9223f;
+  margin-right: 6px;
+}
+.break {
+  overflow-wrap: anywhere;
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.pulse {
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 14px;
+  background: #b30a2214;
+  border: 1px solid #c8102e50;
+  color: #f28ea0;
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 15px 0;
+}
+.error svg {
+  margin-top: 2px;
+}
+.notice {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #ffffff04;
+  border: 1px solid #ffffff16;
+  border-radius: 7px;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #b9b2aa;
+}
+.notice p {
+  margin: 0;
+}
+.success {
+  background: #2b7a4d19;
+  border: 1px solid #3b965b50;
+  border-radius: 6px;
+  padding: 14px;
+  font-size: 13px;
+  color: #8ccca2;
+  margin: 15px 0;
+}
+.fineprint {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #817a76;
+}
+.test-note {
+  font-size: 12px;
+  background: #7c642124;
+  color: #cbb98d;
+  padding: 8px;
+  border-radius: 4px;
+}
+.test-banner {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #39280b;
+  color: #dfbf79;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  position: relative;
+  z-index: 30;
+}
+.global-error {
+  max-width: 900px;
+  margin: 10px auto;
+  padding: 0 20px;
+}

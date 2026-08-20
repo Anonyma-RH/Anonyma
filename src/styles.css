@@ -734,3 +734,98 @@ a:focus-visible {
   font-size: 28px;
   max-width: 320px;
 }
+.usecase-card p {
+  font-size: 14px;
+}
+.prompt-preview {
+  border: 1px solid #ffffff16;
+  border-radius: 9px;
+  background: #0e0c0d;
+  padding: 28px;
+  align-self: center;
+  box-shadow: 0 20px 60px #0002;
+}
+.prompt-preview > div {
+  font:
+    8px ui-monospace,
+    monospace;
+  letter-spacing: 0.15em;
+  color: #a1918c;
+}
+.prompt-preview p {
+  color: #e0d9d2;
+  margin: 22px 0;
+  font-size: 17px;
+}
+.prompt-answer {
+  font-size: 11px;
+  color: #766d68;
+}
+.faq {
+  padding-bottom: 80px;
+}
+.faq > h2 {
+  margin-bottom: 35px;
+}
+.faq-item {
+  border-bottom: 1px solid #ffffff13;
+}
+.faq-item > button {
+  padding: 23px 0;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  color: #d4cdc7;
+}
+.faq-item > button svg {
+  color: #887c75;
+}
+.faq-item p {
+  font-size: 14px;
+  padding: 0 40px 20px 0;
+  max-width: 840px;
+  margin: 0;
+}
+.footer-cta {
+  text-align: center;
+  padding: 76px 20px 80px;
+  border-top: 1px solid #ffffff10;
+}
+.footer-cta h2 {
+  font:
+    44px/1.15 Array,
+    sans-serif;
+  margin-bottom: 26px;
+}
+.footer-grid {
+  max-width: 1152px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  gap: 40px;
+  padding: 48px 0;
+  border-top: 1px solid #ffffff13;
+}
+.footer-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.footer-grid strong {
+  font-size: 12px;
+  margin-bottom: 9px;
+  font-weight: 500;
+  color: #dfd6ce;
+}
+.footer-grid a:not(.wordmark) {
+  font-size: 12px;
+  color: #8b827b;
+}
+.footer-grid p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 4px 0;
+}

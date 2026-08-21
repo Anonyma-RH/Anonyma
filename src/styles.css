@@ -829,3 +829,105 @@ a:focus-visible {
   line-height: 1.7;
   margin: 4px 0;
 }
+.footer-grid .wordmark {
+  font-size: 29px;
+}
+.footer-grid .subtle {
+  font-size: 10px;
+}
+.footer-bottom {
+  max-width: 1152px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #ffffff0d;
+  padding: 24px 0 35px;
+  font-size: 10px;
+  color: #6b625c;
+}
+.page-title {
+  text-align: center;
+  padding: 64px 24px 20px;
+}
+.page-title h1 {
+  font:
+    64px/1.08 Array,
+    sans-serif;
+  margin: 13px 0 23px;
+  letter-spacing: -0.025em;
+}
+.page-title h1 span {
+  color: #d21c37;
+  position: relative;
+}
+.page-title p {
+  font-size: 16px;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+.catalog-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #b4aba4;
+  padding: 8px 15px;
+  margin: 10px auto 38px;
+}
+.catalog-layout {
+  max-width: 1152px;
+  margin: 0 auto 100px;
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  gap: 40px;
+}
+.filters h3 {
+  font-size: 15px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 4px 0 24px;
+}
+.filters label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #766d67;
+  margin: 27px 0 12px;
+}
+.filters > button:not(.text-link) {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 12px;
+  color: #aaa199;
+  border-radius: 5px;
+  margin-bottom: 4px;
+}
+.filters > button.selected {
+  background: #c8102e17;
+  color: #e04b60;
+}
+.filters > button span {
+  color: #72645e;
+  font-size: 10px;
+}
+.filters select {
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.filter-note {
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 22px 0;
+}
+.catalog-toolbar {
+  display: flex;
+  gap: 12px;
+}
+.catalog-toolbar > select {
+  width: 175px;
+  font-size: 12px;
+}

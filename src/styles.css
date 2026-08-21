@@ -931,3 +931,131 @@ a:focus-visible {
   width: 175px;
   font-size: 12px;
 }
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #141112;
+  border: 1px solid #ffffff17;
+  border-radius: 6px;
+  padding: 0 14px;
+  flex: 1;
+  min-width: 0;
+  color: #766c66;
+}
+.search-field:focus-within {
+  border-color: #c8102e80;
+}
+.search-field input {
+  border: 0;
+  background: none;
+  padding: 13px 0;
+  box-shadow: none;
+  font-size: 13px;
+}
+.result-label {
+  display: flex;
+  justify-content: space-between;
+  margin: 24px 0 12px;
+  color: #8f847d;
+  font-size: 11px;
+}
+.result-label span {
+  font-size: 9px;
+}
+.model-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.model-row {
+  background: #181516;
+  border: 1px solid #ffffff0d;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.model-row summary {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  cursor: pointer;
+  list-style: none;
+  padding: 15px 17px;
+  min-height: 69px;
+}
+.model-row summary::-webkit-details-marker {
+  display: none;
+}
+.model-name {
+  min-width: 0;
+  flex: 1;
+}
+.model-name strong {
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.model-name small {
+  display: block;
+  font:
+    9px ui-monospace,
+    monospace;
+  color: #716760;
+  margin-top: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.popular {
+  font-size: 6px;
+  letter-spacing: 0.03em;
+  color: #c59a68;
+  background: #a8873017;
+  padding: 3px 4px;
+  border-radius: 3px;
+}
+.model-type {
+  font-size: 9px;
+  text-transform: capitalize;
+  color: #9a857b;
+  background: #ffffff06;
+  border: 1px solid #ffffff09;
+  padding: 4px 8px;
+  border-radius: 4px;
+  width: 53px;
+  text-align: center;
+}
+.model-context {
+  font:
+    10px ui-monospace,
+    monospace;
+  color: #9a8e84;
+  width: 43px;
+  text-align: right;
+}
+.model-price {
+  width: 100px;
+  text-align: right;
+  white-space: nowrap;
+}
+.model-price strong {
+  font-size: 12px;
+  font-weight: 500;
+  color: #d0c5bc;
+}
+.model-price small {
+  display: block;
+  font-size: 8px;
+  margin-top: 4px;
+  color: #74685f;
+}
+.run-link {
+  font-size: 10px;
+  color: #d14a5d;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 46px;
+}

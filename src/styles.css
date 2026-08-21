@@ -1059,3 +1059,98 @@ a:focus-visible {
   gap: 4px;
   min-width: 46px;
 }
+.model-detail {
+  padding: 5px 24px 20px 58px;
+  border-top: 1px solid #ffffff09;
+  font-size: 12px;
+}
+.model-detail p {
+  margin: 12px 0 0;
+}
+.model-detail > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin: 15px 0;
+  color: #958b83;
+}
+.load-more {
+  display: flex !important;
+  margin: 28px auto 0;
+  min-width: 180px;
+}
+.calculator-layout {
+  max-width: 1152px;
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  gap: 44px;
+  margin: 36px auto 90px;
+}
+.calculator-layout > section h2 {
+  font-size: 22px;
+  margin: 6px 0 8px;
+}
+.calculator-layout > section > p {
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+.subscription-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.subscription {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+  background: #181516;
+  border: 1px solid #ffffff16;
+  border-radius: 8px;
+  padding: 17px 14px;
+  min-height: 80px;
+}
+.subscription.active {
+  border-color: #c8102e70;
+  background: #c8102e09;
+}
+.subscription > div {
+  flex: 1;
+}
+.subscription strong {
+  font-size: 13px;
+  display: block;
+  font-weight: 500;
+}
+.subscription small {
+  font-size: 10px;
+  display: block;
+  margin-top: 5px;
+  color: #93837a;
+}
+.check-box {
+  width: 15px;
+  height: 15px;
+  border: 1px solid #6a5950;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.subscription.active .check-box {
+  background: var(--red);
+  border-color: var(--red);
+}
+.form-section {
+  margin-top: 28px;
+}
+.form-section label {
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.form-section label b {
+  font-weight: 500;
+  color: #eee4dc;
+}

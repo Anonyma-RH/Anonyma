@@ -1154,3 +1154,116 @@ a:focus-visible {
   font-weight: 500;
   color: #eee4dc;
 }
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #6a5d55;
+  margin-top: 7px;
+}
+.segments {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #ffffff0c;
+  border-radius: 7px;
+  background: #141112;
+}
+.segments button {
+  flex: 1;
+  padding: 10px 8px;
+  font-size: 12px;
+  color: #8e7f76;
+  border-radius: 4px;
+  text-transform: capitalize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.segments button.active {
+  background: #2c2424;
+  color: #eee2db;
+  box-shadow: 0 1px 5px #0003;
+}
+.form-section > small {
+  display: block;
+  font-size: 10px;
+  margin-top: 9px;
+}
+.calculator-result {
+  background:
+    radial-gradient(at top right, #40131b66, transparent 60%), #1a1617;
+  border: 1px solid #6e343a70;
+  border-radius: 14px;
+  padding: 36px;
+  align-self: start;
+  position: sticky;
+  top: 20px;
+}
+.result-money {
+  font:
+    64px Array,
+    sans-serif;
+  color: #df1e3d;
+  margin: 18px 0;
+}
+.result-money > small {
+  font:
+    13px Figtree,
+    sans-serif;
+  color: #9a827a;
+  margin-left: 8px;
+}
+.calculator-result > p {
+  font-size: 12px;
+}
+.savings-box {
+  padding: 20px 22px;
+  border: 1px solid #a2273b35;
+  background: #c8102e08;
+  border-radius: 8px;
+  margin: 25px 0;
+}
+.savings-box > span {
+  font-size: 11px;
+  display: block;
+  color: #b9a298;
+}
+.savings-box strong {
+  font-size: 30px;
+  font-weight: 500;
+  display: block;
+  margin: 8px 0;
+}
+.savings-box strong small {
+  font-size: 12px;
+}
+.savings-box > small {
+  font-size: 10px;
+}
+.cost-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #9f8a80;
+  margin-bottom: 9px;
+}
+.cost-bar-label b {
+  font-weight: 500;
+  color: #d8c7bb;
+}
+.cost-bar {
+  height: 7px;
+  background: #ffffff07;
+  border-radius: 3px;
+  margin-bottom: 19px;
+  overflow: hidden;
+}
+.cost-bar i {
+  display: block;
+  height: 100%;
+  background: #74625b;
+  border-radius: 3px;
+  min-width: 3px;
+}

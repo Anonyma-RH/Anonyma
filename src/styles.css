@@ -1363,3 +1363,89 @@ a:focus-visible {
   border-radius: 10px;
   padding: 26px;
 }
+.article-card h3 {
+  font-size: 23px;
+  margin: 18px 0 12px;
+}
+.article-card p {
+  font-size: 13px;
+}
+.article-card > span:last-child {
+  font-size: 11px;
+  color: #c7aa9b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 25px;
+}
+.article-card:hover {
+  border-color: #a423394a;
+  background: #1e1819;
+}
+.article-page {
+  max-width: 750px;
+  margin: 70px auto 100px;
+}
+.prose {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #afa196;
+}
+.prose h1 {
+  font-size: 48px;
+  color: #eee4dc;
+  margin: 16px 0 25px;
+}
+.prose h2 {
+  font-size: 25px;
+  color: #e4d8ce;
+  margin: 38px 0 12px;
+}
+.prose p {
+  line-height: 1.85;
+}
+.prose .lead {
+  font-size: 19px;
+  color: #bfaea0;
+  margin-bottom: 38px;
+}
+.prose a:not(.button) {
+  color: #d34e64;
+}
+.article-page > .eyebrow {
+  margin-top: 35px;
+}
+.roadmap {
+  margin-top: 40px;
+  margin-bottom: 90px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.roadmap article {
+  padding: 30px;
+  border: 1px solid #ffffff13;
+  border-radius: 10px;
+  background: #191516;
+}
+.roadmap h2 {
+  font-size: 24px;
+  margin: 22px 0 12px;
+}
+.roadmap p {
+  font-size: 13px;
+}
+.status-tag {
+  display: inline-flex;
+  font-size: 10px;
+  padding: 5px 9px;
+  background: #ffffff06;
+  border: 1px solid #ffffff14;
+  border-radius: 4px;
+  text-transform: capitalize;
+  color: #bca99b;
+}
+.status-tag.available {
+  color: #8cb49d;
+  background: #5f95751a;
+}

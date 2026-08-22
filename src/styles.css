@@ -1546,3 +1546,112 @@ td strong {
   letter-spacing: -0.045em;
   margin: 0 0 26px;
 }
+.docs-home > p {
+  font-size: 16px;
+}
+.docs-search {
+  max-width: 640px;
+  margin: 38px auto 65px;
+  text-align: left;
+  height: 52px;
+}
+.docs-search input {
+  font-size: 15px;
+}
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  text-align: left;
+}
+.docs-grid > a {
+  padding: 26px;
+  border: 1px solid #ffffff13;
+  border-radius: 10px;
+  background: #181415;
+}
+.docs-grid > a:hover {
+  border-color: #a7334044;
+}
+.docs-grid h3 {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 18px 0 11px;
+}
+.docs-grid p {
+  font-size: 13px;
+  margin: 0;
+}
+.docs-layout {
+  max-width: 1180px;
+  margin: 40px auto 90px;
+  display: grid;
+  grid-template-columns: 235px minmax(0, 740px);
+  gap: 70px;
+}
+.docs-layout > aside {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 25px;
+  align-self: start;
+}
+.docs-layout > aside .search-field {
+  margin-bottom: 17px;
+}
+.docs-layout > aside > a {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #9a8779;
+  border-radius: 5px;
+}
+.docs-layout > aside > a.active {
+  background: #c8102e13;
+  color: #df415d;
+}
+.code-block {
+  background: #0e0c0d;
+  border: 1px solid #ffffff16;
+  border-radius: 7px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+.code-block > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ffffff0b;
+  padding: 7px 15px;
+  color: #8a7c70;
+  font:
+    10px ui-monospace,
+    monospace;
+}
+.code-block pre {
+  padding: 16px;
+  margin: 0;
+  color: #d6c6b9;
+}
+.doc-bottom {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #ffffff15;
+  margin-top: 50px;
+  padding-top: 24px;
+  font-size: 12px;
+}
+.support-layout {
+  max-width: 1000px;
+  margin: 45px auto 100px;
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 70px;
+}
+.support-layout aside {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

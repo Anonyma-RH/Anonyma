@@ -1745,3 +1745,84 @@ td strong {
   color: #806e60;
   margin: 25px;
 }
+.wallet-intro {
+  text-align: center;
+  padding: 10px 4px;
+}
+.wallet-intro > svg {
+  color: #c72943;
+  margin-bottom: 19px;
+}
+.wallet-intro h3 {
+  font-size: 20px;
+}
+.wallet-intro p {
+  font-size: 12px;
+}
+.signed-out {
+  min-height: calc(100dvh - var(--header));
+  text-align: center;
+  padding: 110px 20px;
+  background: radial-gradient(ellipse at top, #440e1b22, transparent 50%);
+}
+.signed-out > svg {
+  color: #c52842;
+  margin-bottom: 30px;
+}
+.signed-out h1 {
+  font-size: 40px;
+}
+.signed-out p {
+  font-size: 14px;
+  margin-bottom: 30px;
+}
+.account-page {
+  max-width: 1120px;
+  margin: 55px auto 100px;
+}
+.account-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+}
+.account-heading h1 {
+  font-size: 43px;
+  margin: 8px 0;
+}
+.account-heading p {
+  font-size: 13px;
+  margin: 0;
+}
+.balance-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.balance-cards article {
+  border: 1px solid #ffffff16;
+  background: linear-gradient(125deg, #251a1d, #191516);
+  padding: 25px;
+  border-radius: 10px;
+}
+.balance-cards span {
+  font-size: 12px;
+  color: #ab9788;
+}
+.balance-cards strong {
+  display: block;
+  font-size: 34px;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+  margin: 17px 0 9px;
+}
+.balance-cards small {
+  font-size: 10px;
+  color: #847164;
+}
+.account-tabs {
+  display: flex;
+  gap: 30px;
+  margin: 38px 0 28px;
+  border-bottom: 1px solid #ffffff16;
+}

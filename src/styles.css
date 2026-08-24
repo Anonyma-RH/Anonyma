@@ -2246,3 +2246,118 @@ td strong {
   align-items: center;
   gap: 9px;
 }
+.sidebar-toggle {
+  display: none;
+}
+.workspace-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.conversation-column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.conversation-scroll {
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #3d2929 transparent;
+  scrollbar-width: thin;
+}
+.workspace-empty {
+  max-width: 960px;
+  padding: 61px 28px 30px;
+  margin: auto;
+  text-align: center;
+}
+.workspace-empty .eyebrow {
+  font:
+    9px ui-monospace,
+    monospace;
+  letter-spacing: 0.2em;
+  color: #ba2c42;
+  margin-bottom: 19px;
+}
+.workspace-empty h1 {
+  font-size: 48px;
+  letter-spacing: -0.045em;
+  margin: 0 0 16px;
+  font-weight: 650;
+}
+.workspace-empty > p {
+  font-size: 14px;
+  color: #897265;
+  margin-bottom: 34px;
+}
+.mode-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  text-align: left;
+}
+.mode-cards button {
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid #ffffff12;
+  border-radius: 8px;
+  background: linear-gradient(125deg, #25181c65, #17121470);
+  height: 154px;
+  padding: 20px 18px;
+}
+.mode-cards button:hover {
+  border-color: #c8102e60;
+  background: #c8102e0b;
+}
+.mode-cards button > svg:first-child {
+  color: #b72a40;
+  margin-bottom: 24px;
+}
+.mode-cards strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
+}
+.mode-cards span {
+  display: block;
+  font-size: 10px;
+  color: #806c5e;
+  max-width: 120px;
+  line-height: 1.5;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+.mode-cards .ghost-icon {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  color: #ffffff03;
+  right: 5px;
+  bottom: 4px;
+  transform: rotate(-10deg);
+  stroke-width: 1;
+}
+.composer-wrap {
+  padding: 10px 32px 13px;
+  flex-shrink: 0;
+  max-width: 884px;
+  width: 100%;
+  margin: auto;
+}
+.composer {
+  background: #191415;
+  border: 1px solid #57404670;
+  border-radius: 8px;
+  padding: 14px 16px 11px;
+  box-shadow: 0 5px 30px #0002;
+}
+.composer:focus-within {
+  border-color: #8b344455;
+}

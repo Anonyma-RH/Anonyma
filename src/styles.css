@@ -2021,3 +2021,112 @@ td strong {
   display: flex;
   overflow: hidden;
 }
+.test-banner ~ .workspace {
+  height: calc(100dvh - var(--header) - 26px);
+}
+.workspace-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  border-right: 1px solid #ffffff10;
+  display: flex;
+  flex-direction: column;
+  background: #100e0f;
+}
+.sidebar-top {
+  padding: 18px 16px 12px;
+}
+.sidebar-balance {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  border: 1px solid #702b3a50;
+  border-radius: 7px;
+  background: linear-gradient(120deg, #351a2250, #21151925);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.sidebar-balance > span:first-child {
+  display: flex;
+  justify-content: space-between;
+  font:
+    8px ui-monospace,
+    monospace;
+  letter-spacing: 0.1em;
+  color: #9f7777;
+}
+.sidebar-balance strong {
+  font-size: 25px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.sidebar-balance strong small {
+  font-size: 10px;
+  font-weight: 400;
+  color: #8b736e;
+}
+.sidebar-balance > span:last-child {
+  font-size: 9px;
+  color: #7d6860;
+}
+.sidebar-top .button {
+  justify-content: flex-start;
+  font-size: 12px;
+  padding: 11px 12px;
+  min-height: 40px;
+  gap: 8px;
+}
+.sidebar-top kbd {
+  margin-left: auto;
+  border: 0;
+  color: #6e6057;
+}
+.history-label {
+  padding: 17px 20px 9px;
+  color: #685950;
+  font:
+    8px ui-monospace,
+    monospace;
+  letter-spacing: 0.13em;
+}
+.history-list {
+  flex: 1;
+  overflow: auto;
+  padding: 0 10px;
+}
+.history-list > p {
+  font-size: 11px;
+  color: #5f5149;
+  padding: 13px 12px;
+  line-height: 1.8;
+}
+.history-list > div {
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  margin: 3px 0;
+}
+.history-list > div.active {
+  background: #c8102e0d;
+}
+.history-list > div > button:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  text-align: left;
+  color: #9b8676;
+  font-size: 11px;
+}
+.history-list > div > button:first-child span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.delete-chat {
+  opacity: 0;
+  color: #937769;
+  padding: 5px;
+}

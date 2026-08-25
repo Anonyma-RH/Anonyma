@@ -2483,3 +2483,94 @@ td strong {
   margin-top: 26px;
   text-align: left;
 }
+.generation-controls label {
+  margin: 0;
+  min-width: 100px;
+  font-size: 10px;
+}
+.generation-controls select {
+  font-size: 11px;
+  padding: 10px;
+}
+.generation-controls > .button {
+  min-height: 37px;
+  font-size: 11px;
+  padding: 9px 14px;
+}
+.generation-controls > .text-link {
+  margin-bottom: 11px;
+  font-size: 10px;
+}
+.video-controls {
+  max-width: 550px;
+  margin: 20px auto 0;
+}
+.video-controls > input {
+  margin-top: 15px;
+  font-size: 11px;
+}
+.video-controls .generation-controls {
+  margin: 0;
+}
+.video-controls .generation-controls label {
+  flex: 1;
+}
+.messages {
+  max-width: 850px;
+  padding: 30px 28px 24px;
+  margin: auto;
+}
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 0 0 35px;
+}
+.message-avatar {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #2f2323;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #ccb7a5;
+}
+.message.assistant .message-avatar {
+  background: transparent;
+}
+.message-body {
+  flex: 1;
+  min-width: 0;
+}
+.message-name {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  color: #c9b6a5;
+  margin: 6px 0 15px;
+  font-weight: 550;
+}
+.message-body > p,
+.message-body > ul,
+.message-body > ol,
+.message-body > blockquote {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #bbab9d;
+}
+.message.user .message-body > p {
+  color: #e5d4c7;
+}
+.message-body h1 {
+  font-size: 26px;
+}
+.message-body h2 {
+  font-size: 22px;
+}
+.message-body h3 {
+  font-size: 18px;
+}

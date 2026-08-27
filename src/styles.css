@@ -4988,3 +4988,151 @@ td strong {
     sans-serif;
   margin: 0 0 10px;
 }
+.funding-body p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #a9a5a1;
+  margin: 0;
+}
+.funding-body ul {
+  list-style: none;
+  border-left: 1px solid #ffffff08;
+  padding: 0 0 0 28px;
+  margin: 0;
+  font-size: 13px;
+  color: #c0bdb8;
+}
+.funding-body li {
+  margin: 0 0 12px;
+}
+.funding-marks {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+.funding-marks img {
+  width: 18px;
+  height: 18px;
+  filter: brightness(0) invert(0.76);
+}
+.funding-marks span {
+  font-size: 12px;
+}
+.funding-marks b {
+  display: block;
+  font:
+    9px ui-monospace,
+    monospace;
+  color: #aa7070;
+  margin-top: 5px;
+}
+@media (max-width: 700px) {
+  .provider-group {
+    width: 1300px;
+  }
+  .provider-marquee .provider-artwork {
+    width: 30px;
+    height: 30px;
+  }
+  .market-strip {
+    padding: 20px 16px;
+    row-gap: 20px;
+  }
+  .market-coin {
+    width: 50%;
+    display: grid;
+    grid-template-columns: 18px auto;
+    gap: 2px 8px;
+    padding: 4px 20px;
+  }
+  .market-coin small {
+    grid-column: 2;
+  }
+  .market-coin:nth-child(even) {
+    border: none;
+  }
+  .funding-section {
+    padding: 60px 0;
+  }
+  .funding-section h2 {
+    font-size: 40px;
+    letter-spacing: -1px;
+  }
+  .funding-links {
+    justify-content: flex-start;
+    gap: 24px;
+    margin-top: 34px;
+  }
+  .funding-card {
+    padding: 24px;
+  }
+  .funding-body {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .funding-body ul {
+    border-left: 0;
+    border-top: 1px solid #ffffff08;
+    padding: 20px 0 0;
+  }
+  .funding-body h3 {
+    font-size: 36px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .provider-track {
+    animation: none;
+  }
+}
+
+.token-benefits,
+.job-section {
+  max-width: 960px;
+  margin: auto;
+}
+.token-benefits h2,
+.job-section h2 {
+  font-size: 51.2px;
+  line-height: 1.04;
+  font-weight: 800;
+}
+.token-benefits > .section-desc {
+  max-width: 715px;
+  line-height: 1.65;
+}
+.token-benefit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 36px 0 30px;
+}
+.token-benefit-grid article {
+  background: #1c1919;
+  border: 1px solid #3a2020;
+  padding: 32px;
+  border-radius: 4px;
+}
+.token-benefit-grid h3 {
+  font-size: 22px;
+  margin: 18px 0 12px;
+}
+.token-benefit-grid p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #aaa5a0;
+  overflow-wrap: anywhere;
+}
+.job-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  padding: 26px 30px;
+  background: #1b1919;
+  border: 1px solid #383535;
+  border-radius: 15px;
+}
+.job-panel h3 {
+  font-size: 24px;
+  margin: 16px 0 10px;
+}

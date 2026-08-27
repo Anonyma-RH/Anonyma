@@ -4735,3 +4735,164 @@ td strong {
   margin: 50px 0 18px;
   font-size: 30px;
 }
+.how-page > p,
+.developers-page > p {
+  font-size: 15px;
+}
+.developer-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.developer-cards article > svg {
+  color: #cb2943;
+  margin-bottom: 26px;
+  width: 30px;
+  height: 30px;
+}
+.developer-cards .button {
+  margin-top: 15px;
+}
+.developers-page > .code-block {
+  margin: 35px 0;
+}
+.developers-page > .feature-grid {
+  margin-top: 35px;
+}
+@media (max-width: 600px) {
+  .how-page,
+  .developers-page {
+    margin: 25px 20px 65px;
+  }
+  .steps,
+  .developer-cards {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+  .steps article,
+  .developer-cards article {
+    padding: 25px;
+  }
+  .usage-flow {
+    flex-direction: column;
+    margin: 35px 0;
+    gap: 17px;
+    font-size: 12px;
+  }
+  .usage-flow svg {
+    transform: rotate(90deg);
+  }
+  .how-page > h2,
+  .developers-page > h2 {
+    font-size: 26px;
+  }
+  .how-page > p,
+  .developers-page > p {
+    font-size: 13px;
+  }
+}
+@media (max-width: 850px) {
+  .workspace-sidebar {
+    visibility: hidden;
+  }
+  .workspace-sidebar.open {
+    visibility: visible;
+  }
+}
+@media (max-width: 600px) {
+  .workspace-empty {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .workspace-empty h1 {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.9px;
+  }
+  .workspace-empty > p {
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 360px;
+  }
+  .mode-cards {
+    gap: 12px;
+  }
+  .mode-cards strong {
+    font-size: 16px;
+  }
+  .mode-cards span {
+    font-size: 12px;
+  }
+  .mode-cards button > svg:first-child {
+    width: 18px;
+    height: 18px;
+    padding: 7px;
+    margin-bottom: 8px;
+  }
+  .mode-cards .ghost-icon {
+    color: #ffffff0a;
+  }
+  .composer-wrap {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Source-observed provider motion, live market strip and funding sequence. */
+.provider-artwork {
+  object-fit: contain;
+  filter: brightness(0) invert(0.92);
+  flex-shrink: 0;
+}
+.provider-marquee {
+  height: 96px;
+  overflow: hidden;
+  border-bottom: 1px solid #ffffff0d;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 5%,
+    #000 95%,
+    transparent
+  );
+}
+.provider-track {
+  width: max-content;
+  display: flex;
+  height: 100%;
+  animation: provider-travel 48s linear infinite;
+}
+.provider-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 2470px;
+}
+.provider-marquee:hover .provider-track {
+  animation-play-state: paused;
+}
+@keyframes provider-travel {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.market-strip {
+  min-height: 76px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #ffffff0d;
+  padding: 16px;
+  gap: 12px 0;
+}
+.market-coin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 26px;
+  border-right: 1px solid #ffffff12;
+  font:
+    12px ui-monospace,
+    monospace;
+}

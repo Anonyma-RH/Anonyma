@@ -5136,3 +5136,134 @@ td strong {
   font-size: 24px;
   margin: 16px 0 10px;
 }
+.job-panel p {
+  font-size: 15px;
+  color: #aaa5a0;
+  line-height: 1.6;
+}
+.job-recommendations > a {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 16px;
+}
+.job-recommendations code {
+  font-size: 13px;
+}
+.job-recommendations span {
+  color: #88837f;
+  font-size: 12px;
+}
+.job-recommendations a:hover code {
+  color: #ce3846;
+}
+.job-all {
+  text-decoration: underline;
+  font-size: 14px;
+  grid-column: 1/-1;
+  margin-top: 16px;
+}
+@media (max-width: 700px) {
+  .token-benefit-grid {
+    grid-template-columns: 1fr;
+  }
+  .token-benefits h2,
+  .job-section h2 {
+    font-size: 40px;
+  }
+  .token-benefit-grid article {
+    padding: 30px 26px;
+  }
+  .job-panel {
+    grid-template-columns: 1fr;
+    padding: 24px;
+    gap: 24px;
+  }
+}
+@media (max-width: 600px) {
+  .hero-image {
+    display: block;
+    height: 250px;
+    opacity: 0.85;
+    background-size: auto 430px;
+    background-position: center 65%;
+    background-image:
+      linear-gradient(to bottom, transparent, #100e0f), url("/assets/hero.webp");
+  }
+  .hero .inference {
+    min-height: 110px;
+    margin: 0 20px 0;
+  }
+  .hero {
+    min-height: 568px;
+  }
+  .hero h1 {
+    font-size: 42px;
+  }
+  .hero p {
+    line-height: 1.6;
+  }
+}
+
+/* Measured public-reference layout; branding and service status remain Anonyma. */
+.header-home {
+  background: transparent;
+  border-bottom-color: transparent;
+}
+.hero {
+  margin-top: calc(-1 * var(--header));
+  height: 562px;
+}
+.hero-content {
+  padding: 96px 64px 0;
+}
+.hero h1 {
+  max-width: 680px;
+  line-height: 1.06;
+  letter-spacing: normal;
+  margin-bottom: 28px;
+}
+.hero p {
+  max-width: 633px;
+  font-size: 19px;
+  line-height: 1.6;
+}
+.hero-image {
+  opacity: 1;
+  background-position:
+    center,
+    center,
+    50% 44%;
+  background-size: cover;
+  background-image:
+    linear-gradient(
+      90deg,
+      #100e0f 8%,
+      #100e0ff2 36%,
+      #100e0f85 52%,
+      transparent 64%
+    ),
+    linear-gradient(
+      #100e0f52 0%,
+      transparent 22%,
+      transparent 62%,
+      #100e0f 100%
+    ),
+    url("/assets/hero.webp");
+}
+.hero .inference {
+  width: 380px;
+  min-height: 112px;
+  background: #1b1818dc;
+  border-color: #ffffff1a;
+  border-radius: 4px;
+}
+.token-benefits,
+.job-section,
+.landing-section.faq {
+  padding: 88px 0;
+}
+.faq-head {
+  text-align: center;
+  margin-bottom: 56px;
+}

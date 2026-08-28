@@ -5267,3 +5267,177 @@ td strong {
   text-align: center;
   margin-bottom: 56px;
 }
+.faq-head h2 {
+  font:
+    51.2px/1.04 Array,
+    sans-serif;
+  margin: 0;
+}
+.faq-head p {
+  font-size: 18px;
+  line-height: 1.6;
+  margin: 20px auto 0;
+  color: #aaa5a0;
+}
+.faq-item:first-of-type {
+  border-top: 1px solid #ffffff13;
+}
+.faq-item > button {
+  font-size: 18px;
+  font-weight: 600;
+  padding: 20px 0;
+}
+.faq-item p {
+  font-size: 16px;
+  line-height: 1.65;
+  padding: 0 40px 28px 0;
+  max-width: 780px;
+}
+.faq-chevron {
+  transition: transform 160ms;
+}
+.faq-chevron.open {
+  transform: rotate(180deg);
+}
+.site-footer .footer-cta {
+  min-height: 330px;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.site-footer .footer-cta h2 {
+  font:
+    46px/1.12 Array,
+    sans-serif;
+  margin: 15px 0 30px;
+}
+.site-footer .footer-cta em {
+  font-style: normal;
+  color: var(--red);
+}
+.site-footer .footer-grid {
+  max-width: 1152px;
+  width: calc(100% - 128px);
+  grid-template-columns: 1.2fr 3.2fr 1.2fr;
+  gap: 50px;
+  padding: 52px 0;
+  align-items: start;
+}
+.footer-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 42px;
+}
+.footer-links > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.footer-links a {
+  line-height: 1.6;
+}
+.footer-contact {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  color: #88817d;
+  line-height: 1.6;
+}
+.footer-contact span {
+  margin-top: 16px;
+}
+@media (max-width: 1000px) {
+  .site-footer .footer-grid {
+    width: calc(100% - 48px);
+    grid-template-columns: 1fr 3fr;
+    gap: 32px;
+  }
+  .footer-contact {
+    grid-column: 2;
+  }
+  .footer-links {
+    gap: 24px;
+  }
+}
+@media (max-width: 700px) {
+  .hero {
+    min-height: 645px;
+    height: auto;
+    padding-bottom: 20px;
+  }
+  .hero-content {
+    padding: 144px 12px 0;
+  }
+  .hero h1 {
+    font-size: 42px;
+    line-height: 1.06;
+    letter-spacing: normal;
+  }
+  .hero p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-top: 28px;
+    margin-bottom: 40px;
+  }
+  .hero-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1.44fr;
+    gap: 16px;
+  }
+  .hero-image {
+    display: block;
+    height: 557px;
+    top: -96px;
+    background-position:
+      center,
+      35% 50%;
+    background-size: cover;
+    background-image:
+      linear-gradient(transparent 20%, #100e0f 83%), url("/assets/hero.webp");
+  }
+  .hero .inference {
+    position: relative;
+    inset: auto;
+    width: auto;
+    margin: 40px 20px 0;
+    min-height: 112px;
+  }
+  .token-benefits,
+  .job-section,
+  .landing-section.faq {
+    padding: 60px 0;
+  }
+  .faq-head {
+    margin-bottom: 36px;
+  }
+  .faq-head h2 {
+    font-size: 40px;
+  }
+  .faq-head p {
+    font-size: 16px;
+  }
+  .faq-item > button {
+    font-size: 16px;
+    gap: 20px;
+  }
+  .faq-item p {
+    font-size: 15px;
+    padding-right: 12px;
+  }
+  .site-footer .footer-cta h2 {
+    font-size: 32px;
+  }
+  .site-footer .footer-grid {
+    width: calc(100% - 40px);
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding: 40px 0;
+  }
+  .footer-contact {
+    grid-column: auto;
+  }
+  .footer-links {
+    gap: 18px;
+  }
+}

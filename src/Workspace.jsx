@@ -3,3 +3,4 @@ import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { readChatEvents } from "./stream";
+import { videoPresets } from "../data/video-presets.js";

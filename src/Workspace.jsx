@@ -49,3 +49,9 @@ import {
   Empty,
   generationPrice,
 } from "./lib";
+const modes = [
+  ["chat", MessageSquare, "Ask", "Think, plan and explore."],
+  ["code", Code2, "Code", "Build, debug and explain."],
+  ["image", Image, "Images", "Create and refine visuals."],
+  ["video", Video, "Video", "Direct your next clip."],
+];

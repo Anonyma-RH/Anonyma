@@ -72,3 +72,8 @@ function textOf(content) {
               .join("\n")
           : "");
 }
+function imageOf(content) {
+  return Array.isArray(content)
+    ? content.filter((p) => p.type === "image_url").map((p) => p.image_url.url)
+    : content?.images?.map((i) => i.image_url?.url || i.url) || [];
+}

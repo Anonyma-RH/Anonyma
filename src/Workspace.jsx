@@ -55,3 +55,9 @@ const modes = [
   ["image", Image, "Images", "Create and refine visuals."],
   ["video", Video, "Video", "Direct your next clip."],
 ];
+const modeLabel = {
+  chat: "Ask",
+  code: "Code",
+  image: "Images",
+  video: "Video",
+};

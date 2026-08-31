@@ -77,3 +77,131 @@ function imageOf(content) {
     ? content.filter((p) => p.type === "image_url").map((p) => p.image_url.url)
     : content?.images?.map((i) => i.image_url?.url || i.url) || [];
 }
+export function ModelPicker({
+  mode,
+  selected,
+  onSelect,
+  onClose,
+  multi = false,
+}) {
+  const { models, modelInfo } = useApp(),
+    [q, setQ] = useState(""),
+    [filter, setFilter] = useState("all");
+  const relevant = models.filter((m) =>
+    mode === "image"
+      ? m.imageCapable
+      : mode === "video"
+        ? m.type === "video"
+        : m.type === "chat" && !m.imageCapable,
+  );
+  const list = relevant
+    .filter(
+      (m) =>
+        `${m.id} ${m.name} ${m.owned_by}`
+          .toLowerCase()
+          .includes(q.toLowerCase()) &&
+        (filter === "all" ||
+          (filter === "popular" && m.popular) ||
+          (filter === "vision" && m.vision) ||
+          (filter === "code" && /code|coder|devstral|claude|gpt/i.test(m.id)) ||
+          (filter === "reasoning" &&
+            /reason|think|o3|o4|r1|gpt-5/i.test(m.id)) ||
+          (filter === "cheap" && (m.pricing?.input_per_1M_tokens || 0) < 1) ||
+          (filter === "long" && m.context_length >= 128000)),
+    )
+    .sort(
+      (a, b) =>
+        Number(b.callable) - Number(a.callable) ||
+        Number(b.popular) - Number(a.popular),
+    );
+  return (
+    <Modal
+      title={multi ? "Compare image models" : "Choose a model"}
+      onClose={onClose}
+      wide
+    >
+      <div className="search-field">
+        <Search size={18} />
+        <input
+          autoFocus
+          placeholder="Search models or providers…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <kbd>ESC</kbd>
+      </div>
+      <div className="pills model-picker-filters">
+        {(mode === "image" || mode === "video"
+          ? ["all"]
+          : ["all", "popular", "code", "reasoning", "vision", "cheap", "long"]
+        ).map((v) => (
+          <button
+            key={v}
+            className={v === filter ? "active" : ""}
+            onClick={() => setFilter(v)}
+          >
+            {v === "long" ? "Long context" : v}
+          </button>
+        ))}
+      </div>
+      <div className="picker-list">
+        {list.map((m) => (
+          <button
+            key={m.id}
+            className={
+              (
+                Array.isArray(selected)
+                  ? selected.includes(m.id)
+                  : selected === m.id
+              )
+                ? "active"
+                : ""
+            }
+            disabled={!m.callable}
+            onClick={() => onSelect(m.id)}
+          >
+            <ProviderIcon provider={m.owned_by} />
+            <div>
+              <strong>{m.name}</strong>
+              <small>{m.id}</small>
+            </div>
+            <div className="picker-price">
+              <span>
+                {mode === "image"
+                  ? fmt(m.imagePrice * 1000) + " cr"
+                  : mode === "video"
+                    ? fmt(generationPrice(m) * 1000) + " cr"
+                    : "$" + (m.pricing?.input_per_1M_tokens || 0) + "/M"}
+              </span>
+              <small>
+                {!m.callable
+                  ? "Not configured"
+                  : m.context_length
+                    ? fmt(m.context_length / 1000) + "K context"
+                    : "per generation"}
+              </small>
+            </div>
+            {(Array.isArray(selected)
+              ? selected.includes(m.id)
+              : selected === m.id) && <Check size={16} />}
+          </button>
+        ))}
+      </div>
+      {!list.length && (
+        <Empty title="No models found">Try another search.</Empty>
+      )}
+      {multi && (
+        <Button className="full" onClick={onClose}>
+          Use selected models
+        </Button>
+      )}
+      <p className="fineprint">
+        {modelInfo?.live
+          ? "Catalog refreshed from the provider"
+          : "Reference catalog snapshot"}
+        {modelInfo?.updatedAt ? ` · ${date(modelInfo.updatedAt)}` : ""}. Only
+        connected, supported models are selectable. ⌘K opens this picker.
+      </p>
+    </Modal>
+  );
+}

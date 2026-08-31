@@ -61,3 +61,14 @@ const modeLabel = {
   image: "Images",
   video: "Video",
 };
+function textOf(content) {
+  return typeof content === "string"
+    ? content
+    : content?.text ||
+        (Array.isArray(content)
+          ? content
+              .filter((p) => p.type === "text")
+              .map((p) => p.text)
+              .join("\n")
+          : "");
+}

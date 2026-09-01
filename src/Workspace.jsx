@@ -205,3 +205,44 @@ export function ModelPicker({
     </Modal>
   );
 }
+function artifactsFrom(messages) {
+  const files = [];
+  messages
+    .filter((m) => m.role === "assistant")
+    .forEach((m, version) => {
+      const code = textOf(m.content);
+      const regex = /```([^\n]*)\n([\s\S]*?)```/g;
+      let match;
+      let index = 0;
+      while ((match = regex.exec(code))) {
+        const info = match[1].trim(),
+          lang = info.split(/\s/)[0] || "text";
+        const ext =
+          {
+            javascript: "js",
+            typescript: "ts",
+            python: "py",
+            jsx: "jsx",
+            tsx: "tsx",
+            html: "html",
+            css: "css",
+            json: "json",
+            bash: "sh",
+            sql: "sql",
+            markdown: "md",
+          }[lang] || "txt";
+        const filename = (
+          info.match(/(?:filename=|file=)([^\s]+)/)?.[1] ||
+          `file-${++index}.${ext}`
+        ).replace(/[\\/]/g, "-");
+        files.push({
+          name: filename,
+          language: lang,
+          code: match[2],
+          version: version + 1,
+          id: `${version}-${files.length}`,
+        });
+      }
+    });
+  return files;
+}

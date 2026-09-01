@@ -246,3 +246,79 @@ function artifactsFrom(messages) {
     });
   return files;
 }
+function Artifacts({ files, onClose }) {
+  const [selected, setSelected] = useState("");
+  const file = files.find((f) => f.id === selected) || files.at(-1);
+  return (
+    <aside className="artifact-panel">
+      <div className="panel-title">
+        <h3>
+          <FileCode size={16} /> Code files
+        </h3>
+        <button
+          className="icon-button"
+          aria-label="Close code panel"
+          onClick={onClose}
+        >
+          <X size={18} />
+        </button>
+      </div>
+      <div className="artifact-tabs">
+        {files.map((f) => (
+          <button
+            key={f.id}
+            className={file?.id === f.id ? "active" : ""}
+            onClick={() => setSelected(f.id)}
+          >
+            {f.name}
+            <small>v{f.version}</small>
+          </button>
+        ))}
+      </div>
+      {file ? (
+        <>
+          <div className="artifact-actions">
+            <span>
+              {file.language} · version {file.version}
+            </span>
+            <CopyButton text={file.code} />
+            <button
+              className="copy-button"
+              aria-label="Download selected code file"
+              onClick={() => download(file.code, file.name)}
+            >
+              <Download size={14} />
+            </button>
+          </div>
+          <pre>
+            <code>{file.code}</code>
+          </pre>
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const { default: JSZip } = await import("jszip");
+              const zip = new JSZip();
+              files.forEach((f) => zip.file(`v${f.version}/${f.name}`, f.code));
+              const blob = await zip.generateAsync({ type: "blob" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "anonyma-code.zip";
+              a.click();
+              setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }}
+          >
+            <Download size={15} /> Save all files
+          </Button>
+        </>
+      ) : (
+        <Empty title="Your code appears here">
+          Ask for a code example to create a downloadable file.
+        </Empty>
+      )}
+      <p className="fineprint">
+        Generated source is not executed in this workspace.
+      </p>
+    </aside>
+  );
+}

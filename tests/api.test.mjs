@@ -20,3 +20,25 @@ import {
   usdUnits,
 } from "../server/core.js";
 import { canonical } from "../server/auth.js";
+const chatModel = "google/gemini-2.5-flash",
+  imageModel = "google/gemini-2.5-flash-image";
+const prompt = {
+  model: chatModel,
+  messages: [{ role: "user", content: "Hello test" }],
+  max_tokens: 50,
+};
+function fixture(t, extra = {}) {
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-test-"));
+  const svc = createApp({
+    testMode: true,
+    dbPath: join(dir, "test.sqlite"),
+    mediaPath: join(dir, "media"),
+    origin: "http://localhost:5175",
+    ...extra,
+  });
+  t.after(() => {
+    svc.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  return svc;
+}

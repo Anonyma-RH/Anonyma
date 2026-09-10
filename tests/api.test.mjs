@@ -61,3 +61,17 @@ async function mockServer(t, handler) {
   t.after(() => new Promise((r) => s.close(r)));
   return "http://127.0.0.1:" + s.address().port;
 }
+async function readJSON(req) {
+  let s = "";
+  for await (const b of req) s += b;
+  return JSON.parse(s || "{}");
+}
+function event(res, p) {
+  res.write("data: " + JSON.stringify(p) + "\n\n");
+}
+
+test("USD conversion removes float noise while rounding genuine fractional subcredits up", () => {
+  assert.equal(usdUnits(0.4025), 4025000);
+  assert.equal(usdUnits(0.1 + 0.2), 3000000);
+  assert.equal(usdUnits(0.00000015), 2);
+});

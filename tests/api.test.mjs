@@ -42,3 +42,22 @@ function fixture(t, extra = {}) {
   });
   return svc;
 }
+async function register(app, name = "tester") {
+  const agent = request.agent(app);
+  const result = await agent
+    .post("/api/auth/register")
+    .send({ username: name, password: "test-password-long" })
+    .expect(201);
+  return { agent, user: result.body.user };
+}
+async function keyFor(agent, cap = null) {
+  return (
+    await agent.post("/api/keys").send({ name: "integration", cap }).expect(201)
+  ).body;
+}
+async function mockServer(t, handler) {
+  const s = createServer(handler);
+  await new Promise((r) => s.listen(0, "127.0.0.1", r));
+  t.after(() => new Promise((r) => s.close(r)));
+  return "http://127.0.0.1:" + s.address().port;
+}

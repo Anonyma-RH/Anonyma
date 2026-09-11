@@ -75,3 +75,88 @@ test("USD conversion removes float noise while rounding genuine fractional subcr
   assert.equal(usdUnits(0.1 + 0.2), 3000000);
   assert.equal(usdUnits(0.00000015), 2);
 });
+test("config/catalog are explicit; missing gateway does not create fake successful generations", async (t) => {
+  const s = fixture(t, {
+    testMode: false,
+    smtp: "smtp://fixture",
+    smtpFrom: "",
+    paymentKey: "fixture",
+    paymentSecret: "fixture",
+    publicUrl: "http://localhost",
+  });
+  const c = await request(s.app).get("/api/config").expect(200);
+  assert.equal(c.body.services.generation, false);
+  assert.equal(c.body.services.email, false);
+  assert.equal(c.body.services.payments, false);
+  const models = (await request(s.app).get("/api/models").expect(200)).body;
+  assert.equal(models.data.length, 566);
+  assert.equal(models.data.filter((m) => m.callable).length, 0);
+  const { agent } = await register(s.app);
+  await agent.post("/api/chat").send(prompt).expect(503);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds").get().n, 0);
+});
+test("registration hashes secrets; CSRF rejects foreign origins; logout invalidates session", async (t) => {
+  const s = fixture(t);
+  const { agent, user } = await register(s.app);
+  assert.equal(user.balance, 100000);
+  const stored = s.db.prepare("SELECT * FROM users").get();
+  assert.notEqual(stored.password, "test-password-long");
+  assert.ok(stored.password.includes(":"));
+  await agent
+    .post("/api/auth/logout")
+    .set("Origin", "https://evil.example")
+    .send({})
+    .expect(403);
+  await agent.post("/api/auth/logout").send({}).expect(200);
+  assert.equal((await agent.get("/api/me")).body.user, null);
+  await agent
+    .post("/api/auth/password")
+    .send({ username: "tester", password: "wrong" })
+    .expect(401);
+  await agent
+    .post("/api/auth/password")
+    .send({ username: "tester", password: "test-password-long" })
+    .expect(200);
+});
+test("email codes expire, are single-use, and stop after five guesses", async (t) => {
+  const s = fixture(t);
+  const a = request.agent(s.app);
+  const send = (
+    await a
+      .post("/api/auth/email/send")
+      .send({ email: "test@example.invalid" })
+      .expect(200)
+  ).body;
+  await a
+    .post("/api/auth/email/verify")
+    .send({ id: send.id, code: send.testCode })
+    .expect(200);
+  await a
+    .post("/api/auth/email/verify")
+    .send({ id: send.id, code: send.testCode })
+    .expect(400);
+  const send2 = (
+    await a
+      .post("/api/auth/email/send")
+      .send({ email: "other@example.invalid" })
+  ).body;
+  for (let i = 0; i < 5; i++)
+    await a
+      .post("/api/auth/email/verify")
+      .send({ id: send2.id, code: "000000" })
+      .expect(400);
+  await a
+    .post("/api/auth/email/verify")
+    .send({ id: send2.id, code: send2.testCode })
+    .expect(400);
+  const send3 = (
+    await a
+      .post("/api/auth/email/send")
+      .send({ email: "expires@example.invalid" })
+  ).body;
+  s.db.prepare("UPDATE challenges SET expires=0 WHERE id=?").run(send3.id);
+  await a
+    .post("/api/auth/email/verify")
+    .send({ id: send3.id, code: send3.testCode })
+    .expect(400);
+});

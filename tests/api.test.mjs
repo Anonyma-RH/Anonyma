@@ -248,3 +248,99 @@ test("streaming chat persists receipts/context; duplicate request rejected; owne
   await agent.delete("/api/conversations").expect(200);
   assert.equal((await agent.get("/api/conversations")).body.data.length, 0);
 });
+test("API key stores only hash, returns OpenAI-compatible JSON/SSE, revokes immediately", async (t) => {
+  const s = fixture(t);
+  const { agent } = await register(s.app);
+  const key = await keyFor(agent);
+  assert.ok(
+    !JSON.stringify(s.db.prepare("SELECT * FROM api_keys").all()).includes(
+      key.key,
+    ),
+  );
+  const listing = await request(s.app)
+    .get("/v1/models")
+    .set("Authorization", "Bearer " + key.key)
+    .expect(200);
+  assert.ok(listing.body.data.length > 0);
+  assert.ok(!("pricing" in listing.body.data[0]));
+  const result = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send({ ...prompt, temperature: 0.3, tools: [{}] })
+    .expect(200);
+  assert.equal(result.body.object, "chat.completion");
+  assert.ok(result.body.askr.credits_charged > 0);
+  assert.ok(result.body.choices[0].message.content);
+  const stream = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send({ ...prompt, stream: true })
+    .expect(200);
+  assert.match(stream.text, /chat.completion.chunk/);
+  assert.match(stream.text, /\[DONE\]/);
+  await agent.delete("/api/keys/" + key.id).expect(200);
+  await request(s.app)
+    .get("/v1/models")
+    .set("Authorization", "Bearer " + key.key)
+    .expect(401);
+});
+test("API caps include inflight reservations and roll forward after 24 hours", async (t) => {
+  const s = fixture(t);
+  const { agent, user } = await register(s.app);
+  const key = await keyFor(agent, 1);
+  reserve(s.db, { id: "cap-first", user: user.id, amount: 7000, key: key.id });
+  assert.throws(
+    () =>
+      reserve(s.db, {
+        id: "cap-second",
+        user: user.id,
+        amount: 4000,
+        key: key.id,
+      }),
+    /cap/,
+  );
+  settle(s.db, "cap-first", 6000);
+  assert.throws(
+    () =>
+      reserve(s.db, {
+        id: "cap-third",
+        user: user.id,
+        amount: 5000,
+        key: key.id,
+      }),
+    /cap/,
+  );
+  s.db
+    .prepare("INSERT INTO ledger VALUES(?,?,?,?,?,?,?,?)")
+    .run(
+      "old_spend",
+      user.id,
+      -50000,
+      "chat",
+      "old_spend_ref",
+      key.id,
+      "Old usage",
+      now() - 90000000,
+    );
+  reserve(s.db, { id: "cap-fourth", user: user.id, amount: 4000, key: key.id });
+  release(s.db, "cap-fourth");
+});
+test("reservation is atomic, never overdraws, settlement is idempotent and ledger is append-only", async (t) => {
+  const s = fixture(t);
+  const { user } = await register(s.app);
+  const total = balance(s.db, user.id).total;
+  reserve(s.db, { id: "big1", user: user.id, amount: total - 1 });
+  assert.throws(
+    () => reserve(s.db, { id: "big2", user: user.id, amount: 2 }),
+    /Not enough/,
+  );
+  const result = settle(s.db, "big1", total * 2);
+  assert.equal(result.charged, total - 1);
+  assert.equal(settle(s.db, "big1", 10).charged, total - 1);
+  assert.equal(balance(s.db, user.id).available, 1);
+  assert.throws(
+    () => s.db.prepare("UPDATE ledger SET amount=0").run(),
+    /append-only/,
+  );
+  assert.throws(() => s.db.prepare("DELETE FROM ledger").run(), /append-only/);
+});

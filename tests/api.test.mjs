@@ -344,3 +344,127 @@ test("reservation is atomic, never overdraws, settlement is idempotent and ledge
   );
   assert.throws(() => s.db.prepare("DELETE FROM ledger").run(), /append-only/);
 });
+test("input limits and unsupported roles reject before creating holds", async (t) => {
+  const s = fixture(t);
+  const { agent } = await register(s.app);
+  const key = await keyFor(agent);
+  const auth = "Bearer " + key.key;
+  await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .send({ ...prompt, messages: [{ role: "tool", content: "x" }] })
+    .expect(400);
+  await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .send({
+      ...prompt,
+      messages: Array.from({ length: 41 }, () => ({
+        role: "user",
+        content: "x".repeat(4000),
+      })),
+    })
+    .expect(400);
+  await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .send({ ...prompt, max_tokens: -1 })
+    .expect(400);
+  await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .send({
+      ...prompt,
+      messages: [{ role: "user", content: "x".repeat(270000) }],
+    })
+    .expect(413);
+  await agent
+    .post("/api/chat")
+    .send({
+      ...prompt,
+      messages: [{ role: "user", content: "x".repeat(48001) }],
+    })
+    .expect(400);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds").get().n, 0);
+  await request(s.app)
+    .post("/v1/embeddings")
+    .set("Authorization", auth)
+    .send({})
+    .expect(404);
+});
+test("image batch generates private durable assets, limits references, and supports deletion", async (t) => {
+  const s = fixture(t);
+  const { agent } = await register(s.app);
+  const other = await register(s.app, "outsider");
+  const result = await agent
+    .post("/api/images")
+    .send({
+      model: imageModel,
+      prompt: "Red circle test",
+      n: 2,
+      requestId: "images-1",
+    })
+    .expect(200);
+  assert.equal(result.body.data.length, 2);
+  assert.ok(result.body.receipt.credits_charged > 0);
+  const url = result.body.data[0].url;
+  await agent
+    .get(url)
+    .expect(200)
+    .expect("Content-Type", /image\/png/);
+  await other.agent.get(url).expect(404);
+  await request(s.app).get(url).expect(404);
+  const ref = "data:image/png;base64,iVBORw0KGgo=";
+  await agent
+    .post("/api/images")
+    .send({ model: imageModel, prompt: "x", n: 1, images: Array(9).fill(ref) })
+    .expect(400);
+  await agent
+    .post("/api/images")
+    .send({ model: imageModel, prompt: "x", n: 5 })
+    .expect(400);
+  await agent.delete(url).expect(200);
+  await agent.get(url).expect(404);
+});
+test("video jobs settle into a real playable local fixture and remain private", async (t) => {
+  const s = fixture(t);
+  const { agent, user } = await register(s.app);
+  const result = await agent
+    .post("/api/videos")
+    .send({
+      model: "kling-2.5-turbo",
+      prompt: "Test clip",
+      ratio: "16:9",
+      duration: "5",
+      requestId: "vid-1",
+    })
+    .expect(202);
+  assert.ok(balance(s.db, user.id).held > 0);
+  await s.tick();
+  const jobs = (await agent.get("/api/videos")).body.data;
+  assert.equal(jobs[0].status, "completed");
+  const media = (await agent.get("/api/media")).body.data;
+  assert.equal(media[0].mime, "video/mp4");
+  const asset = await agent.get(media[0].url).expect(200);
+  assert.ok(asset.body.length > 1000);
+  assert.equal(balance(s.db, user.id).held, 0);
+  await agent
+    .post("/api/videos")
+    .send({
+      model: "kling-2.5-turbo",
+      prompt: "Test clip",
+      ratio: "16:9",
+      duration: "5",
+      requestId: "vid-1",
+    })
+    .expect(409);
+  await agent
+    .post("/api/videos")
+    .send({
+      model: "kling-2.5-turbo",
+      prompt: "x",
+      ratio: "16:9",
+      duration: "42",
+    })
+    .expect(400);
+});

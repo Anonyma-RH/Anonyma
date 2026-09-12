@@ -775,3 +775,109 @@ test("durable conversations and pending video jobs resume after process restart"
   await s.tick();
   assert.equal((await a.get("/api/videos")).body.data[0].status, "completed");
 });
+test("catalog refresh imports priced upstream models and preserves unavailable history", async (t) => {
+  const gateway = await mockServer(t, async (req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        data: [
+          {
+            id: "fresh-fixture",
+            type: "chat",
+            owned_by: "Fixture",
+            name: "Fixture model",
+            pricing: {
+              type: "per_token",
+              input_per_1M_tokens: 1,
+              output_per_1M_tokens: 2,
+            },
+          },
+        ],
+      }),
+    );
+  });
+  const temp = mkdtempSync(join(tmpdir(), "anonyma-catalog-"));
+  t.after(() => rmSync(temp, { recursive: true, force: true }));
+  const s = fixture(t, {
+    gateway,
+    syncModels: true,
+    catalogPath: join(temp, "models.json"),
+  });
+  const m = (await request(s.app).get("/api/models")).body;
+  assert.equal(m.live, true);
+  assert.equal(m.data.find((v) => v.id === "fresh-fixture").status, "live");
+  assert.equal(m.data.find((v) => v.id === chatModel).status, "unavailable");
+});
+test("missing or invalid published token rates reject before reserving credits", async (t) => {
+  const temp = mkdtempSync(join(tmpdir(), "anonyma-unpriced-"));
+  t.after(() => rmSync(temp, { recursive: true, force: true }));
+  const catalogPath = join(temp, "models.json");
+  writeFileSync(
+    catalogPath,
+    JSON.stringify({
+      updatedAt: new Date().toISOString(),
+      data: [
+        { id: "missing-rate", type: "chat", status: "live", pricing: {} },
+        {
+          id: "negative-rate",
+          type: "chat",
+          status: "live",
+          pricing: { input_per_1M_tokens: -1, output_per_1M_tokens: 2 },
+        },
+      ],
+    }),
+  );
+  const s = fixture(t, { catalogPath });
+  const { agent } = await register(s.app);
+  for (const model of ["missing-rate", "negative-rate"]) {
+    const response = await agent
+      .post("/api/chat")
+      .send({ ...prompt, model })
+      .expect(400);
+    assert.equal(response.body.error.code, "unpriced_model");
+  }
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds").get().n, 0);
+});
+test("API compatibility clamps output, retains last 40 strings, skips parts, and exposes authenticated connection balance", async (t) => {
+  let received;
+  const gateway = await mockServer(t, async (req, res) => {
+    received = await readJSON(req);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, {
+      choices: [{ delta: { content: "OK" } }],
+      usage: { prompt_tokens: 2, completion_tokens: 1 },
+    });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "compat-fund");
+  const key = await keyFor(agent);
+  const auth = "Bearer " + key.key;
+  const connection = await request(s.app)
+    .get("/v1")
+    .set("User-Agent", "Integration test")
+    .set("Authorization", auth)
+    .expect(200);
+  assert.equal(connection.body.authenticated, true);
+  assert.equal(connection.body.account.credits, 10000);
+  await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .send({
+      model: chatModel,
+      max_tokens: 99999,
+      messages: [
+        ...Array.from({ length: 41 }, (_, i) => ({
+          role: "user",
+          content: "Message " + i,
+        })),
+        { role: "user", content: [{ type: "text", text: "skipped" }] },
+      ],
+    })
+    .expect(200);
+  assert.equal(received.max_tokens, 8192);
+  assert.equal(received.messages.length, 40);
+  assert.equal(received.messages[0].content, "Message 1");
+  assert.equal(received.messages.at(-1).content, "Message 40");
+});

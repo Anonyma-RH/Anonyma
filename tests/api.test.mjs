@@ -674,3 +674,104 @@ test("vision validation uses advertised capabilities rather than guessed provide
     })
     .expect(400);
 });
+test("API image output is signed, expires, and can be fetched without disclosing the API key", async (t) => {
+  const s = fixture(t);
+  const { agent } = await register(s.app);
+  const key = await keyFor(agent);
+  const r = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send({
+      model: imageModel,
+      messages: [{ role: "user", content: "A fixture" }],
+    })
+    .expect(200);
+  const url = new URL(r.body.choices[0].message.images[0].image_url.url);
+  await request(s.app)
+    .get(url.pathname + url.search)
+    .expect(200);
+  await request(s.app)
+    .get(url.pathname + url.search.replace("sig=", "sig=x"))
+    .expect(404);
+  s.db.prepare("UPDATE media SET expires=1").run();
+  await request(s.app)
+    .get(url.pathname + url.search)
+    .expect(404);
+});
+test("video failure releases funds; ambiguous submission is held without automatic resubmission", async (t) => {
+  let calls = 0;
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(200, { "content-type": "application/json" });
+    if (req.method === "POST") {
+      calls++;
+      res.end(
+        JSON.stringify(
+          calls === 1 ? { id: "upstream-video" } : { status: "unknown" },
+        ),
+      );
+    } else
+      res.end(JSON.stringify({ status: "failed", error: "Fixture failure" }));
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fake" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "video-funds");
+  const body = {
+    model: "kling-2.5-turbo",
+    prompt: "Clip",
+    ratio: "16:9",
+    duration: "5",
+  };
+  await agent.post("/api/videos").send(body).expect(202);
+  await s.tick();
+  assert.equal(balance(s.db, user.id).held, 0);
+  const second = await agent.post("/api/videos").send(body);
+  assert.equal(second.status, 500);
+  assert.ok(balance(s.db, user.id).held > 0);
+  await s.tick();
+  assert.equal(calls, 2);
+  assert.ok(
+    (await agent.get("/api/videos")).body.data.some(
+      (j) => j.status === "reconciliation",
+    ),
+  );
+});
+test("durable conversations and pending video jobs resume after process restart", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-restart-"));
+  const settings = {
+    testMode: true,
+    dbPath: join(dir, "db.sqlite"),
+    mediaPath: join(dir, "media"),
+  };
+  let s = createApp(settings);
+  t.after(() => {
+    s.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  const { agent } = await register(s.app);
+  const conversation = (
+    await agent.post("/api/conversations").send({ title: "Survives restart" })
+  ).body.id;
+  await agent
+    .post("/api/videos")
+    .send({
+      model: "kling-2.5-turbo",
+      prompt: "Persisted clip",
+      ratio: "16:9",
+      duration: "5",
+    })
+    .expect(202);
+  s.close();
+  s = createApp(settings);
+  const a = request.agent(s.app);
+  await a
+    .post("/api/auth/password")
+    .send({ username: "tester", password: "test-password-long" })
+    .expect(200);
+  assert.equal(
+    (await a.get("/api/conversations/" + conversation)).body.title,
+    "Survives restart",
+  );
+  await s.tick();
+  assert.equal((await a.get("/api/videos")).body.data[0].status, "completed");
+});

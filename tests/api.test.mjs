@@ -607,3 +607,70 @@ test("account closure revokes access and deletes content while retaining financi
       .n > 0,
   );
 });
+test("support requests, session listings, and exports are owner-scoped", async (t) => {
+  const s = fixture(t);
+  const { agent } = await register(s.app);
+  await request(s.app)
+    .post("/api/support")
+    .send({ subject: "a", body: "b" })
+    .expect(401);
+  const ticket = await agent
+    .post("/api/support")
+    .send({ subject: "Fixture help", body: "Local integration test." })
+    .expect(201);
+  assert.ok(ticket.body.id);
+  const exported = await agent.get("/api/account/export").expect(200);
+  assert.equal(exported.body.user.username, "tester");
+  assert.ok(!JSON.stringify(exported.body).includes("test-password-long"));
+  const sessions = await agent.get("/api/account/sessions").expect(200);
+  assert.equal(sessions.body.data.length, 1);
+  await agent.post("/api/auth/logout-all").send({}).expect(200);
+  await agent.get("/api/account/export").expect(401);
+});
+test("email hourly limits persist after successful verification", async (t) => {
+  const s = fixture(t),
+    a = request.agent(s.app);
+  for (let i = 0; i < 5; i++) {
+    const j = (
+      await a
+        .post("/api/auth/email/send")
+        .send({ email: "limited@example.invalid" })
+        .expect(200)
+    ).body;
+    await a
+      .post("/api/auth/email/verify")
+      .send({ id: j.id, code: j.testCode })
+      .expect(200);
+  }
+  await a
+    .post("/api/auth/email/send")
+    .send({ email: "limited@example.invalid" })
+    .expect(429);
+});
+test("vision validation uses advertised capabilities rather than guessed provider names", async (t) => {
+  const s = fixture(t);
+  const { agent } = await register(s.app);
+  const models = (await agent.get("/api/models")).body.data;
+  const textOnly = models.find(
+    (m) => m.type === "chat" && m.callable && !m.vision,
+  );
+  assert.ok(textOnly);
+  await agent
+    .post("/api/chat")
+    .send({
+      model: textOnly.id,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Describe this" },
+            {
+              type: "image_url",
+              image_url: { url: "https://example.invalid/test.png" },
+            },
+          ],
+        },
+      ],
+    })
+    .expect(400);
+});

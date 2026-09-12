@@ -468,3 +468,142 @@ test("video jobs settle into a real playable local fixture and remain private", 
     })
     .expect(400);
 });
+test("empty and explicitly rejected real-adapter responses release reservations", async (t) => {
+  const gateway = await mockServer(t, async (req, res) => {
+    const body = await readJSON(req);
+    if (body.messages[0].content === "reject") {
+      res.writeHead(400, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: { message: "Fixture rejection" } }));
+      return;
+    }
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, {
+      choices: [{ delta: { content: "" } }],
+      usage: { prompt_tokens: 10, completion_tokens: 0 },
+    });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, {
+    testMode: false,
+    gateway,
+    gatewayKey: "fake-test-key",
+  });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 1000000, "mock-fund");
+  const key = await keyFor(agent);
+  const before = balance(s.db, user.id).total;
+  const r = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send(prompt)
+    .expect(502);
+  assert.equal(r.body.error.code, "empty_output");
+  await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send({ ...prompt, messages: [{ role: "user", content: "reject" }] })
+    .expect(400);
+  assert.equal(balance(s.db, user.id).total, before);
+  assert.equal(balance(s.db, user.id).held, 0);
+});
+test("NOWPayments signed callback credits once; forged and mismatched callbacks rejected", async (t) => {
+  let invoice;
+  const base = await mockServer(t, async (req, res) => {
+    const body = await readJSON(req);
+    invoice = {
+      payment_id: 123456,
+      payment_status: "waiting",
+      order_id: body.order_id,
+      price_currency: "usd",
+      price_amount: body.price_amount,
+      pay_address: "test-address",
+      pay_amount: 0.0001,
+      pay_currency: "btc",
+    };
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify(invoice));
+  });
+  const secret = "test-ipn-secret";
+  const s = fixture(t, {
+    testMode: false,
+    paymentKey: "test-key",
+    paymentSecret: secret,
+    paymentBase: base,
+    publicUrl: "https://example.invalid",
+  });
+  const { agent, user } = await register(s.app);
+  await agent
+    .post("/api/deposits")
+    .send({ amount: 20, currency: "btc" })
+    .expect(201);
+  const payload = { ...invoice, payment_status: "finished" };
+  const sign = (v) =>
+    createHmac("sha512", secret)
+      .update(JSON.stringify(canonical(v)))
+      .digest("hex");
+  await request(s.app).post("/api/payments/ipn").send(payload).expect(401);
+  const wrong = { ...payload, price_amount: 999 };
+  await request(s.app)
+    .post("/api/payments/ipn")
+    .set("x-nowpayments-sig", sign(wrong))
+    .send(wrong)
+    .expect(400);
+  assert.equal(balance(s.db, user.id).total, 0);
+  for (const amount of ["not-a-number", null, -1]) {
+    const invalid = { ...payload, price_amount: amount };
+    await request(s.app)
+      .post("/api/payments/ipn")
+      .set("x-nowpayments-sig", sign(invalid))
+      .send(invalid)
+      .expect(400);
+    assert.equal(balance(s.db, user.id).total, 0);
+  }
+  for (let i = 0; i < 2; i++)
+    await request(s.app)
+      .post("/api/payments/ipn")
+      .set("x-nowpayments-sig", sign(payload))
+      .send(payload)
+      .expect(200);
+  assert.equal(credits(balance(s.db, user.id).total), 20000);
+  const sparseUpdate = { ...payload };
+  delete sparseUpdate.pay_address;
+  await request(s.app)
+    .post("/api/payments/ipn")
+    .set("x-nowpayments-sig", sign(sparseUpdate))
+    .send(sparseUpdate)
+    .expect(200);
+  assert.equal(
+    (await agent.get("/api/deposits")).body.data[0].payload.pay_address,
+    invoice.pay_address,
+  );
+  assert.equal(
+    s.db.prepare("SELECT COUNT(*) n FROM ledger WHERE kind='deposit'").get().n,
+    1,
+  );
+});
+test("account closure revokes access and deletes content while retaining financial audit", async (t) => {
+  const s = fixture(t);
+  const { agent, user } = await register(s.app);
+  const key = await keyFor(agent);
+  await agent.post("/api/conversations").send({ title: "Private" }).expect(201);
+  await agent.delete("/api/account").send({ confirm: "no" }).expect(400);
+  await agent.delete("/api/account").send({ confirm: "DELETE" }).expect(200);
+  await request(s.app)
+    .get("/v1/models")
+    .set("Authorization", "Bearer " + key.key)
+    .expect(401);
+  assert.equal(
+    s.db.prepare("SELECT username FROM users WHERE id=?").get(user.id).username,
+    null,
+  );
+  assert.equal(
+    s.db
+      .prepare("SELECT COUNT(*) n FROM conversations WHERE user_id=?")
+      .get(user.id).n,
+    0,
+  );
+  assert.ok(
+    s.db.prepare("SELECT COUNT(*) n FROM ledger WHERE user_id=?").get(user.id)
+      .n > 0,
+  );
+});

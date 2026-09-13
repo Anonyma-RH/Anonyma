@@ -979,3 +979,142 @@ test("the standalone CLI streams an authenticated one-shot answer and receipt", 
   assert.match(result.stdout, /credits/);
   assert.match(result.stdout, /LOCAL TEST/);
 });
+
+test("image batches retain successful outputs and charge them once after a later provider failure", async (t) => {
+  let calls = 0;
+  const png =
+    "data:image/png;base64," +
+    readFileSync("data/test-image.png").toString("base64");
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    calls++;
+    res.writeHead(calls === 1 ? 200 : 503, {
+      "content-type": "application/json",
+    });
+    res.end(
+      JSON.stringify(
+        calls === 1
+          ? {
+              choices: [{ message: { images: [{ image_url: { url: png } }] } }],
+              cost: 0.02,
+            }
+          : { error: { message: "Test outage" } },
+      ),
+    );
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "image-batch-funding");
+  const body = {
+    model: imageModel,
+    prompt: "A blue circle",
+    n: 3,
+    requestId: "partial-batch",
+  };
+  const result = await agent.post("/api/images").send(body).expect(200);
+  assert.equal(result.body.partial, true);
+  assert.equal(result.body.data.length, 1);
+  assert.match(result.body.warning, /Only saved images/);
+  assert.equal(result.body.receipt.credits_charged, 20);
+  assert.equal(result.body.data[0].cost, 20);
+  assert.equal(calls, 2);
+  assert.equal((await agent.get("/api/media")).body.data.length, 1);
+  assert.equal(balance(s.db, user.id).held, 0);
+  await agent.post("/api/images").send(body).expect(409);
+  assert.equal(calls, 2);
+  await agent
+    .post("/api/images")
+    .send({ ...body, images: "not-an-array" })
+    .expect(400);
+});
+
+test("invalid credit and settlement amounts cannot corrupt ledger or release held funds", async (t) => {
+  const s = fixture(t);
+  const { user } = await register(s.app);
+  reserve(s.db, { id: "checked-cost", user: user.id, amount: 1000 });
+  for (const value of [NaN, Infinity, -1, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.throws(
+      () => settle(s.db, "checked-cost", value),
+      /could not be verified/,
+    );
+    assert.throws(
+      () => addCredit(s.db, user.id, value, uid()),
+      /positive integer/,
+    );
+  }
+  assert.equal(balance(s.db, user.id).held, 1000);
+  assert.equal(settle(s.db, "checked-cost", 200).charged, 200);
+});
+
+test("real SMTP adapter delivers to a local capture server and removes failed challenges", async (t) => {
+  const { createServer: tcpServer } = await import("node:net");
+  let mail = "",
+    reject = false;
+  const sockets = new Set();
+  const smtp = tcpServer((socket) => {
+    sockets.add(socket);
+    socket.on("close", () => sockets.delete(socket));
+    socket.setEncoding("utf8");
+    socket.write("220 localhost ESMTP test\r\n");
+    let buffer = "",
+      data = false;
+    socket.on("data", (chunk) => {
+      buffer += chunk;
+      let end;
+      while ((end = buffer.indexOf("\r\n")) >= 0) {
+        const line = buffer.slice(0, end);
+        buffer = buffer.slice(end + 2);
+        if (data) {
+          if (line === ".") {
+            data = false;
+            socket.write("250 captured\r\n");
+          } else mail += line + "\n";
+        } else if (/^EHLO|^HELO/.test(line))
+          socket.write("250-localhost\r\n250 SIZE 1000000\r\n");
+        else if (/^MAIL FROM/.test(line))
+          socket.write(reject ? "550 fixture refused\r\n" : "250 OK\r\n");
+        else if (/^DATA/.test(line)) {
+          data = true;
+          socket.write("354 Send message\r\n");
+        } else if (/^QUIT/.test(line)) socket.end("221 Bye\r\n");
+        else socket.write("250 OK\r\n");
+      }
+    });
+  });
+  await new Promise((resolve) => smtp.listen(0, "127.0.0.1", resolve));
+  t.after(() => {
+    for (const socket of sockets) socket.destroy();
+    smtp.close();
+  });
+  const s = fixture(t, {
+    testMode: false,
+    smtp: `smtp://127.0.0.1:${smtp.address().port}`,
+    smtpFrom: "Anonyma <sender@example.invalid>",
+  });
+  const agent = request.agent(s.app);
+  const sent = await agent
+    .post("/api/auth/email/send")
+    .send({ email: "recipient@example.invalid" })
+    .expect(200);
+  assert.equal(sent.body.testCode, undefined);
+  assert.match(mail, /To: recipient@example.invalid/);
+  const code = mail.match(/Your code is (\d{6})/)[1];
+  await agent
+    .post("/api/auth/email/verify")
+    .send({ id: sent.body.id, code })
+    .expect(200);
+  reject = true;
+  const failed = await agent
+    .post("/api/auth/email/send")
+    .send({ email: "unreachable@example.invalid" })
+    .expect(503);
+  assert.equal(failed.body.error.code, "email_unavailable");
+  assert.equal(
+    s.db
+      .prepare(
+        "SELECT COUNT(*) n FROM challenges WHERE target='unreachable@example.invalid'",
+      )
+      .get().n,
+    0,
+  );
+});

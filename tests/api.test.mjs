@@ -1118,3 +1118,116 @@ test("real SMTP adapter delivers to a local capture server and removes failed ch
     0,
   );
 });
+
+test("expired image batches recover persisted charges exactly once and leave known videos reserved", async (t) => {
+  const s = fixture(t);
+  const { user } = await register(s.app);
+  reserve(s.db, {
+    id: "recover-image",
+    user: user.id,
+    amount: 10000,
+    kind: "image",
+    ttl: -100,
+  });
+  s.db.prepare("UPDATE holds SET result=? WHERE id=?").run(
+    JSON.stringify({
+      delivered: 2400,
+      mediaIds: ["already-delivered"],
+      description: "Test image",
+    }),
+    "recover-image",
+  );
+  reserve(s.db, {
+    id: "keep-video",
+    user: user.id,
+    amount: 10000,
+    kind: "video",
+    ttl: -100,
+  });
+  await s.tick();
+  await s.tick();
+  const receipt = JSON.parse(
+    s.db.prepare("SELECT result FROM holds WHERE id='recover-image'").get()
+      .result,
+  );
+  assert.equal(receipt.charged, 2400);
+  assert.equal(
+    s.db
+      .prepare("SELECT COUNT(*) n FROM ledger WHERE ref='recover-image'")
+      .get().n,
+    1,
+  );
+  assert.equal(
+    s.db.prepare("SELECT status FROM holds WHERE id='keep-video'").get().status,
+    "held",
+  );
+});
+
+test("maintenance does not release an expired reservation while its image request is still active", async (t) => {
+  let service, heldDuringRequest;
+  const png =
+    "data:image/png;base64," +
+    readFileSync("data/test-image.png").toString("base64");
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    service.db.prepare("UPDATE holds SET expires=0 WHERE kind='image'").run();
+    await service.tick();
+    heldDuringRequest = service.db
+      .prepare("SELECT status FROM holds WHERE kind='image'")
+      .get().status;
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        choices: [{ message: { images: [{ image_url: { url: png } }] } }],
+        cost: -9,
+      }),
+    );
+  });
+  service = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(service.app);
+  addCredit(service.db, user.id, 100000000, "active-image-fund");
+  const result = await agent
+    .post("/api/images")
+    .send({ model: imageModel, prompt: "A circle" })
+    .expect(200);
+  assert.equal(heldDuringRequest, "held");
+  assert.equal(result.body.receipt.credits_charged, 47);
+  assert.equal(balance(service.db, user.id).held, 0);
+});
+
+test("video polling is bounded and rotates through all queued jobs", async (t) => {
+  let active = 0,
+    peak = 0;
+  const polled = new Set();
+  const gateway = await mockServer(t, async (req, res) => {
+    active++;
+    peak = Math.max(peak, active);
+    polled.add(req.url.split("/").at(-1));
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    active--;
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ status: "processing" }));
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { user } = await register(s.app);
+  for (let i = 0; i < 21; i++)
+    s.db
+      .prepare("INSERT INTO videos VALUES(?,?,?,?,?,?,?,?,?,?)")
+      .run(
+        "queued-" + i,
+        user.id,
+        "hold-" + i,
+        "provider-" + i,
+        "pending",
+        "{}",
+        null,
+        null,
+        1,
+        1,
+      );
+  await s.tick();
+  assert.equal(polled.size, 20);
+  await s.tick();
+  assert.equal(polled.size, 21);
+  assert.ok(peak > 1 && peak <= 4);
+});

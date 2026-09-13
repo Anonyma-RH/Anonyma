@@ -881,3 +881,101 @@ test("API compatibility clamps output, retains last 40 strings, skips parts, and
   assert.equal(received.messages[0].content, "Message 1");
   assert.equal(received.messages.at(-1).content, "Message 40");
 });
+test("unreadable responses and upstream deadline charge exactly the reservation and report it", async (t) => {
+  let timeoutMode = false;
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    if (timeoutMode) {
+      setTimeout(() => {
+        res.writeHead(200);
+        res.end();
+      }, 120);
+      return;
+    }
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    res.end("data: {broken-json}\n\n");
+  });
+  const s = fixture(t, {
+    testMode: false,
+    gateway,
+    gatewayKey: "fixture",
+    requestTimeoutMs: 40,
+  });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "failure-fund");
+  const key = await keyFor(agent);
+  const auth = "Bearer " + key.key;
+  const bad = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .send(prompt)
+    .expect(502);
+  assert.equal(bad.body.error.code, "provider_unreadable");
+  assert.ok(bad.body.askr.credits_charged > 0);
+  const hold = s.db
+    .prepare("SELECT * FROM holds ORDER BY created DESC LIMIT 1")
+    .get();
+  assert.equal(JSON.parse(hold.result).charged, hold.amount);
+  timeoutMode = true;
+  const timed = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .send(prompt)
+    .expect(504);
+  assert.equal(timed.body.error.code, "provider_timeout");
+  assert.ok(timed.body.askr.credits_charged > 0);
+  assert.equal(balance(s.db, user.id).held, 0);
+});
+test("upstream disconnect preserves partial history and returns an honest billing receipt", async (t) => {
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, { choices: [{ delta: { content: "Partial answer" } }] });
+    res.end();
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "interruption-fund");
+  const workspace = await agent.post("/api/chat").send(prompt).expect(200);
+  assert.match(workspace.text, /provider_interrupted/);
+  const message = s.db
+    .prepare("SELECT content FROM messages WHERE role='assistant'")
+    .get();
+  assert.equal(JSON.parse(message.content).interrupted, true);
+  assert.equal(JSON.parse(message.content).text, "Partial answer");
+  const key = await keyFor(agent);
+  const result = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send(prompt)
+    .expect(502);
+  assert.equal(result.body.error.code, "provider_interrupted");
+  assert.ok(result.body.anonyma.credits_charged > 0);
+  assert.equal(balance(s.db, user.id).held, 0);
+});
+test("the standalone CLI streams an authenticated one-shot answer and receipt", async (t) => {
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const s = fixture(t);
+  const { agent } = await register(s.app);
+  const key = await keyFor(agent);
+  const http = s.app.listen(0, "127.0.0.1");
+  await new Promise((r) => http.once("listening", r));
+  t.after(() => new Promise((r) => http.close(r)));
+  const run = promisify(execFile);
+  const result = await run(
+    process.execPath,
+    ["cli/anonyma.mjs", "Hello from the CLI"],
+    {
+      env: {
+        ...process.env,
+        ANONYMA_API_KEY: key.key,
+        ANONYMA_BASE_URL: "http://127.0.0.1:" + http.address().port + "/v1",
+        ANONYMA_MODEL: chatModel,
+      },
+    },
+  );
+  assert.match(result.stdout, /Hello from the CLI/);
+  assert.match(result.stdout, /credits/);
+  assert.match(result.stdout, /LOCAL TEST/);
+});

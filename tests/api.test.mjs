@@ -1231,3 +1231,168 @@ test("video polling is bounded and rotates through all queued jobs", async (t) =
   assert.equal(polled.size, 21);
   assert.ok(peak > 1 && peak <= 4);
 });
+
+test("live video adapter refuses fixture flags and recovers completion without duplicate media or charges", async (t) => {
+  let fixtureFlag = true;
+  const video =
+    "data:video/mp4;base64," +
+    readFileSync("data/test-video.mp4").toString("base64");
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify(
+        req.method === "POST"
+          ? { id: "video-upstream" }
+          : {
+              status: "completed",
+              cost: "invalid",
+              data: fixtureFlag ? { test: true } : { url: video },
+            },
+      ),
+    );
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "video-recovery-fund");
+  const job = await agent
+    .post("/api/videos")
+    .send({
+      model: "kling-2.5-turbo",
+      prompt: "A circle moving",
+      ratio: "16:9",
+      duration: "5",
+    })
+    .expect(202);
+  await s.tick();
+  assert.equal((await agent.get("/api/media")).body.data.length, 0);
+  assert.ok(balance(s.db, user.id).held > 0);
+  fixtureFlag = false;
+  await s.tick();
+  const media = (await agent.get("/api/media")).body.data;
+  assert.equal(media.length, 1);
+  assert.equal(media[0].cost, 402.5);
+  const count = s.db
+    .prepare("SELECT COUNT(*) n FROM ledger WHERE kind='video'")
+    .get().n;
+  s.db
+    .prepare("UPDATE videos SET status='processing' WHERE id=?")
+    .run(job.body.id);
+  await s.tick();
+  assert.equal((await agent.get("/api/media")).body.data.length, 1);
+  assert.equal(
+    s.db.prepare("SELECT COUNT(*) n FROM ledger WHERE kind='video'").get().n,
+    count,
+  );
+});
+
+test("payment callbacks can arrive before invoice creation returns without lost credits or status regression", async (t) => {
+  const secret = "early-callback-fixture";
+  let s;
+  const base = await mockServer(t, async (req, res) => {
+    const body = await readJSON(req);
+    const update = {
+      payment_id: "early-42",
+      order_id: body.order_id,
+      price_amount: body.price_amount,
+      price_currency: "usd",
+      pay_currency: "btc",
+      payment_status: "finished",
+    };
+    const signature = createHmac("sha512", secret)
+      .update(JSON.stringify(canonical(update)))
+      .digest("hex");
+    await request(s.app)
+      .post("/api/payments/ipn")
+      .set("x-nowpayments-sig", signature)
+      .send(update)
+      .expect(200);
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        ...update,
+        payment_status: "waiting",
+        pay_address: "test-only-address",
+        pay_amount: 0.001,
+      }),
+    );
+  });
+  s = fixture(t, {
+    testMode: false,
+    paymentKey: "fixture",
+    paymentSecret: secret,
+    paymentBase: base,
+    publicUrl: "https://payments.example.invalid",
+  });
+  const { agent, user } = await register(s.app);
+  const result = await agent
+    .post("/api/deposits")
+    .send({ amount: 20, currency: "btc", requestId: "early" })
+    .expect(201);
+  assert.equal(result.body.payment_status, "finished");
+  assert.equal(result.body.pay_address, "test-only-address");
+  await agent
+    .post("/api/deposits")
+    .send({ amount: 20, currency: "btc", requestId: "early" })
+    .expect(200);
+  assert.equal(credits(balance(s.db, user.id).total), 20000);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 1);
+});
+
+test("uncertain invoice creation blocks closure and recovers from a later authenticated callback", async (t) => {
+  let invoice;
+  const secret = "late-callback-fixture";
+  const base = await mockServer(t, async (req, res) => {
+    const body = await readJSON(req);
+    invoice = {
+      payment_id: "late-42",
+      order_id: body.order_id,
+      price_amount: body.price_amount,
+      price_currency: "usd",
+      pay_currency: "btc",
+      payment_status: "finished",
+    };
+    res.destroy();
+  });
+  const s = fixture(t, {
+    testMode: false,
+    paymentKey: "fixture",
+    paymentSecret: secret,
+    paymentBase: base,
+    publicUrl: "https://payments.example.invalid",
+  });
+  const { agent, user } = await register(s.app);
+  await agent
+    .post("/api/deposits")
+    .send({ amount: 20, currency: "btc", requestId: "late" })
+    .expect(502);
+  assert.equal(
+    s.db.prepare("SELECT status FROM deposits").get().status,
+    "reconciliation",
+  );
+  await agent.delete("/api/account").send({ confirm: "DELETE" }).expect(409);
+  await agent
+    .post("/api/deposits")
+    .send({ amount: 20, currency: "btc", requestId: "late" })
+    .expect(409);
+  const signature = (body) =>
+    createHmac("sha512", secret)
+      .update(JSON.stringify(canonical(body)))
+      .digest("hex");
+  const invalid = { ...invoice, pay_currency: "eth" };
+  await request(s.app)
+    .post("/api/payments/ipn")
+    .set("x-nowpayments-sig", signature(invalid))
+    .send(invalid)
+    .expect(400);
+  assert.equal(
+    s.db.prepare("SELECT provider_id FROM deposits").get().provider_id,
+    null,
+  );
+  await request(s.app)
+    .post("/api/payments/ipn")
+    .set("x-nowpayments-sig", signature(invoice))
+    .send(invoice)
+    .expect(200);
+  assert.equal(credits(balance(s.db, user.id).total), 20000);
+});

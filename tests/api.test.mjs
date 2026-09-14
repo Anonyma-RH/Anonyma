@@ -1481,3 +1481,93 @@ test("malformed API bodies return client errors and wallet linking requires a se
   await agent.delete("/api/account").expect(400);
   await agent.get("/api/me").expect(200);
 });
+
+test("password recovery invalidates older email recovery and login codes", async (t) => {
+  const s = fixture(t);
+  const { agent } = await register(s.app);
+  const email = "recovery@example.invalid";
+  const link = (
+    await agent
+      .post("/api/auth/email/send")
+      .send({ email, purpose: "link" })
+      .expect(200)
+  ).body;
+  await agent
+    .post("/api/auth/email/verify")
+    .send({ id: link.id, code: link.testCode })
+    .expect(200);
+  const old = (
+    await agent
+      .post("/api/auth/email/send")
+      .send({ email, purpose: "recover" })
+      .expect(200)
+  ).body;
+  const login = (
+    await agent
+      .post("/api/auth/email/send")
+      .send({ email, purpose: "login" })
+      .expect(200)
+  ).body;
+  const reset = (
+    await agent
+      .post("/api/auth/email/send")
+      .send({ email, purpose: "recover" })
+      .expect(200)
+  ).body;
+  await agent
+    .post("/api/auth/email/verify")
+    .send({
+      id: reset.id,
+      code: reset.testCode,
+      password: "a-new-long-password",
+    })
+    .expect(200);
+  await request(s.app)
+    .post("/api/auth/email/verify")
+    .send({ id: old.id, code: old.testCode, password: "another-long-password" })
+    .expect(400);
+  await request(s.app)
+    .post("/api/auth/email/verify")
+    .send({ id: login.id, code: login.testCode })
+    .expect(400);
+  await request(s.app)
+    .post("/api/auth/password")
+    .send({ username: "tester", password: "a-new-long-password" })
+    .expect(200);
+});
+
+test("null image parts and malformed generation IDs fail before reserving funds", async (t) => {
+  const s = fixture(t);
+  const { agent, user } = await register(s.app);
+  await agent
+    .post("/api/chat")
+    .send({ ...prompt, messages: [{ role: "user", content: [null] }] })
+    .expect(400);
+  for (const requestId of [{}, [], 42, ""]) {
+    await agent
+      .post("/api/chat")
+      .send({ ...prompt, requestId })
+      .expect(400);
+    await agent
+      .post("/api/images")
+      .send({ model: imageModel, prompt: "hello", requestId })
+      .expect(400);
+  }
+  assert.equal(balance(s.db, user.id).held, 0);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds").get().n, 0);
+});
+
+test("request receipts are recoverable after completion and isolated by account", async (t) => {
+  const s = fixture(t);
+  const { agent } = await register(s.app);
+  const other = await register(s.app, "other");
+  await agent
+    .post("/api/chat")
+    .send({ ...prompt, requestId: "recover-me" })
+    .expect(200);
+  const result = (await agent.get("/api/requests/recover-me").expect(200)).body;
+  assert.equal(result.status, "settled");
+  assert.ok(result.receipt.credits_charged > 0);
+  await other.agent.get("/api/requests/recover-me").expect(404);
+  await request(s.app).get("/api/requests/recover-me").expect(401);
+});

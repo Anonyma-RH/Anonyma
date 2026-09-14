@@ -1571,3 +1571,72 @@ test("request receipts are recoverable after completion and isolated by account"
   await other.agent.get("/api/requests/recover-me").expect(404);
   await request(s.app).get("/api/requests/recover-me").expect(401);
 });
+
+test("a later chat-image download failure bills and exposes saved partial output", async (t) => {
+  const png = readFileSync(
+    new URL("../data/test-image.png", import.meta.url),
+  ).toString("base64");
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, {
+      choices: [
+        {
+          delta: {
+            images: [
+              { image_url: { url: "data:image/png;base64," + png } },
+              { image_url: { url: "https://untrusted.invalid/image.png" } },
+            ],
+          },
+        },
+      ],
+    });
+    event(res, { choices: [{ delta: {}, finish_reason: "stop" }] });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, { testMode: false, gatewayKey: "fixture", gateway });
+  const { agent, user } = await register(s.app);
+  addCredit(
+    s.db,
+    user.id,
+    usdUnits(10),
+    "fund-partial-image",
+    "deposit",
+    "Test-only funding in temporary isolated database",
+  );
+  const response = await agent
+    .post("/api/chat")
+    .send({
+      model: imageModel,
+      messages: prompt.messages,
+      requestId: "partial-image",
+    })
+    .expect(200);
+  assert.match(response.text, /error/);
+  const state = (await agent.get("/api/requests/partial-image")).body;
+  assert.equal(state.status, "settled");
+  assert.ok(state.receipt.credits_charged > 0);
+  assert.equal(balance(s.db, user.id).held, 0);
+  const media = (await agent.get("/api/media")).body.data;
+  assert.equal(media.length, 1);
+  assert.equal(media[0].cost, state.receipt.credits_charged);
+  assert.match(response.text, new RegExp(media[0].id));
+  const stored = s.db
+    .prepare("SELECT content FROM messages WHERE role='assistant'")
+    .get();
+  assert.equal(JSON.parse(stored.content).images.length, 1);
+});
+
+test("HTTP API contract and downloaded CLI reflect the configured installation without leaking configuration", async (t) => {
+  const s = fixture(t, {
+    publicUrl: "https://anonyma.example.invalid",
+    gatewayKey: "secret-not-for-contract",
+  });
+  const doc = (await request(s.app).get("/api/openapi.json").expect(200)).body;
+  assert.equal(doc.openapi, "3.1.0");
+  assert.ok(doc.paths["/api/requests/{id}"]);
+  assert.ok(!JSON.stringify(doc).includes("secret-not-for-contract"));
+  const cli = (await request(s.app).get("/cli.mjs").expect(200)).text;
+  assert.match(cli, /https:\/\/anonyma\.example\.invalid\/v1/);
+  assert.ok(!cli.includes("secret-not-for-contract"));
+});

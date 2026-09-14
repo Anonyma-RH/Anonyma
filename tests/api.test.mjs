@@ -1396,3 +1396,88 @@ test("uncertain invoice creation blocks closure and recovers from a later authen
     .expect(200);
   assert.equal(credits(balance(s.db, user.id).total), 20000);
 });
+
+test("background payment checks settle invoices without browser polling or a delivered webhook", async (t) => {
+  let invoice,
+    checks = 0;
+  const base = await mockServer(t, async (req, res) => {
+    if (req.method === "POST") {
+      const body = await readJSON(req);
+      invoice = {
+        payment_id: "poll-42",
+        order_id: body.order_id,
+        price_amount: body.price_amount,
+        price_currency: "usd",
+        pay_currency: "btc",
+        payment_status: "waiting",
+      };
+    } else checks++;
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        ...invoice,
+        payment_status: checks ? "finished" : "waiting",
+      }),
+    );
+  });
+  const s = fixture(t, {
+    testMode: false,
+    paymentKey: "fixture",
+    paymentSecret: "fixture",
+    paymentBase: base,
+    publicUrl: "https://payments.example.invalid",
+    paymentPollIntervalMs: 0,
+  });
+  const { agent, user } = await register(s.app);
+  await agent
+    .post("/api/deposits")
+    .send({ amount: 10, currency: "btc" })
+    .expect(201);
+  s.db.prepare("UPDATE deposits SET updated=0").run();
+  await s.tick();
+  await s.tick();
+  assert.equal(checks, 1);
+  assert.equal(credits(balance(s.db, user.id).total), 10000);
+});
+
+test("invalid upstream token counts fall back to estimates and never strand reservations", async (t) => {
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, { choices: [{ delta: { content: "A useful answer" } }] });
+    event(res, {
+      choices: [],
+      usage: { prompt_tokens: -100, completion_tokens: "oops" },
+    });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 10000000, "invalid-usage-test");
+  const key = await keyFor(agent);
+  const result = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send(prompt)
+    .expect(200);
+  assert.ok(result.body.usage.prompt_tokens > 0);
+  assert.ok(result.body.usage.completion_tokens > 0);
+  assert.ok(result.body.anonyma.credits_charged > 0);
+  assert.equal(balance(s.db, user.id).held, 0);
+});
+
+test("malformed API bodies return client errors and wallet linking requires a session", async (t) => {
+  const s = fixture(t);
+  await request(s.app)
+    .post("/api/auth/register")
+    .set("Content-Type", "application/json")
+    .expect(400);
+  await request(s.app).post("/api/auth/register").send([]).expect(400);
+  await request(s.app)
+    .post("/api/auth/wallet/challenge")
+    .send({ address: Wallet.createRandom().address, link: true })
+    .expect(401);
+  const { agent } = await register(s.app);
+  await agent.delete("/api/account").expect(400);
+  await agent.get("/api/me").expect(200);
+});

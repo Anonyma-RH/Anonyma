@@ -4,6 +4,8 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   build: {
     outDir: "dist/client",
+    // The walkthrough's Three.js/Lottie chunk is lazy-loaded and knowingly large.
+    chunkSizeWarningLimit: 900,
   },
   optimizeDeps: {
     include: ["react", "react-dom/client"],

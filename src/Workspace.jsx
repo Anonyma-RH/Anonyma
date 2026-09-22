@@ -1,1609 +1,1411 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import Markdown from "react-markdown";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { readChatEvents } from "./stream";
-import { videoPresets } from "../data/video-presets.js";
+import { useApp } from "./context.jsx";
 import {
-  MessageSquare,
-  Code2,
-  Image,
-  Video,
-  Plus,
-  ArrowUp,
-  ArrowUpRight,
-  ChevronDown,
-  ChevronRight,
-  Search,
-  X,
-  Paperclip,
-  Square,
-  Copy,
-  Download,
-  Trash2,
-  PanelLeft,
-  PanelRight,
-  History,
-  FolderOpen,
-  SlidersHorizontal,
-  Check,
-  RefreshCw,
-  Wallet,
-  LoaderCircle,
-  ExternalLink,
-  FileCode,
-  Expand,
-  Pencil,
-} from "lucide-react";
-import {
-  api,
-  useApp,
+  Logo,
+  Mark,
+  Icon,
   Button,
-  ErrorBox,
+  Notice,
+  Empty,
   Modal,
   CopyButton,
-  ProviderIcon,
-  fmt,
-  date,
+  PixelTile,
+  BandLines,
+  BandSteps,
+} from "./ui.jsx";
+import AsciiField from "./AsciiField.jsx";
+import { Reveal } from "./ReferenceMotion.jsx";
+import WorkspaceHome from "./WorkspaceHome.jsx";
+import {
+  api,
+  streamChat,
+  readStore,
+  saveStore,
   download,
-  Empty,
-  generationPrice,
-} from "./lib";
-const modes = [
-  ["chat", MessageSquare, "Ask", "Think, plan and explore."],
-  ["code", Code2, "Code", "Build, debug and explain."],
-  ["image", Image, "Images", "Create and refine visuals."],
-  ["video", Video, "Video", "Direct your next clip."],
+  uid,
+  messageFromServer,
+  toRequestMessage,
+  videoPresets,
+} from "./lib.js";
+const initial = [
+  {
+    id: "welcome",
+    title: "A fresh perspective",
+    mode: "chat",
+    messages: [
+      { role: "user", content: "What can I explore in this workspace?" },
+      {
+        role: "assistant",
+        content:
+          "Welcome to your ANONYMA demo.\n\nExplore **chat, code, images and video** in one place. Switch models, organize your conversations and discover a shared credit experience.\n\nThis is a prepared example. No AI request has been made and no credits have been charged.",
+        sample: true,
+      },
+    ],
+  },
 ];
-const modeLabel = {
-  chat: "Ask",
-  code: "Code",
-  image: "Images",
-  video: "Video",
-};
-function textOf(content) {
-  return typeof content === "string"
-    ? content
-    : content?.text ||
-        (Array.isArray(content)
-          ? content
-              .filter((p) => p.type === "text")
-              .map((p) => p.text)
-              .join("\n")
-          : "");
-}
-function imageOf(content) {
-  return Array.isArray(content)
-    ? content.filter((p) => p.type === "image_url").map((p) => p.image_url.url)
-    : content?.images?.map((i) => i.image_url?.url || i.url) || [];
-}
-export function ModelPicker({
-  mode,
-  selected,
-  onSelect,
+const sampleChat =
+  "Here is a starting point for your idea.\n\n### Make space for the possibility\n\n1. **Start with the outcome.** Describe what you want to create and who it is for.\n2. **Choose your approach.** Use chat to explore, code to build, and image or video to visualize.\n3. **Keep what works.** Refine your prompt and return to the conversation when you are ready.\n\nThis is a prepared UI demonstration, not a response from the selected model.";
+const sampleCode =
+  'Here is an editable starting point for a simple idea card.\n\n```jsx\n// IdeaCard.jsx — prepared demo example\nexport default function IdeaCard({ title, description }) {\n  return (\n    <article className="idea-card">\n      <span>A LITTLE POSSIBILITY</span>\n      <h2>{title}</h2>\n      <p>{description}</p>\n    </article>\n  );\n}\n```\n\n```css\n/* idea-card.css */\n.idea-card {\n  padding: 32px;\n  background: #fdfff8;\n  border: 1px solid #dfe3d9;\n}\n```\n\nFiles are available in the code panel. This workspace does not execute code.';
+export function AppSidebar({
+  active = "chat",
+  demo = false,
+  children,
+  open = false,
   onClose,
-  multi = false,
 }) {
-  const { models, modelInfo } = useApp(),
-    [q, setQ] = useState(""),
-    [filter, setFilter] = useState("all");
-  const relevant = models.filter((m) =>
-    mode === "image"
-      ? m.imageCapable
-      : mode === "video"
-        ? m.type === "video"
-        : m.type === "chat" && !m.imageCapable,
-  );
-  const list = relevant
-    .filter(
-      (m) =>
-        `${m.id} ${m.name} ${m.owned_by}`
-          .toLowerCase()
-          .includes(q.toLowerCase()) &&
-        (filter === "all" ||
-          (filter === "popular" && m.popular) ||
-          (filter === "vision" && m.vision) ||
-          (filter === "code" && /code|coder|devstral|claude|gpt/i.test(m.id)) ||
-          (filter === "reasoning" &&
-            /reason|think|o3|o4|r1|gpt-5/i.test(m.id)) ||
-          (filter === "cheap" && (m.pricing?.input_per_1M_tokens || 0) < 1) ||
-          (filter === "long" && m.context_length >= 128000)),
-    )
-    .sort(
-      (a, b) =>
-        Number(b.callable) - Number(a.callable) ||
-        Number(b.popular) - Number(a.popular),
-    );
+  const q = demo ? "?demo=1" : "";
+  const { user } = useApp();
+  const signedIn = !demo && user;
   return (
-    <Modal
-      title={multi ? "Compare image models" : "Choose a model"}
-      onClose={onClose}
-      wide
-    >
-      <div className="search-field">
-        <Search size={18} />
-        <input
-          autoFocus
-          placeholder="Search models or providers…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <kbd>ESC</kbd>
-      </div>
-      <div className="pills model-picker-filters">
-        {(mode === "image" || mode === "video"
-          ? ["all"]
-          : ["all", "popular", "code", "reasoning", "vision", "cheap", "long"]
-        ).map((v) => (
-          <button
-            key={v}
-            className={v === filter ? "active" : ""}
-            onClick={() => setFilter(v)}
-          >
-            {v === "long" ? "Long context" : v}
-          </button>
-        ))}
-      </div>
-      <div className="picker-list">
-        {list.map((m) => (
-          <button
-            key={m.id}
-            className={
-              (
-                Array.isArray(selected)
-                  ? selected.includes(m.id)
-                  : selected === m.id
-              )
-                ? "active"
-                : ""
-            }
-            disabled={!m.callable}
-            onClick={() => onSelect(m.id)}
-          >
-            <ProviderIcon provider={m.owned_by} />
-            <div>
-              <strong>{m.name}</strong>
-              <small>{m.id}</small>
-            </div>
-            <div className="picker-price">
-              <span>
-                {mode === "image"
-                  ? fmt(m.imagePrice * 1000) + " cr"
-                  : mode === "video"
-                    ? fmt(generationPrice(m) * 1000) + " cr"
-                    : "$" + (m.pricing?.input_per_1M_tokens || 0) + "/M"}
-              </span>
-              <small>
-                {!m.callable
-                  ? "Not configured"
-                  : m.context_length
-                    ? fmt(m.context_length / 1000) + "K context"
-                    : "per generation"}
-              </small>
-            </div>
-            {(Array.isArray(selected)
-              ? selected.includes(m.id)
-              : selected === m.id) && <Check size={16} />}
-          </button>
-        ))}
-      </div>
-      {!list.length && (
-        <Empty title="No models found">Try another search.</Empty>
-      )}
-      {multi && (
-        <Button className="full" onClick={onClose}>
-          Use selected models
-        </Button>
-      )}
-      <p className="fineprint">
-        {modelInfo?.live
-          ? "Catalog refreshed from the provider"
-          : "Reference catalog snapshot"}
-        {modelInfo?.updatedAt ? ` · ${date(modelInfo.updatedAt)}` : ""}. Only
-        connected, supported models are selectable. ⌘K opens this picker.
-      </p>
-    </Modal>
-  );
-}
-function artifactsFrom(messages) {
-  const files = [];
-  messages
-    .filter((m) => m.role === "assistant")
-    .forEach((m, version) => {
-      const code = textOf(m.content);
-      const regex = /```([^\n]*)\n([\s\S]*?)```/g;
-      let match;
-      let index = 0;
-      while ((match = regex.exec(code))) {
-        const info = match[1].trim(),
-          lang = info.split(/\s/)[0] || "text";
-        const ext =
-          {
-            javascript: "js",
-            typescript: "ts",
-            python: "py",
-            jsx: "jsx",
-            tsx: "tsx",
-            html: "html",
-            css: "css",
-            json: "json",
-            bash: "sh",
-            sql: "sql",
-            markdown: "md",
-          }[lang] || "txt";
-        const filename = (
-          info.match(/(?:filename=|file=)([^\s]+)/)?.[1] ||
-          `file-${++index}.${ext}`
-        ).replace(/[\\/]/g, "-");
-        files.push({
-          name: filename,
-          language: lang,
-          code: match[2],
-          version: version + 1,
-          id: `${version}-${files.length}`,
-        });
-      }
-    });
-  return files;
-}
-function Artifacts({ files, onClose }) {
-  const [selected, setSelected] = useState("");
-  const file = files.find((f) => f.id === selected) || files.at(-1);
-  return (
-    <aside className="artifact-panel">
-      <div className="panel-title">
-        <h3>
-          <FileCode size={16} /> Code files
-        </h3>
+    <aside className={"app-sidebar " + (open ? "shown" : "")}>
+      <div className="sidebar-brand">
+        <Logo />
         <button
-          className="icon-button"
-          aria-label="Close code panel"
+          className="icon-button mobile-only"
           onClick={onClose}
+          aria-label="Close sidebar"
         >
-          <X size={18} />
+          <Icon name="close" />
         </button>
       </div>
-      <div className="artifact-tabs">
-        {files.map((f) => (
-          <button
-            key={f.id}
-            className={file?.id === f.id ? "active" : ""}
-            onClick={() => setSelected(f.id)}
+      <div className="sidebar-group-label">WORKSPACE</div>
+      <nav aria-label="Workspace navigation">
+        {[
+          ["home", "Home"],
+          ["chat", "Chat & reason"],
+          ["code", "Code & build"],
+          ["image", "Images"],
+          ["video", "Video"],
+          ["library", "Your library"],
+        ].map(([id, t]) => (
+          <Link
+            key={id}
+            className={active === id ? "active" : ""}
+            to={"/workspace/" + id + q}
           >
-            {f.name}
-            <small>v{f.version}</small>
-          </button>
+            <PixelTile name={id} />
+            {t}
+            {active === id && <span className="nav-active-dot" />}
+          </Link>
         ))}
+      </nav>
+      {children}
+      <div className="sidebar-bottom">
+        <Link to="/models">
+          <PixelTile name="models" />
+          Explore models
+          <Icon name="diagonal" size={13} />
+        </Link>
+        <Link to={"/account/keys" + q}>
+          <PixelTile name="key" />
+          Developer API
+        </Link>
+        <Link to={"/account/credits" + q}>
+          <PixelTile name="credits" />
+          Credits
+        </Link>
+        <Link to={"/account" + q}>
+          <span className="avatar">
+            {demo ? "D" : signedIn ? user.username?.[0]?.toUpperCase() || "A" : "A"}
+          </span>
+          <span>
+            {demo ? "Demo workspace" : signedIn ? user.username || "Your account" : "Your account"}
+            <small>
+              {demo
+                ? "Local sample · no charges"
+                : signedIn
+                  ? `${Number(user.available || 0).toLocaleString()} credits available`
+                  : "Balance & settings"}
+            </small>
+          </span>
+          <Icon name="settings" size={16} />
+        </Link>
       </div>
-      {file ? (
-        <>
-          <div className="artifact-actions">
-            <span>
-              {file.language} · version {file.version}
-            </span>
-            <CopyButton text={file.code} />
-            <button
-              className="copy-button"
-              aria-label="Download selected code file"
-              onClick={() => download(file.code, file.name)}
-            >
-              <Download size={14} />
-            </button>
-          </div>
-          <pre>
-            <code>{file.code}</code>
-          </pre>
-          <Button
-            variant="outline"
-            onClick={async () => {
-              const { default: JSZip } = await import("jszip");
-              const zip = new JSZip();
-              files.forEach((f) => zip.file(`v${f.version}/${f.name}`, f.code));
-              const blob = await zip.generateAsync({ type: "blob" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = "anonyma-code.zip";
-              a.click();
-              setTimeout(() => URL.revokeObjectURL(url), 1000);
-            }}
-          >
-            <Download size={15} /> Save all files
-          </Button>
-        </>
-      ) : (
-        <Empty title="Your code appears here">
-          Ask for a code example to create a downloadable file.
-        </Empty>
-      )}
-      <p className="fineprint">
-        Generated source is not executed in this workspace.
-      </p>
     </aside>
   );
 }
-export function Workspace() {
-  const { models, user, refresh, config } = useApp(),
-    navigate = useNavigate(),
-    [params] = useSearchParams();
-  const initialMode = ["chat", "code", "image", "video"].includes(
-    params.get("mode"),
-  )
-    ? params.get("mode")
-    : "chat";
-  const [mode, setMode] = useState(initialMode),
-    [modelId, setModelId] = useState(params.get("model") || ""),
+export default function Workspace() {
+  const { mode = "home" } = useParams();
+  const location = useLocation();
+  const welcomeRef = useRef();
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const demo = params.get("demo") === "1";
+  const { models, user, connected, config, refresh } = useApp();
+  const [all, setAll] = useState(() =>
+      demo ? readStore("conversations", initial) : [],
+    ),
+    [current, setCurrent] = useState(null),
     [messages, setMessages] = useState([]),
-    [conversations, setConversations] = useState([]),
-    [conversation, setConversation] = useState(null),
     [prompt, setPrompt] = useState(""),
-    [attachments, setAttachments] = useState([]),
+    [model, setModel] = useState(params.get("model") || models[0]?.id || ""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [picker, setPicker] = useState(false),
-    [sidebar, setSidebar] = useState(false),
-    [showCode, setShowCode] = useState(true),
-    [library, setLibrary] = useState(false),
-    [media, setMedia] = useState([]),
-    [jobs, setJobs] = useState([]),
-    [zoom, setZoom] = useState(null),
+    [info, setInfo] = useState(""),
+    [receipt, setReceipt] = useState(null),
+    [attachments, setAttachments] = useState([]),
+    [media, setMedia] = useState(() => (demo ? readStore("media", []) : [])),
+    [dialog, setDialog] = useState(null),
+    [menu, setMenu] = useState(false),
     [n, setN] = useState(1),
-    [compare, setCompare] = useState([]),
-    [multiPicker, setMultiPicker] = useState(false),
-    [ratio, setRatio] = useState("16:9"),
-    [duration, setDuration] = useState("5"),
-    [quality, setQuality] = useState("standard"),
-    [imageUrl, setImageUrl] = useState(""),
-    [estimate, setEstimate] = useState(null),
-    [maxTokens, setMaxTokens] = useState(4096),
-    [settings, setSettings] = useState(false),
-    [libraryFilter, setLibraryFilter] = useState("all");
-  const [renaming, setRenaming] = useState(null);
-  const [savingTitle, setSavingTitle] = useState(false);
-  const [titleError, setTitleError] = useState("");
-  const controller = useRef(null),
-    conversationLoad = useRef(0),
-    bottom = useRef(null),
-    fileInput = useRef(null),
-    textarea = useRef(null);
-  const selected = models.find((m) => m.id === modelId);
-  const eligible = models.filter(
-    (m) =>
-      m.callable &&
-      (mode === "image"
-        ? m.imageCapable
-        : mode === "video"
-          ? m.type === "video"
-          : m.type === "chat" && !m.imageCapable),
-  );
-  const explicitUnavailable =
-    modelId === params.get("model") &&
-    modelId &&
-    models.length &&
-    (!selected || !selected.callable);
-  const model = explicitUnavailable
-    ? selected || { id: modelId, name: modelId, callable: false }
-    : eligible.find((m) => m.id === modelId) ||
-      eligible.find((m) => m.id === "google/gemini-2.5-flash") ||
-      eligible.find((m) => m.popular) ||
-      eligible[0] ||
-      selected;
-  const presets = videoPresets(model);
-  const files = useMemo(() => artifactsFrom(messages), [messages]);
-  async function loadHistory() {
-    if (!user) return;
-    try {
-      setConversations((await api("/api/conversations")).data);
-    } catch (e) {
-      setError(e.message);
-    }
-  }
-  async function loadMedia() {
-    if (!user) return;
-    try {
-      const [m, j] = await Promise.all([
-        api("/api/media"),
-        api("/api/videos"),
-        refresh(),
-      ]);
-      setMedia(m.data);
-      setJobs(j.data);
-    } catch (e) {
-      setError(e.message);
-    }
-  }
-  useEffect(() => {
-    loadHistory();
-    loadMedia();
-  }, [user?.id]);
-  useEffect(() => {
-    if (!user) return;
-    const timer = setInterval(() => {
-      if (
-        mode === "video" ||
-        jobs.some((j) => ["pending", "processing"].includes(j.status))
-      )
-        loadMedia();
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [
-    user?.id,
+    [compareModels, setCompareModels] = useState([]),
+    [jobs, setJobs] = useState([]),
+    [quote, setQuote] = useState(null),
+    [filter, setFilter] = useState("all"),
+    [rename, setRename] = useState(""),
+    // null = not chosen yet, so the first published option wins over the "default" preset.
+    [video, setVideo] = useState({ quality: null, ratio: null, duration: null, image: "" });
+  const controller = useRef(),
+    timer = useRef(),
+    streamEnd = useRef();
+  const validMode = ["home", "chat", "code", "image", "video", "library"].includes(
     mode,
-    jobs.some((j) => ["pending", "processing"].includes(j.status)),
-  ]);
+  );
+  // Demo shows the catalog for illustration; live mode offers only models the service can run.
+  const visibleModels = models.filter((m) =>
+    mode === "image"
+      ? demo
+        ? m.imageCapable || m.type === "image"
+        : m.imageCapable && m.callable
+      : mode === "video"
+        ? m.type === "video" && (demo || (m.callable && videoPresets(m).length > 0))
+        : m.type === "chat" && (demo || m.callable),
+  );
+  const selected = models.find((m) => m.id === model);
+  // Video choices come only from the model's published prices, as the server requires.
+  const presets = mode === "video" && selected ? videoPresets(selected) : [];
+  const pick = (values, value) => (values.includes(value) ? value : values[0] ?? "");
+  const qualities = [...new Set(presets.map((p) => p.quality))];
+  const vq = pick(qualities, video.quality);
+  const ratios = [...new Set(presets.filter((p) => p.quality === vq).map((p) => p.ratio))];
+  const vr = pick(ratios, video.ratio);
+  const durations = [
+    ...new Set(presets.filter((p) => p.quality === vq && p.ratio === vr).map((p) => p.duration)),
+  ];
+  const vd = pick(durations, video.duration);
+  const videoOption = presets.find((p) => p.quality === vq && p.ratio === vr && p.duration === vd);
+  const videoCredits = videoOption
+    ? Math.ceil(videoOption.price * 1000 * (1 + (Number(config?.markup) || 0) / 100))
+    : null;
+  const needsImage = !!(
+    selected?.capabilities?.requires_image_url || selected?.category === "image-to-video"
+  );
+  const acceptsImage = selected?.capabilities?.accepts_image_url !== false;
   useEffect(() => {
-    const fn = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setPicker((v) => !v);
-      }
-    };
-    window.addEventListener("keydown", fn);
-    return () => {
-      window.removeEventListener("keydown", fn);
-      controller.current?.abort();
-    };
-  }, []);
-  useEffect(() => {
-    if (busy)
-      bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, busy]);
-  useEffect(() => {
+    controller.current?.abort();
+    clearInterval(timer.current);
+    setBusy(false);
+    if (!visibleModels.some((m) => m.id === model))
+      setModel(visibleModels[0]?.id || "");
     setError("");
-    setEstimate(null);
-    if (mode === "video" && model) {
-      const preset = presets[0];
-      if (preset) {
-        setQuality(preset.quality);
-        setRatio(preset.ratio);
-        setDuration(preset.duration);
-        if (model.capabilities?.accepts_image_url === false) setImageUrl("");
-      }
-    }
-  }, [mode, model?.id]);
-  const content = () =>
-    attachments.length
-      ? [
-          { type: "text", text: prompt },
-          ...attachments.map((a) => ({
-            type: "image_url",
-            image_url: { url: a.url },
-          })),
-        ]
-      : prompt;
-  const context = () => {
-    const previous = messages
-      .filter((m) => ["user", "assistant"].includes(m.role))
-      .slice(-18)
-      .map((m) => ({
-        role: m.role,
-        content: m.role === "assistant" ? textOf(m.content) : m.content,
-      }));
-    return [
-      ...(mode === "code"
-        ? [
-            {
-              role: "system",
-              content:
-                "Help write and explain code. Put complete source in fenced code blocks with a language and filename=example.ext where useful.",
-            },
-          ]
-        : []),
-      ...previous,
-      { role: "user", content: content() },
-    ].slice(-20);
-  };
-  useEffect(() => {
-    if (!user || !model?.callable || !prompt.trim()) {
-      setEstimate(null);
-      return;
-    }
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      try {
-        const j = await api("/api/quote", {
-          method: "POST",
-          body: {
-            model: model.id,
-            messages:
-              mode === "chat" || mode === "code"
-                ? context()
-                : [{ role: "user", content: prompt }],
-            max_tokens: maxTokens,
-            n: mode === "image" ? n : 1,
-            ratio,
-            duration,
-            quality,
-            image_url: mode === "video" ? imageUrl || undefined : undefined,
-          },
-        });
-        if (!cancelled) setEstimate(j);
-      } catch {
-        if (!cancelled) setEstimate(null);
-      }
-    }, 450);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [
-    prompt,
-    model?.id,
-    attachments.length,
-    maxTokens,
-    n,
-    ratio,
-    duration,
-    quality,
-    imageUrl,
-    user?.id,
-  ]);
-  function changeMode(next) {
-    if (busy) return;
-    setMode(next);
-    setLibrary(false);
-    setError("");
+    setReceipt(null);
+    setQuote(null);
+    setPrompt(location.state?.prompt || "");
     setAttachments([]);
-  }
-  async function selectConversation(id) {
-    if (busy) return;
-    const version = ++conversationLoad.current;
-    try {
-      const c = await api("/api/conversations/" + id);
-      if (version !== conversationLoad.current) return;
-      setConversation(id);
-      setMessages(c.messages.map((m) => ({ ...m, usage: m.content?.usage })));
-      setMode(c.mode === "code" ? "code" : "chat");
-      setLibrary(false);
-      setSidebar(false);
-      setError("");
-      setAttachments([]);
-    } catch (e) {
-      if (version === conversationLoad.current) setError(e.message);
+    setCurrent(null);
+    setMessages([]);
+    setMenu(false);
+  }, [mode, demo]);
+  useEffect(() => {
+    if (demo && !saveStore("conversations", all))
+      setInfo("Browser storage is full. Export your work before leaving.");
+  }, [all, demo]);
+  useEffect(() => {
+    if (demo) saveStore("media", media);
+  }, [media, demo]);
+  useEffect(() => {
+    if (!demo && !user) {
+      setAll([]);
+      setMedia([]);
+      setMessages([]);
+      setCurrent(null);
     }
+    if (!demo && user) {
+      api("/api/conversations")
+        .then((r) => setAll(r.data))
+        .catch((e) => setError(e.message));
+      api("/api/media")
+        .then((r) => setMedia(r.data))
+        .catch((e) => setError(e.message));
+    }
+  }, [demo, user]);
+  useEffect(
+    () => () => {
+      controller.current?.abort();
+      clearInterval(timer.current);
+    },
+    [],
+  );
+  useEffect(() => {
+    if (!demo && user && mode === "video") {
+      let seen = null;
+      const poll = () =>
+        api("/api/videos")
+          .then((r) => {
+            const done = r.data.filter((j) => j.status === "completed").length;
+            if (seen !== null && done > seen) {
+              api("/api/media")
+                .then((m) => setMedia(m.data))
+                .catch(() => {});
+              refresh();
+            }
+            seen = done;
+            setJobs(r.data);
+          })
+          .catch((e) => setError(e.message));
+      poll();
+      const id = setInterval(poll, 5000);
+      return () => clearInterval(id);
+    }
+  }, [mode, demo, user]);
+  useEffect(() => {
+    streamEnd.current?.scrollIntoView({ block: "nearest" });
+  }, [messages, busy]);
+  function persist(next, id = current) {
+    if (!demo) return;
+    const key = id || uid();
+    setCurrent(key);
+    setAll((prev) => {
+      const old = prev.find((c) => c.id === key);
+      const row = {
+        id: key,
+        title:
+          old?.title ||
+          next.find((m) => m.role === "user")?.content?.slice(0, 40) ||
+          "New conversation",
+        mode,
+        messages: next,
+      };
+      return [row, ...prev.filter((c) => c.id !== key)].slice(0, 300);
+    });
   }
-  function reset() {
-    if (busy) return;
-    conversationLoad.current++;
-    setConversation(null);
+  function newChat() {
+    controller.current?.abort();
+    clearInterval(timer.current);
+    setBusy(false);
+    setCurrent(null);
     setMessages([]);
     setPrompt("");
-    setAttachments([]);
-    setLibrary(false);
-    setSidebar(false);
+    setReceipt(null);
     setError("");
   }
-  async function attach(files) {
+  async function openChat(c) {
+    if (mode !== c.mode) {
+      navigate("/workspace/" + c.mode + (demo ? "?demo=1" : ""));
+      setTimeout(() => {
+        setCurrent(c.id);
+        setMessages(c.messages || []);
+      }, 100);
+    } else {
+      setCurrent(c.id);
+      setMessages(c.messages || []);
+    }
+    if (!demo) {
+      try {
+        const r = await api("/api/conversations/" + c.id);
+        setCurrent(c.id);
+        setMessages(r.messages.map(messageFromServer));
+      } catch (e) {
+        setError(e.message);
+      }
+    }
+    setMenu(false);
+  }
+  async function addFiles(e) {
     setError("");
-    const incoming = Array.from(files);
-    if (attachments.length + incoming.length > 8) {
-      setError("You can attach up to eight images.");
+    const files = [...e.target.files];
+    if (files.length + attachments.length > 8) {
+      setError("Choose up to 8 reference images.");
+      e.target.value = "";
       return;
     }
-    const all = [];
-    for (const file of incoming) {
-      if (
-        !["image/png", "image/jpeg", "image/webp", "image/gif"].includes(
-          file.type,
-        )
-      ) {
-        setError("Only PNG, JPEG, WebP and GIF images are supported.");
-        return;
-      }
-      if (file.size > 1.5 * 1024 * 1024) {
-        setError("Each image must be smaller than 1.5 MB.");
-        return;
-      }
-      const url = await new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result);
-        r.onerror = reject;
-        r.readAsDataURL(file);
-      });
-      all.push({ name: file.name, url });
+    if (
+      files.some(
+        (f) =>
+          !["image/png", "image/jpeg", "image/webp", "image/gif"].includes(
+            f.type,
+          ) || f.size > 1.5 * 1024 * 1024,
+      )
+    ) {
+      setError("Use PNG, JPEG, WebP or GIF images up to 1.5 MiB each.");
+      e.target.value = "";
+      return;
     }
-    setAttachments((a) => [...a, ...all]);
+    const values = await Promise.all(
+      files.map(
+        (f) =>
+          new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve({ name: f.name, url: reader.result });
+            reader.readAsDataURL(f);
+          }),
+      ),
+    );
+    setAttachments((prev) => [...prev, ...values]);
+    e.target.value = "";
   }
   async function send(e) {
     e?.preventDefault();
-    if (busy || !prompt.trim()) return;
-    if (!user) {
-      navigate("/signin?next=/ask");
-      return;
-    }
-    if (!model?.callable) {
-      setError(
-        "This model is not available for generation yet. Please choose an available model or try again after the service is connected.",
-      );
-      return;
-    }
-    if (mode === "video" && requiresVideoImage && !imageUrl.trim()) {
-      setError(
-        "This video model needs a starting image. Add its HTTPS image link before generating.",
-      );
-      return;
-    }
-    setBusy(true);
-    conversationLoad.current++;
-    setError("");
-    const sentPrompt = prompt,
-      bodyContent = content();
-    const ac = new AbortController();
-    controller.current = ac;
-    try {
-      if (mode === "image") {
-        const ids = compare.length ? compare : [model.id];
-        const results = await Promise.allSettled(
-          ids.map((id) =>
-            api("/api/images", {
-              method: "POST",
-              body: {
-                model: id,
-                prompt: sentPrompt,
-                n,
-                images: attachments.map((a) => a.url),
-                requestId: crypto.randomUUID(),
-              },
-              signal: ac.signal,
-            }),
-          ),
+    if (!prompt.trim() || busy) return;
+    if (!demo) {
+      if (!user) {
+        setError(
+          connected
+            ? "Sign in to start generating, or open the demo."
+            : "Sign in to generate when the account service is connected, or open the demo.",
         );
-        const errors = results.filter((r) => r.status === "rejected");
-        const warnings = results
-          .filter((r) => r.status === "fulfilled" && r.value.warning)
-          .map((r) => r.value.warning);
-        if (errors.length || warnings.length)
-          setError(
-            [...errors.map((r) => r.reason.message), ...warnings].join(" · "),
-          );
-        await loadMedia();
-        setLibrary(true);
-        setLibraryFilter("image");
-      } else if (mode === "video") {
-        await api("/api/videos", {
-          method: "POST",
-          body: {
-            model: model.id,
-            prompt: sentPrompt,
-            ratio,
-            duration,
-            quality,
-            image_url: imageUrl || undefined,
-            requestId: crypto.randomUUID(),
-          },
-          signal: ac.signal,
-        });
-        await loadMedia();
-        setLibrary(true);
-        setLibraryFilter("video");
-      } else {
-        const requestMessages = context();
-        setMessages((prev) => [
-          ...prev,
-          { role: "user", content: bodyContent },
-          {
-            role: "assistant",
-            content: { text: "", reasoning: "" },
-            model: model.id,
-            pending: true,
-          },
-        ]);
-        setPrompt("");
-        setAttachments([]);
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: model.id,
-            messages: requestMessages,
-            conversationId: conversation,
-            mode,
-            max_tokens: maxTokens,
-            requestId: crypto.randomUUID(),
-          }),
-          signal: ac.signal,
-        });
-        if (!response.ok) {
-          const j = await response.json();
-          throw Error(j.error?.message || "Generation failed.");
-        }
-        let text = "",
-          reasoning = "",
-          interrupted = false,
-          receipt = null;
-        const images = [];
-        for await (const chunk of readChatEvents(response)) {
-          if (chunk.error) {
-            interrupted = true;
-            setError(chunk.error.message);
-          }
-          if (chunk.conversationId) setConversation(chunk.conversationId);
-          const delta = chunk.choices?.[0]?.delta || {};
-          text += delta.content || "";
-          reasoning += delta.reasoning || delta.reasoning_content || "";
-          if (delta.images) images.push(...delta.images);
-          if (chunk.anonyma) receipt = { ...chunk.anonyma, usage: chunk.usage };
-          setMessages((prev) => [
-            ...prev.slice(0, -1),
-            {
-              role: "assistant",
-              content: { text, reasoning, images: [...images], interrupted },
-              model: model.id,
-              pending: true,
-              credits: receipt?.credits_charged,
-              usage: receipt?.usage,
-            },
-          ]);
-        }
-        setMessages((prev) =>
-          prev.map((m, i) =>
-            i === prev.length - 1 ? { ...m, pending: false } : m,
-          ),
-        );
-        await loadHistory();
+        return;
       }
-      await refresh();
-    } catch (e) {
+      if (!selected?.callable || !config?.services?.generation) {
+        setError("This model is not currently available for generation.");
+        return;
+      }
+    }
+    setError("");
+    setInfo("");
+    setReceipt(null);
+    setBusy(true);
+    controller.current = new AbortController();
+    const text = prompt.trim();
+    const requestId = uid();
+    if (mode === "image" || mode === "video") {
+      try {
+        if (demo) {
+          if (mode === "video") {
+            setJobs([
+              {
+                id: requestId,
+                status: "processing",
+                sample: true,
+                request: { prompt: text },
+              },
+            ]);
+            await new Promise((resolve, reject) => {
+              const id = setTimeout(resolve, 1200);
+              controller.current.signal.addEventListener(
+                "abort",
+                () => {
+                  clearTimeout(id);
+                  reject(new DOMException("Aborted", "AbortError"));
+                },
+                { once: true },
+              );
+            });
+            setJobs([
+              {
+                id: requestId,
+                status: "completed",
+                sample: true,
+                request: { prompt: text },
+              },
+            ]);
+            const item = {
+              id: requestId,
+              kind: "video",
+              url: "/media/anonyma-hero.mp4",
+              prompt: text,
+              model: "Prepared animation",
+              sample: true,
+              created: Date.now(),
+            };
+            setMedia((prev) => [item, ...prev]);
+          } else {
+            await new Promise((r) => setTimeout(r, 650));
+            if (controller.current.signal.aborted) return;
+            const targets = compareModels.length ? compareModels : [model];
+            const additions = targets.flatMap((m, j) =>
+              Array.from({ length: n }, (_, i) => ({
+                id: uid(),
+                kind: "image",
+                url: "/media/sample-" + (((i + j) % 3) + 1) + ".svg",
+                prompt: text,
+                model: models.find((x) => x.id === m)?.name || m,
+                sample: true,
+                created: Date.now(),
+              })),
+            );
+            setMedia((prev) => [...additions, ...prev]);
+          }
+          setInfo(
+            "Prepared sample shown. Your prompt was not sent to an AI provider. No credits charged.",
+          );
+          setReceipt({ credits_charged: 0, sample: true });
+        } else if (mode === "image") {
+          const targets = compareModels.length ? compareModels : [model];
+          const results = await Promise.allSettled(
+            targets.map((m) =>
+              api("/api/images", {
+                method: "POST",
+                body: {
+                  model: m,
+                  prompt: text,
+                  n,
+                  images: attachments.map((a) => a.url),
+                  requestId: uid(),
+                },
+                signal: controller.current.signal,
+              }),
+            ),
+          );
+          const successes = results.filter((r) => r.status === "fulfilled");
+          setMedia((prev) => [
+            ...successes.flatMap((r) => r.value.data),
+            ...prev,
+          ]);
+          const failures = results.filter((r) => r.status === "rejected");
+          if (failures.length)
+            setError(
+              `${failures.length} model request(s) failed: ${failures.map((r) => r.reason.message).join("; ")}. Completed results are retained.`,
+            );
+          // Each compared model is a separate request with its own charge.
+          const parts = results
+            .map((r, i) =>
+              r.status === "fulfilled"
+                ? {
+                    model: models.find((x) => x.id === targets[i])?.name || targets[i],
+                    credits: Number(r.value.receipt?.credits_charged) || 0,
+                  }
+                : null,
+            )
+            .filter(Boolean);
+          if (parts.length)
+            setReceipt({
+              credits_charged: Math.round(parts.reduce((t, p) => t + p.credits, 0) * 10000) / 10000,
+              parts: parts.length > 1 ? parts : null,
+              local_test: successes.some((r) => r.value.testMode),
+            });
+        } else {
+          if (!videoOption)
+            throw new Error("This video model has no published price for these options.");
+          if (needsImage && !video.image.trim())
+            throw new Error("This video model needs a public HTTPS start image.");
+          const r = await api("/api/videos", {
+            method: "POST",
+            body: {
+              model,
+              prompt: text,
+              ...(vq ? { quality: vq } : {}),
+              ...(vr ? { ratio: vr } : {}),
+              ...(vd ? { duration: vd } : {}),
+              ...(video.image.trim() && acceptsImage ? { image_url: video.image.trim() } : {}),
+              requestId,
+            },
+            signal: controller.current.signal,
+          });
+          setJobs((prev) => [r, ...prev]);
+          setInfo(
+            "Video submitted. Completion will be confirmed by the service.",
+          );
+        }
+        setPrompt("");
+      } catch (err) {
+        setError(
+          err.name === "AbortError"
+            ? "Stopped waiting. Upstream work may still continue; check your library and receipts."
+            : err.message,
+        );
+      } finally {
+        setBusy(false);
+        if (!demo) refresh();
+      }
+      return;
+    }
+    const next = [
+      ...messages,
+      { role: "user", content: text, images: attachments.map((a) => a.url) },
+    ];
+    setPrompt("");
+    setAttachments([]);
+    setMessages([...next, { role: "assistant", content: "", sample: demo }]);
+    if (demo) {
+      const answer = mode === "code" ? sampleCode : sampleChat;
+      let index = 0;
+      timer.current = setInterval(() => {
+        index += 28;
+        const now = [
+          ...next,
+          { role: "assistant", content: answer.slice(0, index), sample: true },
+        ];
+        setMessages(now);
+        if (index >= answer.length) {
+          clearInterval(timer.current);
+          setBusy(false);
+          persist(now);
+          setReceipt({ credits_charged: 0, sample: true });
+        }
+      }, 25);
+      return;
+    }
+    let output = "",
+      liveId = current,
+      reasoning = "",
+      images = [];
+    try {
+      await streamChat(
+        {
+          model,
+          messages: next.slice(-20).map(toRequestMessage),
+          conversationId: current,
+          mode,
+          max_tokens: 4096,
+          requestId,
+        },
+        (event) => {
+          if (event.error)
+            throw new Error(
+              event.error.message || "The stream ended with an error.",
+            );
+          if (event.conversationId) liveId = event.conversationId;
+          output += event.choices?.[0]?.delta?.content || "";
+          reasoning +=
+            event.choices?.[0]?.delta?.reasoning_content ||
+            event.choices?.[0]?.delta?.reasoning ||
+            "";
+          for (const img of event.choices?.[0]?.delta?.images || []) {
+            const url = img?.image_url?.url || img?.url;
+            if (url) images = [...images, url];
+          }
+          if (event.anonyma) setReceipt(event.anonyma);
+          setMessages([
+            ...next,
+            { role: "assistant", content: output, reasoning, images },
+          ]);
+        },
+        controller.current.signal,
+      );
+      setCurrent(liveId);
+    } catch (err) {
       setError(
-        e.name === "AbortError"
-          ? "Generation stopped. Partial output may be billed."
-          : e.message,
+        err.name === "AbortError"
+          ? "Stopped. Partial billing may apply; refresh receipts before retrying."
+          : err.message,
       );
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.pending
-            ? {
-                ...m,
-                pending: false,
-                content: { ...m.content, interrupted: true },
-              }
-            : m,
-        ),
-      );
-      await refresh();
-      await loadHistory();
     } finally {
       setBusy(false);
-      controller.current = null;
+      refresh();
+      api("/api/conversations")
+        .then((r) => setAll(r.data))
+        .catch(() => {});
     }
   }
-  const visibleMedia = media.filter(
-    (m) => libraryFilter === "all" || m.kind === libraryFilter,
-  );
-  const jobList = jobs.filter((j) => j.status !== "completed");
-  function chooseVideoOption(field, value) {
-    const choices = presets.filter((p) => p[field] === value);
-    const current = { quality, ratio, duration };
-    const next =
-      choices.find((p) =>
-        Object.keys(current).every(
-          (key) => key === field || p[key] === current[key],
-        ),
-      ) || choices[0];
-    if (next) {
-      setQuality(next.quality);
-      setRatio(next.ratio);
-      setDuration(next.duration);
+  function stop() {
+    clearInterval(timer.current);
+    controller.current?.abort();
+    setBusy(false);
+    if (demo) {
+      persist(messages);
+      setInfo("Sample stopped. No credits were charged.");
     }
   }
-  const videoRatios = [
-    ...new Set(
-      presets.filter((p) => p.quality === quality).map((p) => p.ratio),
-    ),
-  ];
-  const videoQualities = [...new Set(presets.map((p) => p.quality))];
-  const requiresVideoImage =
-    model?.capabilities?.requires_image_url ||
-    model?.category === "image-to-video";
-  const durations = [
-    ...new Set(
-      presets
-        .filter((p) => p.quality === quality && p.ratio === ratio)
-        .map((p) => p.duration),
-    ),
-  ];
+  async function quoteRequest() {
+    setError("");
+    if (demo) {
+      setQuote({ credits: 0, sample: true });
+      return;
+    }
+    try {
+      const r = await api("/api/quote", {
+        method: "POST",
+        body: {
+          model,
+          messages: [...messages, { role: "user", content: prompt }],
+          max_tokens: 4096,
+        },
+      });
+      setQuote(r);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+  async function confirmDialog() {
+    try {
+      if (dialog.type === "rename") {
+        if (!rename.trim()) return;
+        if (!demo)
+          await api("/api/conversations/" + dialog.item.id, {
+            method: "PATCH",
+            body: { title: rename.trim() },
+          });
+        setAll((prev) =>
+          prev.map((c) =>
+            c.id === dialog.item.id ? { ...c, title: rename.trim() } : c,
+          ),
+        );
+      } else if (dialog.type === "delete") {
+        if (!demo)
+          await api("/api/conversations/" + dialog.item.id, {
+            method: "DELETE",
+          });
+        setAll((prev) => prev.filter((c) => c.id !== dialog.item.id));
+        if (current === dialog.item.id) newChat();
+      } else if (dialog.type === "media") {
+        if (!demo)
+          await api("/api/media/" + dialog.item.id, { method: "DELETE" });
+        setMedia((prev) => prev.filter((m) => m.id !== dialog.item.id));
+      }
+      setDialog(null);
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+  const files = messages
+    .filter((m) => m.role === "assistant")
+    .flatMap((m) =>
+      [...m.content.matchAll(/```(\w*)\n([\s\S]*?)```/g)].map((match, i) => ({
+        name:
+          match[1] === "jsx"
+            ? "IdeaCard.jsx"
+            : match[1] === "css"
+              ? "idea-card.css"
+              : `file-${i + 1}.${match[1] || "txt"}`,
+        content: match[2],
+      })),
+    );
+  const hasResults =
+    (mode === "image" || mode === "video") &&
+    (jobs.some((j) => j.status !== "completed") ||
+      media.some((m) => m.kind === mode));
+  async function exportZip() {
+    const { default: JSZip } = await import("jszip");
+    const zip = new JSZip();
+    files.forEach((f) => zip.file(f.name, f.content));
+    download(
+      "anonyma-code.zip",
+      await zip.generateAsync({ type: "uint8array" }),
+      "application/zip",
+    );
+  }
+  if (!validMode)
+    return (
+      <main id="main">
+        <Empty
+          title="Workflow not found"
+          action={<Button to="/workspace/chat">Open chat</Button>}
+        >
+          Choose a supported workspace.
+        </Empty>
+      </main>
+    );
   return (
-    <div className="workspace">
-      <aside className={"workspace-sidebar " + (sidebar ? "open" : "")}>
-        <div className="sidebar-top">
-          <div className="rail-heading">
-            <span>WORKSPACE</span>
-            <Link to="/support">Support</Link>
-          </div>
-          <Link
-            to="/account"
-            className={"sidebar-balance " + (!user ? "unsigned" : "")}
-          >
-            <span>
-              {user ? "YOUR BALANCE" : "NOT SIGNED IN"}{" "}
-              <ArrowUpRight size={12} />
-            </span>
-            <strong>
-              {user ? (
-                <>
-                  {fmt(user.available, 2)} <small>credits</small>
-                </>
-              ) : (
-                "Sign in to start"
-              )}
-            </strong>
-            {user && <span>Available to use</span>}
-          </Link>
-          <Button variant="outline full" onClick={reset} disabled={busy}>
-            <Plus size={16} /> New chat <kbd>＋</kbd>
-          </Button>
-        </div>
-        <div className="history-label">RECENT CHATS</div>
-        <div className="history-list">
-          {conversations.map((c) => (
-            <div key={c.id} className={conversation === c.id ? "active" : ""}>
-              <button disabled={busy} onClick={() => selectConversation(c.id)}>
-                <MessageSquare size={14} />
-                <span>{c.title}</span>
-              </button>
+    <main id="main" className="app-shell">
+      <AppSidebar
+        active={mode}
+        demo={demo}
+        open={menu}
+        onClose={() => setMenu(false)}
+      >
+        <button className="new-conversation" onClick={newChat}>
+          <Icon name="plus" size={17} />
+          New conversation
+        </button>
+        <div className="sidebar-group-label">RECENT CONVERSATIONS</div>
+        <div className="conversation-list">
+          {(demo ? all : user ? all : []).slice(0, 12).map((c) => (
+            <div className={c.id === current ? "current" : ""} key={c.id}>
+              <button onClick={() => openChat(c)}>{c.title}</button>
               <button
-                className="delete-chat"
-                title="Rename conversation"
-                aria-label={"Rename " + c.title}
-                disabled={busy}
+                className="conversation-options"
+                aria-label={"Options for " + c.title}
                 onClick={() => {
-                  setTitleError("");
-                  setRenaming({ id: c.id, title: c.title });
+                  setRename(c.title);
+                  setDialog({ type: "rename", item: c });
                 }}
               >
-                <Pencil size={12} />
-              </button>
-              <button
-                className="delete-chat"
-                title="Delete conversation"
-                aria-label={"Delete " + c.title}
-                disabled={busy}
-                onClick={async () => {
-                  try {
-                    await api("/api/conversations/" + c.id, {
-                      method: "DELETE",
-                    });
-                    if (conversation === c.id) reset();
-                    loadHistory();
-                  } catch (e) {
-                    setError(e.message);
-                  }
-                }}
-              >
-                <Trash2 size={12} />
+                ···
               </button>
             </div>
           ))}
-          {!conversations.length && (
-            <p>
-              Your conversations will
-              <br />
-              appear here.
-            </p>
+        </div>
+      </AppSidebar>
+      {menu && (
+        <button
+          className="sidebar-scrim"
+          aria-label="Close menu"
+          onClick={() => setMenu(false)}
+        />
+      )}
+      <div className="workspace-main">
+        <header className="workspace-header">
+          <button
+            className="icon-button mobile-only"
+            aria-label="Open workspace menu"
+            onClick={() => setMenu(true)}
+          >
+            <Icon name="menu" />
+          </button>
+          <span>
+            {
+              {
+                home: "Home",
+                chat: "Chat & reason",
+                code: "Code & build",
+                image: "Image studio",
+                video: "Video studio",
+                library: "Your library",
+              }[mode]
+            }
+            <span className="workspace-slash">/</span>
+            <small>{demo ? "Demo workspace" : "Personal workspace"}</small>
+          </span>
+          <div>
+            <Link
+              to={"/account/credits" + (demo ? "?demo=1" : "")}
+              className="balance-chip"
+            >
+              <Icon name="credits" size={15} />
+              {demo ? (
+                <>
+                  <b>1,000</b> available · 0 held
+                </>
+              ) : user ? (
+                <>
+                  <b>{Number(user.available || 0).toLocaleString()}</b> available ·{" "}
+                  {Number(user.held || 0).toLocaleString()} held
+                </>
+              ) : (
+                "Credits"
+              )}
+            </Link>
+            <Link
+              to={"/account/credits" + (demo ? "?demo=1" : "")}
+              className="header-add-credits"
+            >
+              Add credits
+            </Link>
+            <Link to="/" className="icon-button" aria-label="Back to website">
+              <Icon name="diagonal" size={17} />
+            </Link>
+          </div>
+        </header>
+        <div className="workspace-notice">
+          <span className={"dot " + (demo ? "demo-dot" : "")} />
+          {demo
+            ? "Interactive demo · Prepared examples · Saved in this browser"
+            : connected
+              ? config?.testMode
+                ? "Local test mode · Fixture balance · No real provider, payment or email"
+                : "Connected account service"
+              : "Preview · Account and generation services are not connected"}
+          {!demo && (
+            <Link to={"/workspace/" + mode + "?demo=1"}>
+              Try the demo <Icon name="arrow" size={13} />
+            </Link>
           )}
         </div>
-        <div className="sidebar-bottom">
-          <button
-            className={"library-link " + (library ? "active" : "")}
-            onClick={() => {
-              setLibrary(!library);
-              setSidebar(false);
-              loadMedia();
-            }}
-          >
-            <FolderOpen size={17} /> Your library <span>{media.length}</span>
-          </button>
-          <Link to="/account/deposit" className="sidebar-promo">
-            <Wallet size={17} />
-            <div>
-              <strong>One balance. Every model.</strong>
-              <p>Add credits. Make something.</p>
-            </div>
-            <ArrowUpRight size={14} />
-          </Link>
-          <Link to="/docs/api" className="sidebar-promo">
-            <Code2 size={17} />
-            <div>
-              <strong>Bring your own workflow.</strong>
-              <p>Connect with the API or CLI.</p>
-            </div>
-            <ArrowUpRight size={14} />
-          </Link>
-          <Link className="sidebar-user" to={user ? "/account" : "/signin"}>
-            <span>{(user?.username || "A").slice(0, 1).toUpperCase()}</span>
-            {user?.username || user?.email || "Sign in / Create account"}
-            <ChevronRight size={15} />
-          </Link>
-        </div>
-      </aside>
-      {sidebar && (
-        <div className="sidebar-shade" onClick={() => setSidebar(false)} />
-      )}
-      <main className="workspace-main">
-        <div className="workspace-toolbar">
-          <button
-            className="icon-button sidebar-toggle"
-            aria-label="Open history"
-            onClick={() => setSidebar(!sidebar)}
-          >
-            <PanelLeft size={19} />
-          </button>
-          <div className="mode-tabs">
-            {modes.map(([id, Icon]) => (
-              <button
-                key={id}
-                aria-label={modeLabel[id]}
-                aria-pressed={mode === id}
-                className={mode === id ? "active" : ""}
-                disabled={busy}
-                onClick={() => changeMode(id)}
-              >
-                <Icon size={16} />
-                <span>{modeLabel[id]}</span>
-              </button>
-            ))}
-          </div>
-          <div className="toolbar-right">
-            <Link className="compare-workspace" to="/compare">
-              ⇄ Compare
-            </Link>
-            {conversation && (
-              <button
-                title="Export conversation"
-                aria-label="Export conversation"
-                className="icon-button"
-                onClick={() =>
-                  download(
-                    { messages },
-                    "conversation.json",
-                    "application/json",
-                  )
-                }
-              >
-                <Download size={16} />
-              </button>
-            )}
-            <button
-              className="icon-button"
-              title="Saved library"
-              aria-label="Saved library"
-              onClick={() => {
-                setLibrary(!library);
-                loadMedia();
-              }}
-            >
-              <FolderOpen size={17} />
-            </button>
-            {mode === "code" && (
-              <button
-                className="icon-button"
-                aria-label="Toggle code panel"
-                onClick={() => setShowCode(!showCode)}
-              >
-                <PanelRight size={17} />
-              </button>
-            )}
-            <button
-              className="icon-button"
-              aria-label="Generation settings"
-              onClick={() => setSettings(true)}
-            >
-              <SlidersHorizontal size={17} />
-            </button>
-          </div>
-        </div>
-        <div className="workspace-content">
-          <div
-            className="conversation-column"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (mode !== "video") attach(e.dataTransfer.files);
-            }}
-          >
-            <div className="conversation-scroll">
-              {library ? (
-                <div className="library">
-                  <div className="panel-title">
-                    <div>
-                      <div className="eyebrow">SAVED TO YOUR ACCOUNT</div>
-                      <h1>Your library</h1>
-                    </div>
-                    <Button
-                      variant="ghost small"
-                      aria-label="Refresh library"
-                      onClick={() => loadMedia()}
-                    >
-                      <RefreshCw size={14} />
-                    </Button>
-                  </div>
-                  <div className="pills">
-                    {["all", "image", "video"].map((v) => (
-                      <button
-                        key={v}
-                        className={libraryFilter === v ? "active" : ""}
-                        onClick={() => setLibraryFilter(v)}
-                      >
-                        {v === "all"
-                          ? "Everything"
-                          : v === "image"
-                            ? "Images"
-                            : "Videos"}
-                      </button>
-                    ))}
-                  </div>
-                  {libraryFilter !== "image" &&
-                    jobList.map((j) => (
-                      <div className="video-job" key={j.id}>
-                        {["pending", "processing"].includes(j.status) ? (
-                          <LoaderCircle className="spin" size={18} />
-                        ) : (
-                          <Video size={18} />
-                        )}
-                        <div>
-                          <strong>
-                            {j.status} · {j.request.model}
-                          </strong>
-                          <p>{j.request.prompt}</p>
-                          {j.error && <small>{j.error}</small>}
-                        </div>
-                      </div>
-                    ))}
-                  {!visibleMedia.length && !jobList.length && (
-                    <Empty title="Room for your next idea">
-                      Generated images and videos will be saved here.
-                    </Empty>
-                  )}
-                  <div className="media-grid">
-                    {visibleMedia.map((m) => (
-                      <article className="media-card" key={m.id}>
-                        <button
-                          className="media-preview"
-                          onClick={() => setZoom(m)}
-                        >
-                          {m.kind === "video" ? (
-                            <video
-                              src={m.url + "#t=0.1"}
-                              preload="metadata"
-                              muted
-                            />
-                          ) : (
-                            <img src={m.url} alt={m.prompt} />
-                          )}
-                          <Expand size={19} />
-                          {config?.testMode && (
-                            <span className="media-test">
-                              LOCAL TEST FIXTURE
-                            </span>
-                          )}
-                        </button>
-                        <div>
-                          <p>{m.prompt}</p>
-                          <small>
-                            {m.model} · {fmt(m.cost, 4)} cr
-                          </small>
-                          <div className="media-actions">
-                            <a
-                              href={m.url + "?download=1"}
-                              download
-                              className="copy-button"
-                            >
-                              <Download size={14} /> Save
-                            </a>
-                            <button
-                              className="copy-button"
-                              onClick={() => {
-                                setMode(m.kind);
-                                setModelId(m.model);
-                                setPrompt(
-                                  m.prompt.replace(/^LOCAL TEST FIXTURE: /, ""),
-                                );
-                                setLibrary(false);
-                              }}
-                            >
-                              Rerun
-                            </button>
-                            <button
-                              className="copy-button"
-                              aria-label="Delete media"
-                              onClick={async () => {
-                                try {
-                                  await api("/api/media/" + m.id, {
-                                    method: "DELETE",
-                                  });
-                                  loadMedia();
-                                } catch (e) {
-                                  setError(e.message);
-                                }
-                              }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
+        <div
+          key={mode}
+          className={
+            "workspace-body " + (!messages.length ? "workspace-start " : "") +
+            (mode === "home" ? "workspace-home " : "") +
+            (hasResults ? "with-results " : "") +
+            (mode === "code" && files.length ? "with-code" : "")
+          }
+        >
+          {mode === "home" ? (
+            <WorkspaceHome
+              demo={demo}
+              user={user}
+              models={models}
+              conversations={all}
+              media={media}
+              onOpen={openChat}
+            />
+          ) : mode === "library" ? (
+            <div className="library-page">
+              <div className="page-heading-inline">
+                <div>
+                  <p className="eyebrow">YOURS TO COME BACK TO</p>
+                  <h1>Your library.</h1>
                 </div>
-              ) : messages.length && ["chat", "code"].includes(mode) ? (
-                <div className="messages">
-                  {messages.map((m, i) => (
-                    <article className={"message " + m.role} key={m.id || i}>
-                      <div className="message-avatar">
-                        {m.role === "user" ? (
-                          (user?.username || "You").slice(0, 1).toUpperCase()
-                        ) : (
-                          <ProviderIcon
-                            provider={
-                              models.find((v) => v.id === m.model)?.owned_by ||
-                              ""
-                            }
-                            size={22}
-                          />
-                        )}
-                      </div>
-                      <div className="message-body">
-                        <div className="message-name">
-                          {m.role === "user"
-                            ? "You"
-                            : models.find((v) => v.id === m.model)?.name ||
-                              "Assistant"}
-                          {m.pending && <span className="tiny-dot pulse" />}
+                <Button to={"/workspace/image" + (demo ? "?demo=1" : "")}>
+                  Create something <Icon name="plus" />
+                </Button>
+              </div>
+              <div className="filter-tabs">
+                {["all", "image", "video"].map((f) => (
+                  <button
+                    aria-pressed={f === filter}
+                    className={f === filter ? "active" : ""}
+                    key={f}
+                    onClick={() => setFilter(f)}
+                  >
+                    {f === "all"
+                      ? "Everything"
+                      : f === "image"
+                        ? "Images"
+                        : "Video"}
+                  </button>
+                ))}
+              </div>
+              <MediaGrid
+                media={media.filter(
+                  (m) => filter === "all" || m.kind === filter,
+                )}
+                onDelete={(item) => setDialog({ type: "media", item })}
+              />
+              {!media.length && (
+                <Empty
+                  icon="image"
+                  title="A little empty. Full of possibility."
+                >
+                  Your completed images and videos will appear here.
+                </Empty>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="chat-area">
+                {messages.length && ["chat", "code"].includes(mode) ? (
+                  <div className="messages">
+                    {messages.map((m, i) => (
+                      <article
+                        key={i}
+                        className={
+                          "message " +
+                          m.role +
+                          (busy && i === messages.length - 1 && m.role === "assistant"
+                            ? " streaming"
+                            : "")
+                        }
+                      >
+                        <div className="message-avatar">
+                          {m.role === "user" ? "Y" : <Mark />}
                         </div>
-                        {m.content?.reasoning && (
-                          <details className="reasoning">
-                            <summary>Reasoning</summary>
-                            <Markdown remarkPlugins={[remarkGfm]}>
-                              {m.content.reasoning}
-                            </Markdown>
-                          </details>
-                        )}
-                        <Markdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            pre: ({ children }) => (
-                              <div className="code-block">
-                                <div>Generated code</div>
-                                <pre>{children}</pre>
-                              </div>
-                            ),
-                            a: ({ children, ...p }) => (
-                              <a {...p} target="_blank" rel="noreferrer">
-                                {children}
-                              </a>
-                            ),
-                          }}
-                        >
-                          {textOf(m.content)}
-                        </Markdown>
-                        {imageOf(m.content).length > 0 && (
-                          <div className="message-images">
-                            {imageOf(m.content).map((url, j) => (
+                        <div>
+                          <div className="message-label">
+                            {m.role === "user" ? "You" : "ANONYMA"}
+                            {m.sample && <span>PREPARED EXAMPLE</span>}
+                          </div>
+                          <div className="markdown">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {m.content || "Preparing…"}
+                            </ReactMarkdown>
+                            {m.images?.map((url, j) => (
                               <img
-                                key={j}
+                                className="message-image"
                                 src={url}
-                                alt="Conversation image"
-                                onClick={() =>
-                                  setZoom({
-                                    url,
-                                    prompt: "Conversation image",
-                                    kind: "image",
-                                  })
-                                }
+                                alt={m.role === "user" ? "Your reference" : "Generated image"}
+                                key={j}
                               />
                             ))}
                           </div>
-                        )}
-                        {m.content?.interrupted && (
-                          <p className="muted">
-                            Response interrupted. Check account activity for the
-                            charge.
-                          </p>
-                        )}
-                        {m.pending && !textOf(m.content) && (
-                          <div className="typing">•••</div>
-                        )}
-                        {m.role === "assistant" && !m.pending && (
-                          <div className="message-receipt">
-                            <CopyButton text={textOf(m.content)} label="Copy" />
-                            {m.credits != null && (
-                              <span>{fmt(m.credits, 4)} credits</span>
-                            )}
-                            {m.usage && (
-                              <span>{fmt(m.usage.total_tokens)} tokens</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </article>
-                  ))}
-                  <div ref={bottom} />
-                </div>
-              ) : (
-                <div className="workspace-empty">
-                  <div className="eyebrow">&gt;_ EVERY MODEL · ONE BALANCE</div>
-                  <h1>
-                    {mode === "chat"
-                      ? "What are you making?"
-                      : mode === "code"
-                        ? "What will you build?"
-                        : mode === "image"
-                          ? "Imagine something new."
-                          : "Make your ideas move."}
-                  </h1>
-                  <p>
-                    {mode === "chat"
-                      ? "Ask a question, explore an idea, or make a plan. See an estimate before sending and a usage receipt after every reply."
-                      : mode === "code"
-                        ? "Write, debug and explore. Your code, ready to take with you."
-                        : mode === "image"
-                          ? "Create and compare images with your favorite models."
-                          : "Choose your model and turn a prompt into a video."}
-                  </p>
-                  <div className="mode-cards">
-                    {modes.map(([id, Icon, title, desc]) => (
-                      <button
-                        key={id}
-                        className={mode === id ? "active" : ""}
-                        onClick={() => changeMode(id)}
-                      >
-                        <Icon size={20} />
-                        <strong>{title}</strong>
-                        <span>{desc}</span>
-                        <Icon className="ghost-icon" />
-                      </button>
+                          {m.reasoning && (
+                            <details>
+                              <summary>Reasoning</summary>
+                              <p>{m.reasoning}</p>
+                            </details>
+                          )}
+                          {m.role === "assistant" && m.content && (
+                            <CopyButton text={m.content} />
+                          )}
+                        </div>
+                      </article>
                     ))}
+                    <div ref={streamEnd} />
                   </div>
-                  {mode === "image" && (
-                    <div className="generation-controls">
-                      <label>
-                        Images
-                        <select
-                          value={n}
-                          onChange={(e) => setN(Number(e.target.value))}
-                        >
-                          {[1, 2, 3, 4].map((v) => (
-                            <option key={v}>{v}</option>
-                          ))}
-                        </select>
-                      </label>
-                      <Button
-                        variant="outline"
-                        onClick={() => setMultiPicker(true)}
-                      >
-                        Compare models{" "}
-                        {compare.length ? `(${compare.length})` : ""}
-                      </Button>
-                      {compare.length > 0 && (
-                        <button
-                          className="text-link"
-                          onClick={() => setCompare([])}
-                        >
-                          Use single model
-                        </button>
-                      )}
+                ) : (
+                  <div className="workspace-welcome" ref={welcomeRef}>
+                    <AsciiField sectionRef={welcomeRef} />
+                    <BandLines />
+                    <p className="eyebrow">
+                      {
+                        {
+                          chat: "CHAT & REASON",
+                          code: "CODE & BUILD",
+                          image: "IMAGE STUDIO",
+                          video: "VIDEO STUDIO",
+                        }[mode]
+                      }
+                    </p>
+                    <Reveal key={mode}>
+                    <h1>
+                      {
+                        {
+                          chat: <>What’s on your mind?</>,
+                          code: <>What will you build?</>,
+                          image: <>Create something worth seeing.</>,
+                          video: <>Set your ideas in motion.</>,
+                        }[mode]
+                      }
+                    </h1>
+                    </Reveal>
+                    <p>
+                      {
+                        {
+                          chat: "Choose a model. Start a conversation. Keep your best ideas together.",
+                          code: "Turn a thought into code you can make your own.",
+                          image:
+                            "A fresh perspective, a new direction, a world of your own.",
+                          video: "From the first frame to a new possibility.",
+                        }[mode]
+                      }
+                    </p>
+                    <BandSteps />
+                  </div>
+                )}
+                {(mode === "image" || mode === "video") && (
+                  <div className="generation-results">
+                    {jobs
+                      .filter((j) => j.status !== "completed")
+                      .map((j) => (
+                        <Notice key={j.id}>
+                          {j.sample ? "Sample job" : "Video job"}: {j.status}
+                          {j.error && " · " + j.error}
+                          {j.status === "reconciliation" &&
+                            " · Operator review required. Do not resubmit."}
+                        </Notice>
+                      ))}
+                    <MediaGrid
+                      media={media.filter((m) => m.kind === mode).slice(0, 8)}
+                      onDelete={(item) => setDialog({ type: "media", item })}
+                    />
+                  </div>
+                )}
+              </div>
+              <div className="composer-zone">
+                {info && <Notice>{info}</Notice>}
+                {error && <Notice type="error">{error}</Notice>}
+                {receipt && (
+                  <div className="receipt">
+                    <span className="sq" aria-hidden="true" />
+                    {receipt.sample
+                      ? "Sample receipt · 0 credits charged"
+                      : `${receipt.local_test ? "Test receipt" : "Receipt"} · ${receipt.credits_charged ?? "Unconfirmed"} ${receipt.local_test ? "fixture " : ""}credits charged`}
+                    {receipt.parts?.map((p) => (
+                      <span className="receipt-part" key={p.model}>
+                        {p.model} {p.credits}
+                      </span>
+                    ))}
+                    {receipt.request_id && (
+                      <span className="receipt-part">Request {String(receipt.request_id).slice(0, 12)}</span>
+                    )}
+                  </div>
+                )}
+                {quote && (
+                  <div className="receipt">
+                    {quote.sample
+                      ? "Demo estimate · no paid request"
+                      : `Estimated reservation: ${quote.credits} credits`}
+                  </div>
+                )}
+                <form className="composer" onSubmit={send}>
+                  {attachments.length > 0 && (
+                    <div className="attachment-list">
+                      {attachments.map((a, i) => (
+                        <span key={i}>
+                          <img src={a.url} alt={a.name} />
+                          <button
+                            type="button"
+                            aria-label={"Remove " + a.name}
+                            onClick={() =>
+                              setAttachments((p) => p.filter((_, j) => j !== i))
+                            }
+                          >
+                            <Icon name="close" size={12} />
+                          </button>
+                        </span>
+                      ))}
                     </div>
                   )}
-                  {mode === "video" && (
-                    <div className="video-controls">
-                      <div className="generation-controls">
-                        <label>
-                          Aspect ratio
-                          <select
-                            value={ratio}
-                            onChange={(e) =>
-                              chooseVideoOption("ratio", e.target.value)
-                            }
-                          >
-                            {videoRatios.map((v) => (
-                              <option key={v} value={v}>
-                                {v || "Model default"}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          Duration
-                          <select
-                            value={duration}
-                            onChange={(e) =>
-                              chooseVideoOption("duration", e.target.value)
-                            }
-                          >
-                            {durations.map((v) => (
-                              <option key={v} value={v}>
-                                {v ? `${v} seconds` : "Model default"}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          Quality
-                          <select
-                            value={quality}
-                            onChange={(e) =>
-                              chooseVideoOption("quality", e.target.value)
-                            }
-                          >
-                            {videoQualities.map((v) => (
-                              <option key={v} value={v}>
-                                {v || "Model default"}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      </div>
-                      {model?.capabilities?.accepts_image_url !== false && (
-                        <input
-                          aria-label="Video reference image URL"
-                          placeholder={
-                            requiresVideoImage
-                              ? "Required reference image URL (https://…)"
-                              : "Optional reference image URL (https://…)"
-                          }
-                          required={requiresVideoImage}
-                          type="url"
-                          value={imageUrl}
-                          onChange={(e) => setImageUrl(e.target.value)}
-                        />
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="composer-wrap">
-              <ErrorBox error={error} />
-              {attachments.length > 0 && (
-                <div className="attachment-row">
-                  {attachments.map((a, i) => (
-                    <div key={i}>
-                      <img src={a.url} alt={a.name} />
-                      <button
-                        aria-label={"Remove " + a.name}
-                        onClick={() =>
-                          setAttachments(attachments.filter((_, j) => i !== j))
-                        }
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <form className="composer" onSubmit={send}>
-                <div className="composer-top">
                   <textarea
-                    ref={textarea}
+                    aria-label="Your prompt"
+                    placeholder={
+                      mode === "image"
+                        ? "Describe what you imagine…"
+                        : mode === "video"
+                          ? "Describe your scene…"
+                          : "Give your idea a place to begin…"
+                    }
                     value={prompt}
+                    maxLength={mode === "video" ? 2000 : 48000}
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
+                      if (
+                        e.key === "Enter" &&
+                        !e.shiftKey &&
+                        ["chat", "code"].includes(mode)
+                      ) {
                         e.preventDefault();
                         send();
                       }
                     }}
-                    maxLength={mode === "video" ? 2000 : 48000}
-                    placeholder={
-                      mode === "image"
-                        ? "Describe the image you want to create…"
-                        : mode === "video"
-                          ? "Describe your video…"
-                          : mode === "code"
-                            ? "Describe what you want to build…"
-                            : "Ask anything…"
-                    }
-                    rows={2}
+                    rows="3"
                   />
-                  {busy ? (
+                  <div className="composer-controls">
+                    <div>
+                      <select
+                        aria-label="Select model"
+                        value={model}
+                        onChange={(e) => {
+                          setModel(e.target.value);
+                          setQuote(null);
+                        }}
+                      >
+                        {(() => {
+                          const option = (m) => (
+                            <option value={m.id} key={m.id}>
+                              {m.name}
+                              {!m.callable && !demo ? " · catalog only" : ""}
+                            </option>
+                          );
+                          const popular = visibleModels.filter((m) => m.popular);
+                          // Long live catalogs read better with popular models grouped first.
+                          return visibleModels.length > 12 && popular.length ? (
+                            <>
+                              <optgroup label="Popular">{popular.map(option)}</optgroup>
+                              <optgroup label={`All models (${visibleModels.length})`}>
+                                {visibleModels.filter((m) => !m.popular).map(option)}
+                              </optgroup>
+                            </>
+                          ) : (
+                            visibleModels.map(option)
+                          );
+                        })()}
+                      </select>
+                      {(mode === "image" || selected?.vision) && (
+                        <label
+                          className="attachment-control"
+                          title="Add reference image"
+                        >
+                          <Icon name="plus" size={18} />
+                          <span className="sr-only">Add reference images</span>
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            onChange={addFiles}
+                          />
+                        </label>
+                      )}
+                      {mode === "image" && (
+                        <select
+                          aria-label="Number of images"
+                          value={n}
+                          onChange={(e) => setN(Number(e.target.value))}
+                        >
+                          {[1, 2, 3, 4].map((x) => (
+                            <option key={x} value={x}>
+                              {x} image{x > 1 ? "s" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {mode === "video" && presets.length > 0 && (
+                        <>
+                          {qualities.some(Boolean) && (
+                            <select
+                              aria-label="Video quality"
+                              value={vq}
+                              onChange={(e) => setVideo((v) => ({ ...v, quality: e.target.value }))}
+                            >
+                              {qualities.map((q) => (
+                                <option key={q} value={q}>
+                                  {q ? q[0].toUpperCase() + q.slice(1) : "Default quality"}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                          <select
+                            aria-label="Aspect ratio"
+                            value={vr}
+                            onChange={(e) => setVideo((v) => ({ ...v, ratio: e.target.value }))}
+                          >
+                            {ratios.map((r) => (
+                              <option key={r} value={r}>
+                                {r || "Default ratio"}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            aria-label="Duration"
+                            value={vd}
+                            onChange={(e) => setVideo((v) => ({ ...v, duration: e.target.value }))}
+                          >
+                            {durations.map((d) => (
+                              <option key={d} value={d}>
+                                {d ? d + " seconds" : "Default length"}
+                              </option>
+                            ))}
+                          </select>
+                        </>
+                      )}
+                    </div>
+                    {busy ? (
+                      <button
+                        type="button"
+                        className="send-button"
+                        aria-label="Stop generation"
+                        onClick={stop}
+                      >
+                        <Icon name="stop" size={17} />
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        className="send-button"
+                        disabled={!prompt.trim()}
+                        aria-label={demo ? "Run sample" : "Generate"}
+                      >
+                        <Icon name="arrow" size={21} />
+                      </button>
+                    )}
+                  </div>
+                  {mode === "image" && (
+                    <details className="compare-options">
+                      <summary>Compare image models (up to 4)</summary>
+                      {visibleModels.map((m) => (
+                        <label key={m.id}>
+                          <input
+                            type="checkbox"
+                            checked={compareModels.includes(m.id)}
+                            disabled={
+                              !compareModels.includes(m.id) &&
+                              compareModels.length >= 4
+                            }
+                            onChange={() =>
+                              setCompareModels((p) =>
+                                p.includes(m.id)
+                                  ? p.filter((x) => x !== m.id)
+                                  : [...p, m.id],
+                              )
+                            }
+                          />
+                          {m.name}
+                        </label>
+                      ))}
+                    </details>
+                  )}
+                </form>
+                {!messages.length && (<div className="prompt-suggestions">
+                      {(mode === "chat"
+                        ? [
+                            "Help me think through an idea",
+                            "Make a complex topic simple",
+                            "Find a fresh perspective",
+                          ]
+                        : mode === "code"
+                          ? [
+                              "Build a simple idea card",
+                              "Explain a piece of code",
+                              "Plan a small React app",
+                            ]
+                          : mode === "image"
+                            ? [
+                                "A quiet architectural study",
+                                "A playful geometric world",
+                                "A soft, abstract landscape",
+                              ]
+                            : [
+                                "A gentle abstract motion loop",
+                                "A product idea in motion",
+                                "A cinematic opening frame",
+                              ]
+                      ).map((t) => (
+                        <button key={t} onClick={() => setPrompt(t)}>
+                          {t}
+                          <Icon name="diagonal" size={14} />
+                        </button>
+                      ))}
+                    </div>)}
+                <div className="composer-caption">
+                  <span>
+                    {demo
+                      ? "Sample outputs are illustrative. No provider request or charge."
+                      : "AI can make mistakes. Check important information."}
+                  </span>
+                  {["chat", "code"].includes(mode) && (
                     <button
-                      type="button"
-                      className="send-button"
-                      aria-label="Stop generation"
-                      onClick={() => controller.current?.abort()}
+                      onClick={quoteRequest}
+                      disabled={!prompt.trim() || busy}
                     >
-                      <Square size={17} />
-                    </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      className="send-button"
-                      aria-label="Send prompt"
-                      disabled={!prompt.trim()}
-                    >
-                      <span>
-                        Send
-                        {estimate ? ` · ~${fmt(estimate.credits, 1)} cr` : ""}
-                      </span>
+                      Estimate credits
                     </button>
                   )}
                 </div>
-                <div className="composer-bottom">
-                  <div className="composer-model">
-                    <button type="button" onClick={() => setPicker(true)}>
-                      <ProviderIcon
-                        provider={model?.owned_by || ""}
-                        size={19}
-                      />
-                      <span>{model?.name || "Choose a model"}</span>
-                      <ChevronDown size={13} />
-                    </button>
-                    {mode !== "video" && (
-                      <>
-                        <input
-                          hidden
-                          ref={fileInput}
-                          type="file"
-                          multiple
-                          accept="image/png,image/jpeg,image/webp,image/gif"
-                          onChange={(e) => {
-                            attach(e.target.files);
-                            e.target.value = "";
-                          }}
-                        />
-                        <button
-                          type="button"
-                          className="icon-button"
-                          aria-label="Attach reference images"
-                          onClick={() => fileInput.current?.click()}
-                        >
-                          <Paperclip size={17} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                  <span className="composer-estimate">
-                    {estimate
-                      ? `Up to ${fmt(mode === "image" && compare.length ? compare.reduce((sum, id) => sum + (models.find((m) => m.id === id)?.imagePrice || 0) * 1000 * n, 0) : estimate.credits, 2)} credits`
-                      : "Pay only for what you use"}
-                  </span>
-                </div>
-              </form>
-              <div className="composer-note">
-                {config?.testMode
-                  ? "Local test output is a fixture, not a real model response."
-                  : "AI can make mistakes. Review important output."}
-                <Link to="/docs/credits">How billing works ↗</Link>
+                {mode === "video" && !demo && selected && acceptsImage && (
+                  <label className="video-image-field">
+                    Start image URL{needsImage ? " (required for this model)" : " (optional)"}
+                    <input
+                      type="url"
+                      inputMode="url"
+                      placeholder="https://…"
+                      value={video.image}
+                      onChange={(e) => setVideo((v) => ({ ...v, image: e.target.value }))}
+                    />
+                  </label>
+                )}
+                {mode === "video" && (
+                  <p className="fine-print">
+                    {demo
+                      ? "Demo preview uses the prepared ANONYMA animation."
+                      : videoCredits != null
+                        ? `About ${videoCredits.toLocaleString()} credits are held until the job completes. Options come from this model's published prices.`
+                        : "Choose a video model with a published price."}
+                  </p>
+                )}
               </div>
-            </div>
-          </div>
-          {mode === "code" && showCode && messages.length > 0 && (
-            <Artifacts files={files} onClose={() => setShowCode(false)} />
+            </>
+          )}
+          {mode === "code" && files.length > 0 && (
+            <aside className="code-panel">
+              <div>
+                <h3>Files & revisions</h3>
+                <button className="small-button" onClick={exportZip}>
+                  <Icon name="download" size={14} />
+                  ZIP
+                </button>
+              </div>
+              <p className="fine-print">Prepared code · no execution sandbox</p>
+              {files.map((f, i) => (
+                <details key={i} open={i === 0}>
+                  <summary>
+                    <Icon name="file" size={14} />
+                    {f.name}
+                    <span>v{Math.floor(i / 2) + 1}</span>
+                  </summary>
+                  <pre>
+                    <code>{f.content}</code>
+                  </pre>
+                  <div className="inline-actions">
+                    <CopyButton text={f.content} />
+                    <button
+                      className="small-button"
+                      onClick={() => download(f.name, f.content, "text/plain")}
+                    >
+                      Download
+                    </button>
+                  </div>
+                </details>
+              ))}
+            </aside>
           )}
         </div>
-      </main>
-      {picker && (
-        <ModelPicker
-          mode={mode}
-          selected={model?.id}
-          onSelect={(id) => {
-            setModelId(id);
-            setPicker(false);
-          }}
-          onClose={() => setPicker(false)}
-        />
-      )}{" "}
-      {multiPicker && (
-        <ModelPicker
-          mode="image"
-          multi
-          selected={compare}
-          onSelect={(id) =>
-            setCompare((v) =>
-              v.includes(id)
-                ? v.filter((x) => x !== id)
-                : v.length < 4
-                  ? [...v, id]
-                  : v,
-            )
+      </div>
+      {dialog && (
+        <Modal
+          title={
+            dialog.type === "rename"
+              ? "Conversation details"
+              : dialog.type === "media"
+                ? "Delete this creation?"
+                : "Delete this conversation?"
           }
-          onClose={() => setMultiPicker(false)}
-        />
-      )}{" "}
-      {settings && (
-        <Modal title="Generation settings" onClose={() => setSettings(false)}>
-          <label>
-            Maximum output tokens
-            <input
-              type="number"
-              min="1"
-              max="8192"
-              value={maxTokens}
-              onChange={(e) =>
-                setMaxTokens(
-                  Math.min(8192, Math.max(1, Number(e.target.value))),
-                )
+          onClose={() => setDialog(null)}
+        >
+          {dialog.type === "rename" ? (
+            <>
+              <label>
+                Conversation name
+                <input
+                  value={rename}
+                  onChange={(e) => setRename(e.target.value)}
+                  maxLength="100"
+                  autoFocus
+                />
+              </label>
+              <div className="inline-actions">
+                <Button onClick={confirmDialog} disabled={!rename.trim()}>
+                  Save name
+                </Button>
+                <button
+                  className="small-button"
+                  onClick={() =>
+                    download(
+                      "conversation.json",
+                      JSON.stringify(dialog.item, null, 2),
+                    )
+                  }
+                >
+                  <Icon name="download" size={14} />
+                  Export
+                </button>
+                <button
+                  className="small-button danger-text"
+                  onClick={() => setDialog({ ...dialog, type: "delete" })}
+                >
+                  <Icon name="delete" size={14} />
+                  Delete
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p>
+                {demo
+                  ? "This removes the sample from this browser."
+                  : "This removes the item from your account."}
+              </p>
+              <div className="inline-actions">
+                <Button onClick={confirmDialog}>Delete</Button>
+                <Button secondary onClick={() => setDialog(null)}>
+                  Keep it
+                </Button>
+              </div>
+            </>
+          )}
+        </Modal>
+      )}
+    </main>
+  );
+}
+function MediaGrid({ media, onDelete }) {
+  return (
+    <div className="media-grid">
+      {media.map((m) => (
+        <article key={m.id}>
+          {m.kind === "video" ? (
+            <video
+              controls
+              playsInline
+              preload="metadata"
+              src={m.url}
+              poster={m.sample ? "/media/anonyma-hero-poster.jpg" : undefined}
+            />
+          ) : (
+            <img
+              src={m.url}
+              alt={
+                m.sample
+                  ? "Prepared geometric illustration — sample, not generated from prompt"
+                  : m.prompt
               }
             />
-          </label>
-          <p className="fineprint">
-            Default 4,096. The credit reservation includes this output ceiling.
-            Actual settled usage can be lower.
-          </p>
-          <Button className="full" onClick={() => setSettings(false)}>
-            Done
-          </Button>
-        </Modal>
-      )}
-      {renaming && (
-        <Modal
-          title="Rename conversation"
-          onClose={() => !savingTitle && setRenaming(null)}
-        >
-          <form
-            onSubmit={async (event) => {
-              event.preventDefault();
-              if (savingTitle || !renaming.title.trim()) return;
-              setSavingTitle(true);
-              setTitleError("");
-              try {
-                await api("/api/conversations/" + renaming.id, {
-                  method: "PATCH",
-                  body: { title: renaming.title.trim() },
-                });
-                await loadHistory();
-                setRenaming(null);
-              } catch (error) {
-                setTitleError(error.message);
-              } finally {
-                setSavingTitle(false);
-              }
-            }}
-          >
-            <label>
-              Conversation name
-              <input
-                autoFocus
-                maxLength={70}
-                required
-                value={renaming.title}
-                onChange={(event) =>
-                  setRenaming({ ...renaming, title: event.target.value })
-                }
-              />
-            </label>
-            <ErrorBox error={titleError} />
-            <Button
-              type="submit"
-              className="full"
-              disabled={savingTitle || !renaming.title.trim()}
-            >
-              {savingTitle ? "Saving…" : "Save name"}
-            </Button>
-          </form>
-        </Modal>
-      )}
-      {zoom && (
-        <Modal
-          title={zoom.kind === "video" ? "Your video" : "Your image"}
-          onClose={() => setZoom(null)}
-          wide
-        >
-          <div className="lightbox">
-            {zoom.kind === "video" ? (
-              <video controls autoPlay src={zoom.url} />
-            ) : (
-              <img src={zoom.url} alt={zoom.prompt} />
-            )}
+          )}
+          <div>
+            <span className="eyebrow">
+              {m.sample ? "PREPARED SAMPLE" : m.model}
+            </span>
+            <h3>{m.prompt}</h3>
+            <p>
+              {m.model}
+              {m.cost != null ? " · " + m.cost + " credits" : ""}
+            </p>
+            <div className="inline-actions">
+              <a className="small-button" href={m.url} download>
+                <Icon name="download" size={14} />
+                Download
+              </a>
+              <button
+                className="small-button"
+                onClick={() => onDelete(m)}
+                aria-label={"Delete " + m.prompt}
+              >
+                <Icon name="delete" size={14} />
+              </button>
+            </div>
           </div>
-          <p>{zoom.prompt}</p>
-          <small>
-            {zoom.model} · {zoom.created ? date(zoom.created) : ""}
-          </small>
-          <div className="button-row">
-            <a
-              className="button outline"
-              href={
-                zoom.url + (zoom.url.includes("?") ? "&" : "?") + "download=1"
-              }
-              download
-            >
-              <Download size={16} /> Download original
-            </a>
-            <CopyButton text={zoom.prompt || ""} label="Copy prompt" />
-          </div>
-        </Modal>
-      )}
+        </article>
+      ))}
     </div>
   );
 }

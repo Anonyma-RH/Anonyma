@@ -91,3 +91,34 @@ test("Video presets follow published prices only", () => {
     { quality: "", ratio: "", duration: "", price: 1 },
   ]);
 });
+test("Wallet sign-in is offered only with a browser wallet or WalletConnect", async () => {
+  const { walletAvailable } = await import("../src/lib.js");
+  assert.equal(walletAvailable({ walletProject: "" }), false);
+  assert.equal(walletAvailable({ walletProject: "project-id" }), true);
+});
+test("A cancelled wallet signature is reported plainly and nothing is verified", async () => {
+  const { walletSign } = await import("../src/lib.js");
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.window = {
+    ethereum: {
+      request: async ({ method }) => {
+        if (method === "eth_requestAccounts") return ["0x0000000000000000000000000000000000000001"];
+        throw Object.assign(new Error("User rejected"), { code: 4001 });
+      },
+    },
+  };
+  globalThis.fetch = async (path) => {
+    calls.push(path);
+    return new Response(JSON.stringify({ id: "wc_1", message: "Sign in" }), {
+      headers: { "content-type": "application/json" },
+    });
+  };
+  try {
+    await assert.rejects(walletSign({}), /cancelled\. Nothing was signed/);
+    assert.deepEqual(calls, ["/api/auth/wallet/challenge"]);
+  } finally {
+    globalThis.fetch = realFetch;
+    delete globalThis.window;
+  }
+});

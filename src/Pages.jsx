@@ -16,7 +16,7 @@ import {
   CopyButton,
   Modal,
 } from "./ui.jsx";
-import { api, download, savings } from "./lib.js";
+import { api, download, savings, walletSign, walletAvailable } from "./lib.js";
 import { articles } from "./data.js";
 export function PageIntro({ eyebrow, title, children }) {
   return (
@@ -940,6 +940,19 @@ export function Auth({ register = false }) {
     [error, setError] = useState(""),
     [challenge, setChallenge] = useState(null),
     [recover, setRecover] = useState(false);
+  async function walletSubmit() {
+    setBusy(true);
+    setError("");
+    try {
+      await walletSign(config);
+      await refresh();
+      navigate("/workspace");
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function submit(e) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
@@ -1025,11 +1038,24 @@ export function Auth({ register = false }) {
         {method === "wallet" ? (
           <>
             <Notice>
-              Wallet sign-in requires a connected authentication service and its
-              exact signed challenge. Connecting a wallet alone does not
-              authenticate an account.
+              Sign a one-time message to prove you control a wallet. No
+              transfer, approval or payment is requested, and ANONYMA never asks
+              for a recovery phrase.
             </Notice>
-            <Button disabled>Wallet sign-in unavailable</Button>
+            {connected ? (
+              <Button onClick={walletSubmit} disabled={busy || !walletAvailable(config)}>
+                {busy ? "Waiting for your wallet…" : "Connect wallet"}
+              </Button>
+            ) : (
+              <Button disabled>Wallet sign-in needs the account service</Button>
+            )}
+            {connected && !walletAvailable(config) && (
+              <p className="fine-print">
+                No browser wallet was found, and WalletConnect is not configured on
+                this service.
+              </p>
+            )}
+            {error && <Notice type="error">{error}</Notice>}
           </>
         ) : (
           <form onSubmit={submit}>

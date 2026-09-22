@@ -15,7 +15,15 @@ import {
 } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
-import { api, readStore, saveStore, download, uid } from "./lib.js";
+import {
+  api,
+  readStore,
+  saveStore,
+  download,
+  uid,
+  walletSign,
+  walletAvailable,
+} from "./lib.js";
 import { EmailLink, InvoiceDetails } from "./AccountFlows.jsx";
 export default function Account() {
   const { section = "overview" } = useParams();
@@ -594,10 +602,55 @@ export default function Account() {
                   <div>
                     <span>Wallet</span>
                     <b>{user?.wallet || "Not linked"}</b>
-                    <button className="small-button" disabled>
-                      Wallet setup pending
+                    <button
+                      className="small-button"
+                      disabled={demo || !user || busy || !walletAvailable(config)}
+                      title={
+                        walletAvailable(config)
+                          ? undefined
+                          : "No browser wallet found and WalletConnect is not configured."
+                      }
+                      onClick={async () => {
+                        setBusy(true);
+                        setError("");
+                        try {
+                          await walletSign(config, true);
+                          await refresh();
+                          setNotice("Wallet linked. You can now sign in with it.");
+                        } catch (e) {
+                          setError(e.message);
+                        } finally {
+                          setBusy(false);
+                        }
+                      }}
+                    >
+                      {user?.wallet ? "Change wallet" : "Link wallet"}
                     </button>
                   </div>
+                  {user?.wallet && config?.services?.token && (
+                    <div>
+                      <span>Holdings</span>
+                      <b>
+                        {Number(user.tokenBalance || 0).toLocaleString()} tokens ·{" "}
+                        {Math.round((Number(user.discount) || 0) * 100)}% markup reduction
+                      </b>
+                      <button
+                        className="small-button"
+                        disabled={busy}
+                        onClick={async () => {
+                          try {
+                            await api("/api/account/token/refresh", { method: "POST", body: {} });
+                            await refresh();
+                            setNotice("Wallet holdings refreshed.");
+                          } catch (e) {
+                            setError(e.message);
+                          }
+                        }}
+                      >
+                        Refresh
+                      </button>
+                    </div>
+                  )}
                 </div>
               </section>
               <section>

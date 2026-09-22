@@ -183,3 +183,46 @@ export function videoPresets(model) {
     presets.push({ quality: "", ratio: "", duration: "", price });
   return presets;
 }
+
+// Wallet sign-in and linking. The wallet only proves control of an address by signing the
+// server's exact one-time challenge; no transfer, approval or recovery phrase is ever requested.
+export const walletAvailable = (config) =>
+  !!globalThis.window?.ethereum || !!config?.walletProject;
+export async function walletSign(config, link = false) {
+  let provider = globalThis.window?.ethereum;
+  if (!provider) {
+    if (!config?.walletProject)
+      throw new Error(
+        "Install a browser wallet, or ask the operator to configure WalletConnect for mobile wallets.",
+      );
+    const { EthereumProvider } = await import("@walletconnect/ethereum-provider");
+    provider = await EthereumProvider.init({
+      projectId: config.walletProject,
+      chains: [config.walletChain || 1],
+      showQrModal: true,
+    });
+    await provider.connect();
+  }
+  try {
+    const [address] = await provider.request({ method: "eth_requestAccounts" });
+    if (!address) throw new Error("No wallet account was selected.");
+    const challenge = await api("/api/auth/wallet/challenge", {
+      method: "POST",
+      body: { address, link },
+    });
+    const signature = await provider.request({
+      method: "personal_sign",
+      params: [challenge.message, address],
+    });
+    return await api("/api/auth/wallet/verify", {
+      method: "POST",
+      body: { id: challenge.id, signature },
+    });
+  } catch (e) {
+    if (e?.code === 4001)
+      throw new Error("The wallet request was cancelled. Nothing was signed.");
+    if (e?.code === -32002)
+      throw new Error("Your wallet already has a pending request. Open it to continue.");
+    throw e;
+  }
+}

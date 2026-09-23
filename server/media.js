@@ -3,6 +3,17 @@ import { join } from "node:path";
 import { createHmac } from "node:crypto";
 import { uid, now, fail, credits, splitCharge } from "./core.js";
 
+const imageType = (bytes) =>
+  bytes.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex"))
+    ? "image/png"
+    : bytes.subarray(0, 3).equals(Buffer.from("ffd8ff", "hex"))
+      ? "image/jpeg"
+      : bytes.subarray(0, 4).toString("latin1") === "RIFF" &&
+          bytes.subarray(8, 12).toString("latin1") === "WEBP"
+        ? "image/webp"
+        : bytes.subarray(0, 4).toString("latin1") === "GIF8"
+          ? "image/gif"
+          : null;
 // Private media files on disk plus their rows, with signed temporary URLs
 // for API callers.
 export function createMediaStore(db, cfg) {
@@ -31,8 +42,11 @@ export function createMediaStore(db, cfg) {
         /^data:(image\/(?:png|jpeg|webp|gif)|video\/mp4);base64,([A-Za-z0-9+/=]+)$/,
       );
       if (!match) fail(502, "Unsupported generated media format.");
-      mime = match[1];
       bytes = Buffer.from(match[2], "base64");
+      // Providers return raw base64 without a type, so trust the bytes.
+      mime = match[1].startsWith("image/")
+        ? (imageType(bytes) ?? match[1])
+        : match[1];
     } else if (Buffer.isBuffer(source)) {
       bytes = source;
       mime = meta.mime;

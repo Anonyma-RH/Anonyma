@@ -26,8 +26,17 @@ export function chatRoutes(ctx) {
     Number.isSafeInteger(value) && value >= 0 ? value : fallback;
   async function runChat(req, res, api) {
     const m = getModel(req.body.model);
-    if (!["chat", "image"].includes(m.type))
-      fail(400, "This endpoint supports chat and compatible image models.");
+    // Dedicated image models are priced per option and served by
+    // /v1/images/generations; through chat they would be held at the
+    // cheapest variant while the provider chooses the quality.
+    if (m.type !== "chat")
+      fail(
+        400,
+        m.type === "image"
+          ? "Image models are available through image generation, not chat."
+          : "This endpoint supports chat models.",
+        "unsupported_model",
+      );
     const messages = validateMessages(req.body.messages, m, api),
       max = maxTokens(req.body.max_tokens);
     const requestId = requestIdentifier(req);
@@ -96,6 +105,23 @@ export function chatRoutes(ctx) {
       upstreamCost = null,
       receipt = null,
       accepted = false;
+    // Provider token counts (OpenAI or PPQ field names), else estimates.
+    const tokenCounts = () => ({
+      input: validTokenCount(
+        usage?.prompt_tokens,
+        validTokenCount(
+          usage?.input_tokens,
+          Math.ceil(JSON.stringify(messages).length / 4),
+        ),
+      ),
+      out: validTokenCount(
+        usage?.completion_tokens,
+        validTokenCount(
+          usage?.output_tokens,
+          Math.ceil((output + reasoning).length / 4),
+        ),
+      ),
+    });
     const images = [];
     const saved = [];
     const savedMediaIds = [];
@@ -187,20 +213,7 @@ export function chatRoutes(ctx) {
           "The model returned no content. Nothing was charged.",
           "empty_output",
         );
-      const input = validTokenCount(
-        usage?.prompt_tokens,
-        validTokenCount(
-          usage?.input_tokens,
-          Math.ceil(JSON.stringify(messages).length / 4),
-        ),
-      );
-      const out = validTokenCount(
-        usage?.completion_tokens,
-        validTokenCount(
-          usage?.output_tokens,
-          Math.ceil((output + reasoning).length / 4),
-        ),
-      );
+      const { input, out } = tokenCounts();
       const dollars =
         reportedProviderCost(usage, upstreamCost) ??
         (imageCallable(m) ? generationPrice(m) : tokenCost(m, input, out));
@@ -310,17 +323,8 @@ export function chatRoutes(ctx) {
           usdUnits(
             (saved.length && imageCallable(m)
               ? generationPrice(m)
-              : tokenCost(
-                  m,
-                  validTokenCount(
-                    usage?.prompt_tokens,
-                    Math.ceil(JSON.stringify(messages).length / 4),
-                  ),
-                  validTokenCount(
-                    usage?.completion_tokens,
-                    Math.ceil((output + reasoning).length / 4),
-                  ),
-                )) * factor,
+              : (reportedProviderCost(usage, upstreamCost) ??
+                tokenCost(m, tokenCounts().input, tokenCounts().out))) * factor,
           ),
           "Interrupted: " + m.name,
         );
@@ -351,16 +355,7 @@ export function chatRoutes(ctx) {
         receipt = settle(
           db,
           hold,
-          usdUnits(
-            tokenCost(
-              m,
-              validTokenCount(
-                usage?.prompt_tokens,
-                Math.ceil(JSON.stringify(messages).length / 4),
-              ),
-              0,
-            ) * factor,
-          ),
+          usdUnits(tokenCost(m, tokenCounts().input, 0) * factor),
           "Stopped before output: " + m.name,
         );
         e.receipt = receipt;

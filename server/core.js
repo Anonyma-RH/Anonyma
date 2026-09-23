@@ -420,6 +420,33 @@ export function callable(m, cfg) {
     (cfg.testMode || !!cfg.gatewayKey)
   );
 }
+// Published option names mix cases ("2k" and "2K" both appear).
+const sameOption = (a, b) =>
+  b != null && String(a).toLowerCase() === String(b).toLowerCase();
+const pricedVariant = (m, opts) => {
+  const variants = m.pricing?.variants || [];
+  return variants.find((v) => v.quality === opts.quality) || variants[0];
+};
+// The requested value that selects an image model's price: resolution, then
+// size, then an aspect ratio when the model prices by aspect ratio.
+export function imagePriceKey(m, opts = {}) {
+  const sizes = (pricedVariant(m, opts)?.options || []).map((o) => o.size);
+  return [opts.resolution, opts.size, opts.ratio].find((value) =>
+    sizes.some((size) => sameOption(size, value)),
+  );
+}
+// A resolution or size the price list doesn't publish would silently fall
+// back to the default price while the provider renders what was asked for.
+export function unpublishedImageOption(m, opts = {}) {
+  const sized = (pricedVariant(m, opts)?.options || []).filter(
+    (o) => o.size !== "default",
+  );
+  if (!sized.length || imagePriceKey(m, opts)) return null;
+  const requested = opts.resolution ?? opts.size;
+  return requested == null
+    ? null
+    : { requested, published: sized.map((o) => o.size) };
+}
 export function generationPrice(m, opts = {}) {
   if (Object.hasOwn(imagePrices, m.id)) return imagePrices[m.id];
   const variants = m.pricing?.variants || [];
@@ -429,9 +456,9 @@ export function generationPrice(m, opts = {}) {
       (o) =>
         typeof o.price === "number" && Number.isFinite(o.price) && o.price > 0,
     );
-    const selected = opts.resolution || opts.size;
+    const selected = imagePriceKey(m, opts);
     const priced =
-      options.find((o) => o.size === selected) ||
+      options.find((o) => sameOption(o.size, selected)) ||
       options.find((o) => o.size === "default") ||
       options.reduce(
         (highest, o) => (!highest || o.price > highest.price ? o : highest),

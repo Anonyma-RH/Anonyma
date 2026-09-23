@@ -10,6 +10,7 @@ import {
   release,
   quote,
   generationPrice,
+  unpublishedImageOption,
   markupFactor,
 } from "../core.js";
 import { generateImages } from "../provider.js";
@@ -84,6 +85,13 @@ export function mediaRoutes(ctx) {
           )
         )
           fail(400, "Choose a published quality for this model.");
+        const unpublished = unpublishedImageOption(m, req.body);
+        if (unpublished)
+          fail(
+            400,
+            `Size "${unpublished.requested}" has no published price for this model. Choose one of: ${unpublished.published.join(", ")}.`,
+            "unpriced_option",
+          );
         if (!(generationPrice(m, req.body) > 0))
           fail(
             400,

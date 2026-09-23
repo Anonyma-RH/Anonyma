@@ -2169,3 +2169,164 @@ test("costs above a reservation are absorbed but recorded for the operator", asy
     0,
   );
 });
+test("image sizes price case-insensitively and unpublished sizes are refused before reserving", async (t) => {
+  const { generationPrice, unpublishedImageOption } =
+    await import("../server/core.js");
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-sized-image-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const catalogPath = join(dir, "models.json");
+  const model = {
+    id: "fixture/sized-image",
+    name: "Sized image",
+    type: "image",
+    status: "live",
+    capabilities: { accepts_prompt: true, accepts_resolution: true },
+    pricing: {
+      type: "per_generation",
+      variants: [
+        {
+          quality: "standard",
+          options: [
+            { size: "default", price: 0.092 },
+            { size: "1k", price: 0.092 },
+            { size: "2k", price: 0.138 },
+            { size: "4K", price: 0.184 },
+          ],
+        },
+      ],
+    },
+  };
+  writeFileSync(
+    catalogPath,
+    JSON.stringify({ updatedAt: new Date().toISOString(), data: [model] }),
+  );
+  // The provider documents "2K"; the price list spells it "2k".
+  assert.equal(generationPrice(model, { resolution: "2K" }), 0.138);
+  assert.equal(generationPrice(model, { size: "4k" }), 0.184);
+  assert.equal(unpublishedImageOption(model, { ratio: "16:9" }), null);
+  assert.deepEqual(unpublishedImageOption(model, { resolution: "8K" }), {
+    requested: "8K",
+    published: ["1k", "2k", "4K"],
+  });
+
+  let sent;
+  const gateway = await mockServer(t, async (req, res) => {
+    sent = await readJSON(req);
+    res.writeHead(200, { "content-type": "application/json" });
+    // No cost reported: billing must use the requested option's price.
+    res.end(
+      JSON.stringify({
+        data: [
+          {
+            b64_json: readFileSync(
+              new URL("../data/test-image.png", import.meta.url),
+            ).toString("base64"),
+          },
+        ],
+      }),
+    );
+  });
+  const s = fixture(t, {
+    testMode: false,
+    gateway,
+    gatewayKey: "fixture",
+    catalogPath,
+  });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "sized-image-fund", "test_credit");
+  const refused = await agent
+    .post("/api/images")
+    .send({ model: model.id, prompt: "Mountains", resolution: "8K" })
+    .expect(400);
+  assert.equal(refused.body.error.code, "unpriced_option");
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds").get().n, 0);
+  const before = balance(s.db, user.id).total;
+  await agent
+    .post("/api/images")
+    .send({ model: model.id, prompt: "Mountains", resolution: "2K" })
+    .expect(200);
+  assert.equal(sent.resolution, "2K");
+  assert.equal(before - balance(s.db, user.id).total, usdUnits(0.138));
+});
+test("dedicated image models are refused by chat endpoints before reserving", async (t) => {
+  const { path: catalogPath, model } = dedicatedImageCatalog(t);
+  const s = fixture(t, {
+    testMode: false,
+    gateway: "http://127.0.0.1:9",
+    gatewayKey: "fixture",
+    catalogPath,
+  });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "image-chat-fund", "test_credit");
+  const key = await keyFor(agent);
+  const api = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send({ ...prompt, model: model.id })
+    .expect(400);
+  assert.equal(api.body.error.code, "unsupported_model");
+  await agent
+    .post("/api/chat")
+    .send({ ...prompt, model: model.id })
+    .expect(400);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds").get().n, 0);
+});
+test("interrupted streams bill PPQ input/output token aliases", async (t) => {
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, { choices: [{ delta: { content: "Partial" } }] });
+    event(res, {
+      choices: [],
+      usage: { input_tokens: 5000, output_tokens: 3 },
+    });
+    res.end(); // no [DONE]: the connection ends before completion
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "interrupt-alias-fund", "test_credit");
+  const key = await keyFor(agent);
+  const before = balance(s.db, user.id).total;
+  const r = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send(prompt)
+    .expect(502);
+  assert.equal(r.body.error.code, "provider_interrupted");
+  // The reported 5,000 prompt tokens exceed this small request's hold: the
+  // user pays the hold and the rest is recorded as operator-absorbed.
+  const hold = s.db.prepare("SELECT amount, uncovered FROM holds").get();
+  assert.equal(before - balance(s.db, user.id).total, hold.amount);
+  assert.equal(
+    hold.amount + hold.uncovered,
+    usdUnits((5000 * 0.15 + 3 * 1.25) / 1e6),
+  );
+});
+test("generated images are stored with the type their bytes show", async (t) => {
+  const { createMediaStore } = await import("../server/media.js");
+  const { database } = await import("../server/core.js");
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-image-type-"));
+  const db = database(join(dir, "db.sqlite"));
+  t.after(() => {
+    db.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  db.prepare("INSERT INTO users(id,created) VALUES(?,?)").run("u1", 1);
+  const store = createMediaStore(db, {
+    mediaPath: dir,
+    secret: "fixture",
+    mediaHosts: [],
+    origin: "http://localhost:5175",
+  });
+  const asPng = (bytes) => "data:image/png;base64," + bytes.toString("base64");
+  const jpeg = Buffer.from("ffd8ffe000104a46494600010100", "hex");
+  const png = readFileSync(new URL("../data/test-image.png", import.meta.url));
+  assert.equal(
+    (await store.saveMedia("u1", "image", asPng(jpeg))).mime,
+    "image/jpeg",
+  );
+  assert.equal(
+    (await store.saveMedia("u1", "image", asPng(png))).mime,
+    "image/png",
+  );
+});

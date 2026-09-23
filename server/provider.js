@@ -186,6 +186,7 @@ export async function generateImages(
     await onBatch(batch);
     return;
   }
+  const dedicated = model.type === "image";
   const content = options.images?.length
     ? [
         { type: "text", text: prompt },
@@ -196,19 +197,42 @@ export async function generateImages(
       ]
     : prompt;
   for (let i = 0; i < n; i++) {
+    const resolution =
+      options.resolution ||
+      (/^[124]K$/.test(options.size || "") ? options.size : null);
+    const size =
+      options.size && options.size !== resolution
+        ? options.size
+        : options.ratio;
+    const body = dedicated
+      ? {
+          model: model.id,
+          prompt,
+          ...(model.pricing?.variants?.length
+            ? { quality: options.quality || model.pricing.variants[0].quality }
+            : {}),
+          ...(options.images?.length ? { image_url: options.images[0] } : {}),
+          ...(resolution ? { resolution } : {}),
+          ...(size ? { size } : {}),
+          ...(options.output_format
+            ? { output_format: options.output_format }
+            : {}),
+        }
+      : {
+          model: model.id,
+          messages: [{ role: "user", content }],
+          stream: false,
+        };
     const r = await fetch(
-      cfg.gateway.replace(/\/$/, "") + "/chat/completions",
+      cfg.gateway.replace(/\/$/, "") +
+        (dedicated ? "/v1/images/generations" : "/chat/completions"),
       {
         method: "POST",
         headers: {
           "content-type": "application/json",
           authorization: `Bearer ${cfg.gatewayKey}`,
         },
-        body: JSON.stringify({
-          model: model.id,
-          messages: [{ role: "user", content }],
-          stream: false,
-        }),
+        body: JSON.stringify(body),
         signal,
       },
     );
@@ -222,8 +246,14 @@ export async function generateImages(
       );
     }
     const j = await r.json();
-    let images = j.choices?.[0]?.message?.images || [];
-    if (!images.length && Array.isArray(j.choices?.[0]?.message?.content))
+    let images = dedicated
+      ? j.data || []
+      : j.choices?.[0]?.message?.images || [];
+    if (
+      !dedicated &&
+      !images.length &&
+      Array.isArray(j.choices?.[0]?.message?.content)
+    )
       images = j.choices[0].message.content.filter(
         (p) => p.type === "image_url",
       );
@@ -237,7 +267,10 @@ export async function generateImages(
       reportedProviderCost(j.usage, j.cost) ?? generationPrice(model, options);
     // Persist each completed call before starting the next paid request.
     await onBatch({
-      data: images.map((v) => ({ url: v.image_url?.url || v.url })),
+      data: images.map((v) => ({
+        url: v.image_url?.url || v.url,
+        b64_json: v.b64_json,
+      })),
       cost,
     });
   }

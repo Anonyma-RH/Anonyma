@@ -18,6 +18,7 @@ import {
   now,
   uid,
   usdUnits,
+  callable,
 } from "../server/core.js";
 import { canonical } from "../server/auth.js";
 import { recordPayment } from "../server/payments.js";
@@ -70,6 +71,33 @@ async function readJSON(req) {
 }
 function event(res, p) {
   res.write("data: " + JSON.stringify(p) + "\n\n");
+}
+function dedicatedImageCatalog(t) {
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-image-catalog-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const path = join(dir, "models.json");
+  const model = {
+    id: "fixture/image",
+    name: "Fixture image",
+    type: "image",
+    status: "live",
+    capabilities: {
+      accepts_prompt: true,
+      accepts_image_url: true,
+      requires_image_url: false,
+    },
+    pricing: {
+      type: "per_generation",
+      variants: [
+        { quality: "low", options: [{ size: "default", price: 0.047 }] },
+      ],
+    },
+  };
+  writeFileSync(
+    path,
+    JSON.stringify({ updatedAt: new Date().toISOString(), data: [model] }),
+  );
+  return { path, model };
 }
 
 test("USD conversion removes float noise while rounding genuine fractional subcredits up", () => {
@@ -1020,12 +1048,14 @@ test("the standalone CLI streams an authenticated one-shot answer and receipt", 
 });
 
 test("image batches retain successful outputs and charge them once after a later provider failure", async (t) => {
+  const { path: catalogPath, model } = dedicatedImageCatalog(t);
   let calls = 0;
+  const upstreamRequests = [];
   const png =
     "data:image/png;base64," +
     readFileSync("data/test-image.png").toString("base64");
   const gateway = await mockServer(t, async (req, res) => {
-    await readJSON(req);
+    upstreamRequests.push({ path: req.url, body: await readJSON(req) });
     calls++;
     res.writeHead(calls === 1 ? 200 : 503, {
       "content-type": "application/json",
@@ -1034,18 +1064,23 @@ test("image batches retain successful outputs and charge them once after a later
       JSON.stringify(
         calls === 1
           ? {
-              choices: [{ message: { images: [{ image_url: { url: png } }] } }],
+              data: [{ b64_json: png.split(",")[1] }],
               cost: 0.02,
             }
           : { error: { message: "Test outage" } },
       ),
     );
   });
-  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const s = fixture(t, {
+    testMode: false,
+    gateway,
+    gatewayKey: "fixture",
+    catalogPath,
+  });
   const { agent, user } = await register(s.app);
   addCredit(s.db, user.id, 100000000, "image-batch-funding");
   const body = {
-    model: imageModel,
+    model: model.id,
     prompt: "A blue circle",
     n: 3,
     requestId: "partial-batch",
@@ -1057,6 +1092,11 @@ test("image batches retain successful outputs and charge them once after a later
   assert.equal(result.body.receipt.credits_charged, 20);
   assert.equal(result.body.data[0].cost, 20);
   assert.equal(calls, 2);
+  assert.equal(upstreamRequests[0].path, "/v1/images/generations");
+  assert.equal(upstreamRequests[0].body.model, model.id);
+  assert.equal(upstreamRequests[0].body.quality, "low");
+  assert.equal(upstreamRequests[0].body.prompt, "A blue circle");
+  assert.equal(upstreamRequests[0].body.messages, undefined);
   assert.equal((await agent.get("/api/media")).body.data.length, 1);
   assert.equal(balance(s.db, user.id).held, 0);
   await agent.post("/api/images").send(body).expect(409);
@@ -1065,6 +1105,59 @@ test("image batches retain successful outputs and charge them once after a later
     .post("/api/images")
     .send({ ...body, images: "not-an-array" })
     .expect(400);
+});
+
+test("dedicated image references remain private and retired chat-image models are unavailable live", async (t) => {
+  assert.equal(
+    callable(
+      {
+        id: imageModel,
+        type: "chat",
+        status: "live",
+        pricing: { input_per_1M_tokens: 0.15, output_per_1M_tokens: 1.25 },
+        architecture: { output_modalities: ["image", "text"] },
+      },
+      { testMode: false, gatewayKey: "fixture" },
+    ),
+    false,
+  );
+  const { path: catalogPath, model } = dedicatedImageCatalog(t);
+  const png = readFileSync("data/test-image.png").toString("base64");
+  const ref = "data:image/png;base64," + png;
+  let upstream;
+  const gateway = await mockServer(t, async (req, res) => {
+    upstream = { path: req.url, body: await readJSON(req) };
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ data: [{ b64_json: png }], cost: 0.047 }));
+  });
+  const s = fixture(t, {
+    testMode: false,
+    gateway,
+    gatewayKey: "fixture",
+    catalogPath,
+  });
+  const { agent, user } = await register(s.app);
+  const other = await register(s.app, "image-outsider");
+  addCredit(s.db, user.id, 1000000, "reference-fund", "test_credit");
+  const result = await agent
+    .post("/api/images")
+    .send({ model: model.id, prompt: "Use this reference", images: [ref] })
+    .expect(200);
+  assert.equal(upstream.path, "/v1/images/generations");
+  assert.equal(upstream.body.image_url, ref);
+  assert.equal(result.body.receipt.charged, usdUnits(0.047));
+  const url = result.body.data[0].url;
+  await agent
+    .get(url)
+    .expect(200)
+    .expect("Content-Type", /image\/png/);
+  await other.agent.get(url).expect(404);
+  await request(s.app).get(url).expect(404);
+  await agent
+    .post("/api/images")
+    .send({ model: model.id, prompt: "Invalid references", images: [ref, ref] })
+    .expect(400);
+  assert.equal(balance(s.db, user.id).held, 0);
 });
 
 test("invalid credit and settlement amounts cannot corrupt ledger or release held funds", async (t) => {
@@ -1203,6 +1296,7 @@ test("expired image batches recover persisted charges exactly once and leave kno
 });
 
 test("maintenance does not release an expired reservation while its image request is still active", async (t) => {
+  const { path: catalogPath, model } = dedicatedImageCatalog(t);
   let service, heldDuringRequest;
   const png =
     "data:image/png;base64," +
@@ -1217,17 +1311,22 @@ test("maintenance does not release an expired reservation while its image reques
     res.writeHead(200, { "content-type": "application/json" });
     res.end(
       JSON.stringify({
-        choices: [{ message: { images: [{ image_url: { url: png } }] } }],
+        data: [{ b64_json: png.split(",")[1] }],
         cost: -9,
       }),
     );
   });
-  service = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  service = fixture(t, {
+    testMode: false,
+    gateway,
+    gatewayKey: "fixture",
+    catalogPath,
+  });
   const { agent, user } = await register(service.app);
   addCredit(service.db, user.id, 100000000, "active-image-fund");
   const result = await agent
     .post("/api/images")
-    .send({ model: imageModel, prompt: "A circle" })
+    .send({ model: model.id, prompt: "A circle" })
     .expect(200);
   assert.equal(heldDuringRequest, "held");
   assert.equal(result.body.receipt.credits_charged, 47);
@@ -1854,7 +1953,7 @@ test("a later chat-image download failure bills and exposes saved partial output
   const response = await agent
     .post("/api/chat")
     .send({
-      model: imageModel,
+      model: chatModel,
       messages: prompt.messages,
       requestId: "partial-image",
     })

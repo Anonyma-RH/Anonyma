@@ -376,7 +376,8 @@ export function catalog() {
   };
 }
 export const vision = (m) =>
-  (m.architecture?.input_modalities || []).includes("image");
+  (m.architecture?.input_modalities || []).includes("image") ||
+  (m.type === "image" && m.capabilities?.accepts_image_url === true);
 export const imagePrices = {
   "google/gemini-3.1-flash-lite-image": 0.041,
   "google/gemini-2.5-flash-image": 0.047,
@@ -384,7 +385,19 @@ export const imagePrices = {
   "google/gemini-3-pro-image": 0.163,
 };
 export function imageCallable(m) {
-  return Object.hasOwn(imagePrices, m.id);
+  if (Object.hasOwn(imagePrices, m.id)) return true;
+  if (m.type !== "image" || m.capabilities?.accepts_prompt !== true)
+    return false;
+  const prices = [
+    m.pricing?.base_price,
+    m.pricing?.per_generation,
+    ...(m.pricing?.variants || []).flatMap((v) =>
+      (v.options || []).map((o) => o.price),
+    ),
+  ];
+  return prices.some(
+    (price) => typeof price === "number" && Number.isFinite(price) && price > 0,
+  );
 }
 export function hasPublishedTokenRates(m) {
   return [
@@ -401,16 +414,37 @@ export function callable(m, cfg) {
     (["chat", "video"].includes(m.type) || imageCallable(m)) &&
     (m.type !== "chat" || imageCallable(m) || hasPublishedTokenRates(m)) &&
     (m.type !== "video" || videoPresets(m).length > 0) &&
+    (cfg.testMode || m.type !== "chat" || !imageCallable(m)) &&
     (!(m.architecture?.output_modalities || []).includes("image") ||
       imageCallable(m)) &&
     (cfg.testMode || !!cfg.gatewayKey)
   );
 }
 export function generationPrice(m, opts = {}) {
-  if (imageCallable(m)) return imagePrices[m.id];
+  if (Object.hasOwn(imagePrices, m.id)) return imagePrices[m.id];
   const variants = m.pricing?.variants || [];
   const v = variants.find((v) => v.quality === opts.quality) || variants[0];
-  const size = opts.size || `${opts.ratio || "16:9"}_${opts.duration || "5"}`;
+  if (m.type === "image") {
+    const options = (v?.options || []).filter(
+      (o) =>
+        typeof o.price === "number" && Number.isFinite(o.price) && o.price > 0,
+    );
+    const selected = opts.resolution || opts.size;
+    const priced =
+      options.find((o) => o.size === selected) ||
+      options.find((o) => o.size === "default") ||
+      options.reduce(
+        (highest, o) => (!highest || o.price > highest.price ? o : highest),
+        null,
+      );
+    return (
+      priced?.price ?? m.pricing?.base_price ?? m.pricing?.per_generation ?? 0
+    );
+  }
+  const size =
+    opts.resolution ||
+    opts.size ||
+    `${opts.ratio || "16:9"}_${opts.duration || "5"}`;
   const o =
     v?.options?.find((o) => o.size === size) ||
     v?.options?.find((o) => o.size === "default") ||

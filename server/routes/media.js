@@ -9,6 +9,7 @@ import {
   settle,
   release,
   quote,
+  generationPrice,
   markupFactor,
 } from "../core.js";
 import { generateImages } from "../provider.js";
@@ -69,6 +70,27 @@ export function mediaRoutes(ctx) {
         fail(400, "Choose 1–4 images.");
       const refs = req.body.images || [];
       if (!Array.isArray(refs)) fail(400, "Reference images must be an array.");
+      if (m.type === "image") {
+        if (refs.length > 1)
+          fail(400, "This provider accepts one reference image per request.");
+        if (refs.length && !m.capabilities?.accepts_image_url)
+          fail(400, "This model does not accept a reference image.");
+        if (!refs.length && m.capabilities?.requires_image_url)
+          fail(400, "This model requires a reference image.");
+        if (
+          req.body.quality &&
+          !(m.pricing?.variants || []).some(
+            (variant) => variant.quality === req.body.quality,
+          )
+        )
+          fail(400, "Choose a published quality for this model.");
+        if (!(generationPrice(m, req.body) > 0))
+          fail(
+            400,
+            "This image option has no published price.",
+            "unpriced_model",
+          );
+      }
       validateMessages(
         [
           {

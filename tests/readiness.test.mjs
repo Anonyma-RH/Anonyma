@@ -14,9 +14,18 @@ import {
 } from "../server/readiness.js";
 test("encrypted private models are not routed through ordinary chat", () => {
   const cfg = { gatewayKey: "fixture" };
-  const model = { id: "private/example", status: "live", type: "chat" };
+  const model = {
+    id: "private/example",
+    status: "live",
+    type: "chat",
+    pricing: { input_per_1M_tokens: 1, output_per_1M_tokens: 2 },
+  };
   assert.equal(callable(model, cfg), false);
   assert.equal(callable({ ...model, id: "openai/example" }, cfg), true);
+  assert.equal(
+    callable({ ...model, id: "openai/example", pricing: {} }, cfg),
+    false,
+  );
 });
 test("token markup discount follows supply share immediately and stays bounded", () => {
   assert.equal(discount(1000000), 0.025);
@@ -63,6 +72,27 @@ test("readiness reports missing configuration without exposing secrets or claimi
   assert.equal(result.configured.generation, true);
   assert.equal(result.configured.payments, false);
   assert.deepEqual(result.missing.payments, ["PUBLIC_BASE_URL"]);
+  assert.equal(result.requiredConfigured, false);
   assert.equal(result.verified, false);
   assert.ok(!JSON.stringify(result).includes("private-fixture"));
+});
+test("optional wallet and token settings do not block required configuration readiness", () => {
+  const result = configurationStatus(
+    config({
+      testMode: false,
+      gatewayKey: "fixture",
+      paymentKey: "fixture",
+      paymentSecret: "fixture",
+      publicUrl: "https://anonyma.example.invalid",
+      smtp: "smtp://localhost",
+      smtpFrom: "noreply@example.invalid",
+      walletProject: "",
+      rpc: "",
+      token: "",
+    }),
+  );
+  assert.equal(result.requiredConfigured, true);
+  assert.equal(result.configured.walletConnect, false);
+  assert.equal(result.configured.token, false);
+  assert.equal(result.verified, false);
 });

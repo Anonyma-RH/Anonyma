@@ -39,6 +39,7 @@ import {
   catalog,
   callable,
   imageCallable,
+  hasPublishedTokenRates,
   vision,
   quote,
   tokenCost,
@@ -221,6 +222,12 @@ export function createApp(overrides = {}) {
   const getModel = (id, type) => {
     const m = models.data.find((v) => v.id === id);
     if (!m) fail(404, "Unknown model.", "model_not_found");
+    if (m.type === "chat" && !imageCallable(m) && !hasPublishedTokenRates(m))
+      fail(
+        400,
+        "This model has no valid published token rate.",
+        "unpriced_model",
+      );
     if (!callable(m, cfg))
       fail(
         503,
@@ -231,19 +238,6 @@ export function createApp(overrides = {}) {
       );
     if (type && m.type !== type && !(type === "image" && imageCallable(m)))
       fail(400, `Choose a ${type} model.`);
-    if (
-      m.type === "chat" &&
-      !imageCallable(m) &&
-      [m.pricing?.input_per_1M_tokens, m.pricing?.output_per_1M_tokens].some(
-        (rate) =>
-          typeof rate !== "number" || !Number.isFinite(rate) || rate < 0,
-      )
-    )
-      fail(
-        400,
-        "This model has no valid published token rate.",
-        "unpriced_model",
-      );
     return m;
   };
   function validateMessages(input, m, api = false) {
@@ -1416,7 +1410,7 @@ export function createApp(overrides = {}) {
             );
             if (String(update.payment_id) !== deposit.provider_id)
               throw Error("Processor invoice identity mismatch.");
-            recordPayment(db, update);
+            recordPayment(db, update, { current: true });
           } catch {
             db.prepare("UPDATE deposits SET updated=? WHERE id=?").run(
               now(),
@@ -1649,13 +1643,17 @@ export function createApp(overrides = {}) {
         });
         if (!invoice.payment_id)
           throw Error("Processor did not return a payment ID.");
-        const stored = recordPayment(db, {
-          ...invoice,
-          payment_status: invoice.payment_status || "waiting",
-          order_id: invoice.order_id ?? id,
-          price_amount: invoice.price_amount ?? dollars,
-          price_currency: invoice.price_currency ?? "usd",
-        });
+        const stored = recordPayment(
+          db,
+          {
+            ...invoice,
+            payment_status: invoice.payment_status || "waiting",
+            order_id: invoice.order_id ?? id,
+            price_amount: invoice.price_amount ?? dollars,
+            price_currency: invoice.price_currency ?? "usd",
+          },
+          { current: true },
+        );
         res.status(201).json({ id, ...JSON.parse(stored.payload) });
       } catch (e) {
         db.prepare(
@@ -1675,7 +1673,8 @@ export function createApp(overrides = {}) {
       }
     },
   );
-  const applyPayment = (body) => recordPayment(db, body);
+  const applyPayment = (body, current = false) =>
+    recordPayment(db, body, { current });
   app.post("/api/payments/ipn", (req, res) => {
     if (
       !validIPN(req.body, req.headers["x-nowpayments-sig"], cfg.paymentSecret)
@@ -1689,27 +1688,40 @@ export function createApp(overrides = {}) {
       .prepare("SELECT * FROM deposits WHERE id=? AND user_id=?")
       .get(req.params.id, req.user.id);
     if (!d) fail(404, "Invoice not found.");
+    let refreshError = null;
     if (
       d.provider_id &&
       !["finished", "failed", "expired", "refunded"].includes(d.status)
     ) {
-      const result = await payment(
-        cfg,
-        "/payment/" + encodeURIComponent(d.provider_id),
-      );
-      if (String(result.payment_id) !== d.provider_id)
-        fail(
-          502,
-          "Processor returned a different invoice.",
-          "payment_identity_mismatch",
+      let result;
+      try {
+        result = await payment(
+          cfg,
+          "/payment/" + encodeURIComponent(d.provider_id),
         );
-      applyPayment(result);
+      } catch {
+        refreshError =
+          "Processor status is temporarily unavailable. Showing the last verified invoice details.";
+      }
+      if (result == null || typeof result !== "object" || Array.isArray(result))
+        refreshError =
+          "Processor status is temporarily unavailable. Showing the last verified invoice details.";
+      else {
+        if (String(result.payment_id) !== d.provider_id)
+          fail(
+            502,
+            "Processor returned a different invoice.",
+            "payment_identity_mismatch",
+          );
+        applyPayment(result, true);
+      }
     }
     const updated = db.prepare("SELECT * FROM deposits WHERE id=?").get(d.id);
     res.json({
       ...updated,
       amount: updated.amount / 1e7,
       payload: JSON.parse(updated.payload),
+      ...(refreshError ? { refreshError } : {}),
     });
   });
   app.post(
@@ -1816,9 +1828,7 @@ export function createApp(overrides = {}) {
       mode: cfg.testMode ? "local-test" : "live",
       database: !!db.prepare("SELECT 1").get(),
       integrations: configurationStatus(cfg).configured,
-      ready:
-        !cfg.testMode &&
-        Object.values(configurationStatus(cfg).configured).every(Boolean),
+      ready: configurationStatus(cfg).requiredConfigured,
     }),
   );
   app.get("/llms.txt", (req, res) =>

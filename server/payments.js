@@ -11,11 +11,12 @@ const statuses = new Set([
   "expired",
   "refunded",
 ]);
+const terminalUncredited = new Set(["failed", "expired", "refunded"]);
 
 // Accept only authenticated processor responses or verified signed callbacks.
 // Binding by order_id recovers a callback that beats the create response, or
 // an invoice whose upstream creation succeeded before the connection failed.
-export function recordPayment(db, body) {
+export function recordPayment(db, body, { current = false } = {}) {
   if (!body || typeof body !== "object" || Array.isArray(body))
     fail(400, "Invalid payment update.");
   const providerId = String(body.payment_id || "");
@@ -66,12 +67,45 @@ export function recordPayment(db, body) {
         String(body.pay_currency).toLowerCase() !== d.currency)
     )
       fail(400, "Payment invoice mismatch.");
-    const status = d.credited ? "finished" : body.payment_status;
+    const previous = JSON.parse(d.payload);
+    let review = !!previous.statusReview;
+    let status = d.credited ? "finished" : body.payment_status;
+    if (d.credited) {
+      // Never silently undo credited funds. Contradictory processor statuses
+      // need an operator to compare the current processor record and ledger.
+      if (terminalUncredited.has(body.payment_status)) review = true;
+      if (review) {
+        if (current && body.payment_status === "finished") review = false;
+        else status = "reconciliation";
+      }
+    } else if (review || terminalUncredited.has(d.status)) {
+      if (body.payment_status === "finished") {
+        // A signed callback may be older than a terminal update. An
+        // authenticated status fetch is required before adding credit.
+        if (current) review = false;
+        else {
+          review = true;
+          status = "reconciliation";
+        }
+      } else if (review) {
+        if (current && terminalUncredited.has(body.payment_status))
+          review = false;
+        else status = "reconciliation";
+      } else if (!terminalUncredited.has(body.payment_status))
+        status = d.status;
+    }
     const payload = {
-      ...JSON.parse(d.payload),
+      ...previous,
       ...body,
       payment_status: status,
+      ...(review
+        ? {
+            statusReview:
+              "Conflicting payment updates require a current processor check and operator reconciliation.",
+          }
+        : {}),
     };
+    if (!review) delete payload.statusReview;
     db.prepare(
       "UPDATE deposits SET provider_id=?,status=?,payload=?,updated=? WHERE id=?",
     ).run(providerId, status, JSON.stringify(payload), now(), d.id);

@@ -16,14 +16,20 @@ export function configurationStatus(cfg) {
       ["TOKEN_CONTRACT", cfg.token],
     ],
   };
+  const configured = Object.fromEntries(
+    Object.entries(groups).map(([service, keys]) => [
+      service,
+      keys.every(([, value]) => !!value),
+    ]),
+  );
   return {
     mode: cfg.testMode ? "local-test" : "live",
-    configured: Object.fromEntries(
-      Object.entries(groups).map(([service, keys]) => [
-        service,
-        keys.every(([, value]) => !!value),
-      ]),
-    ),
+    configured,
+    requiredConfigured:
+      !cfg.testMode &&
+      ["generation", "payments", "email"].every(
+        (service) => configured[service],
+      ),
     missing: Object.fromEntries(
       Object.entries(groups).map(([service, keys]) => [
         service,

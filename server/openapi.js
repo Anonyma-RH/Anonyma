@@ -145,6 +145,11 @@ const schemas = {
     credited: integer,
     created: integer,
     updated: integer,
+    refreshError: {
+      ...string,
+      description:
+        "Present when a pending invoice could not be refreshed from the processor; saved invoice details are returned without asserting a new payment status.",
+    },
   }),
   Quote: object({
     credits: number,
@@ -323,7 +328,10 @@ for (const [path, summary] of [
   ["/api/models", "Model catalog including capability and pricing metadata"],
   ["/api/market", "Public cryptocurrency market feed"],
   ["/api/rates", "Crypto units per USD; validated rates cached for 60 seconds"],
-  ["/health", "Process health; HTTP 200 does not certify upstream readiness"],
+  [
+    "/health",
+    "Process health and required configuration; HTTP 200 does not certify upstream workflows",
+  ],
 ])
   route("get", path, summary, { auth: null });
 route("get", "/api/conversations", "List latest 300 conversations", {
@@ -490,7 +498,11 @@ route(
   "get",
   "/api/deposits/{id}",
   "Read invoice and refresh pending processor status",
-  { response: ref("Deposit") },
+  {
+    response: ref("Deposit"),
+    description:
+      "If the processor is temporarily unavailable, returns the last verified saved invoice with refreshError. A processor identity mismatch is rejected. Saved status is not treated as new payment confirmation. Conflicting terminal updates enter reconciliation until a current authenticated processor status is checked.",
+  },
 );
 route("post", "/api/payments/ipn", "NOWPayments signed callback", {
   auth: "ipn",

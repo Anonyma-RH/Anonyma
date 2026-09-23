@@ -829,7 +829,9 @@ test("missing or invalid published token rates reject before reserving credits",
   );
   const s = fixture(t, { catalogPath });
   const { agent } = await register(s.app);
+  const listed = (await agent.get("/api/models").expect(200)).body.data;
   for (const model of ["missing-rate", "negative-rate"]) {
+    assert.equal(listed.find((row) => row.id === model).callable, false);
     const response = await agent
       .post("/api/chat")
       .send({ ...prompt, model })
@@ -1339,6 +1341,89 @@ test("payment callbacks can arrive before invoice creation returns without lost 
   assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 1);
 });
 
+test("stale payment callbacks cannot reopen an expired invoice", async (t) => {
+  const secret = "terminal-status-fixture";
+  let invoice;
+  let currentStatus = "finished";
+  const base = await mockServer(t, async (req, res) => {
+    if (req.method === "GET") {
+      res.writeHead(200, { "content-type": "application/json" });
+      return res.end(
+        JSON.stringify({ ...invoice, payment_status: currentStatus }),
+      );
+    }
+    const body = await readJSON(req);
+    invoice = {
+      payment_id: "terminal-42",
+      order_id: body.order_id,
+      price_amount: body.price_amount,
+      price_currency: "usd",
+      pay_currency: "btc",
+      payment_status: "waiting",
+    };
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify(invoice));
+  });
+  const s = fixture(t, {
+    testMode: false,
+    paymentKey: "fixture",
+    paymentSecret: secret,
+    paymentBase: base,
+    publicUrl: "https://payments.example.invalid",
+  });
+  const { agent, user } = await register(s.app);
+  const created = await agent
+    .post("/api/deposits")
+    .send({ amount: 10, currency: "btc" })
+    .expect(201);
+  const callback = async (payment_status) => {
+    const body = { ...invoice, payment_status };
+    const signature = createHmac("sha512", secret)
+      .update(JSON.stringify(canonical(body)))
+      .digest("hex");
+    await request(s.app)
+      .post("/api/payments/ipn")
+      .set("x-nowpayments-sig", signature)
+      .send(body)
+      .expect(200);
+  };
+  await callback("expired");
+  await callback("waiting");
+  assert.equal(
+    s.db.prepare("SELECT status FROM deposits WHERE id=?").get(created.body.id)
+      .status,
+    "expired",
+  );
+  assert.equal(balance(s.db, user.id).total, 0);
+  await callback("finished");
+  const conflicted = s.db
+    .prepare("SELECT status,payload FROM deposits WHERE id=?")
+    .get(created.body.id);
+  assert.equal(conflicted.status, "reconciliation");
+  assert.ok(JSON.parse(conflicted.payload).statusReview);
+  assert.equal(balance(s.db, user.id).total, 0);
+  await agent.get(`/api/deposits/${created.body.id}`).expect(200);
+  assert.equal(credits(balance(s.db, user.id).total), 10000);
+  await callback("refunded");
+  assert.equal(
+    s.db.prepare("SELECT status FROM deposits WHERE id=?").get(created.body.id)
+      .status,
+    "reconciliation",
+  );
+  currentStatus = "refunded";
+  await agent.get(`/api/deposits/${created.body.id}`).expect(200);
+  assert.equal(
+    s.db.prepare("SELECT status FROM deposits WHERE id=?").get(created.body.id)
+      .status,
+    "reconciliation",
+  );
+  currentStatus = "finished";
+  await agent.get(`/api/deposits/${created.body.id}`).expect(200);
+  await callback("finished");
+  assert.equal(credits(balance(s.db, user.id).total), 10000);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 1);
+});
+
 test("uncertain invoice creation blocks closure and recovers from a later authenticated callback", async (t) => {
   let invoice;
   const secret = "late-callback-fixture";
@@ -1437,6 +1522,74 @@ test("background payment checks settle invoices without browser polling or a del
   await s.tick();
   await s.tick();
   assert.equal(checks, 1);
+  assert.equal(credits(balance(s.db, user.id).total), 10000);
+});
+
+test("saved invoices remain viewable during processor outages without trusting a mismatched status", async (t) => {
+  let invoice;
+  let status = "offline";
+  const base = await mockServer(t, async (req, res) => {
+    if (req.method === "POST") {
+      const body = await readJSON(req);
+      invoice = {
+        payment_id: "saved-42",
+        order_id: body.order_id,
+        price_amount: body.price_amount,
+        price_currency: "usd",
+        pay_currency: "btc",
+        pay_address: "saved-address",
+        pay_amount: 0.001,
+        payment_status: "waiting",
+      };
+      res.writeHead(200, { "content-type": "application/json" });
+      return res.end(JSON.stringify(invoice));
+    }
+    if (status === "offline") {
+      res.writeHead(503);
+      return res.end();
+    }
+    res.writeHead(200, { "content-type": "application/json" });
+    if (status === "empty") return res.end("null");
+    res.end(
+      JSON.stringify({
+        ...invoice,
+        payment_id:
+          status === "mismatch" ? "another-invoice" : invoice.payment_id,
+        payment_status: status === "finished" ? "finished" : "waiting",
+      }),
+    );
+  });
+  const s = fixture(t, {
+    testMode: false,
+    paymentKey: "fixture",
+    paymentSecret: "fixture",
+    paymentBase: base,
+    publicUrl: "https://payments.example.invalid",
+  });
+  const { agent, user } = await register(s.app);
+  const created = await agent
+    .post("/api/deposits")
+    .send({ amount: 10, currency: "btc" })
+    .expect(201);
+  const cached = await agent
+    .get(`/api/deposits/${created.body.id}`)
+    .expect(200);
+  assert.equal(cached.body.status, "waiting");
+  assert.equal(cached.body.payload.pay_address, "saved-address");
+  assert.match(cached.body.refreshError, /last verified invoice details/);
+  assert.equal(balance(s.db, user.id).total, 0);
+  status = "empty";
+  const empty = await agent.get(`/api/deposits/${created.body.id}`).expect(200);
+  assert.match(empty.body.refreshError, /last verified invoice details/);
+  status = "mismatch";
+  const wrong = await agent.get(`/api/deposits/${created.body.id}`).expect(502);
+  assert.equal(wrong.body.error.code, "payment_identity_mismatch");
+  status = "finished";
+  const settled = await agent
+    .get(`/api/deposits/${created.body.id}`)
+    .expect(200);
+  assert.equal(settled.body.status, "finished");
+  assert.equal(settled.body.refreshError, undefined);
   assert.equal(credits(balance(s.db, user.id).total), 10000);
 });
 

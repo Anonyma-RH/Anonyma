@@ -303,11 +303,20 @@ export const imagePrices = {
 export function imageCallable(m) {
   return Object.hasOwn(imagePrices, m.id);
 }
+export function hasPublishedTokenRates(m) {
+  return [
+    m.pricing?.input_per_1M_tokens,
+    m.pricing?.output_per_1M_tokens,
+  ].every(
+    (rate) => typeof rate === "number" && Number.isFinite(rate) && rate >= 0,
+  );
+}
 export function callable(m, cfg) {
   return (
     m.status === "live" &&
     !m.id.startsWith("private/") &&
     (["chat", "video"].includes(m.type) || imageCallable(m)) &&
+    (m.type !== "chat" || imageCallable(m) || hasPublishedTokenRates(m)) &&
     (m.type !== "video" || videoPresets(m).length > 0) &&
     (!(m.architecture?.output_modalities || []).includes("image") ||
       imageCallable(m)) &&

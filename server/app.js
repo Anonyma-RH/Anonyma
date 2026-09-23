@@ -1397,7 +1397,7 @@ export function createApp(overrides = {}) {
       if (!cfg.testMode && cfg.paymentKey) {
         const pending = db
           .prepare(
-            "SELECT * FROM deposits WHERE provider_id IS NOT NULL AND credited=0 AND status IN ('waiting','confirming','confirmed','sending','partially_paid') AND updated<? ORDER BY updated,created LIMIT 10",
+            "SELECT * FROM deposits WHERE provider_id IS NOT NULL AND (status='reconciliation' OR credited=0 AND status IN ('waiting','confirming','confirmed','sending','partially_paid')) AND updated<? ORDER BY updated,created LIMIT 10",
           )
           .all(now() - (cfg.paymentPollIntervalMs ?? 60000));
         const check = async (deposit) => {
@@ -1572,6 +1572,20 @@ export function createApp(overrides = {}) {
     const result = await payment(cfg, "/currencies");
     res.json({ data: result.currencies || [], live: true });
   });
+  const depositJSON = (d) => {
+    const payload = JSON.parse(d.payload);
+    return {
+      ...d,
+      amount: d.amount / 1e7,
+      payload,
+      credited:
+        d.credited &&
+        d.status === "finished" &&
+        payload.creditState !== "reversed"
+          ? 1
+          : 0,
+    };
+  };
   app.get("/api/deposits", requireUser, (req, res) =>
     res.json({
       data: db
@@ -1579,11 +1593,7 @@ export function createApp(overrides = {}) {
           "SELECT * FROM deposits WHERE user_id=? ORDER BY created DESC LIMIT 50",
         )
         .all(req.user.id)
-        .map((d) => ({
-          ...d,
-          amount: d.amount / 1e7,
-          payload: JSON.parse(d.payload),
-        })),
+        .map(depositJSON),
     }),
   );
   app.post(
@@ -1643,6 +1653,8 @@ export function createApp(overrides = {}) {
         });
         if (!invoice.payment_id)
           throw Error("Processor did not return a payment ID.");
+        // The create response may arrive after a newer signed callback. It is
+        // authenticated, but it is not a current status poll for corrections.
         const stored = recordPayment(
           db,
           {
@@ -1652,7 +1664,7 @@ export function createApp(overrides = {}) {
             price_amount: invoice.price_amount ?? dollars,
             price_currency: invoice.price_currency ?? "usd",
           },
-          { current: true },
+          { current: false },
         );
         res.status(201).json({ id, ...JSON.parse(stored.payload) });
       } catch (e) {
@@ -1718,9 +1730,7 @@ export function createApp(overrides = {}) {
     }
     const updated = db.prepare("SELECT * FROM deposits WHERE id=?").get(d.id);
     res.json({
-      ...updated,
-      amount: updated.amount / 1e7,
-      payload: JSON.parse(updated.payload),
+      ...depositJSON(updated),
       ...(refreshError ? { refreshError } : {}),
     });
   });

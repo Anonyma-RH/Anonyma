@@ -1,4 +1,4 @@
-import { addCredit, fail, now, transaction } from "./core.js";
+import { addCredit, fail, now, transaction, uid } from "./core.js";
 
 const statuses = new Set([
   "waiting",
@@ -16,7 +16,11 @@ const terminalUncredited = new Set(["failed", "expired", "refunded"]);
 // Accept only authenticated processor responses or verified signed callbacks.
 // Binding by order_id recovers a callback that beats the create response, or
 // an invoice whose upstream creation succeeded before the connection failed.
-export function recordPayment(db, body, { current = false } = {}) {
+export function recordPayment(
+  db,
+  body,
+  { current = false, allowReinstate = false } = {},
+) {
   if (!body || typeof body !== "object" || Array.isArray(body))
     fail(400, "Invalid payment update.");
   const providerId = String(body.payment_id || "");
@@ -70,13 +74,70 @@ export function recordPayment(db, body, { current = false } = {}) {
     const previous = JSON.parse(d.payload);
     let review = !!previous.statusReview;
     let status = d.credited ? "finished" : body.payment_status;
+    let creditState = d.credited
+      ? previous.creditState === "reversed"
+        ? "reversed"
+        : "credited"
+      : "uncredited";
+    let correctionCount =
+      Number.isSafeInteger(previous.creditCorrectionCount) &&
+      previous.creditCorrectionCount >= 0
+        ? previous.creditCorrectionCount
+        : 0;
     if (d.credited) {
-      // Never silently undo credited funds. Contradictory processor statuses
-      // need an operator to compare the current processor record and ledger.
-      if (terminalUncredited.has(body.payment_status)) review = true;
-      if (review) {
-        if (current && body.payment_status === "finished") review = false;
-        else status = "reconciliation";
+      const isTerminal = terminalUncredited.has(body.payment_status);
+      const correctLedger = (amount, description) => {
+        correctionCount += 1;
+        db.prepare("INSERT INTO ledger VALUES(?,?,?,?,?,?,?,?)").run(
+          uid("l_"),
+          d.user_id,
+          amount,
+          "payment_correction",
+          `payment_${providerId}_correction_${correctionCount}`,
+          null,
+          description,
+          now(),
+        );
+      };
+      if (current && isTerminal && creditState === "credited") {
+        // Only the authenticated current processor status can reverse a
+        // previously credited invoice. Keep the correction append-only.
+        correctLedger(
+          -d.amount,
+          `${d.currency.toUpperCase()} payment reversed`,
+        );
+        creditState = "reversed";
+        review = false;
+        status = body.payment_status;
+      } else if (
+        current &&
+        allowReinstate &&
+        body.payment_status === "finished" &&
+        creditState === "reversed"
+      ) {
+        // A reversal is terminal enough that an ordinary status poll must not
+        // reinstate spendable credit. The operator confirms this transition.
+        correctLedger(
+          d.amount,
+          `${d.currency.toUpperCase()} payment reinstated`,
+        );
+        creditState = "credited";
+        review = false;
+        status = "finished";
+      } else if (creditState === "reversed") {
+        if (isTerminal) {
+          review = false;
+          status = body.payment_status;
+        } else {
+          review = true;
+          status = "reconciliation";
+        }
+      } else {
+        if (isTerminal) review = true;
+        if (review) {
+          if (current && body.payment_status === "finished") review = false;
+          else status = "reconciliation";
+        }
       }
     } else if (review || terminalUncredited.has(d.status)) {
       if (body.payment_status === "finished") {
@@ -94,14 +155,17 @@ export function recordPayment(db, body, { current = false } = {}) {
       } else if (!terminalUncredited.has(body.payment_status))
         status = d.status;
     }
+    if (status === "finished" && !d.credited) creditState = "credited";
     const payload = {
       ...previous,
       ...body,
       payment_status: status,
+      creditState,
+      creditCorrectionCount: correctionCount,
       ...(review
         ? {
             statusReview:
-              "Conflicting payment updates require a current processor check and operator reconciliation.",
+              "Conflicting payment updates require a current processor check; unresolved outcomes need operator reconciliation.",
           }
         : {}),
     };

@@ -142,7 +142,11 @@ const schemas = {
     currency: string,
     status: string,
     payload: object(),
-    credited: integer,
+    credited: {
+      ...integer,
+      description:
+        "1 only while the original payment credit is currently usable; 0 while it is disputed or reversed. Historical credits and corrections remain in the append-only ledger.",
+    },
     created: integer,
     updated: integer,
     refreshError: {
@@ -501,7 +505,7 @@ route(
   {
     response: ref("Deposit"),
     description:
-      "If the processor is temporarily unavailable, returns the last verified saved invoice with refreshError. A processor identity mismatch is rejected. Saved status is not treated as new payment confirmation. Conflicting terminal updates enter reconciliation until a current authenticated processor status is checked.",
+      "If the processor is temporarily unavailable, returns the last verified saved invoice with refreshError. A processor identity mismatch is rejected. Saved status is not treated as new payment confirmation. Conflicting terminal updates pause new spending until a current authenticated processor status is checked. Confirmed reversals use append-only ledger corrections; reinstatement after a reversal requires operator confirmation.",
   },
 );
 route("post", "/api/payments/ipn", "NOWPayments signed callback", {

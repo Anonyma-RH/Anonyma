@@ -20,6 +20,7 @@ import {
   usdUnits,
 } from "../server/core.js";
 import { canonical } from "../server/auth.js";
+import { recordPayment } from "../server/payments.js";
 const chatModel = "google/gemini-2.5-flash",
   imageModel = "google/gemini-2.5-flash-image";
 const prompt = {
@@ -1370,6 +1371,7 @@ test("stale payment callbacks cannot reopen an expired invoice", async (t) => {
     paymentSecret: secret,
     paymentBase: base,
     publicUrl: "https://payments.example.invalid",
+    paymentPollIntervalMs: -1,
   });
   const { agent, user } = await register(s.app);
   const created = await agent
@@ -1410,18 +1412,72 @@ test("stale payment callbacks cannot reopen an expired invoice", async (t) => {
       .status,
     "reconciliation",
   );
+  assert.equal(
+    (await agent.get("/api/deposits").expect(200)).body.data[0].credited,
+    0,
+  );
+  assert.equal(balance(s.db, user.id).available, 0);
+  assert.throws(
+    () => reserve(s.db, { id: "blocked-by-dispute", user: user.id, amount: 1 }),
+    { code: "payment_reconciliation_pending" },
+  );
   currentStatus = "refunded";
-  await agent.get(`/api/deposits/${created.body.id}`).expect(200);
+  await s.tick();
   assert.equal(
     s.db.prepare("SELECT status FROM deposits WHERE id=?").get(created.body.id)
       .status,
-    "reconciliation",
+    "refunded",
+  );
+  assert.equal(balance(s.db, user.id).total, 0);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 2);
+  assert.equal(
+    (await agent.get(`/api/deposits/${created.body.id}`).expect(200)).body
+      .credited,
+    0,
+  );
+  await callback("refunded");
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 2);
+  await callback("finished");
+  assert.throws(
+    () =>
+      reserve(s.db, { id: "blocked-until-current", user: user.id, amount: 1 }),
+    { code: "payment_reconciliation_pending" },
   );
   currentStatus = "finished";
-  await agent.get(`/api/deposits/${created.body.id}`).expect(200);
+  const stillDisputed = await agent
+    .get(`/api/deposits/${created.body.id}`)
+    .expect(200);
+  assert.equal(stillDisputed.body.credited, 0);
+  assert.equal(stillDisputed.body.status, "reconciliation");
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 2);
+  recordPayment(
+    s.db,
+    { ...invoice, payment_status: "finished" },
+    { current: true, allowReinstate: true },
+  );
+  const reinstated = await agent
+    .get(`/api/deposits/${created.body.id}`)
+    .expect(200);
+  assert.equal(reinstated.body.credited, 1);
   await callback("finished");
   assert.equal(credits(balance(s.db, user.id).total), 10000);
-  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 1);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 3);
+  await callback("failed");
+  currentStatus = "failed";
+  await agent.get(`/api/deposits/${created.body.id}`).expect(200);
+  assert.equal(balance(s.db, user.id).total, 0);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 4);
+  await callback("finished");
+  currentStatus = "finished";
+  await agent.get(`/api/deposits/${created.body.id}`).expect(200);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 4);
+  recordPayment(
+    s.db,
+    { ...invoice, payment_status: "finished" },
+    { current: true, allowReinstate: true },
+  );
+  assert.equal(credits(balance(s.db, user.id).total), 10000);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger").get().n, 5);
 });
 
 test("uncertain invoice creation blocks closure and recovers from a later authenticated callback", async (t) => {

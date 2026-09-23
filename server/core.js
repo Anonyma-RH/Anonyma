@@ -97,6 +97,13 @@ export function config(overrides = {}) {
       cfg[field] = url.origin;
     }
   }
+  if (
+    e.NODE_ENV === "production" &&
+    !cfg.testMode &&
+    cfg.publicUrl &&
+    cfg.origin !== cfg.publicUrl
+  )
+    throw Error("APP_ORIGIN and PUBLIC_BASE_URL must match in production.");
   if (!Number.isInteger(cfg.port) || cfg.port < 0 || cfg.port > 65535)
     throw Error("Invalid server port.");
   for (const field of ["chain", "walletChain"])
@@ -128,6 +135,7 @@ export function database(path) {
  CREATE TABLE IF NOT EXISTS tickets(id TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id),subject TEXT,body TEXT,created INTEGER);
  CREATE INDEX IF NOT EXISTS ledger_user ON ledger(user_id,created);
  CREATE INDEX IF NOT EXISTS holds_user ON holds(user_id,status);
+ CREATE INDEX IF NOT EXISTS deposits_user_status ON deposits(user_id,status,credited);
  CREATE INDEX IF NOT EXISTS messages_conversation ON messages(conversation_id,created);
  `);
   if (
@@ -159,7 +167,16 @@ export function balance(db, user) {
       "SELECT COALESCE(SUM(amount),0) n FROM holds WHERE user_id=? AND status='held'",
     )
     .get(user).n;
-  return { total, held, available: total - held };
+  const disputedCredit = db
+    .prepare(
+      "SELECT 1 FROM deposits WHERE user_id=? AND credited=1 AND status='reconciliation' LIMIT 1",
+    )
+    .get(user);
+  return {
+    total,
+    held,
+    available: disputedCredit ? Math.min(0, total - held) : total - held,
+  };
 }
 export function addCredit(
   db,
@@ -195,6 +212,18 @@ export function reserve(
       );
     if (!Number.isSafeInteger(amount) || amount < 0)
       fail(400, "Invalid reservation");
+    if (
+      db
+        .prepare(
+          "SELECT id FROM deposits WHERE user_id=? AND credited=1 AND status='reconciliation' LIMIT 1",
+        )
+        .get(user)
+    )
+      fail(
+        409,
+        "A credited payment is under reconciliation. New requests are paused until its current processor status is confirmed.",
+        "payment_reconciliation_pending",
+      );
     if (balance(db, user).available < amount)
       fail(
         402,

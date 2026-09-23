@@ -96,3 +96,29 @@ test("optional wallet and token settings do not block required configuration rea
   assert.equal(result.configured.token, false);
   assert.equal(result.verified, false);
 });
+test("production refuses a payment callback origin that differs from the browser origin", () => {
+  const previous = process.env.NODE_ENV;
+  process.env.NODE_ENV = "production";
+  try {
+    assert.throws(
+      () =>
+        config({
+          origin: "http://127.0.0.1:3001",
+          publicUrl: "https://anonyma.example.com",
+          testMode: false,
+        }),
+      /APP_ORIGIN and PUBLIC_BASE_URL must match/,
+    );
+    assert.equal(
+      config({
+        origin: "https://anonyma.example.com",
+        publicUrl: "https://anonyma.example.com",
+        testMode: false,
+      }).origin,
+      "https://anonyma.example.com",
+    );
+  } finally {
+    if (previous == null) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previous;
+  }
+});

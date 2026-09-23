@@ -112,10 +112,12 @@ if (process.platform === "win32")
     const wrapper = join(dir, "anonyma.cmd");
     assert.ok(statSync(installed).size > 0);
     assert.ok(statSync(wrapper).size > 0);
+    // Node escapes quotes for most Windows programs, but cmd.exe parses its
+    // own command line, so the quoting below must reach it unchanged.
     const answer = await run(
       "cmd.exe",
       ["/d", "/s", "/c", `""${wrapper}" "An argument with spaces""`],
-      { env },
+      { env, windowsVerbatimArguments: true },
     );
     assert.match(answer.stdout, /Windows CLI works/);
     assert.equal(body.messages.at(-1).content, "An argument with spaces");

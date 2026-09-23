@@ -189,11 +189,17 @@ export function chatRoutes(ctx) {
         );
       const input = validTokenCount(
         usage?.prompt_tokens,
-        Math.ceil(JSON.stringify(messages).length / 4),
+        validTokenCount(
+          usage?.input_tokens,
+          Math.ceil(JSON.stringify(messages).length / 4),
+        ),
       );
       const out = validTokenCount(
         usage?.completion_tokens,
-        Math.ceil((output + reasoning).length / 4),
+        validTokenCount(
+          usage?.output_tokens,
+          Math.ceil((output + reasoning).length / 4),
+        ),
       );
       const dollars =
         reportedProviderCost(usage, upstreamCost) ??

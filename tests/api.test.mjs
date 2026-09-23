@@ -138,6 +138,31 @@ test("PPQ BYOK usage includes upstream inference and fee in the settled charge",
   assert.equal(before - balance(s.db, user.id).total, usdUnits(billed));
   assert.equal(balance(s.db, user.id).held, 0);
 });
+test("PPQ streamed input/output token aliases drive fallback billing", async (t) => {
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, { choices: [{ delta: { content: "ready" } }] });
+    event(res, { choices: [], usage: { input_tokens: 13, output_tokens: 5 } });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 1000000, "alias-fund", "test_credit");
+  const key = await keyFor(agent);
+  const before = balance(s.db, user.id).total;
+  const response = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send({ ...prompt, max_tokens: 100 })
+    .expect(200);
+  assert.equal(response.body.usage.prompt_tokens, 13);
+  assert.equal(response.body.usage.completion_tokens, 5);
+  assert.equal(
+    before - balance(s.db, user.id).total,
+    usdUnits((13 * 0.15 + 5 * 1.25) / 1e6),
+  );
+});
 test("config/catalog are explicit; missing gateway does not create fake successful generations", async (t) => {
   const s = fixture(t, {
     testMode: false,

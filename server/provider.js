@@ -1,5 +1,24 @@
 import { readFileSync } from "node:fs";
 import { fail, generationPrice } from "./core.js";
+// PPQ's BYOK usage.cost is its fee, not the full account debit. The
+// upstream inference charge appears separately in cost_details. Live PPQ
+// history includes another 0.5% of that upstream charge in the final debit.
+export function reportedProviderCost(usage, explicitCost) {
+  const valid = (value) =>
+    typeof value === "number" && Number.isFinite(value) && value >= 0;
+  const reported = valid(explicitCost)
+    ? explicitCost
+    : valid(usage?.cost)
+      ? usage.cost
+      : null;
+  const upstream = usage?.cost_details?.upstream_inference_cost;
+  if (usage?.is_byok === true && valid(upstream))
+    return Math.max(
+      upstream * 1.005 + (valid(usage.cost) ? usage.cost : 0),
+      reported ?? 0,
+    );
+  return reported;
+}
 // Codes for upstream responses that prove the provider did not accept the
 // request, so its reservation can be released without reconciliation.
 export const PROVIDER_REFUSALS = new Set([
@@ -214,13 +233,8 @@ export async function generateImages(
         "The provider returned no image for this part of the batch.",
         "empty_output",
       );
-    const reportedCost = j.cost ?? j.usage?.cost;
     const cost =
-      typeof reportedCost === "number" &&
-      Number.isFinite(reportedCost) &&
-      reportedCost >= 0
-        ? reportedCost
-        : generationPrice(model, options);
+      reportedProviderCost(j.usage, j.cost) ?? generationPrice(model, options);
     // Persist each completed call before starting the next paid request.
     await onBatch({
       data: images.map((v) => ({ url: v.image_url?.url || v.url })),

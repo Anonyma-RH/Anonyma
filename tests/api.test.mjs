@@ -21,6 +21,7 @@ import {
 } from "../server/core.js";
 import { canonical } from "../server/auth.js";
 import { recordPayment } from "../server/payments.js";
+import { reportedProviderCost } from "../server/provider.js";
 const chatModel = "google/gemini-2.5-flash",
   imageModel = "google/gemini-2.5-flash-image";
 const prompt = {
@@ -75,6 +76,39 @@ test("USD conversion removes float noise while rounding genuine fractional subcr
   assert.equal(usdUnits(0.4025), 4025000);
   assert.equal(usdUnits(0.1 + 0.2), 3000000);
   assert.equal(usdUnits(0.00000015), 2);
+});
+test("PPQ BYOK usage includes upstream inference and fee in the settled charge", async (t) => {
+  const usage = {
+    prompt_tokens: 13,
+    completion_tokens: 5,
+    cost: 0.00000418,
+    is_byok: true,
+    cost_details: { upstream_inference_cost: 0.0000836 },
+  };
+  const billed = 0.000088198; // PPQ's observed account-history debit.
+  assert.ok(Math.abs(reportedProviderCost(usage) - billed) < 1e-12);
+  assert.equal(reportedProviderCost({ cost: 0.00000418 }), 0.00000418);
+  assert.equal(reportedProviderCost(usage, 0.00009), 0.00009);
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, { choices: [{ delta: { content: "ready" } }] });
+    event(res, { choices: [], usage });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 1000000, "byok-fund", "test_credit");
+  const key = await keyFor(agent);
+  const before = balance(s.db, user.id).total;
+  const response = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send({ ...prompt, max_tokens: 100 })
+    .expect(200);
+  assert.equal(response.body.choices[0].message.content, "ready");
+  assert.equal(before - balance(s.db, user.id).total, usdUnits(billed));
+  assert.equal(balance(s.db, user.id).held, 0);
 });
 test("config/catalog are explicit; missing gateway does not create fake successful generations", async (t) => {
   const s = fixture(t, {

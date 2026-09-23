@@ -13,7 +13,7 @@ import {
   generationPrice,
   markupFactor,
 } from "../core.js";
-import { chatStream } from "../provider.js";
+import { chatStream, reportedProviderCost } from "../provider.js";
 import { requestIdentifier } from "../middleware.js";
 
 // Streamed chat for the workspace and the compatible /v1 API.
@@ -195,15 +195,9 @@ export function chatRoutes(ctx) {
         usage?.completion_tokens,
         Math.ceil((output + reasoning).length / 4),
       );
-      const reportedCost = upstreamCost ?? usage?.cost;
       const dollars =
-        typeof reportedCost === "number" &&
-        Number.isFinite(reportedCost) &&
-        reportedCost >= 0
-          ? reportedCost
-          : imageCallable(m)
-            ? generationPrice(m)
-            : tokenCost(m, input, out);
+        reportedProviderCost(usage, upstreamCost) ??
+        (imageCallable(m) ? generationPrice(m) : tokenCost(m, input, out));
       usage = {
         ...usage,
         prompt_tokens: input,

@@ -51,7 +51,7 @@ export function Catalog() {
         .sort((a, b) =>
           sort === "context"
             ? (b.context_length || 0) - (a.context_length || 0)
-            : a.name.localeCompare(b.name),
+            : String(a.name ?? a.id).localeCompare(String(b.name ?? b.id)),
         ),
     [models, type, provider, query, sort],
   );

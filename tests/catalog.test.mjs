@@ -46,3 +46,44 @@ test("catalog joins chat and dedicated media feeds atomically and preserves cach
   await assert.rejects(syncCatalog(cfg, snapshot), /503/);
   assert.equal(readFileSync(cfg.catalogPath, "utf8"), before);
 });
+test("retired snapshot models are named entries, and damaged caches are repaired", async (t) => {
+  const { catalog } = await import("../server/core.js");
+  const { loadCatalog } = await import("../server/catalog.js");
+  const { mkdtempSync, rmSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const bundled = catalog().data;
+  assert.ok(
+    bundled.every(
+      (m) => typeof m.id === "string" && typeof m.name === "string",
+    ),
+  );
+  const retired = bundled.find((m) => m.id === "ai21/jamba-large-1.7");
+  assert.equal(retired.status, "unavailable");
+
+  // A cache written by the old code: retired IDs spread into character maps.
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-catalog-repair-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const path = join(dir, "models.json");
+  writeFileSync(
+    path,
+    JSON.stringify({
+      updatedAt: "2026-09-21T00:00:00.000Z",
+      data: [
+        { id: "live/model", name: "Live model", status: "live" },
+        { ...[..."ai21/jamba-large-1.7"], status: "unavailable" },
+      ],
+    }),
+  );
+  const repaired = loadCatalog(path).data;
+  assert.ok(
+    repaired.every(
+      (m) => typeof m.id === "string" && typeof m.name === "string",
+    ),
+  );
+  assert.equal(
+    repaired.filter((m) => m.id === "ai21/jamba-large-1.7").length,
+    1,
+  );
+  assert.ok(repaired.some((m) => m.id === "live/model"));
+});

@@ -365,12 +365,12 @@ const snapshot = JSON.parse(
     "utf8",
   ),
 );
+// The snapshot lists retired models by ID only.
+export const retiredModel = (id) => ({ id, name: id, status: "unavailable" });
+export const retiredModelIds = () => snapshot.dead;
 export function catalog() {
   return {
-    data: [
-      ...snapshot.data,
-      ...snapshot.dead.map((m) => ({ ...m, status: "unavailable" })),
-    ],
+    data: [...snapshot.data, ...snapshot.dead.map(retiredModel)],
     updatedAt: snapshot.updatedAt,
     source: "Reference catalog snapshot · 19 Sep 2026",
   };

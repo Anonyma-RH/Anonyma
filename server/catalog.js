@@ -7,11 +7,24 @@ import {
 } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { dirname } from "node:path";
-import { catalog } from "./core.js";
+import { catalog, retiredModel, retiredModelIds } from "./core.js";
+// Caches written before retired snapshot IDs were expanded correctly hold
+// nameless objects built from the ID's characters. Drop anything without a
+// usable ID and restore the retired IDs as proper entries.
+export function repairCatalog(j) {
+  const data = j.data
+    .filter((m) => typeof m?.id === "string")
+    .map((m) => (typeof m.name === "string" ? m : { ...m, name: m.id }));
+  const ids = new Set(data.map((m) => m.id));
+  for (const id of retiredModelIds())
+    if (!ids.has(id)) data.push(retiredModel(id));
+  return { ...j, data };
+}
 export function loadCatalog(path) {
   try {
     const j = JSON.parse(readFileSync(path, "utf8"));
-    if (Array.isArray(j.data) && j.data.length && j.updatedAt) return j;
+    if (Array.isArray(j.data) && j.data.length && j.updatedAt)
+      return repairCatalog(j);
   } catch {}
   return catalog();
 }

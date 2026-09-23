@@ -54,6 +54,7 @@ import {
   createVideo,
   pollVideo,
   payment,
+  PROVIDER_REFUSALS,
 } from "./provider.js";
 
 export function createApp(overrides = {}) {
@@ -104,6 +105,9 @@ export function createApp(overrides = {}) {
     next();
   };
   app.disable("x-powered-by");
+  // Rate limits key on req.ip, which is the proxy's address unless the
+  // proxy is trusted to report the client in X-Forwarded-For.
+  app.set("trust proxy", cfg.trustProxy);
   app.use((req, res, next) => {
     res.set({
       "X-Content-Type-Options": "nosniff",
@@ -593,7 +597,8 @@ export function createApp(overrides = {}) {
       reasoning = "",
       usage = null,
       upstreamCost = null,
-      receipt = null;
+      receipt = null,
+      accepted = false;
     const images = [];
     const saved = [];
     const savedMediaIds = [];
@@ -634,6 +639,7 @@ export function createApp(overrides = {}) {
         cfg,
         { model: m.id, messages, max_tokens: max },
         controller.signal,
+        () => (accepted = true),
       )) {
         if (part.error)
           fail(
@@ -781,6 +787,12 @@ export function createApp(overrides = {}) {
         controller.signal.aborted &&
         controller.signal.reason?.message === "Provider timeout";
       const chargeReservation = timedOut || e.code === "provider_unreadable";
+      // The provider bills the prompt once it accepts a request, even if the
+      // user stops before any output arrives.
+      const stoppedAfterAcceptance =
+        accepted &&
+        controller.signal.aborted &&
+        controller.signal.reason?.message === "Client disconnected";
       if (chargeReservation) {
         receipt = settle(
           db,
@@ -839,6 +851,23 @@ export function createApp(overrides = {}) {
             receipt.charged,
             now(),
           );
+      } else if (stoppedAfterAcceptance) {
+        receipt = settle(
+          db,
+          hold,
+          usdUnits(
+            tokenCost(
+              m,
+              validTokenCount(
+                usage?.prompt_tokens,
+                Math.ceil(JSON.stringify(messages).length / 4),
+              ),
+              0,
+            ) * factor,
+          ),
+          "Stopped before output: " + m.name,
+        );
+        e.receipt = receipt;
       } else release(db, hold);
       if (receipt) attributeMediaCost(receipt);
       if (streaming) {
@@ -1221,7 +1250,7 @@ export function createApp(overrides = {}) {
         ).run(job.id, now(), id);
         res.status(202).json({ id, status: "pending" });
       } catch (e) {
-        if (e.code === "provider_rejected") {
+        if (PROVIDER_REFUSALS.has(e.code)) {
           release(db, hold);
           db.prepare(
             "UPDATE videos SET status='failed',error=?,updated=? WHERE id=?",

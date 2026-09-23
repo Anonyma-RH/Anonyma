@@ -1,7 +1,41 @@
 import { readFileSync } from "node:fs";
 import { fail, generationPrice } from "./core.js";
-export async function* chatStream(cfg, body, signal) {
+// Codes for upstream responses that prove the provider did not accept the
+// request, so its reservation can be released without reconciliation.
+export const PROVIDER_REFUSALS = new Set([
+  "provider_rejected",
+  "provider_unavailable",
+  "provider_busy",
+]);
+// 401/402/403 mean the operator's gateway account (key, funding, access) is
+// at fault and 429 means the gateway is throttling us; neither is the
+// user's request, so they are reported as a temporary service condition.
+function providerFailure(status, detail, label = "Provider") {
+  if ([401, 402, 403].includes(status)) {
+    console.error(
+      `${label} refused the gateway account (${status}). Check the gateway key and its funding.`,
+    );
+    fail(
+      503,
+      "The AI provider is temporarily unavailable. Nothing was charged.",
+      "provider_unavailable",
+    );
+  }
+  if (status === 429)
+    fail(
+      503,
+      "The AI provider is busy. Nothing was charged; try again shortly.",
+      "provider_busy",
+    );
+  fail(
+    status >= 500 ? 502 : 400,
+    detail || `${label} rejected this request (${status}).`,
+    "provider_rejected",
+  );
+}
+export async function* chatStream(cfg, body, signal, onAccepted) {
   if (cfg.testMode) {
+    onAccepted?.();
     if (/gemini.*image/.test(body.model)) {
       yield {
         choices: [
@@ -77,12 +111,9 @@ export async function* chatStream(cfg, body, signal) {
     try {
       detail = (await response.json()).error?.message;
     } catch {}
-    fail(
-      response.status >= 500 ? 502 : 400,
-      detail || `Provider rejected this request (${response.status}).`,
-      "provider_rejected",
-    );
+    providerFailure(response.status, detail);
   }
+  onAccepted?.();
   const decoder = new TextDecoder();
   let buffer = "";
   for await (const bytes of response.body) {
@@ -162,12 +193,15 @@ export async function generateImages(
         signal,
       },
     );
-    if (!r.ok)
+    if (!r.ok) {
+      if ([401, 402, 403, 429].includes(r.status))
+        providerFailure(r.status, null, "Image provider");
       fail(
         502,
         `Image provider rejected the request (${r.status}).`,
         "provider_rejected",
       );
+    }
     const j = await r.json();
     let images = j.choices?.[0]?.message?.images || [];
     if (!images.length && Array.isArray(j.choices?.[0]?.message?.content))
@@ -206,8 +240,11 @@ export async function createVideo(cfg, body) {
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(120000),
   });
-  if (!r.ok)
+  if (!r.ok) {
+    if ([401, 402, 403, 429].includes(r.status))
+      providerFailure(r.status, null, "Video provider");
     fail(502, `Video submission rejected (${r.status}).`, "provider_rejected");
+  }
   return r.json();
 }
 export async function pollVideo(cfg, id, signal) {

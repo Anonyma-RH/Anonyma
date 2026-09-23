@@ -1849,3 +1849,161 @@ test("HTTP API contract and downloaded CLI reflect the configured installation w
   assert.match(cli, /https:\/\/anonyma\.example\.invalid\/v1/);
   assert.ok(!cli.includes("secret-not-for-contract"));
 });
+test("behind a trusted proxy, rate limits apply per client instead of site-wide", async (t) => {
+  const s = fixture(t);
+  const signUp = (name, ip) =>
+    request(s.app)
+      .post("/api/auth/register")
+      .set("X-Forwarded-For", ip)
+      .send({ username: name, password: "test-password-long" });
+  for (let i = 0; i < 10; i++)
+    assert.equal((await signUp("busy" + i, "203.0.113.7")).status, 201);
+  assert.equal((await signUp("busy10", "203.0.113.7")).status, 429);
+  // A different visitor behind the same proxy keeps their own allowance.
+  assert.equal((await signUp("other0", "198.51.100.9")).status, 201);
+
+  // Without a trusted proxy the forwarded header is ignored, not believed.
+  const direct = fixture(t, { trustProxy: false });
+  for (let i = 0; i < 10; i++)
+    await request(direct.app)
+      .post("/api/auth/register")
+      .set("X-Forwarded-For", "192.0.2." + i)
+      .send({ username: "spoof" + i, password: "test-password-long" })
+      .expect(201);
+  await request(direct.app)
+    .post("/api/auth/register")
+    .set("X-Forwarded-For", "192.0.2.99")
+    .send({ username: "spoof10", password: "test-password-long" })
+    .expect(429);
+});
+test("gateway account and throttling refusals report an outage and release funds", async (t) => {
+  let status = 402;
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(status, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: { message: "Operator account detail" } }));
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "refusal-fund");
+  const key = await keyFor(agent);
+  const before = balance(s.db, user.id).total;
+  const errors = t.mock.method(console, "error", () => {});
+  const unfunded = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send(prompt)
+    .expect(503);
+  assert.equal(unfunded.body.error.code, "provider_unavailable");
+  assert.doesNotMatch(unfunded.body.error.message, /Operator account/);
+  assert.equal(errors.mock.callCount(), 1);
+  status = 429;
+  const busy = await request(s.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", "Bearer " + key.key)
+    .send(prompt)
+    .expect(503);
+  assert.equal(busy.body.error.code, "provider_busy");
+  // A refused video submission is released, not parked for reconciliation.
+  status = 401;
+  await agent
+    .post("/api/videos")
+    .send({
+      model: "kling-2.5-turbo",
+      prompt: "Clip",
+      ratio: "16:9",
+      duration: "5",
+    })
+    .expect(503);
+  assert.equal(
+    s.db.prepare("SELECT status FROM videos").get().status,
+    "failed",
+  );
+  assert.equal(balance(s.db, user.id).total, before);
+  assert.equal(balance(s.db, user.id).held, 0);
+});
+test("stopping after the provider accepts charges only the prompt; stopping earlier is free", async (t) => {
+  let delayHead = false;
+  let received;
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    received?.();
+    if (delayHead) {
+      const timer = setTimeout(() => res.writeHead(200).end(), 2000);
+      res.on("close", () => clearTimeout(timer));
+      return;
+    }
+    // Accept the request, then produce nothing until the client leaves.
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    res.write(": accepted\n\n");
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const server = s.app.listen(0, "127.0.0.1");
+  await new Promise((r) => server.once("listening", r));
+  t.after(() => {
+    server.closeAllConnections();
+    return new Promise((r) => server.close(r));
+  });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "stop-fund");
+  const key = await keyFor(agent);
+  const url = `http://127.0.0.1:${server.address().port}/v1/chat/completions`;
+  async function stopEarly(afterGatewayMs) {
+    const gatewaySawIt = new Promise((r) => (received = r));
+    const controller = new AbortController();
+    const pending = fetch(url, {
+      method: "POST",
+      headers: {
+        authorization: "Bearer " + key.key,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ ...prompt, stream: true }),
+      signal: controller.signal,
+    })
+      .then((r) => r.text())
+      .catch(() => {});
+    await gatewaySawIt;
+    await new Promise((r) => setTimeout(r, afterGatewayMs));
+    controller.abort();
+    await pending;
+    for (let i = 0; i < 100; i++) {
+      const hold = s.db
+        .prepare("SELECT * FROM holds ORDER BY rowid DESC LIMIT 1")
+        .get();
+      if (hold.status !== "held") return hold;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    throw Error("Reservation was never finalized.");
+  }
+  const accepted = await stopEarly(100);
+  assert.equal(accepted.status, "settled");
+  const receipt = JSON.parse(accepted.result);
+  assert.ok(receipt.charged > 0, "the prompt is billed");
+  assert.ok(receipt.charged < accepted.amount, "output is not billed");
+  const before = balance(s.db, user.id).total;
+  delayHead = true;
+  const refused = await stopEarly(20);
+  assert.equal(refused.status, "released");
+  assert.equal(balance(s.db, user.id).total, before);
+  assert.equal(balance(s.db, user.id).held, 0);
+});
+test("costs above a reservation are absorbed but recorded for the operator", async (t) => {
+  const s = fixture(t);
+  const { user } = await register(s.app);
+  const warnings = t.mock.method(console, "warn", () => {});
+  reserve(s.db, { id: "over", user: user.id, amount: 1000 });
+  const receipt = settle(s.db, "over", 1500);
+  assert.equal(receipt.charged, 1000);
+  assert.equal(receipt.uncovered, undefined, "not exposed in user receipts");
+  const hold = s.db.prepare("SELECT * FROM holds WHERE id='over'").get();
+  assert.equal(hold.uncovered, 500);
+  assert.equal(warnings.mock.callCount(), 1);
+  assert.doesNotMatch(warnings.mock.calls[0].arguments[0], /\bover\b/);
+  reserve(s.db, { id: "under", user: user.id, amount: 1000 });
+  settle(s.db, "under", 400);
+  assert.equal(
+    s.db.prepare("SELECT uncovered FROM holds WHERE id='under'").get()
+      .uncovered,
+    0,
+  );
+});

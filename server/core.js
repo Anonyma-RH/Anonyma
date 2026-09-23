@@ -40,6 +40,20 @@ export function passwordMatches(password, stored) {
     scryptSync(password, salt, 64),
   );
 }
+// Only configured proxies may report the client address in X-Forwarded-For.
+// Keep the backend port private when trusting a Docker bridge or subnet.
+// Set TRUST_PROXY=false when nothing sits in front of the server.
+export function parseTrustProxy(value) {
+  const v = (value ?? "loopback").trim();
+  if (["", "false", "0"].includes(v.toLowerCase())) return false;
+  if (/^\d+$/.test(v))
+    throw Error("TRUST_PROXY must name proxy addresses or subnets, not hops.");
+  if (v.toLowerCase() === "true")
+    throw Error(
+      "TRUST_PROXY=true would let any client forge its address. Name the proxy's addresses or subnets instead.",
+    );
+  return v;
+}
 export function config(overrides = {}) {
   const e = process.env;
   const cfg = {
@@ -69,6 +83,7 @@ export function config(overrides = {}) {
     syncModels: e.AUTO_SYNC_MODELS === "true",
     supportEmail: e.SUPPORT_EMAIL || "",
     telegram: e.TELEGRAM_URL || "",
+    trustProxy: parseTrustProxy(e.TRUST_PROXY),
     ...overrides,
   };
   for (const field of [
@@ -145,6 +160,13 @@ export function database(path) {
       .some((c) => c.name === "token_checked")
   )
     db.exec("ALTER TABLE users ADD COLUMN token_checked INTEGER");
+  if (
+    !db
+      .prepare("PRAGMA table_info(holds)")
+      .all()
+      .some((c) => c.name === "uncovered")
+  )
+    db.exec("ALTER TABLE holds ADD COLUMN uncovered INTEGER DEFAULT 0");
   return db;
 }
 export function transaction(db, fn) {
@@ -276,6 +298,13 @@ export function settle(
     )
       fail(502, "Usage cost could not be verified.", "invalid_cost");
     const amount = Math.min(h.amount, Math.max(0, Math.ceil(actual)));
+    // Users are never charged beyond their reservation, so any excess is an
+    // operator loss; keep it on the hold for the reconciliation report.
+    const uncovered = Math.ceil(actual) - amount;
+    if (uncovered > 0)
+      console.warn(
+        `Provider cost exceeded a reservation by ${credits(uncovered)} credits; absorbed by the operator. See the reconciliation report for the hold.`,
+      );
     if (amount)
       db.prepare("INSERT INTO ledger VALUES(?,?,?,?,?,?,?,?)").run(
         uid("l_"),
@@ -293,10 +322,9 @@ export function settle(
       credits_charged: credits(amount),
       released: credits(h.amount - amount),
     };
-    db.prepare("UPDATE holds SET status='settled',result=? WHERE id=?").run(
-      JSON.stringify(result),
-      id,
-    );
+    db.prepare(
+      "UPDATE holds SET status='settled',result=?,uncovered=? WHERE id=?",
+    ).run(JSON.stringify(result), Math.max(0, uncovered), id);
     return result;
   });
 }

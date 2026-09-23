@@ -12,6 +12,23 @@ const statuses = new Set([
   "refunded",
 ]);
 const terminalUncredited = new Set(["failed", "expired", "refunded"]);
+// Invoices the processor may still move toward payment.
+export const OPEN_PAYMENT_STATUSES = [
+  "waiting",
+  "confirming",
+  "confirmed",
+  "sending",
+  "partially_paid",
+];
+// Invoices whose processor status can no longer change.
+export const FINAL_PAYMENT_STATUSES = ["finished", ...terminalUncredited];
+// Local states for an invoice whose creation has not been confirmed.
+export const UNCONFIRMED_INVOICE_STATUSES = [
+  "creating",
+  "error",
+  "reconciliation",
+];
+export const sqlList = (values) => values.map((v) => `'${v}'`).join(",");
 
 // Accept only authenticated processor responses or verified signed callbacks.
 // Binding by order_id recovers a callback that beats the create response, or

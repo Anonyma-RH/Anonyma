@@ -212,17 +212,35 @@ export function balance(db, user) {
       "SELECT COALESCE(SUM(amount),0) n FROM holds WHERE user_id=? AND status='held'",
     )
     .get(user).n;
-  const disputedCredit = db
+  return {
+    total,
+    held,
+    available: hasDisputedCredit(db, user)
+      ? Math.min(0, total - held)
+      : total - held,
+  };
+}
+// A credited payment whose processor status later conflicts pauses spending
+// until the operator confirms it.
+export const hasDisputedCredit = (db, user) =>
+  !!db
     .prepare(
       "SELECT 1 FROM deposits WHERE user_id=? AND credited=1 AND status='reconciliation' LIMIT 1",
     )
     .get(user);
-  return {
-    total,
-    held,
-    available: disputedCredit ? Math.min(0, total - held) : total - held,
-  };
-}
+// Settled spend by an API key over the rolling 24-hour cap window.
+export const keySpend24h = (db, key) =>
+  -db
+    .prepare(
+      "SELECT COALESCE(SUM(amount),0) n FROM ledger WHERE key_id=? AND amount<0 AND created>?",
+    )
+    .get(key, now() - 86400000).n;
+// Split an integer charge across items so the parts sum exactly to it.
+export const splitCharge = (total, count) =>
+  Array.from(
+    { length: count },
+    (_, index) => Math.floor(total / count) + (index < total % count ? 1 : 0),
+  );
 export function addCredit(
   db,
   user,
@@ -250,13 +268,7 @@ export function reserve(
       );
     if (!Number.isSafeInteger(amount) || amount < 0)
       fail(400, "Invalid reservation");
-    if (
-      db
-        .prepare(
-          "SELECT id FROM deposits WHERE user_id=? AND credited=1 AND status='reconciliation' LIMIT 1",
-        )
-        .get(user)
-    )
+    if (hasDisputedCredit(db, user))
       fail(
         409,
         "A credited payment is under reconciliation. New requests are paused until its current processor status is confirmed.",
@@ -273,11 +285,7 @@ export function reserve(
         .prepare("SELECT * FROM api_keys WHERE id=? AND revoked IS NULL")
         .get(key);
       if (!k) fail(401, "Key revoked");
-      const spent = -db
-        .prepare(
-          "SELECT COALESCE(SUM(amount),0) n FROM ledger WHERE key_id=? AND amount<0 AND created>?",
-        )
-        .get(key, now() - 86400000).n;
+      const spent = keySpend24h(db, key);
       const inflight = db
         .prepare(
           "SELECT COALESCE(SUM(amount),0) n FROM holds WHERE key_id=? AND status='held'",

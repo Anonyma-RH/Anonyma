@@ -312,7 +312,9 @@ test("API caps include inflight reservations and roll forward after 24 hours", a
     /cap/,
   );
   s.db
-    .prepare("INSERT INTO ledger VALUES(?,?,?,?,?,?,?,?)")
+    .prepare(
+      "INSERT INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES(?,?,?,?,?,?,?,?)",
+    )
     .run(
       "old_spend",
       user.id,
@@ -1215,7 +1217,9 @@ test("video polling is bounded and rotates through all queued jobs", async (t) =
   const { user } = await register(s.app);
   for (let i = 0; i < 21; i++)
     s.db
-      .prepare("INSERT INTO videos VALUES(?,?,?,?,?,?,?,?,?,?)")
+      .prepare(
+        "INSERT INTO videos(id,user_id,hold_id,provider_id,status,request,error,media_id,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?)",
+      )
       .run(
         "queued-" + i,
         user.id,

@@ -335,14 +335,9 @@ export function createApp(overrides = {}) {
   }
   function newConversation(user, title = "New conversation", mode = "chat") {
     const id = uid("c_");
-    db.prepare("INSERT INTO conversations VALUES(?,?,?,?,?,?)").run(
-      id,
-      user,
-      title.slice(0, 70),
-      mode,
-      now(),
-      now(),
-    );
+    db.prepare(
+      "INSERT INTO conversations(id,user_id,title,mode,created,updated) VALUES(?,?,?,?,?,?)",
+    ).run(id, user, title.slice(0, 70), mode, now(), now());
     db.prepare(
       "DELETE FROM conversations WHERE user_id=? AND id NOT IN (SELECT id FROM conversations WHERE user_id=? ORDER BY updated DESC LIMIT 300)",
     ).run(user, user);
@@ -566,7 +561,9 @@ export function createApp(overrides = {}) {
           : "Image conversation",
         req.body.mode === "code" ? "code" : "chat",
       );
-      db.prepare("INSERT INTO messages VALUES(?,?,?,?,?,?,?)").run(
+      db.prepare(
+        "INSERT INTO messages(id,conversation_id,role,content,model,cost,created) VALUES(?,?,?,?,?,?,?)",
+      ).run(
         uid("m_"),
         conversation,
         "user",
@@ -732,7 +729,9 @@ export function createApp(overrides = {}) {
         conversation &&
         db.prepare("SELECT id FROM conversations WHERE id=?").get(conversation)
       )
-        db.prepare("INSERT INTO messages VALUES(?,?,?,?,?,?,?)").run(
+        db.prepare(
+          "INSERT INTO messages(id,conversation_id,role,content,model,cost,created) VALUES(?,?,?,?,?,?,?)",
+        ).run(
           uid("m_"),
           conversation,
           "assistant",
@@ -837,7 +836,9 @@ export function createApp(overrides = {}) {
             .prepare("SELECT id FROM conversations WHERE id=?")
             .get(conversation)
         )
-          db.prepare("INSERT INTO messages VALUES(?,?,?,?,?,?,?)").run(
+          db.prepare(
+            "INSERT INTO messages(id,conversation_id,role,content,model,cost,created) VALUES(?,?,?,?,?,?,?)",
+          ).run(
             uid("m_"),
             conversation,
             "assistant",
@@ -1007,7 +1008,9 @@ export function createApp(overrides = {}) {
       ext = mime === "video/mp4" ? "mp4" : mime.split("/")[1];
     const filename = id + "." + ext;
     writeFileSync(join(cfg.mediaPath, filename), bytes, { mode: 0o600 });
-    db.prepare("INSERT INTO media VALUES(?,?,?,?,?,?,?,?,?,?)").run(
+    db.prepare(
+      "INSERT INTO media(id,user_id,kind,mime,filename,prompt,model,cost,created,expires) VALUES(?,?,?,?,?,?,?,?,?,?)",
+    ).run(
       id,
       user,
       kind,
@@ -1230,7 +1233,9 @@ export function createApp(overrides = {}) {
         kind: "video",
         ttl: 1200000,
       });
-      db.prepare("INSERT INTO videos VALUES(?,?,?,?,?,?,?,?,?,?)").run(
+      db.prepare(
+        "INSERT INTO videos(id,user_id,hold_id,provider_id,status,request,error,media_id,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?)",
+      ).run(
         id,
         req.user.id,
         hold,
@@ -1565,7 +1570,9 @@ export function createApp(overrides = {}) {
       fail(400, "Invalid credit cap.");
     const secret = uid("anonyma_live_") + uid();
     const id = uid("key_");
-    db.prepare("INSERT INTO api_keys VALUES(?,?,?,?,?,?,?,?,?)").run(
+    db.prepare(
+      "INSERT INTO api_keys(id,user_id,hash,name,prefix,cap,created,revoked,last_used) VALUES(?,?,?,?,?,?,?,?,?)",
+    ).run(
       id,
       req.user.id,
       hash(secret),
@@ -1658,7 +1665,9 @@ export function createApp(overrides = {}) {
         fail(409, "Invoice creation is pending or requires reconciliation.");
       }
       const created = now();
-      db.prepare("INSERT INTO deposits VALUES(?,?,?,?,?,?,?,?,?,?)").run(
+      db.prepare(
+        "INSERT INTO deposits(id,user_id,provider_id,amount,currency,status,payload,credited,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?)",
+      ).run(
         id,
         req.user.id,
         null,
@@ -1778,13 +1787,9 @@ export function createApp(overrides = {}) {
       )
         fail(400, "Include a subject and a message (up to 10,000 characters).");
       const id = uid("ticket_");
-      db.prepare("INSERT INTO tickets VALUES(?,?,?,?,?)").run(
-        id,
-        req.user.id,
-        subject,
-        body,
-        now(),
-      );
+      db.prepare(
+        "INSERT INTO tickets(id,user_id,subject,body,created) VALUES(?,?,?,?,?)",
+      ).run(id, req.user.id, subject, body, now());
       res.status(201).json({
         id,
         message:

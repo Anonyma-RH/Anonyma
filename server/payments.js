@@ -88,7 +88,9 @@ export function recordPayment(
       const isTerminal = terminalUncredited.has(body.payment_status);
       const correctLedger = (amount, description) => {
         correctionCount += 1;
-        db.prepare("INSERT INTO ledger VALUES(?,?,?,?,?,?,?,?)").run(
+        db.prepare(
+          "INSERT INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES(?,?,?,?,?,?,?,?)",
+        ).run(
           uid("l_"),
           d.user_id,
           amount,

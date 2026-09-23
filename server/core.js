@@ -128,11 +128,22 @@ export function config(overrides = {}) {
     throw Error("Markup must be a nonnegative percentage.");
   return cfg;
 }
-export function database(path) {
-  if (path !== ":memory:")
-    mkdirSync(dirname(resolve(path)), { recursive: true });
-  const db = new DatabaseSync(path);
-  db.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
+const addColumn = (db, table, column, definition) => {
+  if (
+    !db
+      .prepare(`PRAGMA table_info(${table})`)
+      .all()
+      .some((c) => c.name === column)
+  )
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+};
+// Schema upgrades, applied in order and recorded in PRAGMA user_version.
+// Only ever append: a released step must never be edited or reordered.
+// Steps must also be safe on databases created before versioning existed
+// (user_version 0), which is why they use IF NOT EXISTS / addColumn.
+export const MIGRATIONS = [
+  (db) =>
+    db.exec(`
  CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT, email TEXT UNIQUE, wallet TEXT UNIQUE, created INTEGER NOT NULL, deleted INTEGER, token_balance TEXT DEFAULT '0', token_since INTEGER, token_checked INTEGER);
  CREATE TABLE IF NOT EXISTS sessions(hash TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id),expires INTEGER NOT NULL,created INTEGER NOT NULL);
  CREATE TABLE IF NOT EXISTS challenges(id TEXT PRIMARY KEY,target TEXT NOT NULL,purpose TEXT NOT NULL,hash TEXT NOT NULL,expires INTEGER NOT NULL,attempts INTEGER DEFAULT 0,payload TEXT);
@@ -152,21 +163,33 @@ export function database(path) {
  CREATE INDEX IF NOT EXISTS holds_user ON holds(user_id,status);
  CREATE INDEX IF NOT EXISTS deposits_user_status ON deposits(user_id,status,credited);
  CREATE INDEX IF NOT EXISTS messages_conversation ON messages(conversation_id,created);
- `);
-  if (
-    !db
-      .prepare("PRAGMA table_info(users)")
-      .all()
-      .some((c) => c.name === "token_checked")
-  )
-    db.exec("ALTER TABLE users ADD COLUMN token_checked INTEGER");
-  if (
-    !db
-      .prepare("PRAGMA table_info(holds)")
-      .all()
-      .some((c) => c.name === "uncovered")
-  )
-    db.exec("ALTER TABLE holds ADD COLUMN uncovered INTEGER DEFAULT 0");
+`),
+  (db) => addColumn(db, "users", "token_checked", "INTEGER"),
+  (db) => addColumn(db, "holds", "uncovered", "INTEGER DEFAULT 0"),
+  // API-key spending caps sum the ledger by key on every reservation.
+  (db) =>
+    db.exec("CREATE INDEX IF NOT EXISTS ledger_key ON ledger(key_id,created)"),
+];
+export function migrate(db) {
+  const version = () => db.prepare("PRAGMA user_version").get().user_version;
+  if (version() > MIGRATIONS.length)
+    throw Error(
+      "This database was upgraded by a newer version of Anonyma. Update the software before starting it.",
+    );
+  for (let v = version(); v < MIGRATIONS.length; v++)
+    transaction(db, () => {
+      MIGRATIONS[v](db);
+      db.exec(`PRAGMA user_version=${v + 1}`);
+    });
+}
+export function database(path) {
+  if (path !== ":memory:")
+    mkdirSync(dirname(resolve(path)), { recursive: true });
+  const db = new DatabaseSync(path);
+  db.exec(
+    "PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;",
+  );
+  migrate(db);
   return db;
 }
 export function transaction(db, fn) {
@@ -210,16 +233,9 @@ export function addCredit(
 ) {
   if (!Number.isSafeInteger(amount) || amount <= 0)
     fail(400, "Credit amount must be a positive integer.");
-  db.prepare("INSERT OR IGNORE INTO ledger VALUES(?,?,?,?,?,?,?,?)").run(
-    uid("l_"),
-    user,
-    amount,
-    kind,
-    ref,
-    null,
-    description,
-    now(),
-  );
+  db.prepare(
+    "INSERT OR IGNORE INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES(?,?,?,?,?,?,?,?)",
+  ).run(uid("l_"), user, amount, kind, ref, null, description, now());
 }
 export function reserve(
   db,
@@ -306,7 +322,9 @@ export function settle(
         `Provider cost exceeded a reservation by ${credits(uncovered)} credits; absorbed by the operator. See the reconciliation report for the hold.`,
       );
     if (amount)
-      db.prepare("INSERT INTO ledger VALUES(?,?,?,?,?,?,?,?)").run(
+      db.prepare(
+        "INSERT INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES(?,?,?,?,?,?,?,?)",
+      ).run(
         uid("l_"),
         h.user_id,
         -amount,

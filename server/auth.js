@@ -30,12 +30,9 @@ export function authRoutes(app, db, cfg, limit) {
   };
   function session(res, user) {
     const token = uid("session_");
-    db.prepare("INSERT INTO sessions VALUES(?,?,?,?)").run(
-      hash(token),
-      user.id,
-      now() + 30 * 86400000,
-      now(),
-    );
+    db.prepare(
+      "INSERT INTO sessions(hash,user_id,expires,created) VALUES(?,?,?,?)",
+    ).run(hash(token), user.id, now() + 30 * 86400000, now());
     res.cookie("anonyma_session", token, cookieOptions);
     return publicUser(user);
   }
@@ -171,11 +168,9 @@ export function authRoutes(app, db, cfg, limit) {
         fail(429, "Only five codes per email per hour.");
       if ((!cfg.smtp || !cfg.smtpFrom) && !cfg.testMode)
         fail(503, "Email delivery is not configured.", "email_unconfigured");
-      db.prepare("INSERT INTO rate_events VALUES(?,?,?)").run(
-        "email",
-        email,
-        now(),
-      );
+      db.prepare(
+        "INSERT INTO rate_events(kind,target,created) VALUES(?,?,?)",
+      ).run("email", email, now());
       const code = String(randomInt(100000, 1000000));
       const id = uid("e_");
       db.prepare(

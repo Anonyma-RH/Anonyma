@@ -19,3 +19,15 @@ createRoot(document.getElementById("root")).render(
     <App />
   </BrowserRouter>,
 );
+// Installable app shell. Only in built (production) bundles, and only where
+// service workers are actually usable (isSecureContext covers https and the
+// loopback addresses, e.g. a local test server on http://127.0.0.1).
+if (
+  import.meta.env.PROD &&
+  "serviceWorker" in navigator &&
+  window.isSecureContext
+) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}

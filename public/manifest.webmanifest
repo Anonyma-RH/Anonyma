@@ -1,0 +1,40 @@
+{
+  "name": "ANONYMA",
+  "short_name": "ANONYMA",
+  "description": "One account. Many AI models.",
+  "start_url": "/workspace",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#0135df",
+  "background_color": "#0135df",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "share_target": {
+    "action": "/workspace/chat",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

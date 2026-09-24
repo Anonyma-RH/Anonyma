@@ -1,14 +1,33 @@
 // Pure helpers for the Symposium workspace mode, kept framework-free so
 // tests can import them directly (see tests/symposium.test.mjs).
 
-// A sensible default selection: the first few callable chat models, in
-// whatever order the caller's list is already sorted (sortModels in lib.js
-// puts popular, callable models first).
+// A sensible default selection: the first few callable chat models in the
+// caller's order (sortModels in lib.js puts popular ones first), preferring
+// one per provider so a symposium starts with genuinely different voices.
 export function defaultSymposiumModels(models, count = 3) {
-  return models
-    .filter((m) => m.type === "chat" && m.callable)
-    .slice(0, count)
-    .map((m) => m.id);
+  const chat = models.filter((m) => m.type === "chat" && m.callable);
+  const picked = [],
+    providers = new Set();
+  for (const m of chat) {
+    const provider = m.provider || m.id;
+    if (picked.length < count && !providers.has(provider)) {
+      picked.push(m.id);
+      providers.add(provider);
+    }
+  }
+  for (const m of chat) if (picked.length < count && !picked.includes(m.id)) picked.push(m.id);
+  return picked;
+}
+
+// Picker filter: selected models first, then name/id matches, capped so a
+// catalog of hundreds of models stays a short, scannable list.
+export function pickerModels(models, selected, query, limit = 60) {
+  const q = query.trim().toLowerCase();
+  const chosen = models.filter((m) => selected.includes(m.id));
+  const rest = models.filter(
+    (m) => !selected.includes(m.id) && (!q || (m.name + " " + m.id).toLowerCase().includes(q)),
+  );
+  return [...chosen, ...rest.slice(0, limit)];
 }
 
 // The fusion request: one system instruction, then the original question and

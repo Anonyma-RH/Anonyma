@@ -124,3 +124,26 @@ test("totalEstimate sums resolved credit quotes and skips failed ones", () => {
   assert.equal(totalEstimate({}), 0);
   assert.equal(totalEstimate(undefined), 0);
 });
+
+test("defaultSymposiumModels prefers one model per provider", () => {
+  const models = [
+    { id: "c1", provider: "anthropic", type: "chat", callable: true },
+    { id: "c2", provider: "anthropic", type: "chat", callable: true },
+    { id: "g1", provider: "google", type: "chat", callable: true },
+    { id: "o1", provider: "openai", type: "chat", callable: true },
+  ];
+  assert.deepEqual(defaultSymposiumModels(models), ["c1", "g1", "o1"]);
+  assert.deepEqual(defaultSymposiumModels(models.slice(0, 2)), ["c1", "c2"]);
+});
+
+test("pickerModels lists selected models first and filters the rest", async () => {
+  const { pickerModels } = await import("../src/symposium.js");
+  const models = [
+    { id: "a", name: "Alpha" },
+    { id: "b", name: "Beta" },
+    { id: "g", name: "Gamma" },
+  ];
+  assert.deepEqual(pickerModels(models, ["g"], "").map((m) => m.id), ["g", "a", "b"]);
+  assert.deepEqual(pickerModels(models, ["g"], "bet").map((m) => m.id), ["g", "b"]);
+  assert.deepEqual(pickerModels(models, [], "", 1).map((m) => m.id), ["a"]);
+});

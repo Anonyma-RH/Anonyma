@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import { Icon, Notice, Empty, BandLines, BandSteps } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { api, streamChat, uid } from "./lib.js";
-import { defaultSymposiumModels, buildFusionMessages, totalEstimate } from "./symposium.js";
+import { defaultSymposiumModels, buildFusionMessages, totalEstimate, pickerModels } from "./symposium.js";
 import "./symposium.css";
 
 const STATUS_LABEL = {
@@ -40,7 +40,8 @@ export default function Symposium({ demo, user, models, config, refresh }) {
     [fusion, setFusion] = useState(null),
     [quotes, setQuotes] = useState({}),
     [quoting, setQuoting] = useState(false),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [pickerQuery, setPickerQuery] = useState("");
   // Keep the picker valid as the catalog loads or callability changes,
   // without discarding a selection that is still good.
   useEffect(() => {
@@ -384,7 +385,15 @@ export default function Symposium({ demo, user, models, config, refresh }) {
             <summary>
               Models to compare ({selected.length}/4)
             </summary>
-            {visibleModels.map((m) => (
+            <input
+              className="symposium-filter"
+              type="search"
+              value={pickerQuery}
+              onChange={(e) => setPickerQuery(e.target.value)}
+              placeholder="Filter models"
+              aria-label="Filter models"
+            />
+            {pickerModels(visibleModels, selected, pickerQuery).map((m) => (
               <label key={m.id}>
                 <input
                   type="checkbox"

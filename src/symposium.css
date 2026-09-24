@@ -107,3 +107,4 @@
     padding: 14px;
   }
 }
+.symposium-filter{display:block;width:100%;margin:6px 0 10px;padding:8px 10px;border:1px solid var(--work-line,#dfe4ee);border-radius:2px;font:inherit;font-size:14px;background:#fff}

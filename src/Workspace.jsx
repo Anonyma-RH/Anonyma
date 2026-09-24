@@ -250,6 +250,7 @@ export default function Workspace() {
     setReceipt(null);
     setQuote(null);
     setPrompt(location.state?.prompt || "");
+    setWebSearch(!!location.state?.web);
     setAttachments([]);
     setCurrent(null);
     setMessages([]);

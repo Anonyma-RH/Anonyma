@@ -32,6 +32,53 @@ export function accountRoutes(ctx) {
       balance: publicUser(req.user),
     }),
   );
+  // Spending for the dashboard: the last 14 local days, split by kind, plus
+  // this week against the week before. Only settled usage counts (ledger rows
+  // tied to a hold); deposits, transfers and referral rewards don't.
+  app.get("/api/account/summary", requireUser, (req, res) => {
+    const DAY = 86400000;
+    const tz = Math.max(-840, Math.min(840, Math.trunc(Number(req.query.tz) || 0)));
+    const shift = tz * 60000;
+    const today = Math.floor((now() - shift) / DAY);
+    const from = (today - 13) * DAY + shift;
+    const rows = db
+      .prepare(
+        "SELECT l.amount,l.ref,l.created,h.kind FROM ledger l JOIN holds h ON h.id=l.ref WHERE l.user_id=? AND l.created>=?",
+      )
+      .all(req.user.id, from);
+    const days = Array.from({ length: 14 }, (_, i) => ({
+      date: new Date((today - 13 + i) * DAY).toISOString().slice(0, 10),
+      spent: 0,
+    }));
+    const kinds = {};
+    const week = { spent: 0, previous: 0, requests: 0, byKind: {} };
+    const counted = new Set();
+    for (const r of rows) {
+      const i = Math.floor((r.created - shift) / DAY) - (today - 13);
+      if (i < 0 || i > 13) continue;
+      const kind = r.kind || "chat";
+      days[i].spent -= r.amount;
+      (kinds[kind] ||= { kind, spent: 0, requests: 0 }).spent -= r.amount;
+      if (i >= 7) week.spent -= r.amount;
+      else week.previous -= r.amount;
+      if (r.amount < 0 && !counted.has(r.ref)) {
+        counted.add(r.ref);
+        kinds[kind].requests++;
+        if (i >= 7) {
+          week.requests++;
+          week.byKind[kind] = (week.byKind[kind] || 0) + 1;
+        }
+      }
+    }
+    res.json({
+      days: days.map((d) => ({ ...d, spent: credits(d.spent) })),
+      byKind: Object.values(kinds)
+        .map((k) => ({ ...k, spent: credits(k.spent) }))
+        .sort((a, b) => b.spent - a.spent),
+      week: { ...week, spent: credits(week.spent), previous: credits(week.previous) },
+      balance: publicUser(req.user),
+    });
+  });
   app.get("/api/keys", requireUser, (req, res) =>
     res.json({
       data: db

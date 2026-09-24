@@ -644,6 +644,18 @@ route(
   "/api/account/ledger",
   "Latest 50 ledger entries and current balance",
 );
+route("get", "/api/account/summary", "Spending over the last 14 days", {
+  description:
+    "Settled usage per local day (oldest first), per kind (chat, image, video, audio) and for the last 7 days against the 7 before. Deposits, transfers and referral rewards are excluded.",
+  query: [
+    {
+      in: "query",
+      name: "tz",
+      description: "Minutes behind UTC, as returned by Date.getTimezoneOffset().",
+      schema: integer,
+    },
+  ],
+});
 route("get", "/api/keys", "List key metadata; raw keys never returned");
 route("post", "/api/keys", "Create API key; secret returned once", {
   body: object({

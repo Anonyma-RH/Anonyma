@@ -84,6 +84,10 @@ export function config(overrides = {}) {
     supportEmail: e.SUPPORT_EMAIL || "",
     telegram: e.TELEGRAM_URL || "",
     trustProxy: parseTrustProxy(e.TRUST_PROXY),
+    // The gateway's fee above the inference cost it reports (PPQ: 5.5%).
+    gatewayFeePercent: Number(e.GATEWAY_FEE_PERCENT ?? 5.5),
+    // Chat reservations hold this multiple of the price-list estimate.
+    holdMargin: Number(e.HOLD_MARGIN ?? 4),
     ...overrides,
   };
   for (const field of [
@@ -126,6 +130,18 @@ export function config(overrides = {}) {
       throw Error(`Invalid ${field} ID.`);
   if (!Number.isFinite(cfg.markup) || cfg.markup < 0)
     throw Error("Markup must be a nonnegative percentage.");
+  if (
+    !Number.isFinite(cfg.gatewayFeePercent) ||
+    cfg.gatewayFeePercent < 0 ||
+    cfg.gatewayFeePercent > 100
+  )
+    throw Error("Gateway fee must be a percentage from 0 to 100.");
+  if (
+    !Number.isFinite(cfg.holdMargin) ||
+    cfg.holdMargin < 1 ||
+    cfg.holdMargin > 20
+  )
+    throw Error("Hold margin must be between 1 and 20.");
   return cfg;
 }
 const addColumn = (db, table, column, definition) => {

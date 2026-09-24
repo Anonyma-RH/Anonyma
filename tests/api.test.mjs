@@ -115,7 +115,14 @@ test("PPQ BYOK usage includes upstream inference and fee in the settled charge",
   };
   const billed = 0.000088198; // PPQ's observed account-history debit.
   assert.ok(Math.abs(reportedProviderCost(usage) - billed) < 1e-12);
-  assert.equal(reportedProviderCost({ cost: 0.00000418 }), 0.00000418);
+  // Without BYOK, usage.cost is the inference cost; PPQ debited 1.055x it
+  // in a live check (0.000119208 reported, 0.000125764 debited).
+  assert.ok(
+    // PPQ's balance has nine decimals, so its debit is rounded to 1e-9.
+    Math.abs(reportedProviderCost({ cost: 0.000119208 }) - 0.000125764) < 1e-9,
+  );
+  assert.equal(reportedProviderCost({ cost: 0.00000418, is_byok: true }), null);
+  assert.equal(reportedProviderCost({ cost: 0.0001 }, undefined, 0), 0.0001);
   assert.equal(reportedProviderCost(usage, 0.00009), 0.00009);
   const gateway = await mockServer(t, async (req, res) => {
     await readJSON(req);
@@ -973,7 +980,7 @@ test("API compatibility clamps output, retains last 40 strings, skips parts, and
   assert.equal(received.messages[0].content, "Message 1");
   assert.equal(received.messages.at(-1).content, "Message 40");
 });
-test("unreadable responses and upstream deadline charge exactly the reservation and report it", async (t) => {
+test("unreadable responses and upstream deadline charge the estimate, not the headroom, and report it", async (t) => {
   let timeoutMode = false;
   const gateway = await mockServer(t, async (req, res) => {
     await readJSON(req);
@@ -1007,7 +1014,8 @@ test("unreadable responses and upstream deadline charge exactly the reservation 
   const hold = s.db
     .prepare("SELECT * FROM holds ORDER BY created DESC LIMIT 1")
     .get();
-  assert.equal(JSON.parse(hold.result).charged, hold.amount);
+  // The hold carries 4x headroom; the failure policy charges the estimate.
+  assert.equal(JSON.parse(hold.result).charged * 4, hold.amount);
   timeoutMode = true;
   const timed = await request(s.app)
     .post("/v1/chat/completions")
@@ -2084,15 +2092,22 @@ test("gateway account and throttling refusals report an outage and release funds
   assert.equal(balance(s.db, user.id).total, before);
   assert.equal(balance(s.db, user.id).held, 0);
 });
-test("stopping after the provider accepts charges only the prompt; stopping earlier is free", async (t) => {
-  let delayHead = false;
+test("a stopped chat is cancelled once the provider accepts and charges only the prompt", async (t) => {
+  let late = null; // "accept" or "refuse" after a delay, else accept now
   let received;
+  let acceptedAt = 0,
+    cancelledAt = 0;
   const gateway = await mockServer(t, async (req, res) => {
     await readJSON(req);
     received?.();
-    if (delayHead) {
-      const timer = setTimeout(() => res.writeHead(200).end(), 2000);
-      res.on("close", () => clearTimeout(timer));
+    res.on("close", () => (cancelledAt = Date.now()));
+    if (late) {
+      setTimeout(() => {
+        if (late === "refuse") return res.writeHead(400).end("{}");
+        acceptedAt = Date.now();
+        res.writeHead(200, { "content-type": "text/event-stream" });
+        res.write(": accepted\n\n");
+      }, 300);
       return;
     }
     // Accept the request, then produce nothing until the client leaves.
@@ -2142,8 +2157,19 @@ test("stopping after the provider accepts charges only the prompt; stopping earl
   const receipt = JSON.parse(accepted.result);
   assert.ok(receipt.charged > 0, "the prompt is billed");
   assert.ok(receipt.charged < accepted.amount, "output is not billed");
+  // The client leaves before the provider answers: the upstream request is
+  // kept until the provider accepts, then cancelled and billed as a stop.
+  late = "accept";
+  const leftEarly = await stopEarly(20);
+  assert.equal(leftEarly.status, "settled");
+  assert.ok(JSON.parse(leftEarly.result).charged > 0, "the prompt is billed");
+  assert.ok(
+    acceptedAt > 0 && cancelledAt >= acceptedAt,
+    "cancelled after acceptance",
+  );
+  // If the provider refuses instead, nothing is charged.
   const before = balance(s.db, user.id).total;
-  delayHead = true;
+  late = "refuse";
   const refused = await stopEarly(20);
   assert.equal(refused.status, "released");
   assert.equal(balance(s.db, user.id).total, before);
@@ -2329,4 +2355,56 @@ test("generated images are stored with the type their bytes show", async (t) => 
     (await store.saveMedia("u1", "image", asPng(png))).mime,
     "image/png",
   );
+});
+test("chat holds headroom for pricier routing but falls back when the balance is short", async (t) => {
+  let upstream = 0.000001;
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, { choices: [{ delta: { content: "ready" } }] });
+    event(res, {
+      choices: [],
+      usage: {
+        prompt_tokens: 10,
+        completion_tokens: 10,
+        cost: upstream,
+        cost_details: { upstream_inference_cost: upstream },
+      },
+    });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "headroom-fund", "test_credit");
+  const key = await keyFor(agent);
+  const ask = (auth, requestId) =>
+    request(s.app)
+      .post("/v1/chat/completions")
+      .set("Authorization", "Bearer " + auth)
+      .set("Idempotency-Key", requestId)
+      .send(prompt)
+      .expect(200);
+  const holdFor = (owner, requestId) =>
+    s.db.prepare("SELECT * FROM holds WHERE id=?").get(`${owner}:${requestId}`);
+  await ask(key.key, "learn-estimate");
+  const estimate = holdFor(user.id, "learn-estimate").amount / 4;
+
+  // The provider routes to a model three times pricier than its list price.
+  upstream = (3 * estimate) / 1e7 / 1.055;
+  const before = balance(s.db, user.id).total;
+  await ask(key.key, "pricier-route");
+  const pricier = holdFor(user.id, "pricier-route");
+  assert.equal(pricier.uncovered, 0);
+  assert.equal(
+    before - balance(s.db, user.id).total,
+    usdUnits(upstream * 1.055),
+  );
+
+  // A balance that covers the estimate but not the headroom still works.
+  upstream = 0.000001;
+  const other = await register(s.app, "short-balance");
+  addCredit(s.db, other.user.id, estimate * 2, "short-fund", "test_credit");
+  const otherKey = await keyFor(other.agent);
+  await ask(otherKey.key, "short");
+  assert.equal(holdFor(other.user.id, "short").amount, estimate);
 });

@@ -3,21 +3,21 @@ import { fail, generationPrice } from "./core.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
-export function reportedProviderCost(usage, explicitCost) {
+// What PPQ actually debits for a request. For token-priced chat PPQ adds a
+// fee on top of the upstream inference cost it reports: observed debits were
+// exactly 1.055 times that cost (0.0000836 -> 0.000088198 with a BYOK key,
+// 0.000119208 -> 0.000125764 without). A top-level `cost`, as image and video
+// responses carry, is already the final debit.
+export function reportedProviderCost(usage, explicitCost, feePercent = 5.5) {
   const valid = (value) =>
     typeof value === "number" && Number.isFinite(value) && value >= 0;
-  const reported = valid(explicitCost)
-    ? explicitCost
-    : valid(usage?.cost)
-      ? usage.cost
-      : null;
+  if (valid(explicitCost)) return explicitCost;
+  const fee = 1 + feePercent / 100;
   const upstream = usage?.cost_details?.upstream_inference_cost;
-  if (usage?.is_byok === true && valid(upstream))
-    return Math.max(
-      upstream * 1.005 + (valid(usage.cost) ? usage.cost : 0),
-      reported ?? 0,
-    );
-  return reported;
+  if (valid(upstream)) return upstream * fee;
+  // With a BYOK key, `usage.cost` is only PPQ's fee, not the inference.
+  if (valid(usage?.cost) && usage.is_byok !== true) return usage.cost * fee;
+  return null;
 }
 // Codes for upstream responses that prove the provider did not accept the
 // request, so its reservation can be released without reconciliation.

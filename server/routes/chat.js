@@ -49,13 +49,29 @@ export function chatRoutes(ctx) {
         ? ownConversation(req.body.conversationId, req.user.id).id
         : null;
     }
-    reserve(db, {
-      id: hold,
-      user: req.user.id,
-      amount,
-      key: req.apiKey?.id,
-      ttl: api ? 300000 : 240000,
-    });
+    // Published token prices are a floor: the gateway may route to a pricier
+    // provider (a live Llama request cost about 3x its listed rate). Hold
+    // headroom when the balance and key cap allow it; settlement still
+    // charges only the actual cost, and failure policies use `amount`.
+    const reservation = (held) =>
+      reserve(db, {
+        id: hold,
+        user: req.user.id,
+        amount: held,
+        key: req.apiKey?.id,
+        ttl: api ? 300000 : 240000,
+      });
+    const headroom = Math.ceil(amount * cfg.holdMargin);
+    try {
+      reservation(headroom);
+    } catch (e) {
+      if (
+        headroom <= amount ||
+        !["insufficient_credits", "key_cap_exceeded"].includes(e.code)
+      )
+        throw e;
+      reservation(amount);
+    }
     // Nothing can be sent upstream yet, so a failure here releases the hold
     // immediately instead of leaving credits reserved until it expires.
     if (!api)
@@ -94,9 +110,18 @@ export function chatRoutes(ctx) {
       () => controller.abort(new Error("Provider timeout")),
       cfg.requestTimeoutMs || (api ? 120000 : 240000),
     );
+    // Cancelling before the provider answers doesn't reliably stop its work
+    // (a live check was billed for generation after such an abort), while
+    // cancelling once it has accepted does. So a client that leaves early is
+    // held until acceptance (or 15 seconds), then stopped like Stop.
+    let clientGone = false;
+    const stopForClient = () =>
+      controller.abort(new Error("Client disconnected"));
     res.on("close", () => {
-      if (!res.writableEnded)
-        controller.abort(new Error("Client disconnected"));
+      if (res.writableEnded) return;
+      clientGone = true;
+      if (accepted) stopForClient();
+      else setTimeout(stopForClient, 15000).unref();
     });
     const id = uid("chatcmpl_");
     let output = "",
@@ -152,7 +177,10 @@ export function chatRoutes(ctx) {
         cfg,
         { model: m.id, messages, max_tokens: max },
         controller.signal,
-        () => (accepted = true),
+        () => {
+          accepted = true;
+          if (clientGone) stopForClient();
+        },
       )) {
         if (part.error)
           fail(
@@ -215,7 +243,7 @@ export function chatRoutes(ctx) {
         );
       const { input, out } = tokenCounts();
       const dollars =
-        reportedProviderCost(usage, upstreamCost) ??
+        reportedProviderCost(usage, upstreamCost, cfg.gatewayFeePercent) ??
         (imageCallable(m) ? generationPrice(m) : tokenCost(m, input, out));
       usage = {
         ...usage,
@@ -314,7 +342,7 @@ export function chatRoutes(ctx) {
           (timedOut
             ? "The provider deadline expired."
             : "The provider response could not be decoded.") +
-          " Reserved credits were charged under the failure-billing policy. Check activity before retrying.";
+          " The estimated cost was charged under the failure-billing policy. Check activity before retrying.";
         e.receipt = receipt;
       } else if (output || reasoning || saved.length) {
         receipt = settle(
@@ -323,8 +351,12 @@ export function chatRoutes(ctx) {
           usdUnits(
             (saved.length && imageCallable(m)
               ? generationPrice(m)
-              : (reportedProviderCost(usage, upstreamCost) ??
-                tokenCost(m, tokenCounts().input, tokenCounts().out))) * factor,
+              : (reportedProviderCost(
+                  usage,
+                  upstreamCost,
+                  cfg.gatewayFeePercent,
+                ) ?? tokenCost(m, tokenCounts().input, tokenCounts().out))) *
+              factor,
           ),
           "Interrupted: " + m.name,
         );

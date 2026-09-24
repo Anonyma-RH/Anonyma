@@ -389,6 +389,25 @@ export default function Workspace() {
     setAttachments((prev) => [...prev, ...values]);
     e.target.value = "";
   }
+  // "@model-id your message" sends that one message to another chat model.
+  const mentionQuery = ["chat", "code"].includes(mode)
+    ? prompt.match(/^@([^\s]*)$/)?.[1]
+    : undefined;
+  const mentionMatches =
+    mentionQuery === undefined
+      ? []
+      : visibleModels
+          .filter((m) =>
+            (m.id + " " + m.name).toLowerCase().includes(mentionQuery.toLowerCase()),
+          )
+          .slice(0, 6);
+  const mention = ["chat", "code"].includes(mode)
+    ? prompt.trim().match(/^@(\S+)\s+([\s\S]+)$/)
+    : null;
+  const mentioned = mention
+    ? visibleModels.find((m) => m.id.toLowerCase() === mention[1].toLowerCase())
+    : null;
+  const target = mentioned || selected;
   async function send(e) {
     e?.preventDefault();
     if (!prompt.trim() || busy) return;
@@ -401,7 +420,7 @@ export default function Workspace() {
         );
         return;
       }
-      if (!selected?.callable || !config?.services?.generation) {
+      if (!target?.callable || !config?.services?.generation) {
         setError("This model is not currently available for generation.");
         return;
       }
@@ -411,7 +430,8 @@ export default function Workspace() {
     setReceipt(null);
     setBusy(true);
     controller.current = new AbortController();
-    const text = prompt.trim();
+    const text = mentioned ? mention[2].trim() : prompt.trim();
+    const requestModel = target?.id || model;
     const requestId = uid();
     if (mode === "image" || mode === "video") {
       try {
@@ -599,7 +619,7 @@ export default function Workspace() {
     try {
       await streamChat(
         {
-          model,
+          model: requestModel,
           messages: next.slice(-20).map(toRequestMessage),
           conversationId: current,
           mode,
@@ -632,6 +652,7 @@ export default function Workspace() {
               reasoning,
               images,
               citations,
+              model: requestModel,
             },
           ]);
         },
@@ -957,6 +978,11 @@ export default function Workspace() {
                           <div className="message-label">
                             {m.role === "user" ? "You" : "ANONYMA"}
                             {m.sample && <span>PREPARED EXAMPLE</span>}
+                            {m.role === "assistant" && m.model && !m.sample && (
+                              <span className="model-tag">
+                                {models.find((x) => x.id === m.model)?.name || m.model}
+                              </span>
+                            )}
                           </div>
                           <div className="markdown">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -1127,6 +1153,14 @@ export default function Workspace() {
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={(e) => {
                       if (
+                        (e.key === "Enter" || e.key === "Tab") &&
+                        mentionMatches.length
+                      ) {
+                        e.preventDefault();
+                        setPrompt("@" + mentionMatches[0].id + " ");
+                        return;
+                      }
+                      if (
                         e.key === "Enter" &&
                         !e.shiftKey &&
                         ["chat", "code"].includes(mode)
@@ -1137,6 +1171,26 @@ export default function Workspace() {
                     }}
                     rows="3"
                   />
+                  {mentionMatches.length > 0 && (
+                    <div className="mention-menu" role="listbox" aria-label="Send to model">
+                      {mentionMatches.map((m) => (
+                        <button
+                          type="button"
+                          role="option"
+                          key={m.id}
+                          onClick={() => setPrompt("@" + m.id + " ")}
+                        >
+                          <b>{m.name}</b>
+                          <span>@{m.id}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {mentioned && (
+                    <p className="mention-hint">
+                      This message goes to <b>{mentioned.name}</b>.
+                    </p>
+                  )}
                   <div className="composer-controls">
                     <div>
                       <select

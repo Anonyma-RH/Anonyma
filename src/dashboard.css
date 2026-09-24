@@ -115,7 +115,7 @@
 @keyframes dash-grow{from{transform:scaleY(0)}}
 @keyframes dash-grow-x{from{transform:scaleX(0)}}
 @keyframes dash-draw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
-@media(prefers-reduced-motion:reduce){.dash *,.dash{animation:none!important;transition:none!important}}
+:where([data-motion="off"]) .dash *,:where([data-motion="off"]) .dash{animation:none!important;transition:none!important}
 
 @media(max-width:1180px){
   .dash-hero,.dash-ledger{grid-template-columns:minmax(0,1fr);gap:32px}

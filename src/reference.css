@@ -1740,55 +1740,53 @@ footer {
     width: 100%;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .n-reveal:after {
-    display: none;
-  }
-  .n-pill,
-  .n-marquee-track,
-  .n-stat-progress i.active,
-  .n-flow-art {
-    animation: none;
-  }
-  .n-stat-progress i.active {
-    transform: scaleX(1);
-  }
-  .n-flow {
-    height: auto;
-    padding: 80px var(--n-gutter);
-  }
-  .n-flow-sticky {
-    display: none;
-  }
-  .n-flow-accessible {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip-path: none;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 40px;
-  }
-  .n-flow-accessible h3 {
-    margin-bottom: 20px;
-  }
-  .n-flow-accessible p,
-  .n-flow-accessible li {
-    font-size: 16px;
-    color: #bbb;
-    margin-bottom: 12px;
-  }
-  .n-hero-content,
-  .n-pills {
-    transform: none !important;
-  }
-  .n-hero-wipe {
-    display: none;
-  }
+:where([data-motion="off"]) .n-reveal:after {
+  display: none;
 }
-@media (max-width: 500px) and (prefers-reduced-motion: reduce) {
-  .n-flow-accessible {
+:where([data-motion="off"]) .n-pill,
+:where([data-motion="off"]) .n-marquee-track,
+:where([data-motion="off"]) .n-stat-progress i.active,
+:where([data-motion="off"]) .n-flow-art {
+  animation: none;
+}
+:where([data-motion="off"]) .n-stat-progress i.active {
+  transform: scaleX(1);
+}
+:where([data-motion="off"]) .n-flow {
+  height: auto;
+  padding: 80px var(--n-gutter);
+}
+:where([data-motion="off"]) .n-flow-sticky {
+  display: none;
+}
+:where([data-motion="off"]) .n-flow-accessible {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 40px;
+}
+:where([data-motion="off"]) .n-flow-accessible h3 {
+  margin-bottom: 20px;
+}
+:where([data-motion="off"]) .n-flow-accessible p,
+:where([data-motion="off"]) .n-flow-accessible li {
+  font-size: 16px;
+  color: #bbb;
+  margin-bottom: 12px;
+}
+:where([data-motion="off"]) .n-hero-content,
+:where([data-motion="off"]) .n-pills {
+  transform: none !important;
+}
+:where([data-motion="off"]) .n-hero-wipe {
+  display: none;
+}
+@media (max-width: 500px) {
+  :where([data-motion="off"]) .n-flow-accessible {
     grid-template-columns: 1fr;
   }
 }

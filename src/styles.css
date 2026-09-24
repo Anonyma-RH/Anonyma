@@ -4614,17 +4614,16 @@ td code {
     font-size: 32px;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *:before,
-  *:after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
-  }
-  .orbit {
-    translate: 0 !important;
-  }
+:where([data-motion="off"]),
+:where([data-motion="off"]) *,
+:where([data-motion="off"]) *:before,
+:where([data-motion="off"]) *:after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+:where([data-motion="off"]) .orbit {
+  translate: 0 !important;
 }
 
 @media (min-width: 701px) {

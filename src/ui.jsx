@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { animate } from "animejs";
+import { reducedMotion } from "./motion.js";
 import { Link } from "react-router-dom";
 import {
   Mic,
@@ -163,7 +164,7 @@ export function CountUp({ value }) {
     const target = Number(value) || 0;
     // Credits can be fractional; the settled value keeps up to two decimals.
     const final = target.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (reducedMotion.matches) {
       el.textContent = final;
       return;
     }

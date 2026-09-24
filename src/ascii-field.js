@@ -1,6 +1,6 @@
 // Vanilla JavaScript player: no animation library; only visible frames are drawn.
+import { reducedMotion as reduced } from "./motion.js";
 export function attachAsciiField(canvas, section) {
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const images = new Map();
   let dead = false,
     visible = false,

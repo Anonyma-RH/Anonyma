@@ -4,18 +4,18 @@ import { Icon, Mark } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { Reveal, useHeroMotion } from "./ReferenceMotion.jsx";
 import ReferenceFlow from "./ReferenceFlow.jsx";
+import { reducedMotion, setMotion, useReducedMotion } from "./motion.js";
 
 const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
 function useScene(ref) {
   const [progress, setProgress] = useState(0);
   useEffect(() => {
     let frame = 0;
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
       frame = 0;
       if (ref.current)
         setProgress(
-          reduced.matches
+          reducedMotion.matches
             ? 0
             : Math.max(
                 0,
@@ -29,9 +29,11 @@ function useScene(ref) {
     update();
     addEventListener("scroll", scroll, { passive: true });
     addEventListener("resize", scroll);
+    reducedMotion.addEventListener("change", scroll);
     return () => {
       removeEventListener("scroll", scroll);
       removeEventListener("resize", scroll);
+      reducedMotion.removeEventListener("change", scroll);
       cancelAnimationFrame(frame);
     };
   }, []);
@@ -70,22 +72,24 @@ function Hero() {
     backgroundVideo = useRef();
   const p = useScene(ref);
   useHeroMotion(ref);
-  const [paused, setPaused] = useState(
-    () => matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  // The motion button pauses every animation on the site, not just these films.
+  const paused = useReducedMotion();
   useEffect(() => {
-    const v = video.current;
+    const films = [video.current, backgroundVideo.current];
+    if (paused) {
+      films.forEach((f) => f.pause());
+      return;
+    }
     const o = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting && !paused) e.target.play().catch(() => {});
+          if (e.isIntersecting) e.target.play().catch(() => {});
           else e.target.pause();
         }
       },
       { threshold: 0.05 },
     );
-    o.observe(v);
-    o.observe(backgroundVideo.current);
+    films.forEach((f) => o.observe(f));
     return () => o.disconnect();
   }, [paused]);
   return (
@@ -137,7 +141,7 @@ function Hero() {
           </ArrowLink>
           <button
             className="hero-motion-toggle"
-            onClick={() => setPaused(!paused)}
+            onClick={() => setMotion(paused)}
             aria-label={paused ? "Play hero motion" : "Pause hero motion"}
           >
             <Icon name={paused ? "play" : "pause"} size={11} />
@@ -159,7 +163,7 @@ function Hero() {
         />
         <button
           className="n-video-toggle"
-          onClick={() => setPaused(!paused)}
+          onClick={() => setMotion(paused)}
           aria-label={paused ? "Play hero animation" : "Pause hero animation"}
         >
           <Icon name={paused ? "play" : "pause"} size={12} />
@@ -311,15 +315,13 @@ const creditSlides = [
 function Outcomes() {
   const [index, setIndex] = useState(0);
   const ref = useRef();
+  const reduced = useReducedMotion();
   useEffect(() => {
     let timer;
     const o = new IntersectionObserver(
       ([e]) => {
         clearInterval(timer);
-        if (
-          e.isIntersecting &&
-          !matchMedia("(prefers-reduced-motion: reduce)").matches
-        )
+        if (e.isIntersecting && !reduced)
           timer = setInterval(() => setIndex((i) => (i + 1) % 3), 7000);
       },
       { threshold: 0.3 },
@@ -329,7 +331,7 @@ function Outcomes() {
       o.disconnect();
       clearInterval(timer);
     };
-  }, []);
+  }, [reduced]);
   const c = creditSlides[index];
   return (
     <section className="n-outcomes" ref={ref}>

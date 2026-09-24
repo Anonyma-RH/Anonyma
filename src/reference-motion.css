@@ -22,4 +22,4 @@ a:hover>.reference-arrow .arrow-head,button:hover>.reference-arrow .arrow-head{t
 .closing-cta.closing-visible .step-blocks .button,.closing-cta.closing-visible .step-blocks:before,.closing-cta.closing-visible .step-blocks:after{--closing-wipe:100%;transition-duration:.85s}
 .closing-cta .step-blocks:before{transition-delay:.1s}.closing-cta .step-blocks:after{transition-delay:.2s}
 @media(max-width:939px){.closing-cta>.n-reveal h2{font-size:36px;padding:24px}}
-@media(prefers-reduced-motion:reduce){.reference-word-cover{display:none}.closing-cta .step-blocks .button,.closing-cta .step-blocks:before,.closing-cta .step-blocks:after{mask-image:none!important;transition:none}.reference-arrow path{transition:none!important}}
+:where([data-motion="off"]) .reference-word-cover{display:none}:where([data-motion="off"]) .closing-cta .step-blocks .button,:where([data-motion="off"]) .closing-cta .step-blocks:before,:where([data-motion="off"]) .closing-cta .step-blocks:after{mask-image:none!important;transition:none}:where([data-motion="off"]) .reference-arrow path{transition:none!important}

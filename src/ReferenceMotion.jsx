@@ -8,10 +8,12 @@ import {
   onScroll,
 } from "animejs";
 import "./reference-motion.css";
+import { useReducedMotion } from "./motion.js";
 export function Reveal({ children, className = "" }) {
   const ref = useRef();
+  const reduced = useReducedMotion();
   useEffect(() => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (reduced) return;
     const heading = ref.current.querySelector("h1,h2,h3");
     if (!heading) return;
     const split = splitText(heading, { words: true });
@@ -43,7 +45,7 @@ export function Reveal({ children, className = "" }) {
       motion?.revert();
       split.revert();
     };
-  }, []);
+  }, [reduced]);
   return (
     <div ref={ref} className={"n-reveal shown " + className}>
       {children}
@@ -51,8 +53,9 @@ export function Reveal({ children, className = "" }) {
   );
 }
 export function useHeroMotion(ref) {
+  const reduced = useReducedMotion();
   useEffect(() => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (reduced) return;
     const node = ref.current,
       pills = node.querySelectorAll(".n-pill");
     const entrance = animate(pills, {
@@ -119,19 +122,20 @@ export function useHeroMotion(ref) {
       node.removeEventListener("pointermove", move);
       node.removeEventListener("pointerleave", leave);
     };
-  }, []);
+  }, [reduced]);
 }
 export function useClosingMotion() {
   const ref = useRef();
+  const reduced = useReducedMotion();
   useEffect(() => {
     const node = ref.current;
-    if (!node || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!node || reduced) return;
     const io = new IntersectionObserver(
       ([e]) => node.classList.toggle("closing-visible", e.isIntersecting),
       { threshold: 0.15 },
     );
     io.observe(node);
     return () => io.disconnect();
-  }, []);
+  }, [reduced]);
   return ref;
 }

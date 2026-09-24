@@ -1,6 +1,7 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { AppProvider } from "./context.jsx";
+import { reducedMotion } from "./motion.js";
 import { Logo, Icon, Button, Mark } from "./ui.jsx";
 import Home from "./Home.jsx";
 import { Reveal, useClosingMotion } from "./ReferenceMotion.jsx";
@@ -263,7 +264,7 @@ function ScrollManager() {
       timer = setTimeout(
         () =>
           document.getElementById(hash.slice(1))?.scrollIntoView({
-            behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+            behavior: reducedMotion.matches
               ? "instant"
               : "smooth",
           }),

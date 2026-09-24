@@ -10,6 +10,7 @@ import {
 import { Icon } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import "./flow.css";
+import { useReducedMotion } from "./motion.js";
 const positions = ["tr", "tl", "bl", "br"];
 const sides = ["top", "left", "bottom", "right"];
 export default function ReferenceFlow({ steps }) {
@@ -17,6 +18,7 @@ export default function ReferenceFlow({ steps }) {
     canvas = useRef(),
     center = useRef(),
     [fallback, setFallback] = useState(false);
+  const reduced = useReducedMotion();
   const [mobileLayout, setMobileLayout] = useState(
     () => matchMedia("(width < 58.75rem)").matches,
   );
@@ -30,8 +32,7 @@ export default function ReferenceFlow({ steps }) {
     setFallback(false);
     const section = root.current,
       query = (s) => Array.from(section.querySelectorAll(s));
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-    if (reduced.matches) {
+    if (reduced) {
       setFallback(true);
       return;
     }
@@ -284,7 +285,7 @@ export default function ReferenceFlow({ steps }) {
       disposed = true;
       cleanup();
     };
-  }, [mobileLayout]);
+  }, [mobileLayout, reduced]);
   return (
     <section
       ref={root}

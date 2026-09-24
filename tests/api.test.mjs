@@ -2477,3 +2477,43 @@ test("web search sends the web plugin, returns citations and bills at least the 
   await agent.post("/api/chat").send(prompt).expect(200);
   assert.equal(sent.plugins, undefined);
 });
+test("credits can be sent once per request to another account and never overdrawn", async (t) => {
+  const s = fixture(t);
+  const alice = await register(s.app, "alice");
+  const bob = await register(s.app, "bob");
+  const send = (body) => alice.agent.post("/api/credits/send").send(body);
+  const aliceBefore = balance(s.db, alice.user.id).total;
+  const bobBefore = balance(s.db, bob.user.id).total;
+
+  const r = await send({ to: "@Bob", amount: 2.5, requestId: "gift-1" }).expect(
+    201,
+  );
+  assert.equal(r.body.to, "bob");
+  assert.equal(aliceBefore - balance(s.db, alice.user.id).total, 25000);
+  assert.equal(balance(s.db, bob.user.id).total - bobBefore, 25000);
+  // A retry with the same request ID doesn't send twice.
+  await send({ to: "bob", amount: 2.5, requestId: "gift-1" }).expect(200);
+  assert.equal(balance(s.db, bob.user.id).total - bobBefore, 25000);
+  await send({ to: "bob", amount: 3, requestId: "gift-1" }).expect(409);
+
+  await send({ to: "alice", amount: 1 }).expect(400);
+  await send({ to: "nobody", amount: 1 }).expect(404);
+  await send({ to: "bob", amount: 0.5 }).expect(400);
+  await send({ to: "bob", amount: 1.23456 }).expect(400);
+  const available = balance(s.db, alice.user.id).available / 10000;
+  const tooMuch = await send({
+    to: "bob",
+    amount: Math.floor(available) + 1,
+  }).expect(402);
+  assert.equal(tooMuch.body.error.code, "insufficient_credits");
+  const kinds = s.db
+    .prepare(
+      "SELECT kind, amount FROM ledger WHERE kind LIKE 'transfer%' ORDER BY kind",
+    )
+    .all()
+    .map((row) => ({ ...row }));
+  assert.deepEqual(kinds, [
+    { kind: "transfer_in", amount: 25000 },
+    { kind: "transfer_out", amount: -25000 },
+  ]);
+});

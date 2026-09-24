@@ -44,7 +44,8 @@ export default function Account() {
     [amount, setAmount] = useState(10),
     [currency, setCurrency] = useState(""),
     [currencies, setCurrencies] = useState([]),
-    [invoiceIntent, setInvoiceIntent] = useState(uid);
+    [invoiceIntent, setInvoiceIntent] = useState(uid),
+    [transfer, setTransfer] = useState({ to: "", amount: "", confirm: false, id: uid() });
   useEffect(() => setInvoiceIntent(uid()), [amount, currency]);
   const q = demo ? "?demo=1" : "";
   const bandRef = useRef();
@@ -77,6 +78,32 @@ export default function Account() {
   useEffect(() => {
     if (demo) saveStore("keys", keys);
   }, [keys, demo]);
+  async function sendCredits(e) {
+    e.preventDefault();
+    if (!transfer.confirm) {
+      setTransfer((t) => ({ ...t, confirm: true }));
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const r = await api("/api/credits/send", {
+        method: "POST",
+        body: { to: transfer.to, amount: Number(transfer.amount), requestId: transfer.id },
+      });
+      setNotice(`Sent ${r.credits.toLocaleString()} credits to @${r.to}.`);
+      setTransfer({ to: "", amount: "", confirm: false, id: uid() });
+      refresh();
+      api("/api/account/ledger")
+        .then((l) => setLedger(l.data))
+        .catch(() => {});
+    } catch (err) {
+      setError(err.message);
+      setTransfer((t) => ({ ...t, confirm: false }));
+    } finally {
+      setBusy(false);
+    }
+  }
   async function createKey(e) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
@@ -482,6 +509,42 @@ export default function Account() {
                     Understand credits <Icon name="arrow" size={15} />
                   </Link>
                 </div>
+                <form className="form-panel send-credits" onSubmit={sendCredits}>
+                  <h2>Send credits</h2>
+                  <p>Move credits from your balance to another account. Transfers can't be undone.</p>
+                  <label>
+                    Recipient username
+                    <input
+                      value={transfer.to}
+                      placeholder="@username"
+                      maxLength="40"
+                      required
+                      onChange={(e) => setTransfer((t) => ({ ...t, to: e.target.value, confirm: false, id: uid() }))}
+                    />
+                  </label>
+                  <label>
+                    Credits
+                    <input
+                      type="number"
+                      min="1"
+                      step="any"
+                      required
+                      value={transfer.amount}
+                      onChange={(e) => setTransfer((t) => ({ ...t, amount: e.target.value, confirm: false, id: uid() }))}
+                    />
+                  </label>
+                  <Button disabled={busy || demo || !user || !transfer.to.trim() || !(Number(transfer.amount) >= 1)}>
+                    {transfer.confirm
+                      ? `Confirm: send ${Number(transfer.amount).toLocaleString()} credits to @${transfer.to.replace(/^@/, "")}`
+                      : "Send credits"}
+                    <Icon name="arrow" />
+                  </Button>
+                  {transfer.confirm && (
+                    <button type="button" className="small-button" onClick={() => setTransfer((t) => ({ ...t, confirm: false }))}>
+                      Cancel
+                    </button>
+                  )}
+                </form>
               </div>
             </div>
           )}

@@ -55,7 +55,7 @@ const chat = object(
     web_search: {
       ...bool,
       description:
-        "Search the web before answering (also accepted as plugins: [{ id: \"web\" }]). Adds the per-search fee; cited sources are returned as citations.",
+        'Search the web before answering (also accepted as plugins: [{ id: "web" }]). Adds the per-search fee; cited sources are returned as citations.',
     },
   },
   ["model", "messages"],
@@ -506,6 +506,33 @@ route("post", "/api/audio/transcriptions", "Transcribe a recording", {
   }),
   description:
     "Holds the cost of 10 minutes and charges the transcribed duration. Longer recordings are charged at most 10 minutes.",
+});
+route("post", "/api/credits/send", "Send credits to another account", {
+  body: object(
+    {
+      to: {
+        ...string,
+        description: "Recipient username (a leading @ is ignored)",
+      },
+      amount: {
+        ...number,
+        minimum: 1,
+        maximum: 1000000,
+        description: "Credits, up to four decimals",
+      },
+      requestId,
+    },
+    ["to", "amount"],
+  ),
+  response: object({
+    id: string,
+    to: string,
+    credits: number,
+    available: number,
+  }),
+  status: 201,
+  description:
+    "Moves available credits atomically as a linked transfer_out/transfer_in ledger pair. Reusing a requestId returns the original transfer instead of sending again. Paused while a credited payment is under reconciliation.",
 });
 route("get", "/api/media", "List private workspace library", {
   response: object({ data: array(ref("Media")) }),

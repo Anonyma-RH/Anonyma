@@ -16,6 +16,7 @@ import { chatRoutes } from "./routes/chat.js";
 import { mediaRoutes } from "./routes/media.js";
 import { videoRoutes } from "./routes/videos.js";
 import { audioRoutes } from "./routes/audio.js";
+import { creditRoutes } from "./routes/credits.js";
 import { accountRoutes } from "./routes/account.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { siteRoutes } from "./routes/site.js";
@@ -62,6 +63,7 @@ export function createApp(overrides = {}) {
   mediaRoutes(ctx);
   videoRoutes(ctx);
   audioRoutes(ctx);
+  creditRoutes(ctx);
   const worker = createWorker(ctx);
   accountRoutes(ctx);
   paymentRoutes(ctx);

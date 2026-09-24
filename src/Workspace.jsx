@@ -187,6 +187,7 @@ export default function Workspace() {
   const controller = useRef(),
     timer = useRef(),
     streamEnd = useRef(),
+    composerZone = useRef(),
     promptBox = useRef();
   const validMode = [
     "home",
@@ -310,14 +311,22 @@ export default function Workspace() {
     }
   }, [mode, demo, user]);
   useEffect(() => {
-    streamEnd.current?.scrollIntoView({ block: "nearest" });
+    const end = streamEnd.current;
+    if (!end) return;
+    // The sticky composer covers the bottom of the viewport, so reserve its
+    // height below the newest message when scrolling it into view.
+    end.style.scrollMarginBottom =
+      (composerZone.current?.offsetHeight || 0) + "px";
+    end.scrollIntoView({ block: "nearest" });
   }, [messages, busy]);
   // /workspace/chat?c=ID opens a conversation directly (used by Collab).
+  // Keyed on the user's id: the balance refresh after every reply replaces
+  // the user object, and re-opening would blank the thread.
   const linked = params.get("c");
   useEffect(() => {
     if (linked && user && !demo && ["chat", "code"].includes(mode))
       openChat({ id: linked, mode });
-  }, [linked, user, mode]);
+  }, [linked, user?.id, mode]);
   // Shared conversations refresh while open so members see each other.
   useEffect(() => {
     if (!shared || !current || busy) return;
@@ -1147,7 +1156,7 @@ export default function Workspace() {
                   </div>
                 )}
               </div>
-              <div className="composer-zone">
+              <div className="composer-zone" ref={composerZone}>
                 {info && <Notice>{info}</Notice>}
                 {error && <Notice type="error">{error}</Notice>}
                 {receipt && (

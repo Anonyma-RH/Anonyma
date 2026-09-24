@@ -1,4 +1,4 @@
-import { addCredit, fail, now, transaction, uid } from "./core.js";
+import { addCredit, fail, hash, now, transaction, uid } from "./core.js";
 
 const statuses = new Set([
   "waiting",
@@ -254,5 +254,68 @@ export function recordPayment(
       referralReward(db, d, referralPercent, "credit");
     }
     return db.prepare("SELECT * FROM deposits WHERE id=?").get(d.id);
+  });
+}
+
+// A confirmed on-chain transfer from the user's linked wallet. It can't be
+// reversed like a processor invoice, so the deposit is recorded already
+// credited. The provider id (chain and transaction hash) is unique, which
+// makes each transaction creditable once.
+export function recordWalletPayment(
+  db,
+  { user, providerId, amount, currency, payload },
+  { referralPercent = 0 } = {},
+) {
+  if (!Number.isSafeInteger(amount) || amount <= 0)
+    fail(400, "This payment is too small to credit.", "payment_not_matched");
+  return transaction(db, () => {
+    const existing = db
+      .prepare("SELECT * FROM deposits WHERE provider_id=?")
+      .get(providerId);
+    if (existing) {
+      if (existing.user_id !== user)
+        fail(
+          409,
+          "This transaction was already credited to another account.",
+          "payment_already_claimed",
+        );
+      return existing;
+    }
+    const id = "deposit_" + hash(providerId).slice(0, 32);
+    const created = now();
+    db.prepare(
+      "INSERT INTO deposits(id,user_id,provider_id,amount,currency,status,payload,credited,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?)",
+    ).run(
+      id,
+      user,
+      providerId,
+      amount,
+      currency,
+      "finished",
+      JSON.stringify({
+        ...payload,
+        payment_id: providerId,
+        payment_status: "finished",
+        creditState: "credited",
+      }),
+      1,
+      created,
+      created,
+    );
+    addCredit(
+      db,
+      user,
+      amount,
+      "payment_" + providerId,
+      "deposit",
+      `${currency.toUpperCase()} deposit`,
+    );
+    referralReward(
+      db,
+      { id, user_id: user, amount },
+      referralPercent,
+      "credit",
+    );
+    return db.prepare("SELECT * FROM deposits WHERE id=?").get(id);
   });
 }

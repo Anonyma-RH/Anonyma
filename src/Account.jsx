@@ -24,7 +24,7 @@ import {
   walletSign,
   walletAvailable,
 } from "./lib.js";
-import { EmailLink, InvoiceDetails } from "./AccountFlows.jsx";
+import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
 export default function Account() {
   const { section = "overview" } = useParams();
   const navigate = useNavigate();
@@ -403,6 +403,19 @@ export default function Account() {
           )}
           {section === "credits" && (
             <div className="funding-layout">
+              <div className="funding-stack">
+              <WalletPayPanel
+                config={config}
+                user={user}
+                demo={demo}
+                onChanged={async () => {
+                  await refresh();
+                  api("/api/deposits")
+                    .then((d) => setDeposits(d.data))
+                    .catch(() => {});
+                }}
+              />
+              {(config?.services?.payments || !config?.walletPayments) && (
               <form className="form-panel" onSubmit={submitDeposit}>
                 <h2>Add credits</h2>
                 <p>1 USD = 1,000 credits</p>
@@ -481,6 +494,8 @@ export default function Account() {
                   sample payment address is used.
                 </Notice>
               </form>
+              )}
+              </div>
               <div>
                 <h2>Funding activity</h2>
                 {deposits.length ? (

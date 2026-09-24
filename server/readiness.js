@@ -19,6 +19,7 @@ export function configurationStatus(cfg) {
       ["GATEWAY2_BASE_URL", cfg.gateway2],
       ["GATEWAY2_API_KEY", cfg.gateway2Key],
     ],
+    walletPayments: [["WALLET_PAYMENT_ADDRESS", cfg.walletPaymentAddress]],
   };
   const configured = Object.fromEntries(
     Object.entries(groups).map(([service, keys]) => [
@@ -29,11 +30,13 @@ export function configurationStatus(cfg) {
   return {
     mode: cfg.testMode ? "local-test" : "live",
     configured,
+    // Either payment route (processor invoices or direct wallet payments)
+    // lets users add credit.
     requiredConfigured:
       !cfg.testMode &&
-      ["generation", "payments", "email"].every(
-        (service) => configured[service],
-      ),
+      configured.generation &&
+      (configured.payments || configured.walletPayments) &&
+      configured.email,
     missing: Object.fromEntries(
       Object.entries(groups).map(([service, keys]) => [
         service,

@@ -2,8 +2,20 @@ import { hash, now, fail, usdUnits } from "../core.js";
 import { payment } from "../provider.js";
 import { validIPN } from "../auth.js";
 import { configurationStatus } from "../readiness.js";
-import { recordPayment, FINAL_PAYMENT_STATUSES } from "../payments.js";
+import {
+  recordPayment,
+  recordWalletPayment,
+  FINAL_PAYMENT_STATUSES,
+} from "../payments.js";
 import { requestIdentifier } from "../middleware.js";
+import {
+  TX_HASH,
+  formatTokenAmount,
+  tokenCredits,
+  verifyWalletPayment,
+  walletPaymentInfo,
+  walletPaymentsEnabled,
+} from "../wallet-payments.js";
 
 // Crypto deposit invoices and processor callbacks.
 export function paymentRoutes(ctx) {
@@ -130,6 +142,82 @@ export function paymentRoutes(ctx) {
           );
         throw e;
       }
+    },
+  );
+  // Credit a stablecoin transfer the user sent from their linked wallet. The
+  // browser posts the transaction hash right after sending (or the user pastes
+  // it); 202 means it isn't confirmed yet and the client checks again.
+  app.post(
+    "/api/deposits/wallet",
+    requireUser,
+    limit("wallet_deposits", 240, 3600000),
+    async (req, res) => {
+      if (!walletPaymentsEnabled(cfg))
+        fail(
+          503,
+          "Wallet payments are not configured on this service yet.",
+          "wallet_payments_unconfigured",
+        );
+      const txHash = String(req.body.txHash || "")
+        .trim()
+        .toLowerCase();
+      if (!TX_HASH.test(txHash))
+        fail(
+          400,
+          "Enter a valid transaction hash (0x and 64 hex characters).",
+          "invalid_transaction",
+        );
+      const providerId = `wallet:${cfg.walletPaymentChain}:${txHash}`;
+      const known = db
+        .prepare("SELECT * FROM deposits WHERE provider_id=?")
+        .get(providerId);
+      if (known) {
+        if (known.user_id !== req.user.id)
+          fail(
+            409,
+            "This transaction was already credited to another account.",
+            "payment_already_claimed",
+          );
+        return res.json(depositJSON(known));
+      }
+      if (!req.user.wallet)
+        fail(
+          400,
+          "Link the wallet you pay from in Settings first. Payments are matched to your linked wallet.",
+          "wallet_not_linked",
+        );
+      const info = walletPaymentInfo(cfg);
+      const result = await verifyWalletPayment(cfg, txHash, req.user.wallet);
+      if (result.pending)
+        return res.status(202).json({
+          status: result.reason,
+          confirmations: result.confirmations,
+          required: info.confirmations,
+          txHash,
+        });
+      const stored = recordWalletPayment(
+        db,
+        {
+          user: req.user.id,
+          providerId,
+          amount: tokenCredits(result.value, info.decimals),
+          currency: info.symbol.toLowerCase(),
+          payload: {
+            price_currency: "usd",
+            pay_currency: `${info.symbol} on ${info.chainName}`,
+            pay_amount: formatTokenAmount(result.value, info.decimals),
+            pay_address: info.address,
+            from_address: result.from,
+            tx_hash: txHash,
+            block: result.block,
+            explorer_url: info.explorer
+              ? `${info.explorer}/tx/${txHash}`
+              : null,
+          },
+        },
+        { referralPercent: cfg.referralPercent },
+      );
+      res.status(201).json(depositJSON(stored));
     },
   );
   const applyPayment = (body, current = false) =>

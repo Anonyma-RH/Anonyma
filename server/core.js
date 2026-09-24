@@ -96,6 +96,18 @@ export function config(overrides = {}) {
     gateway2: e.GATEWAY2_BASE_URL || "",
     gateway2Key: e.GATEWAY2_API_KEY || "",
     gateway2FeePercent: Number(e.GATEWAY2_FEE_PERCENT ?? 0),
+    // Direct wallet payments: users send a dollar stablecoin from their linked
+    // wallet to this public address and are credited once it's confirmed.
+    // Defaults are USDG on Robinhood Chain.
+    walletPaymentAddress: e.WALLET_PAYMENT_ADDRESS || "",
+    walletPaymentRpc:
+      e.WALLET_PAYMENT_RPC_URL || "https://rpc.mainnet.chain.robinhood.com",
+    walletPaymentChain: Number(e.WALLET_PAYMENT_CHAIN_ID || 4663),
+    walletPaymentContract:
+      e.WALLET_PAYMENT_CONTRACT || "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+    walletPaymentSymbol: e.WALLET_PAYMENT_SYMBOL || "USDG",
+    walletPaymentDecimals: Number(e.WALLET_PAYMENT_DECIMALS ?? 6),
+    walletPaymentConfirmations: Number(e.WALLET_PAYMENT_CONFIRMATIONS ?? 10),
     ...overrides,
   };
   for (const field of [
@@ -105,6 +117,7 @@ export function config(overrides = {}) {
     "paymentBase",
     "rpc",
     "gateway2",
+    "walletPaymentRpc",
   ]) {
     if (!cfg[field] && ["publicUrl", "rpc", "gateway2"].includes(field))
       continue;
@@ -135,9 +148,24 @@ export function config(overrides = {}) {
     throw Error("APP_ORIGIN and PUBLIC_BASE_URL must match in production.");
   if (!Number.isInteger(cfg.port) || cfg.port < 0 || cfg.port > 65535)
     throw Error("Invalid server port.");
-  for (const field of ["chain", "walletChain"])
+  for (const field of ["chain", "walletChain", "walletPaymentChain"])
     if (!Number.isSafeInteger(cfg[field]) || cfg[field] < 1)
       throw Error(`Invalid ${field} ID.`);
+  for (const field of ["walletPaymentAddress", "walletPaymentContract"])
+    if (cfg[field] && !/^0x[0-9a-fA-F]{40}$/.test(cfg[field]))
+      throw Error(`Invalid ${field}: expected a 0x-prefixed 40-hex address.`);
+  if (
+    !Number.isInteger(cfg.walletPaymentDecimals) ||
+    cfg.walletPaymentDecimals < 0 ||
+    cfg.walletPaymentDecimals > 36
+  )
+    throw Error("Wallet payment decimals must be an integer from 0 to 36.");
+  if (
+    !Number.isInteger(cfg.walletPaymentConfirmations) ||
+    cfg.walletPaymentConfirmations < 1 ||
+    cfg.walletPaymentConfirmations > 10000
+  )
+    throw Error("Wallet payment confirmations must be from 1 to 10000.");
   if (!Number.isFinite(cfg.markup) || cfg.markup < 0)
     throw Error("Markup must be a nonnegative percentage.");
   if (

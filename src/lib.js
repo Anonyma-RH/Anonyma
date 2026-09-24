@@ -206,7 +206,7 @@ export function videoPresets(model) {
 // server's exact one-time challenge; no transfer, approval or recovery phrase is ever requested.
 export const walletAvailable = (config) =>
   !!globalThis.window?.ethereum || !!config?.walletProject;
-export async function walletSign(config, link = false) {
+async function walletProvider(config, chain) {
   let provider = globalThis.window?.ethereum;
   if (!provider) {
     if (!config?.walletProject)
@@ -217,11 +217,118 @@ export async function walletSign(config, link = false) {
       await import("@walletconnect/ethereum-provider");
     provider = await EthereumProvider.init({
       projectId: config.walletProject,
-      chains: [config.walletChain || 1],
+      chains: [chain || config.walletChain || 1],
       showQrModal: true,
     });
     await provider.connect();
   }
+  return provider;
+}
+function walletError(e) {
+  if (e?.code === 4001)
+    return new Error("The wallet request was cancelled. Nothing was sent.");
+  if (e?.code === -32002)
+    return new Error(
+      "Your wallet already has a pending request. Open it to continue.",
+    );
+  return e;
+}
+// "12.5" with 6 decimals -> 12500000n. Rejects more precision than the token has.
+export function toTokenUnits(amount, decimals) {
+  const m = /^(\d+)(?:\.(\d+))?$/.exec(String(amount).trim());
+  if (!m || (m[2] || "").length > decimals)
+    throw new Error(`Enter an amount with at most ${decimals} decimal places.`);
+  return BigInt(m[1] + (m[2] || "").padEnd(decimals, "0"));
+}
+// ERC-20 transfer(to, value) call data.
+export function transferData(to, value) {
+  const word = (hex) => hex.replace(/^0x/, "").toLowerCase().padStart(64, "0");
+  return "0xa9059cbb" + word(to) + word(value.toString(16));
+}
+// Sends the stablecoin from the linked wallet to the payment address and
+// returns the transaction hash. Crediting happens server-side once the
+// chain confirms it; see claimWalletPayment.
+export async function payWithWallet(config, linkedWallet, amount) {
+  const wp = config.walletPayments;
+  const value = toTokenUnits(amount, wp.decimals);
+  if (value <= 0n) throw new Error("Enter an amount above zero.");
+  const provider = await walletProvider(config, wp.chainId);
+  try {
+    const [address] = await provider.request({ method: "eth_requestAccounts" });
+    if (!address) throw new Error("No wallet account was selected.");
+    if (address.toLowerCase() !== String(linkedWallet).toLowerCase())
+      throw new Error(
+        `Your wallet is on ${address}, but payments are matched to your linked wallet ${linkedWallet}. Switch accounts in your wallet, or change the linked wallet in Settings.`,
+      );
+    const chainId = "0x" + wp.chainId.toString(16);
+    try {
+      await provider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId }],
+      });
+    } catch (e) {
+      if (e?.code !== 4902 || !wp.publicRpc) throw e;
+      await provider.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId,
+            chainName: wp.chainName,
+            nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+            rpcUrls: [wp.publicRpc],
+            ...(wp.explorer ? { blockExplorerUrls: [wp.explorer] } : {}),
+          },
+        ],
+      });
+    }
+    return await provider.request({
+      method: "eth_sendTransaction",
+      params: [
+        {
+          from: address,
+          to: wp.token,
+          data: transferData(wp.address, value),
+          value: "0x0",
+        },
+      ],
+    });
+  } catch (e) {
+    throw walletError(e);
+  }
+}
+// Asks the server to credit a sent transaction, checking again every few
+// seconds while the chain confirms it. Resolves with the credited deposit.
+export async function claimWalletPayment(txHash, { onProgress, signal } = {}) {
+  const deadline = Date.now() + 10 * 60000;
+  for (;;) {
+    const r = await api("/api/deposits/wallet", {
+      method: "POST",
+      body: { txHash },
+      signal,
+    });
+    if (r.credited) return r;
+    onProgress?.(r);
+    if (Date.now() > deadline)
+      throw new ApiError(
+        "The payment isn't confirmed yet. It will be credited when you check again; nothing is lost.",
+        202,
+        "still_confirming",
+      );
+    await new Promise((resolve, reject) => {
+      const id = setTimeout(resolve, 3000);
+      signal?.addEventListener(
+        "abort",
+        () => {
+          clearTimeout(id);
+          reject(new DOMException("Aborted", "AbortError"));
+        },
+        { once: true },
+      );
+    });
+  }
+}
+export async function walletSign(config, link = false) {
+  const provider = await walletProvider(config);
   try {
     const [address] = await provider.request({ method: "eth_requestAccounts" });
     if (!address) throw new Error("No wallet account was selected.");
@@ -240,10 +347,6 @@ export async function walletSign(config, link = false) {
   } catch (e) {
     if (e?.code === 4001)
       throw new Error("The wallet request was cancelled. Nothing was signed.");
-    if (e?.code === -32002)
-      throw new Error(
-        "Your wallet already has a pending request. Open it to continue.",
-      );
-    throw e;
+    throw walletError(e);
   }
 }

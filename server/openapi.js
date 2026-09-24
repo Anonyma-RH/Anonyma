@@ -694,6 +694,27 @@ route("post", "/api/deposits", "Create cryptocurrency deposit invoice", {
     "Use one stable requestId per invoice. Successful repeats return 200 and the original invoice. Display exact processor pay_address, pay_amount, pay_currency/network. Do not credit from a browser success state. Server verifies IPN or processor status and credits finished invoices once.",
 });
 route(
+  "post",
+  "/api/deposits/wallet",
+  "Credit a stablecoin payment sent from the linked wallet",
+  {
+    body: object(
+      {
+        txHash: {
+          ...string,
+          pattern: "^0x[0-9a-fA-F]{64}$",
+          description: "Transaction hash of the transfer",
+        },
+      },
+      ["txHash"],
+    ),
+    status: 201,
+    response: ref("Deposit"),
+    description:
+      "For the chain and token in /api/config walletPayments. The server reads the transaction and credits the sum of that token's transfers from the account's linked wallet to the payment address, at 1 token = 1 USD, once it has the configured confirmations. Returns 202 {status: waiting|confirming, confirmations, required} until then; post the same hash again. Each transaction is credited once (repeats return 200 and the same deposit). Transfers from another wallet, of another token, to another address, reverted, or older than 7 days are refused.",
+  },
+);
+route(
   "get",
   "/api/deposits/{id}",
   "Read invoice and refresh pending processor status",

@@ -2873,6 +2873,29 @@ td code {
   gap: 35px;
   margin-top: 38px;
 }
+.funding-stack {
+  display: grid;
+  gap: 24px;
+  align-content: start;
+}
+.wallet-pay .notice {
+  margin-top: 14px;
+}
+.wallet-pay-manual {
+  margin-top: 20px;
+  font-size: 12px;
+}
+.wallet-pay-manual summary {
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+.wallet-pay-manual code,
+.invoice-details dd a {
+  word-break: break-all;
+}
+.wallet-pay-manual label {
+  margin: 14px 0 12px;
+}
 .funding-layout h2 {
   font-size: 33px;
   letter-spacing: -0.5px;

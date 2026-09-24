@@ -4,6 +4,10 @@ import { createMarketFeed } from "../market.js";
 import { configurationStatus } from "../readiness.js";
 import { videoOptions } from "../video-options.js";
 import {
+  walletPaymentInfo,
+  walletPaymentsEnabled,
+} from "../wallet-payments.js";
+import {
   fail,
   balance,
   credits,
@@ -38,7 +42,9 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
         email: configurationStatus(cfg).configured.email || cfg.testMode,
         walletConnect: !!cfg.walletProject,
         token: !!cfg.rpc && !!cfg.token,
+        walletPayments: walletPaymentsEnabled(cfg),
       },
+      walletPayments: walletPaymentInfo(cfg),
       walletProject: cfg.walletProject,
       walletChain: cfg.walletChain,
       chain: cfg.chain,

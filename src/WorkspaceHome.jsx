@@ -630,11 +630,11 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
               <h3>Invite a friend</h3>
               <p>
                 {referrals
-                  ? `You get ${referrals.percent}% of what they add. ` +
+                  ? `You get ${referrals.percent}% back in credits when they top up. ` +
                     (referrals.invited
-                      ? `${plural(referrals.invited, "person has", "people have")} joined through your link so far, earning you ${fmt(referrals.earned)} credits.`
+                      ? `${plural(referrals.invited, "person has", "people have")} joined through your link so far, giving you ${fmt(referrals.earned)} credits back.`
                       : "Nobody has joined through your link yet.")
-                  : "Share your link and earn a share of what your friends add."}
+                  : "Share your link and get credits back when friends top up."}
               </p>
               {referrals?.link ? (
                 <button type="button" onClick={copyInvite}>
@@ -646,7 +646,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
             </div>
           ) : (
             <SoonCorner title="Invite a friend">
-              Share your link and earn a share of what your friends add, or send credits to any account.
+              Share your link and get credits back when friends top up, or send credits to any account.
             </SoonCorner>
           )}
           {live.api ? (

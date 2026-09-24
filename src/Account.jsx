@@ -985,7 +985,7 @@ function InviteCard({ data, onLoad }) {
         </p>
         <h2>
           {data.percent > 0
-            ? `Earn ${data.percent}% of what your friends add.`
+            ? `Get ${data.percent}% back in credits when friends top up.`
             : "Share Anonyma with a friend."}
         </h2>
         <p>
@@ -1005,7 +1005,7 @@ function InviteCard({ data, onLoad }) {
           <dd>{data.invited}</dd>
         </div>
         <div>
-          <dt>Credits earned</dt>
+          <dt>Credits received</dt>
           <dd>{Number(data.earned).toLocaleString()}</dd>
         </div>
       </dl>

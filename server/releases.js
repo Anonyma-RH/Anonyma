@@ -90,9 +90,9 @@ export const UPDATES = [
   {
     id: "social",
     title: "Referrals & Credits",
-    tagline: "Share it. Earn from it.",
+    tagline: "Invite friends. Get credits back.",
     points: [
-      "Earn a share of friends' deposits",
+      "Get 5% back in credits when friends top up",
       "Send credits to any account",
       "Instant, on the ledger",
     ],

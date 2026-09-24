@@ -10,7 +10,7 @@ export const UPDATES = [
   {
     id: "code",
     title: "Code & build",
-    tagline: "Ship code with every frontier model.",
+    tagline: "Build with your favorite models.",
     points: [
       "A dedicated code mode",
       "Files in a live side panel",
@@ -39,10 +39,10 @@ export const UPDATES = [
   },
   {
     id: "catalog",
-    title: "500+ models",
-    tagline: "Every major model. One balance.",
+    title: "Full model catalog",
+    tagline: "Hundreds of models. One balance.",
     points: [
-      "OpenAI, Anthropic, Google and hundreds more",
+      "Models from OpenAI, Anthropic, Google and more",
       "@mention any model mid-conversation",
       "Pay per use, never a subscription",
     ],

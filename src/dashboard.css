@@ -7,7 +7,9 @@
 /* Hero */
 .dash-hero{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:48px;align-items:end;padding:56px 48px 70px;background:var(--blue);color:#fff;
   background-image:radial-gradient(rgba(255,255,255,.13) 1px,transparent 1.2px);background-size:22px 22px}
-.dash-hello{margin:0;color:#fff;font-size:clamp(56px,7.2vw,104px);line-height:.95;overflow-wrap:anywhere}
+.dash-hero-copy{container-type:inline-size}
+/* --fit is the longest word in characters (the username is one word), so a long name shrinks to its column instead of breaking mid-word. */
+.dash-hello{margin:0;color:#fff;font-size:max(36px,min(clamp(56px,7.2vw,104px),calc(100cqi / (var(--fit,10) * .54))));line-height:.95;overflow-wrap:anywhere}
 .dash-hello span{display:block;animation:dash-rise .9s calc(.1s + var(--i) * .12s) cubic-bezier(.22,1,.36,1) backwards}
 .dash-hero-copy p{margin:20px 0 0;font-size:17px;line-height:1.5;color:rgba(255,255,255,.88);max-width:42ch;text-wrap:pretty}
 .dash-hero-copy p a{color:#fff;text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:4px;text-decoration-thickness:2px}

@@ -81,26 +81,33 @@ export default function Account() {
   }, [keys, demo]);
   async function sendCredits(e) {
     e.preventDefault();
+    if (!/^\d+(\.\d{1,4})?$/.test(transfer.amount.trim())) {
+      setTransfer((t) => ({ ...t, result: { type: "error", text: "Use a whole number or at most four decimal places." } }));
+      return;
+    }
     if (!transfer.confirm) {
-      setTransfer((t) => ({ ...t, confirm: true }));
+      setTransfer((t) => ({ ...t, confirm: true, result: null }));
       return;
     }
     setBusy(true);
-    setError("");
     try {
       const r = await api("/api/credits/send", {
         method: "POST",
         body: { to: transfer.to, amount: Number(transfer.amount), requestId: transfer.id },
       });
-      setNotice(`Sent ${r.credits.toLocaleString()} credits to @${r.to}.`);
-      setTransfer({ to: "", amount: "", confirm: false, id: uid() });
+      setTransfer({
+        to: "",
+        amount: "",
+        confirm: false,
+        id: uid(),
+        result: { text: `Sent ${r.credits.toLocaleString(undefined, { maximumFractionDigits: 4 })} credits to @${r.to}.` },
+      });
       refresh();
       api("/api/account/ledger")
         .then((l) => setLedger(l.data))
         .catch(() => {});
     } catch (err) {
-      setError(err.message);
-      setTransfer((t) => ({ ...t, confirm: false }));
+      setTransfer((t) => ({ ...t, confirm: false, result: { type: "error", text: err.message } }));
     } finally {
       setBusy(false);
     }
@@ -521,7 +528,7 @@ export default function Account() {
                       placeholder="@username"
                       maxLength="40"
                       required
-                      onChange={(e) => setTransfer((t) => ({ ...t, to: e.target.value, confirm: false, id: uid() }))}
+                      onChange={(e) => setTransfer((t) => ({ ...t, to: e.target.value, confirm: false, id: uid(), result: null }))}
                     />
                   </label>
                   <label>
@@ -532,12 +539,12 @@ export default function Account() {
                       step="any"
                       required
                       value={transfer.amount}
-                      onChange={(e) => setTransfer((t) => ({ ...t, amount: e.target.value, confirm: false, id: uid() }))}
+                      onChange={(e) => setTransfer((t) => ({ ...t, amount: e.target.value, confirm: false, id: uid(), result: null }))}
                     />
                   </label>
                   <Button disabled={busy || demo || !user || !transfer.to.trim() || !(Number(transfer.amount) >= 1)}>
                     {transfer.confirm
-                      ? `Confirm: send ${Number(transfer.amount).toLocaleString()} credits to @${transfer.to.replace(/^@/, "")}`
+                      ? `Confirm: send ${Number(transfer.amount).toLocaleString(undefined, { maximumFractionDigits: 4 })} credits to @${transfer.to.trim().replace(/^@/, "")}`
                       : "Send credits"}
                     <Icon name="arrow" />
                   </Button>
@@ -546,6 +553,7 @@ export default function Account() {
                       Cancel
                     </button>
                   )}
+                  {transfer.result && <Notice type={transfer.result.type}>{transfer.result.text}</Notice>}
                 </form>
               </div>
             </div>

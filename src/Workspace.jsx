@@ -186,7 +186,8 @@ export default function Workspace() {
     });
   const controller = useRef(),
     timer = useRef(),
-    streamEnd = useRef();
+    streamEnd = useRef(),
+    promptBox = useRef();
   const validMode = [
     "home",
     "chat",
@@ -1194,6 +1195,7 @@ export default function Workspace() {
                     </div>
                   )}
                   <textarea
+                    ref={promptBox}
                     aria-label="Your prompt"
                     placeholder={
                       mode === "image"
@@ -1232,7 +1234,12 @@ export default function Workspace() {
                           type="button"
                           role="option"
                           key={m.id}
-                          onClick={() => setPrompt("@" + m.id + " ")}
+                          // Keep typing in the prompt: the menu closes once a model is picked.
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setPrompt("@" + m.id + " ");
+                            promptBox.current?.focus();
+                          }}
                         >
                           <b>{m.name}</b>
                           <span>@{m.id}</span>

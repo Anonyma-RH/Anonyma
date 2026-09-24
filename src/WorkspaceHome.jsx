@@ -313,12 +313,30 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
     <div className="dash">
       <section className="dash-hero">
         <div className="dash-hero-copy">
-          <h1 className="dash-display dash-hello">
+          <h1
+            className="dash-display dash-hello"
+            style={{
+              "--fit": Math.max(
+                ...`${greeting()}, ${name || ""}.`.split(" ").map((w) => w.length),
+              ),
+            }}
+          >
             <span style={{ "--i": 0 }}>
               {greeting()}
               {name ? "," : "."}
             </span>
-            {name && <span style={{ "--i": 1 }}>{name}.</span>}
+            {name && (
+              <span style={{ "--i": 1 }}>
+                {/* A name too long even at the smallest size wraps after _ . or - rather than mid-word. */}
+                {name.split(/(?<=[_.-])/).map((part, i) => (
+                  <React.Fragment key={i}>
+                    {i > 0 && <wbr />}
+                    {part}
+                  </React.Fragment>
+                ))}
+                .
+              </span>
+            )}
           </h1>
           <p>
             {last ? (

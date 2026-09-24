@@ -1,6 +1,6 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
-import { AppProvider } from "./context.jsx";
+import { AppProvider, useStartPath } from "./context.jsx";
 import { reducedMotion } from "./motion.js";
 import { Logo, Icon, Button, Mark } from "./ui.jsx";
 import Home from "./Home.jsx";
@@ -20,6 +20,7 @@ import {
 const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 function Navigation() {
+  const start = useStartPath();
   const [open, setOpen] = useState(false),
     [drop, setDrop] = useState("");
   const location = useLocation();
@@ -130,12 +131,12 @@ function Navigation() {
         ))}
         <div className="mobile-actions">
           <Link to="/login">Log in</Link>
-          <Link to="/workspace?demo=1">Explore workspace →</Link>
+          <Link to={start()}>Explore workspace →</Link>
         </div>
       </nav>
       <div className="header-actions">
         <Link to="/login">Log in</Link>
-        <Link to="/workspace?demo=1" className="header-cta">
+        <Link to={start()} className="header-cta">
           Get started <Icon name="diagonal" size={15} />
         </Link>
       </div>
@@ -152,6 +153,7 @@ function Navigation() {
 }
 function Footer() {
   const closing = useClosingMotion();
+  const start = useStartPath();
   return (
     <>
       <section className="closing-cta" ref={closing}>
@@ -162,7 +164,7 @@ function Footer() {
           to bringing ideas to life.
         </h2></Reveal>
         <div className="step-blocks">
-          <Button to="/workspace?demo=1">
+          <Button to={start()}>
             Explore workspace <Icon name="arrow" />
           </Button>
         </div>

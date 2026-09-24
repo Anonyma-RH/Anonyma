@@ -3,6 +3,12 @@ import { api, normalizeModel, sortModels } from "./lib.js";
 import { models as fallbackModels } from "./data.js";
 const Context = createContext(null);
 export const useApp = () => useContext(Context);
+// Where "get started" links lead: the real workspace when signed in,
+// otherwise account creation, which opens the workspace afterwards.
+export function useStartPath() {
+  const app = useContext(Context);
+  return (path = "/workspace") => (app?.user ? path : "/register");
+}
 export function AppProvider({ children }) {
   const [config, setConfig] = useState(null),
     [models, setModels] = useState(fallbackModels),

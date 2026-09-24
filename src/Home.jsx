@@ -4,6 +4,7 @@ import { Icon, Mark } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { Reveal, useHeroMotion } from "./ReferenceMotion.jsx";
 import ReferenceFlow from "./ReferenceFlow.jsx";
+import { useStartPath } from "./context.jsx";
 import { reducedMotion, setMotion, useReducedMotion } from "./motion.js";
 
 const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
@@ -67,6 +68,7 @@ const labels = [
   ["Developer API", "lavender", "key"],
 ];
 function Hero() {
+  const start = useStartPath();
   const ref = useRef(),
     video = useRef(),
     backgroundVideo = useRef();
@@ -136,7 +138,7 @@ function Hero() {
             you can spend less time switching tools and more time bringing your
             ideas to life.
           </p>
-          <ArrowLink to="/workspace?demo=1" className="n-primary">
+          <ArrowLink to={start()} className="n-primary">
             Get started
           </ArrowLink>
           <button
@@ -219,13 +221,13 @@ const capabilities = [
       "Project file exports",
       "Conversation history",
     ],
-    to: "/workspace/chat?demo=1",
+    to: "/workspace/chat",
   },
   {
     title: "Images & video",
     description: "Visual creation in one workspace.",
     items: ["Image generation", "Reference images", "Asynchronous video"],
-    to: "/workspace/image?demo=1",
+    to: "/workspace/image",
   },
   {
     title: "Credits & API",
@@ -235,6 +237,7 @@ const capabilities = [
   },
 ];
 function Capabilities() {
+  const start = useStartPath();
   const [slide, setSlide] = useState(0);
   return (
     <section className="n-capabilities" id="platform">
@@ -249,7 +252,11 @@ function Capabilities() {
       <div className="n-capability-frame">
         <div className="n-capability-grid" style={{ "--slide": slide }}>
           {capabilities.map((c, i) => (
-            <Link to={c.to} className="n-capability" key={c.title}>
+            <Link
+              to={c.to.startsWith("/workspace") ? start(c.to) : c.to}
+              className="n-capability"
+              key={c.title}
+            >
               <img src={`/reference/capability-${i + 1}.svg`} alt="" />
               <div>
                 <h3>{c.title}</h3>
@@ -576,6 +583,7 @@ function FlowDiagram({ stage }) {
   );
 }
 function Workflow() {
+  const start = useStartPath();
   const ref = useRef();
   const p = useScene(ref);
   const stage = Math.min(3, Math.max(0, Math.floor(p - 2.7)));
@@ -649,7 +657,7 @@ function Workflow() {
               <br />
               Platform
             </h2>
-            <ArrowLink to="/workspace?demo=1">Explore More</ArrowLink>
+            <ArrowLink to={start()}>Explore More</ArrowLink>
           </div>
         </div>
         <article

@@ -11,9 +11,11 @@ import { Icon } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import "./flow.css";
 import { useReducedMotion } from "./motion.js";
+import { useStartPath } from "./context.jsx";
 const positions = ["tr", "tl", "bl", "br"];
 const sides = ["top", "left", "bottom", "right"];
 export default function ReferenceFlow({ steps }) {
+  const start = useStartPath();
   const root = useRef(),
     canvas = useRef(),
     center = useRef(),
@@ -312,7 +314,7 @@ export default function ReferenceFlow({ steps }) {
                 <br />
                 Platform
               </h2>
-              <Link className="n-cta" to="/workspace/chat?demo=1">
+              <Link className="n-cta" to={start("/workspace/chat")}>
                 Explore More <Icon name="arrow" />
               </Link>
             </div>

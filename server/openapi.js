@@ -202,6 +202,18 @@ const schemas = {
     anonyma: object({ credits_charged: number, request_id: string }),
     askr: object(),
   }),
+  Scroll: object({
+    id: string,
+    title: string,
+    body: string,
+    created: integer,
+    updated: integer,
+  }),
+  Instructions: object({
+    body: string,
+    enabled: bool,
+    updated: { type: ["integer", "null"] },
+  }),
   RequestStatus: object({
     requestId: string,
     kind: string,
@@ -632,6 +644,49 @@ route(
     body: object({ title: string, mode: { enum: ["chat", "code"] } }),
     response: object({ id: string }),
     status: 201,
+  },
+);
+route("get", "/api/scrolls", "List your saved scrolls", {
+  response: object({ data: array(ref("Scroll")) }),
+});
+route("post", "/api/scrolls", "Save a reusable prompt as a scroll", {
+  body: object(
+    {
+      title: { ...string, maxLength: 80 },
+      body: { ...string, maxLength: 8000 },
+    },
+    ["title", "body"],
+  ),
+  response: ref("Scroll"),
+  status: 201,
+  description:
+    'Body may contain {{variable}} placeholders filled in before sending. Up to 200 scrolls per account.',
+});
+route("patch", "/api/scrolls/{id}", "Rename or edit a scroll (owner)", {
+  body: object({
+    title: { ...string, maxLength: 80 },
+    body: { ...string, maxLength: 8000 },
+  }),
+  response: ref("Scroll"),
+});
+route("delete", "/api/scrolls/{id}", "Delete a scroll (owner)", {
+  response: ref("Ok"),
+});
+route(
+  "get",
+  "/api/instructions",
+  "Read your standing instructions and whether they're enabled",
+  { response: ref("Instructions") },
+);
+route(
+  "put",
+  "/api/instructions",
+  "Replace your standing instructions and enabled flag",
+  {
+    body: object({ body: { ...string, maxLength: 4000 }, enabled: bool }),
+    response: ref("Instructions"),
+    description:
+      "When enabled, the client sends this as a leading system message on chat and code requests. This endpoint only stores it; it does not itself alter /api/chat.",
   },
 );
 route("get", "/api/referrals", "Your referral link and rewards", {

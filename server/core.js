@@ -341,6 +341,15 @@ export const MIGRATIONS = [
       "CREATE TABLE IF NOT EXISTS retention_defaults(user_id TEXT PRIMARY KEY REFERENCES users(id), days INTEGER NOT NULL)",
     );
   },
+  // Scrolls: saved reusable prompts with {{variable}} placeholders. Standing
+  // instructions: one editable system message the client may send with chat.
+  (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS scrolls(id TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id),title TEXT NOT NULL,body TEXT NOT NULL,created INTEGER NOT NULL,updated INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS scrolls_user ON scrolls(user_id);
+      CREATE TABLE IF NOT EXISTS user_instructions(user_id TEXT PRIMARY KEY REFERENCES users(id),body TEXT NOT NULL,enabled INTEGER NOT NULL DEFAULT 1,updated INTEGER NOT NULL);
+    `);
+  },
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;

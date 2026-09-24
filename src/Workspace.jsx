@@ -46,6 +46,8 @@ import {
   privateModeReleased,
 } from "./PrivateMode.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
+import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
+import { extractVariables } from "./scrolls.js";
 import {
   api,
   streamChat,
@@ -232,6 +234,12 @@ export default function Workspace() {
     [ephemeral, setEphemeral] = useState(false),
     [privateMode, setPrivateMode] = useState(false),
     [shared, setShared] = useState(null),
+    [scrolls, setScrolls] = useState([]),
+    [instructions, setInstructions] = useState({ body: "", enabled: false }),
+    [scrollsPanel, setScrollsPanel] = useState(false),
+    [scrollFill, setScrollFill] = useState(null),
+    [slashDismissedFor, setSlashDismissedFor] = useState(null),
+    [slashIndex, setSlashIndex] = useState(0),
     // null = not chosen yet, so the first published option wins over the "default" preset.
     [video, setVideo] = useState({
       quality: null,
@@ -353,6 +361,8 @@ export default function Workspace() {
       setMedia([]);
       setMessages([]);
       setCurrent(null);
+      setScrolls([]);
+      setInstructions({ body: "", enabled: false });
     }
     if (!demo && user) {
       api("/api/conversations")
@@ -361,6 +371,14 @@ export default function Workspace() {
       api("/api/media")
         .then((r) => setMedia(r.data))
         .catch((e) => setError(e.message));
+      // Scrolls and standing instructions are quiet failures: the composer
+      // works the same as before either way.
+      api("/api/scrolls")
+        .then((r) => setScrolls(r.data))
+        .catch(() => {});
+      api("/api/instructions")
+        .then((r) => setInstructions(r))
+        .catch(() => {});
     }
   }, [demo, user]);
   useEffect(
@@ -563,6 +581,50 @@ export default function Workspace() {
     ? visibleModels.find((m) => m.id.toLowerCase() === mention[1].toLowerCase())
     : null;
   const target = mentioned || selected;
+  // Typing "/" at the start of an empty prompt opens a scroll picker, filtered
+  // by title. Users with no saved scrolls see no change in behaviour.
+  const slashQuery =
+    ["chat", "code"].includes(mode) && !demo && scrolls.length
+      ? prompt.match(/^\/(\S*)$/)?.[1]
+      : undefined;
+  const scrollMatches =
+    slashQuery === undefined || slashDismissedFor === slashQuery
+      ? []
+      : scrolls
+          .filter((s) => s.title.toLowerCase().includes(slashQuery.toLowerCase()))
+          .slice(0, 8);
+  const scrollIndex = Math.min(slashIndex, Math.max(0, scrollMatches.length - 1));
+  function pickScroll(scroll) {
+    if (!scroll) return;
+    setSlashDismissedFor(slashQuery);
+    if (extractVariables(scroll.body).length) setScrollFill(scroll);
+    else {
+      setPrompt(scroll.body);
+      promptBox.current?.focus();
+    }
+  }
+  function insertScroll(text) {
+    setPrompt(text);
+    setScrollFill(null);
+    promptBox.current?.focus();
+  }
+  async function createScroll(draft) {
+    const r = await api("/api/scrolls", { method: "POST", body: draft });
+    setScrolls((prev) => [r, ...prev]);
+  }
+  async function updateScroll(id, draft) {
+    const r = await api("/api/scrolls/" + id, { method: "PATCH", body: draft });
+    setScrolls((prev) => prev.map((s) => (s.id === id ? r : s)));
+  }
+  async function deleteScroll(id) {
+    await api("/api/scrolls/" + id, { method: "DELETE" });
+    setScrolls((prev) => prev.filter((s) => s.id !== id));
+  }
+  async function saveInstructions(payload) {
+    const r = await api("/api/instructions", { method: "PUT", body: payload });
+    setInstructions(r);
+  }
+  const instructionsActive = !demo && instructions.enabled && !!instructions.body.trim();
   async function send(e) {
     e?.preventDefault();
     if (!prompt.trim() || busy) return;
@@ -749,6 +811,11 @@ export default function Workspace() {
       ...messages,
       { role: "user", content: text, images: attachments.map((a) => a.url) },
     ];
+    // Standing instructions (Scrolls) lead the request as a system message.
+    // The server keeps the last 20 messages, so they take one of those slots
+    // rather than being trimmed off a long conversation.
+    let standing = instructionsActive ? instructions.body.trim() : "";
+    const history = standing ? 19 : 20;
     // Veil masks the new message and any earlier turns in this request's
     // context window before anything reaches the network. Detection and
     // tagging happen only in this browser; see src/veil.js.
@@ -761,7 +828,16 @@ export default function Workspace() {
     if (veilOn && !demo && isReleased(config, "veil")) {
       let veiledCount = 0;
       const tags = new Set();
-      veiledPayload = rawNext.slice(-20).map((m) => {
+      // Standing instructions are masked too, with this conversation's tag
+      // map, so a detail saved in them never leaves the browser and a reply
+      // that repeats its tag is restored on screen like any other.
+      if (standing) {
+        const r = veil(standing, veilStateRef.current, veilWords);
+        veiledCount += r.count;
+        r.tags.forEach((t) => tags.add(t));
+        standing = r.text;
+      }
+      veiledPayload = rawNext.slice(-history).map((m) => {
         const r = veil(m.content || "", veilStateRef.current, veilWords);
         veiledCount += r.count;
         r.tags.forEach((t) => tags.add(t));
@@ -812,7 +888,10 @@ export default function Workspace() {
       await streamChat(
         {
           model: requestModel,
-          messages: (veiledPayload || next.slice(-20)).map(toRequestMessage),
+          messages: [
+            ...(standing ? [{ role: "system", content: standing }] : []),
+            ...(veiledPayload || next.slice(-history)).map(toRequestMessage),
+          ],
           ...(ephemeral ? { ephemeral: true } : { conversationId: current }),
           mode,
           max_tokens: 4096,
@@ -1429,8 +1508,35 @@ export default function Workspace() {
                     }
                     value={prompt}
                     maxLength={mode === "video" ? 2000 : 48000}
-                    onChange={(e) => setPrompt(e.target.value)}
+                    onChange={(e) => {
+                      setPrompt(e.target.value);
+                      setSlashIndex(0);
+                    }}
                     onKeyDown={(e) => {
+                      if (scrollMatches.length) {
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          setSlashDismissedFor(slashQuery);
+                          return;
+                        }
+                        if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          setSlashIndex((i) => (i + 1) % scrollMatches.length);
+                          return;
+                        }
+                        if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          setSlashIndex(
+                            (i) => (i - 1 + scrollMatches.length) % scrollMatches.length,
+                          );
+                          return;
+                        }
+                        if (e.key === "Enter" || e.key === "Tab") {
+                          e.preventDefault();
+                          pickScroll(scrollMatches[scrollIndex]);
+                          return;
+                        }
+                      }
                       if (
                         (e.key === "Enter" || e.key === "Tab") &&
                         mentionMatches.length
@@ -1469,6 +1575,32 @@ export default function Workspace() {
                           <span>@{m.id}</span>
                         </button>
                       ))}
+                    </div>
+                  )}
+                  {scrollMatches.length > 0 && (
+                    <div className="scroll-menu" role="listbox" aria-label="Insert a scroll">
+                      {scrollMatches.map((s, i) => {
+                        const vars = extractVariables(s.body);
+                        return (
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={i === scrollIndex}
+                            className={i === scrollIndex ? "active" : ""}
+                            key={s.id}
+                            // Keep typing in the prompt: the menu closes once a scroll is picked.
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => pickScroll(s)}
+                          >
+                            <b>{s.title}</b>
+                            <span>
+                              {vars.length
+                                ? `${vars.length} variable${vars.length > 1 ? "s" : ""}`
+                                : "Insert"}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                   {mentioned && (
@@ -1581,6 +1713,24 @@ export default function Workspace() {
                           }
                           onError={setError}
                         />
+                      )}
+                      {["chat", "code"].includes(mode) && !demo && (
+                        <button
+                          type="button"
+                          className="attachment-control scrolls-button"
+                          title={
+                            instructionsActive
+                              ? "Scrolls · standing instructions active"
+                              : "Scrolls: saved prompts and standing instructions"
+                          }
+                          onClick={() => setScrollsPanel(true)}
+                        >
+                          <Icon name="book" size={17} />
+                          <span>Scrolls</span>
+                          {instructionsActive && (
+                            <span className="instructions-dot" aria-hidden="true" />
+                          )}
+                        </button>
                       )}
                       {mode === "image" && (
                         <select
@@ -1894,6 +2044,25 @@ export default function Workspace() {
             </>
           )}
         </Modal>
+      )}
+      {scrollsPanel && (
+        <ScrollsPanel
+          scrolls={scrolls}
+          instructions={instructions}
+          currentPrompt={prompt}
+          onClose={() => setScrollsPanel(false)}
+          onCreate={createScroll}
+          onUpdate={updateScroll}
+          onDelete={deleteScroll}
+          onSaveInstructions={saveInstructions}
+        />
+      )}
+      {scrollFill && (
+        <ScrollFillForm
+          scroll={scrollFill}
+          onInsert={insertScroll}
+          onCancel={() => setScrollFill(null)}
+        />
       )}
     </main>
   );

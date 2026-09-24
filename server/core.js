@@ -90,6 +90,8 @@ export function config(overrides = {}) {
     holdMargin: Number(e.HOLD_MARGIN ?? 4),
     // Per-request web search fee in USD (PPQ: $0.02 plus its 5.5% fee).
     webSearchPrice: Number(e.WEB_SEARCH_PRICE ?? 0.0211),
+    // Share of a referred account's deposits credited to its referrer.
+    referralPercent: Number(e.REFERRAL_PERCENT ?? 5),
     ...overrides,
   };
   for (const field of [
@@ -150,6 +152,12 @@ export function config(overrides = {}) {
     cfg.webSearchPrice > 1
   )
     throw Error("Web search price must be between 0 and 1 USD.");
+  if (
+    !Number.isFinite(cfg.referralPercent) ||
+    cfg.referralPercent < 0 ||
+    cfg.referralPercent > 50
+  )
+    throw Error("Referral percent must be between 0 and 50.");
   return cfg;
 }
 const addColumn = (db, table, column, definition) => {
@@ -193,6 +201,14 @@ export const MIGRATIONS = [
   // API-key spending caps sum the ledger by key on every reservation.
   (db) =>
     db.exec("CREATE INDEX IF NOT EXISTS ledger_key ON ledger(key_id,created)"),
+  // Referral codes and who referred each account.
+  (db) => {
+    addColumn(db, "users", "referral_code", "TEXT");
+    addColumn(db, "users", "referred_by", "TEXT");
+    db.exec(
+      "CREATE UNIQUE INDEX IF NOT EXISTS users_referral_code ON users(referral_code) WHERE referral_code IS NOT NULL",
+    );
+  },
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;

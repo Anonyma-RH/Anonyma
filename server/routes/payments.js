@@ -111,7 +111,7 @@ export function paymentRoutes(ctx) {
             price_amount: invoice.price_amount ?? dollars,
             price_currency: invoice.price_currency ?? "usd",
           },
-          { current: false },
+          { current: false, referralPercent: cfg.referralPercent },
         );
         res.status(201).json({ id, ...JSON.parse(stored.payload) });
       } catch (e) {
@@ -133,7 +133,10 @@ export function paymentRoutes(ctx) {
     },
   );
   const applyPayment = (body, current = false) =>
-    recordPayment(db, body, { current });
+    recordPayment(db, body, {
+      current,
+      referralPercent: cfg.referralPercent,
+    });
   app.post("/api/payments/ipn", (req, res) => {
     if (
       !validIPN(req.body, req.headers["x-nowpayments-sig"], cfg.paymentSecret)

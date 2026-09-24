@@ -52,10 +52,24 @@ export function authRoutes(app, db, cfg, limit) {
       discount: discount(user.token_balance, user.token_since),
     };
   }
-  function newUser(fields) {
+  // A referral link sets the anonyma_ref cookie; any sign-up method honours it.
+  function referrerFrom(req) {
+    const code = String(req.body?.ref || req.cookies?.anonyma_ref || "")
+      .trim()
+      .toLowerCase();
+    if (!/^[a-z0-9]{6,16}$/.test(code)) return null;
+    return (
+      db
+        .prepare(
+          "SELECT id FROM users WHERE referral_code=? AND deleted IS NULL",
+        )
+        .get(code)?.id || null
+    );
+  }
+  function newUser(fields, req) {
     const id = uid("u_");
     db.prepare(
-      "INSERT INTO users(id,username,password,email,wallet,created) VALUES(?,?,?,?,?,?)",
+      "INSERT INTO users(id,username,password,email,wallet,created,referred_by) VALUES(?,?,?,?,?,?,?)",
     ).run(
       id,
       fields.username || null,
@@ -63,6 +77,7 @@ export function authRoutes(app, db, cfg, limit) {
       fields.email || null,
       fields.wallet || null,
       now(),
+      req ? referrerFrom(req) : null,
     );
     if (cfg.testMode)
       addCredit(
@@ -122,7 +137,7 @@ export function authRoutes(app, db, cfg, limit) {
           .get(username)
       )
         fail(409, "That username is taken.");
-      const user = newUser({ username, password: passwordHash(password) });
+      const user = newUser({ username, password: passwordHash(password) }, req);
       res.status(201).json({ user: session(res, user) });
     },
   );
@@ -249,7 +264,7 @@ export function authRoutes(app, db, cfg, limit) {
         db.prepare(
           "DELETE FROM challenges WHERE target=? AND purpose IN ('login','recover')",
         ).run(ch.target);
-      } else user ||= newUser({ email: ch.target });
+      } else user ||= newUser({ email: ch.target }, req);
       db.prepare("DELETE FROM challenges WHERE id=?").run(ch.id);
       res.json({ user: session(res, user) });
     },
@@ -315,7 +330,7 @@ export function authRoutes(app, db, cfg, limit) {
           "UPDATE users SET wallet=?,token_balance='0',token_since=NULL,token_checked=NULL WHERE id=?",
         ).run(signer, req.user.id);
         user = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
-      } else user ||= newUser({ wallet: signer });
+      } else user ||= newUser({ wallet: signer }, req);
       db.prepare("DELETE FROM challenges WHERE id=?").run(ch.id);
       res.json({ user: session(res, user) });
     },

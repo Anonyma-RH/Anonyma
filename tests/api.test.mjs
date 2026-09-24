@@ -2517,3 +2517,104 @@ test("credits can be sent once per request to another account and never overdraw
     { kind: "transfer_out", amount: -25000 },
   ]);
 });
+test("referrals attribute sign-ups and reward a share of credited deposits, reversed with them", async (t) => {
+  const s = fixture(t, { referralPercent: 5 });
+  const alice = await register(s.app, "alice");
+  const mine = (await alice.agent.get("/api/referrals").expect(200)).body;
+  assert.match(mine.code, /^[a-z2-9]{8}$/);
+  assert.match(mine.link, new RegExp(`/\\?ref=${mine.code}$`));
+  assert.equal(
+    (await alice.agent.get("/api/referrals").expect(200)).body.code,
+    mine.code,
+    "stable code",
+  );
+
+  // Bob arrives through the link (the frontend stores the code in a cookie).
+  const bobAgent = request.agent(s.app);
+  const bob = (
+    await bobAgent
+      .post("/api/auth/register")
+      .set("Cookie", `anonyma_ref=${mine.code}`)
+      .send({ username: "bob", password: "test-password-long" })
+      .expect(201)
+  ).body.user;
+  assert.equal(
+    s.db.prepare("SELECT referred_by FROM users WHERE id=?").get(bob.id)
+      .referred_by,
+    alice.user.id,
+  );
+  await register(s.app, "carol"); // no link, no referrer
+  assert.equal(
+    (await alice.agent.get("/api/referrals").expect(200)).body.invited,
+    1,
+  );
+
+  const deposit = (id, dollars) => {
+    s.db
+      .prepare(
+        "INSERT INTO deposits(id,user_id,provider_id,amount,currency,status,payload,credited,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?)",
+      )
+      .run(
+        id,
+        bob.id,
+        null,
+        usdUnits(dollars),
+        "btc",
+        "waiting",
+        "{}",
+        0,
+        now(),
+        now(),
+      );
+    return {
+      payment_id: "pay-" + id,
+      order_id: id,
+      price_amount: dollars,
+      price_currency: "usd",
+    };
+  };
+  const invoice = deposit("dep-1", 20);
+  const aliceBefore = balance(s.db, alice.user.id).total;
+  recordPayment(
+    s.db,
+    { ...invoice, payment_status: "finished" },
+    { current: true, referralPercent: 5 },
+  );
+  recordPayment(
+    s.db,
+    { ...invoice, payment_status: "finished" },
+    { current: true, referralPercent: 5 },
+  );
+  assert.equal(
+    balance(s.db, alice.user.id).total - aliceBefore,
+    usdUnits(1),
+    "5% of $20, once",
+  );
+  assert.equal(
+    (await alice.agent.get("/api/referrals").expect(200)).body.earned,
+    1000,
+  );
+
+  // A reversed deposit reverses the reward; reinstating restores it.
+  recordPayment(
+    s.db,
+    { ...invoice, payment_status: "refunded" },
+    { current: true, referralPercent: 5 },
+  );
+  assert.equal(balance(s.db, alice.user.id).total, aliceBefore);
+  recordPayment(
+    s.db,
+    { ...invoice, payment_status: "finished" },
+    { current: true, allowReinstate: true, referralPercent: 5 },
+  );
+  assert.equal(balance(s.db, alice.user.id).total - aliceBefore, usdUnits(1));
+
+  // Rewards are off when the percentage is zero.
+  const quiet = deposit("dep-2", 10);
+  recordPayment(
+    s.db,
+    { ...quiet, payment_status: "finished" },
+    { current: true, referralPercent: 0 },
+  );
+  assert.equal(balance(s.db, alice.user.id).total - aliceBefore, usdUnits(1));
+});

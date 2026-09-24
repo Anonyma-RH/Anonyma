@@ -421,3 +421,14 @@
 .app-shell .citations{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 4px;font-size:13px}
 .app-shell .citations span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--work-muted)}
 .app-shell .citations a{border:1px solid var(--work-line);padding:4px 10px;border-radius:2px;color:#0135df;text-decoration:none;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Referrals */
+.app-shell .invite-card{display:grid;grid-template-columns:1.4fr 1fr;gap:18px 32px;align-items:center;margin:0 0 36px;padding:28px 32px;background:#0135df;color:#fff;border-radius:2px}
+.app-shell .invite-card .eyebrow{color:#ffb21e;display:flex;gap:8px;align-items:center}
+.app-shell .invite-card h2{color:#fff;margin:8px 0}
+.app-shell .invite-card p{color:rgba(255,255,255,.85)}
+.app-shell .invite-link{display:flex;gap:10px;align-items:center;background:#fff;color:#0b1b57;padding:10px 12px;border-radius:2px;min-width:0}
+.app-shell .invite-link code{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.app-shell .invite-card dl{display:flex;gap:32px;margin:0;grid-column:1/-1}
+.app-shell .invite-card dt{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
+.app-shell .invite-card dd{margin:4px 0 0;font-size:28px;font-family:var(--serif, serif)}
+@media (max-width:760px){.app-shell .invite-card{grid-template-columns:1fr}}

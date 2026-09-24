@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import {
   hash,
   now,
@@ -16,7 +17,49 @@ export const MAX_TRANSFER = 1_000_000; // credits
 // Credit transfers between accounts, recorded as a linked pair of ledger
 // entries so both balances change atomically and the history is auditable.
 export function creditRoutes(ctx) {
-  const { app, db, limit, requireUser } = ctx;
+  const { app, db, cfg, limit, requireUser } = ctx;
+  // Codes are created on first use: eight characters from an unambiguous
+  // lowercase alphabet, retried on the rare collision.
+  function referralCode(user) {
+    const existing = db
+      .prepare("SELECT referral_code FROM users WHERE id=?")
+      .get(user).referral_code;
+    if (existing) return existing;
+    const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = [...randomBytes(8)]
+        .map((b) => alphabet[b % alphabet.length])
+        .join("");
+      try {
+        db.prepare(
+          "UPDATE users SET referral_code=? WHERE id=? AND referral_code IS NULL",
+        ).run(code, user);
+        return db
+          .prepare("SELECT referral_code FROM users WHERE id=?")
+          .get(user).referral_code;
+      } catch (e) {
+        if (!/UNIQUE/.test(e.message)) throw e;
+      }
+    }
+    fail(503, "Could not create a referral code. Try again.");
+  }
+  app.get("/api/referrals", requireUser, (req, res) => {
+    const code = referralCode(req.user.id);
+    const earned = db
+      .prepare(
+        "SELECT COALESCE(SUM(amount),0) n FROM ledger WHERE user_id=? AND kind IN ('referral','referral_correction')",
+      )
+      .get(req.user.id).n;
+    res.json({
+      code,
+      link: `${cfg.publicUrl || cfg.origin}/?ref=${code}`,
+      percent: cfg.referralPercent,
+      invited: db
+        .prepare("SELECT COUNT(*) n FROM users WHERE referred_by=?")
+        .get(req.user.id).n,
+      earned: credits(earned),
+    });
+  });
   app.post(
     "/api/credits/send",
     requireUser,

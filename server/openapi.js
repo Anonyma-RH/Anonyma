@@ -507,6 +507,17 @@ route("post", "/api/audio/transcriptions", "Transcribe a recording", {
   description:
     "Holds the cost of 10 minutes and charges the transcribed duration. Longer recordings are charged at most 10 minutes.",
 });
+route("get", "/api/referrals", "Your referral link and rewards", {
+  response: object({
+    code: string,
+    link: string,
+    percent: number,
+    invited: integer,
+    earned: number,
+  }),
+  description:
+    "Sign-ups through the link (the ref query parameter sets the anonyma_ref cookie) are attributed to you. You earn percent of each credited deposit they make; the reward is reversed if that deposit is reversed.",
+});
 route("post", "/api/credits/send", "Send credits to another account", {
   body: object(
     {

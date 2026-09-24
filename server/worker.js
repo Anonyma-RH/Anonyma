@@ -174,7 +174,10 @@ export function createWorker(ctx) {
             );
             if (String(update.payment_id) !== deposit.provider_id)
               throw Error("Processor invoice identity mismatch.");
-            recordPayment(db, update, { current: true });
+            recordPayment(db, update, {
+              current: true,
+              referralPercent: cfg.referralPercent,
+            });
           } catch {
             db.prepare("UPDATE deposits SET updated=? WHERE id=?").run(
               now(),

@@ -45,6 +45,7 @@ export default function Account() {
     [currency, setCurrency] = useState(""),
     [currencies, setCurrencies] = useState([]),
     [invoiceIntent, setInvoiceIntent] = useState(uid),
+    [referrals, setReferrals] = useState(null),
     [transfer, setTransfer] = useState({ to: "", amount: "", confirm: false, id: uid() });
   useEffect(() => setInvoiceIntent(uid()), [amount, currency]);
   const q = demo ? "?demo=1" : "";
@@ -333,6 +334,7 @@ export default function Account() {
           )}
           {section === "overview" && (
             <>
+              {!demo && user && <InviteCard data={referrals} onLoad={setReferrals} />}
               <div className="account-section-head">
                 <h2>Recent activity</h2>
                 <Button secondary to={"/account/credits" + q}>
@@ -931,5 +933,47 @@ export default function Account() {
         </Modal>
       )}
     </main>
+  );
+}
+
+// Referral link, with who joined through it and what it has earned.
+function InviteCard({ data, onLoad }) {
+  useEffect(() => {
+    if (!data) api("/api/referrals").then(onLoad).catch(() => {});
+  }, []);
+  if (!data) return null;
+  return (
+    <div className="invite-card">
+      <div>
+        <p className="eyebrow">
+          <Icon name="gift" size={14} /> INVITE FRIENDS
+        </p>
+        <h2>
+          {data.percent > 0
+            ? `Earn ${data.percent}% of what your friends add.`
+            : "Share Anonyma with a friend."}
+        </h2>
+        <p>
+          Anyone who signs up through your link is connected to your account
+          {data.percent > 0
+            ? ". You receive credits whenever their deposits are confirmed."
+            : "."}
+        </p>
+      </div>
+      <div className="invite-link">
+        <code>{data.link}</code>
+        <CopyButton text={data.link} />
+      </div>
+      <dl>
+        <div>
+          <dt>Joined</dt>
+          <dd>{data.invited}</dd>
+        </div>
+        <div>
+          <dt>Credits earned</dt>
+          <dd>{Number(data.earned).toLocaleString()}</dd>
+        </div>
+      </dl>
+    </div>
   );
 }

@@ -30,13 +30,60 @@ export const UNCONFIRMED_INVOICE_STATUSES = [
 ];
 export const sqlList = (values) => values.map((v) => `'${v}'`).join(",");
 
+// A referred account's credited deposits earn its referrer a share. The
+// reward follows the deposit: reversed with it and reinstated with it, as
+// append-only entries keyed by the deposit.
+function referralReward(db, deposit, percent, event) {
+  if (!(percent > 0)) return;
+  const referrer = db
+    .prepare(
+      "SELECT r.id FROM users u JOIN users r ON r.id=u.referred_by WHERE u.id=? AND r.deleted IS NULL",
+    )
+    .get(deposit.user_id);
+  if (!referrer) return;
+  const ref = `referral_${deposit.id}`;
+  const outstanding = db
+    .prepare(
+      "SELECT COALESCE(SUM(amount),0) n, COUNT(*) c FROM ledger WHERE ref=? OR ref LIKE ?",
+    )
+    .get(ref, ref + "_correction_%");
+  const insert = (amount, key, kind, description) =>
+    db
+      .prepare(
+        "INSERT OR IGNORE INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES(?,?,?,?,?,?,?,?)",
+      )
+      .run(uid("l_"), referrer.id, amount, kind, key, null, description, now());
+  const reward = Math.floor((deposit.amount * percent) / 100);
+  if (event === "credit" && !outstanding.c && reward > 0)
+    insert(reward, ref, "referral", "Referral reward");
+  else if (event === "reverse" && outstanding.n > 0)
+    insert(
+      -outstanding.n,
+      `${ref}_correction_${outstanding.c}`,
+      "referral_correction",
+      "Referral reward reversed",
+    );
+  else if (event === "reinstate" && outstanding.c && outstanding.n === 0) {
+    const original = db
+      .prepare("SELECT amount FROM ledger WHERE ref=?")
+      .get(ref);
+    if (original?.amount > 0)
+      insert(
+        original.amount,
+        `${ref}_correction_${outstanding.c}`,
+        "referral_correction",
+        "Referral reward reinstated",
+      );
+  }
+}
+
 // Accept only authenticated processor responses or verified signed callbacks.
 // Binding by order_id recovers a callback that beats the create response, or
 // an invoice whose upstream creation succeeded before the connection failed.
 export function recordPayment(
   db,
   body,
-  { current = false, allowReinstate = false } = {},
+  { current = false, allowReinstate = false, referralPercent = 0 } = {},
 ) {
   if (!body || typeof body !== "object" || Array.isArray(body))
     fail(400, "Invalid payment update.");
@@ -125,6 +172,7 @@ export function recordPayment(
           -d.amount,
           `${d.currency.toUpperCase()} payment reversed`,
         );
+        referralReward(db, d, referralPercent, "reverse");
         creditState = "reversed";
         review = false;
         status = body.payment_status;
@@ -140,6 +188,7 @@ export function recordPayment(
           d.amount,
           `${d.currency.toUpperCase()} payment reinstated`,
         );
+        referralReward(db, d, referralPercent, "reinstate");
         creditState = "credited";
         review = false;
         status = "finished";
@@ -202,6 +251,7 @@ export function recordPayment(
         `${d.currency.toUpperCase()} deposit`,
       );
       db.prepare("UPDATE deposits SET credited=1 WHERE id=?").run(d.id);
+      referralReward(db, d, referralPercent, "credit");
     }
     return db.prepare("SELECT * FROM deposits WHERE id=?").get(d.id);
   });

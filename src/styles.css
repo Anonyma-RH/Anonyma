@@ -8,8 +8,8 @@
   --yellow: #e9df88;
   --pink: #f0a9b0;
   --sage: #e0e9dd;
-  --font: "Manrope", sans-serif;
-  --serif: "Libre Caslon Display", Georgia, serif;
+  --font: "GFS Neohellenic", sans-serif;
+  --serif: "GFS Didot", Georgia, serif;
   color: var(--ink);
   background: var(--paper);
   font-family: var(--font);

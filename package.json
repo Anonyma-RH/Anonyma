@@ -17,8 +17,6 @@
   "dependencies": {
     "@fontsource/gfs-didot": "5.3.0",
     "@fontsource/gfs-neohellenic": "5.3.0",
-    "@fontsource/libre-caslon-display": "5.3.0",
-    "@fontsource/manrope": "5.3.0",
     "@lottiefiles/dotlottie-web": "0.68.0",
     "@walletconnect/ethereum-provider": "2.25.0",
     "animejs": "4.3.6",

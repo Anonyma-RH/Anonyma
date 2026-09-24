@@ -22,11 +22,11 @@ function panel(stage, index) {
   ctx.fillRect(0, 0, w, h);
   ctx.strokeStyle = "#6181c2";
   ctx.lineWidth = 2;
-  ctx.font = "500 34px Retorika, sans-serif";
+  ctx.font = "500 34px 'GFS Neohellenic', sans-serif";
   ctx.fillStyle = "#f5f7ff";
   ctx.fillText(labels[stage][index], 40, 64);
   ctx.fillStyle = "#aac0ee";
-  ctx.font = "23px Retorika, sans-serif";
+  ctx.font = "23px 'GFS Neohellenic', sans-serif";
   ctx.fillText("ANONYMA / PRODUCT PREVIEW", 40, h - 28);
   const accent = colors[stage];
   if (stage === 0) {
@@ -40,17 +40,17 @@ function panel(stage, index) {
       ctx.fillStyle = accent;
       ctx.fillRect(54, y + 20, 24, 24);
       ctx.fillStyle = "#fff";
-      ctx.font = "28px Retorika, sans-serif";
+      ctx.font = "28px 'GFS Neohellenic', sans-serif";
       ctx.fillText(label, 98, y + 43);
       ctx.fillStyle = "#b5c7ee";
-      ctx.font = "20px Retorika, sans-serif";
+      ctx.font = "20px 'GFS Neohellenic', sans-serif";
       ctx.fillText(index === 0 ? "Catalog" : "Workflow", w - 150, y + 41);
     });
   } else if (stage === 1 && index === 0) {
     ctx.fillStyle = "#fff";
-    ctx.font = "92px Retorika, sans-serif";
+    ctx.font = "92px 'GFS Neohellenic', sans-serif";
     ctx.fillText("1,000", 42, 204);
-    ctx.font = "26px Retorika, sans-serif";
+    ctx.font = "26px 'GFS Neohellenic', sans-serif";
     ctx.fillStyle = "#b5c7ee";
     ctx.fillText("Sample credits", 45, 251);
     [0, 1, 2, 3, 4, 5, 6].forEach((i) => {
@@ -67,7 +67,7 @@ function panel(stage, index) {
       let y = 111 + i * 77;
       ctx.strokeRect(36, y, 648, 58);
       ctx.fillStyle = "#fff";
-      ctx.font = "28px Retorika, sans-serif";
+      ctx.font = "28px 'GFS Neohellenic', sans-serif";
       ctx.fillText(t, 55, y + 39);
       ctx.fillStyle = accent;
       ctx.fillRect(480, y + 24, 157 - i * 25, 9);
@@ -123,7 +123,7 @@ function panel(stage, index) {
       ctx.fillStyle = i === 0 ? "#264b9d" : "#183780";
       ctx.fillRect(36, y, 648 - i * 24, 72);
       ctx.fillStyle = i === 0 ? accent : "#fff";
-      ctx.font = "27px Retorika, sans-serif";
+      ctx.font = "27px 'GFS Neohellenic', sans-serif";
       ctx.fillText(t, 57, y + 44);
     });
   }

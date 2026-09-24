@@ -1,6 +1,4 @@
 /* Product workspace: shared ANONYMA typography, quiet white surfaces, cobalt navigation. */
-/* Agora type (Greek Font Society): Neohellenic for text, Didot for display. */
-.app-shell{--font:"GFS Neohellenic",system-ui,sans-serif;--serif:"GFS Didot",Georgia,serif;font-family:var(--font)}
 .app-shell{--work-ink:#142343;--work-muted:#68748a;--work-line:#e3e8f0;--work-surface:#f7f9fc;background:#fff;color:var(--work-ink);min-height:100dvh;font-size:14px}
 .app-shell .app-sidebar{width:244px;background:#0135df;color:#fff;border:0;padding:28px 16px 20px;scrollbar-width:thin;scrollbar-color:#ffffff40 transparent}
 .app-sidebar .sidebar-brand{padding:0 12px 27px;border-bottom:1px solid #ffffff26}

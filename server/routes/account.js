@@ -176,7 +176,13 @@ export function accountRoutes(ctx) {
       .all(req.user.id))
       deleteMedia(m);
     transaction(db, () => {
-      db.prepare("DELETE FROM conversations WHERE user_id=?").run(req.user.id);
+      // Owned collabs go (with their shared conversations); in other
+      // collabs the member leaves and their messages stay, unattributed.
+      db.prepare("DELETE FROM collabs WHERE owner_id=?").run(req.user.id);
+      db.prepare("DELETE FROM collab_members WHERE user_id=?").run(req.user.id);
+      db.prepare(
+        "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
+      ).run(req.user.id);
       db.prepare("DELETE FROM sessions WHERE user_id=?").run(req.user.id);
       db.prepare("UPDATE api_keys SET revoked=? WHERE user_id=?").run(
         now(),

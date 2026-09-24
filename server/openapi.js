@@ -507,6 +507,82 @@ route("post", "/api/audio/transcriptions", "Transcribe a recording", {
   description:
     "Holds the cost of 10 minutes and charges the transcribed duration. Longer recordings are charged at most 10 minutes.",
 });
+const collabSummary = object({
+  id: string,
+  name: string,
+  role: string,
+  members: integer,
+  updated: integer,
+});
+route("get", "/api/collabs", "List collabs you belong to", {
+  response: object({ data: array(collabSummary) }),
+});
+route("post", "/api/collabs", "Create a collab", {
+  body: object({ name: { ...string, maxLength: 60 } }, ["name"]),
+  response: object({ id: string, name: string }),
+  status: 201,
+});
+route("get", "/api/collabs/{id}", "Collab members and shared conversations", {
+  response: object({
+    id: string,
+    name: string,
+    role: string,
+    maxMembers: integer,
+    members: array(object({ username: string, role: string, joined: integer })),
+    conversations: array(
+      object({
+        id: string,
+        title: string,
+        mode: string,
+        updated: integer,
+        author: string,
+      }),
+    ),
+  }),
+  description:
+    "Members only. Shared conversations are read and posted through /api/conversations/{id} and /api/chat; each member's requests are billed to their own balance.",
+});
+route("patch", "/api/collabs/{id}", "Rename a collab (owner)", {
+  body: object({ name: string }, ["name"]),
+  response: ref("Ok"),
+});
+route(
+  "delete",
+  "/api/collabs/{id}",
+  "Delete a collab and its shared conversations (owner)",
+  {
+    response: ref("Ok"),
+  },
+);
+route("post", "/api/collabs/{id}/invite", "Create an invite link (owner)", {
+  response: object({ token: string, link: string }),
+  description: "Replaces any previous invite link.",
+});
+route("post", "/api/collabs/join", "Join a collab with an invite token", {
+  body: object({ token: string }, ["token"]),
+  response: object({ id: string, name: string }),
+  description: "Up to 12 members per collab. Joining again is a no-op.",
+});
+route(
+  "delete",
+  "/api/collabs/{id}/members/{username}",
+  "Remove a member or leave",
+  {
+    response: ref("Ok"),
+    description:
+      "The owner removes anyone else; a member may remove themself. The owner can't leave.",
+  },
+);
+route(
+  "post",
+  "/api/collabs/{id}/conversations",
+  "Start a shared conversation",
+  {
+    body: object({ title: string, mode: { enum: ["chat", "code"] } }),
+    response: object({ id: string }),
+    status: 201,
+  },
+);
 route("get", "/api/referrals", "Your referral link and rewards", {
   response: object({
     code: string,

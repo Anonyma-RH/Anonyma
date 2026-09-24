@@ -21,7 +21,7 @@ export function chatRoutes(ctx) {
   const { app, db, cfg, limit, requireUser, apiAuth, inflight } = ctx;
   const mediaStore = ctx.media;
   const { getModel, validateMessages, maxTokens } = ctx.models;
-  const { ownConversation, newConversation } = ctx.conversations;
+  const { accessConversation, newConversation } = ctx.conversations;
   const validTokenCount = (value, fallback) =>
     Number.isSafeInteger(value) && value >= 0 ? value : fallback;
   async function runChat(req, res, api) {
@@ -54,7 +54,7 @@ export function chatRoutes(ctx) {
     let conversation = null;
     if (!api) {
       conversation = req.body.conversationId
-        ? ownConversation(req.body.conversationId, req.user.id).id
+        ? accessConversation(req.body.conversationId, req.user.id).id
         : null;
     }
     // Published token prices are a floor: the gateway may route to a pricier
@@ -92,7 +92,7 @@ export function chatRoutes(ctx) {
           req.body.mode === "code" ? "code" : "chat",
         );
         db.prepare(
-          "INSERT INTO messages(id,conversation_id,role,content,model,cost,created) VALUES(?,?,?,?,?,?,?)",
+          "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
         ).run(
           uid("m_"),
           conversation,
@@ -101,6 +101,7 @@ export function chatRoutes(ctx) {
           m.id,
           0,
           now(),
+          req.user.id,
         );
         db.prepare("UPDATE conversations SET updated=? WHERE id=?").run(
           now(),
@@ -311,7 +312,7 @@ export function chatRoutes(ctx) {
         db.prepare("SELECT id FROM conversations WHERE id=?").get(conversation)
       )
         db.prepare(
-          "INSERT INTO messages(id,conversation_id,role,content,model,cost,created) VALUES(?,?,?,?,?,?,?)",
+          "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
         ).run(
           uid("m_"),
           conversation,
@@ -326,6 +327,7 @@ export function chatRoutes(ctx) {
           m.id,
           receipt.charged,
           now(),
+          req.user.id,
         );
       if (streaming) {
         if (saved.length)
@@ -420,7 +422,7 @@ export function chatRoutes(ctx) {
             .get(conversation)
         )
           db.prepare(
-            "INSERT INTO messages(id,conversation_id,role,content,model,cost,created) VALUES(?,?,?,?,?,?,?)",
+            "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
           ).run(
             uid("m_"),
             conversation,
@@ -434,6 +436,7 @@ export function chatRoutes(ctx) {
             m.id,
             receipt.charged,
             now(),
+            req.user.id,
           );
       } else if (stoppedAfterAcceptance) {
         receipt = settle(

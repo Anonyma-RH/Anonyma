@@ -440,3 +440,18 @@
 .app-shell .mention-menu span{color:var(--work-muted);font-size:12px}
 .app-shell .mention-hint{margin:0 0 6px;font-size:13px;color:#0135df}
 .app-shell .model-tag{margin-left:8px;font-size:11px;letter-spacing:.06em;color:var(--work-muted)}
+/* Collab */
+.app-shell .collab-layout{display:grid;grid-template-columns:300px 1fr;gap:32px;align-items:start}
+.app-shell .collab-list{display:flex;flex-direction:column;margin-top:16px;border-top:1px solid var(--work-line)}
+.app-shell .collab-list button,.app-shell .collab-conversation{display:flex;flex-direction:column;gap:4px;padding:14px 12px;background:none;border:0;border-bottom:1px solid var(--work-line);text-align:left;cursor:pointer;width:100%}
+.app-shell .collab-list button.active{background:#eef2ff;box-shadow:inset 3px 0 0 #0135df}
+.app-shell .collab-list span,.app-shell .collab-conversation span{font-size:12px;color:var(--work-muted)}
+.app-shell .collab-columns{display:grid;grid-template-columns:1.4fr 1fr;gap:32px}
+.app-shell .collab-members{list-style:none;padding:0;margin:0 0 20px}
+.app-shell .collab-members li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--work-line)}
+.app-shell .collab-members li>span:nth-child(2){flex:1}
+.app-shell .inline-form{display:flex;gap:10px;margin:8px 0 12px}
+.app-shell .inline-form input{flex:1;padding:10px 12px;border:1px solid var(--work-line)}
+.app-shell .collab-banner{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 16px;padding:10px 14px;background:#eef2ff;color:#0b1b57;font-size:13px}
+.app-shell .collab-banner a{margin-left:auto;color:#0135df}
+@media (max-width:900px){.app-shell .collab-layout,.app-shell .collab-columns{grid-template-columns:1fr}}

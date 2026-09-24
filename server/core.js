@@ -209,6 +209,18 @@ export const MIGRATIONS = [
       "CREATE UNIQUE INDEX IF NOT EXISTS users_referral_code ON users(referral_code) WHERE referral_code IS NOT NULL",
     );
   },
+  // Collab: shared workspaces whose members read and write the same
+  // conversations; messages record who wrote them.
+  (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS collabs(id TEXT PRIMARY KEY,owner_id TEXT REFERENCES users(id),name TEXT NOT NULL,invite_hash TEXT UNIQUE,created INTEGER NOT NULL,updated INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS collab_members(collab_id TEXT REFERENCES collabs(id) ON DELETE CASCADE,user_id TEXT REFERENCES users(id),role TEXT NOT NULL,joined INTEGER NOT NULL,PRIMARY KEY(collab_id,user_id));
+      CREATE INDEX IF NOT EXISTS collab_members_user ON collab_members(user_id);
+    `);
+    addColumn(db, "conversations", "collab_id", "TEXT REFERENCES collabs(id) ON DELETE CASCADE");
+    addColumn(db, "messages", "author_id", "TEXT");
+    db.exec("CREATE INDEX IF NOT EXISTS conversations_collab ON conversations(collab_id,updated)");
+  },
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;

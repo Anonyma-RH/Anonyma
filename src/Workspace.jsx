@@ -26,6 +26,7 @@ import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
 import WorkspaceHome from "./WorkspaceHome.jsx";
 import AudioStudio, { MicButton } from "./AudioStudio.jsx";
+import CollabHub from "./Collab.jsx";
 import {
   api,
   streamChat,
@@ -88,6 +89,7 @@ export function AppSidebar({
           ["image", "Images"],
           ["video", "Video"],
           ["audio", "Voice & audio"],
+          ["collab", "Collab"],
           ["library", "Your library"],
         ].map(([id, t]) => (
           <Link
@@ -174,6 +176,7 @@ export default function Workspace() {
     [filter, setFilter] = useState("all"),
     [rename, setRename] = useState(""),
     [webSearch, setWebSearch] = useState(false),
+    [shared, setShared] = useState(null),
     // null = not chosen yet, so the first published option wins over the "default" preset.
     [video, setVideo] = useState({
       quality: null,
@@ -191,6 +194,7 @@ export default function Workspace() {
     "image",
     "video",
     "audio",
+    "collab",
     "library",
   ].includes(mode);
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
@@ -306,6 +310,30 @@ export default function Workspace() {
   useEffect(() => {
     streamEnd.current?.scrollIntoView({ block: "nearest" });
   }, [messages, busy]);
+  // /workspace/chat?c=ID opens a conversation directly (used by Collab).
+  const linked = params.get("c");
+  useEffect(() => {
+    if (linked && user && !demo && ["chat", "code"].includes(mode))
+      openChat({ id: linked, mode });
+  }, [linked, user, mode]);
+  // Shared conversations refresh while open so members see each other.
+  useEffect(() => {
+    if (!shared || !current || busy) return;
+    const id = setInterval(
+      () =>
+        api("/api/conversations/" + current)
+          .then((r) =>
+            setMessages((prev) =>
+              r.messages.length !== prev.length
+                ? r.messages.map(messageFromServer)
+                : prev,
+            ),
+          )
+          .catch(() => {}),
+      4000,
+    );
+    return () => clearInterval(id);
+  }, [shared, current, busy]);
   function persist(next, id = current) {
     if (!demo) return;
     const key = id || uid();
@@ -325,6 +353,7 @@ export default function Workspace() {
     });
   }
   function newChat() {
+    setShared(null);
     controller.current?.abort();
     clearInterval(timer.current);
     setBusy(false);
@@ -349,6 +378,7 @@ export default function Workspace() {
       try {
         const r = await api("/api/conversations/" + c.id);
         setCurrent(c.id);
+        setShared(r.collab || null);
         setMessages(r.messages.map(messageFromServer));
       } catch (e) {
         setError(e.message);
@@ -828,6 +858,7 @@ export default function Workspace() {
                 image: "Image studio",
                 video: "Video studio",
                 audio: "Voice studio",
+                collab: "Collab",
                 library: "Your library",
               }[mode]
             }
@@ -942,6 +973,8 @@ export default function Workspace() {
                 </Empty>
               )}
             </div>
+          ) : mode === "collab" ? (
+            <CollabHub demo={demo} user={user} />
           ) : mode === "audio" ? (
             <AudioStudio
               demo={demo}
@@ -956,6 +989,14 @@ export default function Workspace() {
           ) : (
             <>
               <div className="chat-area">
+                {shared && ["chat", "code"].includes(mode) && (
+                  <div className="collab-banner">
+                    <Icon name="users" size={16} />
+                    Shared in <b>{shared.name}</b> · members see this
+                    conversation; each pays for their own requests.
+                    <Link to="/workspace/collab">Open collab</Link>
+                  </div>
+                )}
                 {messages.length && ["chat", "code"].includes(mode) ? (
                   <div className="messages">
                     {messages.map((m, i) => (
@@ -972,11 +1013,23 @@ export default function Workspace() {
                         }
                       >
                         <div className="message-avatar">
-                          {m.role === "user" ? "Y" : <Mark />}
+                          {m.role === "user" ? (
+                            m.author && m.author !== user?.username ? (
+                              m.author[0].toUpperCase()
+                            ) : (
+                              "Y"
+                            )
+                          ) : (
+                            <Mark />
+                          )}
                         </div>
                         <div>
                           <div className="message-label">
-                            {m.role === "user" ? "You" : "ANONYMA"}
+                            {m.role === "user"
+                              ? m.author && m.author !== user?.username
+                                ? m.author
+                                : "You"
+                              : "ANONYMA"}
                             {m.sample && <span>PREPARED EXAMPLE</span>}
                             {m.role === "assistant" && m.model && !m.sample && (
                               <span className="model-tag">

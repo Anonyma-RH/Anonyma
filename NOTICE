@@ -1,0 +1,42 @@
+# Third-party notices
+
+Project licenses do not replace third-party licenses. Dependencies are obtained through npm; preserve their shipped notices when redistributing their code or a built bundle. No model weights are distributed. Brand names and marks identify their owners and imply no endorsement.
+
+## Font notices
+
+The application uses GFS Didot and GFS Neohellenic via Fontsource, under SIL Open Font License 1.1. Their unmodified license and copyright notices are included in LICENSES. These third-party names are legally required attributions, not Git contributor identities.
+
+## Direct runtime dependencies
+
+| Package | Installed version | Declared license |
+|---|---|---|
+| @fontsource/gfs-didot | 5.3.0 | OFL-1.1 |
+| @fontsource/gfs-neohellenic | 5.3.0 | OFL-1.1 |
+| @lottiefiles/dotlottie-web | 0.68.0 | MIT |
+| @walletconnect/ethereum-provider | 2.25.0 | SEE LICENSE IN LICENSE.md |
+| animejs | 4.3.6 | MIT |
+| cookie-parser | 1.4.7 | MIT |
+| ethers | 6.17.0 | MIT |
+| express | 5.2.1 | MIT |
+| jszip | 3.10.2 | (MIT OR GPL-3.0-or-later) |
+| lucide-react | 1.47.0 | ISC |
+| nodemailer | 10.0.10 | MIT-0 |
+| react | 19.2.0 | MIT |
+| react-dom | 19.2.0 | MIT |
+| react-markdown | 10.1.0 | MIT |
+| react-router-dom | 7.18.4 | MIT |
+| remark-gfm | 4.0.1 | MIT |
+| three | 0.184.0 | MIT |
+
+## WalletConnect notice
+
+Portions © 2025 Reown, Inc. All Rights Reserved
+
+The WalletConnect dependency retains its Community License Agreement, supplied in
+`LICENSES/WalletConnect-Community-License.md`. It is not relicensed under the
+project’s noncommercial terms. This repository distributes application source
+and dependency declarations, not the installed SDK or a prebuilt bundle.
+
+## Project assets
+
+The README header was generated for Anonyma. Project assets retain whatever rights are held by their creators; the project license grants only rights the project holds. Historical proprietary font files and provider logo files are not distributed by this mirror. No third-party attribution is removed by Git identity normalization.

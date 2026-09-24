@@ -19,5 +19,5 @@
 .app-shell .veil-words input{flex:1;min-width:0;font:inherit;font-size:12px;border:1px solid var(--work-line);background:#fff;border-radius:2px;padding:7px 8px;color:var(--work-ink)}
 .app-shell .veil-words .small-button{padding:0 10px}
 /* Inline mark for a restored value: the model only ever saw the tag. */
-.app-shell .veil-mark{text-decoration:underline dotted;text-decoration-color:#8aa0d6;text-underline-offset:3px;cursor:help}
+.app-shell .veil-mark{background:#eef2fd;color:inherit;padding:0 2px;border-radius:2px;text-decoration:underline dotted;text-decoration-color:#0135df;text-underline-offset:3px;cursor:help}
 @media(max-width:700px){.app-shell .veil-popover{width:240px}}

@@ -46,6 +46,13 @@ import {
   privateModeReleased,
 } from "./PrivateMode.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
+import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
+import {
+  MAX_TOTAL_CHARS,
+  applyBudget,
+  composeMessageWithDocuments,
+  parseDocumentBlocks,
+} from "./documents.js";
 import {
   api,
   streamChat,
@@ -213,6 +220,7 @@ export default function Workspace() {
     [info, setInfo] = useState(""),
     [receipt, setReceipt] = useState(null),
     [attachments, setAttachments] = useState([]),
+    [documents, setDocuments] = useState([]),
     [media, setMedia] = useState(() => (demo ? readStore("media", []) : [])),
     [dialog, setDialog] = useState(null),
     [menu, setMenu] = useState(false),
@@ -327,6 +335,7 @@ export default function Workspace() {
     setPrompt(location.state?.prompt || "");
     setWebSearch(!!location.state?.web);
     setAttachments([]);
+    setDocuments([]);
     setCurrent(null);
     setMessages([]);
     setMenu(false);
@@ -745,9 +754,17 @@ export default function Workspace() {
       }
       return;
     }
+    // Document text (already trimmed to the shared budget) rides along as
+    // delimited blocks after the typed prompt; see src/documents.js.
+    const budgeted = documents.length
+      ? applyBudget(documents, MAX_TOTAL_CHARS).documents
+      : [];
+    const content = budgeted.length
+      ? composeMessageWithDocuments(text, budgeted)
+      : text;
     const rawNext = [
       ...messages,
-      { role: "user", content: text, images: attachments.map((a) => a.url) },
+      { role: "user", content, images: attachments.map((a) => a.url) },
     ];
     // Veil masks the new message and any earlier turns in this request's
     // context window before anything reaches the network. Detection and
@@ -779,6 +796,7 @@ export default function Workspace() {
     }
     setPrompt("");
     setAttachments([]);
+    setDocuments([]);
     setMessages([...next, { role: "assistant", content: "", sample: demo }]);
     if (demo) {
       const answer = mode === "code" ? sampleCode : sampleChat;
@@ -892,11 +910,17 @@ export default function Workspace() {
       return;
     }
     try {
+      const budgeted = documents.length
+        ? applyBudget(documents, MAX_TOTAL_CHARS).documents
+        : [];
+      const content = budgeted.length
+        ? composeMessageWithDocuments(prompt, budgeted)
+        : prompt;
       const r = await api("/api/quote", {
         method: "POST",
         body: {
           model,
-          messages: [...messages, { role: "user", content: prompt }],
+          messages: [...messages, { role: "user", content }],
           max_tokens: 4096,
           ...(webSearch ? { web_search: true } : {}),
         },
@@ -1196,7 +1220,15 @@ export default function Workspace() {
                 )}
                 {messages.length && textMode ? (
                   <div className="messages">
-                    {messages.map((m, i) => (
+                    {messages.map((m, i) => {
+                      // A saved user message may carry <document> blocks after
+                      // the typed prompt; render those as collapsed chips
+                      // instead of a wall of extracted text.
+                      const parsed = parseDocumentBlocks(m.content);
+                      const shown =
+                        parsed.text ||
+                        (parsed.documents.length ? "" : "Preparing…");
+                      return (
                       <article
                         key={i}
                         className={
@@ -1243,8 +1275,11 @@ export default function Workspace() {
                                 [veilRemarkPlugin, { map: veilStateRef.current.map }],
                               ]}
                             >
-                              {m.content || "Preparing…"}
+                              {shown}
                             </ReactMarkdown>
+                            {parsed.documents.length > 0 && (
+                              <MessageDocuments documents={parsed.documents} />
+                            )}
                             {m.images?.map((url, j) => (
                               <img
                                 className="message-image"
@@ -1291,7 +1326,8 @@ export default function Workspace() {
                           )}
                         </div>
                       </article>
-                    ))}
+                      );
+                    })}
                     <div ref={streamEnd} />
                   </div>
                 ) : (
@@ -1417,6 +1453,12 @@ export default function Workspace() {
                       ))}
                     </div>
                   )}
+                  {!demo && ["chat", "code"].includes(mode) && (
+                    <DocumentChips
+                      documents={documents}
+                      setDocuments={setDocuments}
+                    />
+                  )}
                   <textarea
                     ref={promptBox}
                     aria-label="Your prompt"
@@ -1530,6 +1572,14 @@ export default function Workspace() {
                             onChange={addFiles}
                           />
                         </label>
+                      )}
+                      {!demo && ["chat", "code"].includes(mode) && (
+                        <DocumentAttach
+                          documents={documents}
+                          setDocuments={setDocuments}
+                          disabled={busy}
+                          onError={setError}
+                        />
                       )}
                       {["chat", "code"].includes(mode) &&
                         isReleased(config, "search") && (

@@ -1,0 +1,90 @@
+/* Documents in chat: chip list for attached/parsed PDFs and text files. */
+.document-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.document-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  background: var(--work-surface, #f7f9fc);
+}
+.document-chip details {
+  flex: 1;
+  min-width: 0;
+}
+.document-chip summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--work-ink, #142343);
+}
+.document-chip summary::-webkit-details-marker {
+  display: none;
+}
+.document-chip summary svg {
+  flex-shrink: 0;
+  color: #0135df;
+}
+.document-chip-name {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+.document-chip-meta {
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+  white-space: nowrap;
+}
+.document-chip-warn-icon {
+  color: #9c3d2a;
+  flex-shrink: 0;
+}
+.document-chip-note {
+  margin: 0 10px 8px;
+  font-size: 11px;
+  color: #9c3d2a;
+  line-height: 1.5;
+}
+.document-chip-preview {
+  margin: 0 10px 10px;
+  padding: 8px;
+  max-height: 160px;
+  overflow: auto;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #374660;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #fff;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+}
+.document-chip-remove {
+  flex-shrink: 0;
+  color: var(--work-muted, #68748a);
+  padding: 9px 10px;
+}
+.document-chip-remove:hover {
+  color: #9c3d2a;
+}
+.document-list-history {
+  margin: 10px 0;
+  max-width: 420px;
+}
+@media (max-width: 700px) {
+  .document-chip-name {
+    max-width: 140px;
+  }
+}

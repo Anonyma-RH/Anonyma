@@ -72,6 +72,15 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return; // same-origin only
   if (isNeverCached(url)) return; // let the API/health/v1 hit the network directly
+  // Films and audio stream with byte-range requests (206 responses can't be
+  // cached) and are tens of megabytes; leave them to the browser's own cache.
+  if (
+    request.headers.has("range") ||
+    request.destination === "video" ||
+    request.destination === "audio" ||
+    /\.(mp4|webm|mov|mp3|wav|m4a|ogg)$/i.test(url.pathname)
+  )
+    return;
 
   const isNavigation =
     request.mode === "navigate" ||

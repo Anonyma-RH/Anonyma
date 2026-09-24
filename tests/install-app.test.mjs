@@ -168,3 +168,11 @@ test("server: no crash and a plain 404 for manifest/sw.js when no build output e
   await request(app).get("/manifest.webmanifest").expect(404);
   await request(app).get("/sw.js").expect(404);
 });
+
+test("the service worker leaves films, audio and range requests to the network", () => {
+  const sw = readFileSync("public/sw.js", "utf8");
+  assert.match(sw, /request\.headers\.has\("range"\)/);
+  assert.match(sw, /request\.destination === "video"/);
+  assert.match(sw, /request\.destination === "audio"/);
+  assert.match(sw, /mp4\|webm/);
+});

@@ -42,7 +42,15 @@ export function chatRoutes(ctx) {
     const requestId = requestIdentifier(req);
     const hold = req.user.id + ":" + requestId;
     const factor = markupFactor(req.user, cfg);
-    const amount = Math.ceil(quote(m, messages, max) * factor);
+    // Web search is a PPQ plugin with its own per-request fee.
+    const webSearch =
+      req.body.web_search === true ||
+      (Array.isArray(req.body.plugins) &&
+        req.body.plugins.some((p) => p?.id === "web"));
+    const searchFee = webSearch ? cfg.webSearchPrice : 0;
+    const amount = Math.ceil(
+      (quote(m, messages, max) + usdUnits(searchFee)) * factor,
+    );
     let conversation = null;
     if (!api) {
       conversation = req.body.conversationId
@@ -148,6 +156,21 @@ export function chatRoutes(ctx) {
       ),
     });
     const images = [];
+    const citations = [];
+    // Sources the provider cited for a web search, deduplicated and capped.
+    const addCitation = (url, title) => {
+      if (
+        typeof url !== "string" ||
+        !/^https?:\/\//.test(url) ||
+        citations.length >= 12 ||
+        citations.some((c) => c.url === url)
+      )
+        return;
+      citations.push({
+        url: url.slice(0, 2000),
+        title: typeof title === "string" ? title.slice(0, 300) : "",
+      });
+    };
     const saved = [];
     const savedMediaIds = [];
     const attributeMediaCost = (receipt) =>
@@ -175,7 +198,12 @@ export function chatRoutes(ctx) {
     try {
       for await (const part of chatStream(
         cfg,
-        { model: m.id, messages, max_tokens: max },
+        {
+          model: m.id,
+          messages,
+          max_tokens: max,
+          ...(webSearch ? { plugins: [{ id: "web", max_results: 5 }] } : {}),
+        },
         controller.signal,
         () => {
           accepted = true;
@@ -196,6 +224,12 @@ export function chatRoutes(ctx) {
         )
           reasoning += delta.reasoning || delta.reasoning_content;
         if (delta.images) images.push(...delta.images);
+        for (const a of [
+          ...(delta.annotations || []),
+          ...(part.choices?.[0]?.message?.annotations || []),
+        ])
+          addCitation(a?.url_citation?.url, a?.url_citation?.title);
+        for (const url of part.citations || []) addCitation(url);
         if (part.usage) usage = part.usage;
         if (Number.isFinite(part.cost)) upstreamCost = part.cost;
         if (part.choices?.length) {
@@ -242,9 +276,19 @@ export function chatRoutes(ctx) {
           "empty_output",
         );
       const { input, out } = tokenCounts();
-      const dollars =
-        reportedProviderCost(usage, upstreamCost, cfg.gatewayFeePercent) ??
-        (imageCallable(m) ? generationPrice(m) : tokenCost(m, input, out));
+      const reported = reportedProviderCost(
+        usage,
+        upstreamCost,
+        cfg.gatewayFeePercent,
+      );
+      // Whether the provider folds the search fee into its reported cost
+      // isn't documented, so a searched request costs at least the token
+      // estimate plus the fee.
+      const dollars = Math.max(
+        reported ??
+          (imageCallable(m) ? generationPrice(m) : tokenCost(m, input, out)),
+        webSearch ? tokenCost(m, input, out) + searchFee : 0,
+      );
       usage = {
         ...usage,
         prompt_tokens: input,
@@ -259,6 +303,7 @@ export function chatRoutes(ctx) {
       const extension = {
         credits_charged: receipt.credits_charged,
         request_id: requestId,
+        ...(citations.length ? { citations } : {}),
         ...(cfg.testMode ? { local_test: true } : {}),
       };
       if (
@@ -271,7 +316,13 @@ export function chatRoutes(ctx) {
           uid("m_"),
           conversation,
           "assistant",
-          JSON.stringify({ text: output, reasoning, images: saved, usage }),
+          JSON.stringify({
+            text: output,
+            reasoning,
+            images: saved,
+            usage,
+            ...(citations.length ? { citations } : {}),
+          }),
           m.id,
           receipt.charged,
           now(),
@@ -309,6 +360,7 @@ export function chatRoutes(ctx) {
                 content: output,
                 ...(reasoning ? { reasoning } : {}),
                 ...(saved.length ? { images: saved } : {}),
+                ...(citations.length ? { citations } : {}),
               },
               finish_reason: "stop",
             },
@@ -355,8 +407,8 @@ export function chatRoutes(ctx) {
                   usage,
                   upstreamCost,
                   cfg.gatewayFeePercent,
-                ) ?? tokenCost(m, tokenCounts().input, tokenCounts().out))) *
-              factor,
+                ) ?? tokenCost(m, tokenCounts().input, tokenCounts().out)) +
+                (accepted ? searchFee : 0)) * factor,
           ),
           "Interrupted: " + m.name,
         );
@@ -387,7 +439,7 @@ export function chatRoutes(ctx) {
         receipt = settle(
           db,
           hold,
-          usdUnits(tokenCost(m, tokenCounts().input, 0) * factor),
+          usdUnits((tokenCost(m, tokenCounts().input, 0) + searchFee) * factor),
           "Stopped before output: " + m.name,
         );
         e.receipt = receipt;

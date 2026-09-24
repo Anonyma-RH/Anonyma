@@ -88,6 +88,8 @@ export function config(overrides = {}) {
     gatewayFeePercent: Number(e.GATEWAY_FEE_PERCENT ?? 5.5),
     // Chat reservations hold this multiple of the price-list estimate.
     holdMargin: Number(e.HOLD_MARGIN ?? 4),
+    // Per-request web search fee in USD (PPQ: $0.02 plus its 5.5% fee).
+    webSearchPrice: Number(e.WEB_SEARCH_PRICE ?? 0.0211),
     ...overrides,
   };
   for (const field of [
@@ -142,6 +144,12 @@ export function config(overrides = {}) {
     cfg.holdMargin > 20
   )
     throw Error("Hold margin must be between 1 and 20.");
+  if (
+    !Number.isFinite(cfg.webSearchPrice) ||
+    cfg.webSearchPrice < 0 ||
+    cfg.webSearchPrice > 1
+  )
+    throw Error("Web search price must be between 0 and 1 USD.");
   return cfg;
 }
 const addColumn = (db, table, column, definition) => {

@@ -118,10 +118,18 @@ export function AppSidebar({
         </Link>
         <Link to={"/account" + q}>
           <span className="avatar">
-            {demo ? "D" : signedIn ? user.username?.[0]?.toUpperCase() || "A" : "A"}
+            {demo
+              ? "D"
+              : signedIn
+                ? user.username?.[0]?.toUpperCase() || "A"
+                : "A"}
           </span>
           <span>
-            {demo ? "Demo workspace" : signedIn ? user.username || "Your account" : "Your account"}
+            {demo
+              ? "Demo workspace"
+              : signedIn
+                ? user.username || "Your account"
+                : "Your account"}
             <small>
               {demo
                 ? "Local sample · no charges"
@@ -165,14 +173,26 @@ export default function Workspace() {
     [quote, setQuote] = useState(null),
     [filter, setFilter] = useState("all"),
     [rename, setRename] = useState(""),
+    [webSearch, setWebSearch] = useState(false),
     // null = not chosen yet, so the first published option wins over the "default" preset.
-    [video, setVideo] = useState({ quality: null, ratio: null, duration: null, image: "" });
+    [video, setVideo] = useState({
+      quality: null,
+      ratio: null,
+      duration: null,
+      image: "",
+    });
   const controller = useRef(),
     timer = useRef(),
     streamEnd = useRef();
-  const validMode = ["home", "chat", "code", "image", "video", "audio", "library"].includes(
-    mode,
-  );
+  const validMode = [
+    "home",
+    "chat",
+    "code",
+    "image",
+    "video",
+    "audio",
+    "library",
+  ].includes(mode);
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
   const visibleModels = models.filter((m) =>
     mode === "image"
@@ -180,27 +200,40 @@ export default function Workspace() {
         ? m.imageCapable || m.type === "image"
         : m.imageCapable && m.callable
       : mode === "video"
-        ? m.type === "video" && (demo || (m.callable && videoPresets(m).length > 0))
+        ? m.type === "video" &&
+          (demo || (m.callable && videoPresets(m).length > 0))
         : m.type === "chat" && (demo || m.callable),
   );
   const selected = models.find((m) => m.id === model);
   // Video choices come only from the model's published prices, as the server requires.
   const presets = mode === "video" && selected ? videoPresets(selected) : [];
-  const pick = (values, value) => (values.includes(value) ? value : values[0] ?? "");
+  const pick = (values, value) =>
+    values.includes(value) ? value : (values[0] ?? "");
   const qualities = [...new Set(presets.map((p) => p.quality))];
   const vq = pick(qualities, video.quality);
-  const ratios = [...new Set(presets.filter((p) => p.quality === vq).map((p) => p.ratio))];
+  const ratios = [
+    ...new Set(presets.filter((p) => p.quality === vq).map((p) => p.ratio)),
+  ];
   const vr = pick(ratios, video.ratio);
   const durations = [
-    ...new Set(presets.filter((p) => p.quality === vq && p.ratio === vr).map((p) => p.duration)),
+    ...new Set(
+      presets
+        .filter((p) => p.quality === vq && p.ratio === vr)
+        .map((p) => p.duration),
+    ),
   ];
   const vd = pick(durations, video.duration);
-  const videoOption = presets.find((p) => p.quality === vq && p.ratio === vr && p.duration === vd);
+  const videoOption = presets.find(
+    (p) => p.quality === vq && p.ratio === vr && p.duration === vd,
+  );
   const videoCredits = videoOption
-    ? Math.ceil(videoOption.price * 1000 * (1 + (Number(config?.markup) || 0) / 100))
+    ? Math.ceil(
+        videoOption.price * 1000 * (1 + (Number(config?.markup) || 0) / 100),
+      )
     : null;
   const needsImage = !!(
-    selected?.capabilities?.requires_image_url || selected?.category === "image-to-video"
+    selected?.capabilities?.requires_image_url ||
+    selected?.category === "image-to-video"
   );
   const acceptsImage = selected?.capabilities?.accepts_image_url !== false;
   useEffect(() => {
@@ -474,7 +507,9 @@ export default function Workspace() {
             .map((r, i) =>
               r.status === "fulfilled"
                 ? {
-                    model: models.find((x) => x.id === targets[i])?.name || targets[i],
+                    model:
+                      models.find((x) => x.id === targets[i])?.name ||
+                      targets[i],
                     credits: Number(r.value.receipt?.credits_charged) || 0,
                   }
                 : null,
@@ -482,15 +517,21 @@ export default function Workspace() {
             .filter(Boolean);
           if (parts.length)
             setReceipt({
-              credits_charged: Math.round(parts.reduce((t, p) => t + p.credits, 0) * 10000) / 10000,
+              credits_charged:
+                Math.round(parts.reduce((t, p) => t + p.credits, 0) * 10000) /
+                10000,
               parts: parts.length > 1 ? parts : null,
               local_test: successes.some((r) => r.value.testMode),
             });
         } else {
           if (!videoOption)
-            throw new Error("This video model has no published price for these options.");
+            throw new Error(
+              "This video model has no published price for these options.",
+            );
           if (needsImage && !video.image.trim())
-            throw new Error("This video model needs a public HTTPS start image.");
+            throw new Error(
+              "This video model needs a public HTTPS start image.",
+            );
           const r = await api("/api/videos", {
             method: "POST",
             body: {
@@ -499,7 +540,9 @@ export default function Workspace() {
               ...(vq ? { quality: vq } : {}),
               ...(vr ? { ratio: vr } : {}),
               ...(vd ? { duration: vd } : {}),
-              ...(video.image.trim() && acceptsImage ? { image_url: video.image.trim() } : {}),
+              ...(video.image.trim() && acceptsImage
+                ? { image_url: video.image.trim() }
+                : {}),
               requestId,
             },
             signal: controller.current.signal,
@@ -551,7 +594,8 @@ export default function Workspace() {
     let output = "",
       liveId = current,
       reasoning = "",
-      images = [];
+      images = [],
+      citations = [];
     try {
       await streamChat(
         {
@@ -561,6 +605,7 @@ export default function Workspace() {
           mode,
           max_tokens: 4096,
           requestId,
+          ...(webSearch ? { web_search: true } : {}),
         },
         (event) => {
           if (event.error)
@@ -578,9 +623,16 @@ export default function Workspace() {
             if (url) images = [...images, url];
           }
           if (event.anonyma) setReceipt(event.anonyma);
+          if (event.anonyma?.citations) citations = event.anonyma.citations;
           setMessages([
             ...next,
-            { role: "assistant", content: output, reasoning, images },
+            {
+              role: "assistant",
+              content: output,
+              reasoning,
+              images,
+              citations,
+            },
           ]);
         },
         controller.current.signal,
@@ -622,6 +674,7 @@ export default function Workspace() {
           model,
           messages: [...messages, { role: "user", content: prompt }],
           max_tokens: 4096,
+          ...(webSearch ? { web_search: true } : {}),
         },
       });
       setQuote(r);
@@ -772,8 +825,8 @@ export default function Workspace() {
                 </>
               ) : user ? (
                 <>
-                  <b>{Number(user.available || 0).toLocaleString()}</b> available ·{" "}
-                  {Number(user.held || 0).toLocaleString()} held
+                  <b>{Number(user.available || 0).toLocaleString()}</b>{" "}
+                  available · {Number(user.held || 0).toLocaleString()} held
                 </>
               ) : (
                 "Credits"
@@ -808,7 +861,8 @@ export default function Workspace() {
         <div
           key={mode}
           className={
-            "workspace-body " + (!messages.length ? "workspace-start " : "") +
+            "workspace-body " +
+            (!messages.length ? "workspace-start " : "") +
             (mode === "home" ? "workspace-home " : "") +
             (hasResults ? "with-results " : "") +
             (mode === "code" && files.length ? "with-code" : "")
@@ -889,7 +943,9 @@ export default function Workspace() {
                         className={
                           "message " +
                           m.role +
-                          (busy && i === messages.length - 1 && m.role === "assistant"
+                          (busy &&
+                          i === messages.length - 1 &&
+                          m.role === "assistant"
                             ? " streaming"
                             : "")
                         }
@@ -910,11 +966,33 @@ export default function Workspace() {
                               <img
                                 className="message-image"
                                 src={url}
-                                alt={m.role === "user" ? "Your reference" : "Generated image"}
+                                alt={
+                                  m.role === "user"
+                                    ? "Your reference"
+                                    : "Generated image"
+                                }
                                 key={j}
                               />
                             ))}
                           </div>
+                          {m.citations?.length > 0 && (
+                            <div className="citations">
+                              <span>Sources</span>
+                              {m.citations.map((c) => (
+                                <a
+                                  key={c.url}
+                                  href={c.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer nofollow"
+                                >
+                                  {c.title ||
+                                    c.url
+                                      .replace(/^https?:\/\//, "")
+                                      .split("/")[0]}
+                                </a>
+                              ))}
+                            </div>
+                          )}
                           {m.reasoning && (
                             <details>
                               <summary>Reasoning</summary>
@@ -944,16 +1022,16 @@ export default function Workspace() {
                       }
                     </p>
                     <Reveal key={mode}>
-                    <h1>
-                      {
+                      <h1>
                         {
-                          chat: <>What’s on your mind?</>,
-                          code: <>What will you build?</>,
-                          image: <>Create something worth seeing.</>,
-                          video: <>Set your ideas in motion.</>,
-                        }[mode]
-                      }
-                    </h1>
+                          {
+                            chat: <>What’s on your mind?</>,
+                            code: <>What will you build?</>,
+                            image: <>Create something worth seeing.</>,
+                            video: <>Set your ideas in motion.</>,
+                          }[mode]
+                        }
+                      </h1>
                     </Reveal>
                     <p>
                       {
@@ -1003,7 +1081,9 @@ export default function Workspace() {
                       </span>
                     ))}
                     {receipt.request_id && (
-                      <span className="receipt-part">Request {String(receipt.request_id).slice(0, 12)}</span>
+                      <span className="receipt-part">
+                        Request {String(receipt.request_id).slice(0, 12)}
+                      </span>
                     )}
                   </div>
                 )}
@@ -1074,13 +1154,21 @@ export default function Workspace() {
                               {!m.callable && !demo ? " · catalog only" : ""}
                             </option>
                           );
-                          const popular = visibleModels.filter((m) => m.popular);
+                          const popular = visibleModels.filter(
+                            (m) => m.popular,
+                          );
                           // Long live catalogs read better with popular models grouped first.
                           return visibleModels.length > 12 && popular.length ? (
                             <>
-                              <optgroup label="Popular">{popular.map(option)}</optgroup>
-                              <optgroup label={`All models (${visibleModels.length})`}>
-                                {visibleModels.filter((m) => !m.popular).map(option)}
+                              <optgroup label="Popular">
+                                {popular.map(option)}
+                              </optgroup>
+                              <optgroup
+                                label={`All models (${visibleModels.length})`}
+                              >
+                                {visibleModels
+                                  .filter((m) => !m.popular)
+                                  .map(option)}
                               </optgroup>
                             </>
                           ) : (
@@ -1104,10 +1192,29 @@ export default function Workspace() {
                         </label>
                       )}
                       {["chat", "code"].includes(mode) && (
+                        <button
+                          type="button"
+                          className={
+                            "attachment-control web-toggle" +
+                            (webSearch ? " on" : "")
+                          }
+                          aria-pressed={webSearch}
+                          title="Search the web before answering (about 21 credits per search)"
+                          onClick={() => setWebSearch((v) => !v)}
+                        >
+                          <Icon name="globe" size={17} />
+                          <span>Web</span>
+                        </button>
+                      )}
+                      {["chat", "code"].includes(mode) && (
                         <MicButton
                           demo={demo}
                           disabled={busy}
-                          onText={(t) => setPrompt((p) => (p.trim() ? p.trimEnd() + " " + t : t))}
+                          onText={(t) =>
+                            setPrompt((p) =>
+                              p.trim() ? p.trimEnd() + " " + t : t,
+                            )
+                          }
                           onError={setError}
                         />
                       )}
@@ -1130,11 +1237,18 @@ export default function Workspace() {
                             <select
                               aria-label="Video quality"
                               value={vq}
-                              onChange={(e) => setVideo((v) => ({ ...v, quality: e.target.value }))}
+                              onChange={(e) =>
+                                setVideo((v) => ({
+                                  ...v,
+                                  quality: e.target.value,
+                                }))
+                              }
                             >
                               {qualities.map((q) => (
                                 <option key={q} value={q}>
-                                  {q ? q[0].toUpperCase() + q.slice(1) : "Default quality"}
+                                  {q
+                                    ? q[0].toUpperCase() + q.slice(1)
+                                    : "Default quality"}
                                 </option>
                               ))}
                             </select>
@@ -1142,7 +1256,9 @@ export default function Workspace() {
                           <select
                             aria-label="Aspect ratio"
                             value={vr}
-                            onChange={(e) => setVideo((v) => ({ ...v, ratio: e.target.value }))}
+                            onChange={(e) =>
+                              setVideo((v) => ({ ...v, ratio: e.target.value }))
+                            }
                           >
                             {ratios.map((r) => (
                               <option key={r} value={r}>
@@ -1153,7 +1269,12 @@ export default function Workspace() {
                           <select
                             aria-label="Duration"
                             value={vd}
-                            onChange={(e) => setVideo((v) => ({ ...v, duration: e.target.value }))}
+                            onChange={(e) =>
+                              setVideo((v) => ({
+                                ...v,
+                                duration: e.target.value,
+                              }))
+                            }
                           >
                             {durations.map((d) => (
                               <option key={d} value={d}>
@@ -1210,37 +1331,39 @@ export default function Workspace() {
                     </details>
                   )}
                 </form>
-                {!messages.length && (<div className="prompt-suggestions">
-                      {(mode === "chat"
+                {!messages.length && (
+                  <div className="prompt-suggestions">
+                    {(mode === "chat"
+                      ? [
+                          "Help me think through an idea",
+                          "Make a complex topic simple",
+                          "Find a fresh perspective",
+                        ]
+                      : mode === "code"
                         ? [
-                            "Help me think through an idea",
-                            "Make a complex topic simple",
-                            "Find a fresh perspective",
+                            "Build a simple idea card",
+                            "Explain a piece of code",
+                            "Plan a small React app",
                           ]
-                        : mode === "code"
+                        : mode === "image"
                           ? [
-                              "Build a simple idea card",
-                              "Explain a piece of code",
-                              "Plan a small React app",
+                              "A quiet architectural study",
+                              "A playful geometric world",
+                              "A soft, abstract landscape",
                             ]
-                          : mode === "image"
-                            ? [
-                                "A quiet architectural study",
-                                "A playful geometric world",
-                                "A soft, abstract landscape",
-                              ]
-                            : [
-                                "A gentle abstract motion loop",
-                                "A product idea in motion",
-                                "A cinematic opening frame",
-                              ]
-                      ).map((t) => (
-                        <button key={t} onClick={() => setPrompt(t)}>
-                          {t}
-                          <Icon name="diagonal" size={14} />
-                        </button>
-                      ))}
-                    </div>)}
+                          : [
+                              "A gentle abstract motion loop",
+                              "A product idea in motion",
+                              "A cinematic opening frame",
+                            ]
+                    ).map((t) => (
+                      <button key={t} onClick={() => setPrompt(t)}>
+                        {t}
+                        <Icon name="diagonal" size={14} />
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="composer-caption">
                   <span>
                     {demo
@@ -1258,13 +1381,16 @@ export default function Workspace() {
                 </div>
                 {mode === "video" && !demo && selected && acceptsImage && (
                   <label className="video-image-field">
-                    Start image URL{needsImage ? " (required for this model)" : " (optional)"}
+                    Start image URL
+                    {needsImage ? " (required for this model)" : " (optional)"}
                     <input
                       type="url"
                       inputMode="url"
                       placeholder="https://…"
                       value={video.image}
-                      onChange={(e) => setVideo((v) => ({ ...v, image: e.target.value }))}
+                      onChange={(e) =>
+                        setVideo((v) => ({ ...v, image: e.target.value }))
+                      }
                     />
                   </label>
                 )}

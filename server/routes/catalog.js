@@ -85,7 +85,8 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
     const amount = Math.ceil(
       (video
         ? usdUnits(video.price)
-        : quote(m, messages, maxTokens(req.body.max_tokens), req.body)) *
+        : quote(m, messages, maxTokens(req.body.max_tokens), req.body) +
+          (req.body.web_search === true ? usdUnits(cfg.webSearchPrice) : 0)) *
         markupFactor(req.user, cfg),
     );
     res.json({

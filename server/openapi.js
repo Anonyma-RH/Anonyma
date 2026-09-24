@@ -52,6 +52,11 @@ const chat = object(
     conversationId: string,
     mode: { enum: ["chat", "code"] },
     stream: bool,
+    web_search: {
+      ...bool,
+      description:
+        "Search the web before answering (also accepted as plugins: [{ id: \"web\" }]). Adds the per-search fee; cited sources are returned as citations.",
+    },
   },
   ["model", "messages"],
 );

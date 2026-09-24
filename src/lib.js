@@ -112,7 +112,11 @@ export function normalizeModel(m) {
     provider: m.provider || m.owned_by || String(m.id).split("/")[0],
     description:
       m.description ||
-      (modality ? modality.replace("->", " → ") : m.type ? `${m.type} model` : ""),
+      (modality
+        ? modality.replace("->", " → ")
+        : m.type
+          ? `${m.type} model`
+          : ""),
   };
 }
 // Popular callable models first, then the rest alphabetically.
@@ -136,13 +140,18 @@ export function messageFromServer(m) {
         .filter((p) => p?.type === "text")
         .map((p) => p.text)
         .join("\n"),
-      images: c.filter((p) => p?.type === "image_url").map((p) => p.image_url.url),
+      images: c
+        .filter((p) => p?.type === "image_url")
+        .map((p) => p.image_url.url),
     };
   return {
     ...m,
     content: c?.text || "",
     reasoning: c?.reasoning || "",
-    images: (c?.images || []).map((i) => i?.image_url?.url || i?.url).filter(Boolean),
+    images: (c?.images || [])
+      .map((i) => i?.image_url?.url || i?.url)
+      .filter(Boolean),
+    citations: Array.isArray(c?.citations) ? c.citations : [],
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.
@@ -165,7 +174,11 @@ export function videoPresets(model) {
   const presets = [];
   for (const variant of variants) {
     for (const option of variant.options || []) {
-      if (typeof option.price !== "number" || !Number.isFinite(option.price) || option.price <= 0)
+      if (
+        typeof option.price !== "number" ||
+        !Number.isFinite(option.price) ||
+        option.price <= 0
+      )
         continue;
       const pair = /^(16:9|9:16|1:1)_([1-9]\d{0,2})$/.exec(option.size);
       const seconds = /^[1-9]\d{0,2}$/.test(option.size);
@@ -179,7 +192,12 @@ export function videoPresets(model) {
     }
   }
   const price = model?.pricing?.base_price ?? model?.pricing?.per_generation;
-  if (!variants.length && typeof price === "number" && Number.isFinite(price) && price > 0)
+  if (
+    !variants.length &&
+    typeof price === "number" &&
+    Number.isFinite(price) &&
+    price > 0
+  )
     presets.push({ quality: "", ratio: "", duration: "", price });
   return presets;
 }
@@ -195,7 +213,8 @@ export async function walletSign(config, link = false) {
       throw new Error(
         "Install a browser wallet, or ask the operator to configure WalletConnect for mobile wallets.",
       );
-    const { EthereumProvider } = await import("@walletconnect/ethereum-provider");
+    const { EthereumProvider } =
+      await import("@walletconnect/ethereum-provider");
     provider = await EthereumProvider.init({
       projectId: config.walletProject,
       chains: [config.walletChain || 1],
@@ -222,7 +241,9 @@ export async function walletSign(config, link = false) {
     if (e?.code === 4001)
       throw new Error("The wallet request was cancelled. Nothing was signed.");
     if (e?.code === -32002)
-      throw new Error("Your wallet already has a pending request. Open it to continue.");
+      throw new Error(
+        "Your wallet already has a pending request. Open it to continue.",
+      );
     throw e;
   }
 }

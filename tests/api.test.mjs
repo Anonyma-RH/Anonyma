@@ -2408,3 +2408,72 @@ test("chat holds headroom for pricier routing but falls back when the balance is
   await ask(otherKey.key, "short");
   assert.equal(holdFor(other.user.id, "short").amount, estimate);
 });
+test("web search sends the web plugin, returns citations and bills at least the search fee", async (t) => {
+  let sent;
+  const gateway = await mockServer(t, async (req, res) => {
+    sent = await readJSON(req);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, {
+      choices: [
+        {
+          delta: {
+            content: "Here is today's news.",
+            annotations: [
+              {
+                type: "url_citation",
+                url_citation: {
+                  url: "https://example.com/a",
+                  title: "Example A",
+                },
+              },
+              {
+                type: "url_citation",
+                url_citation: {
+                  url: "https://example.com/a",
+                  title: "Duplicate",
+                },
+              },
+              {
+                type: "url_citation",
+                url_citation: { url: "javascript:alert(1)", title: "Bad" },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    // The reported inference cost excludes the search fee in this fixture.
+    event(res, {
+      choices: [],
+      usage: { prompt_tokens: 10, completion_tokens: 10, cost: 0.000001 },
+    });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "search-fund", "test_credit");
+  const before = balance(s.db, user.id).total;
+  const r = await agent
+    .post("/api/chat")
+    .send({ ...prompt, web_search: true })
+    .expect(200);
+  assert.deepEqual(sent.plugins, [{ id: "web", max_results: 5 }]);
+  const final = r.text
+    .split("\n\n")
+    .filter((l) => l.includes('"anonyma"'))
+    .map((l) => JSON.parse(l.slice(6)))
+    .pop();
+  assert.deepEqual(final.anonyma.citations, [
+    { url: "https://example.com/a", title: "Example A" },
+  ]);
+  const charged = before - balance(s.db, user.id).total;
+  assert.ok(charged >= usdUnits(0.0211), "the search fee is always covered");
+  const saved = s.db
+    .prepare("SELECT content FROM messages WHERE role='assistant'")
+    .get();
+  assert.equal(JSON.parse(saved.content).citations.length, 1);
+
+  // Without the toggle, no plugin is sent and no fee is added.
+  await agent.post("/api/chat").send(prompt).expect(200);
+  assert.equal(sent.plugins, undefined);
+});

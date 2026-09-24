@@ -415,3 +415,9 @@
 .app-shell .mic-button.recording{color:#fff;background:#d92d20;border-color:#d92d20}
 .app-shell .mic-button.transcribing{opacity:.6;cursor:progress}
 .app-shell .mic-time{font-size:12px;font-variant-numeric:tabular-nums}
+/* Web search */
+.app-shell .web-toggle{display:inline-flex;align-items:center;gap:6px;background:none;cursor:pointer;font-size:13px}
+.app-shell .web-toggle.on{color:#fff;background:#0135df;border-color:#0135df}
+.app-shell .citations{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 4px;font-size:13px}
+.app-shell .citations span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--work-muted)}
+.app-shell .citations a{border:1px solid var(--work-line);padding:4px 10px;border-radius:2px;color:#0135df;text-decoration:none;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

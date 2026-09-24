@@ -1,0 +1,30 @@
+/* Off the record and auto-delete. The composer toggle reuses the existing
+   .attachment-control/.web-toggle styling; this file covers what's new. */
+.retention-indicator {
+  font-size: 10px;
+  color: var(--work-muted, #68748a);
+  white-space: nowrap;
+}
+.app-sidebar .retention-indicator {
+  color: #b7c9ff;
+  padding: 0 2px;
+}
+.retention-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.retention-select select {
+  font-size: 12px;
+}
+.retention-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 23px;
+}
+.retention-row .retention-select {
+  margin-bottom: 0;
+}

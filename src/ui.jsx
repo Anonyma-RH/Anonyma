@@ -42,6 +42,7 @@ import {
   RefreshCw,
   LogOut,
   Eye,
+  EyeOff,
   FileCode,
   TriangleAlert,
 } from "lucide-react";
@@ -80,6 +81,7 @@ const icons = {
   refresh: RefreshCw,
   logout: LogOut,
   eye: Eye,
+  eyeoff: EyeOff,
   file: FileCode,
   warning: TriangleAlert,
   mic: Mic,

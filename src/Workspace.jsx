@@ -31,6 +31,12 @@ import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import CollabHub from "./Collab.jsx";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
 import {
+  EphemeralToggle,
+  EphemeralNotice,
+  RetentionSelect,
+  RetentionIndicator,
+} from "./Ephemeral.jsx";
+import {
   api,
   streamChat,
   readStore,
@@ -205,10 +211,14 @@ export default function Workspace() {
     [quote, setQuote] = useState(null),
     [filter, setFilter] = useState("all"),
     [rename, setRename] = useState(""),
+    // The server stores an expiry, not the preset that produced it, so this
+    // only reflects a choice made in this session rather than a stored one.
+    [retentionDays, setRetentionDays] = useState(null),
     [webSearch, setWebSearch] = useState(false),
     [veilOn, setVeilOn] = useState(() => loadVeilOn()),
     [veilWords, setVeilWords] = useState(() => loadVeilWords()),
     [veilNote, setVeilNote] = useState(null),
+    [ephemeral, setEphemeral] = useState(false),
     [shared, setShared] = useState(null),
     // null = not chosen yet, so the first published option wins over the "default" preset.
     [video, setVideo] = useState({
@@ -435,6 +445,12 @@ export default function Workspace() {
     veilStateRef.current = loadVeilState(veilKeyRef.current);
     setVeilNote(null);
   }
+  // Off the record only ever applies to a fresh, unsaved thread: switching
+  // it either way starts a new chat rather than mixing saved and unsaved turns.
+  function toggleEphemeral() {
+    newChat();
+    setEphemeral((v) => !v);
+  }
   async function openChat(c) {
     if (mode !== c.mode) {
       navigate("/workspace/" + c.mode + "?" +
@@ -447,6 +463,7 @@ export default function Workspace() {
     veilKeyRef.current = c.id;
     veilStateRef.current = loadVeilState(c.id);
     setVeilNote(null);
+    setEphemeral(false);
     setCurrent(c.id);
     setMessages(c.messages || []);
     if (!demo) {
@@ -750,7 +767,7 @@ export default function Workspace() {
         {
           model: requestModel,
           messages: (veiledPayload || next.slice(-20)).map(toRequestMessage),
-          conversationId: current,
+          ...(ephemeral ? { ephemeral: true } : { conversationId: current }),
           mode,
           max_tokens: 4096,
           requestId,
@@ -869,6 +886,23 @@ export default function Workspace() {
       setError(e.message);
     }
   }
+  // Owner only; for a collab conversation, the server further requires the
+  // collab owner (a member who merely started the thread gets a 403 here).
+  async function updateRetention(days) {
+    const expires = days ? Date.now() + days * 86400000 : null;
+    try {
+      await api("/api/conversations/" + dialog.item.id, {
+        method: "PATCH",
+        body: { retention: days },
+      });
+      setAll((prev) =>
+        prev.map((c) => (c.id === dialog.item.id ? { ...c, expires } : c)),
+      );
+      setDialog((d) => (d ? { ...d, item: { ...d.item, expires } } : d));
+    } catch (e) {
+      setError(e.message);
+    }
+  }
   const files = messages
     .filter((m) => m.role === "assistant")
     .flatMap((m) =>
@@ -924,11 +958,13 @@ export default function Workspace() {
           {(demo ? all : user ? all : []).slice(0, 12).map((c) => (
             <div className={c.id === current ? "current" : ""} key={c.id}>
               <button onClick={() => openChat(c)}>{c.title}</button>
+              {!demo && <RetentionIndicator expires={c.expires} />}
               <button
                 className="conversation-options"
                 aria-label={"Options for " + c.title}
                 onClick={() => {
                   setRename(c.title);
+                  setRetentionDays(null);
                   setDialog({ type: "rename", item: c });
                 }}
               >
@@ -1265,6 +1301,9 @@ export default function Workspace() {
                 )}
               </div>
               <div className="composer-zone" ref={composerZone}>
+                {ephemeral && ["chat", "code"].includes(mode) && (
+                  <EphemeralNotice />
+                )}
                 {info && <Notice>{info}</Notice>}
                 {error && <Notice type="error">{error}</Notice>}
                 {receipt && (
@@ -1438,6 +1477,12 @@ export default function Workspace() {
                           <Icon name="globe" size={17} />
                           <span>Web</span>
                         </button>
+                      )}
+                      {!demo && textMode && (
+                        <EphemeralToggle
+                          active={ephemeral}
+                          onToggle={toggleEphemeral}
+                        />
                       )}
                       {textMode &&
                         !demo &&
@@ -1713,6 +1758,18 @@ export default function Workspace() {
                   autoFocus
                 />
               </label>
+              {!demo && (
+                <div className="retention-row">
+                  <RetentionSelect
+                    value={retentionDays}
+                    onChange={(days) => {
+                      setRetentionDays(days);
+                      updateRetention(days);
+                    }}
+                  />
+                  <RetentionIndicator expires={dialog.item.expires} />
+                </div>
+              )}
               <div className="inline-actions">
                 <Button onClick={confirmDialog} disabled={!rename.trim()}>
                   Save name

@@ -17,6 +17,7 @@ import {
 } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
+import { RetentionSelect } from "./Ephemeral.jsx";
 import {
   api,
   readStore,
@@ -50,6 +51,7 @@ export default function Account() {
     [currencies, setCurrencies] = useState([]),
     [invoiceIntent, setInvoiceIntent] = useState(uid),
     [referrals, setReferrals] = useState(null),
+    [retentionDefault, setRetentionDefault] = useState(null),
     [transfer, setTransfer] = useState({ to: "", amount: "", confirm: false, id: uid() });
   useEffect(() => setInvoiceIntent(uid()), [amount, currency]);
   const q = demo ? "?demo=1" : "";
@@ -83,6 +85,20 @@ export default function Account() {
   useEffect(() => {
     if (demo) saveStore("keys", keys);
   }, [keys, demo]);
+  useEffect(() => {
+    if (demo || !user) return;
+    api("/api/retention")
+      .then((r) => setRetentionDefault(r.days))
+      .catch(() => {});
+  }, [demo, user]);
+  async function saveRetentionDefault(days) {
+    setRetentionDefault(days);
+    try {
+      await api("/api/retention", { method: "PUT", body: { days } });
+    } catch (e) {
+      setError(e.message);
+    }
+  }
   async function sendCredits(e) {
     e.preventDefault();
     if (!/^\d+(\.\d{1,4})?$/.test(transfer.amount.trim())) {
@@ -820,6 +836,22 @@ export default function Account() {
                   <Icon name="download" size={16} />
                 </Button>
               </section>
+              {!demo && (
+                <section>
+                  <div>
+                    <h2>Auto-delete.</h2>
+                    <p>
+                      New conversations follow this default. Existing
+                      conversations keep their own setting.
+                    </p>
+                  </div>
+                  <RetentionSelect
+                    value={retentionDefault}
+                    disabled={!user}
+                    onChange={saveRetentionDefault}
+                  />
+                </section>
+              )}
               <section className="danger-zone">
                 <div>
                   <h2>{demo ? "Reset the demo." : "Close your account."}</h2>

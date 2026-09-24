@@ -52,8 +52,17 @@ export function chatRoutes(ctx) {
     const amount = Math.ceil(
       (quote(m, messages, max) + usdUnits(searchFee)) * factor,
     );
+    // Off the record: nothing about the chat is written to storage, not even
+    // the user's message. Billing is unaffected — only persistence changes.
+    const ephemeral = !api && req.body.ephemeral === true;
+    if (ephemeral && req.body.conversationId)
+      fail(
+        400,
+        "An off-the-record chat can't be added to a saved conversation.",
+        "invalid_request",
+      );
     let conversation = null;
-    if (!api) {
+    if (!api && !ephemeral) {
       conversation = req.body.conversationId
         ? accessConversation(req.body.conversationId, req.user.id).id
         : null;
@@ -83,7 +92,7 @@ export function chatRoutes(ctx) {
     }
     // Nothing can be sent upstream yet, so a failure here releases the hold
     // immediately instead of leaving credits reserved until it expires.
-    if (!api)
+    if (!api && !ephemeral)
       try {
         conversation ||= newConversation(
           req.user.id,

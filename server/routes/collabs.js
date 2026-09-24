@@ -86,9 +86,9 @@ export function collabRoutes(ctx) {
         .map((m) => ({ ...m, username: m.username || "Former member" })),
       conversations: db
         .prepare(
-          "SELECT c.id, c.title, c.mode, c.updated, u.username author FROM conversations c LEFT JOIN users u ON u.id=c.user_id WHERE c.collab_id=? ORDER BY c.updated DESC LIMIT 100",
+          "SELECT c.id, c.title, c.mode, c.updated, c.expires, u.username author FROM conversations c LEFT JOIN users u ON u.id=c.user_id WHERE c.collab_id=? AND (c.expires IS NULL OR c.expires>=?) ORDER BY c.updated DESC LIMIT 100",
         )
-        .all(c.id),
+        .all(c.id, now()),
     });
   });
 

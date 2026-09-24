@@ -1,8 +1,9 @@
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
-import { AppProvider, useStartPath } from "./context.jsx";
+import { AppProvider, useApp, useStartPath } from "./context.jsx";
 import { reducedMotion } from "./motion.js";
-import { Logo, Icon, Button, Mark } from "./ui.jsx";
+import { Logo, Icon, Button, Mark, SoonTag } from "./ui.jsx";
+import { isReleased, modeReleased } from "./lib.js";
 import Home from "./Home.jsx";
 import { Reveal, useClosingMotion } from "./ReferenceMotion.jsx";
 import {
@@ -19,8 +20,17 @@ import {
 } from "./Pages.jsx";
 const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
+// Links into updates that aren't released yet lead to the roadmap, tagged "Soon".
+function locked(config, to) {
+  if (to.startsWith("/workspace/")) return !modeReleased(config, to.slice(11));
+  return (
+    ["/developers", "/docs/api", "/account/keys"].includes(to) &&
+    !isReleased(config, "api")
+  );
+}
 function Navigation() {
   const start = useStartPath();
+  const { config } = useApp();
   const [open, setOpen] = useState(false),
     [drop, setDrop] = useState("");
   const location = useLocation();
@@ -119,12 +129,19 @@ function Navigation() {
             </button>
             {drop === group.id && (
               <div className="dropdown">
-                {group.links.map(([to, label]) => (
-                  <Link to={to} key={to}>
-                    {label}
-                    <Icon name="arrow" size={14} />
-                  </Link>
-                ))}
+                {group.links.map(([to, label]) =>
+                  locked(config, to) ? (
+                    <Link to="/roadmap" key={to}>
+                      {label}
+                      <SoonTag />
+                    </Link>
+                  ) : (
+                    <Link to={to} key={to}>
+                      {label}
+                      <Icon name="arrow" size={14} />
+                    </Link>
+                  ),
+                )}
               </div>
             )}
           </div>
@@ -154,6 +171,7 @@ function Navigation() {
 function Footer() {
   const closing = useClosingMotion();
   const start = useStartPath();
+  const { config } = useApp();
   return (
     <>
       <section className="closing-cta" ref={closing}>
@@ -239,11 +257,17 @@ function Footer() {
             ].map((g) => (
               <div className="footer-group" key={g.title}>
                 <span>{g.title}</span>
-                {g.links.map(([t, h]) => (
-                  <Link to={h} key={t}>
-                    {t}
-                  </Link>
-                ))}
+                {g.links.map(([t, h]) =>
+                  locked(config, h) ? (
+                    <Link to="/roadmap" key={t}>
+                      {t} <SoonTag />
+                    </Link>
+                  ) : (
+                    <Link to={h} key={t}>
+                      {t}
+                    </Link>
+                  ),
+                )}
               </div>
             ))}
           </div>

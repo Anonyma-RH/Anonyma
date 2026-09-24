@@ -12,6 +12,8 @@ import {
   BandLines,
   BandSteps,
   CountUp,
+  ComingSoon,
+  SoonTag,
 } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
@@ -23,6 +25,8 @@ import {
   uid,
   walletSign,
   walletAvailable,
+  isReleased,
+  releaseUpdate,
 } from "./lib.js";
 import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
 export default function Account() {
@@ -293,6 +297,7 @@ export default function Account() {
                 className={id === section ? "active" : ""}
               >
                 {label}
+                {id === "keys" && !isReleased(config, "api") && <SoonTag />}
               </Link>
             ))}
           </nav>
@@ -341,7 +346,9 @@ export default function Account() {
           )}
           {section === "overview" && (
             <>
-              {!demo && user && <InviteCard data={referrals} onLoad={setReferrals} />}
+              {!demo && user && isReleased(config, "social") && (
+                <InviteCard data={referrals} onLoad={setReferrals} />
+              )}
               <div className="account-section-head">
                 <h2>Recent activity</h2>
                 <Button secondary to={"/account/credits" + q}>
@@ -533,6 +540,7 @@ export default function Account() {
                     Understand credits <Icon name="arrow" size={15} />
                   </Link>
                 </div>
+                {isReleased(config, "social") && (
                 <form className="form-panel send-credits" onSubmit={sendCredits}>
                   <h2>Send credits</h2>
                   <p>Move credits from your balance to another account. Transfers can't be undone.</p>
@@ -570,10 +578,14 @@ export default function Account() {
                   )}
                   {transfer.result && <Notice type={transfer.result.type}>{transfer.result.text}</Notice>}
                 </form>
+                )}
               </div>
             </div>
           )}
-          {section === "keys" && (
+          {section === "keys" && !isReleased(config, "api") && (
+            <ComingSoon update={releaseUpdate(config, "api")} />
+          )}
+          {section === "keys" && isReleased(config, "api") && (
             <>
               <div className="account-section-head">
                 <div>

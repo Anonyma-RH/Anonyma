@@ -4795,3 +4795,62 @@ td code {
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+/* Unreleased updates */
+.coming-soon {
+  max-width: 560px;
+  margin: 72px auto;
+  padding: 40px;
+  border: 1px solid var(--line);
+  background: #f7f9f0;
+  text-align: left;
+}
+.coming-soon h2 {
+  font-size: 38px;
+  letter-spacing: -0.5px;
+  margin: 6px 0 10px;
+}
+.coming-soon-tagline {
+  font-size: 16px;
+  margin: 0 0 20px;
+}
+.coming-soon ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+  display: grid;
+  gap: 10px;
+}
+.coming-soon li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+}
+.soon-tag {
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid currentColor;
+  opacity: 0.8;
+}
+.locked {
+  opacity: 0.62;
+}
+@media (max-width: 700px) {
+  .coming-soon {
+    margin: 32px 16px;
+    padding: 28px 22px;
+  }
+  .coming-soon h2 {
+    font-size: 30px;
+  }
+}
+.account-tabs .soon-tag {
+  margin-left: 6px;
+  vertical-align: 2px;
+}

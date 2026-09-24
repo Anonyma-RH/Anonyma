@@ -312,6 +312,37 @@ export function Empty({ icon = "models", title, children, action }) {
     </div>
   );
 }
+// Shown in place of an update that hasn't been released yet.
+export function ComingSoon({ update }) {
+  return (
+    <div className="coming-soon">
+      <p className="eyebrow">
+        {update
+          ? `UPDATE ${String(update.number).padStart(2, "0")} · COMING SOON`
+          : "COMING SOON"}
+      </p>
+      <h2>{update?.title || "Coming soon"}</h2>
+      {update && <p className="coming-soon-tagline">{update.tagline}</p>}
+      {update && (
+        <ul>
+          {update.points.map((p) => (
+            <li key={p}>
+              <Icon name="check" size={16} />
+              {p}
+            </li>
+          ))}
+        </ul>
+      )}
+      <Button to="/roadmap">
+        See what's coming <Icon name="arrow" />
+      </Button>
+    </div>
+  );
+}
+// A small "Soon" tag for navigation items that aren't released yet.
+export function SoonTag() {
+  return <span className="soon-tag">Soon</span>;
+}
 export function Notice({ children, type = "" }) {
   return (
     <div

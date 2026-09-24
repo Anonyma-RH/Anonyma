@@ -1,0 +1,130 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import request from "supertest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createApp } from "../server/app.js";
+import { config } from "../server/core.js";
+import { UPDATES, parseReleased } from "../server/releases.js";
+
+const MVP_MODEL = "google/gemini-2.5-flash";
+function fixture(t, released) {
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-releases-"));
+  const svc = createApp({
+    testMode: true,
+    dbPath: join(dir, "test.sqlite"),
+    mediaPath: join(dir, "media"),
+    origin: "http://localhost:5175",
+    released,
+    mvpModels: [MVP_MODEL],
+  });
+  t.after(() => {
+    svc.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  return svc;
+}
+async function signedIn(svc) {
+  const agent = request.agent(svc.app);
+  await agent
+    .post("/api/auth/register")
+    .send({ username: "tester", password: "test-password-long" })
+    .expect(201);
+  return agent;
+}
+const chat = (extra = {}) => ({
+  model: MVP_MODEL,
+  messages: [{ role: "user", content: "Hello" }],
+  max_tokens: 20,
+  ...extra,
+});
+const refused = async (res, title) => {
+  const r = await res.expect(403);
+  assert.equal(r.body.error.code, "feature_unreleased");
+  assert.equal(r.body.error.message, `${title} is coming soon.`);
+};
+
+test("the MVP refuses every unreleased update on the server", async (t) => {
+  const svc = fixture(t, "mvp");
+  const a = await signedIn(svc);
+  await refused(a.post("/api/chat").send(chat({ mode: "code" })), "Code & build");
+  await refused(a.post("/api/conversations").send({ mode: "code" }), "Code & build");
+  await refused(a.post("/api/chat").send(chat({ web_search: true })), "Live web search");
+  await refused(a.post("/api/chat").send(chat({ plugins: [{ id: "web" }] })), "Live web search");
+  await refused(a.post("/api/images").send({ prompt: "x" }), "Image studio");
+  await refused(a.get("/api/audio/models"), "Voice & audio");
+  await refused(a.post("/api/audio/speech").send({}), "Voice & audio");
+  await refused(a.get("/api/videos"), "Video studio");
+  await refused(a.post("/api/videos").send({}), "Video studio");
+  await refused(a.get("/api/collabs"), "Collab");
+  await refused(a.post("/api/collabs/join").send({}), "Collab");
+  await refused(a.post("/api/keys").send({ name: "k" }), "Developer API & CLI");
+  await refused(request(svc.app).get("/v1/models"), "Developer API & CLI");
+  await refused(request(svc.app).post("/v1/chat/completions").send(chat()), "Developer API & CLI");
+  await refused(request(svc.app).get("/install.sh"), "Developer API & CLI");
+  await refused(a.get("/api/referrals"), "Referrals & sending credits");
+  await refused(a.post("/api/credits/send").send({}), "Referrals & sending credits");
+
+  // What the MVP keeps: plain chat, conversations, keys list, credits, account.
+  const r = await a.post("/api/chat").send(chat()).expect(200);
+  assert.match(r.text, /"credits_charged"/);
+  await a.post("/api/conversations").send({ title: "Hi" }).expect(201);
+  await a.get("/api/keys").expect(200);
+  await a.get("/api/deposits").expect(200);
+  await a.get("/api/account/ledger").expect(200);
+});
+
+test("the MVP offers only its chat models", async (t) => {
+  const svc = fixture(t, "mvp");
+  const a = await signedIn(svc);
+  const list = (await a.get("/api/models").expect(200)).body.data;
+  assert.deepEqual(list.map((m) => m.id), [MVP_MODEL]);
+  assert.equal(list[0].callable, true);
+  const other = (await a.post("/api/chat").send(chat({ model: "openai/gpt-4o-mini" })).expect(503)).body;
+  assert.equal(other.error.code, "model_unavailable");
+});
+
+test("releasing an update opens exactly that update", async (t) => {
+  const svc = fixture(t, "mvp,code,catalog");
+  const a = await signedIn(svc);
+  const r = await a.post("/api/chat").send(chat({ mode: "code" })).expect(200);
+  assert.match(r.text, /"credits_charged"/);
+  await refused(a.post("/api/chat").send(chat({ web_search: true })), "Live web search");
+  const list = (await a.get("/api/models").expect(200)).body.data;
+  assert.ok(list.filter((m) => m.type === "chat").length > 1);
+  assert.ok(!list.some((m) => m.type === "video"));
+  const info = (await request(svc.app).get("/api/config").expect(200)).body.releases;
+  assert.equal(info.all, false);
+  assert.equal(info.features.code, true);
+  assert.equal(info.features.search, false);
+  assert.deepEqual(info.updates.map((u) => [u.number, u.id, u.released]).slice(0, 4), [
+    [1, "code", true],
+    [2, "search", false],
+    [3, "images", false],
+    [4, "catalog", true],
+  ]);
+});
+
+test("by default everything is released", async (t) => {
+  const svc = fixture(t, undefined);
+  const info = (await request(svc.app).get("/api/config").expect(200)).body.releases;
+  assert.equal(info.all, true);
+  assert.ok(Object.values(info.features).every(Boolean));
+  const a = await signedIn(svc);
+  await a.get("/api/collabs").expect(200);
+  // Reaches the API's own key check instead of the release gate.
+  await request(svc.app).get("/v1/models").expect(401);
+});
+
+test("release settings are validated", () => {
+  assert.equal(parseReleased("all"), "all");
+  assert.equal(parseReleased(""), "all");
+  assert.deepEqual([...parseReleased("mvp")], []);
+  assert.deepEqual([...parseReleased(" MVP, Code ,search")], ["code", "search"]);
+  assert.throws(() => parseReleased("mvp,vidoe"), /Unknown RELEASED_FEATURES: vidoe/);
+  assert.equal(config({}).released, "all");
+  assert.equal(config({}).mvpModels.length, 10);
+  assert.equal(UPDATES.length, 9);
+  for (const u of UPDATES) assert.equal(u.points.length, 3);
+});

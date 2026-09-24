@@ -21,6 +21,8 @@ import {
   PixelTile,
   BandLines,
   BandSteps,
+  ComingSoon,
+  SoonTag,
 } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
@@ -37,6 +39,10 @@ import {
   messageFromServer,
   toRequestMessage,
   videoPresets,
+  isReleased,
+  modeReleased,
+  releaseUpdate,
+  MODE_FEATURES,
 } from "./lib.js";
 const initial = [
   {
@@ -66,7 +72,7 @@ export function AppSidebar({
   onClose,
 }) {
   const q = demo ? "?demo=1" : "";
-  const { user } = useApp();
+  const { user, config } = useApp();
   const signedIn = !demo && user;
   return (
     <aside className={"app-sidebar " + (open ? "shown" : "")}>
@@ -91,17 +97,25 @@ export function AppSidebar({
           ["audio", "Voice & audio"],
           ["collab", "Collab"],
           ["library", "Your library"],
-        ].map(([id, t]) => (
-          <Link
-            key={id}
-            className={active === id ? "active" : ""}
-            to={"/workspace/" + id + q}
-          >
-            <PixelTile name={id} />
-            {t}
-            {active === id && <span className="nav-active-dot" />}
-          </Link>
-        ))}
+        ].map(([id, t]) =>
+          modeReleased(config, id) ? (
+            <Link
+              key={id}
+              className={active === id ? "active" : ""}
+              to={"/workspace/" + id + q}
+            >
+              <PixelTile name={id} />
+              {t}
+              {active === id && <span className="nav-active-dot" />}
+            </Link>
+          ) : (
+            <Link key={id} className="locked" to="/roadmap">
+              <PixelTile name={id} />
+              {t}
+              <SoonTag />
+            </Link>
+          ),
+        )}
       </nav>
       {children}
       <div className="sidebar-bottom">
@@ -110,9 +124,13 @@ export function AppSidebar({
           Explore models
           <Icon name="diagonal" size={13} />
         </Link>
-        <Link to={"/account/keys" + q}>
+        <Link
+          to={isReleased(config, "api") ? "/account/keys" + q : "/roadmap"}
+          className={isReleased(config, "api") ? "" : "locked"}
+        >
           <PixelTile name="key" />
           Developer API
+          {!isReleased(config, "api") && <SoonTag />}
         </Link>
         <Link to={"/account/credits" + q}>
           <PixelTile name="credits" />
@@ -289,7 +307,7 @@ export default function Workspace() {
     [],
   );
   useEffect(() => {
-    if (!demo && user && mode === "video") {
+    if (!demo && user && mode === "video" && isReleased(config, "video")) {
       let seen = null;
       const poll = () =>
         api("/api/videos")
@@ -931,7 +949,9 @@ export default function Workspace() {
             (mode === "code" && files.length ? "with-code" : "")
           }
         >
-          {mode === "home" ? (
+          {!modeReleased(config, mode) ? (
+            <ComingSoon update={releaseUpdate(config, MODE_FEATURES[mode])} />
+          ) : mode === "home" ? (
             <WorkspaceHome
               demo={demo}
               user={user}
@@ -1315,7 +1335,8 @@ export default function Workspace() {
                           />
                         </label>
                       )}
-                      {["chat", "code"].includes(mode) && (
+                      {["chat", "code"].includes(mode) &&
+                        isReleased(config, "search") && (
                         <button
                           type="button"
                           className={
@@ -1330,7 +1351,8 @@ export default function Workspace() {
                           <span>Web</span>
                         </button>
                       )}
-                      {["chat", "code"].includes(mode) && (
+                      {["chat", "code"].includes(mode) &&
+                        isReleased(config, "audio") && (
                         <MicButton
                           demo={demo}
                           disabled={busy}

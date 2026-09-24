@@ -7,6 +7,7 @@ import {
   walletPaymentInfo,
   walletPaymentsEnabled,
 } from "../wallet-payments.js";
+import { modelReleased, releaseInfo } from "../releases.js";
 import {
   fail,
   balance,
@@ -54,13 +55,16 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
       telegram: cfg.telegram,
       catalogUpdatedAt: models.snapshot.updatedAt,
       readiness: configurationStatus(cfg),
+      releases: releaseInfo(cfg),
     }),
   );
   app.get("/api/models", async (req, res) => {
     const current = await models.current();
     res.json({
       ...current,
-      data: current.data.map((m) => ({
+      data: current.data
+        .filter((m) => modelReleased(m, cfg))
+        .map((m) => ({
         ...m,
         callable: callable(m, cfg),
         imageCapable: imageCallable(m),

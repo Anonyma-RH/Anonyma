@@ -5,6 +5,7 @@ import { config, database, uid } from "./core.js";
 import { assertNoTestCredits } from "./readiness.js";
 import { authRoutes } from "./auth.js";
 import { createLimiter, applyMiddleware, errorHandler } from "./middleware.js";
+import { releaseGuard } from "./releases.js";
 import { createModels } from "./models.js";
 import { createMediaStore } from "./media.js";
 import { createAudioCatalog } from "./audio.js";
@@ -56,6 +57,8 @@ export function createApp(overrides = {}) {
     inflight: { controllers: new Set(), holds: new Set() },
   };
   applyMiddleware(app, cfg);
+  // Features not yet released are refused before any route runs.
+  app.use(releaseGuard(cfg));
   // Registration order matters: Express matches routes in this order, and
   // /v1/* and the /api 404 fallbacks must come after the real endpoints.
   Object.assign(ctx, authRoutes(app, db, cfg, ctx.limit));

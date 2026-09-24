@@ -20,9 +20,9 @@
 .dash-composer textarea::placeholder{color:#7d889c}
 .dash-composer-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--rule)}
 .dash-modes{display:flex;flex-wrap:wrap;gap:2px}
-.dash-modes button{display:flex;align-items:center;gap:6px;padding:7px 9px;border:0;background:none;color:var(--ink);font-size:15px}
-.dash-modes button svg{color:var(--blue)}
-.dash-modes button:hover{background:#eef2fc}
+.dash-modes button,.dash-modes a{display:flex;align-items:center;gap:6px;padding:7px 9px;border:0;background:none;color:var(--ink);font-size:15px}
+.dash-modes button svg,.dash-modes a svg{color:var(--blue)}
+.dash-modes button:hover,.dash-modes a:hover{background:#eef2fc}
 .dash-modes button.on{background:var(--blue);color:#fff}
 .dash-modes button.on svg{color:var(--gold)}
 .dash-composer-go{display:flex;align-items:center;gap:12px;margin-left:auto;font-size:15px;white-space:nowrap}
@@ -108,6 +108,8 @@
 .dash-trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:48px;padding:40px 48px 48px}
 .dash-trio h3{margin:0 0 10px;font-family:"GFS Didot",Georgia,serif;font-weight:400;font-size:25px;line-height:1.15;color:var(--ink);overflow-wrap:anywhere}
 .dash-trio p{margin:0 0 14px;font-size:15.5px;line-height:1.6;color:#33405c;max-width:40ch}
+/* Updates that aren't released yet */
+.dash .soon-tag{margin-left:0;font-family:var(--font);font-weight:400;line-height:1.4;vertical-align:middle;text-decoration:none}
 .dash-trio a,.dash-trio div>button{padding:0;border:0;background:none;font-size:15px;font-weight:700;color:var(--blue);text-decoration:underline;text-underline-offset:3px}
 
 @keyframes dash-rise{from{opacity:0;transform:translateY(.35em)}}

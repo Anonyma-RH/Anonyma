@@ -8,6 +8,11 @@ import {
 import { mkdirSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { videoPresets } from "../data/video-presets.js";
+import {
+  DEFAULT_MVP_MODELS,
+  modelReleased,
+  parseReleased,
+} from "./releases.js";
 
 export const uid = (prefix = "") => prefix + randomBytes(16).toString("hex");
 export const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -108,8 +113,16 @@ export function config(overrides = {}) {
     walletPaymentSymbol: e.WALLET_PAYMENT_SYMBOL || "USDG",
     walletPaymentDecimals: Number(e.WALLET_PAYMENT_DECIMALS ?? 6),
     walletPaymentConfirmations: Number(e.WALLET_PAYMENT_CONFIRMATIONS ?? 10),
+    // Which updates are live ("all", or "mvp" plus update ids) and the MVP's
+    // chat models while the full catalog isn't released.
+    released: e.RELEASED_FEATURES ?? "all",
+    mvpModels: e.MVP_MODELS
+      ? e.MVP_MODELS.split(",").map((v) => v.trim()).filter(Boolean)
+      : DEFAULT_MVP_MODELS,
     ...overrides,
   };
+  if (typeof cfg.released === "string")
+    cfg.released = parseReleased(cfg.released);
   for (const field of [
     "origin",
     "publicUrl",
@@ -516,7 +529,8 @@ export function callable(m, cfg) {
     (cfg.testMode || m.type !== "chat" || !imageCallable(m)) &&
     (!(m.architecture?.output_modalities || []).includes("image") ||
       imageCallable(m)) &&
-    (cfg.testMode || !!cfg.gatewayKey)
+    (cfg.testMode || !!cfg.gatewayKey) &&
+    modelReleased(m, cfg)
   );
 }
 // Published option names mix cases ("2k" and "2K" both appear).

@@ -350,3 +350,23 @@ export async function walletSign(config, link = false) {
     throw walletError(e);
   }
 }
+
+// Released updates (see server/releases.js). Without config (preview or
+// offline) everything counts as released.
+export const isReleased = (config, id) =>
+  config?.releases?.features?.[id] !== false;
+export const releaseUpdate = (config, id) =>
+  config?.releases?.updates?.find((u) => u.id === id) || null;
+// The update each workspace mode belongs to; library needs any media studio.
+export const MODE_FEATURES = {
+  code: "code",
+  image: "images",
+  video: "video",
+  audio: "audio",
+  collab: "collab",
+};
+export function modeReleased(config, mode) {
+  if (mode === "library")
+    return ["images", "video", "audio"].some((id) => isReleased(config, id));
+  return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
+}

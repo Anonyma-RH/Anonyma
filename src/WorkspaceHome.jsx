@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PixelIcon, CountUp } from "./ui.jsx";
+import { PixelIcon, CountUp, SoonTag } from "./ui.jsx";
 import { useApp } from "./context.jsx";
-import { api } from "./lib.js";
+import { api, isReleased, modeReleased } from "./lib.js";
 import "./dashboard.css";
 
 // The workspace dashboard: greeting and composer, the balance, where the
@@ -29,6 +29,7 @@ const modeNames = {
   audio: "Voice",
   collab: "Collab",
 };
+const studioNames = { image: "image", video: "video", audio: "voice" };
 const kindNames = { chat: "Chat & code", image: "Images", video: "Video", audio: "Voice" };
 const kindNouns = {
   chat: ["chat", "chats"],
@@ -145,6 +146,19 @@ function Tile({ name }) {
   );
 }
 
+// A corner for an update that isn't out yet: what it will do, and the roadmap.
+function SoonCorner({ title, children }) {
+  return (
+    <div>
+      <h3>
+        {title} <SoonTag />
+      </h3>
+      <p>{children}</p>
+      <Link to="/roadmap">See the roadmap</Link>
+    </div>
+  );
+}
+
 function SpendChart({ days }) {
   const [active, setActive] = useState(null);
   const top = Math.max(0, ...days.map((d) => d.spent));
@@ -201,6 +215,14 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
   const [copied, setCopied] = useState(false);
   const [data, setData] = useState(() => (demo ? demoData() : {}));
   const [jobs, setJobs] = useState([]);
+  // Updates that aren't out yet stay locked here, and their endpoints answer 403.
+  const live = {
+    collab: isReleased(config, "collab"),
+    social: isReleased(config, "social"),
+    api: isReleased(config, "api"),
+    video: isReleased(config, "video"),
+    search: isReleased(config, "search"),
+  };
 
   useEffect(() => {
     if (demo) return setData(demoData());
@@ -210,13 +232,14 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
         .then((r) => setData((d) => ({ ...d, [key]: pick(r) })))
         .catch(() => {});
     get("/api/account/summary?tz=" + new Date().getTimezoneOffset(), "summary");
-    get("/api/collabs", "collabs", (r) => r.data || []);
-    get("/api/referrals", "referrals");
-    get("/api/keys", "keys", (r) => r.data || []);
-    api("/api/videos")
-      .then((r) => setJobs(r.data || []))
-      .catch(() => {});
-  }, [demo, user?.id]);
+    if (live.collab) get("/api/collabs", "collabs", (r) => r.data || []);
+    if (live.social) get("/api/referrals", "referrals");
+    if (live.api) get("/api/keys", "keys", (r) => r.data || []);
+    if (live.video)
+      api("/api/videos")
+        .then((r) => setJobs(r.data || []))
+        .catch(() => {});
+  }, [demo, user?.id, live.collab, live.social, live.api, live.video]);
 
   const { summary, collabs, referrals, keys } = data;
   const running = jobs.filter((j) =>
@@ -308,6 +331,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
   const activeKeys = (keys || []).filter((k) => !k.revoked);
   const key = activeKeys.find((k) => k.cap != null) || activeKeys[0];
   const creations = media.slice(0, 3);
+  const studio = ["image", "video", "audio"].find((m) => modeReleased(config, m));
 
   return (
     <div className="dash">
@@ -375,21 +399,30 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
           />
           <div className="dash-composer-bar">
             <div className="dash-modes" role="group" aria-label="Workflow">
-              {modes.map(([id, label]) => (
-                <button
-                  type="button"
-                  key={id}
-                  aria-pressed={tab === id}
-                  className={tab === id ? "on" : ""}
-                  onClick={() => setTab(id)}
-                >
-                  <PixelIcon name={id} size={13} />
-                  {label}
-                </button>
-              ))}
+              {modes.map(([id, label]) =>
+                modeReleased(config, id) ? (
+                  <button
+                    type="button"
+                    key={id}
+                    aria-pressed={tab === id}
+                    className={tab === id ? "on" : ""}
+                    onClick={() => setTab(id)}
+                  >
+                    <PixelIcon name={id} size={13} />
+                    {label}
+                  </button>
+                ) : (
+                  // Not released yet: a link to the roadmap, never a mode to start.
+                  <Link key={id} to="/roadmap" className="locked">
+                    <PixelIcon name={id} size={13} />
+                    {label}
+                    <SoonTag />
+                  </Link>
+                ),
+              )}
             </div>
             <div className="dash-composer-go">
-              {(tab === "chat" || tab === "code") && (
+              {(tab === "chat" || tab === "code") && live.search && (
                 <button
                   type="button"
                   className={"dash-web" + (web ? " on" : "")}
@@ -435,7 +468,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
                 <Link className="solid" to={"/account/credits" + q}>
                   Add credits
                 </Link>
-                <Link to={"/account/credits" + q}>Send credits</Link>
+                {live.social && <Link to={"/account/credits" + q}>Send credits</Link>}
               </div>
             </>
           ) : (
@@ -526,7 +559,11 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
           {creations.length ? (
             <div className={"dash-gallery n" + creations.length}>
               {creations.map((m) => (
-                <Link key={m.id} to={"/workspace/" + m.kind + q} className={"dash-figure " + m.kind}>
+                <Link
+                  key={m.id}
+                  to={modeReleased(config, m.kind) ? "/workspace/" + m.kind + q : "/roadmap"}
+                  className={"dash-figure " + m.kind}
+                >
                   {m.kind === "audio" ? (
                     <span className="dash-wave" aria-hidden="true">
                       {Array.from({ length: 28 }, (_, i) => (
@@ -547,8 +584,16 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
             </div>
           ) : (
             <p className="dash-empty">
-              Images, videos and voice clips you make will show up here.{" "}
-              <Link to={"/workspace/image" + q}>Open the image studio</Link>
+              {studio ? (
+                <>
+                  Images, videos and voice clips you make will show up here.{" "}
+                  <Link to={"/workspace/" + studio + q}>Open the {studioNames[studio]} studio</Link>
+                </>
+              ) : (
+                <>
+                  The image, video and voice studios are coming soon. <Link to="/roadmap">See the roadmap</Link>
+                </>
+              )}
             </p>
           )}
         </div>
@@ -556,54 +601,72 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
 
       {(demo || user) && (
         <section className="dash-trio" style={{ "--i": 3 }}>
-          <div>
-            {collabs?.length ? (
-              <>
-                <h3>{collabs[0].name}</h3>
-                <p>
-                  {plural(collabs[0].members, "member")}, and you're the {collabs[0].role}.
-                  {collabs.length > 1 && ` You're in ${plural(collabs.length - 1, "other collab")} too.`}
-                </p>
-                <Link to={"/workspace/collab" + q}>Open the collab</Link>
-              </>
-            ) : (
-              <>
-                <h3>Work together</h3>
-                <p>Share conversations with up to 11 other people. Everyone pays for their own requests.</p>
-                <Link to={"/workspace/collab" + q}>Start a collab</Link>
-              </>
-            )}
-          </div>
-          <div>
-            <h3>Invite a friend</h3>
-            <p>
-              {referrals
-                ? `You get ${referrals.percent}% of what they add. ` +
-                  (referrals.invited
-                    ? `${plural(referrals.invited, "person has", "people have")} joined through your link so far, earning you ${fmt(referrals.earned)} credits.`
-                    : "Nobody has joined through your link yet.")
-                : "Share your link and earn a share of what your friends add."}
-            </p>
-            {referrals?.link ? (
-              <button type="button" onClick={copyInvite}>
-                {copied ? "Link copied" : "Copy your link"}
-              </button>
-            ) : (
-              <Link to={"/account" + q}>See your link</Link>
-            )}
-          </div>
-          <div>
-            <h3>API keys</h3>
-            <p>
-              {key
-                ? (key.cap != null
-                    ? `“${key.name}” has used ${fmt(key.spent)} of its ${fmt(key.cap)} daily credits.`
-                    : `“${key.name}” has used ${fmt(key.spent)} credits in the last 24 hours.`) +
-                  (activeKeys.length > 1 ? ` You have ${plural(activeKeys.length - 1, "other key")}.` : "")
-                : "Use your balance from code, the CLI or any OpenAI-compatible tool."}
-            </p>
-            <Link to={"/account/keys" + q}>{key ? "Manage keys" : "Create a key"}</Link>
-          </div>
+          {live.collab ? (
+            <div>
+              {collabs?.length ? (
+                <>
+                  <h3>{collabs[0].name}</h3>
+                  <p>
+                    {plural(collabs[0].members, "member")}, and you're the {collabs[0].role}.
+                    {collabs.length > 1 && ` You're in ${plural(collabs.length - 1, "other collab")} too.`}
+                  </p>
+                  <Link to={"/workspace/collab" + q}>Open the collab</Link>
+                </>
+              ) : (
+                <>
+                  <h3>Work together</h3>
+                  <p>Share conversations with up to 11 other people. Everyone pays for their own requests.</p>
+                  <Link to={"/workspace/collab" + q}>Start a collab</Link>
+                </>
+              )}
+            </div>
+          ) : (
+            <SoonCorner title="Work together">
+              Share conversations with up to 11 other people. Everyone pays for their own requests.
+            </SoonCorner>
+          )}
+          {live.social ? (
+            <div>
+              <h3>Invite a friend</h3>
+              <p>
+                {referrals
+                  ? `You get ${referrals.percent}% of what they add. ` +
+                    (referrals.invited
+                      ? `${plural(referrals.invited, "person has", "people have")} joined through your link so far, earning you ${fmt(referrals.earned)} credits.`
+                      : "Nobody has joined through your link yet.")
+                  : "Share your link and earn a share of what your friends add."}
+              </p>
+              {referrals?.link ? (
+                <button type="button" onClick={copyInvite}>
+                  {copied ? "Link copied" : "Copy your link"}
+                </button>
+              ) : (
+                <Link to={"/account" + q}>See your link</Link>
+              )}
+            </div>
+          ) : (
+            <SoonCorner title="Invite a friend">
+              Share your link and earn a share of what your friends add, or send credits to any account.
+            </SoonCorner>
+          )}
+          {live.api ? (
+            <div>
+              <h3>API keys</h3>
+              <p>
+                {key
+                  ? (key.cap != null
+                      ? `“${key.name}” has used ${fmt(key.spent)} of its ${fmt(key.cap)} daily credits.`
+                      : `“${key.name}” has used ${fmt(key.spent)} credits in the last 24 hours.`) +
+                    (activeKeys.length > 1 ? ` You have ${plural(activeKeys.length - 1, "other key")}.` : "")
+                  : "Use your balance from code, the CLI or any OpenAI-compatible tool."}
+              </p>
+              <Link to={"/account/keys" + q}>{key ? "Manage keys" : "Create a key"}</Link>
+            </div>
+          ) : (
+            <SoonCorner title="API keys">
+              Use your balance from code, the CLI or any OpenAI-compatible tool.
+            </SoonCorner>
+          )}
         </section>
       )}
     </div>

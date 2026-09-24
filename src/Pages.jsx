@@ -712,60 +712,67 @@ export function Article() {
     </main>
   );
 }
+// What ships at launch; everything else comes from config.releases.updates.
+const launch = {
+  id: "mvp",
+  number: 0,
+  title: "Chat & credits",
+  tagline: "Top models on one prepaid balance.",
+  points: [
+    "Chat with top models from leading labs",
+    "One prepaid credit balance",
+    "Pay with USDG on Robinhood Chain from your own wallet",
+    "No subscription",
+  ],
+  released: true,
+};
 export function Roadmap() {
+  const { config } = useApp();
+  const updates = config?.releases?.updates || [];
+  // Live first (launch, then released updates), then what's coming, in order.
+  const cards = [
+    launch,
+    ...updates.filter((u) => u.released),
+    ...updates.filter((u) => !u.released),
+  ];
+  const pending = cards.some((u) => !u.released);
   return (
     <main id="main">
       <PageIntro
         eyebrow="THE ROAD AHEAD"
         title={
           <>
-            Room to grow.
+            Live now,
             <br />
-            Built with intention.
+            and what's next.
           </>
         }
       >
-        A clear view of what you can explore today and what comes next.
+        {pending
+          ? "What you can use today comes first. The rest ships as numbered updates, in the order below."
+          : "Everything below is live today, on one prepaid balance."}
       </PageIntro>
       <div className="content-width roadmap-grid">
-        {[
-          [
-            "Explore now",
-            "Frontend preview",
-            "Public site and model discovery",
-            "Interactive workspace demo",
-            "Credit calculator and guides",
-            "Account and developer-key UI",
-          ],
-          [
-            "Connect next",
-            "Backend integration",
-            "Account authentication and ownership",
-            "Verified AI generation and receipts",
-            "Payment confirmation and funding",
-            "Private history and media persistence",
-          ],
-          [
-            "Further ahead",
-            "Planned · not available",
-            "Routing and model recommendations",
-            "Audio workflows",
-            "Memory and model fusion",
-            "Optional token utility",
-          ],
-        ].map(([title, status, ...items], i) => (
-          <article key={title}>
+        {cards.map((u, i) => (
+          <article key={u.id}>
             <span
-              className={"roadmap-number " + ["mint", "lavender", "yellow"][i]}
+              className={
+                "roadmap-number " + ["mint", "lavender", "yellow"][i % 3]
+              }
             >
-              0{i + 1}
+              {String(u.number).padStart(2, "0")}
             </span>
-            <p className="eyebrow">{status}</p>
-            <h2>{title}</h2>
+            <p className="eyebrow">
+              {u.number
+                ? `UPDATE ${String(u.number).padStart(2, "0")} · ${u.released ? "LIVE NOW" : "COMING SOON"}`
+                : "LIVE NOW"}
+            </p>
+            <h2>{u.title}</h2>
+            <p className="coming-soon-tagline">{u.tagline}</p>
             <ul>
-              {items.map((t) => (
+              {u.points.map((t) => (
                 <li key={t}>
-                  <Icon name={i === 0 ? "check" : "history"} size={17} />
+                  <Icon name={u.released ? "check" : "history"} size={17} />
                   {t}
                 </li>
               ))}

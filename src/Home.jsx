@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Icon, Mark } from "./ui.jsx";
+import { Icon, Mark, SoonTag } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { Reveal, useHeroMotion } from "./ReferenceMotion.jsx";
 import ReferenceFlow from "./ReferenceFlow.jsx";
-import { useStartPath } from "./context.jsx";
+import { useApp, useStartPath } from "./context.jsx";
+import { isReleased } from "./lib.js";
 import { reducedMotion, setMotion, useReducedMotion } from "./motion.js";
 
 const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
@@ -228,6 +229,7 @@ const capabilities = [
     description: "Visual creation in one workspace.",
     items: ["Image generation", "Reference images", "Asynchronous video"],
     to: "/workspace/image",
+    feature: "images",
   },
   {
     title: "Credits & API",
@@ -238,6 +240,9 @@ const capabilities = [
 ];
 function Capabilities() {
   const start = useStartPath();
+  const { config } = useApp();
+  // A card for an update that isn't released yet leads to the roadmap.
+  const soon = (c) => c.feature && !isReleased(config, c.feature);
   const [slide, setSlide] = useState(0);
   return (
     <section className="n-capabilities" id="platform">
@@ -253,13 +258,22 @@ function Capabilities() {
         <div className="n-capability-grid" style={{ "--slide": slide }}>
           {capabilities.map((c, i) => (
             <Link
-              to={c.to.startsWith("/workspace") ? start(c.to) : c.to}
+              to={
+                soon(c)
+                  ? "/roadmap"
+                  : c.to.startsWith("/workspace")
+                    ? start(c.to)
+                    : c.to
+              }
               className="n-capability"
               key={c.title}
             >
               <img src={`/reference/capability-${i + 1}.svg`} alt="" />
               <div>
-                <h3>{c.title}</h3>
+                <h3>
+                  {c.title}
+                  {soon(c) && <> <SoonTag /></>}
+                </h3>
                 <p>{c.description}</p>
                 <ul>
                   {c.items.map((t) => (

@@ -7,6 +7,7 @@ import { authRoutes } from "./auth.js";
 import { createLimiter, applyMiddleware, errorHandler } from "./middleware.js";
 import { createModels } from "./models.js";
 import { createMediaStore } from "./media.js";
+import { createAudioCatalog } from "./audio.js";
 import { createWorker } from "./worker.js";
 import { catalogRoutes } from "./routes/catalog.js";
 import { conversationRoutes } from "./routes/conversations.js";
@@ -14,6 +15,7 @@ import { apiRoutes } from "./routes/api.js";
 import { chatRoutes } from "./routes/chat.js";
 import { mediaRoutes } from "./routes/media.js";
 import { videoRoutes } from "./routes/videos.js";
+import { audioRoutes } from "./routes/audio.js";
 import { accountRoutes } from "./routes/account.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { siteRoutes } from "./routes/site.js";
@@ -46,6 +48,7 @@ export function createApp(overrides = {}) {
     limit: createLimiter(),
     models: createModels(cfg),
     media: createMediaStore(db, cfg),
+    audio: createAudioCatalog(cfg),
     inflight: { controllers: new Set(), holds: new Set() },
   };
   applyMiddleware(app, cfg);
@@ -58,6 +61,7 @@ export function createApp(overrides = {}) {
   chatRoutes(ctx);
   mediaRoutes(ctx);
   videoRoutes(ctx);
+  audioRoutes(ctx);
   const worker = createWorker(ctx);
   accountRoutes(ctx);
   paymentRoutes(ctx);

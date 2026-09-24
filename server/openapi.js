@@ -109,7 +109,7 @@ const schemas = {
   ApiChatRequest: apiChat,
   Media: object({
     id: string,
-    kind: { enum: ["image", "video"] },
+    kind: { enum: ["image", "video", "audio"] },
     mime: string,
     prompt: string,
     model: string,
@@ -437,6 +437,70 @@ route("post", "/api/videos", "Submit durable video job", {
 });
 route("get", "/api/videos", "List latest 60 jobs", {
   response: object({ data: array(ref("Video")) }),
+});
+route("get", "/api/audio/models", "List speech models, voices and prices", {
+  auth: null,
+  response: object({
+    tts: array(
+      object({
+        id: string,
+        name: string,
+        char_limit: integer,
+        credits_per_1k_chars: number,
+        voices: array(object({ id: string, name: string, language: string })),
+      }),
+    ),
+    stt: array(
+      object({
+        id: string,
+        name: string,
+        credits_per_minute: number,
+        max_minutes: integer,
+      }),
+    ),
+  }),
+});
+route(
+  "post",
+  "/api/audio/speech",
+  "Turn text into speech saved to the library",
+  {
+    body: object(
+      {
+        model: string,
+        text: { ...string, maxLength: 5000 },
+        voice: string,
+        language: string,
+        requestId,
+      },
+      ["model", "text"],
+    ),
+    response: object({ data: ref("Media"), receipt: object() }),
+    description:
+      "Charged per character at the model's published rate; the audio file is stored privately with kind audio.",
+  },
+);
+route("post", "/api/audio/transcriptions", "Transcribe a recording", {
+  body: object(
+    {
+      audio: {
+        ...string,
+        description:
+          "base64 audio data URL (webm, ogg, mp4, mpeg, wav), up to 10 MB",
+      },
+      model: string,
+      language: string,
+      requestId,
+    },
+    ["audio"],
+  ),
+  response: object({
+    text: string,
+    duration: { type: ["number", "null"] },
+    receipt: object(),
+  }),
+  description:
+    "Holds the cost of 10 minutes and charges the transcribed duration. Longer recordings are charged at most 10 minutes.",
 });
 route("get", "/api/media", "List private workspace library", {
   response: object({ data: array(ref("Media")) }),

@@ -25,6 +25,7 @@ import {
 import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
 import WorkspaceHome from "./WorkspaceHome.jsx";
+import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import {
   api,
   streamChat,
@@ -86,6 +87,7 @@ export function AppSidebar({
           ["code", "Code & build"],
           ["image", "Images"],
           ["video", "Video"],
+          ["audio", "Voice & audio"],
           ["library", "Your library"],
         ].map(([id, t]) => (
           <Link
@@ -168,7 +170,7 @@ export default function Workspace() {
   const controller = useRef(),
     timer = useRef(),
     streamEnd = useRef();
-  const validMode = ["home", "chat", "code", "image", "video", "library"].includes(
+  const validMode = ["home", "chat", "code", "image", "video", "audio", "library"].includes(
     mode,
   );
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
@@ -751,6 +753,7 @@ export default function Workspace() {
                 code: "Code & build",
                 image: "Image studio",
                 video: "Video studio",
+                audio: "Voice studio",
                 library: "Your library",
               }[mode]
             }
@@ -832,7 +835,7 @@ export default function Workspace() {
                 </Button>
               </div>
               <div className="filter-tabs">
-                {["all", "image", "video"].map((f) => (
+                {["all", "image", "video", "audio"].map((f) => (
                   <button
                     aria-pressed={f === filter}
                     className={f === filter ? "active" : ""}
@@ -843,7 +846,9 @@ export default function Workspace() {
                       ? "Everything"
                       : f === "image"
                         ? "Images"
-                        : "Video"}
+                        : f === "video"
+                          ? "Video"
+                          : "Audio"}
                   </button>
                 ))}
               </div>
@@ -858,10 +863,21 @@ export default function Workspace() {
                   icon="image"
                   title="A little empty. Full of possibility."
                 >
-                  Your completed images and videos will appear here.
+                  Your completed images, videos and audio will appear here.
                 </Empty>
               )}
             </div>
+          ) : mode === "audio" ? (
+            <AudioStudio
+              demo={demo}
+              user={user}
+              config={config}
+              media={media}
+              setMedia={setMedia}
+              refresh={refresh}
+              onDelete={(item) => setDialog({ type: "media", item })}
+              Grid={MediaGrid}
+            />
           ) : (
             <>
               <div className="chat-area">
@@ -1086,6 +1102,14 @@ export default function Workspace() {
                             onChange={addFiles}
                           />
                         </label>
+                      )}
+                      {["chat", "code"].includes(mode) && (
+                        <MicButton
+                          demo={demo}
+                          disabled={busy}
+                          onText={(t) => setPrompt((p) => (p.trim() ? p.trimEnd() + " " + t : t))}
+                          onError={setError}
+                        />
                       )}
                       {mode === "image" && (
                         <select
@@ -1363,7 +1387,12 @@ function MediaGrid({ media, onDelete }) {
     <div className="media-grid">
       {media.map((m) => (
         <article key={m.id}>
-          {m.kind === "video" ? (
+          {m.kind === "audio" ? (
+            <div className="audio-card">
+              <Icon name="audio" size={28} />
+              <audio controls preload="metadata" src={m.url} />
+            </div>
+          ) : m.kind === "video" ? (
             <video
               controls
               playsInline

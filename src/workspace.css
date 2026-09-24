@@ -408,3 +408,10 @@
 .app-shell .video-image-field input{font:inherit;font-size:13px;color:var(--work-ink);border:1px solid var(--work-line);background:#fff;padding:9px 10px;border-radius:2px;min-height:38px}
 .app-shell .video-image-field input:focus{outline:2px solid #0135df;outline-offset:1px}
 .app-shell .composer-controls>div{flex-wrap:wrap;row-gap:8px}
+/* Voice & audio */
+.app-shell .audio-card{display:flex;flex-direction:column;gap:14px;align-items:flex-start;justify-content:center;padding:28px 22px;aspect-ratio:16/9;background:linear-gradient(135deg,#0135df,#1b4bf2);color:#fff}
+.app-shell .audio-card audio{width:100%}
+.app-shell .mic-button{display:inline-flex;align-items:center;gap:6px;background:none;cursor:pointer}
+.app-shell .mic-button.recording{color:#fff;background:#d92d20;border-color:#d92d20}
+.app-shell .mic-button.transcribing{opacity:.6;cursor:progress}
+.app-shell .mic-time{font-size:12px;font-variant-numeric:tabular-nums}

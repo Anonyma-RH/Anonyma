@@ -29,7 +29,7 @@ export const PROVIDER_REFUSALS = new Set([
 // 401/402/403 mean the operator's gateway account (key, funding, access) is
 // at fault and 429 means the gateway is throttling us; neither is the
 // user's request, so they are reported as a temporary service condition.
-function providerFailure(status, detail, label = "Provider") {
+export function providerFailure(status, detail, label = "Provider") {
   if ([401, 402, 403].includes(status)) {
     console.error(
       `${label} refused the gateway account (${status}). Check the gateway key and its funding.`,

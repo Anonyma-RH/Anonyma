@@ -99,7 +99,13 @@ export function createMediaStore(db, cfg) {
     if (bytes.length > 100 * 1024 * 1024)
       fail(502, "Generated file too large.");
     const id = uid("asset_"),
-      ext = mime === "video/mp4" ? "mp4" : mime.split("/")[1];
+      ext =
+        {
+          "video/mp4": "mp4",
+          "audio/mpeg": "mp3",
+          "audio/x-wav": "wav",
+          "audio/mp4": "m4a",
+        }[mime] || mime.split("/")[1];
     const filename = id + "." + ext;
     writeFileSync(join(cfg.mediaPath, filename), bytes, { mode: 0o600 });
     db.prepare(

@@ -1,0 +1,23 @@
+/* Veil: composer toggle, popover and inline marks. Scoped under .app-shell
+   so it can reuse the workspace's --work-* variables and 2px corner radius. */
+.app-shell .veil-toggle{display:inline-flex;align-items:center;gap:6px;background:none;cursor:pointer;font-size:13px}
+.app-shell .veil-toggle.on{color:#fff;background:#0135df;border-color:#0135df}
+.app-shell .veil-panel{position:relative}
+.app-shell .veil-panel summary{list-style:none;cursor:pointer;color:#0135df;font-size:10px;white-space:nowrap}
+.app-shell .veil-panel summary::-webkit-details-marker{display:none}
+.app-shell .veil-popover{position:absolute;bottom:100%;left:0;margin-bottom:8px;width:280px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--work-line);border-radius:2px;box-shadow:0 18px 40px rgba(1,20,90,.18);padding:14px;font-size:12px;color:var(--work-ink);z-index:20}
+.app-shell .veil-popover p{margin:0 0 8px;font-size:11px;color:var(--work-muted)}
+.app-shell .veil-entries{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--work-line)}
+.app-shell .veil-entries ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:160px;overflow:auto}
+.app-shell .veil-entries li{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.app-shell .veil-entries code{color:#0135df;background:#edf2ff;padding:1px 5px;border-radius:2px;font-size:10px;white-space:nowrap}
+.app-shell .veil-entries span{color:var(--work-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.app-shell .veil-word-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.app-shell .veil-word{display:inline-flex;align-items:center;gap:4px;background:var(--work-surface);border:1px solid var(--work-line);border-radius:2px;padding:4px 6px;font-size:11px;color:var(--work-ink)}
+.app-shell .veil-word button{color:var(--work-muted);display:inline-flex}
+.app-shell .veil-words form{display:flex;gap:6px}
+.app-shell .veil-words input{flex:1;min-width:0;font:inherit;font-size:12px;border:1px solid var(--work-line);background:#fff;border-radius:2px;padding:7px 8px;color:var(--work-ink)}
+.app-shell .veil-words .small-button{padding:0 10px}
+/* Inline mark for a restored value: the model only ever saw the tag. */
+.app-shell .veil-mark{text-decoration:underline dotted;text-decoration-color:#8aa0d6;text-underline-offset:3px;cursor:help}
+@media(max-width:700px){.app-shell .veil-popover{width:240px}}

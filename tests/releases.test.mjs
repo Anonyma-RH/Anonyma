@@ -48,23 +48,23 @@ const refused = async (res, title) => {
 test("the MVP refuses every unreleased update on the server", async (t) => {
   const svc = fixture(t, "mvp");
   const a = await signedIn(svc);
-  await refused(a.post("/api/chat").send(chat({ mode: "code" })), "Code & build");
-  await refused(a.post("/api/conversations").send({ mode: "code" }), "Code & build");
-  await refused(a.post("/api/chat").send(chat({ web_search: true })), "Live web search");
-  await refused(a.post("/api/chat").send(chat({ plugins: [{ id: "web" }] })), "Live web search");
-  await refused(a.post("/api/images").send({ prompt: "x" }), "Image studio");
-  await refused(a.get("/api/audio/models"), "Voice & audio");
-  await refused(a.post("/api/audio/speech").send({}), "Voice & audio");
-  await refused(a.get("/api/videos"), "Video studio");
-  await refused(a.post("/api/videos").send({}), "Video studio");
+  await refused(a.post("/api/chat").send(chat({ mode: "code" })), "Code & Build");
+  await refused(a.post("/api/conversations").send({ mode: "code" }), "Code & Build");
+  await refused(a.post("/api/chat").send(chat({ web_search: true })), "Live Web Search");
+  await refused(a.post("/api/chat").send(chat({ plugins: [{ id: "web" }] })), "Live Web Search");
+  await refused(a.post("/api/images").send({ prompt: "x" }), "Image Studio");
+  await refused(a.get("/api/audio/models"), "Voice & Audio");
+  await refused(a.post("/api/audio/speech").send({}), "Voice & Audio");
+  await refused(a.get("/api/videos"), "Video Studio");
+  await refused(a.post("/api/videos").send({}), "Video Studio");
   await refused(a.get("/api/collabs"), "Collab");
   await refused(a.post("/api/collabs/join").send({}), "Collab");
   await refused(a.post("/api/keys").send({ name: "k" }), "Developer API & CLI");
   await refused(request(svc.app).get("/v1/models"), "Developer API & CLI");
   await refused(request(svc.app).post("/v1/chat/completions").send(chat()), "Developer API & CLI");
   await refused(request(svc.app).get("/install.sh"), "Developer API & CLI");
-  await refused(a.get("/api/referrals"), "Referrals & sending credits");
-  await refused(a.post("/api/credits/send").send({}), "Referrals & sending credits");
+  await refused(a.get("/api/referrals"), "Referrals & Credits");
+  await refused(a.post("/api/credits/send").send({}), "Referrals & Credits");
 
   // What the MVP keeps: plain chat, conversations, keys list, credits, account.
   const r = await a.post("/api/chat").send(chat()).expect(200);
@@ -90,7 +90,7 @@ test("releasing an update opens exactly that update", async (t) => {
   const a = await signedIn(svc);
   const r = await a.post("/api/chat").send(chat({ mode: "code" })).expect(200);
   assert.match(r.text, /"credits_charged"/);
-  await refused(a.post("/api/chat").send(chat({ web_search: true })), "Live web search");
+  await refused(a.post("/api/chat").send(chat({ web_search: true })), "Live Web Search");
   const list = (await a.get("/api/models").expect(200)).body.data;
   assert.ok(list.filter((m) => m.type === "chat").length > 1);
   assert.ok(!list.some((m) => m.type === "video"));

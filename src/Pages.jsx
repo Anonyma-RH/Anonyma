@@ -713,10 +713,22 @@ export function Article() {
   );
 }
 // What ships at launch; everything else comes from config.releases.updates.
+// Features are presented by name, never by release number.
+const featureIcons = {
+  mvp: "chat",
+  code: "code",
+  search: "globe",
+  images: "image",
+  catalog: "models",
+  audio: "audio",
+  video: "video",
+  collab: "users",
+  api: "key",
+  social: "gift",
+};
 const launch = {
   id: "mvp",
-  number: 0,
-  title: "Chat & credits",
+  title: "Chat & Credits",
   tagline: "Top models on one prepaid balance.",
   points: [
     "Chat with top models from leading labs",
@@ -749,7 +761,7 @@ export function Roadmap() {
         }
       >
         {pending
-          ? "What you can use today comes first. The rest ships as numbered updates, in the order below."
+          ? "What you can use today comes first. The rest arrives feature by feature, in the order below."
           : "Everything below is live today, on one prepaid balance."}
       </PageIntro>
       <div className="content-width roadmap-grid">
@@ -760,13 +772,9 @@ export function Roadmap() {
                 "roadmap-number " + ["mint", "lavender", "yellow"][i % 3]
               }
             >
-              {String(u.number).padStart(2, "0")}
+              <Icon name={featureIcons[u.id] || "chat"} size={20} />
             </span>
-            <p className="eyebrow">
-              {u.number
-                ? `UPDATE ${String(u.number).padStart(2, "0")} · ${u.released ? "LIVE NOW" : "COMING SOON"}`
-                : "LIVE NOW"}
-            </p>
+            <p className="eyebrow">{u.released ? "LIVE NOW" : "COMING SOON"}</p>
             <h2>{u.title}</h2>
             <p className="coming-soon-tagline">{u.tagline}</p>
             <ul>

@@ -1,7 +1,7 @@
 import { fail } from "./core.js";
 
 // The app launches as an MVP (chat with a short list of models, credits and
-// the account) and the rest ships as numbered updates. RELEASED_FEATURES
+// the account) and the rest ships as named feature releases, in this order. RELEASED_FEATURES
 // lists the updates that are live: "all" (the default) or "mvp" plus any
 // update ids, e.g. "mvp,code,search". Until an update is released the server
 // refuses its routes and the app shows it as coming soon. The copy here also
@@ -9,7 +9,7 @@ import { fail } from "./core.js";
 export const UPDATES = [
   {
     id: "code",
-    title: "Code & build",
+    title: "Code & Build",
     tagline: "Build with your favorite models.",
     points: [
       "A dedicated code mode",
@@ -19,7 +19,7 @@ export const UPDATES = [
   },
   {
     id: "search",
-    title: "Live web search",
+    title: "Live Web Search",
     tagline: "Answers from the live web, with sources.",
     points: [
       "One tap on Web in any chat",
@@ -29,7 +29,7 @@ export const UPDATES = [
   },
   {
     id: "images",
-    title: "Image studio",
+    title: "Image Studio",
     tagline: "Turn words into images.",
     points: [
       "Leading image models",
@@ -39,7 +39,7 @@ export const UPDATES = [
   },
   {
     id: "catalog",
-    title: "Full model catalog",
+    title: "Full Model Catalog",
     tagline: "Hundreds of models. One balance.",
     points: [
       "Models from OpenAI, Anthropic, Google and more",
@@ -49,7 +49,7 @@ export const UPDATES = [
   },
   {
     id: "audio",
-    title: "Voice & audio",
+    title: "Voice & Audio",
     tagline: "Talk to it. Hear it back.",
     points: [
       "Natural text-to-speech voices",
@@ -59,7 +59,7 @@ export const UPDATES = [
   },
   {
     id: "video",
-    title: "Video studio",
+    title: "Video Studio",
     tagline: "Direct AI video.",
     points: [
       "Text and image to video",
@@ -89,7 +89,7 @@ export const UPDATES = [
   },
   {
     id: "social",
-    title: "Referrals & sending credits",
+    title: "Referrals & Credits",
     tagline: "Share it. Earn from it.",
     points: [
       "Earn a share of friends' deposits",

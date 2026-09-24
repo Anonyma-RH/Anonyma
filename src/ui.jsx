@@ -316,11 +316,7 @@ export function Empty({ icon = "models", title, children, action }) {
 export function ComingSoon({ update }) {
   return (
     <div className="coming-soon">
-      <p className="eyebrow">
-        {update
-          ? `UPDATE ${String(update.number).padStart(2, "0")} · COMING SOON`
-          : "COMING SOON"}
-      </p>
+      <p className="eyebrow">COMING SOON</p>
       <h2>{update?.title || "Coming soon"}</h2>
       {update && <p className="coming-soon-tagline">{update.tagline}</p>}
       {update && (

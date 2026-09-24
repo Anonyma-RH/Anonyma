@@ -248,3 +248,13 @@ test("only the owner, or the collab owner for a shared conversation, can set ret
   const detail = (await ana.get("/api/conversations/" + shared.id)).body;
   assert.ok(detail.expires > Date.now());
 });
+
+test("retentionChoiceFor shows the shortest option that covers the time left", async () => {
+  const { retentionChoiceFor } = await import("../src/ephemeral.js");
+  const now = Date.UTC(2026, 8, 24), day = 86400000;
+  assert.equal(retentionChoiceFor(null, now), null);
+  assert.equal(retentionChoiceFor(now + 3600000, now), 1);
+  assert.equal(retentionChoiceFor(now + 6.5 * day, now), 7);
+  assert.equal(retentionChoiceFor(now + 7 * day, now), 7);
+  assert.equal(retentionChoiceFor(now + 20 * day, now), 30);
+});

@@ -36,6 +36,7 @@ import {
   RetentionSelect,
   RetentionIndicator,
 } from "./Ephemeral.jsx";
+import { retentionChoiceFor } from "./ephemeral.js";
 import {
   api,
   streamChat,
@@ -964,7 +965,7 @@ export default function Workspace() {
                 aria-label={"Options for " + c.title}
                 onClick={() => {
                   setRename(c.title);
-                  setRetentionDays(null);
+                  setRetentionDays(retentionChoiceFor(c.expires));
                   setDialog({ type: "rename", item: c });
                 }}
               >

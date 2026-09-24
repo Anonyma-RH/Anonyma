@@ -20,3 +20,12 @@ export function retentionLabel(expires, nowMs = Date.now()) {
   const days = Math.ceil(remaining / 86400000);
   return days === 1 ? "Deletes in 1 day" : `Deletes in ${days} days`;
 }
+
+// The choice to show for a conversation that already has an expiry: the
+// shortest option that still covers the time left (only the expiry is
+// stored, not the original choice). null when it never deletes.
+export function retentionChoiceFor(expires, nowMs = Date.now()) {
+  if (!Number.isFinite(expires)) return null;
+  const days = Math.max(1, Math.ceil((expires - nowMs) / 86400000));
+  return days <= 1 ? 1 : days <= 7 ? 7 : 30;
+}

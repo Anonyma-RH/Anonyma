@@ -15,6 +15,10 @@ export function configurationStatus(cfg) {
       ["TOKEN_RPC_URL", cfg.rpc],
       ["TOKEN_CONTRACT", cfg.token],
     ],
+    backupGateway: [
+      ["GATEWAY2_BASE_URL", cfg.gateway2],
+      ["GATEWAY2_API_KEY", cfg.gateway2Key],
+    ],
   };
   const configured = Object.fromEntries(
     Object.entries(groups).map(([service, keys]) => [

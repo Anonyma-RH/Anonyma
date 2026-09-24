@@ -8,6 +8,7 @@ import { createLimiter, applyMiddleware, errorHandler } from "./middleware.js";
 import { createModels } from "./models.js";
 import { createMediaStore } from "./media.js";
 import { createAudioCatalog } from "./audio.js";
+import { createFallback } from "./fallback.js";
 import { createWorker } from "./worker.js";
 import { catalogRoutes } from "./routes/catalog.js";
 import { conversationRoutes } from "./routes/conversations.js";
@@ -51,6 +52,7 @@ export function createApp(overrides = {}) {
     models: createModels(cfg),
     media: createMediaStore(db, cfg),
     audio: createAudioCatalog(cfg),
+    fallback: createFallback(cfg),
     inflight: { controllers: new Set(), holds: new Set() },
   };
   applyMiddleware(app, cfg);

@@ -25,6 +25,7 @@ export const PROVIDER_REFUSALS = new Set([
   "provider_rejected",
   "provider_unavailable",
   "provider_busy",
+  "provider_down",
 ]);
 // 401/402/403 mean the operator's gateway account (key, funding, access) is
 // at fault and 429 means the gateway is throttling us; neither is the
@@ -46,8 +47,14 @@ export function providerFailure(status, detail, label = "Provider") {
       "The AI provider is busy. Nothing was charged; try again shortly.",
       "provider_busy",
     );
+  if (status >= 500)
+    fail(
+      502,
+      detail || `${label} is having trouble (${status}). Nothing was charged.`,
+      "provider_down",
+    );
   fail(
-    status >= 500 ? 502 : 400,
+    400,
     detail || `${label} rejected this request (${status}).`,
     "provider_rejected",
   );
@@ -109,22 +116,34 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
   }
   if (!cfg.gatewayKey)
     fail(503, "AI provider is not configured.", "provider_unconfigured");
-  const response = await fetch(
-    cfg.gateway.replace(/\/$/, "") + "/chat/completions",
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${cfg.gatewayKey}`,
+  let response;
+  try {
+    response = await fetch(
+      cfg.gateway.replace(/\/$/, "") + "/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${cfg.gatewayKey}`,
+        },
+        body: JSON.stringify({
+          ...body,
+          stream: true,
+          stream_options: { include_usage: true },
+        }),
+        signal,
       },
-      body: JSON.stringify({
-        ...body,
-        stream: true,
-        stream_options: { include_usage: true },
-      }),
-      signal,
-    },
-  );
+    );
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    // No response. The provider may still have run it, so failing over can
+    // cost the operator twice; the user is only ever charged once.
+    fail(
+      502,
+      "The AI provider couldn't be reached. Nothing was charged.",
+      "provider_down",
+    );
+  }
   if (!response.ok) {
     let detail;
     try {

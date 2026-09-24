@@ -2618,3 +2618,88 @@ test("referrals attribute sign-ups and reward a share of credited deposits, reve
   );
   assert.equal(balance(s.db, alice.user.id).total - aliceBefore, usdUnits(1));
 });
+test("a backup gateway serves chat only when the primary refuses before accepting", async (t) => {
+  let primaryMode = "unfunded";
+  const primary = await mockServer(t, async (req, res) => {
+    const body = await readJSON(req);
+    if (primaryMode === "accept-then-drop") {
+      res.writeHead(200, { "content-type": "text/event-stream" });
+      event(res, { choices: [{ delta: { content: "partial" } }] });
+      return res.end();
+    }
+    const status = { unfunded: 402, down: 503, bad: 400 }[primaryMode];
+    res.writeHead(status, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({ error: { message: "primary says no " + body.model } }),
+    );
+  });
+  const backupCalls = [];
+  const backup = await mockServer(t, async (req, res) => {
+    if (req.method === "GET" && req.url === "/models") {
+      res.writeHead(200, { "content-type": "application/json" });
+      return res.end(
+        JSON.stringify({
+          data: [{ id: "google/gemini-2.5-flash" }, { id: "vendor/other" }],
+        }),
+      );
+    }
+    const body = await readJSON(req);
+    backupCalls.push(body.model);
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    event(res, { choices: [{ delta: { content: "from backup" } }] });
+    event(res, {
+      choices: [],
+      usage: { prompt_tokens: 5, completion_tokens: 5, cost: 0.0002 },
+    });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, {
+    testMode: false,
+    gateway: primary,
+    gatewayKey: "fixture",
+    gateway2: backup,
+    gateway2Key: "backup-key",
+    gateway2FeePercent: 0,
+  });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "failover-fund", "test_credit");
+  const key = await keyFor(agent);
+  const ask = (model = prompt.model) =>
+    request(s.app)
+      .post("/v1/chat/completions")
+      .set("Authorization", "Bearer " + key.key)
+      .send({ ...prompt, model });
+  t.mock.method(console, "error", () => {});
+
+  // An unfunded primary: the backup answers, billed at its reported cost.
+  let before = balance(s.db, user.id).total;
+  const served = await ask().expect(200);
+  assert.equal(served.body.choices[0].message.content, "from backup");
+  assert.equal(served.body.anonyma.provider, "backup");
+  assert.deepEqual(backupCalls, ["google/gemini-2.5-flash"]);
+  assert.equal(before - balance(s.db, user.id).total, usdUnits(0.0002));
+
+  // An unreachable primary fails over too.
+  primaryMode = "down";
+  await ask().expect(200);
+  assert.equal(backupCalls.length, 2);
+
+  // The user's own bad request never fails over.
+  primaryMode = "bad";
+  await ask().expect(400);
+  assert.equal(backupCalls.length, 2);
+
+  // A model the backup doesn't list surfaces the primary's error, uncharged.
+  primaryMode = "down";
+  before = balance(s.db, user.id).total;
+  const missing = await ask("openai/gpt-4o-mini").expect(502);
+  assert.equal(missing.body.error.code, "provider_down");
+  assert.equal(balance(s.db, user.id).total, before);
+
+  // Once the primary has accepted, a failure is not retried elsewhere.
+  primaryMode = "accept-then-drop";
+  const dropped = await ask().expect(502);
+  assert.equal(dropped.body.error.code, "provider_interrupted");
+  assert.equal(backupCalls.length, 2);
+  assert.equal(balance(s.db, user.id).held, 0);
+});

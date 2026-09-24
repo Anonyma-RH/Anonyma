@@ -14,11 +14,12 @@ import {
   markupFactor,
 } from "../core.js";
 import { chatStream, reportedProviderCost } from "../provider.js";
+import { FAILOVER_CODES } from "../fallback.js";
 import { requestIdentifier } from "../middleware.js";
 
 // Streamed chat for the workspace and the compatible /v1 API.
 export function chatRoutes(ctx) {
-  const { app, db, cfg, limit, requireUser, apiAuth, inflight } = ctx;
+  const { app, db, cfg, limit, requireUser, apiAuth, inflight, fallback } = ctx;
   const mediaStore = ctx.media;
   const { getModel, validateMessages, maxTokens } = ctx.models;
   const { accessConversation, newConversation } = ctx.conversations;
@@ -196,21 +197,44 @@ export function chatRoutes(ctx) {
       if (streaming && !res.destroyed)
         res.write(`data: ${JSON.stringify(v)}\n\n`);
     };
+    // Serve from the primary gateway, or from the backup when the primary
+    // refuses before accepting; never after, so nothing is paid twice.
+    let servedBy = "primary";
+    const upstreamBody = {
+      model: m.id,
+      messages,
+      max_tokens: max,
+      ...(webSearch ? { plugins: [{ id: "web", max_results: 5 }] } : {}),
+    };
+    const markAccepted = () => {
+      accepted = true;
+      if (clientGone) stopForClient();
+    };
+    async function* stream() {
+      try {
+        yield* chatStream(cfg, upstreamBody, controller.signal, markAccepted);
+      } catch (e) {
+        if (
+          accepted ||
+          controller.signal.aborted ||
+          !FAILOVER_CODES.has(e.code)
+        )
+          throw e;
+        const backupModel = await fallback.modelFor(m.id);
+        if (!backupModel) throw e;
+        servedBy = "backup";
+        yield* chatStream(
+          fallback.cfg,
+          { ...upstreamBody, model: backupModel },
+          controller.signal,
+          markAccepted,
+        );
+      }
+    }
+    const feePercent = () =>
+      servedBy === "backup" ? cfg.gateway2FeePercent : cfg.gatewayFeePercent;
     try {
-      for await (const part of chatStream(
-        cfg,
-        {
-          model: m.id,
-          messages,
-          max_tokens: max,
-          ...(webSearch ? { plugins: [{ id: "web", max_results: 5 }] } : {}),
-        },
-        controller.signal,
-        () => {
-          accepted = true;
-          if (clientGone) stopForClient();
-        },
-      )) {
+      for await (const part of stream()) {
         if (part.error)
           fail(
             502,
@@ -277,11 +301,7 @@ export function chatRoutes(ctx) {
           "empty_output",
         );
       const { input, out } = tokenCounts();
-      const reported = reportedProviderCost(
-        usage,
-        upstreamCost,
-        cfg.gatewayFeePercent,
-      );
+      const reported = reportedProviderCost(usage, upstreamCost, feePercent());
       // Whether the provider folds the search fee into its reported cost
       // isn't documented, so a searched request costs at least the token
       // estimate plus the fee.
@@ -305,6 +325,7 @@ export function chatRoutes(ctx) {
         credits_charged: receipt.credits_charged,
         request_id: requestId,
         ...(citations.length ? { citations } : {}),
+        ...(servedBy === "backup" ? { provider: "backup" } : {}),
         ...(cfg.testMode ? { local_test: true } : {}),
       };
       if (
@@ -405,11 +426,8 @@ export function chatRoutes(ctx) {
           usdUnits(
             (saved.length && imageCallable(m)
               ? generationPrice(m)
-              : (reportedProviderCost(
-                  usage,
-                  upstreamCost,
-                  cfg.gatewayFeePercent,
-                ) ?? tokenCost(m, tokenCounts().input, tokenCounts().out)) +
+              : (reportedProviderCost(usage, upstreamCost, feePercent()) ??
+                  tokenCost(m, tokenCounts().input, tokenCounts().out)) +
                 (accepted ? searchFee : 0)) * factor,
           ),
           "Interrupted: " + m.name,

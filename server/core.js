@@ -92,6 +92,10 @@ export function config(overrides = {}) {
     webSearchPrice: Number(e.WEB_SEARCH_PRICE ?? 0.0211),
     // Share of a referred account's deposits credited to its referrer.
     referralPercent: Number(e.REFERRAL_PERCENT ?? 5),
+    // Optional backup OpenAI-compatible gateway for chat (e.g. OpenRouter).
+    gateway2: e.GATEWAY2_BASE_URL || "",
+    gateway2Key: e.GATEWAY2_API_KEY || "",
+    gateway2FeePercent: Number(e.GATEWAY2_FEE_PERCENT ?? 0),
     ...overrides,
   };
   for (const field of [
@@ -100,8 +104,10 @@ export function config(overrides = {}) {
     "gateway",
     "paymentBase",
     "rpc",
+    "gateway2",
   ]) {
-    if (!cfg[field] && ["publicUrl", "rpc"].includes(field)) continue;
+    if (!cfg[field] && ["publicUrl", "rpc", "gateway2"].includes(field))
+      continue;
     let url;
     try {
       url = new URL(cfg[field]);
@@ -158,6 +164,12 @@ export function config(overrides = {}) {
     cfg.referralPercent > 50
   )
     throw Error("Referral percent must be between 0 and 50.");
+  if (
+    !Number.isFinite(cfg.gateway2FeePercent) ||
+    cfg.gateway2FeePercent < 0 ||
+    cfg.gateway2FeePercent > 100
+  )
+    throw Error("Backup gateway fee must be a percentage from 0 to 100.");
   return cfg;
 }
 const addColumn = (db, table, column, definition) => {
@@ -217,9 +229,16 @@ export const MIGRATIONS = [
       CREATE TABLE IF NOT EXISTS collab_members(collab_id TEXT REFERENCES collabs(id) ON DELETE CASCADE,user_id TEXT REFERENCES users(id),role TEXT NOT NULL,joined INTEGER NOT NULL,PRIMARY KEY(collab_id,user_id));
       CREATE INDEX IF NOT EXISTS collab_members_user ON collab_members(user_id);
     `);
-    addColumn(db, "conversations", "collab_id", "TEXT REFERENCES collabs(id) ON DELETE CASCADE");
+    addColumn(
+      db,
+      "conversations",
+      "collab_id",
+      "TEXT REFERENCES collabs(id) ON DELETE CASCADE",
+    );
     addColumn(db, "messages", "author_id", "TEXT");
-    db.exec("CREATE INDEX IF NOT EXISTS conversations_collab ON conversations(collab_id,updated)");
+    db.exec(
+      "CREATE INDEX IF NOT EXISTS conversations_collab ON conversations(collab_id,updated)",
+    );
   },
 ];
 export function migrate(db) {

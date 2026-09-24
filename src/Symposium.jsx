@@ -42,6 +42,12 @@ export default function Symposium({ demo, user, models, config, refresh }) {
     [quoting, setQuoting] = useState(false),
     [error, setError] = useState(""),
     [pickerQuery, setPickerQuery] = useState("");
+  const fusionCard = useRef(null);
+  // Bring the fused answer into view as it starts, above the pinned composer.
+  const fusionStarted = fusion?.status === "pending";
+  useEffect(() => {
+    if (fusionStarted) fusionCard.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [fusionStarted]);
   // Keep the picker valid as the catalog loads or callability changes,
   // without discarding a selection that is still good.
   useEffect(() => {
@@ -303,7 +309,7 @@ export default function Symposium({ demo, user, models, config, refresh }) {
                     </button>
                   </div>
                 ) : (
-                  <article className="symposium-column symposium-fusion">
+                  <article className="symposium-column symposium-fusion" ref={fusionCard}>
                     <header>
                       <b>Fused answer · {modelName(fuseModel)}</b>
                       {["pending", "streaming"].includes(fusion.status) ? (

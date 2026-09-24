@@ -5,6 +5,10 @@ import { Icon, Notice, Empty, BandLines, BandSteps } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { api, streamChat, uid } from "./lib.js";
 import { defaultSymposiumModels, buildFusionMessages, totalEstimate, pickerModels } from "./symposium.js";
+// Every column holds credits for its full output limit while it runs, so
+// Symposium asks for shorter answers than chat to keep four at once
+// within a normal balance. Fusion keeps the chat limit.
+const COLUMN_TOKENS = 2048;
 import "./symposium.css";
 
 const STATUS_LABEL = {
@@ -82,7 +86,7 @@ export default function Symposium({ demo, user, models, config, refresh }) {
           body: {
             model: id,
             messages: [{ role: "user", content: question }],
-            max_tokens: 4096,
+            max_tokens: COLUMN_TOKENS,
           },
         }).then((r) => ({ credits: r.credits })),
       ),
@@ -107,7 +111,7 @@ export default function Symposium({ demo, user, models, config, refresh }) {
           model: id,
           messages: [{ role: "user", content: question }],
           mode: "symposium",
-          max_tokens: 4096,
+          max_tokens: COLUMN_TOKENS,
           requestId: uid(),
         },
         (event) => {
@@ -143,7 +147,9 @@ export default function Symposium({ demo, user, models, config, refresh }) {
           error:
             e.name === "AbortError"
               ? "Stopped. Partial output may have been billed."
-              : e.message,
+              : e.status === 402
+                ? "Not enough credits right now: the other answers are holding credits while they run. Add credits or compare fewer models."
+                : e.message,
         },
       }));
     } finally {

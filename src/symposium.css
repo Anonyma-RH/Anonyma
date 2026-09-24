@@ -1,0 +1,109 @@
+/* Symposium: columns on desktop, stacked cards on mobile. Reuses the
+   workspace's shared classes (chat-area, composer-zone, composer,
+   compare-options, receipt, small-button) for everything but the layout
+   below, which is specific to comparing several models at once. */
+.app-shell .symposium-results {
+  max-width: 1150px;
+  margin: 28px auto 0;
+  padding: 0 32px;
+  width: 100%;
+}
+.app-shell .symposium-question {
+  font-size: 13px;
+  color: var(--work-muted);
+  margin: 0 0 16px;
+  line-height: 1.6;
+}
+.app-shell .symposium-columns {
+  display: grid;
+  grid-template-columns: repeat(var(--symposium-cols, 3), minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.app-shell .symposium-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid var(--work-line);
+  border-radius: 2px;
+  padding: 18px;
+}
+.app-shell .symposium-column header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--work-ink);
+}
+.app-shell .symposium-column header b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-shell .symposium-column .markdown {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.app-shell .symposium-status {
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--work-muted);
+  white-space: nowrap;
+}
+.app-shell .symposium-status.done {
+  color: #0135df;
+}
+.app-shell .symposium-status.error {
+  color: #9c3d2a;
+}
+.app-shell .symposium-error {
+  font-size: 12px;
+  color: #9c3d2a;
+  margin: 0;
+}
+.app-shell .symposium-fuse {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--work-line);
+}
+.app-shell .symposium-fuse-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.app-shell .symposium-fuse-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--work-muted);
+}
+.app-shell .symposium-fuse-controls select {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--work-ink);
+  border: 1px solid var(--work-line);
+  background: var(--work-surface);
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+.app-shell .symposium-fusion {
+  max-width: 814px;
+  border-color: #0135df;
+}
+@media (max-width: 700px) {
+  .app-shell .symposium-results {
+    padding: 0 18px;
+  }
+  .app-shell .symposium-columns {
+    grid-template-columns: 1fr;
+  }
+  .app-shell .symposium-column {
+    padding: 14px;
+  }
+}

@@ -46,6 +46,7 @@ import {
   privateModeReleased,
 } from "./PrivateMode.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
+import Symposium from "./Symposium.jsx";
 import {
   api,
   streamChat,
@@ -119,6 +120,7 @@ export function AppSidebar({
           ["home", "Home"],
           ["chat", "Chat & reason"],
           ["uncensored", "Uncensored"],
+          ["symposium", "Symposium"],
           ["code", "Code & build"],
           ["image", "Images"],
           ["video", "Video"],
@@ -253,6 +255,7 @@ export default function Workspace() {
     "home",
     "chat",
     "uncensored",
+    "symposium",
     "code",
     "image",
     "video",
@@ -356,7 +359,9 @@ export default function Workspace() {
     }
     if (!demo && user) {
       api("/api/conversations")
-        .then((r) => setAll(r.data))
+        // Symposium runs get their own conversation mode so they don't
+        // clutter this shared recent-conversations list.
+        .then((r) => setAll(r.data.filter((c) => c.mode !== "symposium")))
         .catch((e) => setError(e.message));
       api("/api/media")
         .then((r) => setMedia(r.data))
@@ -1049,6 +1054,7 @@ export default function Workspace() {
                 home: "Home",
                 chat: "Chat & reason",
                 uncensored: "Uncensored",
+                symposium: "Symposium",
                 code: "Code & build",
                 image: "Image studio",
                 video: "Video studio",
@@ -1172,6 +1178,8 @@ export default function Workspace() {
             </div>
           ) : mode === "collab" ? (
             <CollabHub demo={demo} user={user} />
+          ) : mode === "symposium" ? (
+            <Symposium demo={demo} user={user} models={models} config={config} refresh={refresh} />
           ) : mode === "audio" ? (
             <AudioStudio
               demo={demo}

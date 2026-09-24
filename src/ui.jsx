@@ -109,6 +109,8 @@ const pixels = {
   credits: [".#####.", "#.....#", ".#####.", "#.....#", ".#####.", "#.....#", ".#####."],
   audio: ["...#...", "...#.#.", ".#.#.#.", ".#.#.##", "##.#.##", ".#.#.#.", "...#..."],
   collab: [".##..##", "#..##..", "#..##..", ".##..##", ".......", "###.###", "###.###"],
+  // Rising columns: several voices answering the same question, compared side by side.
+  symposium: [".....#.", ".....#.", "...#.#.", "...#.#.", ".#.#.#.", ".#.#.#.", ".#.#.#."],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

@@ -27,7 +27,6 @@
     "@mention any model mid-conversation": "在会话中随时用 @ 提及任意模型",
     "% when that gateway is used.": "%，使用该网关时适用。",
     "% when the provider reports a cost that requires that fee to be added. A provider total that already includes fees is used as supplied.": "%，当提供商报告的费用需要加收该费用时适用。如果提供商报告的总额已包含费用，则按其提供的金额计算。",
-    "%, before any applicable account discount. Discounts reduce the markup, not the underlying model cost.": "%（未计入任何适用的账户折扣）。折扣降低的是加价部分，而非模型本身的费用。",
     "<Your next idea />": "<你的下一个想法 />",
     "= $1 = 1,000 credits, on": "= $1 = 1,000 积分，位于",
     "$1 buys 1,000 credits. Internally, the ledger counts whole subcredits, ten million to the dollar, so every amount is an exact integer. Your balance is the sum of your ledger entries. Your available balance is that sum minus what's on hold.": "$1 可购买 1,000 积分。在内部，账本以完整的子积分计数，每美元一千万个，因此每笔金额都是精确的整数。你的余额是账本条目的总和。你的可用余额是该总和减去冻结金额。",
@@ -2517,10 +2516,6 @@
       "zh": "付款状态：{0}。在服务确认结算前，积分仍处于待处理状态。"
     },
     {
-      "en": "Platform markup: {0}%, before any applicable account discount. Discounts reduce the markup, not the underlying model cost.",
-      "zh": "平台加价：{0}%（未计入任何适用的账户折扣）。折扣降低的是加价部分，而非模型本身的费用。"
-    },
-    {
       "en": "Primary gateway fee: {0}% when the provider reports a cost that requires that fee to be added. A provider total that already includes fees is used as supplied.",
       "zh": "主要网关费用：{0}%，当提供商报告的费用需要加收该费用时适用。如果提供商报告的总额已包含费用，则按其提供的金额计算。"
     },
@@ -2835,6 +2830,10 @@
     {
       "en": "Holding it does one thing in ANONYMA: early access. An update marked early opens, before its public release, to accounts holding at least {0} NYMA in a linked wallet. The server checks this on the update's routes, and everyone else gets the same \"coming soon\" refusal as before.",
       "zh": "在 ANONYMA 中，持有它只有一个作用：抢先体验。标记为抢先体验的更新会在公开发布前，向在关联钱包中持有至少 {0} NYMA 的账户开放。服务器会在该更新的路由上检查这一点，其他人收到的仍是和以前一样的“即将推出”拒绝。"
+    },
+    {
+      "en": "Platform markup: {0}%.",
+      "zh": "平台加价：{0}%。"
     }
   ]
 }

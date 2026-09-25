@@ -412,7 +412,7 @@ export const UPDATES = [
       "Refused before anything is reserved or spent",
       "Raising a limit waits 24 hours",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "sharelinks",

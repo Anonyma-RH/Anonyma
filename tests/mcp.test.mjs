@@ -291,6 +291,8 @@ test("the mcp update is registered and gates on both mcp and api", async (t) => 
   assert.equal(entry.title, "MCP Server");
   assert.equal(entry.tagline, "Your balance, inside any AI tool.");
   assert.equal(entry.points.length, 3);
+  // Committed as false until its "Release …" commit flips it to true.
+  assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");
 
   const mvpOnly = fixture(t, "mvp");
   const blocked = await rpc(mvpOnly, null, {

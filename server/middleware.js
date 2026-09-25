@@ -2,7 +2,11 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import { uid, fail } from "./core.js";
 
-import { securityHeaders } from "../src/security-headers.js";
+import {
+  securityHeaders,
+  PREVIEW_FRAME_PATH,
+} from "../src/security-headers.js";
+import { isReleased } from "./releases.js";
 export { createLimiter } from "./rate-limit.js";
 
 // The Connect an App endpoints that apps call from anywhere: discovery,
@@ -23,7 +27,15 @@ export function applyMiddleware(app, cfg) {
   // proxy is trusted to report the client in X-Forwarded-For.
   app.set("trust proxy", cfg.trustProxy);
   app.use((req, res, next) => {
-    res.set(securityHeaders());
+    // Live Preview's frame document is the only page the app may frame, and
+    // only once that update is live (src/security-headers.js).
+    res.set(
+      securityHeaders({
+        previewFrame: isReleased(cfg, "preview")
+          ? cfg.origin + PREVIEW_FRAME_PATH
+          : null,
+      }),
+    );
     // Routing ignores case, so these checks do too.
     const path = req.path.toLowerCase();
     if (

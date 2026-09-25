@@ -2497,7 +2497,39 @@
     "Send either from and to, or days, not both.": "请提供 from 和 to，或提供 days，不要同时提供。",
     "days must be a whole number from 1 to 366.": "days 必须是 1 到 366 之间的整数。",
     "from must be on or before to.": "from 必须早于或等于 to。",
-    "format must be csv or json.": "format 必须是 csv 或 json。"
+    "format must be csv or json.": "format 必须是 csv 或 json。",
+    "Live Preview": "实时预览",
+    "See it run, right beside the code.": "代码旁边，直接看它运行。",
+    "HTML, CSS and JavaScript from Code & Build, running beside the files": "代码与构建中的 HTML、CSS 和 JavaScript，在文件旁边直接运行",
+    "A Preview button on HTML code in chat replies": "聊天回复中的 HTML 代码带有“预览”按钮",
+    "Sandboxed in your browser: network requests blocked, no account access": "在你的浏览器沙箱中运行：拦截网络请求，无法访问账户",
+    "Files": "文件",
+    "Code panel": "代码面板",
+    "Live preview": "实时预览",
+    "Page to preview": "要预览的页面",
+    "Viewport": "视口",
+    "Desktop": "桌面",
+    "Tablet": "平板",
+    "Phone": "手机",
+    "Reload": "重新加载",
+    "Sandboxed in your browser · network requests blocked · nothing charged": "在你的浏览器沙箱中运行 · 已拦截网络请求 · 不收费",
+    "1 note": "1 条提示",
+    "Console": "控制台",
+    "Nothing logged yet.": "暂无输出。",
+    "Log": "日志",
+    "Info": "信息",
+    "Debug": "调试",
+    "Warning": "警告",
+    "Error": "错误",
+    "Blocked": "已拦截",
+    "No HTML page to preview yet.": "还没有可预览的 HTML 页面。",
+    "This page is too large to preview.": "此页面太大，无法预览。",
+    "Prepared code · HTML runs only in the sandboxed Preview": "预先准备的代码 · HTML 只在沙箱预览中运行",
+    "Nested frames aren't shown in the preview.": "预览中不显示嵌套框架。",
+    "This page hid a nested frame, so the preview stopped it.": "此页面隐藏了一个嵌套框架，因此预览已将其停止。",
+    "Storage here is temporary and separate from ANONYMA.": "这里的存储是临时的，并与 ANONYMA 分开。",
+    "Forms don't send anywhere in the preview.": "在预览中，表单不会发送到任何地方。",
+    "Fit": "适应"
   },
   "patterns": [
     {
@@ -3815,6 +3847,46 @@
     {
       "en": "to can't be after today's UTC date ({0}).",
       "zh": "to 不能晚于今天的 UTC 日期（{0}）。"
+    },
+    {
+      "en": "{0} notes",
+      "zh": "{0} 条提示"
+    },
+    {
+      "en": "{0} earlier lines not shown",
+      "zh": "较早的 {0} 行未显示"
+    },
+    {
+      "en": "Missing file: {0} (referenced in {1})",
+      "zh": "缺少文件：{0}（引用自 {1}）"
+    },
+    {
+      "en": "Not loaded, the preview blocks network requests: {0}",
+      "zh": "未加载，预览会拦截网络请求：{0}"
+    },
+    {
+      "en": "{0} matched to {1} by file name",
+      "zh": "{0} 已按文件名匹配到 {1}"
+    },
+    {
+      "en": "Module imports between files aren't resolved in the preview: {0}",
+      "zh": "预览不会解析文件之间的模块导入：{0}"
+    },
+    {
+      "en": "Not shown in the preview: {0}",
+      "zh": "预览中不显示：{0}"
+    },
+    {
+      "en": "Console output stopped after {0} messages.",
+      "zh": "控制台输出在 {0} 条消息后停止。"
+    },
+    {
+      "en": "Links don't leave the preview: {0}",
+      "zh": "链接不会离开预览：{0}"
+    },
+    {
+      "en": "Blocked by the preview sandbox: {0} ({1})",
+      "zh": "已被预览沙箱拦截：{0}（{1}）"
     }
   ]
 }

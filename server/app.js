@@ -39,6 +39,7 @@ import { spendingLimitRoutes } from "./routes/spending-limits.js";
 import { connectRoutes } from "./routes/connect.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { historyLibrary } from "./history-library.js";
+import { previewRoutes } from "./routes/preview.js";
 import { siteRoutes } from "./routes/site.js";
 
 export function createApp(overrides = {}) {
@@ -111,6 +112,8 @@ export function createApp(overrides = {}) {
   spendingLimitRoutes(ctx);
   connectRoutes(ctx);
   paymentRoutes(ctx);
+  // Live Preview's frame page, before the site's static files and fallback.
+  previewRoutes(ctx);
   siteRoutes(ctx);
   app.use(errorHandler(cfg));
   return {

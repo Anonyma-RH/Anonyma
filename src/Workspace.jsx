@@ -105,6 +105,8 @@ import ModelFinder from "./ModelFinder.jsx";
 import { STORAGE_KEY as MODEL_CHOICES, loadChoices, resolveChoice, withChoice, requestNeedsVision } from "./model-finder.js";
 import { useShareTargetPrefill } from "./share-target.js";
 import { InstallAppEntry } from "./InstallApp.jsx";
+import { LivePreview, CodePanelTabs, useHtmlPreview } from "./LivePreview.jsx";
+import { projectFiles, previewPages, PREVIEW_DEMO_REPLY } from "./live-preview.js";
 import { EarlyTag } from "./Holders.jsx";
 import { isEarlyAccess } from "./holders.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
@@ -842,6 +844,11 @@ export default function Workspace() {
   const sendText = mentioned ? mention[2].trim() : prompt.trim();
   const sendModel = target?.id || model;
   const branchesLive = isReleased(config, "branches");
+  // Live Preview (src/LivePreview.jsx): Code & Build's Preview tab and a
+  // Preview button on HTML blocks in replies. Browser-only and sandboxed.
+  const previewLive = isReleased(config, "preview");
+  const [codeTab, setCodeTab] = useState(null);
+  const htmlPreview = useHtmlPreview(previewLive && textMode);
   if (!branchFlight.current) branchFlight.current = singleFlight();
   // Uses Symposium's orchestration, so both updates must be live; never in the demo.
   const doubleCheckLive =
@@ -1190,7 +1197,8 @@ export default function Workspace() {
     }
     setMessages([...next, { role: "assistant", content: "", sample: demo }]);
     if (demo) {
-      const answer = mode === "code" ? sampleCode : sampleChat;
+      const answer =
+        mode === "code" ? (previewLive ? PREVIEW_DEMO_REPLY : sampleCode) : sampleChat;
       let index = 0;
       timer.current = setInterval(() => {
         index += 28;
@@ -1540,7 +1548,11 @@ export default function Workspace() {
         if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
     }
   }
-  const files = messages
+  // With Live Preview, files take the names the reply gives them (the
+  // preview resolves a page's links by name) and real revision numbers.
+  const files = previewLive
+    ? projectFiles(messages)
+    : messages
     .filter((m) => m.role === "assistant")
     .flatMap((m) =>
       [...m.content.matchAll(/```(\w*)\n([\s\S]*?)```/g)].map((match, i) => ({
@@ -1553,6 +1565,11 @@ export default function Workspace() {
         content: match[2],
       })),
     );
+  // The Preview tab opens by itself once there's a page to show, until the
+  // tabs are used.
+  const codePanelTab =
+    codeTab || (previewLive && previewPages(files).length ? "preview" : "files");
+  const previewing = previewLive && codePanelTab === "preview";
   const hasResults =
     (mode === "image" || mode === "video") &&
     (jobs.some((j) => j.status !== "completed") ||
@@ -1716,7 +1733,8 @@ export default function Workspace() {
             (!messages.length ? "workspace-start " : "") +
             (mode === "home" ? "workspace-home " : "") +
             (hasResults ? "with-results " : "") +
-            (mode === "code" && files.length ? "with-code" : "")
+            (mode === "code" && files.length ? "with-code" : "") +
+            (mode === "code" && files.length && previewing ? " with-preview" : "")
           }
         >
           {!modeReleased(config, mode) ? (
@@ -1852,6 +1870,7 @@ export default function Workspace() {
                             // [TAG_n] split across chunks resolves once whole.
                             [veilRemarkPlugin, { map: veilStateRef.current.map }],
                           ]}
+                          components={m.role === "assistant" ? htmlPreview.components : undefined}
                         >
                           {shown}
                         </ReactMarkdown>
@@ -2806,7 +2825,12 @@ export default function Workspace() {
             </>
           )}
           {mode === "code" && files.length > 0 && (
-            <aside className="code-panel">
+            <aside className={"code-panel" + (previewing ? " previewing" : "")}>
+              {previewLive && <CodePanelTabs tab={codePanelTab} onTab={setCodeTab} />}
+              {previewing ? (
+                <LivePreview files={files} />
+              ) : (
+              <>
               <div>
                 <h3>Files & revisions</h3>
                 <button className="small-button" onClick={exportZip}>
@@ -2814,13 +2838,17 @@ export default function Workspace() {
                   ZIP
                 </button>
               </div>
-              <p className="fine-print">Prepared code · no execution sandbox</p>
+              <p className="fine-print">
+                {previewLive
+                  ? "Prepared code · HTML runs only in the sandboxed Preview"
+                  : "Prepared code · no execution sandbox"}
+              </p>
               {files.map((f, i) => (
                 <details key={i} open={i === 0}>
                   <summary>
                     <Icon name="file" size={14} />
                     {f.name}
-                    <span>v{Math.floor(i / 2) + 1}</span>
+                    <span>v{f.version || Math.floor(i / 2) + 1}</span>
                   </summary>
                   <pre>
                     <code>{f.content}</code>
@@ -2836,10 +2864,13 @@ export default function Workspace() {
                   </div>
                 </details>
               ))}
+              </>
+              )}
             </aside>
           )}
         </div>
       </div>
+      {htmlPreview.dialog}
       {dialog && (
         <Modal
           title={

@@ -22,6 +22,8 @@ export default defineConfig({
       "/cli.mjs": "http://127.0.0.1:3001",
       "/install.sh": "http://127.0.0.1:3001",
       "/install.ps1": "http://127.0.0.1:3001",
+      // Live Preview's sandboxed frame page and its headers come from the API.
+      "/preview-frame.html": "http://127.0.0.1:3001",
     },
     allowedHosts: ["terminal.local"],
     warmup: {

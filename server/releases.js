@@ -448,6 +448,17 @@ export const UPDATES = [
     ],
     released: false,
   },
+  {
+    id: "preview",
+    title: "Live Preview",
+    tagline: "See it run, right beside the code.",
+    points: [
+      "HTML, CSS and JavaScript from Code & Build, running beside the files",
+      "A Preview button on HTML code in chat replies",
+      "Sandboxed in your browser: network requests blocked, no account access",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -624,6 +635,8 @@ export function featuresFor(req) {
   if (p === "/api/memory" || p.startsWith("/api/memory/")) return ["memory"];
   if (p === "/api/spending-limits" || p.startsWith("/api/spending-limits/"))
     return ["limits"];
+  // Live Preview's sandboxed frame document (server/routes/preview.js).
+  if (p === "/preview-frame.html") return ["preview"];
   // Share a Chat: managing links, and the public snapshot page and its data.
   if (
     p === "/api/shares" ||

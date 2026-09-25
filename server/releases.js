@@ -161,6 +161,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "receipts",
+    title: "Signed Receipts",
+    tagline: "Proof of what ran, and what it cost.",
+    points: [
+      "Every settled reply gets an Ed25519-signed receipt",
+      "Anyone can verify it, including the answer text",
+      "The public key is published for independent checks",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -248,6 +259,8 @@ function featuresFor(req) {
   if (p === "/api/keys" && post) return ["api"];
   if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return ["api"];
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
+  if (p.startsWith("/api/receipts") || p === "/.well-known/anonyma-receipts.json")
+    return ["receipts"];
   if (p.startsWith("/api/retention")) return ["ephemeral"];
   if (
     req.method === "PATCH" &&

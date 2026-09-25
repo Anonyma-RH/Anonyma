@@ -118,6 +118,10 @@ export function config(overrides = {}) {
     walletPaymentSymbol: e.WALLET_PAYMENT_SYMBOL || "USDG",
     walletPaymentDecimals: Number(e.WALLET_PAYMENT_DECIMALS ?? 6),
     walletPaymentConfirmations: Number(e.WALLET_PAYMENT_CONFIRMATIONS ?? 10),
+    // Ed25519 private key (base64 PKCS8 DER) that signs settlement receipts.
+    // Production should set this; when unset, a key is generated on first
+    // use and persisted in the database instead (see server/receipts.js).
+    receiptSigningKey: e.RECEIPT_SIGNING_KEY || "",
     // Which updates are live ("all", or "mvp" plus update ids) and the MVP's
     // chat models while the full catalog isn't released.
     released: e.RELEASED_FEATURES ?? "mvp",
@@ -340,6 +344,16 @@ export const MIGRATIONS = [
     db.exec(
       "CREATE TABLE IF NOT EXISTS retention_defaults(user_id TEXT PRIMARY KEY REFERENCES users(id), days INTEGER NOT NULL)",
     );
+  },
+  // Signed receipts: an Ed25519 keypair (generated on first use unless
+  // RECEIPT_SIGNING_KEY is set) and the signature saved for each settled
+  // chat request that opted in.
+  (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS receipt_keys(id TEXT PRIMARY KEY,public_key TEXT NOT NULL,private_key TEXT NOT NULL,created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS receipt_signatures(receipt_id TEXT PRIMARY KEY,user_id TEXT REFERENCES users(id),key_id TEXT NOT NULL,payload TEXT NOT NULL,signature TEXT NOT NULL,created INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS receipt_signatures_user ON receipt_signatures(user_id,created);
+    `);
   },
 ];
 export function migrate(db) {

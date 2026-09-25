@@ -786,6 +786,7 @@ const featureIcons = {
   ephemeral: "shield",
   private: "shield",
   zh: "globe",
+  receipts: "shield",
 };
 const launch = {
   id: "mvp",

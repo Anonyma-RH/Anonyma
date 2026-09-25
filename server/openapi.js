@@ -199,7 +199,14 @@ const schemas = {
       completion_tokens: integer,
       total_tokens: integer,
     }),
-    anonyma: object({ credits_charged: number, request_id: string }),
+    anonyma: object({
+      credits_charged: number,
+      request_id: string,
+      signed_receipt: {
+        ...ref("SignedReceipt"),
+        description: "Present only when the receipts update is released.",
+      },
+    }),
     askr: object(),
   }),
   RequestStatus: object({
@@ -210,6 +217,30 @@ const schemas = {
     created: integer,
     expires: integer,
     receipt: { type: ["object", "null"] },
+  }),
+  ReceiptPayload: object({
+    v: { const: 1 },
+    id: { ...string, description: "The requestId this receipt settled." },
+    issued: string,
+    service: { ...string, description: "Public origin that issued the receipt." },
+    model: string,
+    usage: object({ input_tokens: integer, output_tokens: integer }),
+    credits_charged: number,
+    credits_released: number,
+    request_sha256: { ...string, description: "sha256 of the canonical JSON of the sent messages." },
+    response_sha256: { ...string, description: "sha256 of the full answer text." },
+    key_id: string,
+  }),
+  SignedReceipt: object({
+    receipt: ref("ReceiptPayload"),
+    signature: { ...string, description: "Base64 Ed25519 signature over the canonical (sorted-key) JSON of receipt." },
+    key_id: string,
+  }),
+  ReceiptKey: object({
+    key_id: string,
+    algorithm: { const: "Ed25519" },
+    public_key_pem: string,
+    jwk: object(),
   }),
 };
 const paths = {
@@ -449,6 +480,43 @@ route(
       "Use the original requestId, URL-encoded as a path segment. Owner-scoped. A 404 means no stored reservation; held means do not resubmit with a fresh ID. Receipt.charged uses integer ledger subunits; receipt.credits_charged uses displayed credits.",
   },
 );
+route("get", "/api/receipts/{id}", "Read a stored signed receipt", {
+  response: ref("SignedReceipt"),
+  description:
+    "Owner-scoped. Use the requestId returned in the chat response's anonyma/askr extension, URL-encoded as a path segment.",
+});
+route("get", "/api/receipts/key", "Public Ed25519 receipt-signing key", {
+  auth: null,
+  response: ref("ReceiptKey"),
+});
+route(
+  "get",
+  "/.well-known/anonyma-receipts.json",
+  "Same public receipt-signing key, at a well-known discovery path",
+  { auth: null, response: ref("ReceiptKey") },
+);
+route("post", "/api/receipts/verify", "Verify a signed receipt", {
+  auth: null,
+  body: object(
+    {
+      receipt: ref("ReceiptPayload"),
+      signature: string,
+      answer: {
+        ...string,
+        description: "Optional answer text to check against response_sha256.",
+      },
+    },
+    ["receipt", "signature"],
+  ),
+  response: object({
+    valid: bool,
+    key_id: nullableString,
+    reason: { enum: ["unknown_key", "invalid_signature"] },
+    answer_matches: bool,
+  }),
+  description:
+    "Stateless: verifies the signature against the published public key alone; no database lookup of the original receipt is required. answer_matches is included only when answer is sent.",
+});
 route("post", "/api/chat", "Stream chat, code or compatible image output", {
   body: ref("ChatRequest"),
   stream: true,

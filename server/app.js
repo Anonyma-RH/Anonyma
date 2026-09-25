@@ -10,11 +10,13 @@ import { createModels } from "./models.js";
 import { createMediaStore } from "./media.js";
 import { createAudioCatalog } from "./audio.js";
 import { createFallback } from "./fallback.js";
+import { createReceiptSigner } from "./receipts.js";
 import { createWorker } from "./worker.js";
 import { catalogRoutes } from "./routes/catalog.js";
 import { conversationRoutes } from "./routes/conversations.js";
 import { apiRoutes } from "./routes/api.js";
 import { chatRoutes } from "./routes/chat.js";
+import { receiptRoutes } from "./routes/receipts.js";
 import { mediaRoutes } from "./routes/media.js";
 import { videoRoutes } from "./routes/videos.js";
 import { audioRoutes } from "./routes/audio.js";
@@ -55,6 +57,7 @@ export function createApp(overrides = {}) {
     media: createMediaStore(db, cfg),
     audio: createAudioCatalog(cfg),
     fallback: createFallback(cfg),
+    receipts: createReceiptSigner(db, cfg),
     inflight: { controllers: new Set(), holds: new Set() },
   };
   applyMiddleware(app, cfg);
@@ -67,6 +70,7 @@ export function createApp(overrides = {}) {
   ctx.conversations = conversationRoutes(ctx);
   Object.assign(ctx, apiRoutes(ctx));
   chatRoutes(ctx);
+  receiptRoutes(ctx);
   mediaRoutes(ctx);
   videoRoutes(ctx);
   audioRoutes(ctx);

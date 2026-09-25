@@ -34,6 +34,10 @@ them on screen. Enabled on [askanonyma.com](https://askanonyma.com/workspace/cha
 [Uncensored Models](docs/releases/uncensored-models.md): a dedicated section and
 curated model picker, using the same prepaid balance. Includes its launch film.
 
+[Private Mode](docs/releases/private-mode.md): one switch for zero-data-retention
+models only, nothing saved and Veil on, in Chat and Uncensored. Ships with
+Ephemeral Chats. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

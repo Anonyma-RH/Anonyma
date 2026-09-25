@@ -23,6 +23,7 @@ const placeholders = {
 };
 const modeNames = {
   chat: "Chat",
+  uncensored: "Uncensored",
   code: "Code",
   image: "Image",
   video: "Video",

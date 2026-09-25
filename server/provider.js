@@ -307,6 +307,15 @@ export async function createVideo(cfg, body) {
     signal: AbortSignal.timeout(120000),
   });
   if (!r.ok) {
+    // A timeout or server error can arrive after the provider accepted a
+    // paid job. Preserve its reservation for reconciliation; retrying could
+    // submit and charge for a second video.
+    if (r.status === 408 || r.status >= 500)
+      fail(
+        502,
+        "Video submission could not be confirmed. Check your jobs before trying again.",
+        "provider_ambiguous",
+      );
     if ([401, 402, 403, 429].includes(r.status))
       providerFailure(r.status, null, "Video provider");
     fail(502, `Video submission rejected (${r.status}).`, "provider_rejected");

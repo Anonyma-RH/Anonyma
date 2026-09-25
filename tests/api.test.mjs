@@ -33,7 +33,8 @@ const prompt = {
 function fixture(t, extra = {}) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-test-"));
   const svc = createApp({
-    testMode: true, released: "all",
+    testMode: true,
+    released: "all",
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
@@ -712,7 +713,8 @@ test("published billing settings follow the configured fees and reservation poli
     webSearchPrice: 0.04,
     gateway2Key: "",
   });
-  const published = (await request(s.app).get("/api/config").expect(200)).body.billing;
+  const published = (await request(s.app).get("/api/config").expect(200)).body
+    .billing;
   assert.deepEqual(published, {
     creditsPerUsd: 1000,
     creditPrecision: 4,
@@ -735,7 +737,11 @@ test("support requests, session listings, and exports are owner-scoped", async (
     .expect(400);
   const ticket = await agent
     .post("/api/support")
-    .send({ subject: "Fixture help", body: "Local integration test.", email: "tester@example.invalid" })
+    .send({
+      subject: "Fixture help",
+      body: "Local integration test.",
+      email: "tester@example.invalid",
+    })
     .expect(201);
   assert.ok(ticket.body.id);
   const exported = await agent.get("/api/account/export").expect(200);
@@ -855,10 +861,87 @@ test("video failure releases funds; ambiguous submission is held without automat
     ),
   );
 });
+test("video HTTP timeouts and server errors retain reservations; definite refusals release them", async (t) => {
+  let status = 500;
+  let calls = 0;
+  const gateway = await mockServer(t, async (req, res) => {
+    await readJSON(req);
+    calls++;
+    res.writeHead(status, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({ error: { message: "Fixture provider response" } }),
+    );
+  });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "video-http-funds");
+  const total = balance(s.db, user.id).total;
+  const body = {
+    model: "kling-2.5-turbo",
+    prompt: "Clip",
+    ratio: "16:9",
+    duration: "5",
+  };
+  for (status of [408, 500, 503]) {
+    const requestId = `video-uncertain-${status}`;
+    const heldBefore = balance(s.db, user.id).held;
+    const response = await agent
+      .post("/api/videos")
+      .send({ ...body, requestId })
+      .expect(502);
+    assert.equal(response.body.error.code, "provider_ambiguous");
+    const holdId = `${user.id}:${requestId}`;
+    assert.equal(
+      s.db.prepare("SELECT status FROM videos WHERE hold_id=?").get(holdId)
+        .status,
+      "reconciliation",
+    );
+    assert.equal(
+      s.db.prepare("SELECT status FROM holds WHERE id=?").get(holdId).status,
+      "held",
+    );
+    assert.ok(balance(s.db, user.id).held > heldBefore);
+    const acceptedCalls = calls;
+    await agent
+      .post("/api/videos")
+      .send({ ...body, requestId })
+      .expect(409);
+    assert.equal(calls, acceptedCalls, "a duplicate must not resubmit a video");
+  }
+  const heldForReconciliation = balance(s.db, user.id).held;
+  s.db.prepare("UPDATE holds SET expires=1 WHERE kind='video'").run();
+  const submittedCalls = calls;
+  await s.tick();
+  await s.tick();
+  assert.equal(calls, submittedCalls, "unknown jobs must not be retried");
+  assert.equal(balance(s.db, user.id).held, heldForReconciliation);
+  for (status of [400, 422]) {
+    const requestId = `video-refused-${status}`;
+    const response = await agent
+      .post("/api/videos")
+      .send({ ...body, requestId })
+      .expect(502);
+    assert.equal(response.body.error.code, "provider_rejected");
+    const holdId = `${user.id}:${requestId}`;
+    assert.equal(
+      s.db.prepare("SELECT status FROM videos WHERE hold_id=?").get(holdId)
+        .status,
+      "failed",
+    );
+    assert.equal(
+      s.db.prepare("SELECT status FROM holds WHERE id=?").get(holdId).status,
+      "released",
+    );
+    assert.equal(balance(s.db, user.id).held, heldForReconciliation);
+  }
+  assert.equal(balance(s.db, user.id).total, total);
+  assert.equal(calls, 5);
+});
 test("durable conversations and pending video jobs resume after process restart", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-restart-"));
   const settings = {
-    testMode: true, released: "all",
+    testMode: true,
+    released: "all",
     dbPath: join(dir, "db.sqlite"),
     mediaPath: join(dir, "media"),
   };

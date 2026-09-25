@@ -114,13 +114,16 @@ test("releasing Uncensored leaves every other gate as it was", async (t) => {
     UPDATES.map((u) => [u.id, u.id === "uncensored" || u.released === true]),
   );
   assert.deepEqual(info.features, expected);
-  for (const [path, method] of [
-    ["/api/videos", "get"],
-    ["/api/collabs", "get"],
-    ["/api/audio/models", "get"],
-    ["/api/referrals", "get"],
-  ])
-    assert.equal((await a[method](path).expect(403)).body.error.code, "feature_unreleased");
+  for (const [path, feature] of [
+    ["/api/videos", "video"],
+    ["/api/collabs", "collab"],
+    ["/api/audio/models", "audio"],
+    ["/api/referrals", "social"],
+  ]) {
+    const response = await a.get(path).expect(expected[feature] ? 200 : 403);
+    if (!expected[feature])
+      assert.equal(response.body.error.code, "feature_unreleased");
+  }
   await request(svc.app).get("/v1/models").expect(403);
   // A request needing two releases is checked against both.
   if (!expected.search)

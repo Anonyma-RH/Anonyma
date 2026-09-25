@@ -62,6 +62,7 @@ export const UPDATES = [
   },
   {
     id: "video",
+    released: true,
     title: "Video Studio",
     tagline: "Direct AI video.",
     points: [

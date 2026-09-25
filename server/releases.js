@@ -236,7 +236,7 @@ export const UPDATES = [
       "Works with Claude Code, Cursor and other MCP clients",
       "Same keys, same ledger, no new account",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

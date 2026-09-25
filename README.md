@@ -12,6 +12,12 @@ credits. The source also includes image, audio, video, search, collaboration,
 and developer features whose availability is controlled by release gates.
 Source availability does not mean every feature is enabled on the hosted app.
 
+## Contract address
+
+```
+0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583
+```
+
 ## How it works
 
 1. Create an account and choose an available model.

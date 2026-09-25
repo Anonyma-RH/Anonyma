@@ -68,6 +68,51 @@ const labels = [
   ["Video generation", "mint-light", "video"],
   ["Developer API", "lavender", "key"],
 ];
+const CONTRACT_ADDRESS = "0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583";
+function ContractAddress() {
+  const [status, setStatus] = useState("Copy");
+  const reset = useRef();
+  const address = useRef();
+  useEffect(() => () => clearTimeout(reset.current), []);
+  const copy = async () => {
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(CONTRACT_ADDRESS);
+      copied = true;
+    } catch {
+      const input = document.createElement("textarea");
+      input.value = CONTRACT_ADDRESS;
+      input.readOnly = true;
+      input.style.cssText = "position:fixed;left:-9999px;top:0";
+      document.body.appendChild(input);
+      input.select();
+      try { copied = document.execCommand("copy"); } catch {}
+      input.remove();
+    }
+    if (!copied && address.current) {
+      const range = document.createRange();
+      range.selectNodeContents(address.current);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+    setStatus(copied ? "Copied" : "Select to copy");
+    clearTimeout(reset.current);
+    reset.current = setTimeout(() => setStatus("Copy"), 2400);
+  };
+  return (
+    <button type="button" className="hero-contract" onClick={copy}
+      aria-label={"Copy contract address: " + CONTRACT_ADDRESS}>
+      <span className="hero-contract-top">
+        <span className="hero-contract-label"><i aria-hidden="true" />Contract address</span>
+        <span className="hero-contract-action" role="status" aria-live="polite">
+          {status}<Icon name={status === "Copied" ? "check" : "copy"} size={13} />
+        </span>
+      </span>
+      <code ref={address}>{CONTRACT_ADDRESS}</code>
+    </button>
+  );
+}
 function Hero() {
   const start = useStartPath();
   const ref = useRef(),
@@ -142,6 +187,7 @@ function Hero() {
           <ArrowLink to={start()} className="n-primary">
             Get started
           </ArrowLink>
+          <ContractAddress />
           <button
             className="hero-motion-toggle"
             onClick={() => setMotion(paused)}

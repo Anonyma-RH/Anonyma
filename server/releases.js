@@ -353,6 +353,13 @@ export const UPDATES = [
     tagline: "Sources, alternatives and arithmetic, clearly apart.",
     points: ["Research with provider-returned source links", "Compare writing alternatives without overwriting them", "Calculate arithmetic locally without a model call"],
   },
+  {
+    id: "longanswers", title: "Longer, More Reliable Answers",
+    tagline: "More room to finish your thought.",
+    points: ["Choose a larger reply budget where supported", "Keep context and partial answers", "Continue only when you choose"],
+    released: true,
+  },
+
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

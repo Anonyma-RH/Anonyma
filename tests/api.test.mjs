@@ -8,6 +8,7 @@ import { createServer } from "node:http";
 import { createHmac } from "node:crypto";
 import { Wallet } from "ethers";
 import { createApp } from "../server/app.js";
+import { UPDATES } from "../server/releases.js";
 import {
   balance,
   credits,
@@ -457,7 +458,7 @@ test("input limits and unsupported roles reject before creating holds", async (t
     .set("Authorization", auth)
     .send({
       ...prompt,
-      messages: Array.from({ length: 41 }, () => ({
+      messages: Array.from({ length: 61 }, () => ({
         role: "user",
         content: "x".repeat(4000),
       })),
@@ -480,7 +481,7 @@ test("input limits and unsupported roles reject before creating holds", async (t
     .post("/api/chat")
     .send({
       ...prompt,
-      messages: [{ role: "user", content: "x".repeat(48001) }],
+      messages: [{ role: "user", content: "x".repeat(240001) }],
     })
     .expect(400);
   assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds").get().n, 0);
@@ -1042,7 +1043,10 @@ test("missing or invalid published token rates reject before reserving credits",
   }
   assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds").get().n, 0);
 });
-test("API compatibility clamps output, retains last 40 strings, skips parts, and exposes authenticated connection balance", async (t) => {
+test("before Longer Answers, API compatibility clamps output, retains last 40 strings and exposes connection balance", async (t) => {
+  const gate = UPDATES.find(u => u.id === "longanswers"), prior = gate.released;
+  gate.released = false;
+  t.after(() => { gate.released = prior; });
   let received;
   const gateway = await mockServer(t, async (req, res) => {
     received = await readJSON(req);
@@ -1053,7 +1057,7 @@ test("API compatibility clamps output, retains last 40 strings, skips parts, and
     });
     res.end("data: [DONE]\n\n");
   });
-  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture" });
+  const s = fixture(t, { testMode: false, gateway, gatewayKey: "fixture", released: "mvp,api,catalog" });
   const { agent, user } = await register(s.app);
   addCredit(s.db, user.id, 100000000, "compat-fund");
   const key = await keyFor(agent);

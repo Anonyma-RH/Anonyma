@@ -10,6 +10,7 @@ export const FAILOVER_CODES = new Set([
 
 export function createFallback(cfg) {
   const enabled = !cfg.testMode && !!cfg.gateway2 && !!cfg.gateway2Key;
+  let metadata = new Map();
   let ids = null,
     fetchedAt = 0,
     pending = null;
@@ -22,6 +23,7 @@ export function createFallback(cfg) {
       .then(async (r) => {
         if (!r.ok) throw Error(`Backup catalog unavailable (${r.status}).`);
         const j = await r.json();
+        metadata = new Map((j.data || []).filter(m => typeof m?.id === "string").map(m => [m.id, m]));
         ids = (j.data || [])
           .map((m) => m?.id)
           .filter((id) => typeof id === "string");
@@ -50,6 +52,7 @@ export function createFallback(cfg) {
   return {
     enabled,
     modelFor,
+    infoFor: (id) => metadata.get(id),
     // Settings for chatStream against the backup gateway.
     cfg: {
       ...cfg,

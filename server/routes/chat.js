@@ -1,3 +1,4 @@
+import { chatLimits } from "../../data/chat-limits.js";
 import {
   uid,
   now,
@@ -116,7 +117,8 @@ export function chatRoutes(ctx) {
         );
     }
     const messages = validateMessages(req.body.messages, m, api),
-      max = maxTokens(req.body.max_tokens);
+      max = maxTokens(req.body.max_tokens, m);
+    ctx.models.validateContext(messages, m, max);
     const requestId = requestIdentifier(req);
     const hold = req.user.id + ":" + requestId;
     // Team Treasury "Team pays": held on the collab's treasury (see below).
@@ -233,14 +235,14 @@ export function chatRoutes(ctx) {
     // (a live check was billed for generation after such an abort), while
     // cancelling once it has accepted does. So a client that leaves early is
     // held until acceptance (or 15 seconds), then stopped like Stop.
-    let clientGone = false;
+    let clientGone = false, clientStopTimer;
     const stopForClient = () =>
       controller.abort(new Error("Client disconnected"));
     res.on("close", () => {
       if (res.writableEnded) return;
       clientGone = true;
       if (accepted) stopForClient();
-      else setTimeout(stopForClient, 15000).unref();
+      else clientStopTimer = setTimeout(stopForClient, 15000).unref();
     });
     const id = uid("chatcmpl_");
     let output = "",
@@ -309,6 +311,7 @@ export function chatRoutes(ctx) {
     // Serve from the primary gateway, or from the backup when the primary
     // refuses before accepting; never after, so nothing is paid twice.
     let servedBy = "primary";
+    let finishReason = null;
     const upstreamBody = {
       model: m.id,
       messages,
@@ -335,6 +338,15 @@ export function chatRoutes(ctx) {
           throw e;
         const backupModel = await fallback.modelFor(m.id);
         if (!backupModel) throw e;
+        // A larger request cannot silently move to an unverified backup cap.
+        if (isReleased(cfg, "longanswers") && max > chatLimits(fallback.infoFor(backupModel)).maxOutputTokens) throw e;
+        // The same model can have a smaller context window on another route.
+        // Missing backup metadata uses the same conservative context allowance.
+        try {
+          ctx.models.validateContext(messages, { ...fallback.infoFor(backupModel), id: backupModel, type: "chat" }, max);
+        } catch {
+          throw e; // Keep the primary refusal; never send an incompatible fallback.
+        }
         servedBy = "backup";
         yield* chatStream(
           fallback.cfg,
@@ -354,6 +366,7 @@ export function chatRoutes(ctx) {
             part.error.message || "Provider error",
             "provider_rejected",
           );
+        if (typeof part.choices?.[0]?.finish_reason === "string") finishReason = part.choices[0].finish_reason;
         const delta = part.choices?.[0]?.delta || {};
         if (typeof delta.content === "string") output += delta.content;
         if (
@@ -433,6 +446,7 @@ export function chatRoutes(ctx) {
       receipt = settle(db, hold, usdUnits(Number(dollars) * factor), m.name, {
         model: m.id,
         usage,
+        finish_reason: finishReason || "stop",
       });
       attributeMediaCost(receipt);
       // An Ed25519-signed, independently verifiable copy of this receipt.
@@ -466,6 +480,8 @@ export function chatRoutes(ctx) {
       const extension = {
         credits_charged: receipt.credits_charged,
         request_id: requestId,
+        finish_reason: finishReason || "stop",
+        reply_budget: max,
         ...(citations.length ? { citations } : {}),
         ...(servedBy === "backup" ? { provider: "backup" } : {}),
         ...(cfg.testMode ? { local_test: true } : {}),
@@ -489,6 +505,8 @@ export function chatRoutes(ctx) {
             reasoning,
             images: saved,
             usage,
+            finish_reason: finishReason || "stop",
+            request_id: requestId,
             ...(citations.length ? { citations } : {}),
           }),
           m.id,
@@ -531,7 +549,7 @@ export function chatRoutes(ctx) {
                 ...(saved.length ? { images: saved } : {}),
                 ...(citations.length ? { citations } : {}),
               },
-              finish_reason: "stop",
+              finish_reason: finishReason || "stop",
             },
           ],
           usage,
@@ -579,12 +597,22 @@ export function chatRoutes(ctx) {
           "Interrupted: " + m.name,
         );
         e.receipt = receipt;
-        if (
+      } else if (stoppedAfterAcceptance) {
+        receipt = settle(
+          db,
+          hold,
+          usdUnits((tokenCost(m, tokenCounts().input, 0) + searchFee) * factor),
+          "Stopped before output: " + m.name,
+        );
+        e.receipt = receipt;
+      } else release(db, hold);
+      if ((output || reasoning || saved.length) &&
+        receipt && (
           conversation &&
           db
             .prepare("SELECT id FROM conversations WHERE id=?")
             .get(conversation)
-        )
+        ))
           db.prepare(
             "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
           ).run(
@@ -596,21 +624,15 @@ export function chatRoutes(ctx) {
               reasoning,
               images: saved,
               interrupted: true,
+              finish_reason: timedOut ? "timeout" : "interrupted",
+              request_id: requestId,
             }),
             m.id,
             receipt.charged,
             now(),
             req.user.id,
           );
-      } else if (stoppedAfterAcceptance) {
-        receipt = settle(
-          db,
-          hold,
-          usdUnits((tokenCost(m, tokenCounts().input, 0) + searchFee) * factor),
-          "Stopped before output: " + m.name,
-        );
-        e.receipt = receipt;
-      } else release(db, hold);
+
       if (receipt) attributeMediaCost(receipt);
       if (streaming) {
         send({
@@ -622,7 +644,7 @@ export function chatRoutes(ctx) {
             code: e.code || "generation_error",
           },
           anonyma: receipt
-            ? { credits_charged: receipt.credits_charged }
+            ? { credits_charged: receipt.credits_charged, request_id: requestId, finish_reason: timedOut ? "timeout" : "interrupted" }
             : undefined,
           conversationId: conversation,
           ...(saved.length ? { images: saved } : {}),
@@ -631,6 +653,7 @@ export function chatRoutes(ctx) {
       } else throw e;
     } finally {
       clearTimeout(timeout);
+      clearTimeout(clientStopTimer);
       inflight.controllers.delete(controller);
       inflight.holds.delete(hold);
     }

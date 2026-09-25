@@ -49,7 +49,7 @@ const chat = object(
       ...integer,
       minimum: 1,
       default: 4096,
-      description: "Clamped to 8192.",
+      description: "Default 4096. With Longer, More Reliable Answers released, explicit budgets are checked against the model limit shown by /api/models (service ceiling 32768; conservative 8192 where an output limit is unavailable). Oversized budgets or context are refused before reservation; older releases clamp to 8192.",
     },
     requestId,
     conversationId: string,

@@ -22,6 +22,7 @@ export function buildChatRequest({
   documents = [],
   instructions = "",
   veilWith = null,
+  preserveHistory = false,
 }) {
   // Document text (already trimmed to the shared budget) rides along as
   // delimited blocks after the typed prompt; see src/documents.js.
@@ -34,7 +35,7 @@ export function buildChatRequest({
   // Standing instructions (Scrolls) lead the request as a system message in
   // one of the context slots (see historyLimit).
   let standing = instructions || "";
-  const history = historyLimit(standing);
+  const history = preserveHistory ? rawNext.length : historyLimit(standing);
   if (!veilWith)
     return {
       next: rawNext,
@@ -73,11 +74,11 @@ export const cloneVeilState = (state) => ({
 
 // The /api/quote body for a chat Send: same model, messages, reply budget and
 // web search flag, and nothing that reserves or charges.
-export function quoteBody({ model, request, webSearch = false, treasury = false, conversationId }) {
+export function quoteBody({ model, request, webSearch = false, maxTokens = REPLY_BUDGET, treasury = false, conversationId }) {
   return {
     model,
     messages: request,
-    max_tokens: REPLY_BUDGET,
+    max_tokens: maxTokens,
     ...(treasury === true ? { treasury: true, conversationId } : {}),
     ...(webSearch ? { web_search: true } : {}),
   };
@@ -152,6 +153,7 @@ export function createEstimator({
               credits: Number(r.credits),
               available: r.available == null ? null : Number(r.available),
               model: r.model,
+              ...(body.max_tokens ? { replyBudget: body.max_tokens } : {}),
             });
           } catch (e) {
             if (id !== seq || e?.name === "AbortError") return;

@@ -298,7 +298,7 @@ test("the workspace sends and estimates through the same builder", async () => {
   // Send posts the built request with the shared reply budget.
   assert.match(src, /const built = buildChatRequest\(/);
   assert.match(src, /messages: built\.request,/);
-  assert.match(src, /max_tokens: REPLY_BUDGET,/);
+  assert.match(src, /max_tokens: longAnswersLive \? replyBudgetFor\(effectiveModel, replyBudget\) : REPLY_BUDGET,/);
   // Both the automatic estimate and the explicit button quote estimateRequest(),
   // which masks with a copy of the Veil map.
   assert.match(src, /cloneVeilState\(veilStateRef\.current\)/);

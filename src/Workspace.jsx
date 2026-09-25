@@ -1,3 +1,4 @@
+import { CONTINUE_PROMPT, replyBudgetFor, replyBudgets, completionNotice } from "./long-answers.js";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
@@ -261,6 +262,7 @@ export default function Workspace() {
     // only reflects a choice made in this session rather than a stored one.
     [retentionDays, setRetentionDays] = useState(null),
     [webSearch, setWebSearch] = useState(false),
+    [replyBudget, setReplyBudget] = useState(8192),
     [veilOn, setVeilOn] = useState(() => loadVeilOn()),
     [veilWords, setVeilWords] = useState(() => loadVeilWords()),
     [veilNote, setVeilNote] = useState(null),
@@ -345,6 +347,7 @@ export default function Workspace() {
   // Model Finder & Presets (src/model-finder.js): Cheap / Balanced / Best
   // quality presets and a searchable list, remembered per mode in this
   // browser. While it's unreleased the plain model select stays as it was.
+  const longAnswersLive = isReleased(config, "longanswers");
   const finderLive = isReleased(config, "finder");
   const [modelChoices, setModelChoices] = useState(() => {
     const saved = loadChoices(readStore);
@@ -357,6 +360,7 @@ export default function Workspace() {
   // Quote and Send retain image history; capability follows that exact context.
   const needsVision = textMode && requestNeedsVision(buildChatRequest({
     messages, attachments,
+    preserveHistory: longAnswersLive,
     instructions: instructionsActive ? instructions.body.trim() : "",
   }).request);
   const finderModels = needsVision ? visibleModels.filter((m) => m.vision) : visibleModels;
@@ -705,6 +709,7 @@ export default function Workspace() {
     : null;
   const incompatibleMention = finderLive && mentioned && needsVision && !mentioned.vision;
   const target = mentioned || selected;
+  const selectedReplyBudget = longAnswersLive ? replyBudgetFor(target, replyBudget) : REPLY_BUDGET;
   // What a chat Send posts, shared with the credit estimate beside it.
   const sendText = mentioned ? mention[2].trim() : prompt.trim();
   const sendModel = target?.id || model;
@@ -778,11 +783,12 @@ export default function Workspace() {
       attachments,
       documents,
       instructions: instructionsActive ? instructions.body.trim() : "",
+      preserveHistory: longAnswersLive,
       veilWith: veiling
         ? { state: cloneVeilState(veilStateRef.current), words: veilWords }
         : null,
     });
-    return quoteBody({ model: sendModel, request, webSearch, treasury: teamPays.on, conversationId: current });
+    return quoteBody({ model: sendModel, request, webSearch, maxTokens: selectedReplyBudget, treasury: teamPays.on, conversationId: current });
   }
   // Credit Estimates: a live estimate beside Send in chat, code and
   // Uncensored, whenever Send would go through. Image, video and Symposium
@@ -804,7 +810,7 @@ export default function Workspace() {
     () => (autoEstimate ? estimateRequest() : null),
     // Everything estimateRequest reads that can change between renders.
     [autoEstimate, sendText, sendModel, messages, attachments, documents,
-      instructionsActive, instructions.body, veilOn, veilWords, webSearch, current],
+      instructionsActive, instructions.body, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive],
   );
   const estimate = useCreditEstimate(estimateBody);
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
@@ -817,6 +823,7 @@ export default function Workspace() {
     const requestVision = redo
       ? requestNeedsVision(buildChatRequest({
           messages: redo.base,
+          preserveHistory: longAnswersLive,
           attachments: (redo.images || []).map((url) => ({ url })),
           instructions: instructionsActive ? instructions.body.trim() : "",
         }).request)
@@ -1017,6 +1024,7 @@ export default function Workspace() {
       attachments: redo ? (redo.images || []).map((url) => ({ url })) : attachments,
       documents: redo ? [] : documents,
       instructions: instructionsActive ? instructions.body.trim() : "",
+      preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
     });
     const next = built.next,
@@ -1063,6 +1071,7 @@ export default function Workspace() {
       reasoning = "",
       images = [],
       citations = [],
+      finishReason = null,
       // Set once the final event's anonyma.private arrives; drives the
       // "Sent to <provider> · not saved" line under this reply.
       privateInfo = null;
@@ -1074,13 +1083,16 @@ export default function Workspace() {
           messages: built.request,
           ...(ephemeral ? { ephemeral: true } : { conversationId }),
           mode,
-          max_tokens: REPLY_BUDGET,
+          max_tokens: longAnswersLive ? replyBudgetFor(effectiveModel, replyBudget) : REPLY_BUDGET,
           requestId,
           ...(webSearch ? { web_search: true } : {}),
           ...(sendingPrivate ? { private: true } : {}),
           ...teamPays.body,
         },
         (event) => {
+          if (event.conversationId) liveId = event.conversationId;
+          if (event.anonyma) setReceipt(event.anonyma);
+          finishReason = event.anonyma?.finish_reason || event.choices?.[0]?.finish_reason || finishReason;
           if (event.error)
             throw new Error(
               event.error.message || "The stream ended with an error.",
@@ -1107,6 +1119,8 @@ export default function Workspace() {
               images,
               citations,
               model: requestModel,
+              finishReason,
+              requestId,
               ...(privateInfo
                 ? { private: privateInfo, masked: requestMasked }
                 : {}),
@@ -1116,19 +1130,25 @@ export default function Workspace() {
         controller.current.signal,
       );
       setCurrent(liveId);
-      // The conversation just got its real id: move its veil map off the
-      // temporary key so it's found again next time this browser opens it.
-      if (veilOn && liveId && liveId !== veilKeyRef.current) {
-        moveVeilState(veilKeyRef.current, liveId);
-        veilKeyRef.current = liveId;
-      }
     } catch (err) {
+      setCurrent(liveId);
+      if (output || reasoning || images.length) setMessages([...next, {
+        role: "assistant", content: output, reasoning, images, citations, model: requestModel,
+        finishReason: finishReason || "interrupted", interrupted: true, requestId,
+        ...(sendingPrivate ? { private: { privacy: "zdr", stored: false }, masked: requestMasked } : {}),
+      }]);
       setError(
         err.name === "AbortError"
           ? "Stopped. Partial billing may apply; refresh receipts before retrying."
           : err.message,
       );
     } finally {
+      // The conversation just got its real id: move its veil map off the
+      // temporary key so it's found again next time this browser opens it.
+      if (veilOn && liveId && liveId !== veilKeyRef.current) {
+        moveVeilState(veilKeyRef.current, liveId);
+        veilKeyRef.current = liveId;
+      }
       setBusy(false);
       refresh();
       api("/api/conversations")
@@ -1680,6 +1700,18 @@ export default function Workspace() {
                           {m.role === "assistant" && m.content && (
                             <CopyButton text={m.content} />
                           )}
+                          {longAnswersLive && m.role === "assistant" && completionNotice(m) && (
+                            <div className="fine-print" role="status">
+                              <p>{completionNotice(m)}</p>
+                              {i === messages.length - 1 && !busy && (m.content || m.reasoning) && (
+                                <button type="button" className="small-button" onClick={() => {
+                                  setPrompt(CONTINUE_PROMPT);
+                                  setInfo("Continuation is a new paid request. Review the estimate, then press Send. Your previous answer stays here.");
+                                  promptBox.current?.focus();
+                                }}>Prepare continuation</button>
+                              )}
+                            </div>
+                          )}
                           {branchesLive && editing?.index === i && (
                             <form
                               className="edit-turn"
@@ -2208,6 +2240,17 @@ export default function Workspace() {
                             <span className="instructions-dot" aria-hidden="true" />
                           )}
                         </button>
+                      )}
+                      {longAnswersLive && textMode && !demo && (
+                        <label className="fine-print">
+                          Reply budget
+                          <select aria-label="Reply token budget" value={selectedReplyBudget} disabled={busy}
+                            onChange={(e) => setReplyBudget(Number(e.target.value))}>
+                            {replyBudgets(target, selectedReplyBudget).map(value => <option key={value} value={value}>{value.toLocaleString()} tokens</option>)}
+                          </select>
+                          {!target?.chatLimits?.outputLimitKnown && <span>Provider output cap unavailable; conservative service limit.</span>}
+                          <span>Higher budgets can cost and reserve more. Reasoning can use this budget. Chat history is kept or refused, never trimmed.</span>
+                        </label>
                       )}
                       {mode === "image" && (
                         <select

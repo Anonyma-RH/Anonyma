@@ -1,3 +1,4 @@
+import { chatLimits } from "../../data/chat-limits.js";
 import { openapiForConfig } from "../openapi.js";
 import { supportConfigured } from "../support.js";
 import { createRatesFeed } from "../rates.js";
@@ -97,6 +98,7 @@ export function catalogRoutes(ctx) {
         imageCapable: imageCallable(m),
         imagePrice: generationPrice(m),
         vision: vision(m),
+        ...(m.type === "chat" && isReleased(cfg, "longanswers") ? { chatLimits: chatLimits(m) } : {}),
         ...(privateFlagged && isPrivateModel(m, cfg) ? { private: true } : {}),
         ...(trainingFlagged ? trainingFields(m, offered) : {}),
       })),
@@ -127,7 +129,8 @@ export function catalogRoutes(ctx) {
       req.body.messages || [{ role: "user", content: req.body.prompt || " " }],
       m,
     );
-    const max = maxTokens(req.body.max_tokens);
+    const max = maxTokens(req.body.max_tokens, m);
+    const budget = models.validateContext(messages, m, max);
     // A chat model is priced exactly as /api/chat prices the request (see
     // routes/chat.js), which then holds up to HOLD_MARGIN times this amount
     // while it runs; other models keep their per-option prices.
@@ -145,6 +148,7 @@ export function catalogRoutes(ctx) {
       available: credits(team ? team.available : balance(db, req.user.id).available),
       model: m.id,
       estimate: true,
+      ...(budget ? { budget } : {}),
     });
   });
 }

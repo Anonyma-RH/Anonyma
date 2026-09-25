@@ -152,6 +152,9 @@ export function messageFromServer(m) {
     ...m,
     content: c?.text || "",
     reasoning: c?.reasoning || "",
+    finishReason: c?.finish_reason || null,
+    interrupted: c?.interrupted === true,
+    requestId: c?.request_id || null,
     images: (c?.images || [])
       .map((i) => i?.image_url?.url || i?.url)
       .filter(Boolean),

@@ -1,3 +1,5 @@
+import { chatLimits, contextEstimate, CHAT_SERVICE_MESSAGES, CHAT_SERVICE_CHARACTERS } from "../data/chat-limits.js";
+import { isReleased } from "./releases.js";
 import { loadCatalog, syncCatalog } from "./catalog.js";
 import {
   now,
@@ -59,9 +61,10 @@ export function createModels(cfg) {
       input.some((v) => !v || !["system", "user", "assistant"].includes(v.role))
     )
       fail(400, "Only system, user and assistant messages are supported.");
-    input = (
-      api ? input.filter((v) => typeof v.content === "string") : input
-    ).slice(api ? -40 : -20);
+    const extended = isReleased(cfg, "longanswers");
+    if (extended && input.length > CHAT_SERVICE_MESSAGES)
+      fail(400, `This conversation exceeds the ${CHAT_SERVICE_MESSAGES}-message service limit. Start a new conversation with the context you want to keep. Nothing was sent or charged.`, "context_limit_exceeded");
+    if (!extended) input = (api ? input.filter((v) => typeof v.content === "string") : input).slice(api ? -40 : -20);
     if (!input.length)
       fail(
         400,
@@ -74,17 +77,17 @@ export function createModels(cfg) {
         fail(400, "Only system, user and assistant messages are supported.");
       let content = v.content;
       if (typeof content === "string") {
-        if (content.length > 48000 && !api)
-          fail(400, "A message cannot exceed 48,000 characters.");
+        if (content.length > (extended ? CHAT_SERVICE_CHARACTERS : 48000) && !api)
+          fail(400, `A message cannot exceed ${extended ? "240,000" : "48,000"} characters.`);
         total += content.length;
       } else if (Array.isArray(content)) {
         if (
           content.reduce(
             (n, p) => n + (typeof p?.text === "string" ? p.text.length : 0),
             0,
-          ) > 48000
+          ) > (extended ? CHAT_SERVICE_CHARACTERS : 48000)
         )
-          fail(400, "A message cannot exceed 48,000 characters.");
+          fail(400, `A message cannot exceed ${extended ? "240,000" : "48,000"} characters.`);
         content = content.map((p) => {
           if (p?.type === "text" && typeof p.text === "string") {
             total += p.text.length;
@@ -113,9 +116,11 @@ export function createModels(cfg) {
         fail(400, "Message content must be text or supported image parts.");
       return { role: v.role, content };
     });
-    if (total > 120000 && api)
+    if (extended && total > CHAT_SERVICE_CHARACTERS)
+      fail(400, "Conversation exceeds 240,000 characters. Start a new conversation with the context you want to keep. Nothing was sent or charged.", "context_limit_exceeded");
+    if (!extended && total > 120000 && api)
       fail(400, "Conversation exceeds 120,000 characters.");
-    while (total > 120000 && messages.length > 1) {
+    while (!extended && total > 120000 && messages.length > 1) {
       const removed = messages.shift();
       total -=
         typeof removed.content === "string"
@@ -128,11 +133,14 @@ export function createModels(cfg) {
     if (!total && !images) fail(400, "Enter a message.");
     return messages;
   }
-  const maxTokens = (value) => {
+  const maxTokens = (value, model) => {
     const n = value ?? 4096;
     if (!Number.isInteger(n) || n < 1)
       fail(400, "max_tokens must be a positive integer.");
-    return Math.min(n, 8192);
+    if (!isReleased(cfg, "longanswers")) return Math.min(n, 8192);
+    const cap = chatLimits(model).maxOutputTokens;
+    if (n > cap) fail(400, `Choose a reply budget of ${cap.toLocaleString("en-US")} tokens or less for this model. Nothing was sent or charged.`, "output_limit_exceeded");
+    return n;
   };
   return {
     get snapshot() {
@@ -143,5 +151,13 @@ export function createModels(cfg) {
     getModel,
     validateMessages,
     maxTokens,
+    validateContext(messages, model, output) {
+      if (!isReleased(cfg, "longanswers") || model.type !== "chat") return null;
+      const limits = chatLimits(model), input = contextEstimate(messages);
+      const context = limits.contextTokens || 32768;
+      if (input + output > context)
+        fail(400, `This conversation and reply budget exceed the ${limits.contextTokens ? "model's" : "service's conservative"} context allowance (conservative estimate: ${input.toLocaleString("en-US")} input + ${output.toLocaleString("en-US")} reply tokens; allowance ${context.toLocaleString("en-US")}). Reduce the reply budget or start a new conversation with selected context. Nothing was sent or charged.`, "context_limit_exceeded");
+      return { ...limits, inputTokensEstimate: input, replyBudget: output };
+    },
   };
 }

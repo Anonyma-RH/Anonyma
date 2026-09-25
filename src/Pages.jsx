@@ -829,6 +829,7 @@ const featureIcons = {
   connect: "plug",
   finder: "search",
   estimates: "coins",
+  longanswers: "book",
   holders: "credits",
   v1media: "image",
   treasury: "coins",

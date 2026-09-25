@@ -86,11 +86,20 @@
   gap: 12px;
   flex-wrap: wrap;
 }
-.scrolls-toggle {
+/* .modal label stacks a label over its field; the checkbox sits inline. */
+.scrolls-toggle,
+.modal .scrolls-toggle {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
+  margin: 0;
   font-size: 13px;
+}
+.modal .scrolls-toggle input {
+  flex: none;
+  width: auto;
+  margin: 0;
 }
 .scrolls-list-head {
   display: flex;
@@ -158,6 +167,11 @@
 .scrolls-form textarea,
 .scrolls-form input {
   width: 100%;
+}
+.scrolls-form .scrolls-fill-title {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 .scrolls-error {
   margin: 0;

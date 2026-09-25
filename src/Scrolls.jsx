@@ -3,8 +3,11 @@ import { Icon, Modal, Button } from "./ui.jsx";
 import { extractVariables, fillTemplate, validateScroll, validateInstructions } from "./scrolls.js";
 import "./scrolls.css";
 
-// Manage saved scrolls and the standing instructions sent with every
-// chat/code request. Opened from the composer's Scrolls button.
+// Manage saved scrolls and the standing instructions sent with every chat,
+// code and Uncensored request. Opened from the composer's Scrolls button.
+// Titles, bodies, variable names and typed values are the user's own words,
+// so they carry data-i18n="off" and stay as written when Chinese is on
+// (textareas are never translated; their placeholders are).
 export function ScrollsPanel({
   scrolls,
   instructions,
@@ -90,7 +93,8 @@ export function ScrollsPanel({
           <section className="scrolls-instructions">
             <h3>Standing instructions</h3>
             <p className="scrolls-hint">
-              Sent as a leading instruction with every chat and code request, when enabled.
+              Sent with every chat, code and Uncensored message while enabled. Veil masks
+              them like the rest of your message.
             </p>
             <textarea
               value={instructionsBody}
@@ -148,7 +152,7 @@ export function ScrollsPanel({
               <ul className="scrolls-items">
                 {scrolls.map((s) => (
                   <li key={s.id}>
-                    <div>
+                    <div data-i18n="off">
                       <b>{s.title}</b>
                       <p>{s.body.length > 140 ? s.body.slice(0, 140) + "…" : s.body}</p>
                     </div>
@@ -176,6 +180,7 @@ export function ScrollsPanel({
           <label>
             Title
             <input
+              data-i18n="off"
               value={draft.title}
               onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
               maxLength={80}
@@ -209,19 +214,25 @@ export function ScrollsPanel({
   );
 }
 
-// Fills a scroll's {{variables}} before it is inserted into the prompt.
+// Fills a scroll's {{variables}} before it is inserted into the prompt. The
+// dialog's title is fixed text; the scroll's own title sits below it,
+// untranslated.
 export function ScrollFillForm({ scroll, onInsert, onCancel }) {
   const variables = extractVariables(scroll.body);
   const [values, setValues] = useState(() =>
     Object.fromEntries(variables.map((v) => [v, ""])),
   );
   return (
-    <Modal title={scroll.title} onClose={onCancel}>
+    <Modal title="Fill in the blanks" onClose={onCancel}>
       <div className="scrolls-form">
+        <p className="scrolls-fill-title" data-i18n="off">
+          {scroll.title}
+        </p>
         {variables.map((name, i) => (
           <label key={name}>
-            {name}
+            <span data-i18n="off">{name}</span>
             <input
+              data-i18n="off"
               value={values[name] || ""}
               onChange={(e) => setValues((v) => ({ ...v, [name]: e.target.value }))}
               autoFocus={i === 0}

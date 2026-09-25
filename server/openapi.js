@@ -686,7 +686,7 @@ route(
     body: object({ body: { ...string, maxLength: 4000 }, enabled: bool }),
     response: ref("Instructions"),
     description:
-      "When enabled, the client sends this as a leading system message on chat and code requests. This endpoint only stores it; it does not itself alter /api/chat.",
+      "When enabled, the client sends this as a leading system message on chat, code and Uncensored requests, masked by Veil when Veil is on. This endpoint only stores it; it does not itself alter /api/chat.",
   },
 );
 route("get", "/api/referrals", "Your referral link and rewards", {

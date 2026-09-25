@@ -18,19 +18,26 @@ import {
   fillTemplate,
   validateScroll,
   validateInstructions,
+  historyLimit,
+  withStanding,
+  CHAT_CONTEXT,
   MAX_TITLE,
   MAX_BODY,
   MAX_INSTRUCTIONS,
 } from "../src/scrolls.js";
+import { veil, unveil, createVeilState } from "../src/veil.js";
 
-function fixture(t, released) {
+function fixture(t, released, extra = {}) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-scrolls-"));
   const svc = createApp({
     testMode: true,
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
-    ...(released !== undefined ? { released } : {}),
+    // The server defaults to the MVP, so the default fixture opens every
+    // update explicitly, as the other suites do.
+    released: released ?? "all",
+    ...extra,
   });
   t.after(() => {
     svc.close();
@@ -82,6 +89,42 @@ test("validateInstructions only rejects oversized bodies", () => {
   assert.equal(validateInstructions(""), null);
   assert.equal(validateInstructions("Be concise."), null);
   assert.ok(validateInstructions("x".repeat(MAX_INSTRUCTIONS + 1)));
+});
+
+test("standing instructions lead the request inside the 20-message window", () => {
+  const convo = Array.from({ length: 30 }, (_, i) => ({
+    role: i % 2 ? "assistant" : "user",
+    content: "turn " + i,
+  }));
+  // Without instructions nothing changes: the last 20 turns, no system role.
+  assert.equal(historyLimit(""), CHAT_CONTEXT);
+  const plain = withStanding("", convo.slice(-historyLimit("")));
+  assert.equal(plain.length, 20);
+  assert.ok(plain.every((m) => m.role !== "system"));
+  // With them, one leading system message and 19 turns, so the server's
+  // last-20 trim never drops the instructions from a long conversation.
+  const standing = "Answer in bullet points.";
+  const sent = withStanding(standing, convo.slice(-historyLimit(standing)));
+  assert.equal(sent.length, CHAT_CONTEXT);
+  assert.deepEqual(sent[0], { role: "system", content: standing });
+  assert.equal(sent.at(-1).content, "turn 29");
+  assert.equal(sent.filter((m) => m.role === "system").length, 1);
+});
+
+test("Veil masks standing instructions with the conversation's map, and replies restore", () => {
+  // The composer veils the instructions first, then the turns, with one
+  // shared state, so a value in both gets one tag and the reply unveils.
+  const state = createVeilState();
+  const standing = veil("Sign every reply as ana@example.com.", state);
+  const turn = veil("Email ana@example.com the summary.", state);
+  assert.equal(standing.count, 1);
+  assert.equal(standing.text, "Sign every reply as [EMAIL_1].");
+  assert.equal(turn.text, "Email [EMAIL_1] the summary.");
+  const sent = withStanding(standing.text, [{ role: "user", content: turn.text }]);
+  assert.ok(!JSON.stringify(sent).includes("ana@example.com"));
+  assert.equal(unveil("Signed, [EMAIL_1]", state.map), "Signed, ana@example.com");
+  // Nothing detected: the instructions go as written.
+  assert.equal(veil("Be concise.", state).text, "Be concise.");
 });
 
 // --- Routes -----------------------------------------------------------------
@@ -252,6 +295,33 @@ test("chat accepts a leading system message without changing what is saved", asy
   const userMessages = thread.messages.filter((m) => m.role === "user");
   assert.equal(userMessages.length, 1);
   assert.equal(userMessages[0].content, "Hello");
+});
+
+test("a leading system message works with Ephemeral, Private Mode and Uncensored", async (t) => {
+  const privateModel = "venice/venice-uncensored-1-2";
+  const s = fixture(t, undefined, { privateModels: [privateModel] });
+  const { agent } = await register(s.app);
+  const system = { role: "system", content: "Answer in one line." };
+  const user = { role: "user", content: "Hello" };
+  const chat = (body) =>
+    agent
+      .post("/api/chat")
+      .send({ max_tokens: 50, messages: [system, user], ...body })
+      .expect(200);
+  // Ephemeral and Private: answered, nothing saved.
+  await chat({ model: "google/gemini-2.5-flash", ephemeral: true });
+  await chat({ model: privateModel, private: true });
+  assert.deepEqual((await agent.get("/api/conversations")).body.data, []);
+  // Uncensored: saved as its own mode, with only the user message and reply.
+  await chat({ model: privateModel, mode: "uncensored" });
+  const saved = (await agent.get("/api/conversations")).body.data;
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].mode, "uncensored");
+  const thread = (await agent.get(`/api/conversations/${saved[0].id}`)).body;
+  assert.deepEqual(
+    thread.messages.map((m) => m.role),
+    ["user", "assistant"],
+  );
 });
 
 // --- Release gating ----------------------------------------------------

@@ -45,6 +45,19 @@ export function validateScroll({ title, body } = {}) {
   if (b) errors.body = b;
   return errors;
 }
+// The server keeps the last 20 messages of a chat request (validateMessages
+// in server/models.js). Standing instructions take one of those slots, so a
+// long conversation never trims them off.
+export const CHAT_CONTEXT = 20;
+export const historyLimit = (standing) =>
+  standing ? CHAT_CONTEXT - 1 : CHAT_CONTEXT;
+// A chat request's messages: the standing instructions (already masked when
+// Veil is on) as one leading system message, then the conversation.
+export function withStanding(standing, messages) {
+  return standing
+    ? [{ role: "system", content: standing }, ...messages]
+    : messages;
+}
 export function validateInstructions(body) {
   const b = String(body ?? "");
   if (b.length > MAX_INSTRUCTIONS)

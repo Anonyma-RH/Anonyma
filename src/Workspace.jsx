@@ -47,7 +47,7 @@ import {
 } from "./PrivateMode.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
-import { extractVariables } from "./scrolls.js";
+import { extractVariables, historyLimit, withStanding } from "./scrolls.js";
 import {
   api,
   streamChat,
@@ -271,6 +271,9 @@ export default function Workspace() {
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
+  // Scrolls (saved prompts, "/" insert and standing instructions) work in
+  // every text mode: chat, code and Uncensored.
+  const scrollsLive = !demo && isReleased(config, "scrolls");
   const uncensoredIds = config?.releases?.uncensoredModels || [];
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
   // Private mode narrows the text modes further, to private, callable models
@@ -374,7 +377,7 @@ export default function Workspace() {
       // Scrolls and standing instructions are quiet failures: the composer
       // works the same as before either way. Skipped entirely while the
       // update is unreleased, so the client never calls its endpoints.
-      if (isReleased(config, "scrolls")) {
+      if (scrollsLive) {
         api("/api/scrolls")
           .then((r) => setScrolls(r.data))
           .catch(() => {});
@@ -383,7 +386,7 @@ export default function Workspace() {
           .catch(() => {});
       }
     }
-  }, [demo, user]);
+  }, [demo, user, scrollsLive]);
   useEffect(
     () => () => {
       controller.current?.abort();
@@ -585,9 +588,10 @@ export default function Workspace() {
     : null;
   const target = mentioned || selected;
   // Typing "/" at the start of an empty prompt opens a scroll picker, filtered
-  // by title. Users with no saved scrolls see no change in behaviour.
+  // by title, in chat, code and Uncensored. Users with no saved scrolls see
+  // no change in behaviour.
   const slashQuery =
-    ["chat", "code"].includes(mode) && !demo && scrolls.length
+    textMode && scrollsLive && scrolls.length
       ? prompt.match(/^\/(\S*)$/)?.[1]
       : undefined;
   const scrollMatches =
@@ -627,7 +631,8 @@ export default function Workspace() {
     const r = await api("/api/instructions", { method: "PUT", body: payload });
     setInstructions(r);
   }
-  const instructionsActive = !demo && instructions.enabled && !!instructions.body.trim();
+  const instructionsActive =
+    scrollsLive && instructions.enabled && !!instructions.body.trim();
   async function send(e) {
     e?.preventDefault();
     if (!prompt.trim() || busy) return;
@@ -814,11 +819,11 @@ export default function Workspace() {
       ...messages,
       { role: "user", content: text, images: attachments.map((a) => a.url) },
     ];
-    // Standing instructions (Scrolls) lead the request as a system message.
-    // The server keeps the last 20 messages, so they take one of those slots
-    // rather than being trimmed off a long conversation.
+    // Standing instructions (Scrolls) lead the request as a system message,
+    // in one of the 20 context slots (see historyLimit). They are sent, never
+    // saved: the server stores only the new user message and the reply.
     let standing = instructionsActive ? instructions.body.trim() : "";
-    const history = standing ? 19 : 20;
+    const history = historyLimit(standing);
     // Veil masks the new message and any earlier turns in this request's
     // context window before anything reaches the network. Detection and
     // tagging happen only in this browser; see src/veil.js.
@@ -891,10 +896,10 @@ export default function Workspace() {
       await streamChat(
         {
           model: requestModel,
-          messages: [
-            ...(standing ? [{ role: "system", content: standing }] : []),
-            ...(veiledPayload || next.slice(-history)).map(toRequestMessage),
-          ],
+          messages: withStanding(
+            standing,
+            (veiledPayload || next.slice(-history)).map(toRequestMessage),
+          ),
           ...(ephemeral ? { ephemeral: true } : { conversationId: current }),
           mode,
           max_tokens: 4096,
@@ -1595,7 +1600,7 @@ export default function Workspace() {
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => pickScroll(s)}
                           >
-                            <b>{s.title}</b>
+                            <b data-i18n="off">{s.title}</b>
                             <span>
                               {vars.length
                                 ? `${vars.length} variable${vars.length > 1 ? "s" : ""}`
@@ -1717,9 +1722,7 @@ export default function Workspace() {
                           onError={setError}
                         />
                       )}
-                      {["chat", "code"].includes(mode) &&
-                        !demo &&
-                        isReleased(config, "scrolls") && (
+                      {textMode && scrollsLive && (
                         <button
                           type="button"
                           className="attachment-control scrolls-button"

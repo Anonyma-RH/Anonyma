@@ -459,6 +459,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "trail",
+    title: "Privacy Trail",
+    tagline: "See where every prompt went.",
+    points: [
+      "A Privacy chip under every reply",
+      "The model, provider, route and retention for that prompt",
+      "Only what the app knows, never a guess",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -664,6 +675,10 @@ export function featuresFor(req) {
     return ["ephemeral"];
   const needed = [];
   if (p === "/api/chat" && post && body.taskTool !== undefined) needed.push("tasktools");
+  // Privacy Trail: the browser's Veil mask count (null when Veil was off),
+  // kept with the reply's trail.
+  if (p === "/api/chat" && post && body.veil_masked !== undefined)
+    needed.push("trail");
   // A chat (or its estimate) that asks for saved memory.
   if ((p === "/api/chat" || p === "/api/quote") && post && body.memory != null)
     needed.push("memory");

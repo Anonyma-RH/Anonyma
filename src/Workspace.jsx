@@ -71,6 +71,7 @@ import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
 import { MemoryPanel, MemoryUsedNote, useMemory } from "./Memory.jsx";
 import { ShareDialog } from "./ShareLinks.jsx";
 import { shareBlocked } from "./share-links.js";
+import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import { MEMORY_MODES, MAX_FACT_LENGTH } from "./memory.js";
 import { extractVariables } from "./scrolls.js";
 import { useTeamPays } from "./Treasury.jsx";
@@ -853,6 +854,9 @@ export default function Workspace() {
   // Uses Symposium's orchestration, so both updates must be live; never in the demo.
   const doubleCheckLive =
     !demo && !!user && isReleased(config, "doublecheck") && isReleased(config, "symposium");
+  // Privacy Trail: the chip under a reply, from the server's anonyma.privacy
+  // (never in the demo, which sends nothing anywhere).
+  const trailLive = !demo && privacyTrailReleased(config);
   // A check leaves the browser under the same Veil policy as a chat turn
   // (Private Mode forces Veil on): the question and answer are masked with
   // this conversation's map and the always-veil words, even when they were
@@ -1226,6 +1230,8 @@ export default function Workspace() {
       // Set once the final event's anonyma.private arrives; drives the
       // "Sent to <provider> · not saved" line under this reply.
       privateInfo = null,
+      // The final event's anonyma.privacy (Privacy Trail), once released.
+      trailInfo = null,
       // The memory facts the server says it sent with this request.
       memoryUsed = null;
     const sendingPrivate = privateMode && !demo;
@@ -1241,6 +1247,9 @@ export default function Workspace() {
           ...(webSearch ? { web_search: true } : {}),
           ...(sendingPrivate ? { private: true } : {}),
           ...(built.memory ? { memory: built.memory } : {}),
+          // Privacy Trail: only Veil's count leaves the browser (null: off),
+          // so a saved reply's trail can still show it after a reload.
+          ...(trailLive ? { veil_masked: veiling ? requestMasked : null } : {}),
           ...teamPays.body,
         },
         (event) => {
@@ -1268,6 +1277,7 @@ export default function Workspace() {
           if (event.anonyma) setReceipt(event.anonyma);
           if (event.anonyma?.citations) citations = event.anonyma.citations;
           if (event.anonyma?.private) privateInfo = event.anonyma.private;
+          if (event.anonyma?.privacy) trailInfo = event.anonyma.privacy;
           setMessages([
             ...next,
             {
@@ -1282,6 +1292,7 @@ export default function Workspace() {
               ...(privateInfo
                 ? { private: privateInfo, masked: requestMasked }
                 : {}),
+              ...(trailInfo ? { privacy: trailInfo } : {}),
               ...(memoryUsed ? { memoryUsed } : {}),
             },
           ]);
@@ -1295,11 +1306,13 @@ export default function Workspace() {
       if (err.data?.billing) charge.accept(requestId, err.data.billing);
       if (err.data?.anonyma) setReceipt(err.data.anonyma);
       if (err.data?.anonyma?.memory) memoryUsed = err.data.anonyma.memory;
+      if (err.data?.anonyma?.privacy) trailInfo = err.data.anonyma.privacy;
       setCurrent(liveId);
       if (chatControlLive || output || reasoning || images.length) setMessages([...next, {
         role: "assistant", content: output, reasoning, images, citations, model: requestModel,
         finishReason: finishReason || "interrupted", interrupted: true, requestId,
         ...(memoryUsed ? { memoryUsed } : {}),
+        ...(trailInfo ? { privacy: trailInfo } : {}),
         ...(sendingPrivate ? { private: { privacy: "zdr", stored: false }, masked: requestMasked } : {}),
       }]);
       if (chatControlLive) charge.recover(requestId);
@@ -1977,6 +1990,14 @@ export default function Workspace() {
                           )}
                           {m.role === "assistant" && m.memoryUsed && (
                             <MemoryUsedNote memory={m.memoryUsed} />
+                          )}
+                          {trailLive && m.role === "assistant" && m.privacy && (
+                            <PrivacyTrail
+                              key={m.requestId || m.id || i}
+                              privacy={m.privacy}
+                              models={models}
+                              receiptsLive={isReleased(config, "receipts")}
+                            />
                           )}
                           {m.role === "assistant" && m.content && (
                             <CopyButton text={m.content} />

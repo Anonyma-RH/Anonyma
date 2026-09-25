@@ -76,6 +76,13 @@ const chat = object(
       description:
         "Double-check This: a second opinion on an answer from source_model. Needs the Double-check This and Symposium updates released (403 feature_unreleased otherwise). The model must come from a different provider (maker) than source_model (400 double_check_same_provider; 400 double_check_provider_unknown when either maker can't be established). mode must be symposium and conversationId absent, so the reviewed conversation is never changed; ephemeral and private apply as usual. A saved check must name the reviewed conversation in source_conversation (which must be accessible and not itself a check) and stays linked to it: it never outlives it (its deletion time, or the account default if sooner), shortening that conversation's auto-delete shortens the check, nothing extends it, and it is deleted with the conversation or when its owner loses access (leaving the collab). Billed like any chat request.",
     },
+    veil_masked: {
+      type: ["integer", "null"],
+      minimum: 0,
+      maximum: 10000,
+      description:
+        "Privacy Trail: how many details Veil masked in this browser before sending, or null when Veil was off. A count only; the masked values never leave the browser. Needs the trail update released (403 feature_unreleased otherwise). Echoed as anonyma.privacy.veil_masked and kept with a saved reply.",
+    },
     memory: {
       ...array(object({ id: string, text: { ...string, maxLength: 2400 }, updated: integer }, ["id", "text"])),
       maxItems: 50,
@@ -258,9 +265,51 @@ const schemas = {
         ...ref("SignedReceipt"),
         description: "Present only when the receipts update is released.",
       },
+      privacy: {
+        ...ref("PrivacyTrail"),
+        description: "Present only when the trail update is released.",
+      },
     }),
     askr: object(),
   }),
+  PrivacyTrail: {
+    ...object(
+      {
+        model: string,
+        provider: {
+          ...nullableString,
+          description: "The model's owned_by in the catalog; null when the catalog lists none.",
+        },
+        route: {
+          enum: ["primary", "backup"],
+          description: "backup when the backup gateway served the request after the primary refused it before accepting.",
+        },
+        retention: {
+          enum: ["zero_data_retention", "provider_may_retain"],
+          description: "zero_data_retention only when the request was sent with zero-data-retention routing (Private Mode, or a private-only connected app). Zero data retention is opt-in per request, so any other request is provider_may_retain.",
+        },
+        trains_on_prompts: {
+          ...bool,
+          description: "Training Labels: the provider says it uses what is sent to this model to improve its products. Present once the training update is released.",
+        },
+        storage: {
+          enum: ["saved", "off_the_record", "private", "not_saved"],
+          description: "saved: kept in the account's conversation history. off_the_record and private (Private Mode): nothing about the chat is stored. not_saved: API and MCP requests, which are never saved as conversations.",
+        },
+        veil_masked: {
+          type: ["integer", "null"],
+          description: "Workspace only: the Veil mask count the browser reported for this request, or null when Veil was off. Absent over the API.",
+        },
+        receipt_id: {
+          ...nullableString,
+          description: "The signed receipt's id (the requestId) once Signed Receipts is released and the reply was signed; verify it at /verify. Otherwise null.",
+        },
+      },
+      ["model", "provider", "route", "retention", "storage", "receipt_id"],
+    ),
+    description:
+      "Privacy Trail: where one prompt went, from facts the service holds for that request. Never contains prompt or answer text.",
+  },
   Scroll: object({
     id: string,
     title: string,
@@ -712,7 +761,7 @@ route("post", "/api/chat", "Stream chat, code or compatible image output", {
   body: ref("ChatRequest"),
   stream: true,
   description:
-    "Always SSE via fetch POST, not EventSource. Retains latest 20 messages. Parse data events across arbitrary byte boundaries; final usage event includes conversationId, askr and anonyma receipt, followed by [DONE]. Abort cancels work and settles delivered usage. Errors can follow HTTP 200. Use a stable requestId or Idempotency-Key; duplicates return 409, not a new charge. See the request body's private field for Private Mode. A request paid from the personal balance that would go over the account's own spending limits is refused with 402 spending_limit before anything is reserved (see GET /api/spending-limits); team-paid requests don't count.",
+    "Always SSE via fetch POST, not EventSource. Retains latest 20 messages. Parse data events across arbitrary byte boundaries; final usage event includes conversationId, askr and anonyma receipt (with anonyma.privacy once Privacy Trail is released), followed by [DONE]. Abort cancels work and settles delivered usage. Errors can follow HTTP 200. Use a stable requestId or Idempotency-Key; duplicates return 409, not a new charge. See the request body's private field for Private Mode. A request paid from the personal balance that would go over the account's own spending limits is refused with 402 spending_limit before anything is reserved (see GET /api/spending-limits); team-paid requests don't count.",
 });
 route("post", "/api/images", "Generate and save 1–4 images", {
   body: object(
@@ -1508,7 +1557,7 @@ route("post", "/v1/chat/completions", "OpenAI-style chat completion", {
   body: ref("ApiChatRequest"),
   response: ref("ChatCompletion"),
   description:
-    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Other optional parameters such as temperature, tools and response_format are ignored. Tool calling, audio, embeddings and Responses are not implemented. web_search=true or plugins: [{id: web}] requests web search and its fee. Idempotency-Key (1–200 characters) overrides requestId; repeats return 409 duplicate_request without replaying output or charging again. Missing IDs generate a new request, so transport retries without an ID can create another charge. Errors use {error: {message, code, type, param}}. 402 spending_limit (with a spending_limit object) means the account's own daily or monthly spending limit would be exceeded; it is returned before anything is reserved. SSE errors may occur after HTTP 200; inspect every event through [DONE]. Timeouts and unreadable provider responses can charge the base estimate; see /docs/billing. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged.",
+    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Other optional parameters such as temperature, tools and response_format are ignored. Tool calling, audio, embeddings and Responses are not implemented. web_search=true or plugins: [{id: web}] requests web search and its fee. Idempotency-Key (1–200 characters) overrides requestId; repeats return 409 duplicate_request without replaying output or charging again. Missing IDs generate a new request, so transport retries without an ID can create another charge. Errors use {error: {message, code, type, param}}. 402 spending_limit (with a spending_limit object) means the account's own daily or monthly spending limit would be exceeded; it is returned before anything is reserved. SSE errors may occur after HTTP 200; inspect every event through [DONE]. Timeouts and unreadable provider responses can charge the base estimate; see /docs/billing. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged. Once Privacy Trail is released they also carry anonyma.privacy (see PrivacyTrail): the model, provider, gateway route, retention, storage (not_saved over the API) and signed receipt id.",
 });
 paths["/v1/chat/completions"].post.parameters = [
   { name: "Idempotency-Key", in: "header", required: false, schema: requestId },
@@ -1524,7 +1573,7 @@ route(
     body: ref("McpRequest"),
     response: ref("McpResponse"),
     description:
-      "Stateless: no Mcp-Session-Id, no SSE stream. Methods: initialize, ping, tools/list, tools/call (list_models, ask, balance). A notification (no id) is acknowledged with 202 and no body. Unknown methods return -32601; malformed input returns -32700/-32600. Same key authorization, rate limits and caps as /v1. Requires the api update released as well as mcp. Once Connect an App is live, an OAuth access token also works here (and only here): its tools report that connection's own budget, and a private-only connection lists and runs zero-data-retention models only. A 401 then carries WWW-Authenticate resource_metadata for OAuth discovery.",
+      "Stateless: no Mcp-Session-Id, no SSE stream. Methods: initialize, ping, tools/list, tools/call (list_models, ask, balance). A notification (no id) is acknowledged with 202 and no body. Unknown methods return -32601; malformed input returns -32700/-32600. Same key authorization, rate limits and caps as /v1. Requires the api update released as well as mcp. Once Connect an App is live, an OAuth access token also works here (and only here): its tools report that connection's own budget, and a private-only connection lists and runs zero-data-retention models only. Once Privacy Trail is released, ask results carry structuredContent.privacy (see PrivacyTrail). A 401 then carries WWW-Authenticate resource_metadata for OAuth discovery.",
   },
 );
 for (const method of ["get", "delete"])

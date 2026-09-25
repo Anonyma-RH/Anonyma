@@ -27,6 +27,7 @@ import { providerKey, sameProvider } from "../../src/double-check.js";
 import { validateTaskRequest } from "../task-tools.js";
 import { withMemory } from "../../src/memory.js";
 import { tagUsage, chatFeature } from "../usage-insights.js";
+import { privacyTrail, storageFor, trailLive, veilMaskedFrom } from "../privacy-trail.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -83,6 +84,8 @@ export function chatRoutes(ctx) {
         "Private mode needs a model with zero data retention.",
         "private_model_required",
       );
+    // Privacy Trail: the browser's own Veil count (workspace only).
+    const veilMasked = api ? undefined : veilMaskedFrom(req.body);
     // Double-check This: a second opinion must come from another provider,
     // and it never joins the conversation it reviews. It runs as a Symposium
     // request (saved apart, if saved at all), with the same ephemeral and
@@ -160,6 +163,7 @@ export function chatRoutes(ctx) {
     // the user's message. Billing is unaffected — only persistence changes.
     // Private Mode always takes this path too, so nothing it sends is saved.
     const ephemeral = !api && (req.body.ephemeral === true || isPrivate);
+    const storage = storageFor({ api, isPrivate, ephemeral });
     if (ephemeral && req.body.conversationId)
       fail(
         400,
@@ -340,6 +344,19 @@ export function chatRoutes(ctx) {
     // refuses before accepting; never after, so nothing is paid twice.
     let servedBy = "primary";
     let finishReason = null;
+    // Privacy Trail for this request, once released: what the server knows
+    // about where it went (server/privacy-trail.js). Never any prompt text.
+    const trailFor = (receiptId) =>
+      trailLive(cfg)
+        ? privacyTrail(cfg, {
+            model: m,
+            route: servedBy,
+            zeroDataRetention: isPrivate,
+            storage,
+            veilMasked,
+            receiptId,
+          })
+        : null;
     const upstreamBody = {
       model: m.id,
       messages: sent,
@@ -508,6 +525,7 @@ export function chatRoutes(ctx) {
           console.error("Receipt signing failed:", e.message);
         }
       }
+      const privacy = trailFor(signedReceipt ? requestId : null);
       const extension = {
         credits_charged: receipt.credits_charged,
         request_id: requestId,
@@ -520,6 +538,7 @@ export function chatRoutes(ctx) {
           ? { private: { privacy: "zdr", stored: false } }
           : {}),
         ...(signedReceipt ? { signed_receipt: signedReceipt } : {}),
+        ...(privacy ? { privacy } : {}),
         // Exactly which facts went with this request, as sent.
         ...(req.body.memory != null && memory
           ? {
@@ -550,6 +569,7 @@ export function chatRoutes(ctx) {
             finish_reason: finishReason || "stop",
             request_id: requestId,
             ...(citations.length ? { citations } : {}),
+            ...(privacy ? { privacy } : {}),
           }),
           m.id,
           receipt.charged,
@@ -649,6 +669,9 @@ export function chatRoutes(ctx) {
         );
         e.receipt = receipt;
       } else release(db, hold);
+      // A charged, interrupted reply still went somewhere; it has no signed
+      // receipt.
+      const privacy = receipt ? trailFor(null) : null;
       if ((output || reasoning || saved.length) &&
         receipt && (
           conversation &&
@@ -669,6 +692,7 @@ export function chatRoutes(ctx) {
               interrupted: true,
               finish_reason: timedOut ? "timeout" : "interrupted",
               request_id: requestId,
+              ...(privacy ? { privacy } : {}),
             }),
             m.id,
             receipt.charged,
@@ -687,7 +711,12 @@ export function chatRoutes(ctx) {
             code: e.code || "generation_error",
           },
           anonyma: receipt
-            ? { credits_charged: receipt.credits_charged, request_id: requestId, finish_reason: timedOut ? "timeout" : "interrupted" }
+            ? {
+                credits_charged: receipt.credits_charged,
+                request_id: requestId,
+                finish_reason: timedOut ? "timeout" : "interrupted",
+                ...(privacy ? { privacy } : {}),
+              }
             : undefined,
           ...(showBilling ? { billing: billingFor(req.user.id, requestId) } : {}),
           conversationId: conversation,

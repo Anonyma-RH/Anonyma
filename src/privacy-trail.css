@@ -1,0 +1,168 @@
+/* Privacy Trail: the "Privacy" chip under a reply and its "Where this prompt
+   went" panel. Flat cobalt and white like the Private tag (a filled cobalt
+   badge) and the Training Labels tag (outlined, with a yellow square), with
+   the workspace's 2px corners and hairlines. The panel opens in place so it
+   works the same in a chat column, a Symposium column and on a phone. */
+.app-shell .privacy-trail {
+  margin-top: 10px;
+}
+.app-shell .privacy-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0135df;
+  background: #edf2ff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+  padding: 3px 7px;
+  cursor: pointer;
+}
+.app-shell .privacy-chip:hover {
+  border-color: #0135df;
+}
+.app-shell .privacy-trail.open .privacy-chip {
+  color: #fff;
+  background: #0135df;
+  border-color: #0135df;
+}
+.app-shell .privacy-chip:focus-visible,
+.app-shell .privacy-verify:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 1px;
+}
+.app-shell .privacy-panel {
+  margin-top: 8px;
+  max-width: 460px;
+  background: #fff;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-top: 2px solid #0135df;
+  border-radius: 2px;
+  padding: 12px 14px 4px;
+  color: var(--work-ink, #142343);
+  animation: msg-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.app-shell .privacy-panel-title {
+  margin: 0 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .privacy-panel dl {
+  margin: 0;
+}
+.app-shell .privacy-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.app-shell .privacy-row:first-child {
+  border-top: 0;
+}
+.app-shell .privacy-row dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .privacy-row dt::before {
+  content: "";
+  flex: none;
+  width: 5px;
+  height: 5px;
+  background: #0135df;
+}
+.app-shell .privacy-row dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.app-shell .privacy-row dd small {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .privacy-provider,
+.app-shell .privacy-muted {
+  color: var(--work-muted, #68748a);
+}
+.app-shell .privacy-provider::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .privacy-zdr {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0135df;
+  background: #edf2ff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+  padding: 2px 6px;
+}
+.app-shell .privacy-row .training-tag {
+  margin-left: 0;
+}
+.app-shell .privacy-row code {
+  font-size: 11px;
+  color: #0135df;
+  background: #edf2ff;
+  padding: 1px 6px;
+  border-radius: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell .privacy-verify {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 12px;
+  color: #0135df;
+  background: none;
+  border: 0;
+  border-radius: 2px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.app-shell .privacy-verify:hover {
+  background: #edf2ff;
+}
+.app-shell .privacy-verify:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+/* Symposium columns are narrow: stack label over value. */
+.app-shell .symposium-column .privacy-row {
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+@media (max-width: 700px) {
+  .app-shell .privacy-row {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .privacy-panel {
+    animation: none;
+  }
+}
+.app-shell .symposium-column .privacy-trail {
+  margin-top: 0;
+}

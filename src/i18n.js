@@ -439,11 +439,13 @@ const ATTRS = ["placeholder", "title", "aria-label", "alt"];
 // "How" "it" "works" animate word by word; the dictionary's "工作" "原理"
 // already say it all, so the third word is left blank. Likewise "Use
 // <model> instead" (Training Labels) reads "改用 <model>", with the model
-// name kept as written.
+// name kept as written. The Privacy Trail chip reads "隐私轨迹" so it isn't
+// confused with the Private Mode toggle, which is also "隐私".
 const SCOPED = [
   [".flow-word", "works", ""],
   [".training-switch", "Use", "改用"],
   [".training-switch", "instead", ""],
+  [".privacy-chip span", "Privacy", "隐私轨迹"],
 ];
 const scopedFor = (el) => {
   const found = SCOPED.filter(([selector]) => el.matches(selector));

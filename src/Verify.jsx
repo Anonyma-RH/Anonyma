@@ -15,7 +15,9 @@ const snippet = (pem) =>
 
 function fieldTable(receipt) {
   const rows = [
-    ["Model", receipt.model],
+    // Only identifiers are kept as written; counts and the date are plain
+    // numbers the Chinese view formats around.
+    ["Model", receipt.model, true],
     [
       "Tokens",
       receipt.usage
@@ -28,16 +30,16 @@ function fieldTable(receipt) {
         (receipt.credits_released ? ` · ${receipt.credits_released} released` : ""),
     ],
     ["Issued", receipt.issued ? new Date(receipt.issued).toLocaleString() : "—"],
-    ["Key ID", receipt.key_id],
+    ["Key ID", receipt.key_id, true],
   ];
   return (
     <div className="table-scroll">
       <table>
         <tbody>
-          {rows.map(([label, value]) => (
+          {rows.map(([label, value, raw]) => (
             <tr key={label}>
               <th>{label}</th>
-              <td data-i18n="off">{value ?? "—"}</td>
+              <td data-i18n={raw ? "off" : undefined}>{value ?? "—"}</td>
             </tr>
           ))}
         </tbody>

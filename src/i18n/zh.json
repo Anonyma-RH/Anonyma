@@ -25,10 +25,9 @@
     "(optional)": "（可选）",
     "(required for this model)": "（此模型必填）",
     "@mention any model mid-conversation": "在会话中随时用 @ 提及任意模型",
-    "% markup reduction": "% 加价减免",
     "% when that gateway is used.": "%，使用该网关时适用。",
     "% when the provider reports a cost that requires that fee to be added. A provider total that already includes fees is used as supplied.": "%，当提供商报告的费用需要加收该费用时适用。如果提供商报告的总额已包含费用，则按其提供的金额计算。",
-    "%, before any applicable account discount. Discounts reduce the markup, not the underlying model cost.": "%，适用的账户折扣会在此之前计算。折扣会降低加价，而不会降低模型本身的费用。",
+    "%, before any applicable account discount. Discounts reduce the markup, not the underlying model cost.": "%（未计入任何适用的账户折扣）。折扣降低的是加价部分，而非模型本身的费用。",
     "<Your next idea />": "<你的下一个想法 />",
     "= $1 = 1,000 credits, on": "= $1 = 1,000 积分，位于",
     "$1 buys 1,000 credits. Internally, the ledger counts whole subcredits, ten million to the dollar, so every amount is an exact integer. Your balance is the sum of your ledger entries. Your available balance is that sum minus what's on hold.": "$1 可购买 1,000 积分。在内部，账本以完整的子积分计数，每美元一千万个，因此每笔金额都是精确的整数。你的余额是账本条目的总和。你的可用余额是该总和减去冻结金额。",
@@ -1907,7 +1906,7 @@
     "How it's checked": "如何检查",
     "What NYMA isn't": "NYMA 不是什么",
     "Name": "名称",
-    "Symbol": "符号",
+    "Symbol": "代币符号",
     "Network": "网络",
     "Contract": "合约",
     "Decimals": "小数位数",
@@ -1926,14 +1925,14 @@
     "Not needed to use ANONYMA. Credits are bought as usual.": "使用 ANONYMA 不需要 NYMA。积分照常购买。",
     "Not a share of the company, and no revenue share.": "不是公司股份，也没有收益分成。",
     "No promise of value.": "不承诺任何价值。",
-    "Not financial advice.": "不构成财务建议。",
+    "Not financial advice.": "不构成投资建议。",
     "Link a wallet in Account": "在账户中关联钱包",
     "Log in to link a wallet": "登录以关联钱包",
     "NYMA and early access": "NYMA 与抢先体验",
     "NYMA is ANONYMA's token: an ERC-20 named Anonyma on Robinhood Chain (chain ID 4663), with 18 decimals and a total supply of 1,000,000,000 NYMA. Its contract is": "NYMA 是 ANONYMA 的代币：Robinhood Chain（链 ID 4663）上名为 Anonyma 的 ERC-20 代币，18 位小数，总供应量 1,000,000,000 NYMA。其合约地址为",
     "The wallet is linked by signing a one-time message, never a transaction. The server reads its NYMA balance and rechecks it daily in the background. A balance counts only if it was read in the last 48 hours, so access follows the balance. Linking is optional, and a wallet can be unlinked in Account.": "关联钱包只需签署一条一次性消息，从不发起交易。服务器读取其 NYMA 余额，并每天在后台复查。余额只有在过去 48 小时内读取过才算数，因此访问权限随余额而定。关联是可选的，钱包也可以在账户中解除关联。",
     "Public pages and the service configuration are the same for everyone, and apps connected through OAuth never get early access, so neither can tell whether an account holds NYMA.": "公开页面和服务配置对所有人都一样，通过 OAuth 连接的应用也永远不会获得抢先体验，因此两者都无法判断某个账户是否持有 NYMA。",
-    "NYMA isn't needed to use ANONYMA. It isn't a share of the company, carries no revenue share and no promise of value, and nothing here is financial advice. More at": "使用 ANONYMA 不需要 NYMA。它不是公司股份，没有收益分成，也不承诺任何价值，这里的内容也不构成财务建议。详见",
+    "NYMA isn't needed to use ANONYMA. It isn't a share of the company, carries no revenue share and no promise of value, and nothing here is financial advice. More at": "使用 ANONYMA 不需要 NYMA。它不是公司股份，没有收益分成，也不承诺任何价值，这里的任何内容都不构成投资建议。详见",
     "the NYMA page": "NYMA 页面"
   },
   "patterns": [
@@ -2200,10 +2199,6 @@
     {
       "en": "{0} Status will be checked again. Do not create a duplicate payment.",
       "zh": "{0} 系统将再次检查状态。请勿重复付款。"
-    },
-    {
-      "en": "{0} tokens · {1}% markup reduction",
-      "zh": "{0} 代币 · {1}% 加价减免"
     },
     {
       "en": "{0} video",

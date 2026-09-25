@@ -19,7 +19,8 @@ const desktopConfig = (origin) =>
   );
 // Copyable snippets that point an MCP client (Claude Code, Claude Desktop,
 // Cursor, ...) at this account's remote MCP server. The key is always a
-// placeholder; nothing here can leak a real secret.
+// placeholder; nothing here can leak a real secret. Commands and config stay
+// in English under the language switch (data-i18n="off").
 export default function McpConnect({ config }) {
   const origin =
     config?.origin ||
@@ -44,7 +45,7 @@ export default function McpConnect({ config }) {
           <span>CLAUDE CODE</span>
           <CopyButton text={cli} />
         </div>
-        <pre>
+        <pre data-i18n="off">
           <code>{cli}</code>
         </pre>
       </div>
@@ -53,7 +54,7 @@ export default function McpConnect({ config }) {
           <span>CLAUDE DESKTOP / CURSOR</span>
           <CopyButton text={json} />
         </div>
-        <pre>
+        <pre data-i18n="off">
           <code>{json}</code>
         </pre>
       </div>

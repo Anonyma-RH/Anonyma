@@ -13,7 +13,11 @@ export function applyMiddleware(app, cfg) {
   app.set("trust proxy", cfg.trustProxy);
   app.use((req, res, next) => {
     res.set(securityHeaders());
-    if (req.path.startsWith("/api") || req.path.startsWith("/v1"))
+    if (
+      req.path.startsWith("/api") ||
+      req.path.startsWith("/v1") ||
+      req.path === "/mcp"
+    )
       res.set("Cache-Control", "no-store");
     next();
   });
@@ -38,6 +42,8 @@ export function applyMiddleware(app, cfg) {
     });
   });
   app.use("/v1", express.json({ limit: "256kb" }));
+  // The MCP server runs the same requests as /v1, under the same body limit.
+  app.use("/mcp", express.json({ limit: "256kb" }));
   app.use(express.json({ limit: "18mb" }));
   app.use((req, res, next) => {
     if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {

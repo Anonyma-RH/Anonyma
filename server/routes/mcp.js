@@ -7,6 +7,7 @@ import { balance, credits, usdUnits, callable } from "../core.js";
 const PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const LATEST_PROTOCOL_VERSION = PROTOCOL_VERSIONS[0];
 const SERVER_VERSION = "1.0.0";
+const MAX_BATCH = 20;
 
 const TOOLS = [
   {
@@ -128,9 +129,10 @@ function toolListModels(ctx) {
 // Runs the prompt through the exact same hold -> settle path as
 // /v1/chat/completions (runChat with api=true, non-streaming), by handing it
 // a synthetic req/res instead of a real HTTP response. Validation, pricing,
-// failure billing and the ledger charge are all the real thing; only the
-// transport is faked.
-async function toolAsk(ctx, req, args) {
+// gateway failover, failure billing, the ledger charge and the signed
+// receipt are all the real thing; only the transport is faked. An MCP call
+// is never private or ephemeral: runChat ignores both flags when api=true.
+async function toolAsk(ctx, req, res, args) {
   const messages = [
     ...(typeof args.system === "string" && args.system.trim()
       ? [{ role: "system", content: args.system }]
@@ -149,6 +151,10 @@ async function toolAsk(ctx, req, args) {
     headers: {},
   };
   let captured = null;
+  // runChat watches the response for a client that leaves early (held until
+  // the provider accepts, then stopped like /v1). Those listeners go on the
+  // real MCP response and come off again once this call is done.
+  const closeListeners = [];
   const fakeRes = {
     set() {
       return this;
@@ -156,12 +162,22 @@ async function toolAsk(ctx, req, args) {
     flushHeaders() {},
     write() {},
     end() {},
-    on() {},
+    on(event, fn) {
+      if (event === "close") {
+        res.on("close", fn);
+        closeListeners.push(fn);
+      }
+      return this;
+    },
     json(payload) {
       captured = payload;
     },
-    destroyed: false,
-    writableEnded: false,
+    get destroyed() {
+      return res.destroyed;
+    },
+    get writableEnded() {
+      return res.writableEnded;
+    },
   };
   try {
     await ctx.runChat(fakeReq, fakeRes, true);
@@ -175,6 +191,8 @@ async function toolAsk(ctx, req, args) {
         ? { structuredContent: { credits_charged: e.receipt.credits_charged } }
         : {}),
     };
+  } finally {
+    for (const fn of closeListeners) res.off("close", fn);
   }
   const answer = captured?.choices?.[0]?.message?.content || "";
   const extension = captured?.anonyma || {};
@@ -186,10 +204,16 @@ async function toolAsk(ctx, req, args) {
       usage: captured?.usage,
       credits_charged: extension.credits_charged,
       balance_after: credits(after.available),
+      request_id: extension.request_id,
+      // Present once Signed Receipts is released; verifiable at
+      // /api/receipts/verify against the published key.
+      ...(extension.signed_receipt
+        ? { signed_receipt: extension.signed_receipt }
+        : {}),
     },
   };
 }
-async function callTool(ctx, req, params) {
+async function callTool(ctx, req, res, params) {
   const name = params?.name;
   if (!TOOL_NAMES.has(name)) {
     const e = new Error("Unknown tool: " + name);
@@ -205,7 +229,7 @@ async function callTool(ctx, req, params) {
   try {
     if (name === "balance") return toolBalance(ctx, req);
     if (name === "list_models") return toolListModels(ctx);
-    return await toolAsk(ctx, req, args);
+    return await toolAsk(ctx, req, res, args);
   } catch (e) {
     // Insufficient credits, model errors and provider refusals are tool
     // failures, not protocol errors: the call succeeded, the model didn't.
@@ -215,7 +239,7 @@ async function callTool(ctx, req, params) {
     };
   }
 }
-async function handleOne(ctx, req, msg) {
+async function handleOne(ctx, req, res, msg) {
   const invalid =
     typeof msg !== "object" ||
     msg === null ||
@@ -239,7 +263,7 @@ async function handleOne(ctx, req, msg) {
         result = { tools: TOOLS };
         break;
       case "tools/call":
-        result = await callTool(ctx, req, msg.params);
+        result = await callTool(ctx, req, res, msg.params);
         break;
       default:
         // A notification for a method we don't know still gets no reply;
@@ -284,9 +308,25 @@ export function mcpRoutes(ctx) {
     const messages = batch ? body : [body];
     if (!messages.length)
       return res.status(400).json(rpcError(null, -32600, "Invalid Request"));
+    // The rate limit counts HTTP requests, so a batch is capped to keep one
+    // request from carrying an unbounded number of paid calls.
+    if (messages.length > MAX_BATCH)
+      return res
+        .status(400)
+        .json(
+          rpcError(
+            null,
+            -32600,
+            `A batch can hold at most ${MAX_BATCH} messages.`,
+          ),
+        );
+    // A client that hangs up mid-batch isn't sent the rest of its calls.
+    let clientGone = false;
+    res.once("close", () => (clientGone = !res.writableEnded));
     const results = [];
     for (const msg of messages) {
-      const r = await handleOne(ctx, req, msg);
+      if (clientGone) break;
+      const r = await handleOne(ctx, req, res, msg);
       if (r) results.push(r);
     }
     // All notifications (including a lone notifications/initialized): no

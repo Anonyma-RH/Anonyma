@@ -21,6 +21,12 @@
 .mcp-connect .code-example + .code-example {
   margin-top: 16px;
 }
+/* Inside the account shell, .app-shell .small-button would otherwise paint
+   the Copy button's text dark on the dark code panel. */
+.mcp-connect .code-example .small-button {
+  color: #e1ead8;
+  border-color: #4b5a41;
+}
 .mcp-connect .notice {
   margin-top: 20px;
 }

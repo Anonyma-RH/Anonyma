@@ -16,7 +16,7 @@ before(() => UPDATES.forEach((u) => (u.released = false)));
 after(() => UPDATES.forEach((u, i) => (u.released = committed[i])));
 
 const MODEL = "google/gemini-2.5-flash";
-function fixture(t, released = "mvp,api,mcp") {
+function fixture(t, released = "mvp,api,mcp", extra = {}) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-mcp-"));
   const svc = createApp({
     testMode: true,
@@ -25,6 +25,7 @@ function fixture(t, released = "mvp,api,mcp") {
     origin: "http://localhost:5175",
     released,
     mvpModels: [MODEL],
+    ...extra,
   });
   t.after(() => {
     svc.close();
@@ -117,6 +118,52 @@ test("the full MCP handshake runs one ledger charge and reports the right balanc
     result.structuredContent.credits_charged,
   );
   assert.equal(credits(after.available), result.structuredContent.balance_after);
+  assert.ok(result.structuredContent.request_id);
+  // Signed Receipts isn't released in this fixture, so no receipt is signed.
+  assert.equal(result.structuredContent.signed_receipt, undefined);
+});
+
+test("with Signed Receipts released, ask returns a receipt that verifies against its answer", async (t) => {
+  const svc = fixture(t, "mvp,api,mcp,receipts");
+  const { agent, user } = await register(svc.app);
+  const key = await keyFor(agent);
+  const before = balance(svc.db, user.id).total;
+  const call = await rpc(svc, "Bearer " + key.key, {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "tools/call",
+    params: {
+      name: "ask",
+      arguments: { model: MODEL, prompt: "Sign this answer" },
+    },
+  }).expect(200);
+  const result = call.body.result;
+  const signed = result.structuredContent.signed_receipt;
+  assert.ok(signed, "the tool result carries the signed receipt");
+  assert.equal(signed.receipt.id, result.structuredContent.request_id);
+  assert.equal(signed.receipt.model, MODEL);
+  assert.equal(
+    signed.receipt.credits_charged,
+    result.structuredContent.credits_charged,
+  );
+  assert.ok(!JSON.stringify(signed.receipt).includes(user.id));
+  // Charged once, exactly what the receipt says.
+  assert.equal(
+    credits(before - balance(svc.db, user.id).total),
+    signed.receipt.credits_charged,
+  );
+  const verified = (
+    await request(svc.app)
+      .post("/api/receipts/verify")
+      .send({
+        receipt: signed.receipt,
+        signature: signed.signature,
+        answer: result.content[0].text,
+      })
+      .expect(200)
+  ).body;
+  assert.equal(verified.valid, true);
+  assert.equal(verified.answer_matches, true);
 });
 
 test("the balance tool reports available and held credits", async (t) => {
@@ -325,4 +372,106 @@ test("the mcp update is registered and gates on both mcp and api", async (t) => 
     method: "ping",
   }).expect(200);
   assert.deepEqual(ok.body, { jsonrpc: "2.0", id: 1, result: {} });
+});
+
+test("/mcp skips the browser-origin check, is never cached and shares the /v1 IP rate limit", async (t) => {
+  const svc = fixture(t);
+  const { agent } = await register(svc.app);
+  const key = await keyFor(agent);
+  const auth = "Bearer " + key.key;
+  const ping = { jsonrpc: "2.0", id: 1, method: "ping" };
+  // MCP clients aren't browsers on this origin; a foreign Origin and a
+  // missing Content-Type check don't apply here.
+  const foreign = await request(svc.app)
+    .post("/mcp")
+    .set("Authorization", auth)
+    .set("Origin", "https://some-other-tool.example")
+    .send(ping)
+    .expect(200);
+  assert.deepEqual(foreign.body.result, {});
+  assert.equal(foreign.headers["cache-control"], "no-store");
+  assert.match(foreign.headers["content-type"], /application\/json/);
+
+  // 120 requests a minute per IP, counted together with /v1.
+  for (let i = 1; i < 120; i++) await rpc(svc, auth, ping).expect(200);
+  const limited = await rpc(svc, auth, ping).expect(429);
+  assert.equal(limited.body.error.type, "rate_limit_error");
+  await request(svc.app)
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .send({ model: MODEL, messages: [{ role: "user", content: "Hi" }] })
+    .expect(429);
+});
+
+test("oversized batches and bodies are refused before any call runs", async (t) => {
+  const svc = fixture(t);
+  const { agent, user } = await register(svc.app);
+  const key = await keyFor(agent);
+  const auth = "Bearer " + key.key;
+  const ledgerBefore = svc.db
+    .prepare("SELECT COUNT(*) n FROM ledger WHERE user_id=?")
+    .get(user.id).n;
+  const asks = Array.from({ length: 21 }, (_, i) => ({
+    jsonrpc: "2.0",
+    id: i + 1,
+    method: "tools/call",
+    params: { name: "ask", arguments: { model: MODEL, prompt: "Hi" } },
+  }));
+  const tooMany = await rpc(svc, auth, asks).expect(400);
+  assert.equal(tooMany.body.error.code, -32600);
+  // Same 256 KB body limit as /v1.
+  await rpc(svc, auth, {
+    jsonrpc: "2.0",
+    id: 1,
+    method: "tools/call",
+    params: {
+      name: "ask",
+      arguments: { model: MODEL, prompt: "x".repeat(300 * 1024) },
+    },
+  }).expect(413);
+  assert.equal(
+    svc.db
+      .prepare("SELECT COUNT(*) n FROM ledger WHERE user_id=?")
+      .get(user.id).n,
+    ledgerBefore,
+  );
+});
+
+test("in production, /mcp needs HTTPS and works behind the trusted proxy", async (t) => {
+  const origin = "https://service.example.invalid";
+  const svc = fixture(t, "mvp,api,mcp", {
+    production: true,
+    origin,
+    publicUrl: origin,
+    trustProxy: "loopback",
+  });
+  const secure = (req) => req.set("X-Forwarded-Proto", "https");
+  const registered = await secure(request(svc.app).post("/api/auth/register"))
+    .set("Origin", origin)
+    .send({ username: "tester", password: "test-password-long" })
+    .expect(201);
+  const cookie = registered.headers["set-cookie"]
+    .find((c) => c.startsWith("anonyma_session="))
+    .split(";")[0];
+  const key = (
+    await secure(request(svc.app).post("/api/keys"))
+      .set("Cookie", cookie)
+      .set("Origin", origin)
+      .send({ name: "mcp", cap: null })
+      .expect(201)
+  ).body;
+  const ping = { jsonrpc: "2.0", id: 1, method: "ping" };
+  const plain = await request(svc.app)
+    .post("/mcp")
+    .set("Authorization", "Bearer " + key.key)
+    .send(ping)
+    .expect(426);
+  assert.equal(plain.body.error.code, "https_required");
+  const ok = await secure(request(svc.app).post("/mcp"))
+    .set("Authorization", "Bearer " + key.key)
+    .send(ping)
+    .expect(200);
+  assert.deepEqual(ok.body, { jsonrpc: "2.0", id: 1, result: {} });
+  assert.equal(ok.headers["strict-transport-security"], "max-age=31536000");
+  assert.equal(ok.headers["cache-control"], "no-store");
 });

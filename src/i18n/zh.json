@@ -1742,7 +1742,19 @@
     "Your workspace, one tap away.": "轻点一下，直达你的工作台。",
     "Install on phone or desktop": "可安装到手机或电脑",
     "Opens straight into your workspace": "打开即进入你的工作台",
-    "Share links and text into a chat": "将链接和文字分享到对话中"
+    "Share links and text into a chat": "将链接和文字分享到对话中",
+    "Connect an AI tool": "连接 AI 工具",
+    "Any key above works as a Bearer token. Requests from an AI tool spend from the same balance and appear on the same ledger as the web workspace.": "上方任意密钥都可用作 Bearer 令牌。来自 AI 工具的请求与网页工作台共用同一余额，并记录在同一本账本中。",
+    "CLAUDE CODE": "Claude Code 命令",
+    "CLAUDE DESKTOP / CURSOR": "Claude Desktop / Cursor 配置",
+    "Replace YOUR_API_KEY with a real key from above. Keep it private; anyone holding it can spend from this balance.": "请将 YOUR_API_KEY 替换为上方的真实密钥。请妥善保管，任何持有该密钥的人都能使用此余额消费。",
+    "An MCP server, too": "还有 MCP 服务器",
+    "Connect Claude Code, Claude Desktop, Cursor and other MCP clients to your balance at /mcp.": "通过 /mcp 将 Claude Code、Claude Desktop、Cursor 及其他 MCP 客户端连接到你的余额。",
+    "MCP Server": "MCP 服务器",
+    "Your balance, inside any AI tool.": "在任意 AI 工具中使用你的余额。",
+    "A remote MCP server at /mcp": "位于 /mcp 的远程 MCP 服务器",
+    "Works with Claude Code, Claude Desktop and Cursor": "支持 Claude Code、Claude Desktop 和 Cursor",
+    "Same keys, same ledger, no new account": "同样的密钥，同一本账本，无需新账户"
   },
   "patterns": [
     {

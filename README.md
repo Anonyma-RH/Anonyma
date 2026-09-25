@@ -45,6 +45,9 @@ Includes its Greek ASCII launch film.
 [Video Studio](docs/releases/video-studio.md): generate video from text or supported
 reference images, with model-specific frame and duration options. Includes its Greek ASCII launch film.
 
+[Simplified Chinese](docs/releases/simplified-chinese.md): an EN / 中文 switch for the
+whole site, workspace and account; your chats stay as written. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

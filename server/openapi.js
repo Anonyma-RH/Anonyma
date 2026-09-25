@@ -254,6 +254,22 @@ const schemas = {
     public_key_pem: string,
     jwk: object(),
   }),
+  KeyUsage: object({
+    spent_total: {
+      ...number,
+      description: "Lifetime settled spend on this key, in credits.",
+    },
+    in_flight: { ...number, description: "Sum of this key's active holds." },
+    allowance_total: { type: ["number", "null"] },
+    remaining: {
+      type: ["number", "null"],
+      description: "allowance_total minus spent_total and in_flight.",
+    },
+    expires_at: { type: ["integer", "null"] },
+    paused: bool,
+    last_used: { type: ["integer", "null"] },
+    requests: integer,
+  }),
 };
 const paths = {
   "/sitemap.xml": { get: { operationId: "getSitemap", summary: "Public page sitemap", responses: { 200: { description: "XML sitemap" } } } },
@@ -847,6 +863,43 @@ route("post", "/api/keys", "Create API key; secret returned once", {
   response: object({ id: string, key: string, name: string, message: string }),
 });
 route("delete", "/api/keys/{id}", "Revoke API key", { response: ref("Ok") });
+route(
+  "patch",
+  "/api/keys/{id}/allowance",
+  "Set or clear a key's lifetime allowance, expiry and agent label",
+  {
+    body: object({
+      total_credits: {
+        type: ["number", "null"],
+        minimum: 0,
+        maximum: 1e9,
+        description: "Lifetime credit cap. null removes it (unlimited).",
+      },
+      expires_at: {
+        type: ["integer", "null"],
+        description: "Millisecond timestamp. null removes the expiry.",
+      },
+      label: { type: ["string", "null"], maxLength: 60 },
+    }),
+    response: ref("KeyUsage"),
+    description:
+      "Owner only. Fields left out of the body are unchanged; sending null clears that field.",
+  },
+);
+route("post", "/api/keys/{id}/pause", "Pause an API key", {
+  response: ref("KeyUsage"),
+  description:
+    "Owner only. A paused key is authenticated as normal but every request is refused with 403 key_paused until resumed.",
+});
+route("post", "/api/keys/{id}/resume", "Resume a paused API key", {
+  response: ref("KeyUsage"),
+  description: "Owner only.",
+});
+route("get", "/api/keys/{id}/usage", "Read a key's allowance and spend", {
+  response: ref("KeyUsage"),
+  description:
+    "Owner only. remaining accounts for in-flight holds, the same way allowance enforcement does.",
+});
 route(
   "get",
   "/api/payments/currencies",

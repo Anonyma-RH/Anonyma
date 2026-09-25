@@ -216,6 +216,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "allowances",
+    title: "Agent Allowances",
+    tagline: "Give an agent a budget, not your wallet.",
+    points: [
+      "A lifetime credit cap per key",
+      "Optional expiry and a pause switch",
+      "One glance at what an agent spent",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -301,6 +312,10 @@ function featuresFor(req) {
   if (p === "/api/images" && post) return ["images"];
   if (p === "/v1" || p.startsWith("/v1/")) return ["api"];
   if (p === "/api/keys" && post) return ["api"];
+  // Allowances extend an API key's authorization, so they need the API
+  // update released too.
+  if (/^\/api\/keys\/[^/]+\/(allowance|pause|resume|usage)$/.test(p))
+    return ["api", "allowances"];
   if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return ["api"];
   // The installable app's manifest, service worker and offline page.
   if (

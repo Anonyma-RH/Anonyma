@@ -1,0 +1,65 @@
+/* Agent allowances: flat, cobalt-on-white, no glass or pill shapes. */
+.key-allowance {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 160px;
+}
+.allowance-bar {
+  height: 6px;
+  background: var(--work-surface, #f7f9fc);
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.allowance-bar-fill {
+  height: 100%;
+  background: #0135df;
+  border-radius: 0;
+  transition: width 0.3s ease;
+}
+.allowance-figures {
+  margin: 0;
+  font-size: 11px;
+  color: var(--work-ink, #142343);
+  font-variant-numeric: tabular-nums;
+}
+.allowance-figures.muted {
+  color: var(--work-muted, #68748a);
+}
+.allowance-remaining {
+  color: var(--work-muted, #68748a);
+}
+.allowance-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.allowance-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+  background: var(--work-surface, #f7f9fc);
+}
+.allowance-tag.paused {
+  color: #9c5543;
+  border-color: #eecfc1;
+  background: #fff3ee;
+}
+.allowance-tag.expired {
+  color: #9c5543;
+  border-color: #eecfc1;
+  background: #fff3ee;
+}
+.allowance-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.allowance-actions .small-button svg {
+  color: #0135df;
+}

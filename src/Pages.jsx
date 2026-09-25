@@ -791,6 +791,7 @@ const featureIcons = {
   receipts: "shield",
   scrolls: "book",
   app: "download",
+  allowances: "coins",
 };
 const launch = {
   id: "mvp",

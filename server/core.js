@@ -364,6 +364,14 @@ export const MIGRATIONS = [
       CREATE TABLE IF NOT EXISTS user_instructions(user_id TEXT PRIMARY KEY REFERENCES users(id),body TEXT NOT NULL,enabled INTEGER NOT NULL DEFAULT 1,updated INTEGER NOT NULL);
     `);
   },
+  // Agent allowances: an API key can carry a lifetime credit cap, an expiry,
+  // a pause switch and a label, enforced alongside the existing 24h cap.
+  (db) => {
+    addColumn(db, "api_keys", "allowance_total", "INTEGER");
+    addColumn(db, "api_keys", "allowance_expires", "INTEGER");
+    addColumn(db, "api_keys", "paused_at", "INTEGER");
+    addColumn(db, "api_keys", "agent_label", "TEXT");
+  },
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;
@@ -430,6 +438,13 @@ export const keySpend24h = (db, key) =>
       "SELECT COALESCE(SUM(amount),0) n FROM ledger WHERE key_id=? AND amount<0 AND created>?",
     )
     .get(key, now() - 86400000).n;
+// Settled spend by an API key over its whole lifetime, for its allowance.
+export const keySpendTotal = (db, key) =>
+  -db
+    .prepare(
+      "SELECT COALESCE(SUM(amount),0) n FROM ledger WHERE key_id=? AND amount<0",
+    )
+    .get(key).n;
 // Split an integer charge across items so the parts sum exactly to it.
 export const splitCharge = (total, count) =>
   Array.from(
@@ -480,6 +495,9 @@ export function reserve(
         .prepare("SELECT * FROM api_keys WHERE id=? AND revoked IS NULL")
         .get(key);
       if (!k) fail(401, "Key revoked");
+      if (k.paused_at != null) fail(403, "This API key is paused.", "key_paused");
+      if (k.allowance_expires != null && now() >= k.allowance_expires)
+        fail(403, "This API key's allowance has expired.", "key_expired");
       const spent = keySpend24h(db, key);
       const inflight = db
         .prepare(
@@ -491,6 +509,15 @@ export function reserve(
           429,
           "This API key would exceed its rolling 24-hour spending cap.",
           "key_cap_exceeded",
+        );
+      if (
+        k.allowance_total != null &&
+        keySpendTotal(db, key) + inflight + amount > k.allowance_total
+      )
+        fail(
+          402,
+          "This API key has used its full allowance.",
+          "allowance_exhausted",
         );
     }
     db.prepare(

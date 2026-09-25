@@ -25,6 +25,7 @@ import { collabRoutes } from "./routes/collabs.js";
 import { retentionRoutes } from "./routes/retention.js";
 import { scrollsRoutes } from "./routes/scrolls.js";
 import { accountRoutes } from "./routes/account.js";
+import { allowanceRoutes } from "./routes/allowances.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { siteRoutes } from "./routes/site.js";
 
@@ -81,6 +82,7 @@ export function createApp(overrides = {}) {
   scrollsRoutes(ctx);
   const worker = createWorker(ctx);
   accountRoutes(ctx);
+  allowanceRoutes(ctx);
   paymentRoutes(ctx);
   siteRoutes(ctx);
   app.use(errorHandler(cfg));

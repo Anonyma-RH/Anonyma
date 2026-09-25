@@ -1,0 +1,42 @@
+.jump-latest {
+  position: fixed;
+  z-index: 12;
+  bottom: 24px;
+  right: 30px;
+  padding: 11px 17px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--paper, #fff);
+  color: var(--ink, #123);
+  box-shadow: 0 4px 18px #0002;
+  font-size: 12px;
+}
+.charge-status {
+  padding: 12px 0;
+  font-size: 11px;
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+.charge-status > div {
+  flex: 1 1 100%;
+  display: grid;
+  gap: 5px;
+}
+.charge-status span {
+  line-height: 1.5;
+}
+.charge-status small {
+  overflow-wrap: anywhere;
+  opacity: 0.7;
+}
+.charge-status .small-button {
+  margin-left: auto;
+}
+@media (max-width: 650px) {
+  .jump-latest {
+    right: 16px;
+    bottom: 20px;
+  }
+}

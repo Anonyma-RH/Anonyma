@@ -360,6 +360,13 @@ export const UPDATES = [
     released: true,
   },
 
+  {
+    id: "chatcontrol",
+    title: "Reading & Charge Clarity",
+    tagline: "Keep your place. Know your charge.",
+    points: ["Read older replies without forced scrolling", "Jump to the latest reply when ready", "Check actual charge status without resending"],
+    released: true,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

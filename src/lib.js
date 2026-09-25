@@ -57,6 +57,8 @@ export async function streamChat(body, onEvent, signal) {
     throw new ApiError(
       error?.error?.message || "Chat is unavailable.",
       response.status,
+      error?.error?.code,
+      error,
     );
   }
   for await (const event of readChatEvents(response)) onEvent(event);

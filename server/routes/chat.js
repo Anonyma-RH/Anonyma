@@ -39,6 +39,16 @@ function chatTitle(content) {
 export function chatRoutes(ctx) {
   const { app, db, cfg, limit, requireUser, apiAuth, inflight, fallback, receipts } =
     ctx;
+  // Only the requesting account (including its team-paid spend) can read this.
+  const billingFor = (user, requestId) => {
+    const row = db.prepare(`SELECT h.* FROM holds h WHERE h.id=? AND (h.user_id=? OR EXISTS (SELECT 1 FROM treasury_spends s WHERE s.hold_id=h.id AND s.user_id=?))`)
+      .get(user + ":" + requestId, user, user);
+    return row ? {
+      requestId, kind: row.kind, status: row.status, payer: row.user_id === user ? "personal" : "team",
+      reserved: credits(row.amount), created: row.created, expires: row.expires,
+      receipt: row.result ? JSON.parse(row.result) : null,
+    } : null;
+  };
   const mediaStore = ctx.media;
   const { getModel, validateMessages, maxTokens } = ctx.models;
   const { accessConversation, newConversation } = ctx.conversations;
@@ -308,6 +318,8 @@ export function chatRoutes(ctx) {
       if (streaming && !res.destroyed)
         res.write(`data: ${JSON.stringify(v)}\n\n`);
     };
+    const showBilling = !api && isReleased(cfg, "chatcontrol");
+    if (showBilling) send({ billing: billingFor(req.user.id, requestId), conversationId: conversation });
     // Serve from the primary gateway, or from the backup when the primary
     // refuses before accepting; never after, so nothing is paid twice.
     let servedBy = "primary";
@@ -529,6 +541,7 @@ export function chatRoutes(ctx) {
             usage,
             askr: extension,
             anonyma: extension,
+            ...(showBilling ? { billing: billingFor(req.user.id, requestId) } : {}),
             conversationId: conversation,
           }),
         );
@@ -646,6 +659,7 @@ export function chatRoutes(ctx) {
           anonyma: receipt
             ? { credits_charged: receipt.credits_charged, request_id: requestId, finish_reason: timedOut ? "timeout" : "interrupted" }
             : undefined,
+          ...(showBilling ? { billing: billingFor(req.user.id, requestId) } : {}),
           conversationId: conversation,
           ...(saved.length ? { images: saved } : {}),
         });
@@ -659,23 +673,21 @@ export function chatRoutes(ctx) {
     }
   }
   app.get("/api/requests/:id", requireUser, (req, res) => {
-    const row = db
-      .prepare(`SELECT h.* FROM holds h WHERE h.id=? AND (h.user_id=? OR EXISTS (SELECT 1 FROM treasury_spends s WHERE s.hold_id=h.id AND s.user_id=?))`)
-      .get(req.user.id + ":" + req.params.id, req.user.id, req.user.id);
-    if (!row) fail(404, "Request not found.");
-    res.json({
-      requestId: req.params.id,
-      kind: row.kind,
-      status: row.status,
-      reserved: credits(row.amount),
-      created: row.created,
-      expires: row.expires,
-      receipt: row.result ? JSON.parse(row.result) : null,
-    });
+    const state = billingFor(req.user.id, req.params.id);
+    if (!state) fail(404, "Request not found.");
+    res.json(state);
   });
-  app.post("/api/chat", requireUser, limit("chat", 20, 60000), (req, res) =>
-    runChat(req, res, false),
-  );
+  app.post("/api/chat", requireUser, limit("chat", 20, 60000), async (req, res) => {
+    try { await runChat(req, res, false); }
+    catch (e) {
+      // An explicit terminal refusal is different from a missing recovery
+      // record after a network failure. Never turn a read-side 404 into free.
+      const requestId = req.headers["idempotency-key"] ?? req.body.requestId;
+      if (!res.headersSent && isReleased(cfg, "chatcontrol") && typeof requestId === "string" && requestId.trim() && requestId.length <= 200)
+        e.billing = billingFor(req.user.id, requestId) || { requestId, status: "not_charged" };
+      throw e;
+    }
+  });
   app.post(
     "/v1/chat/completions",
     limit("api_ip", 120, 60000),

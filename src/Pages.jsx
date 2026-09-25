@@ -833,6 +833,7 @@ const featureIcons = {
   holders: "credits",
   v1media: "image",
   treasury: "coins",
+  chatcontrol: "book",
 };
 const launch = {
   id: "mvp",

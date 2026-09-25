@@ -148,6 +148,7 @@ export function errorHandler(cfg) {
                   : "invalid_request_error",
         param: null,
       },
+      ...(e.billing ? { billing: e.billing } : {}),
       ...(e.receipt
         ? {
             askr: { credits_charged: e.receipt.credits_charged },

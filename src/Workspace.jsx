@@ -1,4 +1,6 @@
 import { CONTINUE_PROMPT, replyBudgetFor, replyBudgets, completionNotice } from "./long-answers.js";
+import { chatFailureMessage } from "./chat-control.js";
+import { useReadingPosition, useRequestCharge, ChargeStatus } from "./ChatControl.jsx";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
@@ -68,6 +70,7 @@ import { extractVariables } from "./scrolls.js";
 import { useTeamPays } from "./Treasury.jsx";
 import {
   api,
+  ApiError,
   streamChat,
   readStore,
   saveStore,
@@ -321,6 +324,9 @@ export default function Workspace() {
   const textMode = ["chat", "code", "uncensored"].includes(mode);
   // Scrolls (saved prompts, "/" insert and standing instructions) work in
   // every text mode: chat, code and Uncensored.
+  const chatControlLive = !demo && textMode && isReleased(config, "chatcontrol");
+  const reading = useReadingPosition({ enabled: chatControlLive, end: streamEnd, composer: composerZone, messages, busy });
+  const charge = useRequestCharge(chatControlLive);
   const scrollsLive = !demo && isReleased(config, "scrolls");
   const uncensoredIds = config?.releases?.uncensoredModels || [];
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
@@ -435,6 +441,8 @@ export default function Workspace() {
       setModel(visibleModels[0]?.id || "");
     setError("");
     setReceipt(null);
+    charge.reset();
+    reading.reset();
     setQuote(null);
     setPrompt(location.state?.prompt || "");
     setWebSearch(!!location.state?.web);
@@ -529,6 +537,7 @@ export default function Workspace() {
     }
   }, [mode, demo, user]);
   useEffect(() => {
+    if (chatControlLive) return;
     const end = streamEnd.current;
     if (!end) return;
     // The sticky composer covers the bottom of the viewport, so reserve its
@@ -536,7 +545,7 @@ export default function Workspace() {
     end.style.scrollMarginBottom =
       (composerZone.current?.offsetHeight || 0) + "px";
     end.scrollIntoView({ block: "nearest" });
-  }, [messages, busy]);
+  }, [messages, busy, chatControlLive]);
   // Load linked conversations after the destination section has reset its state.
   // Keyed on the user's id: the balance refresh after every reply replaces
   // the user object, and re-opening would blank the thread.
@@ -585,6 +594,8 @@ export default function Workspace() {
     });
   }
   function newChat() {
+    charge.reset();
+    reading.reset();
     setChecking(null);
     if (linked) navigate("/workspace/" + mode + (demo ? "?demo=1" : ""));
     setShared(null);
@@ -625,6 +636,11 @@ export default function Workspace() {
     });
   }
   async function openChat(c) {
+    controller.current?.abort();
+    charge.reset();
+    reading.reset();
+    setReceipt(null);
+    setBusy(false);
     if (mode !== c.mode) {
       navigate("/workspace/" + c.mode + "?" +
         new URLSearchParams({ ...(demo ? { demo: "1" } : {}), c: c.id }));
@@ -859,6 +875,7 @@ export default function Workspace() {
     const text = redo ? redo.content : sendText;
     const requestModel = effectiveModel?.id || model;
     const requestId = uid();
+    if (chatControlLive) { charge.begin(requestId); reading.reset(); }
     if (mode === "image" || mode === "video") {
       try {
         if (demo) {
@@ -1090,12 +1107,15 @@ export default function Workspace() {
           ...teamPays.body,
         },
         (event) => {
+          if (chatControlLive && !charge.isCurrent(requestId)) return;
+          if (event.billing) charge.accept(requestId, event.billing);
           if (event.conversationId) liveId = event.conversationId;
           if (event.anonyma) setReceipt(event.anonyma);
           finishReason = event.anonyma?.finish_reason || event.choices?.[0]?.finish_reason || finishReason;
           if (event.error)
-            throw new Error(
+            throw new ApiError(
               event.error.message || "The stream ended with an error.",
+              200, event.error.code, event,
             );
           if (event.conversationId) liveId = event.conversationId;
           output += event.choices?.[0]?.delta?.content || "";
@@ -1129,31 +1149,34 @@ export default function Workspace() {
         },
         controller.current.signal,
       );
+      if (chatControlLive && !charge.isCurrent(requestId)) return;
       setCurrent(liveId);
     } catch (err) {
+      if (chatControlLive && !charge.isCurrent(requestId)) return;
+      if (err.data?.billing) charge.accept(requestId, err.data.billing);
+      if (err.data?.anonyma) setReceipt(err.data.anonyma);
       setCurrent(liveId);
-      if (output || reasoning || images.length) setMessages([...next, {
+      if (chatControlLive || output || reasoning || images.length) setMessages([...next, {
         role: "assistant", content: output, reasoning, images, citations, model: requestModel,
         finishReason: finishReason || "interrupted", interrupted: true, requestId,
         ...(sendingPrivate ? { private: { privacy: "zdr", stored: false }, masked: requestMasked } : {}),
       }]);
-      setError(
-        err.name === "AbortError"
-          ? "Stopped. Partial billing may apply; refresh receipts before retrying."
-          : err.message,
-      );
+      if (chatControlLive) charge.recover(requestId);
+      setError(chatControlLive ? chatFailureMessage(err) : err.name === "AbortError"
+        ? "Stopped. Partial billing may apply; refresh receipts before retrying." : err.message);
     } finally {
-      // The conversation just got its real id: move its veil map off the
-      // temporary key so it's found again next time this browser opens it.
-      if (veilOn && liveId && liveId !== veilKeyRef.current) {
-        moveVeilState(veilKeyRef.current, liveId);
-        veilKeyRef.current = liveId;
+      if (!chatControlLive || charge.isCurrent(requestId)) {
+        // Failed first replies also have a real ID; preserve their local Veil map.
+        if (veilOn && liveId && liveId !== veilKeyRef.current) {
+          moveVeilState(veilKeyRef.current, liveId);
+          veilKeyRef.current = liveId;
+        }
+        setBusy(false);
+        refresh();
+        api("/api/conversations")
+          .then((r) => setAll(recentConversations(r.data)))
+          .catch(() => {});
       }
-      setBusy(false);
-      refresh();
-      api("/api/conversations")
-        .then((r) => setAll(recentConversations(r.data)))
-        .catch(() => {});
     }
   }
   // Edit a user turn or regenerate an answer. A saved conversation is first
@@ -1378,6 +1401,7 @@ export default function Workspace() {
           onClick={() => setMenu(false)}
         />
       )}
+      {chatControlLive && reading.away && messages.length > 0 && <button type="button" className="jump-latest" onClick={reading.jump}>Jump to latest ↓</button>}
       <div className="workspace-main">
         <header className="workspace-header">
           <button
@@ -1584,7 +1608,7 @@ export default function Workspace() {
                           : { text: m.content, documents: [] };
                       const hasDocuments = parsed.documents.length > 0;
                       const shown =
-                        parsed.text || (hasDocuments ? "" : "Preparing…");
+                        parsed.text || (hasDocuments ? "" : m.interrupted && chatControlLive ? "Reply interrupted. Check charge status below." : "Preparing…");
                       const body = (
                         <ReactMarkdown
                           remarkPlugins={[
@@ -1902,10 +1926,11 @@ export default function Workspace() {
                   ))}
                 {info && <Notice>{info}</Notice>}
                 {error && <Notice type="error">{error}</Notice>}
-                {receipt && (
+                {chatControlLive && <ChargeStatus state={charge.state} checking={charge.checking} recover={charge.recover} />}
+                {receipt && (!chatControlLive || receipt.request_id || receipt.signed_receipt) && (
                   <div className="receipt">
                     <span className="sq" aria-hidden="true" />
-                    {receipt.sample
+                    {chatControlLive ? "Usage receipt" : receipt.sample
                       ? "Sample receipt · 0 credits charged"
                       : `${receipt.local_test ? "Test receipt" : "Receipt"} · ${receipt.credits_charged ?? "Unconfirmed"} ${receipt.local_test ? "fixture " : ""}credits charged`}
                     {receipt.parts?.map((p) => (

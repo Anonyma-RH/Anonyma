@@ -356,13 +356,13 @@ export const UPDATES = [
   {
     id: "memory",
     title: "Memory Across Models",
-    tagline: "Facts you choose, remembered by every model.",
+    tagline: "Facts you choose. Context you control.",
     points: [
       "Off until you turn it on; you write every fact",
       "Edit, pause or delete any fact, and see exactly what was sent",
       "Never used off the record, in Private Mode or shared chats",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "tasktools",

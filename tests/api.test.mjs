@@ -2199,13 +2199,13 @@ test("gateway account and throttling refusals report an outage and release funds
 });
 test("a stopped chat is cancelled once the provider accepts and charges only the prompt", async (t) => {
   let late = null; // "accept" or "refuse" after a delay, else accept now
-  let received;
+  let received, upstreamClosed;
   let acceptedAt = 0,
     cancelledAt = 0;
   const gateway = await mockServer(t, async (req, res) => {
     await readJSON(req);
     received?.();
-    res.on("close", () => (cancelledAt = Date.now()));
+    upstreamClosed = new Promise(resolve => res.on("close", () => { cancelledAt = Date.now(); resolve(); }));
     if (late) {
       setTimeout(() => {
         if (late === "refuse") return res.writeHead(400).end("{}");
@@ -2252,7 +2252,17 @@ test("a stopped chat is cancelled once the provider accepts and charges only the
       const hold = s.db
         .prepare("SELECT * FROM holds ORDER BY rowid DESC LIMIT 1")
         .get();
-      if (hold.status !== "held") return hold;
+      if (hold.status !== "held") {
+        // The ledger can settle before the mock socket's close callback runs.
+        // Observe the actual close before asserting its acceptance timestamp.
+        let timeout;
+        try {
+          await Promise.race([upstreamClosed, new Promise((_, reject) => {
+            timeout = setTimeout(() => reject(Error("Upstream was not cancelled")), 2000);
+          })]);
+        } finally { clearTimeout(timeout); }
+        return hold;
+      }
       await new Promise((r) => setTimeout(r, 20));
     }
     throw Error("Reservation was never finalized.");

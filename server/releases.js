@@ -141,7 +141,7 @@ export const UPDATES = [
       "Never saved on our servers",
       "Veil masks your details before sending",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

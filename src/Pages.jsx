@@ -725,6 +725,7 @@ const featureIcons = {
   collab: "users",
   api: "key",
   social: "gift",
+  veil: "eyeoff",
 };
 const launch = {
   id: "mvp",

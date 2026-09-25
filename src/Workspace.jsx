@@ -29,6 +29,7 @@ import { Reveal } from "./ReferenceMotion.jsx";
 import WorkspaceHome from "./WorkspaceHome.jsx";
 import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import CollabHub from "./Collab.jsx";
+import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
 import {
   api,
   streamChat,
@@ -44,6 +45,16 @@ import {
   releaseUpdate,
   MODE_FEATURES,
 } from "./lib.js";
+import {
+  veil,
+  loadVeilState,
+  saveVeilState,
+  moveVeilState,
+  loadVeilWords,
+  saveVeilWords,
+  loadVeilOn,
+  saveVeilOn,
+} from "./veil.js";
 const initial = [
   {
     id: "welcome",
@@ -194,6 +205,9 @@ export default function Workspace() {
     [filter, setFilter] = useState("all"),
     [rename, setRename] = useState(""),
     [webSearch, setWebSearch] = useState(false),
+    [veilOn, setVeilOn] = useState(() => loadVeilOn()),
+    [veilWords, setVeilWords] = useState(() => loadVeilWords()),
+    [veilNote, setVeilNote] = useState(null),
     [shared, setShared] = useState(null),
     // null = not chosen yet, so the first published option wins over the "default" preset.
     [video, setVideo] = useState({
@@ -206,7 +220,12 @@ export default function Workspace() {
     timer = useRef(),
     streamEnd = useRef(),
     composerZone = useRef(),
-    promptBox = useRef();
+    promptBox = useRef(),
+    // Veil's tag<->value map for the open conversation. Keyed on a temporary
+    // id until the server assigns a real conversationId (see send/openChat),
+    // and never sent anywhere: see src/veil.js's local-only storage helpers.
+    veilKeyRef = useRef("tmp-" + uid()),
+    veilStateRef = useRef(loadVeilState(veilKeyRef.current));
   const validMode = [
     "home",
     "chat",
@@ -275,6 +294,9 @@ export default function Workspace() {
     setCurrent(null);
     setMessages([]);
     setMenu(false);
+    veilKeyRef.current = "tmp-" + uid();
+    veilStateRef.current = loadVeilState(veilKeyRef.current);
+    setVeilNote(null);
   }, [mode, demo]);
   useEffect(() => {
     if (demo && !saveStore("conversations", all))
@@ -283,6 +305,12 @@ export default function Workspace() {
   useEffect(() => {
     if (demo) saveStore("media", media);
   }, [media, demo]);
+  useEffect(() => {
+    saveVeilOn(veilOn);
+  }, [veilOn]);
+  useEffect(() => {
+    saveVeilWords(veilWords);
+  }, [veilWords]);
   useEffect(() => {
     if (!demo && !user) {
       setAll([]);
@@ -391,8 +419,17 @@ export default function Workspace() {
     setPrompt("");
     setReceipt(null);
     setError("");
+    veilKeyRef.current = "tmp-" + uid();
+    veilStateRef.current = loadVeilState(veilKeyRef.current);
+    setVeilNote(null);
   }
   async function openChat(c) {
+    // Load this conversation's local veil map (if this browser has one) so
+    // history unveils immediately; a conversation this browser has never
+    // veiled in just gets an empty map, and tags show as-is.
+    veilKeyRef.current = c.id;
+    veilStateRef.current = loadVeilState(c.id);
+    setVeilNote(null);
     if (mode !== c.mode) {
       navigate("/workspace/" + c.mode + (demo ? "?demo=1" : ""));
       setTimeout(() => {
@@ -487,6 +524,7 @@ export default function Workspace() {
     setError("");
     setInfo("");
     setReceipt(null);
+    setVeilNote(null);
     setBusy(true);
     controller.current = new AbortController();
     const text = mentioned ? mention[2].trim() : prompt.trim();
@@ -644,10 +682,33 @@ export default function Workspace() {
       }
       return;
     }
-    const next = [
+    const rawNext = [
       ...messages,
       { role: "user", content: text, images: attachments.map((a) => a.url) },
     ];
+    // Veil masks the new message and any earlier turns in this request's
+    // context window before anything reaches the network. Detection and
+    // tagging happen only in this browser; see src/veil.js.
+    let next = rawNext,
+      veiledPayload = null;
+    if (veilOn && !demo && isReleased(config, "veil")) {
+      let veiledCount = 0;
+      const tags = new Set();
+      veiledPayload = rawNext.slice(-20).map((m) => {
+        const r = veil(m.content || "", veilStateRef.current, veilWords);
+        veiledCount += r.count;
+        r.tags.forEach((t) => tags.add(t));
+        return { ...m, content: r.text };
+      });
+      saveVeilState(veilKeyRef.current, veilStateRef.current);
+      if (veiledCount)
+        setVeilNote({
+          count: veiledCount,
+          entries: [...tags].map((tag) => ({ tag, value: veilStateRef.current.map[tag] })),
+        });
+      // Display the just-sent message the same way the server saw it.
+      next = [...messages, veiledPayload[veiledPayload.length - 1]];
+    }
     setPrompt("");
     setAttachments([]);
     setMessages([...next, { role: "assistant", content: "", sample: demo }]);
@@ -679,7 +740,7 @@ export default function Workspace() {
       await streamChat(
         {
           model: requestModel,
-          messages: next.slice(-20).map(toRequestMessage),
+          messages: (veiledPayload || next.slice(-20)).map(toRequestMessage),
           conversationId: current,
           mode,
           max_tokens: 4096,
@@ -718,6 +779,12 @@ export default function Workspace() {
         controller.current.signal,
       );
       setCurrent(liveId);
+      // The conversation just got its real id: move its veil map off the
+      // temporary key so it's found again next time this browser opens it.
+      if (veilOn && liveId && liveId !== veilKeyRef.current) {
+        moveVeilState(veilKeyRef.current, liveId);
+        veilKeyRef.current = liveId;
+      }
     } catch (err) {
       setError(
         err.name === "AbortError"
@@ -1069,7 +1136,14 @@ export default function Workspace() {
                             )}
                           </div>
                           <div className="markdown">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            <ReactMarkdown
+                              remarkPlugins={[
+                                remarkGfm,
+                                // Re-runs on every render (incl. mid-stream) so a
+                                // [TAG_n] split across chunks resolves once whole.
+                                [veilRemarkPlugin, { map: veilStateRef.current.map }],
+                              ]}
+                            >
                               {m.content || "Preparing…"}
                             </ReactMarkdown>
                             {m.images?.map((url, j) => (
@@ -1352,6 +1426,11 @@ export default function Workspace() {
                         </button>
                       )}
                       {["chat", "code"].includes(mode) &&
+                        !demo &&
+                        isReleased(config, "veil") && (
+                        <VeilToggle on={veilOn} onToggle={() => setVeilOn((v) => !v)} />
+                      )}
+                      {["chat", "code"].includes(mode) &&
                         isReleased(config, "audio") && (
                         <MicButton
                           demo={demo}
@@ -1516,6 +1595,11 @@ export default function Workspace() {
                       ? "Sample outputs are illustrative. No provider request or charge."
                       : "AI can make mistakes. Check important information."}
                   </span>
+                  {["chat", "code"].includes(mode) &&
+                    !demo &&
+                    isReleased(config, "veil") && (
+                    <VeilPanel note={veilNote} words={veilWords} onWordsChange={setVeilWords} />
+                  )}
                   {["chat", "code"].includes(mode) && (
                     <button
                       onClick={quoteRequest}

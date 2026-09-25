@@ -265,3 +265,25 @@ test("A chat with documents is named after the typed prompt and saved whole", as
   assert.equal(documents[0].name, "report.pdf");
   assert.equal(documents[0].text, "Revenue grew 14%.");
 });
+
+test("A chat with only documents is named after the first file", async (t) => {
+  const s = fixture(t);
+  const agent = request.agent(s.app);
+  await agent
+    .post("/api/auth/register")
+    .send({ username: "doc_only", password: "test-password-long" })
+    .expect(201);
+  const content = composeMessageWithDocuments("", [
+    { name: "q3-report.pdf", pages: 1, text: "Revenue grew 14%." },
+  ]);
+  await agent
+    .post("/api/chat")
+    .send({
+      model: "google/gemini-2.5-flash",
+      messages: [{ role: "user", content }],
+      max_tokens: 50,
+    })
+    .expect(200);
+  const [conversation] = (await agent.get("/api/conversations")).body.data;
+  assert.equal(conversation.title, "q3-report.pdf");
+});

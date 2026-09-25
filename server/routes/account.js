@@ -1,3 +1,5 @@
+import { sessionCookieOptions } from "../auth.js";
+import { exportConversations } from "./conversations.js";
 import {
   uid,
   hash,
@@ -42,7 +44,10 @@ export function accountRoutes(ctx) {
   // tied to a hold); deposits, transfers and referral rewards don't.
   app.get("/api/account/summary", requireUser, (req, res) => {
     const DAY = 86400000;
-    const tz = Math.max(-840, Math.min(840, Math.trunc(Number(req.query.tz) || 0)));
+    const tz = Math.max(
+      -840,
+      Math.min(840, Math.trunc(Number(req.query.tz) || 0)),
+    );
     const shift = tz * 60000;
     const today = Math.floor((now() - shift) / DAY);
     const from = (today - 13) * DAY + shift;
@@ -80,7 +85,11 @@ export function accountRoutes(ctx) {
       byKind: Object.values(kinds)
         .map((k) => ({ ...k, spent: credits(k.spent) }))
         .sort((a, b) => b.spent - a.spent),
-      week: { ...week, spent: credits(week.spent), previous: credits(week.previous) },
+      week: {
+        ...week,
+        spent: credits(week.spent),
+        previous: credits(week.previous),
+      },
       balance: publicUser(req.user),
     });
   });
@@ -188,19 +197,68 @@ export function accountRoutes(ctx) {
   });
   app.get("/api/account/export", requireUser, (req, res) =>
     res.attachment("anonyma-account.json").json({
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      units: {
+        ledgerAmount: "integer subcredits (10000 = 1 credit)",
+        depositAmount: "USD",
+        keyCap: "credits",
+        mediaCost: "credits",
+        requestAmount: "integer subcredits",
+      },
       user: publicUser(req.user),
       ledger: db
-        .prepare("SELECT * FROM ledger WHERE user_id=?")
+        .prepare("SELECT * FROM ledger WHERE user_id=? ORDER BY created,rowid")
         .all(req.user.id),
-      conversations: db
-        .prepare("SELECT * FROM conversations WHERE user_id=?")
+      deposits: db
+        .prepare(
+          "SELECT * FROM deposits WHERE user_id=? ORDER BY created,rowid",
+        )
         .all(req.user.id)
-        .map((c) => ({
-          ...c,
-          messages: db
-            .prepare("SELECT * FROM messages WHERE conversation_id=?")
-            .all(c.id),
+        .map((d) => ({
+          ...d,
+          amount: d.amount / 1e7,
+          payload: JSON.parse(d.payload || "null"),
         })),
+      keys: db
+        .prepare(
+          "SELECT id,name,prefix,cap,created,revoked,last_used FROM api_keys WHERE user_id=?",
+        )
+        .all(req.user.id)
+        .map((k) => ({ ...k, cap: k.cap == null ? null : credits(k.cap) })),
+      sessions: db
+        .prepare(
+          "SELECT created,expires FROM sessions WHERE user_id=? AND expires>?",
+        )
+        .all(req.user.id, now()),
+      supportRequests: db
+        .prepare(
+          "SELECT id,subject,body,email,created,delivery,delivered_at FROM tickets WHERE user_id=?",
+        )
+        .all(req.user.id),
+      requests: db
+        .prepare("SELECT * FROM holds WHERE user_id=? ORDER BY created,rowid")
+        .all(req.user.id),
+      videos: db
+        .prepare(
+          "SELECT id,status,request,error,media_id,created,updated FROM videos WHERE user_id=?",
+        )
+        .all(req.user.id)
+        .map((v) => ({ ...v, request: JSON.parse(v.request || "null") })),
+      collaborations: db
+        .prepare(
+          "SELECT c.id,c.name,c.created,m.role,m.joined FROM collabs c JOIN collab_members m ON c.id=m.collab_id WHERE m.user_id=?",
+        )
+        .all(req.user.id),
+      conversations: exportConversations(db, req.user.id),
+      // Own contributions remain exportable after leaving a shared workspace,
+      // without disclosing its other members' content or current metadata.
+      ownSharedMessages: db
+        .prepare(
+          "SELECT m.* FROM messages m JOIN conversations c ON c.id=m.conversation_id WHERE m.author_id=? AND c.collab_id IS NOT NULL ORDER BY m.created,m.rowid",
+        )
+        .all(req.user.id)
+        .map((m) => ({ ...m, content: JSON.parse(m.content) })),
       media: db
         .prepare("SELECT * FROM media WHERE user_id=?")
         .all(req.user.id)
@@ -246,10 +304,9 @@ export function accountRoutes(ctx) {
         "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
       ).run(req.user.id);
       db.prepare("DELETE FROM sessions WHERE user_id=?").run(req.user.id);
-      db.prepare("UPDATE api_keys SET revoked=? WHERE user_id=?").run(
-        now(),
-        req.user.id,
-      );
+      db.prepare(
+        "UPDATE api_keys SET revoked=?,hash=NULL,name='Deleted account',prefix=NULL WHERE user_id=?",
+      ).run(now(), req.user.id);
       db.prepare(
         "DELETE FROM challenges WHERE target IN (?,?) OR payload=?",
       ).run(req.user.email || "", req.user.wallet || "", req.user.id);
@@ -259,6 +316,8 @@ export function accountRoutes(ctx) {
         "UPDATE users SET username=NULL,password=NULL,email=NULL,wallet=NULL,token_balance='0',token_since=NULL,deleted=? WHERE id=?",
       ).run(now(), req.user.id);
     });
-    res.clearCookie("anonyma_session", { path: "/" }).json({ ok: true });
+    res
+      .clearCookie("anonyma_session", sessionCookieOptions(cfg))
+      .json({ ok: true });
   });
 }

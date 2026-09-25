@@ -287,3 +287,14 @@ test("enabled developer docs match authenticated models, balances, completions a
   assert.match(stream.text, /"choices":\[\],"usage":/);
   assert.match(stream.text, /data: \[DONE\]/);
 });
+
+test("catalog API availability is limited to callable chat models after API release", async (t) => {
+  const svc = fixture(t, "all");
+  const catalog = (await request(svc.app).get("/api/models").expect(200)).body;
+  assert.equal(catalog.developerApiReleased, true);
+  assert.ok(catalog.data.some(m => m.type === "chat" && m.callable));
+  assert.ok(catalog.data.some(m => m.type !== "chat"), "non-chat entries exercise the distinction");
+  for (const model of catalog.data) {
+    assert.equal(model.apiCallable, model.type === "chat" && model.callable, model.id);
+  }
+});

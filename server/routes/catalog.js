@@ -82,7 +82,7 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
         .map((m) => ({
         ...m,
         callable: callable(m, cfg),
-        apiCallable: isReleased(cfg, "api") && callable(m, cfg),
+        apiCallable: isReleased(cfg, "api") && m.type === "chat" && callable(m, cfg),
         imageCapable: imageCallable(m),
         imagePrice: generationPrice(m),
         vision: vision(m),

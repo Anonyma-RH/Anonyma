@@ -38,6 +38,8 @@ export function AppProvider({ children }) {
       setModels(sortModels(m.value.data.map(normalizeModel)));
       const { data, ...meta } = m.value;
       setCatalogMeta({ ...meta, connected: true });
+    } else {
+      setCatalogMeta((previous) => ({ ...previous, connected: false }));
     }
     setUser(u.status === "fulfilled" ? u.value.user : null);
     setLoading(false);

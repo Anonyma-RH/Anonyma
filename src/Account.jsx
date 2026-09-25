@@ -809,7 +809,7 @@ export default function Account() {
               <section>
                 <div>
                   <h2>Your data.</h2>
-                  <p>Take a copy of your work with you.</p>
+                  <p>Download your account JSON. Media files need separate downloads. <Link to="/docs/privacy">Review retention, export and deletion.</Link></p>
                 </div>
                 <Button
                   secondary
@@ -826,7 +826,7 @@ export default function Account() {
                   <p>
                     {demo
                       ? "Clear the sample work stored in this browser."
-                      : "Account closure requires review of unused credits and pending work."}
+                      : "Export first. Closure deletes your personal content and forfeits unused credits; financial and some shared records remain."}
                   </p>
                 </div>
                 <button
@@ -834,7 +834,7 @@ export default function Account() {
                   disabled={!demo && !user}
                   onClick={() => setModal({ type: "close" })}
                 >
-                  {demo ? "Clear local demo" : "Request account closure"}
+                  {demo ? "Clear local demo" : "Close account"}
                 </button>
               </section>
             </div>
@@ -952,7 +952,7 @@ export default function Account() {
               <p>
                 {demo
                   ? "This removes the demo conversations, media references and sample key metadata from this browser."
-                  : "Unused credits may be forfeited. Unresolved holds or invoices block closure. Financial audit records may be retained."}
+                  : "Unused credits are forfeited. Unresolved holds or invoices block closure. Personal content and owned shared workspaces are deleted; financial records, other workspaces’ shared content and external copies remain. Review the data-controls guide before confirming."}
               </p>
               <label>
                 Type DELETE to confirm

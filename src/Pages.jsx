@@ -1,3 +1,4 @@
+import DataControls from "./DataControls.jsx";
 import ApiGuide, { ApiExample } from "./ApiGuide.jsx";
 import React, { useMemo, useState } from "react";
 import {
@@ -21,7 +22,7 @@ import { api, download, savings, walletSign, walletAvailable } from "./lib.js";
 import { articles } from "./data.js";
 import ReleaseStatus from "./ReleaseStatus.jsx";
 import BillingRules from "./BillingRules.jsx";
-import { featureEnabled, featureLabel, guideReleaseLabel, releaseCopy } from "./release-copy.js";
+import { featureEnabled, featureLabel, guideReleaseLabel, releaseCopy, modelAvailability } from "./release-copy.js";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -140,72 +141,76 @@ export function Catalog() {
           {results.length} models · Compare up to 4
         </p>
         <div className="catalog-grid">
-          {results.slice((page - 1) * 6, page * 6).map((m) => (
-            <article className="catalog-card" key={m.id}>
-              <div className="catalog-card-top">
-                <span className={"model-symbol " + (m.color || "mint")}>
-                  {m.icon || "✧"}
-                </span>
-                <span className={"status-tag " + (m.callable ? "ready" : "")}>
-                  {m.callable ? (config?.testMode ? "Test model" : "Available in workspace") : "Catalog only"}
-                </span>
-              </div>
-              <p className="eyebrow">{m.provider || m.id.split("/")[0]}</p>
-              <h2>{m.name}</h2>
-              <p>
-                {m.description ||
-                  "Explore the model’s documented capabilities."}
-              </p>
-              <div className="model-properties">
-                <span>
-                  <Icon name={m.type || "chat"} size={13} />
-                  {m.type === "image"
-                    ? "Image generation"
-                    : m.type === "video"
-                      ? "Video generation"
-                      : "Chat & code"}
-                </span>
-                {m.context_length && (
-                  <span>
-                    {Math.round(m.context_length / 1000).toLocaleString()}k
-                    context
+          {results.slice((page - 1) * 6, page * 6).map((m) => {
+            const availability = modelAvailability(m, config, catalogMeta);
+            return (
+              <article className="catalog-card" key={m.id}>
+                <div className="catalog-card-top">
+                  <span className={"model-symbol " + (m.color || "mint")}>
+                    {m.icon || "✧"}
                   </span>
-                )}
-                {m.vision && <span>Vision</span>}
-              </div>
-              <div className="catalog-card-bottom">
-                <Link
-                  to={
-                    "/workspace/" +
-                    (m.type === "image"
-                      ? "image"
+                  <span className={"status-tag " + (availability.workspaceReady ? "ready" : "")}>
+                    {availability.workspace}
+                  </span>
+                </div>
+                <p className="model-api-status">{availability.api}</p>
+                <p className="eyebrow">{m.provider || m.id.split("/")[0]}</p>
+                <h2>{m.name}</h2>
+                <p>
+                  {m.description ||
+                    "Explore the model’s documented capabilities."}
+                </p>
+                <div className="model-properties">
+                  <span>
+                    <Icon name={m.type || "chat"} size={13} />
+                    {m.type === "image"
+                      ? "Image generation"
                       : m.type === "video"
-                        ? "video"
-                        : "chat") +
-                    "?model=" +
-                    encodeURIComponent(m.id)
-                  }
-                >
-                  Open workspace <Icon name="diagonal" size={15} />
-                </Link>
-                <label className="compare-check">
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(m.id)}
-                    disabled={!selected.includes(m.id) && selected.length >= 4}
-                    onChange={() =>
-                      setSelected((prev) =>
-                        prev.includes(m.id)
-                          ? prev.filter((id) => id !== m.id)
-                          : [...prev, m.id],
-                      )
+                        ? "Video generation"
+                        : "Chat & code"}
+                  </span>
+                  {m.context_length && (
+                    <span>
+                      {Math.round(m.context_length / 1000).toLocaleString()}k
+                      context
+                    </span>
+                  )}
+                  {m.vision && <span>Vision</span>}
+                </div>
+                <div className="catalog-card-bottom">
+                  <Link
+                    to={
+                      "/workspace/" +
+                      (m.type === "image"
+                        ? "image"
+                        : m.type === "video"
+                          ? "video"
+                          : "chat") +
+                      "?model=" +
+                      encodeURIComponent(m.id)
                     }
-                  />
-                  Compare
-                </label>
-              </div>
-            </article>
-          ))}
+                  >
+                    Open workspace <Icon name="diagonal" size={15} />
+                  </Link>
+                  <label className="compare-check">
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(m.id)}
+                      disabled={!selected.includes(m.id) && selected.length >= 4}
+                      onChange={() =>
+                        setSelected((prev) =>
+                          prev.includes(m.id)
+                            ? prev.filter((id) => id !== m.id)
+                            : [...prev, m.id],
+                        )
+                      }
+                    />
+                    Compare
+                  </label>
+                </div>
+              </article>
+            );
+          })}
         </div>
         {!results.length && (
           <Empty
@@ -283,8 +288,12 @@ export function Catalog() {
                     (m) => (m.vision ? "Supported by catalog" : "Not listed"),
                   ],
                   [
-                    "Availability",
-                    (m) => (m.callable ? "Available" : "Not connected"),
+                    "Chat / workspace",
+                    (m) => modelAvailability(m, config, catalogMeta).workspace,
+                  ],
+                  [
+                    "Developer API",
+                    (m) => modelAvailability(m, config, catalogMeta).api,
                   ],
                   [
                     "Price",
@@ -303,8 +312,9 @@ export function Catalog() {
             </table>
           </div>
           <p className="fine-print">
-            Catalog information is illustrative until the shared backend
-            supplies verified models and prices.
+            {catalogMeta.connected
+              ? "Chat availability and developer API access are separate. Labels reflect the latest loaded service configuration; provider availability can change."
+              : "Illustrative catalog. Live availability and prices could not be verified."}
           </p>
         </Modal>
       )}
@@ -527,7 +537,7 @@ const docsTopics = [
     "privacy",
     "History & privacy",
     "Keep your work organized",
-    "The documented retention limits are 300 conversations, 100 images and 60 videos per account. API images have separate 24-hour expiry. Demo data lives only in this browser and can be exported or cleared.",
+    "Review the actual storage limits, download your data and understand what content deletion and account closure remove.",
   ],
 ];
 const guideFeatures = { images: ["images", "video"], api: ["api"] };
@@ -595,6 +605,7 @@ export function Docs() {
           )}
           {(!planned || topic[0] !== "api") && <p className="lead">{topic[3]}</p>}
           {topic[0] === "billing" && <BillingRules />}
+          {topic[0] === "privacy" && <DataControls />}
           {topic[0] === "credits" && <p><Link to="/docs/billing">Read the full billing rules, including fees, refunds and failed requests.</Link></p>}
           {topic[0] !== "api" && <>
           <h3>Try the experience</h3>
@@ -984,6 +995,7 @@ export function Legal({ type }) {
           contact details and commercial policies still need to be published.
           This page does not present them as finalized Terms or a complete Privacy Policy.
         </Notice>
+        {type === "privacy" && <p><Link to="/docs/privacy">Data controls: retention, export, deletion and retained records.</Link></p>}
         {type === "terms" && <p><Link to="/docs/billing">Billing rules: rates, fees, refunds, payment failures and interrupted requests.</Link></p>}
         {(type === "privacy"
           ? [
@@ -993,11 +1005,11 @@ export function Legal({ type }) {
               ],
               [
                 "Service connections",
-                "In the connected service, account data is stored on the server and submitted prompts are sent to configured AI providers. Production retention, processing locations and contact details still need to be disclosed by the operator.",
+                "In the connected service, account data is stored on the server and submitted prompts are sent to configured AI providers. The data-controls guide documents application retention and deletion. Provider and backup retention, processing locations and operator contact details remain to be disclosed.",
               ],
               [
                 "No invented privacy promises",
-                "ANONYMA does not claim end-to-end encryption or independent security certification. Account access controls restrict saved work; complete retention and deletion policies remain outstanding.",
+                "ANONYMA does not claim end-to-end encryption or independent security certification. Account access controls restrict saved work. Application export and deletion controls have the limitations described in the data-controls guide.",
               ],
             ]
           : [

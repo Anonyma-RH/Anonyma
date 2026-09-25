@@ -450,7 +450,7 @@ export default function Whitepaper() {
             </p>
             <h3>Retention</h3>
             <p>
-              The server keeps your 300 most recently updated conversations and
+              The server keeps your 300 most recently updated personal conversations and
               deletes older ones. Sign-in codes and wallet challenges are
               deleted an hour after they expire, rate-limit records after a
               day, and expired sessions are removed.
@@ -458,12 +458,12 @@ export default function Whitepaper() {
             <h3>Export and deletion</h3>
             <p>
               You can export your account as JSON: your profile, ledger,
-              conversations and messages. You can delete one conversation or
+              accessible conversations and messages, deposits, support requests and key/session metadata. Media files require separate downloads. You can delete one personal conversation or
               all of them. Closing your account deletes your conversations,
               media, sessions and support tickets, revokes your API keys and
               clears your username, password, email and wallet address. Unused
               credits are forfeited. Financial records, meaning ledger entries
-              and deposit records, are kept.
+              and deposit records, are kept without automatic expiry. Shared content in other owners’ workspaces and external copies can remain. See the data-controls guide at /docs/privacy for the full limits.
             </p>
             <p>
               Conversations are stored on the server in readable form so they

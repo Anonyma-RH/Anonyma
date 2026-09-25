@@ -62,6 +62,7 @@ export function parseTrustProxy(value) {
 export function config(overrides = {}) {
   const e = process.env;
   const cfg = {
+    production: e.NODE_ENV === "production",
     port: Number(e.PORT || 3001),
     host: e.HOST || "127.0.0.1",
     origin: e.APP_ORIGIN || "http://localhost:5175",
@@ -117,7 +118,9 @@ export function config(overrides = {}) {
     // chat models while the full catalog isn't released.
     released: e.RELEASED_FEATURES ?? "all",
     mvpModels: e.MVP_MODELS
-      ? e.MVP_MODELS.split(",").map((v) => v.trim()).filter(Boolean)
+      ? e.MVP_MODELS.split(",")
+          .map((v) => v.trim())
+          .filter(Boolean)
       : DEFAULT_MVP_MODELS,
     ...overrides,
   };
@@ -146,18 +149,21 @@ export function config(overrides = {}) {
       url.password
     )
       throw Error(`Invalid ${field} URL.`);
+    const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+    if (
+      url.protocol !== "https:" &&
+      (cfg.production || (["origin", "publicUrl"].includes(field) && !loopback))
+    )
+      throw Error(
+        `${field} must use HTTPS; HTTP is allowed only for local development origins.`,
+      );
     if (["origin", "publicUrl"].includes(field)) {
       if (url.pathname !== "/" || url.search || url.hash)
         throw Error(`${field} must be an origin without a path.`);
       cfg[field] = url.origin;
     }
   }
-  if (
-    e.NODE_ENV === "production" &&
-    !cfg.testMode &&
-    cfg.publicUrl &&
-    cfg.origin !== cfg.publicUrl
-  )
+  if (cfg.production && cfg.publicUrl && cfg.origin !== cfg.publicUrl)
     throw Error("APP_ORIGIN and PUBLIC_BASE_URL must match in production.");
   if (!Number.isInteger(cfg.port) || cfg.port < 0 || cfg.port > 65535)
     throw Error("Invalid server port.");

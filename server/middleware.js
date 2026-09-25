@@ -43,6 +43,26 @@ export function applyMiddleware(app, cfg) {
       res.set("Cache-Control", "no-store");
     next();
   });
+  app.use((req, res, next) => {
+    if (!cfg.production) return next();
+    if (req.secure) {
+      res.set("Strict-Transport-Security", "max-age=31536000");
+      return next();
+    }
+    // The private platform health probe exposes no account data or session cookie.
+    if (req.path === "/health" && ["GET", "HEAD"].includes(req.method))
+      return next();
+    if (["GET", "HEAD"].includes(req.method))
+      return res.redirect(308, cfg.origin + req.originalUrl);
+    return res.status(426).json({
+      error: {
+        message: "Use HTTPS for this request.",
+        code: "https_required",
+        type: "invalid_request_error",
+        param: null,
+      },
+    });
+  });
   app.use("/v1", express.json({ limit: "256kb" }));
   app.use(express.json({ limit: "18mb" }));
   app.use((req, res, next) => {

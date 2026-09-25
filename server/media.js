@@ -124,7 +124,7 @@ export function createMediaStore(db, cfg) {
     );
     const old = db
       .prepare(
-        "SELECT * FROM media WHERE user_id=? AND kind=? AND expires IS NULL AND id NOT IN (SELECT id FROM media WHERE user_id=? AND kind=? AND expires IS NULL ORDER BY created DESC LIMIT ?)",
+        "SELECT * FROM media WHERE user_id=? AND kind=? AND expires IS NULL AND id NOT IN (SELECT id FROM media WHERE user_id=? AND kind=? AND expires IS NULL ORDER BY created DESC,rowid DESC LIMIT ?)",
       )
       .all(user, kind, user, kind, kind === "image" ? 100 : 60);
     for (const item of old) deleteMedia(item);
@@ -141,7 +141,14 @@ export function createMediaStore(db, cfg) {
   function deleteMedia(m) {
     try {
       unlinkSync(join(cfg.mediaPath, m.filename));
-    } catch {}
+    } catch (error) {
+      if (error.code !== "ENOENT")
+        fail(
+          503,
+          "Could not remove a saved file. Please retry deletion.",
+          "media_delete_failed",
+        );
+    }
     db.prepare("DELETE FROM media WHERE id=?").run(m.id);
   }
   // Record each item's share of a settled charge.

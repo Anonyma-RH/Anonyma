@@ -20,14 +20,17 @@ import {
   discount,
 } from "./core.js";
 
-export function authRoutes(app, db, cfg, limit) {
-  const cookieOptions = {
+export function sessionCookieOptions(cfg) {
+  return {
     httpOnly: true,
     sameSite: "lax",
-    secure: cfg.origin.startsWith("https:"),
+    secure: cfg.production || new URL(cfg.origin).protocol === "https:",
     path: "/",
-    maxAge: 30 * 86400000,
   };
+}
+
+export function authRoutes(app, db, cfg, limit) {
+  const cookieOptions = { ...sessionCookieOptions(cfg), maxAge: 30 * 86400000 };
   function session(res, user) {
     const token = uid("session_");
     db.prepare(
@@ -339,11 +342,15 @@ export function authRoutes(app, db, cfg, limit) {
     db.prepare("DELETE FROM sessions WHERE hash=?").run(
       hash(req.cookies.anonyma_session || ""),
     );
-    res.clearCookie("anonyma_session", { path: "/" }).json({ ok: true });
+    res
+      .clearCookie("anonyma_session", sessionCookieOptions(cfg))
+      .json({ ok: true });
   });
   app.post("/api/auth/logout-all", requireUser, (req, res) => {
     db.prepare("DELETE FROM sessions WHERE user_id=?").run(req.user.id);
-    res.clearCookie("anonyma_session", { path: "/" }).json({ ok: true });
+    res
+      .clearCookie("anonyma_session", sessionCookieOptions(cfg))
+      .json({ ok: true });
   });
   app.get("/api/account/sessions", requireUser, (req, res) =>
     res.json({

@@ -103,7 +103,7 @@ test("production refuses a payment callback origin that differs from the browser
     assert.throws(
       () =>
         config({
-          origin: "http://127.0.0.1:3001",
+          origin: "https://other.example.com",
           publicUrl: "https://anonyma.example.com",
           testMode: false,
         }),

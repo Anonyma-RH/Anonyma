@@ -1,0 +1,114 @@
+import { Link } from "react-router-dom";
+
+export default function DataControls() {
+  return (
+    <div className="data-controls">
+      <h3>What is retained</h3>
+      <ul>
+        <li>
+          Personal conversations: the 300 most recently updated conversations.
+          Creating another conversation removes the oldest personal conversation
+          and its messages. Shared conversations have no automatic count or time
+          limit.
+        </li>
+        <li>
+          Saved media: the latest 100 images, 60 videos and 60 audio files per
+          account, per type. Saving another file removes the oldest file of that
+          type. These are count limits, not day limits.
+        </li>
+        <li>
+          Temporary API-generated media expires after 24 hours when created with
+          an expiry. Access stops at expiry; background maintenance removes the
+          file. This does not make unreleased API features available.
+        </li>
+        <li>
+          Sessions expire after 30 days. Background maintenance removes expired
+          sessions, challenges more than one hour past expiry and rate-limit
+          records older than 24 hours. Cleanup requires the service to be
+          running; expired authentication is refused immediately.
+        </li>
+        <li>
+          Account-linked support requests, video job records and non-expiring
+          content have no additional scheduled age-based deletion. A list
+          showing only the latest jobs or transactions is not a retention limit.
+        </li>
+      </ul>
+      <h3>Export your data</h3>
+      <p>
+        Open{" "}
+        <Link to="/account/settings">
+          Account → Settings → Export account data
+        </Link>{" "}
+        to download JSON containing your profile, full ledger and deposits,
+        request receipts, video jobs, media metadata, key metadata, active
+        session dates and account-linked support requests. The export includes
+        conversations you can currently access and your own retained
+        contributions to shared conversations. Another member’s private spending
+        details are excluded.
+      </p>
+      <p>
+        Exports never include passwords, password hashes, session tokens,
+        API-key secrets or their hashes. Monetary units are recorded in the
+        file. Media entries are links and metadata, not copies of the files:
+        download the files you want to keep before deleting content or closing
+        the account. Previously pruned or deleted content cannot be exported.
+      </p>
+      <h3>Delete content or close your account</h3>
+      <p>
+        Delete an individual conversation or clear personal history in the
+        workspace. Delete saved media from the library when that feature is
+        enabled. In shared workspaces, conversation deletion requires the
+        creator or workspace owner. Clearing personal history does not delete
+        shared conversations.
+      </p>
+      <p>
+        To close your account, export first, then choose Close account in
+        Account → Settings and type DELETE. Active generation holds or
+        unresolved payment invoices block closure until resolved. Closing
+        removes personal conversations and messages, saved media files, video
+        jobs, account-linked support requests and sessions. It deletes
+        workspaces you own, including their shared content; it ends membership
+        in other workspaces while preserving their shared messages under the
+        deleted account’s internal ID, without its profile name.
+      </p>
+      <p>
+        Closure clears your username, password hash, email and linked wallet,
+        and revokes API keys while clearing their hashes, prefixes and names.
+        Unused credits are forfeited. Successful deletion removes active records
+        and files; a file-removal failure is reported instead of claiming
+        success, so you can retry.
+      </p>
+      <h3>What deletion does not erase</h3>
+      <p>
+        Financial ledger entries, deposit records, request accounting, referral
+        relationships and a deleted-account marker remain under an internal
+        account ID. There is currently no automatic expiry for these records.
+        Payment records can include transaction hashes and wallet addresses;
+        immutable ledger descriptions may contain identifiers used at the time
+        of a transaction.
+      </p>
+      <p>
+        Exports or downloaded files already in your possession, public
+        blockchain transactions, messages copied by collaborators, email already
+        sent to the support inbox and data already sent to AI providers are not
+        erased by account closure. Signed-out support requests are not
+        automatically linked to an account; contact{" "}
+        <Link to="/support">support</Link> with their reference to request
+        access or deletion.
+      </p>
+      <p>
+        Backups are separate copies. The app has no automatic backup-expiry
+        schedule or deletion replay after a restore. Operator backup retention,
+        restore handling, provider retention and processing locations still need
+        to be published. An account deletion is not a promise of immediate
+        erasure from every backup or provider.
+      </p>
+      <h3>Optional demo</h3>
+      <p>
+        The demo stores sample data in this browser. Export or reset it from
+        demo account settings. Resetting the demo does not close a real account
+        or delete downloaded files.
+      </p>
+    </div>
+  );
+}

@@ -50,3 +50,27 @@ export function releaseCopy(config) {
           : "Funding is currently unavailable. Do not send a payment until a supported method appears in your account.",
   };
 }
+
+// A callable workspace model does not imply released developer API access.
+export function modelAvailability(model, config, catalogMeta) {
+  const workspaceName = model.type === "chat" ? "Chat" : "Workspace";
+  const known = catalogMeta?.connected === true && !!config && !catalogMeta.refreshError;
+  const workspaceReady = known && model.callable === true;
+  const workspace = !known
+    ? `${workspaceName} availability unknown`
+    : workspaceReady
+      ? config.testMode ? `${workspaceName} · Test model` : `Available in ${workspaceName.toLowerCase()}`
+      : `Unavailable in ${workspaceName.toLowerCase()}`;
+  const apiReleased = config?.releases?.features?.api;
+  const apiReady = known && apiReleased === true && model.type === "chat" && model.apiCallable === true;
+  const api = apiReleased === false
+    ? "Developer API · Coming soon"
+    : !known || apiReleased !== true
+      ? "Developer API · Availability unknown"
+      : model.type !== "chat"
+        ? "Developer API · Unsupported model"
+        : apiReady
+          ? config.testMode ? "Developer API · Test model" : "Developer API · Available"
+          : "Developer API · Unavailable";
+  return { workspace, api, workspaceReady, apiReady };
+}

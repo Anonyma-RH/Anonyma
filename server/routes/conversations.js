@@ -1,5 +1,31 @@
 import { uid, now, fail, credits } from "../core.js";
 
+// Use the same membership boundary as conversation reads. A removed member
+// cannot export other members' messages from a shared conversation they created.
+export function exportConversations(db, user) {
+  return db
+    .prepare(
+      `SELECT c.* FROM conversations c
+    WHERE (c.collab_id IS NULL AND c.user_id=?) OR
+      EXISTS (SELECT 1 FROM collab_members m WHERE m.collab_id=c.collab_id AND m.user_id=?)
+    ORDER BY c.updated DESC,c.rowid DESC`,
+    )
+    .all(user, user)
+    .map((c) => ({
+      ...c,
+      messages: db
+        .prepare(
+          "SELECT * FROM messages WHERE conversation_id=? ORDER BY created,rowid",
+        )
+        .all(c.id)
+        .map((m) => ({
+          ...m,
+          content: JSON.parse(m.content),
+          cost: c.collab_id && m.author_id !== user ? null : m.cost,
+        })),
+    }));
+}
+
 export function conversationRoutes({ app, db, requireUser }) {
   // Read and post: a personal conversation's creator, or a current member of
   // a shared conversation's collab (leaving a collab ends access, even to
@@ -39,7 +65,7 @@ export function conversationRoutes({ app, db, requireUser }) {
     ).run(id, user, title.slice(0, 70), mode, now(), now(), collab);
     // Keep the newest 300 personal conversations; shared ones belong to their collab.
     db.prepare(
-      "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL AND id NOT IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL ORDER BY updated DESC LIMIT 300)",
+      "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL AND id NOT IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL ORDER BY updated DESC,rowid DESC LIMIT 300)",
     ).run(user, user);
     return id;
   }
@@ -47,7 +73,7 @@ export function conversationRoutes({ app, db, requireUser }) {
     res.json({
       data: db
         .prepare(
-          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL ORDER BY updated DESC LIMIT 300",
+          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL ORDER BY updated DESC,rowid DESC LIMIT 300",
         )
         .all(req.user.id),
     }),
@@ -63,20 +89,7 @@ export function conversationRoutes({ app, db, requireUser }) {
   );
   app.get("/api/conversations/export", requireUser, (req, res) => {
     res.attachment("anonyma-conversations.json").json({
-      conversations: db
-        .prepare(
-          "SELECT * FROM conversations WHERE user_id=? ORDER BY updated DESC",
-        )
-        .all(req.user.id)
-        .map((c) => ({
-          ...c,
-          messages: db
-            .prepare(
-              "SELECT * FROM messages WHERE conversation_id=? ORDER BY created,rowid",
-            )
-            .all(c.id)
-            .map((m) => ({ ...m, content: JSON.parse(m.content) })),
-        })),
+      conversations: exportConversations(db, req.user.id),
     });
   });
   app.delete("/api/conversations", requireUser, (req, res) => {

@@ -5,6 +5,7 @@ import {
   featureLabel,
   guideReleaseLabel,
   releaseCopy,
+  modelAvailability,
 } from "../src/release-copy.js";
 
 const config = {
@@ -76,4 +77,35 @@ test("copy follows subsequent releases without keeping stale coming-soon claims"
   assert.equal(featureLabel(next, "api", "Developer API"), "Developer API");
   assert.match(releaseCopy(next).summary, /Developer API & CLI/);
   assert.doesNotMatch(releaseCopy(next).summary, /coming soon/);
+});
+
+
+test("model labels separate available chat from unreleased developer API access", () => {
+  const model = { type: "chat", callable: true, apiCallable: false };
+  const catalog = { connected: true };
+  assert.deepEqual(modelAvailability(model, config, catalog), {
+    workspace: "Available in chat", api: "Developer API · Coming soon",
+    workspaceReady: true, apiReady: false,
+  });
+  const apiConfig = { ...config, releases: { features: { api: true } } };
+  assert.equal(modelAvailability(model, apiConfig, catalog).api, "Developer API · Unavailable");
+  const callable = { ...model, apiCallable: true };
+  assert.equal(modelAvailability(callable, apiConfig, catalog).api, "Developer API · Available");
+  assert.equal(modelAvailability(callable, config, catalog).apiReady, false, "release gate wins over conflicting model metadata");
+  const test = modelAvailability(callable, { ...apiConfig, testMode: true }, catalog);
+  assert.equal(test.workspace, "Chat · Test model");
+  assert.equal(test.api, "Developer API · Test model");
+  assert.equal(modelAvailability({ ...callable, type: "video" }, apiConfig, catalog).api, "Developer API · Unsupported model");
+  assert.equal(modelAvailability({ ...model, callable: false }, config, catalog).workspace, "Unavailable in chat");
+});
+
+test("missing or stale catalog data never advertises model availability", () => {
+  const model = { type: "chat", callable: true, apiCallable: true };
+  for (const catalog of [{}, { connected: false }, { connected: true, refreshError: "offline" }]) {
+    const label = modelAvailability(model, config, catalog);
+    assert.equal(label.workspace, "Chat availability unknown");
+    assert.equal(label.workspaceReady, false);
+    assert.equal(label.apiReady, false);
+  }
+  assert.equal(modelAvailability(model, null, { connected: true }).api, "Developer API · Availability unknown");
 });

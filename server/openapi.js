@@ -364,9 +364,10 @@ route("post", "/api/conversations", "Create conversation", {
 route(
   "get",
   "/api/conversations/export",
-  "Download all saved conversations as JSON",
+  "Download personal and currently accessible shared conversations as JSON",
+  { description: "Shared membership is required. Other members spending fields are redacted; removed members cannot export shared threads. The account export separately includes the requester’s retained shared contributions." },
 );
-route("delete", "/api/conversations", "Delete all owned conversations", {
+route("delete", "/api/conversations", "Delete all personal conversations", {
   response: ref("Ok"),
 });
 route(
@@ -770,13 +771,17 @@ route("post", "/api/support", "Send a support request to the operator inbox", {
 route(
   "get",
   "/api/account/export",
-  "Download account JSON; financial raw fields use ledger subunits",
+  "Download account JSON with explicit monetary units",
+  {
+    description:
+      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata and accessible conversations. Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
+  },
 );
 route("delete", "/api/account", "Close account and forfeit unused credits", {
   body: object({ confirm: { const: "DELETE" } }, ["confirm"]),
   response: ref("Ok"),
   description:
-    "409 while holds or unresolved invoices exist. Revokes sessions and keys, removes content, retains immutable financial records under a tombstone ID.",
+    "409 while holds or unresolved invoices exist. Deletes personal content, saved media files, account-linked tickets, video jobs, sessions and owned collaborations. Clears profile identifiers and API-key hashes/names/prefixes. Other owners shared content, financial records and external copies remain. Retained accounting has no automatic expiry. Media removal errors prevent a success response and may require retry; deletion does not erase provider copies or existing backups.",
 });
 route("get", "/v1", "Free API connection check", {
   auth: null,

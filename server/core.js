@@ -90,6 +90,10 @@ export function config(overrides = {}) {
     supportEmail: e.SUPPORT_EMAIL || "",
     telegram: e.TELEGRAM_URL || "",
     trustProxy: parseTrustProxy(e.TRUST_PROXY),
+    rateLimitUrl: e.RATE_LIMIT_REDIS_REST_URL || "",
+    rateLimitToken: e.RATE_LIMIT_REDIS_REST_TOKEN || "",
+    rateLimitNamespace: e.RATE_LIMIT_NAMESPACE || "anonyma",
+    serverInstances: Number(e.SERVER_INSTANCES || 1),
     // The gateway's fee above the inference cost it reports (PPQ: 5.5%).
     gatewayFeePercent: Number(e.GATEWAY_FEE_PERCENT ?? 5.5),
     // Chat reservations hold this multiple of the price-list estimate.
@@ -116,7 +120,7 @@ export function config(overrides = {}) {
     walletPaymentConfirmations: Number(e.WALLET_PAYMENT_CONFIRMATIONS ?? 10),
     // Which updates are live ("all", or "mvp" plus update ids) and the MVP's
     // chat models while the full catalog isn't released.
-    released: e.RELEASED_FEATURES ?? "all",
+    released: e.RELEASED_FEATURES ?? "mvp",
     mvpModels: e.MVP_MODELS
       ? e.MVP_MODELS.split(",")
           .map((v) => v.trim())
@@ -124,8 +128,34 @@ export function config(overrides = {}) {
       : DEFAULT_MVP_MODELS,
     ...overrides,
   };
-  if (typeof cfg.released === "string")
+  if (!(cfg.released instanceof Set))
     cfg.released = parseReleased(cfg.released);
+  if (!Number.isSafeInteger(cfg.serverInstances) || cfg.serverInstances < 1)
+    throw Error("SERVER_INSTANCES must be a positive integer.");
+  if (!!cfg.rateLimitUrl !== !!cfg.rateLimitToken)
+    throw Error("Both rate limit REST URL and token are required.");
+  if (cfg.serverInstances > 1 && !cfg.rateLimitUrl)
+    throw Error("Multiple servers require a shared rate limit store.");
+  if (!/^[a-zA-Z0-9_-]{1,64}$/.test(cfg.rateLimitNamespace))
+    throw Error("Invalid rate limit namespace.");
+  if (cfg.rateLimitUrl) {
+    const url = new URL(cfg.rateLimitUrl);
+    if (
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      (url.protocol !== "https:" &&
+        !(
+          url.protocol === "http:" &&
+          !cfg.production &&
+          ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+        ))
+    )
+      throw Error(
+        "Rate limit URL requires HTTPS (local HTTP is for development only).",
+      );
+  }
   for (const field of [
     "origin",
     "publicUrl",
@@ -292,6 +322,11 @@ export const MIGRATIONS = [
     addColumn(db, "tickets", "delivery", "TEXT DEFAULT 'saved'");
     addColumn(db, "tickets", "delivered_at", "INTEGER");
   },
+  (db) =>
+    db.exec(`
+    CREATE TABLE IF NOT EXISTS rate_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires INTEGER NOT NULL);
+    CREATE INDEX IF NOT EXISTS rate_limits_expiry ON rate_limits(expires);
+  `),
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;

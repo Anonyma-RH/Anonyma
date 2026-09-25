@@ -33,7 +33,7 @@ const prompt = {
 function fixture(t, extra = {}) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-test-"));
   const svc = createApp({
-    testMode: true,
+    testMode: true, released: "all",
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
@@ -858,7 +858,7 @@ test("video failure releases funds; ambiguous submission is held without automat
 test("durable conversations and pending video jobs resume after process restart", async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-restart-"));
   const settings = {
-    testMode: true,
+    testMode: true, released: "all",
     dbPath: join(dir, "db.sqlite"),
     mediaPath: join(dir, "media"),
   };

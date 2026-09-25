@@ -13,7 +13,7 @@ import {
   assertNoTestCredits,
 } from "../server/readiness.js";
 test("encrypted private models are not routed through ordinary chat", () => {
-  const cfg = { gatewayKey: "fixture" };
+  const cfg = { gatewayKey: "fixture", released: "all" };
   const model = {
     id: "private/example",
     status: "live",
@@ -45,7 +45,7 @@ test("live mode refuses to spend fixture credit balances and preserves the ledge
       Date.now(),
     );
     addCredit(db, user, 100000, uid(), "test_credit", "Local fixture");
-    assert.doesNotThrow(() => assertNoTestCredits(db, { testMode: true }));
+    assert.doesNotThrow(() => assertNoTestCredits(db, { released: "all", testMode: true }));
     assert.throws(
       () => assertNoTestCredits(db, { testMode: false }),
       /test credits/,

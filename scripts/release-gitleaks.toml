@@ -1,0 +1,3 @@
+title = "Anonyma public-source secret scan"
+[extend]
+useDefault = true

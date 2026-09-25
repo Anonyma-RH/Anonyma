@@ -57,3 +57,16 @@ test("reopening is a no-op and a newer database is refused", (t) => {
   again.close();
   assert.throws(() => database(path), /newer version/);
 });
+
+test("previously versioned databases receive durable quotas without changing balances", t => {
+  const path = tempPath(t), old = new DatabaseSync(path);
+  for (const migration of MIGRATIONS.slice(0, -1)) migration(old);
+  old.exec(`PRAGMA user_version=${MIGRATIONS.length - 1}`);
+  old.prepare("INSERT INTO users(id,username,created) VALUES('existing','existing',1)").run();
+  old.prepare("INSERT INTO ledger(id,user_id,amount,kind,ref,created) VALUES('saved','existing',12345,'deposit','saved',1)").run();
+  old.close();
+  const upgraded = database(path);
+  assert.equal(upgraded.prepare("SELECT amount FROM ledger WHERE id='saved'").get().amount, 12345);
+  assert.equal(upgraded.prepare("SELECT count(*) n FROM rate_limits").get().n, 0);
+  upgraded.close();
+});

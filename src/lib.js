@@ -352,9 +352,9 @@ export async function walletSign(config, link = false) {
 }
 
 // Released updates (see server/releases.js). Without config (preview or
-// offline) everything counts as released.
+// offline) gated features stay unavailable.
 export const isReleased = (config, id) =>
-  config?.releases?.features?.[id] !== false;
+  config?.releases?.features?.[id] === true;
 export const releaseUpdate = (config, id) =>
   config?.releases?.updates?.find((u) => u.id === id) || null;
 // The update each workspace mode belongs to; library needs any media studio.

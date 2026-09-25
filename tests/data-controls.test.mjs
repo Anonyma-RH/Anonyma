@@ -16,7 +16,7 @@ import { now, reserve, release } from "../server/core.js";
 function fixture(t) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-data-controls-"));
   const s = createApp({
-    testMode: true,
+    testMode: true, released: "all",
     released: "all",
     origin: "http://localhost:5175",
     dbPath: join(dir, "db.sqlite"),

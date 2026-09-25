@@ -6,7 +6,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "../server/app.js";
 import { config } from "../server/core.js";
-import { UPDATES, parseReleased } from "../server/releases.js";
+import {
+  UPDATES,
+  parseReleased,
+  isReleased,
+  releaseInfo,
+} from "../server/releases.js";
 
 // Release commits flip `released` on UPDATES entries. These tests cover the
 // gate itself, so they pin every update to unreleased for this file and keep
@@ -150,21 +155,23 @@ test("releasing an update opens exactly that update", async (t) => {
   );
 });
 
-test("by default everything is released", async (t) => {
+test("missing release configuration keeps unreleased features closed", async (t) => {
   const svc = fixture(t, undefined);
   const info = (await request(svc.app).get("/api/config").expect(200)).body
     .releases;
-  assert.equal(info.all, true);
-  assert.ok(Object.values(info.features).every(Boolean));
+  assert.equal(info.all, false);
+  assert.ok(Object.values(info.features).every((v) => v === false));
   const a = await signedIn(svc);
-  await a.get("/api/collabs").expect(200);
-  // Reaches the API's own key check instead of the release gate.
-  await request(svc.app).get("/v1/models").expect(401);
+  await a.get("/api/collabs").expect(403);
+  // Refused before the API's own key check instead of the release gate.
+  await request(svc.app).get("/v1/models").expect(403);
 });
 
 test("release settings are validated", () => {
   assert.equal(parseReleased("all"), "all");
-  assert.equal(parseReleased(""), "all");
+  for (const value of [undefined, null, "", " , "])
+    assert.deepEqual([...parseReleased(value)], []);
+  assert.throws(() => parseReleased("all,typo"), /Unknown RELEASED_FEATURES/);
   assert.deepEqual([...parseReleased("mvp")], []);
   assert.deepEqual(
     [...parseReleased(" MVP, Code ,search")],
@@ -174,7 +181,7 @@ test("release settings are validated", () => {
     () => parseReleased("mvp,vidoe"),
     /Unknown RELEASED_FEATURES: vidoe/,
   );
-  assert.equal(config({}).released, "all");
+  assert.deepEqual([...config({ released: undefined }).released], []);
   assert.equal(config({}).mvpModels.length, 10);
   // The launch updates stay first and in order; later updates append.
   assert.deepEqual(
@@ -292,9 +299,33 @@ test("catalog API availability is limited to callable chat models after API rele
   const svc = fixture(t, "all");
   const catalog = (await request(svc.app).get("/api/models").expect(200)).body;
   assert.equal(catalog.developerApiReleased, true);
-  assert.ok(catalog.data.some(m => m.type === "chat" && m.callable));
-  assert.ok(catalog.data.some(m => m.type !== "chat"), "non-chat entries exercise the distinction");
+  assert.ok(catalog.data.some((m) => m.type === "chat" && m.callable));
+  assert.ok(
+    catalog.data.some((m) => m.type !== "chat"),
+    "non-chat entries exercise the distinction",
+  );
   for (const model of catalog.data) {
-    assert.equal(model.apiCallable, model.type === "chat" && model.callable, model.id);
+    assert.equal(
+      model.apiCallable,
+      model.type === "chat" && model.callable,
+      model.id,
+    );
   }
+});
+
+test("direct helpers fail closed on absent config and the browser requires explicit true", async () => {
+  assert.equal(isReleased({}, "api"), false);
+  assert.equal(releaseInfo({}).all, false);
+  const { isReleased: browserReleased } = await import("../src/lib.js");
+  for (const config of [
+    undefined,
+    {},
+    { releases: {} },
+    { releases: { features: { api: "true" } } },
+  ])
+    assert.equal(browserReleased(config, "api"), false);
+  assert.equal(
+    browserReleased({ releases: { features: { api: true } } }, "api"),
+    true,
+  );
 });

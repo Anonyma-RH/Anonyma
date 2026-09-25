@@ -10,7 +10,7 @@ import { balance } from "../server/core.js";
 function fixture(t) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-summary-"));
   const svc = createApp({
-    testMode: true,
+    testMode: true, released: "all",
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",

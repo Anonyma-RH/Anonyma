@@ -24,8 +24,11 @@ export default function DataControls() {
         <li>
           Sessions expire after 30 days. Background maintenance removes expired
           sessions, challenges more than one hour past expiry and rate-limit
-          records older than 24 hours. Cleanup requires the service to be
-          running; expired authentication is refused immediately.
+          email records older than 24 hours. General request counters expire at
+          the end of their rate window; SQLite removes expired counters during
+          later requests, and a shared Redis store expires them automatically.
+          Cleanup requires the service to be running; expired authentication is
+          refused immediately.
         </li>
         <li>
           Account-linked support requests, video job records and non-expiring

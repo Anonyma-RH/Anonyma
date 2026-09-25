@@ -1,31 +1,9 @@
 import express from "express";
 import cookieParser from "cookie-parser";
-import { uid, now, fail } from "./core.js";
+import { uid, fail } from "./core.js";
 
-// In-memory fixed-window limiter, keyed by account when signed in and by
-// client address otherwise. Resets on restart and is per process.
-export function createLimiter() {
-  const rates = new Map();
-  return (name, max, window) => (req, res, next) => {
-    const key =
-      name + ":" + (name === "api_ip" ? req.ip : req.user?.id || req.ip);
-    let record = rates.get(key);
-    if (!record || record.until < now())
-      rates.set(key, (record = { count: 0, until: now() + window }));
-    if (++record.count > max) {
-      res.set("Retry-After", String(Math.ceil((record.until - now()) / 1000)));
-      return next(
-        Object.assign(new Error("Too many requests. Try again shortly."), {
-          status: 429,
-          code: "rate_limit",
-        }),
-      );
-    }
-    if (rates.size > 10000)
-      for (const [key, r] of rates) if (r.until < now()) rates.delete(key);
-    next();
-  };
-}
+import { securityHeaders } from "../src/security-headers.js";
+export { createLimiter } from "./rate-limit.js";
 
 // Security headers, body parsing and same-origin checks for mutations.
 export function applyMiddleware(app, cfg) {
@@ -34,11 +12,7 @@ export function applyMiddleware(app, cfg) {
   // proxy is trusted to report the client in X-Forwarded-For.
   app.set("trust proxy", cfg.trustProxy);
   app.use((req, res, next) => {
-    res.set({
-      "X-Content-Type-Options": "nosniff",
-      "Referrer-Policy": "strict-origin-when-cross-origin",
-      "X-Frame-Options": "DENY",
-    });
+    res.set(securityHeaders());
     if (req.path.startsWith("/api") || req.path.startsWith("/v1"))
       res.set("Cache-Control", "no-store");
     next();

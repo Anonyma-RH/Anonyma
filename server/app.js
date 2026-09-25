@@ -49,7 +49,7 @@ export function createApp(overrides = {}) {
     app,
     db,
     cfg,
-    limit: createLimiter(),
+    limit: createLimiter(db, cfg),
     models: createModels(cfg),
     media: createMediaStore(db, cfg),
     audio: createAudioCatalog(cfg),

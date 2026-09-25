@@ -11,7 +11,7 @@ import { addCredit, balance, usdUnits } from "../server/core.js";
 function fixture(t, extra = {}) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-audio-"));
   const svc = createApp({
-    testMode: true,
+    testMode: true, released: "all",
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",

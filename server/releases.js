@@ -2,7 +2,7 @@ import { fail } from "./core.js";
 
 // The app launches as an MVP (chat with a short list of models, credits and
 // the account) and the rest ships as named feature releases, in this order. RELEASED_FEATURES
-// lists the updates that are live: "all" (the default) or "mvp" plus any
+// lists the updates that are live: "mvp" (the default) plus any
 // update ids, e.g. "mvp,code,search". Until an update is released the server
 // refuses its routes and the app shows it as coming soon. The copy here also
 // drives the roadmap page and the launch videos.
@@ -128,16 +128,18 @@ export const DEFAULT_MVP_MODELS = [
 ];
 
 export function parseReleased(value) {
-  const parts = String(value ?? "all")
+  const parts = String(value ?? "mvp")
     .split(",")
     .map((v) => v.trim().toLowerCase())
     .filter(Boolean);
-  if (!parts.length || parts.includes("all")) return "all";
-  const unknown = parts.filter((p) => p !== "mvp" && !IDS.includes(p));
+  const unknown = parts.filter(
+    (p) => p !== "mvp" && p !== "all" && !IDS.includes(p),
+  );
   if (unknown.length)
     throw Error(
       `Unknown RELEASED_FEATURES: ${unknown.join(", ")}. Use all, or mvp plus any of: ${IDS.join(", ")}.`,
     );
+  if (parts.includes("all")) return "all";
   return new Set(parts.filter((p) => p !== "mvp"));
 }
 
@@ -145,21 +147,23 @@ export function parseReleased(value) {
 // UPDATES says `released: true`. The second way makes turning a feature on a
 // public commit ("Release Veil") rather than a hosting setting.
 export const isReleased = (cfg, id) =>
-  !cfg.released ||
   cfg.released === "all" ||
-  cfg.released.has(id) ||
+  (cfg.released instanceof Set && cfg.released.has(id)) ||
   UPDATES.some((u) => u.id === id && u.released === true);
 
 // Whether a model is part of what's released: chat models need the full
 // catalog or a place on the MVP list; generators need their studio.
 export function modelReleased(m, cfg) {
-  if (!cfg.released || cfg.released === "all") return true;
+  if (cfg.released === "all") return true;
   if (m.type === "video") return isReleased(cfg, "video");
   if (m.type === "image") return isReleased(cfg, "images");
   if (m.type !== "chat") return false;
   if ((m.architecture?.output_modalities || []).includes("image"))
     return isReleased(cfg, "images");
-  return isReleased(cfg, "catalog") || (cfg.mvpModels || []).includes(m.id);
+  return (
+    isReleased(cfg, "catalog") ||
+    (cfg.mvpModels || DEFAULT_MVP_MODELS).includes(m.id)
+  );
 }
 
 // Which update a request belongs to, if it isn't part of the MVP.
@@ -180,7 +184,8 @@ export function featureFor(req) {
     if (
       p === "/api/chat" &&
       (body.web_search === true ||
-        (Array.isArray(body.plugins) && body.plugins.some((x) => x?.id === "web")))
+        (Array.isArray(body.plugins) &&
+          body.plugins.some((x) => x?.id === "web")))
     )
       return "search";
   }
@@ -201,7 +206,7 @@ export function releaseGuard(cfg) {
 // What the app needs to show released features and the roadmap.
 export function releaseInfo(cfg) {
   return {
-    all: !cfg.released || cfg.released === "all",
+    all: cfg.released === "all",
     features: Object.fromEntries(IDS.map((id) => [id, isReleased(cfg, id)])),
     updates: UPDATES.map((u, i) => ({
       ...u,

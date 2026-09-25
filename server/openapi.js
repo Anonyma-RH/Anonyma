@@ -201,7 +201,10 @@ const schemas = {
     receipt: { type: ["object", "null"] },
   }),
 };
-const paths = {};
+const paths = {
+  "/sitemap.xml": { get: { operationId: "getSitemap", summary: "Public page sitemap", responses: { 200: { description: "XML sitemap" } } } },
+  "/robots.txt": { get: { operationId: "getRobots", summary: "Crawler rules", responses: { 200: { description: "Robots text with sitemap URL" } } } },
+};
 function route(
   method,
   path,

@@ -811,6 +811,7 @@ const featureIcons = {
   app: "download",
   training: "eye",
   mcp: "command",
+  allowances: "coins",
 };
 const launch = {
   id: "mvp",

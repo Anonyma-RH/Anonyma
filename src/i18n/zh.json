@@ -1762,7 +1762,32 @@
     "Same keys, same ledger, no new account": "同样的密钥，同一账本，无需新账户",
     "CURSOR AND OTHER MCP CLIENTS": "Cursor 及其他 MCP 客户端",
     "Connect Claude Code, Cursor and other MCP clients to your balance at /mcp.": "通过 /mcp 将 Claude Code、Cursor 及其他 MCP 客户端连接到你的余额。",
-    "Works with Claude Code, Cursor and other MCP clients": "支持 Claude Code、Cursor 及其他 MCP 客户端"
+    "Works with Claude Code, Cursor and other MCP clients": "支持 Claude Code、Cursor 及其他 MCP 客户端",
+    "Agent Allowances": "智能体额度",
+    "Give an agent a budget, not your wallet.": "给智能体一份预算，而不是你的钱包。",
+    "A lifetime credit cap per key": "每个密钥可设总积分上限",
+    "Optional expiry and a pause switch": "可选到期时间与暂停开关",
+    "One glance at what an agent spent": "智能体花了多少，一目了然",
+    "Allowance": "额度",
+    "No allowance set": "未设置额度",
+    "Set allowance": "设置额度",
+    "Resume": "恢复",
+    "Paused": "已暂停",
+    "Set an allowance.": "设置额度。",
+    "Agent name": "智能体名称",
+    "e.g. Research agent": "例如：研究智能体",
+    "Lifetime allowance (credits)": "总额度（积分）",
+    "Leave blank to remove the allowance": "留空即可移除额度",
+    "1 USD = 1,000 credits.": "1 USD = 1,000 积分。",
+    "Expires": "到期日期",
+    "Save allowance": "保存额度",
+    "Saving…": "正在保存……",
+    "This API key is paused.": "此 API 密钥已暂停。",
+    "This API key's allowance has expired.": "此 API 密钥的额度已过期。",
+    "This API key has used its full allowance.": "此 API 密钥的额度已全部用完。",
+    "Invalid allowance total.": "额度总数无效。",
+    "Invalid expiry.": "到期时间无效。",
+    "402 allowance_exhausted, 403 key_paused or key_expired — the key’s agent allowance is used up, paused or past its expiry.": "402 allowance_exhausted、403 key_paused 或 key_expired——该密钥的智能体额度已用完、已暂停或已过期。"
   },
   "patterns": [
     {
@@ -2600,6 +2625,30 @@
     {
       "en": "{0} says it uses what you send to this tier to improve its products. {1} isn't used that way.",
       "zh": "{0} 表示，会使用你发送给此版本的内容来改进其产品；{1} 则不会。"
+    },
+    {
+      "en": "· {0} left",
+      "zh": "· 剩余 {0}"
+    },
+    {
+      "en": "{0} of {1} credits used",
+      "zh": "已使用 {0} / {1} 积分"
+    },
+    {
+      "en": "Expires {0}",
+      "zh": "{0} 到期"
+    },
+    {
+      "en": "Expired {0}",
+      "zh": "已于 {0} 到期"
+    },
+    {
+      "en": "≈ ${0} at 1,000 credits per USD.",
+      "zh": "按每 USD 1,000 积分计算，约合 ${0}。"
+    },
+    {
+      "en": "This request could cost up to {0} credits, more than the {1} left on this key's allowance.",
+      "zh": "此请求最多可能花费 {0} 积分，超过此密钥额度剩余的 {1} 积分。"
     }
   ]
 }

@@ -7,6 +7,7 @@ import {
   fail,
   credits,
   keySpend24h,
+  keySpendTotal,
   transaction,
 } from "../core.js";
 import {
@@ -97,14 +98,40 @@ export function accountRoutes(ctx) {
     res.json({
       data: db
         .prepare(
-          "SELECT id,name,prefix,cap,created,revoked,last_used FROM api_keys WHERE user_id=? ORDER BY created DESC",
+          "SELECT id,name,prefix,cap,created,revoked,last_used,allowance_total,allowance_expires,paused_at,agent_label FROM api_keys WHERE user_id=? ORDER BY created DESC",
         )
         .all(req.user.id)
-        .map((k) => ({
-          ...k,
-          cap: k.cap == null ? null : credits(k.cap),
-          spent: credits(keySpend24h(db, k.id)),
-        })),
+        .map(
+          ({
+            allowance_total,
+            allowance_expires,
+            paused_at,
+            agent_label,
+            ...k
+          }) => {
+            const spentTotal = keySpendTotal(db, k.id);
+            const held = db
+              .prepare(
+                "SELECT COALESCE(SUM(amount),0) n FROM holds WHERE key_id=? AND status='held'",
+              )
+              .get(k.id).n;
+            return {
+              ...k,
+              cap: k.cap == null ? null : credits(k.cap),
+              spent: credits(keySpend24h(db, k.id)),
+              label: agent_label,
+              paused: paused_at != null,
+              expires_at: allowance_expires,
+              allowance_total:
+                allowance_total == null ? null : credits(allowance_total),
+              allowance_spent: credits(spentTotal),
+              allowance_remaining:
+                allowance_total == null
+                  ? null
+                  : credits(Math.max(0, allowance_total - spentTotal - held)),
+            };
+          },
+        ),
     }),
   );
   app.post("/api/keys", requireUser, limit("keys", 10, 3600000), (req, res) => {
@@ -222,10 +249,15 @@ export function accountRoutes(ctx) {
         })),
       keys: db
         .prepare(
-          "SELECT id,name,prefix,cap,created,revoked,last_used FROM api_keys WHERE user_id=?",
+          "SELECT id,name,prefix,cap,created,revoked,last_used,agent_label,allowance_total,allowance_expires,paused_at FROM api_keys WHERE user_id=?",
         )
         .all(req.user.id)
-        .map((k) => ({ ...k, cap: k.cap == null ? null : credits(k.cap) })),
+        .map((k) => ({
+          ...k,
+          cap: k.cap == null ? null : credits(k.cap),
+          allowance_total:
+            k.allowance_total == null ? null : credits(k.allowance_total),
+        })),
       sessions: db
         .prepare(
           "SELECT created,expires FROM sessions WHERE user_id=? AND expires>?",

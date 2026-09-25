@@ -88,6 +88,12 @@ ANONYMA credits every 30 days, plus perks by tier. Includes its launch film.
 [Team Treasury](docs/releases/team-treasury.md): a shared balance for a Collab workspace, with
 per-member limits and Team pays in shared chats. Includes its launch film.
 
+[Privacy Trail](docs/releases/privacy-trail.md): a Privacy chip under every reply showing the model,
+route, retention, Veil, storage and receipt. Includes its launch film.
+
+[Seed Guard](docs/releases/seed-guard.md): seed phrases, WIF and xprv keys are stopped in your browser
+before anything is sent. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

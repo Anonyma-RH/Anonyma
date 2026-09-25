@@ -222,7 +222,7 @@ export const UPDATES = [
     tagline: "Your balance, inside any AI tool.",
     points: [
       "A remote MCP server at /mcp",
-      "Works with Claude Code, Claude Desktop and Cursor",
+      "Works with Claude Code, Cursor and other MCP clients",
       "Same keys, same ledger, no new account",
     ],
     released: false,

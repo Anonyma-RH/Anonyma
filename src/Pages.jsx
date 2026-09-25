@@ -729,7 +729,7 @@ export function Developers() {
                   [
                     "command",
                     "An MCP server, too",
-                    "Connect Claude Code, Claude Desktop, Cursor and other MCP clients to your balance at /mcp.",
+                    "Connect Claude Code, Cursor and other MCP clients to your balance at /mcp.",
                   ],
                 ]
               : []),

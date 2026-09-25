@@ -959,7 +959,9 @@ export default function Workspace() {
           {(demo ? all : user ? all : []).slice(0, 12).map((c) => (
             <div className={c.id === current ? "current" : ""} key={c.id}>
               <button onClick={() => openChat(c)}>{c.title}</button>
-              {!demo && <RetentionIndicator expires={c.expires} />}
+              {!demo && isReleased(config, "ephemeral") && (
+                <RetentionIndicator expires={c.expires} />
+              )}
               <button
                 className="conversation-options"
                 aria-label={"Options for " + c.title}
@@ -1302,9 +1304,9 @@ export default function Workspace() {
                 )}
               </div>
               <div className="composer-zone" ref={composerZone}>
-                {ephemeral && ["chat", "code"].includes(mode) && (
-                  <EphemeralNotice />
-                )}
+                {isReleased(config, "ephemeral") &&
+                  ephemeral &&
+                  ["chat", "code"].includes(mode) && <EphemeralNotice />}
                 {info && <Notice>{info}</Notice>}
                 {error && <Notice type="error">{error}</Notice>}
                 {receipt && (
@@ -1479,7 +1481,9 @@ export default function Workspace() {
                           <span>Web</span>
                         </button>
                       )}
-                      {!demo && textMode && (
+                      {!demo &&
+                        isReleased(config, "ephemeral") &&
+                        textMode && (
                         <EphemeralToggle
                           active={ephemeral}
                           onToggle={toggleEphemeral}
@@ -1759,7 +1763,7 @@ export default function Workspace() {
                   autoFocus
                 />
               </label>
-              {!demo && (
+              {!demo && isReleased(config, "ephemeral") && (
                 <div className="retention-row">
                   <RetentionSelect
                     value={retentionDays}

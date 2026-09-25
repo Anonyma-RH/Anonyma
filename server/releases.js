@@ -121,6 +121,17 @@ export const UPDATES = [
       "One prepaid balance",
     ],
   },
+  {
+    id: "ephemeral",
+    title: "Ephemeral Chats",
+    tagline: "Off the record, or gone on schedule.",
+    points: [
+      "Chats that are never saved",
+      "Auto-delete after 1, 7 or 30 days",
+      "A receipt either way",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -208,10 +219,18 @@ function featuresFor(req) {
   if (p === "/api/keys" && post) return ["api"];
   if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return ["api"];
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
+  if (p.startsWith("/api/retention")) return ["ephemeral"];
+  if (
+    req.method === "PATCH" &&
+    p.startsWith("/api/conversations/") &&
+    Object.prototype.hasOwnProperty.call(body, "retention")
+  )
+    return ["ephemeral"];
   const needed = [];
   if ((p === "/api/chat" || p === "/api/conversations") && post) {
     if (body.mode === "code") needed.push("code");
     if (body.mode === "uncensored") needed.push("uncensored");
+    if (p === "/api/chat" && body.ephemeral === true) needed.push("ephemeral");
     if (
       p === "/api/chat" &&
       (body.web_search === true ||

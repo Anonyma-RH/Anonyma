@@ -6,15 +6,22 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "../server/app.js";
 import { balance } from "../server/core.js";
+import { UPDATES } from "../server/releases.js";
 import { retentionLabel, retentionOptionLabel } from "../src/ephemeral.js";
 
-function fixture(t) {
+function fixture(t, released) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-ephemeral-"));
   const svc = createApp({
     testMode: true,
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
+    released,
+    // The MVP's default model list doesn't include the fixture's test
+    // model, so gating tests that release only "mvp,ephemeral" need it
+    // added explicitly to keep chat requests reaching the release gate
+    // rather than failing on model availability first.
+    ...(released ? { mvpModels: [prompt.model] } : {}),
   });
   t.after(() => {
     svc.close();
@@ -257,4 +264,66 @@ test("retentionChoiceFor shows the shortest option that covers the time left", a
   assert.equal(retentionChoiceFor(now + 6.5 * day, now), 7);
   assert.equal(retentionChoiceFor(now + 7 * day, now), 7);
   assert.equal(retentionChoiceFor(now + 20 * day, now), 30);
+});
+
+test("the update is registered as off by default", () => {
+  const entry = UPDATES.find((u) => u.id === "ephemeral");
+  assert.ok(entry, "ephemeral is registered in UPDATES");
+  assert.equal(entry.released, false);
+  assert.equal(entry.title, "Ephemeral Chats");
+  assert.equal(entry.tagline, "Off the record, or gone on schedule.");
+  assert.deepEqual(entry.points, [
+    "Chats that are never saved",
+    "Auto-delete after 1, 7 or 30 days",
+    "A receipt either way",
+  ]);
+});
+
+test("the MVP refuses ephemeral chats and retention on the server", async (t) => {
+  const s = fixture(t, "mvp");
+  const { agent } = await register(s.app);
+  const refused = async (res) => {
+    const r = await res.expect(403);
+    assert.equal(r.body.error.code, "feature_unreleased");
+    assert.equal(r.body.error.message, "Ephemeral Chats is coming soon.");
+  };
+  await refused(agent.post("/api/chat").send({ ...prompt, ephemeral: true }));
+  await refused(agent.get("/api/retention"));
+  await refused(agent.put("/api/retention").send({ days: 7 }));
+
+  // A normal, saved chat still works, and a title-only rename still works
+  // on the resulting conversation.
+  await agent.post("/api/chat").send(prompt).expect(200);
+  const convo = (await agent.get("/api/conversations")).body.data[0];
+  await refused(
+    agent.patch("/api/conversations/" + convo.id).send({ retention: 7 }),
+  );
+  await agent
+    .patch("/api/conversations/" + convo.id)
+    .send({ title: "Renamed" })
+    .expect(200);
+  assert.equal(
+    (await agent.get("/api/conversations/" + convo.id)).body.title,
+    "Renamed",
+  );
+});
+
+test("releasing ephemeral opens off-the-record chats and retention", async (t) => {
+  const s = fixture(t, "mvp,ephemeral");
+  const { agent } = await register(s.app);
+  const r = await agent
+    .post("/api/chat")
+    .send({ ...prompt, ephemeral: true })
+    .expect(200);
+  assert.match(r.text, /credits_charged/);
+
+  await agent.post("/api/chat").send(prompt).expect(200);
+  const convo = (await agent.get("/api/conversations")).body.data[0];
+  await agent
+    .patch("/api/conversations/" + convo.id)
+    .send({ retention: 7 })
+    .expect(200);
+  assert.deepEqual((await agent.get("/api/retention")).body, { days: null });
+  await agent.put("/api/retention").send({ days: 7 }).expect(200);
+  assert.deepEqual((await agent.get("/api/retention")).body, { days: 7 });
 });

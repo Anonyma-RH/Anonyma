@@ -86,11 +86,11 @@ export default function Account() {
     if (demo) saveStore("keys", keys);
   }, [keys, demo]);
   useEffect(() => {
-    if (demo || !user) return;
+    if (demo || !user || !isReleased(config, "ephemeral")) return;
     api("/api/retention")
       .then((r) => setRetentionDefault(r.days))
       .catch(() => {});
-  }, [demo, user]);
+  }, [demo, user, config]);
   async function saveRetentionDefault(days) {
     setRetentionDefault(days);
     try {
@@ -836,7 +836,7 @@ export default function Account() {
                   <Icon name="download" size={16} />
                 </Button>
               </section>
-              {!demo && (
+              {!demo && isReleased(config, "ephemeral") && (
                 <section>
                   <div>
                     <h2>Auto-delete.</h2>

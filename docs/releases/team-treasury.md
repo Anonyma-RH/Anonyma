@@ -1,37 +1,17 @@
-# Team Treasury is live
+# Shared Collab Balance — Team Treasury
 
-**Hosted feature release · September 25, 2026**
+Collab members can pool prepaid credits and explicitly turn on **Team pays** for shared chat requests. The owner sets each member's spending limits. Personal payment stays the default; a refused team-paid request never silently switches to personal funds.
 
-One team. One shared balance.
+The estimate uses the standard team rate and the member's remaining team allowance. Contributions, withdrawals, holds and charges stay on the ledger. Requesters can recover their own request status after disconnecting. Team totals include former members' spending.
 
-A Collab workspace can now hold a treasury. Members contribute credits, the owner
-sets each member's daily and monthly limits, and turning on Team pays in a shared
-conversation charges the treasury instead of your own balance. Every spend is
-listed with who made it.
+## Ownership and limitations
 
-[![Team Treasury launch film](../assets/releases/team-treasury.png)](../assets/releases/team-treasury.mp4)
+The owner controls pooled credits, including withdrawal of the full remaining balance. The contribution dialog explains that contributions cannot be taken back. Deleting a collab returns its remaining credits to the owner; deletion is refused while requests are pending. Account closure is blocked while an owned treasury still holds funds.
 
-[Download the 22-second launch film](../assets/releases/team-treasury.mp4)
+Team pays supports shared chat requests, not media generation or developer API requests. Members start with a zero daily limit until the owner increases it. Team-paid requests use the standard rate. Turning the feature off preserves balance visibility and owner withdrawal.
 
-## Notes
+## Release film
 
-Limits are enforced atomically, so concurrent requests can't overspend. Credits
-contributed to a treasury belong to it, the owner controls them, and they can't be
-taken back; the contribute dialog says so. An owner can't close their account
-while the treasury holds credits, and a contribution is refused while the
-contributor's payment is under reconciliation.
+[Download the original Greek ASCII film](../assets/releases/team-treasury.mp4). The scene is an illustration; shown balances and names are examples. No paid generation was used.
 
-## Video validation
-
-A 22-second launch film cut around a real run on the released feature: an owner
-contributes 100 credits to the collab "Studio Delta" and sets a member's limits
-(50 a day, 100 a month); the member turns on Team pays and gets an answer from
-Claude Haiku 4.5 charged to the treasury (0.114 credits, signed receipt); the
-owner's Activity shows who spent it. The refusal shot comes from an earlier take
-with a 20-credit daily limit. Recorded on the feature branch before release; the
-release adds a paused state (shown only if Team Treasury is switched off again)
-and a server-side monthly total, and the screens shown are otherwise unchanged.
-1920×1080, 30 fps, H.264, no audio, metadata removed.
-
-Docs and original artwork: CC BY-NC 4.0. Code: PolyForm Noncommercial 1.0.0.
-See [LICENSE](../../LICENSE) and [NOTICE](../../NOTICE).
+[Watch a real run](../assets/releases/team-treasury-run.mp4): an owner contributes 100 credits and sets a member's limits; the member turns on Team pays and gets an answer charged to the treasury (0.114 credits, signed receipt); the owner's Activity shows who spent it. Recorded before release on the feature branch; the screens shown are unchanged in the release.

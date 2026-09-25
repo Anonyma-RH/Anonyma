@@ -55,6 +55,21 @@ reference images, with model-specific frame and duration options. Includes its G
 [Simplified Chinese](docs/releases/simplified-chinese.md): an EN / 中文 switch for the
 whole site, workspace and account; your chats stay as written. Includes its launch film.
 
+[Documents](docs/releases/documents.md): attach PDF, text, CSV and code files to any chat;
+the text is extracted in your browser. Includes its launch film.
+
+[Symposium](docs/releases/symposium.md): ask up to four models at once, each with its own
+receipt, then fuse the answers into one. Includes its launch film.
+
+[Signed Receipts](docs/releases/signed-receipts.md): signed receipts for completed replies,
+checkable by anyone at askanonyma.com/verify. Includes its launch film.
+
+[Scrolls](docs/releases/scrolls.md): saved prompts with blanks, inserted with /, plus standing
+instructions on every message.
+
+[Install the App](docs/releases/install-the-app.md): install ANONYMA on Android or desktop and
+share links or text straight into a chat.
+
 ## How it works
 
 1. Create an account and choose an available model.

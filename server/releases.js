@@ -310,6 +310,8 @@ export const UPDATES = [
       "Submit and poll video jobs",
     ],
     released: false,
+    // Open to NYMA Insiders and up before its public release.
+    early: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

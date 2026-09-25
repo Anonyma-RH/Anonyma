@@ -18,6 +18,12 @@ export default function DataControls() {
           type. These are count limits, not day limits.
         </li>
         <li>
+          NYMA holders at 1,000,000+ keep twice as much: 600 conversations, 300
+          Symposium runs, 200 images, 120 videos and 120 audio files. Below
+          that, nothing is deleted at once; the standard caps apply again as new
+          items are saved.
+        </li>
+        <li>
           Connected apps: the name you gave each one, the name it gave itself,
           its return address, budget and expiry. Its charges are in the ledger
           like any other; prompts and answers sent through it aren't stored.

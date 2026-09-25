@@ -2018,7 +2018,8 @@
     "IMAGES": "图像",
     "TEXT TO SPEECH": "文本转语音",
     "TRANSCRIPTION": "转录",
-    "Video generation is submitted with POST /v1/videos and polled with GET /v1/videos/{id}. See the API docs for the full reference.": "视频生成通过 POST /v1/videos 提交，并通过 GET /v1/videos/{id} 轮询结果。完整参考请查看 API 文档。"
+    "Video generation is submitted with POST /v1/videos and polled with GET /v1/videos/{id}. See the API docs for the full reference.": "视频生成通过 POST /v1/videos 提交，并通过 GET /v1/videos/{id} 轮询结果。完整参考请查看 API 文档。",
+    "NYMA holders at 1,000,000+ keep twice as much: 600 conversations, 300 Symposium runs, 200 images, 120 videos and 120 audio files. Below that, nothing is deleted at once; the standard caps apply again as new items are saved.": "持有 1,000,000 枚以上 NYMA 的持有者可保留双倍内容：600 个会话、300 次模型圆桌运行、200 张图片、120 个视频和 120 个音频文件。持有量低于该数量时，不会立即删除任何内容；保存新内容时会重新适用标准上限。"
   },
   "patterns": [
     {

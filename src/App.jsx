@@ -28,8 +28,9 @@ const Account = lazy(() => import("./Account.jsx"));
 function locked(config, to) {
   if (to.startsWith("/workspace/")) return !config?.releases ? to !== "/workspace/chat" : !modeReleased(config, to.slice(11));
   return (
-    ["/developers", "/docs/api", "/account/keys", "/guides/one-api"].includes(to) &&
-    !featureEnabled(config, "api")
+    (["/developers", "/docs/api", "/account/keys", "/guides/one-api"].includes(to) &&
+      !featureEnabled(config, "api")) ||
+    (to === "/verify" && !featureEnabled(config, "receipts"))
   );
 }
 function Navigation() {

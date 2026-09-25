@@ -7,6 +7,7 @@ import { api, streamChat, uid, isReleased } from "./lib.js";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
 import { createVeilState } from "./veil.js";
 import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
+import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import {
   defaultSymposiumModels,
   buildFusionMessages,
@@ -60,6 +61,12 @@ export default function Symposium({
   const [veilNote, setVeilNote] = useState(null);
   const veilLive = !demo && isReleased(config, "veil");
   const trainingLive = !demo && trainingLabelsReleased(config);
+  // Privacy Trail: each column's reply gets its own chip. The run's Veil
+  // count (null: Veil off) is the only thing added to the request for it.
+  const trailLive = !demo && privacyTrailReleased(config);
+  const receiptsLive = isReleased(config, "receipts");
+  const veilMasked = useRef(null);
+  const trailBody = () => (trailLive ? { veil_masked: veilMasked.current } : {});
   const veilMarks = [veilRemarkPlugin, { map: veilState.current.map }];
   const controllers = useRef({});
   const fuseController = useRef(null);
@@ -153,6 +160,7 @@ export default function Symposium({
           mode: "symposium",
           max_tokens: COLUMN_TOKENS,
           requestId: uid(),
+          ...trailBody(),
         },
         (event) => {
           if (event.error)
@@ -214,6 +222,7 @@ export default function Symposium({
       words: veilWords,
     });
     setVeilNote(masked.count ? { count: masked.count, entries: masked.entries } : null);
+    veilMasked.current = veilOn && veilLive ? masked.count : null;
     setAskedQuestion(masked.text);
     setRunModels(selected);
     setFuseModel(selected[0]);
@@ -247,6 +256,7 @@ export default function Symposium({
           mode: "symposium",
           max_tokens: 4096,
           requestId: uid(),
+          ...trailBody(),
         },
         (event) => {
           if (event.error)
@@ -365,6 +375,13 @@ export default function Symposium({
                         )}
                       </div>
                     )}
+                    {trailLive && col.receipt?.privacy && (
+                      <PrivacyTrail
+                        privacy={col.receipt.privacy}
+                        models={models}
+                        receiptsLive={receiptsLive}
+                      />
+                    )}
                   </article>
                 );
               })}
@@ -431,6 +448,13 @@ export default function Symposium({
                           </span>
                         )}
                       </div>
+                    )}
+                    {trailLive && fusion.receipt?.privacy && (
+                      <PrivacyTrail
+                        privacy={fusion.receipt.privacy}
+                        models={models}
+                        receiptsLive={receiptsLive}
+                      />
                     )}
                   </article>
                 )}

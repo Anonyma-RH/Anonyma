@@ -326,6 +326,9 @@ async function toolAsk(ctx, req, res, args) {
       ...(extension.signed_receipt
         ? { signed_receipt: extension.signed_receipt }
         : {}),
+      // Present once Privacy Trail is released: where this prompt went
+      // (server/privacy-trail.js), the same object as /v1's anonyma.privacy.
+      ...(extension.privacy ? { privacy: extension.privacy } : {}),
     },
   };
 }

@@ -45,6 +45,8 @@ Includes its Greek ASCII launch film.
 [Video Studio](docs/releases/video-studio.md): generate video from text or supported
 reference images, with model-specific frame and duration options. Includes its Greek ASCII launch film.
 
+[Image Studio](docs/releases/image-studio.md): Create images from prompts, guide supported models with a reference image, and keep completed results in your private library. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

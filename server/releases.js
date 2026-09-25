@@ -31,6 +31,7 @@ export const UPDATES = [
   },
   {
     id: "images",
+    released: true,
     title: "Image Studio",
     tagline: "Turn words into images.",
     points: [

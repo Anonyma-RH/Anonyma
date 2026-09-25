@@ -51,6 +51,8 @@ reference images, with model-specific frame and duration options. Includes its G
 
 [Collab](docs/releases/collab.md): Create shared workspaces for up to 12 people total, invite participants by link, and work in shared conversations. Each person pays for their own requests. Includes its launch film.
 
+[Developer API & CLI](docs/releases/developer-api-and-cli.md): Use an API key for OpenAI-compatible chat completions and model discovery, or send requests from the terminal CLI. Optional per-key caps apply over a rolling 24 hours. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

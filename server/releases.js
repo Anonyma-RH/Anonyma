@@ -86,6 +86,7 @@ export const UPDATES = [
   },
   {
     id: "api",
+    released: true,
     title: "Developer API & CLI",
     tagline: "Your balance, in your code.",
     points: [

@@ -1,4 +1,4 @@
-import test from "node:test";
+import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
 import request from "supertest";
@@ -21,6 +21,13 @@ import {
 import { siteRoutes } from "../server/routes/site.js";
 import { createApp } from "../server/app.js";
 import { UPDATES } from "../server/releases.js";
+
+// Release commits flip `released` on UPDATES entries. These tests cover the
+// gate itself, so they pin every update to unreleased for this file and keep
+// passing after the release commit.
+const committed = UPDATES.map((u) => u.released);
+before(() => UPDATES.forEach((u) => (u.released = false)));
+after(() => UPDATES.forEach((u, i) => (u.released = committed[i])));
 
 const manifestPath = "public/manifest.webmanifest";
 const swPath = "public/sw.js";
@@ -142,7 +149,8 @@ test("the UPDATES entry for the app exists and is off by default", () => {
     "Opens straight into your workspace",
     "Share links and text into a chat",
   ]);
-  assert.equal(entry.released, false);
+  // Committed as false until its "Release …" commit flips it to true.
+  assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");
 });
 
 test("server: the app update is off under the MVP and on once released", async (t) => {

@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "../server/app.js";
+import { UPDATES } from "../server/releases.js";
 import {
   defaultSymposiumModels,
   buildFusionMessages,
@@ -13,13 +14,14 @@ import {
 
 const chatModel = "google/gemini-2.5-flash";
 
-function fixture(t) {
+function fixture(t, released) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-symposium-"));
   const svc = createApp({
     testMode: true,
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
+    ...(released !== undefined ? { released, mvpModels: [chatModel] } : {}),
   });
   t.after(() => {
     svc.close();
@@ -134,6 +136,44 @@ test("defaultSymposiumModels prefers one model per provider", () => {
   ];
   assert.deepEqual(defaultSymposiumModels(models), ["c1", "g1", "o1"]);
   assert.deepEqual(defaultSymposiumModels(models.slice(0, 2)), ["c1", "c2"]);
+});
+
+test("Symposium is refused under the MVP and works once released", async (t) => {
+  const s = fixture(t, "mvp");
+  const { agent } = await register(s.app);
+
+  const refused = await agent.post("/api/chat").send(ask("symposium")).expect(403);
+  assert.equal(refused.body.error.code, "feature_unreleased");
+  assert.equal(refused.body.error.message, "Symposium is coming soon.");
+  const refusedConvo = await agent
+    .post("/api/conversations")
+    .send({ mode: "symposium" })
+    .expect(403);
+  assert.equal(refusedConvo.body.error.code, "feature_unreleased");
+
+  // Plain chat and other modes are unaffected.
+  await agent.post("/api/chat").send(ask(undefined)).expect(200);
+  await agent.post("/api/chat").send(ask("chat")).expect(200);
+});
+
+test("mvp,symposium releases Symposium", async (t) => {
+  const s = fixture(t, "mvp,symposium");
+  const { agent } = await register(s.app);
+  await agent.post("/api/chat").send(ask("symposium")).expect(200);
+  await agent.post("/api/conversations").send({ mode: "symposium" }).expect(201);
+});
+
+test("Symposium is registered as an unreleased update", () => {
+  const update = UPDATES.find((u) => u.id === "symposium");
+  assert.ok(update);
+  assert.equal(update.title, "Symposium");
+  assert.equal(update.tagline, "Ask several models at once.");
+  assert.deepEqual(update.points, [
+    "Up to four models side by side",
+    "A receipt for every answer",
+    "Fuse the answers into one",
+  ]);
+  assert.equal(update.released, false);
 });
 
 test("pickerModels lists selected models first and filters the rest", async () => {

@@ -161,6 +161,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "symposium",
+    title: "Symposium",
+    tagline: "Ask several models at once.",
+    points: [
+      "Up to four models side by side",
+      "A receipt for every answer",
+      "Fuse the answers into one",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -259,6 +270,7 @@ function featuresFor(req) {
   if ((p === "/api/chat" || p === "/api/conversations") && post) {
     if (body.mode === "code") needed.push("code");
     if (body.mode === "uncensored") needed.push("uncensored");
+    if (body.mode === "symposium") needed.push("symposium");
     if (p === "/api/chat" && body.ephemeral === true) needed.push("ephemeral");
     // Private mode always takes the ephemeral path, so it needs both.
     if (p === "/api/chat" && body.private === true)

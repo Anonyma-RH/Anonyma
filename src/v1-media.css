@@ -1,0 +1,35 @@
+.v1-media {
+  padding: 45px 0 0;
+  border-top: 1px solid var(--line);
+  margin-top: 45px;
+}
+.v1-media p {
+  color: #7d896f;
+  font-size: 13px;
+  max-width: 560px;
+}
+.v1-media-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 25px 0;
+}
+.v1-media-examples .code-example {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+.v1-media-examples pre {
+  overflow-x: auto;
+}
+.v1-media small {
+  color: #7d896f;
+  font-size: 12px;
+  display: block;
+}
+@media (max-width: 640px) {
+  .v1-media {
+    padding-top: 30px;
+    margin-top: 30px;
+  }
+}

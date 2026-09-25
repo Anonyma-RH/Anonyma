@@ -2007,7 +2007,18 @@
     "No staking, no locking, no deposits. The wallet is linked by signing a one-time message, never a transaction, and the server only reads its NYMA balance, about once a day at a random time. Rewards are ANONYMA credits, not tokens or cash, and have no cash value.": "无需质押，无需锁仓，无需存入。关联钱包只需签署一条一次性消息，从不发起交易，服务器只读取其 NYMA 余额，大约每天在随机时间读取一次。奖励是 ANONYMA 积分，不是代币或现金，没有现金价值。",
     "Public pages show totals only: credits paid and holders rewarded over the last 30 days, and the vote counts. Nothing names an account, and apps connected through OAuth never get early access, so neither can tell whether an account holds NYMA.": "公开页面只显示总数：过去 30 天发放的积分和获得奖励的持有者数量，以及投票数。任何内容都不会指明某个账户，通过 OAuth 连接的应用也永远不会获得抢先体验，因此两者都无法判断某个账户是否持有 NYMA。",
     "Bigger library, Early access": "更大的媒体库、抢先体验",
-    "Bigger library, Early access, Roadmap vote": "更大的媒体库、抢先体验、路线图投票"
+    "Bigger library, Early access, Roadmap vote": "更大的媒体库、抢先体验、路线图投票",
+    "Multimodal API": "多模态 API",
+    "Images, voice and video in your code.": "在代码中生成图像、语音和视频。",
+    "Generate images with one POST": "一个 POST 请求即可生成图像",
+    "Text to speech and speech to text": "文本转语音，语音转文本",
+    "Submit and poll video jobs": "提交视频任务并轮询结果",
+    "Images, voice and video.": "图像、语音和视频。",
+    "The same key, allowance, spending cap and signed receipts as chat completions, extended to image generation, text-to-speech, transcription and video.": "沿用与聊天补全相同的密钥、额度、消费上限和签名收据，并扩展到图像生成、文本转语音、转录和视频。",
+    "IMAGES": "图像",
+    "TEXT TO SPEECH": "文本转语音",
+    "TRANSCRIPTION": "转录",
+    "Video generation is submitted with POST /v1/videos and polled with GET /v1/videos/{id}. See the API docs for the full reference.": "视频生成通过 POST /v1/videos 提交，并通过 GET /v1/videos/{id} 轮询结果。完整参考请查看 API 文档。"
   },
   "patterns": [
     {

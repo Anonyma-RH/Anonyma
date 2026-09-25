@@ -257,11 +257,18 @@ const schemas = {
     issued: string,
     service: { ...string, description: "Public origin that issued the receipt." },
     model: string,
-    usage: object({ input_tokens: integer, output_tokens: integer }),
+    usage: {
+      ...object({ input_tokens: integer, output_tokens: integer }),
+      description: "Chat receipts only.",
+    },
+    kind: {
+      enum: ["image", "speech", "transcription", "video"],
+      description: "/v1 media receipts only, in place of usage.",
+    },
     credits_charged: number,
     credits_released: number,
-    request_sha256: { ...string, description: "sha256 of the canonical JSON of the sent messages." },
-    response_sha256: { ...string, description: "sha256 of the full answer text." },
+    request_sha256: { ...string, description: "sha256 of the canonical JSON of the sent messages. For media: of the billed request (model, prompt or input, options; an uploaded file as its sha256)." },
+    response_sha256: { ...string, description: "sha256 of the full answer text. For media: of the transcript text, or of the delivered file bytes in order." },
     key_id: string,
   }),
   SignedReceipt: object({
@@ -1366,6 +1373,134 @@ route("get", "/api/connections/{id}/activity", "A connected app's ledger rows (m
     ),
   }),
   description: "The latest 100 charges: time, model, credits and the request/receipt id. No prompts or answers are stored for a connection.",
+});
+// The anonyma extension on every /v1 media response.
+const mediaExtension = object({
+  credits_charged: number,
+  request_id: string,
+  signed_receipt: {
+    ...ref("SignedReceipt"),
+    description: "Present only when the receipts update is released.",
+  },
+});
+const keyRefusals =
+  " Every request holds its worst-case cost against the key first: a paused key (403 key_paused), an expired allowance (403 key_expired), a used-up allowance (402 allowance_exhausted) or the rolling 24-hour cap (429 key_cap_exceeded) refuses it before any provider work. Idempotency-Key or requestId works as on chat completions.";
+route(
+  "post",
+  "/v1/images/generations",
+  "OpenAI-style image generation",
+  {
+    auth: "bearer",
+    body: object(
+      {
+        model: string,
+        prompt: { ...string, maxLength: 48000 },
+        n: { ...integer, minimum: 1, maximum: 4, default: 1 },
+        size: string,
+        response_format: { enum: ["url", "b64_json"], default: "url" },
+      },
+      ["model", "prompt"],
+    ),
+    response: object({
+      created: integer,
+      data: array(object({ url: string, b64_json: string })),
+      anonyma: mediaExtension,
+      testMode: bool,
+      partial: bool,
+      warning: string,
+    }),
+    description:
+      "Same pipeline, pricing and media store as /api/images. Choose a published size for the model; unpublished sizes are refused before any hold is created. url responses are signed and expire 24 hours after generation; b64_json inlines the bytes instead. A later batch failure (n > 1) returns the images saved so far with partial and warning, charging only delivered progress." +
+      keyRefusals,
+  },
+);
+route("post", "/v1/audio/speech", "OpenAI-style text to speech", {
+  auth: "bearer",
+  body: object(
+    {
+      model: string,
+      input: { ...string, maxLength: 5000 },
+      voice: string,
+      response_format: { enum: ["mp3", "opus", "aac", "flac", "wav", "pcm"] },
+    },
+    ["model", "input"],
+  ),
+  response: { type: "string", format: "binary" },
+  description:
+    "Same per-character pricing and voice catalog as /api/audio/speech. Returns raw audio bytes with the provider's Content-Type. Since the body carries only audio, the extension travels in response headers: X-Anonyma-Credits-Charged, X-Anonyma-Request-Id, X-Anonyma-Media-Id (the saved copy expires after 24 hours) and, once receipts are released, X-Anonyma-Signed-Receipt (base64 JSON of a SignedReceipt)." +
+    keyRefusals,
+});
+paths["/v1/audio/speech"].post.responses[200].content = {
+  "application/octet-stream": { schema: { type: "string", format: "binary" } },
+};
+route(
+  "post",
+  "/v1/audio/transcriptions",
+  "OpenAI-style speech to text",
+  {
+    auth: "bearer",
+    body: object(
+      {
+        file: { type: "string", format: "binary" },
+        model: { ...string, default: "nova-3" },
+        language: string,
+      },
+      ["file"],
+    ),
+    response: object({
+      text: string,
+      anonyma: mediaExtension,
+    }),
+    description:
+      "multipart/form-data upload, up to 10 MB, same limits and per-minute pricing as /api/audio/transcriptions. Holds the cost of 10 minutes and charges the transcribed duration." +
+      keyRefusals,
+  },
+);
+paths["/v1/audio/transcriptions"].post.requestBody.content = {
+  "multipart/form-data": {
+    schema: object(
+      {
+        file: { type: "string", format: "binary" },
+        model: { ...string, default: "nova-3" },
+        language: string,
+      },
+      ["file"],
+    ),
+  },
+};
+route("post", "/v1/videos", "Submit a durable video job", {
+  auth: "bearer",
+  body: object(
+    {
+      model: string,
+      prompt: { ...string, maxLength: 2000 },
+      aspect_ratio: string,
+      duration: { type: ["string", "number"] },
+      quality: string,
+      image_url: string,
+    },
+    ["model", "prompt"],
+  ),
+  response: object({ id: string, status: string }),
+  status: 202,
+  description:
+    "Same pipeline, pricing and hold as /api/videos. Choose a published variant from model pricing; image-to-video requires a public HTTPS image_url. Poll GET /v1/videos/{id}." +
+    keyRefusals,
+});
+route("get", "/v1/videos/{id}", "Poll a submitted video job", {
+  auth: "bearer",
+  response: object({
+    id: string,
+    status: string,
+    url: string,
+    error: string,
+    anonyma: {
+      ...mediaExtension,
+      description: "Present once completed and settled.",
+    },
+  }),
+  description:
+    "Owner-scoped to the API key's account. status mirrors /api/videos (submitting, pending, processing, completed, failed, reconciliation). url is a signed link, present once completed, that expires 24 hours after the job finished.",
 });
 for (const [path, summary] of [
   ["/install.sh", "POSIX CLI installer"],

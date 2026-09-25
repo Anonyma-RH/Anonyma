@@ -23,6 +23,7 @@ import { mcpRoutes } from "./routes/mcp.js";
 import { mediaRoutes } from "./routes/media.js";
 import { videoRoutes } from "./routes/videos.js";
 import { audioRoutes } from "./routes/audio.js";
+import { v1MediaRoutes } from "./routes/v1-media.js";
 import { creditRoutes } from "./routes/credits.js";
 import { collabRoutes } from "./routes/collabs.js";
 import { retentionRoutes } from "./routes/retention.js";
@@ -77,6 +78,8 @@ export function createApp(overrides = {}) {
   catalogRoutes(ctx);
   ctx.conversations = conversationRoutes(ctx);
   Object.assign(ctx, apiRoutes(ctx));
+  // Registered before chatRoutes: its /v1/*rest fallback must come last.
+  v1MediaRoutes(ctx);
   Object.assign(ctx, chatRoutes(ctx));
   receiptRoutes(ctx);
   mcpRoutes(ctx);

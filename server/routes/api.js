@@ -41,7 +41,18 @@ export function apiRoutes({ app, db, cfg, models }) {
       service: "Anonyma",
       status: "ok",
       object: "connection",
-      endpoints: ["/v1/models", "/v1/chat/completions"],
+      endpoints: [
+        "/v1/models",
+        "/v1/chat/completions",
+        ...(isReleased(cfg, "v1media")
+          ? [
+              "/v1/images/generations",
+              "/v1/audio/speech",
+              "/v1/audio/transcriptions",
+              "/v1/videos",
+            ]
+          : []),
+      ],
       credits_charged: 0,
       authenticated: !!account,
       models: models.snapshot.data.filter(

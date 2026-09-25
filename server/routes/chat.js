@@ -14,6 +14,7 @@ import {
   markupFactor,
   standardFactor,
   wantsWebSearch,
+  API_MEDIA_TTL_MS,
 } from "../core.js";
 import { chatStream, reportedProviderCost } from "../provider.js";
 import { FAILOVER_CODES } from "../fallback.js";
@@ -331,7 +332,7 @@ export function chatRoutes(ctx) {
                   ? messages.at(-1).content
                   : "",
               model: m.id,
-              expires: api ? now() + 86400000 : null,
+              expires: api ? now() + API_MEDIA_TTL_MS : null,
               signal: controller.signal,
             },
           );
@@ -593,7 +594,9 @@ export function chatRoutes(ctx) {
   app.all("/v1/*rest", (req, res) =>
     fail(
       404,
-      "Unsupported endpoint. Use /v1/models or /v1/chat/completions.",
+      isReleased(cfg, "v1media")
+        ? "Unsupported endpoint. Use /v1/models, /v1/chat/completions, /v1/images/generations, /v1/audio/speech, /v1/audio/transcriptions or /v1/videos."
+        : "Unsupported endpoint. Use /v1/models or /v1/chat/completions.",
       "unsupported_endpoint",
     ),
   );

@@ -510,15 +510,19 @@ export function reserve(
           "This API key would exceed its rolling 24-hour spending cap.",
           "key_cap_exceeded",
         );
-      if (
-        k.allowance_total != null &&
-        keySpendTotal(db, key) + inflight + amount > k.allowance_total
-      )
-        fail(
-          402,
-          "This API key has used its full allowance.",
-          "allowance_exhausted",
-        );
+      if (k.allowance_total != null) {
+        const left = k.allowance_total - keySpendTotal(db, key) - inflight;
+        // Say which it is: the allowance is used up, or this one request's
+        // worst-case cost is larger than what's left of it.
+        if (amount > left)
+          fail(
+            402,
+            left <= 0
+              ? "This API key has used its full allowance."
+              : `This request could cost up to ${credits(amount)} credits, more than the ${credits(left)} left on this key's allowance.`,
+            "allowance_exhausted",
+          );
+      }
     }
     db.prepare(
       "INSERT INTO holds(id,user_id,amount,key_id,kind,created,expires) VALUES(?,?,?,?,?,?,?)",

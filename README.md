@@ -27,6 +27,10 @@ generated files beside the chat and ZIP export. Code & Build is now enabled on
 [Live Web Search](docs/releases/live-web-search.md): turn on Web in chat to
 request current web information and follow cited sources. Includes its launch film.
 
+[Veil](docs/releases/veil.md): masks emails, card numbers, phone numbers, keys
+and other private details in your browser before a prompt is sent, then restores
+them on screen. Enabled on [askanonyma.com](https://askanonyma.com/workspace/chat). Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

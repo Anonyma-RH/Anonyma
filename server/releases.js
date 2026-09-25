@@ -20,6 +20,7 @@ export const UPDATES = [
   },
   {
     id: "search",
+    released: true,
     title: "Live Web Search",
     tagline: "Answers from the live web, with sources.",
     points: [

@@ -7,8 +7,8 @@ prepaid credit balance. This repository contains the React client, Node.js API,
 SQLite accounting and conversation storage, model gateway integration, CLI,
 and application tests.
 
-The hosted app includes chat, Code & Build, a small model selection, dashboard,
-account and credits. The source also includes image, audio, video, search, collaboration,
+The hosted app includes chat, Code & Build, Live Web Search, a small model selection, dashboard,
+account and credits. The source also includes image, audio, video, collaboration,
 and developer features whose availability is controlled by release gates.
 Source availability does not mean every feature is enabled on the hosted app.
 
@@ -18,11 +18,14 @@ Source availability does not mean every feature is enabled on the hosted app.
 0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583
 ```
 
-## Featured source release
+## Featured releases
 
 [Code & Build](docs/releases/code-and-build.md): a dedicated code workspace,
 generated files beside the chat and ZIP export. Code & Build is now enabled on
 [askanonyma.com](https://askanonyma.com/workspace/code). Includes its launch film.
+
+[Live Web Search](docs/releases/live-web-search.md): turn on Web in chat to
+request current web information and follow cited sources. Includes its launch film.
 
 ## How it works
 

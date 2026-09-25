@@ -16,7 +16,7 @@ import {
 import { chatStream, reportedProviderCost } from "../provider.js";
 import { FAILOVER_CODES } from "../fallback.js";
 import { requestIdentifier } from "../middleware.js";
-import { isPrivateModel } from "../private-mode.js";
+import { isPrivateModel, ZDR_ROUTING } from "../private-mode.js";
 
 // Streamed chat for the workspace and the compatible /v1 API.
 export function chatRoutes(ctx) {
@@ -45,7 +45,7 @@ export function chatRoutes(ctx) {
     if (isPrivate && !isPrivateModel(m, cfg))
       fail(
         400,
-        "Private mode needs a model whose provider says it keeps no data.",
+        "Private mode needs a model with zero data retention.",
         "private_model_required",
       );
     const messages = validateMessages(req.body.messages, m, api),
@@ -225,6 +225,7 @@ export function chatRoutes(ctx) {
       messages,
       max_tokens: max,
       ...(webSearch ? { plugins: [{ id: "web", max_results: 5 }] } : {}),
+      ...(isPrivate ? ZDR_ROUTING : {}),
     };
     const markAccepted = () => {
       accepted = true;
@@ -234,9 +235,12 @@ export function chatRoutes(ctx) {
       try {
         yield* chatStream(cfg, upstreamBody, controller.signal, markAccepted);
       } catch (e) {
+        // A private request never fails over: the backup gateway's
+        // retention terms aren't known.
         if (
           accepted ||
           controller.signal.aborted ||
+          isPrivate ||
           !FAILOVER_CODES.has(e.code)
         )
           throw e;
@@ -348,7 +352,7 @@ export function chatRoutes(ctx) {
         ...(servedBy === "backup" ? { provider: "backup" } : {}),
         ...(cfg.testMode ? { local_test: true } : {}),
         ...(isPrivate
-          ? { private: { provider: m.owned_by || m.id, stored: false } }
+          ? { private: { privacy: "zdr", stored: false } }
           : {}),
       };
       if (

@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { createApp } from "../server/app.js";
 import { balance } from "../server/core.js";
 import { UPDATES } from "../server/releases.js";
+import { isPrivateModel, ZDR_ROUTING } from "../server/private-mode.js";
 
 // Release commits flip `released` on UPDATES entries. These tests cover the
 // gate itself, so they pin every update to unreleased for this file and keep
@@ -15,8 +16,9 @@ const committed = UPDATES.map((u) => u.released);
 before(() => UPDATES.forEach((u) => (u.released = false)));
 after(() => UPDATES.forEach((u, i) => (u.released = committed[i])));
 
-// A Venice model (owned_by: "Venice") from the reference snapshot — private
-// under the default PRIVATE_MODEL_PROVIDERS — and an ordinary one that isn't.
+// The reference snapshot carries no privacyLevel labels (the live gateway
+// catalog does), so the fixture counts one model as private via the operator
+// override, and leaves an ordinary one that isn't.
 const privateModel = "venice/venice-uncensored-1-2";
 const publicModel = "google/gemini-2.5-flash";
 const prompt = (model) => ({
@@ -38,6 +40,7 @@ function fixture(t, released) {
     // explicitly to reach the release/model checks under test rather than
     // failing on model availability first.
     ...(released ? { mvpModels: [privateModel, publicModel] } : {}),
+    privateModels: [privateModel],
   });
   t.after(() => {
     svc.close();
@@ -61,7 +64,7 @@ test("the update is registered as off by default", () => {
   assert.equal(entry.title, "Private Mode");
   assert.equal(entry.tagline, "Private models. Nothing saved.");
   assert.deepEqual(entry.points, [
-    "Only models whose provider says it keeps no data",
+    "Only zero-data-retention models",
     "Never saved on our servers",
     "Veil masks your details before sending",
   ]);
@@ -77,7 +80,7 @@ test("a private chat with a private model works and saves nothing", async (t) =>
     .expect(200);
   assert.match(r.text, /\[DONE\]/);
   assert.match(r.text, /credits_charged/);
-  assert.match(r.text, /"private":\{"provider":"Venice","stored":false\}/);
+  assert.match(r.text, /"private":\{"privacy":"zdr","stored":false\}/);
   assert.ok(!/"conversationId":"c_/.test(r.text), "no conversation id is streamed");
   assert.ok(balance(s.db, user.id).total < before, "billing still happens");
   assert.equal(
@@ -174,4 +177,16 @@ test("release gating: private needs ephemeral, and both work", async (t) => {
     .post("/api/chat")
     .send({ ...prompt(privateModel), private: true })
     .expect(200);
+});
+
+test("a model is private only when the gateway labels it zero data retention", () => {
+  const cfg = { privateModels: ["listed/model"] };
+  assert.equal(isPrivateModel({ id: "a", privacyLevel: "zdr" }, cfg), true);
+  assert.equal(isPrivateModel({ id: "b", privacyLevel: "anon" }, cfg), false);
+  // End-to-end encrypted models need client-side encryption first.
+  assert.equal(isPrivateModel({ id: "c", privacyLevel: "e2e" }, cfg), false);
+  // The provider's name alone never makes a model private.
+  assert.equal(isPrivateModel({ id: "d", owned_by: "Venice" }, cfg), false);
+  assert.equal(isPrivateModel({ id: "listed/model" }, cfg), true);
+  assert.deepEqual(ZDR_ROUTING, { provider: { zdr: true, data_collection: "deny" } });
 });

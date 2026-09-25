@@ -137,7 +137,7 @@ export const UPDATES = [
     title: "Private Mode",
     tagline: "Private models. Nothing saved.",
     points: [
-      "Only models whose provider says it keeps no data",
+      "Only zero-data-retention models",
       "Never saved on our servers",
       "Veil masks your details before sending",
     ],

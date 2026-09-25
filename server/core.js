@@ -126,12 +126,8 @@ export function config(overrides = {}) {
           .map((v) => v.trim())
           .filter(Boolean)
       : DEFAULT_MVP_MODELS,
-    // Private Mode: providers (matched case-insensitively against a model's
-    // owned_by) and/or explicit model ids counted as private.
-    privateModelProviders: (e.PRIVATE_MODEL_PROVIDERS ?? "Venice")
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean),
+    // Private Mode follows the gateway's own zero-data-retention label; these
+    // model ids are also counted as private (an operator override).
     privateModels: (e.PRIVATE_MODELS || "")
       .split(",")
       .map((v) => v.trim())

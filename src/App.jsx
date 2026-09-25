@@ -18,6 +18,7 @@ import {
   Auth,
   NotFound,
 } from "./Pages.jsx";
+import Whitepaper from "./Whitepaper.jsx";
 const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 // Links into updates that aren't released yet lead to the roadmap, tagged "Soon".
@@ -99,6 +100,7 @@ function Navigation() {
             title: "Knowledge Base",
             links: [
               ["/docs", "Documentation"],
+              ["/whitepaper", "Whitepaper"],
               ["/guides/choose-a-model", "Model guide"],
               ["/guides/understanding-credits", "Understanding credits"],
               ["/guides/one-api", "Developer guide"],
@@ -240,6 +242,7 @@ function Footer() {
                 title: "Knowledge Base",
                 links: [
                   ["Documentation", "/docs"],
+                  ["Whitepaper", "/whitepaper"],
                   ["Model guide", "/guides/choose-a-model"],
                   ["Understanding credits", "/guides/understanding-credits"],
                   ["Developer guide", "/guides/one-api"],
@@ -329,6 +332,7 @@ function Shell() {
           <Route path="/models" element={<Catalog />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/docs/*" element={<Docs />} />
+          <Route path="/whitepaper" element={<Whitepaper />} />
           <Route path="/developers" element={<Developers />} />
           <Route path="/guides/:slug" element={<Article />} />
           <Route path="/roadmap" element={<Roadmap />} />

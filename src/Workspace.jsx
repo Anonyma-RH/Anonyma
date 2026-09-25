@@ -85,6 +85,7 @@ import {
   MODE_FEATURES,
 } from "./lib.js";
 import {
+  veil,
   loadVeilState,
   saveVeilState,
   moveVeilState,

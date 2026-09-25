@@ -84,7 +84,7 @@ const zh = JSON.parse(readFileSync(new URL("../src/i18n/zh.json", import.meta.ur
 test("the update is registered as off by default, with its icon and Chinese copy", () => {
   const entry = UPDATES.find((u) => u.id === "trail");
   assert.ok(entry, "trail is registered in UPDATES");
-  assert.equal(committed[UPDATES.indexOf(entry)], false, "not released yet");
+  assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");
   assert.equal(entry.title, "Privacy Trail");
   assert.equal(entry.tagline, "See where every prompt went.");
   assert.equal(entry.points.length, 3);

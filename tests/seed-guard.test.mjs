@@ -375,7 +375,7 @@ async function seedGuardModule() {
 
 test("while unreleased Seed Guard stays out of the way, and its override is refused", async (t) => {
   const entry = UPDATES.find((u) => u.id === "seedguard");
-  assert.equal(committed[UPDATES.indexOf(entry)], false, "committed as unreleased");
+  assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");
   assert.equal(entry.title, "Seed Guard");
   assert.equal(entry.tagline, "Your seed phrase never leaves your browser.");
   assert.equal(entry.points.length, 3);

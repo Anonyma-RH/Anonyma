@@ -16,6 +16,7 @@ import {
 import { chatStream, reportedProviderCost } from "../provider.js";
 import { FAILOVER_CODES } from "../fallback.js";
 import { requestIdentifier } from "../middleware.js";
+import { isPrivateModel } from "../private-mode.js";
 
 // Streamed chat for the workspace and the compatible /v1 API.
 export function chatRoutes(ctx) {
@@ -38,6 +39,15 @@ export function chatRoutes(ctx) {
           : "This endpoint supports chat models.",
         "unsupported_model",
       );
+    // Private Mode is released and dependency-gated in releases.js; here
+    // only the chosen model itself is checked.
+    const isPrivate = !api && req.body.private === true;
+    if (isPrivate && !isPrivateModel(m, cfg))
+      fail(
+        400,
+        "Private mode needs a model whose provider says it keeps no data.",
+        "private_model_required",
+      );
     const messages = validateMessages(req.body.messages, m, api),
       max = maxTokens(req.body.max_tokens);
     const requestId = requestIdentifier(req);
@@ -54,7 +64,8 @@ export function chatRoutes(ctx) {
     );
     // Off the record: nothing about the chat is written to storage, not even
     // the user's message. Billing is unaffected — only persistence changes.
-    const ephemeral = !api && req.body.ephemeral === true;
+    // Private Mode always takes this path too, so nothing it sends is saved.
+    const ephemeral = !api && (req.body.ephemeral === true || isPrivate);
     if (ephemeral && req.body.conversationId)
       fail(
         400,
@@ -336,6 +347,9 @@ export function chatRoutes(ctx) {
         ...(citations.length ? { citations } : {}),
         ...(servedBy === "backup" ? { provider: "backup" } : {}),
         ...(cfg.testMode ? { local_test: true } : {}),
+        ...(isPrivate
+          ? { private: { provider: m.owned_by || m.id, stored: false } }
+          : {}),
       };
       if (
         conversation &&

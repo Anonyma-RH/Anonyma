@@ -126,6 +126,16 @@ export function config(overrides = {}) {
           .map((v) => v.trim())
           .filter(Boolean)
       : DEFAULT_MVP_MODELS,
+    // Private Mode: providers (matched case-insensitively against a model's
+    // owned_by) and/or explicit model ids counted as private.
+    privateModelProviders: (e.PRIVATE_MODEL_PROVIDERS ?? "Venice")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean),
+    privateModels: (e.PRIVATE_MODELS || "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean),
     ...overrides,
   };
   if (!(cfg.released instanceof Set))

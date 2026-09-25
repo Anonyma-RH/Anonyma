@@ -5,13 +5,18 @@ import "./ephemeral.css";
 
 // Composer control that starts an unsaved chat. Styled like the existing
 // "Web" toggle so it reads as part of the same control group.
-export function EphemeralToggle({ active, onToggle }) {
+export function EphemeralToggle({ active, onToggle, disabled }) {
   return (
     <button
       type="button"
       className={"attachment-control web-toggle" + (active ? " on" : "")}
       aria-pressed={active}
-      title="Off the record: nothing about this chat is saved"
+      disabled={disabled}
+      title={
+        disabled
+          ? "Off the record is on for this chat because Private mode is on"
+          : "Off the record: nothing about this chat is saved"
+      }
       onClick={onToggle}
     >
       <Icon name={active ? "eyeoff" : "eye"} size={17} />

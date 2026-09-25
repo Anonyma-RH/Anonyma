@@ -132,6 +132,17 @@ export const UPDATES = [
     ],
     released: false,
   },
+  {
+    id: "private",
+    title: "Private Mode",
+    tagline: "Private models. Nothing saved.",
+    points: [
+      "Only models whose provider says it keeps no data",
+      "Never saved on our servers",
+      "Veil masks your details before sending",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -231,6 +242,9 @@ function featuresFor(req) {
     if (body.mode === "code") needed.push("code");
     if (body.mode === "uncensored") needed.push("uncensored");
     if (p === "/api/chat" && body.ephemeral === true) needed.push("ephemeral");
+    // Private mode always takes the ephemeral path, so it needs both.
+    if (p === "/api/chat" && body.private === true)
+      needed.push("private", "ephemeral");
     if (
       p === "/api/chat" &&
       (body.web_search === true ||

@@ -65,6 +65,11 @@ const chat = object(
       description:
         "Off the record: no conversation or message is stored, not even the user's message, and conversationId must be absent. Billing (hold, settlement, ledger entry, receipt) is unchanged.",
     },
+    private: {
+      ...bool,
+      description:
+        'Private Mode: the model must be flagged private (see /api/models\' private field; 400 private_model_required otherwise), and requires both the private and ephemeral updates released (403 feature_unreleased otherwise). Always takes the ephemeral path, so conversationId must be absent. The final SSE event and JSON response carry anonyma.private: { provider, stored: false }. Billing is unchanged.',
+    },
   },
   ["model", "messages"],
 );
@@ -353,7 +358,10 @@ for (const [path, summary] of [
     "/api/config",
     "Public service availability; configured does not mean verified",
   ],
-  ["/api/models", "Model catalog including capability and pricing metadata"],
+  [
+    "/api/models",
+    "Model catalog including capability, pricing and private-mode metadata",
+  ],
   ["/api/market", "Public cryptocurrency market feed"],
   ["/api/rates", "Crypto units per USD; validated rates cached for 60 seconds"],
   [
@@ -445,7 +453,7 @@ route("post", "/api/chat", "Stream chat, code or compatible image output", {
   body: ref("ChatRequest"),
   stream: true,
   description:
-    "Always SSE via fetch POST, not EventSource. Retains latest 20 messages. Parse data events across arbitrary byte boundaries; final usage event includes conversationId, askr and anonyma receipt, followed by [DONE]. Abort cancels work and settles delivered usage. Errors can follow HTTP 200. Use a stable requestId or Idempotency-Key; duplicates return 409, not a new charge.",
+    "Always SSE via fetch POST, not EventSource. Retains latest 20 messages. Parse data events across arbitrary byte boundaries; final usage event includes conversationId, askr and anonyma receipt, followed by [DONE]. Abort cancels work and settles delivered usage. Errors can follow HTTP 200. Use a stable requestId or Idempotency-Key; duplicates return 409, not a new charge. See the request body's private field for Private Mode.",
 });
 route("post", "/api/images", "Generate and save 1–4 images", {
   body: object(

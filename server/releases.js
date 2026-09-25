@@ -260,6 +260,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "v1media",
+    title: "Multimodal API",
+    tagline: "Images, voice and video in your code.",
+    points: [
+      "Generate images with one POST",
+      "Text to speech and speech to text",
+      "Submit and poll video jobs",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -350,6 +361,11 @@ export function featuresFor(req) {
   if (p.startsWith("/api/audio")) return ["audio"];
   if (p.startsWith("/api/collabs")) return ["collab"];
   if (p === "/api/images" && post) return ["images"];
+  // The /v1 media endpoints need the API, the multimodal update itself, and
+  // whichever studio update backs that media type.
+  if (p.startsWith("/v1/images")) return ["api", "v1media", "images"];
+  if (p.startsWith("/v1/audio")) return ["api", "v1media", "audio"];
+  if (p.startsWith("/v1/videos")) return ["api", "v1media", "video"];
   if (p === "/v1" || p.startsWith("/v1/")) return ["api"];
   if (p === "/api/keys" && post) return ["api"];
   // Allowances extend an API key's authorization, so they need the API

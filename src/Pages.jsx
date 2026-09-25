@@ -32,6 +32,7 @@ import BillingRules from "./BillingRules.jsx";
 import { featureEnabled, featureLabel, guideReleaseLabel, releaseCopy, modelAvailability } from "./release-copy.js";
 import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
 import "./mcp.css";
+import V1Media from "./V1Media.jsx";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -758,6 +759,7 @@ export function Developers() {
             </article>
           ))}
         </div>
+        {featureEnabled(config, "v1media") && <V1Media config={config} />}
       </div>
     </main>
   );
@@ -825,6 +827,7 @@ const featureIcons = {
   mcp: "command",
   allowances: "coins",
   connect: "plug",
+  v1media: "image",
 };
 const launch = {
   id: "mvp",

@@ -7,6 +7,7 @@ import {
   release,
   generationPrice,
   markupFactor,
+  API_MEDIA_TTL_MS,
 } from "./core.js";
 import { pollVideo, payment } from "./provider.js";
 import { recordPayment, OPEN_PAYMENT_STATUSES, sqlList } from "./payments.js";
@@ -87,6 +88,7 @@ export function createWorker(ctx) {
                   mime: "video/mp4",
                   prompt: "LOCAL TEST FIXTURE: " + request.prompt,
                   model: request.model,
+                  ...(request.api ? { expires: now() + API_MEDIA_TTL_MS } : {}),
                 },
               );
             } else if (!media)
@@ -94,6 +96,7 @@ export function createWorker(ctx) {
                 prompt: request.prompt,
                 model: request.model,
                 signal: workerController.signal,
+                ...(request.api ? { expires: now() + API_MEDIA_TTL_MS } : {}),
               });
             db.prepare("UPDATE videos SET media_id=? WHERE id=?").run(
               media.id,

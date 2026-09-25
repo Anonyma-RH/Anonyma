@@ -18,6 +18,9 @@ export const uid = (prefix = "") => prefix + randomBytes(16).toString("hex");
 export const hash = (value) => createHash("sha256").update(value).digest("hex");
 export const now = () => Date.now();
 export const UNITS = 10_000_000; // integer subcredits per USD
+// Media generated through a Bearer-keyed request (chat images, /v1 media)
+// gets a signed URL instead of a permanent library entry.
+export const API_MEDIA_TTL_MS = 86400000;
 export const credits = (n) => Number((n / 10000).toFixed(4));
 export const usdUnits = (dollars) => {
   const scaled = Number(dollars) * UNITS;
@@ -696,6 +699,25 @@ export function unpublishedImageOption(m, opts = {}) {
   return requested == null
     ? null
     : { requested, published: sized.map((o) => o.size) };
+}
+// Refuse a dedicated image model's option before any hold is created; shared
+// by the workspace image studio and the /v1/images/generations API route.
+export function assertPricedImageOption(m, opts = {}) {
+  if (m.type !== "image") return;
+  if (
+    opts.quality &&
+    !(m.pricing?.variants || []).some((variant) => variant.quality === opts.quality)
+  )
+    fail(400, "Choose a published quality for this model.");
+  const unpublished = unpublishedImageOption(m, opts);
+  if (unpublished)
+    fail(
+      400,
+      `Size "${unpublished.requested}" has no published price for this model. Choose one of: ${unpublished.published.join(", ")}.`,
+      "unpriced_option",
+    );
+  if (!(generationPrice(m, opts) > 0))
+    fail(400, "This image option has no published price.", "unpriced_model");
 }
 export function generationPrice(m, opts = {}) {
   if (Object.hasOwn(imagePrices, m.id)) return imagePrices[m.id];

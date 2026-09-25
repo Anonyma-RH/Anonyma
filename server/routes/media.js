@@ -9,8 +9,7 @@ import {
   settle,
   release,
   quote,
-  generationPrice,
-  unpublishedImageOption,
+  assertPricedImageOption,
   markupFactor,
 } from "../core.js";
 import { generateImages } from "../provider.js";
@@ -78,26 +77,7 @@ export function mediaRoutes(ctx) {
           fail(400, "This model does not accept a reference image.");
         if (!refs.length && m.capabilities?.requires_image_url)
           fail(400, "This model requires a reference image.");
-        if (
-          req.body.quality &&
-          !(m.pricing?.variants || []).some(
-            (variant) => variant.quality === req.body.quality,
-          )
-        )
-          fail(400, "Choose a published quality for this model.");
-        const unpublished = unpublishedImageOption(m, req.body);
-        if (unpublished)
-          fail(
-            400,
-            `Size "${unpublished.requested}" has no published price for this model. Choose one of: ${unpublished.published.join(", ")}.`,
-            "unpriced_option",
-          );
-        if (!(generationPrice(m, req.body) > 0))
-          fail(
-            400,
-            "This image option has no published price.",
-            "unpriced_model",
-          );
+        assertPricedImageOption(m, req.body);
       }
       validateMessages(
         [

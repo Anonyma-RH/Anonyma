@@ -1,3 +1,4 @@
+import { mediaRecipe } from "./history-library.js";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve, join } from "node:path";
 import {
@@ -90,6 +91,7 @@ export function createWorker(ctx) {
                   mime: "video/mp4",
                   prompt: "LOCAL TEST FIXTURE: " + request.prompt,
                   model: request.model,
+                  ...(!request.api ? { protectMedia: request.library_source, recipe: mediaRecipe("video", { ...request, ratio: request.aspect_ratio }) } : {}),
                   ...(request.api ? { expires: now() + API_MEDIA_TTL_MS } : {}),
                 },
               );
@@ -97,6 +99,7 @@ export function createWorker(ctx) {
               media = await saveMedia(job.user_id, "video", result.data?.url, {
                 prompt: request.prompt,
                 model: request.model,
+                  ...(!request.api ? { protectMedia: request.library_source, recipe: mediaRecipe("video", { ...request, ratio: request.aspect_ratio }) } : {}),
                 signal: workerController.signal,
                 ...(request.api ? { expires: now() + API_MEDIA_TTL_MS } : {}),
               });

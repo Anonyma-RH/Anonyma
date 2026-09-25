@@ -99,6 +99,23 @@ export function createMediaStore(db, cfg) {
     }
     if (bytes.length > 100 * 1024 * 1024)
       fail(502, "Generated file too large.");
+    // Downloads can outlive source deletion, membership or retention changes.
+    // Recheck immediately before synchronous persistence; never create an orphan
+    // file/row, a newly permanent copy, or a link for a revoked member.
+    if (meta.sourceConversation) {
+      const sourceChat = db.prepare(`
+        SELECT c.mode,c.expires FROM conversations c WHERE c.id=?
+        AND ((c.collab_id IS NULL AND c.user_id=?) OR EXISTS (
+          SELECT 1 FROM collab_members cm WHERE cm.collab_id=c.collab_id AND cm.user_id=?
+        ))
+      `).get(meta.sourceConversation, user, user);
+      if (!sourceChat || ["private", "ephemeral"].includes(sourceChat.mode) ||
+          (sourceChat.expires != null && sourceChat.expires <= now()) ||
+          (meta.expires != null && meta.expires <= now()))
+        fail(409, "The source chat is no longer available. This media was not saved.");
+      const deadlines = [meta.expires, sourceChat.expires].filter((v) => v != null);
+      meta = { ...meta, expires: deadlines.length ? Math.min(...deadlines) : null };
+    }
     const id = uid("asset_"),
       ext =
         {
@@ -117,12 +134,18 @@ export function createMediaStore(db, cfg) {
       kind,
       mime,
       filename,
-      meta.prompt || "",
+      meta.sourceConversation ? "" : meta.prompt || "",
       meta.model || "",
       meta.cost || 0,
       now(),
       meta.expires || null,
     );
+    if (!meta.expires && (meta.sourceConversation || meta.recipe)) {
+      db.prepare("INSERT INTO library_items(media_id,source_id,had_source,recipe) VALUES(?,?,?,?)").run(
+        id, meta.sourceConversation || null, meta.sourceConversation ? 1 : 0,
+        meta.sourceConversation ? null : JSON.stringify(meta.recipe),
+      );
+    }
     // The library keeps the latest 100 images, 60 videos and 60 audio files
     // (twice that at the NYMA Holder Program's Holder tier: capsFor in
     // server/holders.js). Read at each save, so leaving the tier deletes
@@ -130,9 +153,9 @@ export function createMediaStore(db, cfg) {
     const caps = capsFor(db, cfg, user);
     const old = db
       .prepare(
-        "SELECT * FROM media WHERE user_id=? AND kind=? AND expires IS NULL AND id NOT IN (SELECT id FROM media WHERE user_id=? AND kind=? AND expires IS NULL ORDER BY created DESC,rowid DESC LIMIT ?)",
+        "SELECT * FROM media WHERE user_id=? AND kind=? AND expires IS NULL AND id NOT IN (SELECT id FROM media WHERE user_id=? AND kind=? AND expires IS NULL ORDER BY (id IS ?) DESC,created DESC,rowid DESC LIMIT ?)",
       )
-      .all(user, kind, user, kind, caps[kind] ?? caps.video);
+      .all(user, kind, user, kind, meta.protectMedia || null, caps[kind] ?? caps.video);
     for (const item of old) deleteMedia(item);
     const result = mediaJSON(
       db.prepare("SELECT * FROM media WHERE id=?").get(id),

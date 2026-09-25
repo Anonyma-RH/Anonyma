@@ -1,0 +1,130 @@
+.history-library h1 {
+  margin: 10px 0 25px;
+}
+.history-search {
+  max-width: 850px;
+  margin: 28px 0;
+}
+.history-search label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.history-search > div {
+  display: flex;
+  gap: 12px;
+}
+.history-search input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  padding: 12px;
+  border-radius: 8px;
+  font: inherit;
+}
+.history-results {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.history-hit {
+  padding: 20px;
+  border: 1px solid #dce2ed;
+  border-radius: 12px;
+  background: #fff;
+  color: #193758;
+  text-align: left;
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+.history-hit strong,
+.history-hit span {
+  display: block;
+}
+.history-hit span {
+  margin-top: 7px;
+  font-size: 12px;
+  color: #64748b;
+}
+.history-hit p {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+.library-review {
+  margin: 24px 0;
+  padding: 25px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: #f4f7ff;
+}
+.library-review-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.library-review-heading h2 {
+  margin-top: 0;
+}
+.library-review button {
+  font: inherit;
+}
+.library-review dl {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 9px 18px;
+}
+.library-review dt {
+  font-weight: 650;
+}
+.library-review dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.library-saved-prompt {
+  white-space: pre-wrap;
+  max-height: 240px;
+  overflow: auto;
+}
+.library-quote {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #a9bdee;
+  border-radius: 10px;
+  background: white;
+}
+.library-quote strong {
+  color: #0135df;
+}
+@media (max-width: 650px) {
+  .history-search > div {
+    flex-direction: column;
+  }
+  .library-review dl {
+    grid-template-columns: 1fr;
+  }
+  .library-review dd {
+    margin-bottom: 12px;
+  }
+}
+
+.history-saved-message {
+  margin: 18px 0;
+  padding: 18px;
+  background: #fff;
+  border-radius: 10px;
+  overflow-wrap: anywhere;
+}
+.history-saved-message pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.history-saved-image {
+  display: block;
+  max-width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  margin-top: 12px;
+}

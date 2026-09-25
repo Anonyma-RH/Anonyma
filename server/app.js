@@ -33,6 +33,7 @@ import { accountRoutes } from "./routes/account.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { connectRoutes } from "./routes/connect.js";
 import { paymentRoutes } from "./routes/payments.js";
+import { historyLibrary } from "./history-library.js";
 import { siteRoutes } from "./routes/site.js";
 
 export function createApp(overrides = {}) {
@@ -78,6 +79,7 @@ export function createApp(overrides = {}) {
   Object.assign(ctx, authRoutes(app, db, cfg, ctx.limit));
   catalogRoutes(ctx);
   ctx.conversations = conversationRoutes(ctx);
+  ctx.library = historyLibrary(ctx);
   ctx.treasury = treasuryRoutes(ctx);
   Object.assign(ctx, apiRoutes(ctx));
   // Registered before chatRoutes: its /v1/*rest fallback must come last.

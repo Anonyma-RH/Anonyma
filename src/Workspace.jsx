@@ -1,6 +1,7 @@
 import { CONTINUE_PROMPT, replyBudgetFor, replyBudgets, completionNotice } from "./long-answers.js";
 import { chatFailureMessage } from "./chat-control.js";
 import { useReadingPosition, useRequestCharge, ChargeStatus } from "./ChatControl.jsx";
+import HistoryLibrary from "./HistoryLibrary.jsx";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
@@ -1497,6 +1498,8 @@ export default function Workspace() {
               media={media}
               onOpen={openChat}
             />
+          ) : mode === "library" && isReleased(config, "historylibrary") ? (
+            <HistoryLibrary key={`${user?.id || "guest"}:${demo}`} user={user} demo={demo} config={config} media={media} Grid={MediaGrid} onOpen={openChat} onDelete={(item) => setDialog({ type: "media", item })} refreshMedia={async () => { const r = await api("/api/media"); setMedia(r.data); refresh(); }} />
           ) : mode === "library" ? (
             <div className="library-page">
               <div className="page-heading-inline">
@@ -2633,7 +2636,7 @@ export default function Workspace() {
     </main>
   );
 }
-function MediaGrid({ media, onDelete }) {
+function MediaGrid({ media, onDelete, onActions }) {
   return (
     <div className="media-grid">
       {media.map((m) => (
@@ -2657,7 +2660,7 @@ function MediaGrid({ media, onDelete }) {
               alt={
                 m.sample
                   ? "Prepared geometric illustration — sample, not generated from prompt"
-                  : m.prompt
+                  : m.prompt || `Saved ${m.kind}`
               }
             />
           )}
@@ -2665,12 +2668,13 @@ function MediaGrid({ media, onDelete }) {
             <span className="eyebrow">
               {m.sample ? "PREPARED SAMPLE" : m.model}
             </span>
-            <h3 data-i18n="off">{m.prompt}</h3>
+            <h3 data-i18n="off">{m.prompt || `Saved ${m.kind}`}</h3>
             <p>
               {m.model}
               {m.cost != null ? " · " + m.cost + " credits" : ""}
             </p>
             <div className="inline-actions">
+              {onActions && !m.sample && <button className="small-button" onClick={() => onActions(m)}>Source & rerun</button>}
               <a className="small-button" href={m.url} download>
                 <Icon name="download" size={14} />
                 Download
@@ -2678,7 +2682,7 @@ function MediaGrid({ media, onDelete }) {
               <button
                 className="small-button"
                 onClick={() => onDelete(m)}
-                aria-label={"Delete " + m.prompt}
+                aria-label={"Delete " + (m.prompt || `saved ${m.kind}`)}
               >
                 <Icon name="delete" size={14} />
               </button>

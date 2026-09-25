@@ -20,6 +20,7 @@ import { requestIdentifier } from "../middleware.js";
 export async function submitVideoJob(ctx, req, { key, api = false } = {}) {
   const { db, cfg } = ctx;
   const { getModel } = ctx.models;
+  if (!api) await ctx.library.validateReplay(req, "video");
   const m = getModel(req.body.model, "video"),
     prompt = String(req.body.prompt || "");
   if (!prompt.trim() || prompt.length > 2000)
@@ -55,6 +56,7 @@ export async function submitVideoJob(ctx, req, { key, api = false } = {}) {
       ...request,
       quoted_provider_cost: price,
       ...(api ? { api: true } : {}),
+      ...(!api && req.body.libraryMediaId ? { library_source: req.body.libraryMediaId } : {}),
     }),
     null,
     null,

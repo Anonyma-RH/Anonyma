@@ -249,7 +249,7 @@ test("Treasury rollback remains additive and later non-additive migrations canno
   assert.equal(old.prepare("PRAGMA user_version").get().user_version, latest);
   assert.equal(old.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE name='treasury_keeps_collab'").get().n, 1);
   assert.equal(balance(old, "u_x").total, 5);
-  assert.deepEqual(old.prepare("SELECT version FROM schema_additive ORDER BY version").all().map(r => r.version), [treasuryVersion]);
+  assert.deepEqual(old.prepare("SELECT version FROM schema_additive ORDER BY version").all().map(r => r.version), db.prepare("SELECT version FROM schema_additive ORDER BY version").all().map(r => r.version));
   assert.equal(old.prepare("PRAGMA foreign_key_check").all().length, 0);
 });
 

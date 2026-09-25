@@ -513,6 +513,14 @@ export const MIGRATIONS = [
         END;
     `);
   },
+  // Library provenance keeps only a link for chat-derived media, never a
+  // second copy of source prompts. Standalone studio recipes follow the media.
+  additive(`
+    CREATE TABLE IF NOT EXISTS library_items(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE,source_id TEXT REFERENCES conversations(id) ON DELETE SET NULL,had_source INTEGER NOT NULL DEFAULT 0,recipe TEXT);
+    CREATE INDEX IF NOT EXISTS library_items_source ON library_items(source_id) WHERE source_id IS NOT NULL;
+    CREATE TRIGGER IF NOT EXISTS library_member_access_removed AFTER DELETE ON collab_members
+    BEGIN UPDATE library_items SET source_id=NULL,recipe=NULL WHERE media_id IN (SELECT id FROM media WHERE user_id=OLD.user_id) AND source_id IN (SELECT id FROM conversations WHERE collab_id=OLD.collab_id); END;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

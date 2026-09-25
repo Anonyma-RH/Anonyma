@@ -412,6 +412,8 @@ export function chatRoutes(ctx) {
       }
       // Images are downloaded before returning durable/private references.
       // A caller that returns text only (the MCP server) keeps none of them.
+      const mediaSource = !api && !ephemeral && conversation && images.length
+        ? accessConversation(conversation, req.user.id) : null;
       for (const img of req.discardMedia === true ? [] : images) {
         const source = img.image_url?.url || img.url;
         if (source) {
@@ -421,11 +423,12 @@ export function chatRoutes(ctx) {
             source,
             {
               prompt:
-                typeof messages.at(-1).content === "string"
+                !ephemeral && typeof messages.at(-1).content === "string"
                   ? messages.at(-1).content
                   : "",
               model: m.id,
-              expires: api ? now() + API_MEDIA_TTL_MS : null,
+              expires: api || ephemeral ? now() + API_MEDIA_TTL_MS : mediaSource?.expires || null,
+              ...(!api && !ephemeral && conversation ? { sourceConversation: conversation } : {}),
               signal: controller.signal,
             },
           );

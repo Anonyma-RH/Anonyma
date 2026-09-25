@@ -12,6 +12,7 @@ import {
   transcribeAudio,
   MAX_TRANSCRIPTION_MINUTES,
 } from "../audio.js";
+import { mediaRecipe } from "../history-library.js";
 import { requestIdentifier } from "../middleware.js";
 
 const RECORDING =
@@ -79,6 +80,7 @@ export function audioRoutes(ctx) {
     requireUser,
     limit("audio", 20, 60000),
     async (req, res) => {
+      await ctx.library.validateReplay(req, "audio");
       const m = await audio.model("tts", String(req.body.model || ""));
       const text =
         typeof req.body.text === "string" ? req.body.text.trim() : "";
@@ -111,6 +113,8 @@ export function audioRoutes(ctx) {
             mime,
             prompt: text.slice(0, 500),
             model: m.id,
+            protectMedia: req.body.libraryMediaId,
+            recipe: mediaRecipe("audio", { model: m.id, text, voice, language }),
           });
           const receipt = settle(db, hold, amount, "Speech: " + m.name, {
             model: m.id,

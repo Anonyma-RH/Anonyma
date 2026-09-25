@@ -367,6 +367,13 @@ export const UPDATES = [
     points: ["Read older replies without forced scrolling", "Jump to the latest reply when ready", "Check actual charge status without resending"],
     released: true,
   },
+  {
+    id: "historylibrary",
+    title: "History Search & Library Actions",
+    tagline: "Pick up where you left off.",
+    points: ["Search saved conversations", "Reopen accessible source chats", "Review a fresh quote before rerunning media"],
+    released: true,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -476,6 +483,12 @@ export function featuresFor(req) {
   const p = String(req.path).toLowerCase(),
     post = req.method === "POST",
     body = req.body || {};
+  if (p.startsWith("/api/history/") || p.startsWith("/api/library/")) return ["historylibrary"];
+  if (post && (body.libraryMediaId !== undefined || body.libraryQuote !== undefined)) {
+    if (p === "/api/images") return ["historylibrary", "images"];
+    if (p === "/api/videos") return ["historylibrary", "video"];
+    if (p === "/api/audio/speech") return ["historylibrary", "audio"];
+  }
   if (p.startsWith("/api/videos")) return ["video"];
   if (p.startsWith("/api/audio")) return ["audio"];
   // Team Treasury lives inside collabs, so its routes need both. Viewing a

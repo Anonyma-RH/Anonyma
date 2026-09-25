@@ -13,6 +13,7 @@ import {
   markupFactor,
 } from "../core.js";
 import { generateImages } from "../provider.js";
+import { mediaRecipe } from "../history-library.js";
 import { requestIdentifier } from "../middleware.js";
 
 // The private media library and image generation.
@@ -61,6 +62,7 @@ export function mediaRoutes(ctx) {
     requireUser,
     limit("images", 10, 60000),
     async (req, res) => {
+      await ctx.library.validateReplay(req, "image");
       const m = getModel(req.body.model, "image"),
         prompt = String(req.body.prompt || "");
       if (!prompt.trim() || prompt.length > 48000)
@@ -151,7 +153,7 @@ export function mediaRoutes(ctx) {
                 img.b64_json
                   ? "data:image/png;base64," + img.b64_json
                   : img.url,
-                { prompt, model: m.id, signal: controller.signal },
+                { prompt, model: m.id, signal: controller.signal, protectMedia: req.body.libraryMediaId, recipe: mediaRecipe("image", { ...req.body, model: m.id, prompt, n, images: refs }) },
               );
               data.push(saved);
               deliveredCost += batch.cost / batch.data.length;

@@ -225,7 +225,7 @@ export const UPDATES = [
       "One tap to the version that doesn't",
       "Flagged in the API too",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

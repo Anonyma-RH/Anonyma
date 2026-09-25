@@ -3,7 +3,8 @@
 export const MAX_TITLE = 80;
 export const MAX_BODY = 8000;
 export const MAX_INSTRUCTIONS = 4000;
-const VARIABLE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
+// Names may be any letters or digits, so {{主题}} works as well as {{topic}}.
+const VARIABLE = /\{\{\s*([\p{L}\p{N}_]+)\s*\}\}/gu;
 
 // Ordered, de-duplicated {{name}} placeholders found in a scroll body.
 export function extractVariables(body) {

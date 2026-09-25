@@ -384,3 +384,12 @@ test("scrolls: releasing the update opens its endpoints", async (t) => {
     .expect(200);
   await agent.delete(`/api/scrolls/${created.id}`).expect(200);
 });
+
+test("placeholder names can be written in any script", () => {
+  assert.deepEqual(extractVariables("为{{主题}}写一份{{受众}}简报，主题：{{主题}}"), ["主题", "受众"]);
+  assert.equal(
+    fillTemplate("为{{主题}}写一份简报", { 主题: "季度收入" }),
+    "为季度收入写一份简报",
+  );
+  assert.deepEqual(extractVariables("{{ café_1 }} and {{topic}}"), ["café_1", "topic"]);
+});

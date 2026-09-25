@@ -53,12 +53,13 @@ export const UPDATES = [
   },
   {
     id: "audio",
+    released: true,
     title: "Voice & Audio",
     tagline: "Talk to it. Hear it back.",
     points: [
       "Natural text-to-speech voices",
       "Dictate prompts with the mic",
-      "Transcribe any recording",
+      "Dictate prompts into your composer",
     ],
   },
   {

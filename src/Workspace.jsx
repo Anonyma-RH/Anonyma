@@ -1182,7 +1182,17 @@ export default function Workspace() {
           ) : mode === "collab" ? (
             <CollabHub demo={demo} user={user} />
           ) : mode === "symposium" ? (
-            <Symposium demo={demo} user={user} models={models} config={config} refresh={refresh} />
+            <Symposium
+              demo={demo}
+              user={user}
+              models={models}
+              config={config}
+              refresh={refresh}
+              veilOn={veilOn}
+              setVeilOn={setVeilOn}
+              veilWords={veilWords}
+              setVeilWords={setVeilWords}
+            />
           ) : mode === "audio" ? (
             <AudioStudio
               demo={demo}

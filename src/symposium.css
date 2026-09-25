@@ -121,3 +121,13 @@
   padding-top: 22px;
   background: linear-gradient(#ffffff00, #fff 18px);
 }
+.app-shell .symposium-saved {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #d6e0ff;
+}
+.app-shell .symposium-veil-note {
+  font-size: 11px;
+  color: var(--work-muted);
+  margin: -8px 0 16px;
+}

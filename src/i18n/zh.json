@@ -1479,7 +1479,8 @@
     "Ask every model the same question…": "向所有模型提出同一个问题…",
     "Ask all models": "向所有模型提问",
     "Filter models": "筛选模型",
-    "Each model is billed separately at its own rate. AI can make mistakes.": "每个模型按各自的价格单独计费。AI 可能会出错。"
+    "Each model is billed separately at its own rate. AI can make mistakes.": "每个模型按各自的价格单独计费。AI 可能会出错。",
+    "Symposium runs are saved to your account, even with Private Mode on.": "即使开启隐私模式，模型圆桌的运行记录也会保存到你的账户。"
   },
   "patterns": [
     {
@@ -2185,6 +2186,14 @@
     {
       "en": "Estimated total: {0} credits",
       "zh": "预计总计：{0} 积分"
+    },
+    {
+      "en": "Veiled {0} detail before sending. The real values show only in this browser.",
+      "zh": "Veil 已在发送前隐藏 {0} 条详情。真实内容仅在此浏览器中显示。"
+    },
+    {
+      "en": "Veiled {0} details before sending. The real values show only in this browser.",
+      "zh": "Veil 已在发送前隐藏 {0} 条详情。真实内容仅在此浏览器中显示。"
     }
   ]
 }

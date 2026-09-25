@@ -44,7 +44,7 @@ export function VeilPanel({ note, words, onWordsChange }) {
               {note.entries.map((e) => (
                 <li key={e.tag}>
                   <code>[{e.tag}]</code>
-                  <span>{e.value}</span>
+                  <span data-i18n="off">{e.value}</span>
                 </li>
               ))}
             </ul>

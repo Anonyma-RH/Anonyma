@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "../server/app.js";
 import { UPDATES } from "../server/releases.js";
+import { CONVERSATION_CAP, SYMPOSIUM_CAP } from "../server/routes/conversations.js";
 
 // Release commits flip `released` on UPDATES entries. These tests cover the
 // gate itself, so they pin every update to unreleased for this file and keep
@@ -210,6 +211,57 @@ test("Symposium's gate adds to a request's other gates instead of replacing them
   assert.equal(refused.body.error.message, "Symposium is coming soon.");
 });
 
+test("symposium runs have their own cap and never evict ordinary chats", async (t) => {
+  const s = fixture(t);
+  const { agent, user } = await register(s.app);
+  const count = (mode) =>
+    s.db
+      .prepare(
+        "SELECT COUNT(*) n FROM conversations WHERE user_id=? AND (mode IS 'symposium')=?",
+      )
+      .get(user.id, mode === "symposium" ? 1 : 0).n;
+  const messagesOf = (id) =>
+    s.db.prepare("SELECT COUNT(*) n FROM messages WHERE conversation_id=?").get(id).n;
+
+  // The oldest ordinary chat and the oldest symposium run both have messages.
+  await agent.post("/api/chat").send(ask(undefined)).expect(200);
+  await agent.post("/api/chat").send(ask("symposium")).expect(200);
+  const oldest = (mode) =>
+    s.db
+      .prepare("SELECT id FROM conversations WHERE user_id=? AND mode=? ORDER BY rowid LIMIT 1")
+      .get(user.id, mode).id;
+  const firstChat = oldest("chat"),
+    firstRun = oldest("symposium");
+  assert.ok(messagesOf(firstChat) > 0 && messagesOf(firstRun) > 0);
+
+  // Fill the ordinary cap exactly, then run far more symposium conversations
+  // than their own cap allows.
+  const insert = s.db.prepare(
+    "INSERT INTO conversations(id,user_id,title,mode,created,updated) VALUES(?,?,?,?,?,?)",
+  );
+  for (let i = 1; i < CONVERSATION_CAP; i++)
+    insert.run(`c_fill_${i}`, user.id, "Filler", "chat", Date.now(), Date.now());
+  assert.equal(count("chat"), CONVERSATION_CAP);
+  for (let i = 0; i < SYMPOSIUM_CAP + 10; i++)
+    await agent.post("/api/conversations").send({ mode: "symposium" }).expect(201);
+
+  // No ordinary chat was evicted; symposium runs stay at their own cap, and
+  // the oldest run went with its messages.
+  assert.equal(count("chat"), CONVERSATION_CAP);
+  assert.ok(s.db.prepare("SELECT 1 FROM conversations WHERE id=?").get(firstChat));
+  assert.ok(messagesOf(firstChat) > 0);
+  assert.equal(count("symposium"), SYMPOSIUM_CAP);
+  assert.equal(s.db.prepare("SELECT 1 FROM conversations WHERE id=?").get(firstRun), undefined);
+  assert.equal(messagesOf(firstRun), 0);
+
+  // A new ordinary chat still evicts only the oldest ordinary chat.
+  await agent.post("/api/conversations").send({ mode: "chat" }).expect(201);
+  assert.equal(count("chat"), CONVERSATION_CAP);
+  assert.equal(count("symposium"), SYMPOSIUM_CAP);
+  assert.equal(s.db.prepare("SELECT 1 FROM conversations WHERE id=?").get(firstChat), undefined);
+  assert.equal(messagesOf(firstChat), 0);
+});
+
 test("Symposium is registered as an unreleased update", () => {
   const update = UPDATES.find((u) => u.id === "symposium");
   assert.ok(update);
@@ -222,6 +274,53 @@ test("Symposium is registered as an unreleased update", () => {
   ]);
   // Committed as false until its "Release …" commit flips it to true.
   assert.equal(typeof committed[UPDATES.indexOf(update)], "boolean");
+});
+
+test("veilQuestion masks the question once for every column and the fusion step", async () => {
+  const { veilQuestion, veilSegments } = await import("../src/symposium.js");
+  const { createVeilState } = await import("../src/veil.js");
+  const question = "Draft a reply to jane@example.com about Project Nimbus for jane@example.com.";
+
+  // Veil off: the question goes out as typed.
+  const plain = veilQuestion(question, { on: false, state: createVeilState(), words: ["Nimbus"] });
+  assert.deepEqual(plain, { text: question, count: 0, entries: [] });
+
+  // Veil on: emails and the user's words become tags; a repeated value
+  // reuses its tag, and the entries list each tag once with its real value.
+  const state = createVeilState();
+  const masked = veilQuestion(question, { on: true, state, words: ["Nimbus"] });
+  assert.equal(
+    masked.text,
+    "Draft a reply to [EMAIL_1] about Project [PRIVATE_1] for [EMAIL_1].",
+  );
+  assert.equal(masked.count, 3);
+  assert.deepEqual(masked.entries, [
+    { tag: "EMAIL_1", value: "jane@example.com" },
+    { tag: "PRIVATE_1", value: "Nimbus" },
+  ]);
+
+  // The fusion request carries only the masked question and the (tagged)
+  // answers, never the real values.
+  const fusion = buildFusionMessages({
+    question: masked.text,
+    answers: [
+      { name: "A", text: "Hi [EMAIL_1], about [PRIVATE_1]…" },
+      { name: "B", text: "Dear [EMAIL_1]" },
+    ],
+  });
+  const sent = JSON.stringify(fusion);
+  assert.doesNotMatch(sent, /jane@example\.com|Nimbus/);
+  assert.match(sent, /\[EMAIL_1\]/);
+
+  // On screen the same map restores the values; unknown tags stay as written.
+  assert.deepEqual(veilSegments("To [EMAIL_1] re [PRIVATE_1] and [KEY_9].", state.map), [
+    { text: "To " },
+    { tag: "EMAIL_1", value: "jane@example.com" },
+    { text: " re " },
+    { tag: "PRIVATE_1", value: "Nimbus" },
+    { text: " and [KEY_9]." },
+  ]);
+  assert.deepEqual(veilSegments("", state.map), []);
 });
 
 test("pickerModels lists selected models first and filters the rest", async () => {

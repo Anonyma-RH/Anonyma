@@ -3,8 +3,17 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Icon, Notice, Empty, BandLines, BandSteps } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
-import { api, streamChat, uid } from "./lib.js";
-import { defaultSymposiumModels, buildFusionMessages, totalEstimate, pickerModels } from "./symposium.js";
+import { api, streamChat, uid, isReleased } from "./lib.js";
+import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
+import { createVeilState } from "./veil.js";
+import {
+  defaultSymposiumModels,
+  buildFusionMessages,
+  totalEstimate,
+  pickerModels,
+  veilQuestion,
+  veilSegments,
+} from "./symposium.js";
 // Every column holds credits for its full output limit while it runs, so
 // Symposium asks for shorter answers than chat to keep four at once
 // within a normal balance. Fusion keeps the chat limit.
@@ -29,9 +38,27 @@ const emptyColumn = () => ({
 
 // Symposium: ask 2-4 chat models the same question side by side, then
 // optionally fuse their answers into one. Each model streams independently
-// (see /api/chat) so one failure never blocks the others.
-export default function Symposium({ demo, user, models, config, refresh }) {
+// (see /api/chat) so one failure never blocks the others. Veil uses the
+// workspace's own setting and word list (passed in), so turning it on here
+// or in chat is the same switch.
+export default function Symposium({
+  demo,
+  user,
+  models,
+  config,
+  refresh,
+  veilOn = false,
+  setVeilOn,
+  veilWords = [],
+  setVeilWords,
+}) {
   const welcome = useRef();
+  // This run's tag -> value map. It lives only in this browser tab: runs have
+  // no thread to reopen, so nothing needs to be stored or sent.
+  const veilState = useRef(createVeilState());
+  const [veilNote, setVeilNote] = useState(null);
+  const veilLive = !demo && isReleased(config, "veil");
+  const veilMarks = [veilRemarkPlugin, { map: veilState.current.map }];
   const controllers = useRef({});
   const fuseController = useRef(null);
   // Callable chat models only. Uncensored models stay in their own section,
@@ -84,13 +111,19 @@ export default function Symposium({ demo, user, models, config, refresh }) {
     if (!question || selected.length < 2 || quoting) return;
     setError("");
     setQuoting(true);
+    // Quote what would be sent: masked with a throwaway map when Veil is on.
+    const { text } = veilQuestion(question, {
+      on: veilOn && veilLive,
+      state: createVeilState(),
+      words: veilWords,
+    });
     const results = await Promise.allSettled(
       selected.map((id) =>
         api("/api/quote", {
           method: "POST",
           body: {
             model: id,
-            messages: [{ role: "user", content: question }],
+            messages: [{ role: "user", content: text }],
             max_tokens: COLUMN_TOKENS,
           },
         }).then((r) => ({ credits: r.credits })),
@@ -171,13 +204,21 @@ export default function Symposium({ demo, user, models, config, refresh }) {
     }
     setError("");
     setFusion(null);
-    setAskedQuestion(question);
+    // Mask once per run: every column and the fusion step send this text.
+    veilState.current = createVeilState();
+    const masked = veilQuestion(question, {
+      on: veilOn && veilLive,
+      state: veilState.current,
+      words: veilWords,
+    });
+    setVeilNote(masked.count ? { count: masked.count, entries: masked.entries } : null);
+    setAskedQuestion(masked.text);
     setRunModels(selected);
     setFuseModel(selected[0]);
     setColumns(Object.fromEntries(selected.map((id) => [id, emptyColumn()])));
     setPrompt("");
     setQuotes({});
-    await Promise.allSettled(selected.map((id) => runOne(id, question)));
+    await Promise.allSettled(selected.map((id) => runOne(id, masked.text)));
     if (!demo) refresh();
   }
   function stopOne(id) {
@@ -257,13 +298,34 @@ export default function Symposium({ demo, user, models, config, refresh }) {
             Choose 2 to 4 chat models, ask them the same question, and compare what
             comes back. Fuse the answers into one when they're done.
           </p>
+          {/* A div, not a p: the band styles its last paragraph. */}
+          <div className="symposium-saved">
+            Symposium runs are saved to your account, even with Private Mode on.
+          </div>
           <BandSteps />
         </div>
         {runModels.length > 0 && (
           <div className="symposium-results" style={{ "--symposium-cols": runModels.length }}>
             {askedQuestion && (
               <p className="symposium-question" data-i18n="off">
-                {askedQuestion}
+                {veilSegments(askedQuestion, veilState.current.map).map((part, i) =>
+                  part.tag ? (
+                    <mark
+                      key={i}
+                      className="veil-mark"
+                      title={`Veiled — the model saw [${part.tag}]`}
+                    >
+                      {part.value}
+                    </mark>
+                  ) : (
+                    <React.Fragment key={i}>{part.text}</React.Fragment>
+                  ),
+                )}
+              </p>
+            )}
+            {veilNote?.count > 0 && (
+              <p className="symposium-veil-note">
+                {`Veiled ${veilNote.count} detail${veilNote.count === 1 ? "" : "s"} before sending. The real values show only in this browser.`}
               </p>
             )}
             <div className="symposium-columns">
@@ -284,7 +346,7 @@ export default function Symposium({ demo, user, models, config, refresh }) {
                       )}
                     </header>
                     <div className="markdown" data-i18n={col.text ? "off" : undefined}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm, veilMarks]}>
                         {col.text || (col.status === "pending" ? "Preparing…" : "")}
                       </ReactMarkdown>
                     </div>
@@ -344,7 +406,7 @@ export default function Symposium({ demo, user, models, config, refresh }) {
                       )}
                     </header>
                     <div className="markdown" data-i18n={fusion.text ? "off" : undefined}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm, veilMarks]}>
                         {fusion.text || (fusion.status === "pending" ? "Preparing…" : "")}
                       </ReactMarkdown>
                     </div>
@@ -397,9 +459,20 @@ export default function Symposium({ demo, user, models, config, refresh }) {
             rows="3"
           />
           <div className="composer-controls">
-            <span className="fine-print">
-              {selected.length} of {visibleModels.length} models selected
-            </span>
+            <div>
+              {veilLive && (
+                <VeilToggle
+                  on={veilOn}
+                  onToggle={() => {
+                    setVeilOn?.((v) => !v);
+                    setQuotes({});
+                  }}
+                />
+              )}
+              <span className="fine-print">
+                {selected.length} of {visibleModels.length} models selected
+              </span>
+            </div>
             <button
               type="submit"
               className="send-button"
@@ -438,6 +511,9 @@ export default function Symposium({ demo, user, models, config, refresh }) {
         </form>
         <div className="composer-caption">
           <span>Each model is billed separately at its own rate. AI can make mistakes.</span>
+          {veilLive && (
+            <VeilPanel note={veilNote} words={veilWords} onWordsChange={(w) => setVeilWords?.(w)} />
+          )}
           <button
             type="button"
             onClick={estimate}

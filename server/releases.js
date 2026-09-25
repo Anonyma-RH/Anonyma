@@ -324,6 +324,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "doublecheck",
+    title: "Double-check This",
+    tagline: "A second opinion from another provider.",
+    points: [
+      "One tap under any answer",
+      "A model from a different provider reviews it",
+      "See the extra cost before you ask",
+    ],
+    released: true,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -510,6 +521,8 @@ export function featuresFor(req) {
     if (body.mode === "uncensored") needed.push("uncensored");
     if (body.mode === "symposium") needed.push("symposium");
     if (p === "/api/chat" && body.ephemeral === true) needed.push("ephemeral");
+    // Double-check This runs on Symposium's orchestration (mode "symposium").
+    if (p === "/api/chat" && body.double_check != null) needed.push("doublecheck");
     // Private mode always takes the ephemeral path, so it needs both.
     if (p === "/api/chat" && body.private === true)
       needed.push("private", "ephemeral");

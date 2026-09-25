@@ -22,6 +22,7 @@ import { requestIdentifier } from "../middleware.js";
 import { isPrivateModel, ZDR_ROUTING } from "../private-mode.js";
 import { isReleased } from "../releases.js";
 import { buildReceiptPayload } from "../receipts.js";
+import { providerKey, sameProvider } from "../../src/double-check.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -67,6 +68,51 @@ export function chatRoutes(ctx) {
         "Private mode needs a model with zero data retention.",
         "private_model_required",
       );
+    // Double-check This: a second opinion must come from another provider,
+    // and it never joins the conversation it reviews. It runs as a Symposium
+    // request (saved apart, if saved at all), with the same ephemeral and
+    // private handling as any chat, so the reviewed chat's storage is kept.
+    // A saved check is a copy of the reviewed question and answer, so it
+    // must name its source conversation (one this user can read) and is
+    // linked to it: the schema then keeps it no longer than the source (its
+    // absolute deadline, or the account default if sooner) and deletes it
+    // with the source (see the source_id migration in core.js). Off the
+    // record and Private checks store nothing.
+    let checkSource;
+    if (!api && req.body.double_check != null) {
+      const id = req.body.double_check?.source_model;
+      const source = typeof id === "string" ? ctx.models.find(id) : null;
+      if (!source)
+        fail(400, "Double-check needs the model that wrote the answer.", "invalid_request");
+      // Unknown makers are never assumed to differ.
+      if (!providerKey(source) || !providerKey(m))
+        fail(
+          400,
+          "A second opinion needs models whose providers are known.",
+          "double_check_provider_unknown",
+        );
+      if (sameProvider(m, source))
+        fail(
+          400,
+          "Choose a model from a different provider for a second opinion.",
+          "double_check_same_provider",
+        );
+      if (req.body.mode !== "symposium" || req.body.conversationId)
+        fail(400, "A double-check runs on its own, apart from the conversation.", "invalid_request");
+      const from = req.body.double_check.source_conversation;
+      if (from != null) {
+        if (typeof from !== "string")
+          fail(400, "source_conversation must be a conversation id.", "invalid_request");
+        checkSource = accessConversation(from, req.user.id);
+        if (checkSource.source_id)
+          fail(400, "A second opinion can't itself be double-checked.", "invalid_request");
+      } else if (req.body.ephemeral !== true && !isPrivate)
+        fail(
+          400,
+          "A saved double-check needs its source conversation.",
+          "invalid_request",
+        );
+    }
     const messages = validateMessages(req.body.messages, m, api),
       max = maxTokens(req.body.max_tokens);
     const requestId = requestIdentifier(req);
@@ -148,6 +194,11 @@ export function chatRoutes(ctx) {
             : "Image conversation",
           ["code", "uncensored", "symposium"].includes(req.body.mode) ? req.body.mode : "chat",
         );
+        if (checkSource)
+          db.prepare("UPDATE conversations SET source_id=? WHERE id=?").run(
+            checkSource.id,
+            conversation,
+          );
         db.prepare(
           "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
         ).run(

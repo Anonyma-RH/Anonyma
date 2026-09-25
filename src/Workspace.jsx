@@ -31,6 +31,7 @@ import WorkspaceHome from "./WorkspaceHome.jsx";
 import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import CollabHub from "./Collab.jsx";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
+import DoubleCheck from "./DoubleCheck.jsx";
 import {
   EphemeralToggle,
   EphemeralNotice,
@@ -267,6 +268,8 @@ export default function Workspace() {
     // True while a branch is being made and its resend runs (see branchFlight).
     [branching, setBranching] = useState(false),
     [privateMode, setPrivateMode] = useState(false),
+    // Double-check This: the index of the answer whose second-opinion panel is open.
+    [checking, setChecking] = useState(null),
     [shared, setShared] = useState(null),
     [scrolls, setScrolls] = useState([]),
     [instructions, setInstructions] = useState({ body: "", enabled: false }),
@@ -538,6 +541,7 @@ export default function Workspace() {
     });
   }
   function newChat() {
+    setChecking(null);
     if (linked) navigate("/workspace/" + mode + (demo ? "?demo=1" : ""));
     setShared(null);
     setLineage({ parent: null, branches: [] });
@@ -589,6 +593,7 @@ export default function Workspace() {
     veilStateRef.current = loadVeilState(c.id);
     setVeilNote(null);
     setEphemeral(false);
+    setChecking(null);
     setCurrent(c.id);
     setMessages(c.messages || []);
     setLineage({ parent: null, branches: [] });
@@ -664,6 +669,19 @@ export default function Workspace() {
   const sendModel = target?.id || model;
   const branchesLive = isReleased(config, "branches");
   if (!branchFlight.current) branchFlight.current = singleFlight();
+  // Uses Symposium's orchestration, so both updates must be live; never in the demo.
+  const doubleCheckLive =
+    !demo && !!user && isReleased(config, "doublecheck") && isReleased(config, "symposium");
+  // A check leaves the browser under the same Veil policy as a chat turn
+  // (Private Mode forces Veil on): the question and answer are masked with
+  // this conversation's map and the always-veil words, even when they were
+  // written before Veil was switched on.
+  const doubleCheckVeil = (veilOn || privateMode) && isReleased(config, "veil");
+  const veilForCheck = (text) => {
+    const r = veil(text, veilStateRef.current, veilWords);
+    if (r.count) saveVeilState(veilKeyRef.current, veilStateRef.current);
+    return r;
+  };
   // Typing "/" at the start of an empty prompt opens a scroll picker, filtered
   // by title, in chat, code and Uncensored. Users with no saved scrolls see
   // no change in behaviour.
@@ -1679,6 +1697,40 @@ export default function Workspace() {
                               ))}
                             </div>
                           )}
+                          {doubleCheckLive &&
+                            m.role === "assistant" &&
+                            m.content &&
+                            m.model &&
+                            !m.sample &&
+                            !(busy && i === messages.length - 1) &&
+                            (checking === i ? (
+                              <DoubleCheck
+                                key={(current || "local") + ":" + i}
+                                answer={m}
+                                question={
+                                  messages.slice(0, i).filter((x) => x.role === "user").at(-1)?.content || ""
+                                }
+                                models={visibleModels}
+                                privateMode={privateMode}
+                                ephemeral={ephemeral}
+                                sourceConversation={current}
+                                mask={doubleCheckVeil ? veilForCheck : null}
+                                maskPolicy={
+                                  doubleCheckVeil ? "veil:" + JSON.stringify(veilWords) : "off"
+                                }
+                                veilMap={veilStateRef.current.map}
+                                onClose={() => setChecking(null)}
+                                refresh={refresh}
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                className="double-check-action"
+                                onClick={() => setChecking(i)}
+                              >
+                                Double-check this
+                              </button>
+                            ))}
                         </div>
                       </article>
                       );

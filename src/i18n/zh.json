@@ -2085,7 +2085,31 @@
     "You've reached your monthly team spending limit.": "你已达到每月团队消费上限。",
     "Credits you add belong to the team treasury, which its owner controls, and can't be taken back.": "你存入的积分归团队金库所有，由协作空间所有者掌管，存入后无法取回。",
     "Team Treasury is paused. Its balance stays on the ledger, and the owner can withdraw it.": "团队金库已暂停。余额仍记录在账本上，所有者可以将其提取。",
-    "Share conversations with up to 11 other people. Pay for your own requests, or from a shared team treasury.": "与最多 11 位其他成员共享会话。你可以自己付费，也可以使用共享的团队金库。"
+    "Share conversations with up to 11 other people. Pay for your own requests, or from a shared team treasury.": "与最多 11 位其他成员共享会话。你可以自己付费，也可以使用共享的团队金库。",
+    "Double-check This": "再核对一下",
+    "Double-check this": "再核对一下",
+    "A second opinion from another provider.": "来自另一家提供商的第二意见。",
+    "One tap under any answer": "在任意回答下点一下即可",
+    "A model from a different provider reviews it": "由另一家提供商的模型进行审阅",
+    "See the extra cost before you ask": "提问前先看到额外费用",
+    "A second opinion from another provider's model, not fact verification. It can be wrong too.": "这是另一家提供商模型给出的第二意见，并非事实核查，它也可能出错。",
+    "Double-check this answer": "再核对这个回答",
+    "Second opinion from": "第二意见来自",
+    "Estimate unavailable": "暂无法估算",
+    "Ask for a second opinion": "请求第二意见",
+    "Second opinion": "第二意见",
+    "Reviewing…": "正在审阅…",
+    "No private model from another provider is available right now.": "目前没有来自其他提供商的私密模型可用。",
+    "No model from another provider is available right now.": "目前没有来自其他提供商的模型可用。",
+    "Double-check needs the model that wrote the answer.": "再核对需要知道写出该回答的模型。",
+    "Choose a model from a different provider for a second opinion.": "请选择来自不同提供商的模型来给出第二意见。",
+    "A double-check runs on its own, apart from the conversation.": "再核对会单独运行，不加入原对话。",
+    "Retry estimate": "重新估算",
+    "The provider of this answer's model isn't known, so a second opinion isn't available.": "无法确定这个回答所用模型的提供商，因此无法获取第二意见。",
+    "A second opinion needs models whose providers are known.": "第二意见需要提供商已知的模型。",
+    "A saved double-check needs its source conversation.": "保存的再核对需要注明其来源对话。",
+    "source_conversation must be a conversation id.": "source_conversation 必须是对话 ID。",
+    "This second opinion uses your personal balance, even in a shared chat.": "即使在共享会话中，这次第二意见也使用你的个人余额。"
   },
   "patterns": [
     {
@@ -3147,6 +3171,18 @@
     {
       "en": "A collab you own still has {0} credits in its team treasury. Withdraw or spend them before closing your account.",
       "zh": "你拥有的一个协作空间的团队金库中仍有 {0} 积分。请先提取或用完这些积分，再关闭账户。"
+    },
+    {
+      "en": "Estimated extra: ~{0} credits",
+      "zh": "预计额外费用：约 {0} 积分"
+    },
+    {
+      "en": "On the answer from {0}.",
+      "zh": "针对 {0} 的回答。"
+    },
+    {
+      "en": "{0} credits charged for this second opinion.",
+      "zh": "此次第二意见收取了 {0} 积分。"
     }
   ]
 }

@@ -465,6 +465,54 @@ export const MIGRATIONS = [
         OR EXISTS (SELECT 1 FROM holds WHERE user_id=t.account_user_id AND status='held')))
       BEGIN SELECT RAISE(ABORT,'treasury_not_empty'); END;
     `),
+  // Double-check This: a saved second opinion is a copy of the question and
+  // answer it reviewed, so it links to that conversation (source_id) and
+  // never outlives it. Deleting the source deletes its checks, whatever the
+  // path (delete, delete all, cap pruning, expiry cleanup, collab deletion).
+  // Shortening the source's auto-delete shortens its checks, and no update
+  // can give a check a later deadline than its source; a longer source
+  // deadline never extends a check. A member who leaves (or is removed from)
+  // a collab loses their checks of its conversations along with access.
+  (db) => {
+    addColumn(
+      db,
+      "conversations",
+      "source_id",
+      "TEXT REFERENCES conversations(id) ON DELETE CASCADE",
+    );
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS conversations_source ON conversations(source_id) WHERE source_id IS NOT NULL;
+      CREATE TRIGGER IF NOT EXISTS conversation_checks_shorten AFTER UPDATE OF expires ON conversations
+        WHEN NEW.expires IS NOT NULL
+        BEGIN
+          UPDATE conversations SET expires=NEW.expires
+            WHERE source_id=NEW.id AND (expires IS NULL OR expires>NEW.expires);
+        END;
+      CREATE TRIGGER IF NOT EXISTS conversation_check_bounded AFTER UPDATE OF expires, source_id ON conversations
+        WHEN NEW.source_id IS NOT NULL AND (SELECT s.expires FROM conversations s WHERE s.id=NEW.source_id) IS NOT NULL
+          AND (NEW.expires IS NULL OR NEW.expires>(SELECT s.expires FROM conversations s WHERE s.id=NEW.source_id))
+        BEGIN
+          UPDATE conversations SET expires=(SELECT s.expires FROM conversations s WHERE s.id=NEW.source_id) WHERE id=NEW.id;
+        END;
+      CREATE TRIGGER IF NOT EXISTS conversation_check_bounded_insert AFTER INSERT ON conversations
+        WHEN NEW.source_id IS NOT NULL AND (SELECT s.expires FROM conversations s WHERE s.id=NEW.source_id) IS NOT NULL
+          AND (NEW.expires IS NULL OR NEW.expires>(SELECT s.expires FROM conversations s WHERE s.id=NEW.source_id))
+        BEGIN
+          UPDATE conversations SET expires=(SELECT s.expires FROM conversations s WHERE s.id=NEW.source_id) WHERE id=NEW.id;
+        END;
+      CREATE TRIGGER IF NOT EXISTS conversation_check_never_extend AFTER UPDATE OF expires ON conversations
+        WHEN OLD.source_id IS NOT NULL AND OLD.expires IS NOT NULL
+          AND (NEW.expires IS NULL OR NEW.expires>OLD.expires)
+        BEGIN
+          UPDATE conversations SET expires=MIN(OLD.expires,COALESCE((SELECT s.expires FROM conversations s WHERE s.id=NEW.source_id),OLD.expires)) WHERE id=NEW.id;
+        END;
+      CREATE TRIGGER IF NOT EXISTS collab_member_checks_removed AFTER DELETE ON collab_members
+        BEGIN
+          DELETE FROM conversations WHERE user_id=OLD.user_id AND source_id IN
+            (SELECT id FROM conversations WHERE collab_id=OLD.collab_id);
+        END;
+    `);
+  },
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

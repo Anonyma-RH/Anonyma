@@ -1,0 +1,11 @@
+/* Double-check This: the second-opinion panel under an answer. */
+.app-shell .double-check{margin-top:12px;padding:14px 16px;border:1px solid #cfd6ee;border-left:4px solid #ffb21c;border-radius:10px;background:#f7f8fd}
+.app-shell .double-check header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.app-shell .double-check .fine-print{margin:6px 0 10px}
+.app-shell .double-check-controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+.app-shell .double-check-controls label{display:grid;gap:4px;font-size:12px}
+.app-shell .double-check-controls select{max-width:320px;font:inherit;font-size:13px;padding:6px 8px}
+.app-shell .double-check-cost{font-size:12px;opacity:.75;align-self:center}
+.app-shell .double-check-result{margin-top:12px;padding-top:10px;border-top:1px solid #dfe3f2}
+.app-shell .double-check-action{margin-top:8px;font:inherit;font-size:12px;padding:5px 10px;border:1px solid #cfd6ee;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.app-shell .double-check-action:hover{border-color:#0135df;color:#0135df}

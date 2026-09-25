@@ -218,48 +218,39 @@ test("the gate opens only viewing and withdrawal of a treasury without Team Trea
   assert.ok(needs("POST", "/api/chat", { treasury: true }).includes("treasury"));
 });
 
-test("the migration is additive: earlier builds can start, and schema-rollback steps over it", (t) => {
-  const path = join(tempDir(t), "schema.sqlite");
-  const db = database(path);
+test("Treasury rollback remains additive and later non-additive migrations cannot be skipped", (t) => {
+  const db = database(join(tempDir(t), "latest.sqlite"));
   t.after(() => db.close());
   const latest = MIGRATIONS.length;
-  const version = () => db.prepare("PRAGMA user_version").get().user_version;
-  const additive = () => db.prepare("SELECT version FROM schema_additive ORDER BY version").all().map((r) => r.version);
-  assert.equal(version(), latest);
-  assert.ok(additive().includes(latest), "Team Treasury's migration records itself as additive");
-
-  // A database a newer, additive-only build upgraded still starts here.
+  const treasuryVersion = 17; // Released after Holder Program schema16; never renumber.
+  assert.ok(db.prepare("SELECT version FROM schema_additive WHERE version=?").get(treasuryVersion));
   db.exec(`PRAGMA user_version=${latest + 1}`);
   db.prepare("INSERT INTO schema_additive(version) VALUES(?)").run(latest + 1);
   migrate(db);
-  // One that isn't additive still refuses, as before.
   db.prepare("DELETE FROM schema_additive WHERE version=?").run(latest + 1);
   assert.throws(() => migrate(db), /upgraded by a newer version/);
   db.exec(`PRAGMA user_version=${latest}`);
+  assert.throws(() => rollbackSchema(db, treasuryVersion), /aren't all additive/);
 
-  // Lowering the version for a build from before the rule: only over
-  // additive migrations, and upgrading again re-runs them harmlessly.
-  db.prepare("INSERT INTO users(id,created) VALUES('u_x',0)").run();
-  db.prepare("INSERT INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES('l_x','u_x',5,'test_credit','x',NULL,'x',0)").run();
-  assert.throws(() => rollbackSchema(db, latest - 2), /aren't all additive/);
-  assert.throws(() => rollbackSchema(db, latest + 1), /Choose a schema version/);
-  assert.deepEqual(rollbackSchema(db, latest - 1), { from: latest, to: latest - 1 });
-  assert.equal(version(), latest - 1);
-  migrate(db);
-  assert.equal(version(), latest);
-  assert.equal(db.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE name='treasury_keeps_collab'").get().n, 1);
-  assert.equal(balance(db, "u_x").total, 5);
-
-  // A database from before this release (version latest - 1) upgrades and records it.
+  // Build the actual pre-Treasury prefix, preserving the Holder migrations.
   const old = new DatabaseSync(join(tempDir(t), "old.sqlite"));
   t.after(() => old.close());
   old.exec("PRAGMA foreign_keys=ON");
-  migrate(old);
-  old.exec("DROP TRIGGER treasury_keeps_collab; DROP TABLE treasury_spends; DROP TABLE treasury_members; DROP TABLE treasury_accounts; DELETE FROM schema_additive;");
-  old.exec(`PRAGMA user_version=${latest - 1}`);
+  for (let v = 0; v < treasuryVersion; v++) {
+    MIGRATIONS[v](old);
+    old.exec(`PRAGMA user_version=${v + 1}`);
+  }
+  old.prepare("INSERT INTO users(id,created) VALUES('u_x',0)").run();
+  old.prepare("INSERT INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES('l_x','u_x',5,'test_credit','x',NULL,'x',0)").run();
+  assert.throws(() => rollbackSchema(old, treasuryVersion - 2), /aren't all additive/);
+  assert.throws(() => rollbackSchema(old, treasuryVersion + 1), /Choose a schema version/);
+  assert.deepEqual(rollbackSchema(old, treasuryVersion - 1), { from: treasuryVersion, to: treasuryVersion - 1 });
   migrate(old);
   assert.equal(old.prepare("PRAGMA user_version").get().user_version, latest);
-  assert.deepEqual(old.prepare("SELECT version FROM schema_additive").all().map((r) => r.version), [latest]);
+  assert.equal(old.prepare("SELECT COUNT(*) n FROM sqlite_master WHERE name='treasury_keeps_collab'").get().n, 1);
+  assert.equal(balance(old, "u_x").total, 5);
+  assert.deepEqual(old.prepare("SELECT version FROM schema_additive ORDER BY version").all().map(r => r.version), [treasuryVersion]);
+  assert.equal(old.prepare("PRAGMA foreign_key_check").all().length, 0);
 });
 
 

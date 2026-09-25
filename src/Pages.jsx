@@ -783,6 +783,7 @@ const featureIcons = {
   social: "gift",
   veil: "eyeoff",
   uncensored: "chat",
+  ephemeral: "shield",
 };
 const launch = {
   id: "mvp",

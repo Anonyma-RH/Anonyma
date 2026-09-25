@@ -468,7 +468,7 @@ export const UPDATES = [
       "The model, provider, route and retention for that prompt",
       "Only what the app knows, never a guess",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "seedguard",

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -18,6 +18,7 @@ import { UPDATES } from "../server/releases.js";
 import { knownPage } from "../src/site-routes.js";
 import { createServer } from "node:http";
 import { addCredit, balance } from "../server/core.js";
+import { compileDictionary, translateText } from "../src/i18n.js";
 
 test("calculator respects arithmetic precedence, signed powers, scientific notation and remainder", () => {
   for (const [s, n] of [
@@ -414,4 +415,44 @@ test("research citations survive the real streaming/saved path; new alternatives
     .get(interrupted.conversationId);
   assert.equal(JSON.parse(saved.content).interrupted, true);
   assert.equal(balance(svc.db, signup.body.user.id).held, 0);
+});
+
+test("Chinese UI: directions translate as labels but send English; user and model text stay as written", () => {
+  const jsx = readFileSync(
+    new URL("../src/TaskTools.jsx", import.meta.url),
+    "utf8",
+  );
+  const dict = compileDictionary(
+    JSON.parse(
+      readFileSync(new URL("../src/i18n/zh.json", import.meta.url), "utf8"),
+    ),
+  );
+  // The translator rewrites option text, so each direction needs an explicit
+  // value: the label may read 亲切自然 while the request keeps the enum.
+  assert.match(jsx, /<option key=\{d\} value=\{d\}>/);
+  for (const direction of [
+    "Clear and concise",
+    "Warm and conversational",
+    "Formal and precise",
+  ]) {
+    assert.match(translateText(direction, dict), /\p{Script=Han}/u);
+    assert.match(
+      taskMessages("writing", "Brief", direction)[0].content,
+      new RegExp(`Direction: ${direction}\\.`),
+    );
+    assert.throws(
+      () => taskMessages("writing", "Brief", translateText(direction, dict)),
+      /listed writing direction/,
+    );
+  }
+  // Model names, the user's brief, model output and source titles are content,
+  // marked with the existing data-i18n="off" convention.
+  assert.match(jsx, /<option key=\{m\.id\} value=\{m\.id\} data-i18n="off">/);
+  assert.match(jsx, /<span data-i18n="off">\{r\.modelName\}<\/span>/);
+  assert.match(jsx, /<p className="task-original" data-i18n="off">/);
+  assert.match(
+    jsx,
+    /<div className="prose" data-i18n=\{r\.text \? "off" : undefined\}>/,
+  );
+  assert.match(jsx, /<li key=\{s\.url\} data-i18n="off">/);
 });

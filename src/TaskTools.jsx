@@ -297,7 +297,7 @@ export default function TaskTools({
                     onChange={(e) => setModel(e.target.value)}
                   >
                     {choices.map((m) => (
-                      <option key={m.id} value={m.id}>
+                      <option key={m.id} value={m.id} data-i18n="off">
                         {m.name}
                       </option>
                     ))}
@@ -316,7 +316,11 @@ export default function TaskTools({
                         "Warm and conversational",
                         "Formal and precise",
                       ].map((d) => (
-                        <option key={d}>{d}</option>
+                        // An explicit value: the label may show translated,
+                        // the request always carries the English direction.
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
                       ))}
                     </select>
                   </label>
@@ -380,18 +384,21 @@ export default function TaskTools({
                   <span>{r.status}</span>
                 </header>
                 <p>
-                  {r.modelName}
+                  <span data-i18n="off">{r.modelName}</span>
                   {r.kind === "writing" ? ` · ${r.direction}` : ""}
                 </p>
                 <details>
                   <summary>Original brief</summary>
-                  <p className="task-original">{r.input}</p>
+                  <p className="task-original" data-i18n="off">
+                    {r.input}
+                  </p>
                 </details>
                 <p className="task-kind">
                   MODEL-GENERATED {r.kind === "writing" ? "DRAFT" : "ANALYSIS"}{" "}
                   · CHECK IMPORTANT CLAIMS
                 </p>
-                <div className="prose">
+                {/* Model output stays as written; only the placeholder translates. */}
+                <div className="prose" data-i18n={r.text ? "off" : undefined}>
                   <ReactMarkdown
                     remarkPlugins={[
                       remarkGfm,
@@ -411,7 +418,7 @@ export default function TaskTools({
                     {r.sources.length ? (
                       <ol>
                         {r.sources.map((s) => (
-                          <li key={s.url}>
+                          <li key={s.url} data-i18n="off">
                             <a
                               href={s.url}
                               target="_blank"

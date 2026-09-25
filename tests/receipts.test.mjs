@@ -191,6 +191,7 @@ test("the signing key persists across app restarts on the same database", async 
     dbPath,
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
+    released: "all",
     mvpModels: [MVP_MODEL],
   };
   const first = createApp(opts);

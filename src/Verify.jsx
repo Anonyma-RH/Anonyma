@@ -37,7 +37,7 @@ function fieldTable(receipt) {
           {rows.map(([label, value]) => (
             <tr key={label}>
               <th>{label}</th>
-              <td>{value ?? "—"}</td>
+              <td data-i18n="off">{value ?? "—"}</td>
             </tr>
           ))}
         </tbody>
@@ -112,6 +112,7 @@ export default function Verify() {
               required
               rows="10"
               spellCheck="false"
+              data-i18n="off"
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder='{"receipt": {...}, "signature": "..."}'
@@ -121,6 +122,7 @@ export default function Verify() {
             Answer text (optional)
             <textarea
               rows="4"
+              data-i18n="off"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               placeholder="Paste the reply text to check it against this receipt"

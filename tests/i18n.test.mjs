@@ -293,3 +293,36 @@ test("the switch renders only once the update is released", async (t) => {
   assert.match(html, /aria-pressed="false"[^>]*>中文</);
   assert.match(render(LanguageSettings, live), /Language\./);
 });
+
+test("en-US dates and times take the zh-CN form, inside patterns too", async () => {
+  const { translateDate, translateText, compileDictionary } = await import("../src/i18n.js");
+  assert.equal(translateDate("9/25/2026, 1:22:31 AM"), "2026/9/25 01:22:31");
+  assert.equal(translateDate("9/25/2026"), "2026/9/25");
+  assert.equal(translateDate("10:02:45 PM"), "22:02:45");
+  assert.equal(translateDate("12:05 AM"), "00:05");
+  assert.equal(translateDate("Credits"), undefined);
+  const dict = compileDictionary({ strings: {}, patterns: [{ en: "Last used {0}", zh: "上次使用：{0}" }] });
+  assert.equal(translateText("Last used 9/24/2026, 10:02:45 PM", dict), "上次使用：2026/9/24 22:02:45");
+  assert.equal(translateText(" 9/24/2026 ", dict), " 2026/9/24 ");
+});
+
+test("names and handles inside patterns are never translated", async () => {
+  const { translateText, compileDictionary, looksLikeHandle } = await import("../src/i18n.js");
+  const dict = compileDictionary({
+    strings: { demo: "演示" },
+    patterns: [
+      { en: "Sent to @{0}", zh: "已发送给 @{0}" },
+      { en: "Good evening, {0}.", zh: "晚上好，{0}。" },
+    ],
+  });
+  assert.equal(translateText("Sent to @demo", dict), "已发送给 @demo");
+  assert.equal(translateText("Good evening, anonyma_demo.", dict), "晚上好，anonyma_demo。");
+  assert.equal(looksLikeHandle("user42"), true);
+  assert.equal(looksLikeHandle("demo"), false);
+});
+
+test("a lone full stop ends a Chinese sentence even after a Latin name", async () => {
+  const { adjustSpacing } = await import("../src/i18n.js");
+  assert.equal(adjustSpacing(".", "o", "", true), "。");
+  assert.equal(adjustSpacing(".", "o", "", false), ".");
+});

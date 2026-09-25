@@ -49,6 +49,10 @@ export function compileDictionary(raw) {
           "$",
       ),
       slots: parts.filter((_, i) => i % 2 === 1),
+      // "@{0}" is a username: never translated.
+      raw: new Set(
+        parts.filter((x, i) => i % 2 === 1 && parts[i - 1].endsWith("@")),
+      ),
       // A cheap substring check before running the regex.
       hint: literals.reduce((a, b) => (b.length > a.length ? b : a), ""),
       zh: p.zh,
@@ -92,10 +96,31 @@ function parts(list, dict, depth) {
   return any ? out : undefined;
 }
 const TRAILING_FULL = { ",": "，", ":": "：", ";": "；" };
+// A single token with an underscore, digit or @ (anonyma_demo, user42) is a
+// name or handle, not a phrase: it stays as written inside a pattern.
+export const looksLikeHandle = (s) => /^[\w.@-]+$/.test(s) && /[_@\d]/.test(s);
+// Dates and times the browser rendered in en-US ("9/25/2026, 1:22:31 AM")
+// in the form zh-CN uses ("2026/9/25 01:22:31"); anything else is undefined.
+export function translateDate(s) {
+  const m =
+    /^(?:(\d{1,2})\/(\d{1,2})\/(\d{4}))?(?:,? ?(\d{1,2}):(\d{2})(?::(\d{2}))? ?(AM|PM))?$/.exec(
+      s,
+    );
+  if (!m || (!m[3] && !m[7])) return undefined;
+  const date = m[3] ? `${m[3]}/${Number(m[1])}/${Number(m[2])}` : "";
+  if (!m[7]) return date;
+  let h = Number(m[4]) % 12;
+  if (m[7] === "PM") h += 12;
+  const time =
+    String(h).padStart(2, "0") + ":" + m[5] + (m[6] ? ":" + m[6] : "");
+  return date ? date + " " + time : time;
+}
 // A normalized string's translation, or undefined: an exact string, then a
 // pattern (captures translated the same way when they can be), then known
 // strings inside separators, " · " status lines and ", " lists.
 export function translateString(core, dict, depth = 0) {
+  const date = translateDate(core);
+  if (date !== undefined) return date;
   const hit = dict.strings.get(core);
   if (hit !== undefined) return hit;
   if (depth > 3) return undefined;
@@ -111,8 +136,12 @@ export function translateString(core, dict, depth = 0) {
     p.slots.forEach((slot, i) => {
       const v = m[i + 1];
       const [lead, inner, trail] = splitSpace(v);
-      const t = hasLetters(inner) ? translateString(inner, dict, depth + 1) : undefined;
-      if (t === undefined && hasLetters(inner)) complete = false;
+      const t =
+        hasLetters(inner) && !p.raw.has(slot) && !looksLikeHandle(inner)
+          ? translateString(inner, dict, depth + 1)
+          : translateDate(inner);
+      if (t === undefined && hasLetters(inner) && !p.raw.has(slot) && !looksLikeHandle(inner))
+        complete = false;
       values[slot] = t === undefined ? v : lead + t + trail;
     });
     if (complete) return fill(p.zh, values);
@@ -149,7 +178,10 @@ export function translateString(core, dict, depth = 0) {
 export function translateText(text, dict) {
   const [lead, body, trail] = splitSpace(String(text));
   const core = normalize(body);
-  if (!hasLetters(core)) return undefined;
+  if (!hasLetters(core)) {
+    const date = translateDate(core);
+    return date === undefined ? undefined : lead + date + trail;
+  }
   let zh = dict.cache.get(core);
   if (zh === undefined) {
     zh = translateString(core, dict) ?? null;
@@ -162,10 +194,11 @@ export function translateText(text, dict) {
 // Spacing next to Chinese: a space between two Chinese neighbours goes, and
 // a lone comma or full stop after Chinese becomes its full-width form.
 const FULL = { ",": "，", ".": "。", ":": "：", ";": "；", "!": "！", "?": "？" };
-export function adjustSpacing(text, prev, next) {
+export function adjustSpacing(text, prev, next, chineseBlock = false) {
   const [lead, core, trail] = splitSpace(text);
   if (!core) return lead && isCJK(prev) && isCJK(next) ? "" : text;
-  if (FULL[core] && isCJK(prev)) return FULL[core] + (isCJK(next) ? "" : trail);
+  if (FULL[core] && (isCJK(prev) || chineseBlock))
+    return FULL[core] + (isCJK(next) ? "" : trail);
   return (
     (lead && isCJK(prev) && isCJK(core[0]) ? "" : lead) +
     core +
@@ -326,7 +359,13 @@ export function createSession(dict) {
     const en = english(node);
     const r = records.get(node);
     const base = r ? r.base : en;
-    const out = adjustSpacing(base, prev, next);
+    // A lone "." after a name ("晚上好，anonyma_demo.") still ends a Chinese
+    // sentence when the block around it is Chinese.
+    const lone = FULL[base.trim()] !== undefined;
+    const block = lone
+      ? node.parentElement?.closest("h1,h2,h3,h4,h5,h6,p,li,td,th,dd,dt,label,figcaption")
+      : null;
+    const out = adjustSpacing(base, prev, next, !!block && /[\u4e00-\u9fff]/.test(block.textContent));
     if (r) {
       if (out === en && base === en) return restore(node);
       r.out = out;

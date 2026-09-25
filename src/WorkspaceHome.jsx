@@ -353,12 +353,14 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
             {name && (
               <span style={{ "--i": 1 }}>
                 {/* A name too long even at the smallest size wraps after _ . or - rather than mid-word. */}
-                {name.split(/(?<=[_.-])/).map((part, i) => (
-                  <React.Fragment key={i}>
-                    {i > 0 && <wbr />}
-                    {part}
-                  </React.Fragment>
-                ))}
+                <span data-i18n="off">
+                  {name.split(/(?<=[_.-])/).map((part, i) => (
+                    <React.Fragment key={i}>
+                      {i > 0 && <wbr />}
+                      {part}
+                    </React.Fragment>
+                  ))}
+                </span>
                 .
               </span>
             )}

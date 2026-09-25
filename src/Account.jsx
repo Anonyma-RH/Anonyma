@@ -31,6 +31,23 @@ import {
   releaseUpdate,
 } from "./lib.js";
 import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
+// Ledger entry kinds as readable labels; an unknown kind reads as words.
+const LEDGER_KINDS = {
+  chat: "Chat",
+  image: "Image",
+  audio: "Voice & audio",
+  video: "Video",
+  deposit: "Deposit",
+  test_credit: "Test credit",
+  transfer_out: "Credits sent",
+  transfer_in: "Credits received",
+  payment_correction: "Payment correction",
+  referral: "Referral reward",
+  referral_correction: "Referral correction",
+};
+const ledgerKind = (kind) =>
+  LEDGER_KINDS[kind] ||
+  String(kind || "").replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase());
 export default function Account() {
   const { section = "overview" } = useParams();
   const navigate = useNavigate();
@@ -386,10 +403,10 @@ export default function Account() {
                       {ledger.map((r) => (
                         <tr key={r.id}>
                           <td>
-                            <b>{r.description || r.kind}</b>
+                            <b>{r.description || ledgerKind(r.kind)}</b>
                             <br />
                             <small>
-                              {r.kind}
+                              {ledgerKind(r.kind)}
                               {r.key_name ? " · API key " + r.key_name : ""}
                             </small>
                           </td>

@@ -1446,7 +1446,11 @@
     "text → image": "文本 → 图像",
     "text → audio": "文本 → 音频",
     "text+image → video": "文本+图像 → 视频",
-    "text+image → image": "文本+图像 → 图像"
+    "text+image → image": "文本+图像 → 图像",
+    "Test credit": "测试积分",
+    "Credits sent": "已发送积分",
+    "Payment correction": "付款更正",
+    "Referral correction": "推荐奖励更正"
   },
   "patterns": [
     {

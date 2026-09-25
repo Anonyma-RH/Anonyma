@@ -9,6 +9,7 @@ import {
   walletPaymentsEnabled,
 } from "../wallet-payments.js";
 import { modelReleased, releaseInfo, isReleased } from "../releases.js";
+import { isPrivateModel } from "../private-mode.js";
 import {
   fail,
   balance,
@@ -73,6 +74,7 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
   );
   app.get("/api/models", async (req, res) => {
     const current = await models.current();
+    const privateFlagged = isReleased(cfg, "private");
     res.json({
       ...current,
       availabilityScope: "web-workspace",
@@ -86,6 +88,7 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
         imageCapable: imageCallable(m),
         imagePrice: generationPrice(m),
         vision: vision(m),
+        ...(privateFlagged && isPrivateModel(m, cfg) ? { private: true } : {}),
       })),
     });
   });

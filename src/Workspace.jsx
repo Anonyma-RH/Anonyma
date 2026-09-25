@@ -31,6 +31,21 @@ import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import CollabHub from "./Collab.jsx";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
 import {
+  EphemeralToggle,
+  EphemeralNotice,
+  RetentionSelect,
+  RetentionIndicator,
+} from "./Ephemeral.jsx";
+import { retentionChoiceFor } from "./ephemeral.js";
+import {
+  PrivateModeToggle,
+  PrivateModeNotice,
+  NoPrivateModelsNotice,
+  PrivateModelTag,
+  PrivateReplyNote,
+  privateModeReleased,
+} from "./PrivateMode.jsx";
+import {
   api,
   streamChat,
   readStore,
@@ -205,10 +220,15 @@ export default function Workspace() {
     [quote, setQuote] = useState(null),
     [filter, setFilter] = useState("all"),
     [rename, setRename] = useState(""),
+    // The server stores an expiry, not the preset that produced it, so this
+    // only reflects a choice made in this session rather than a stored one.
+    [retentionDays, setRetentionDays] = useState(null),
     [webSearch, setWebSearch] = useState(false),
     [veilOn, setVeilOn] = useState(() => loadVeilOn()),
     [veilWords, setVeilWords] = useState(() => loadVeilWords()),
     [veilNote, setVeilNote] = useState(null),
+    [ephemeral, setEphemeral] = useState(false),
+    [privateMode, setPrivateMode] = useState(false),
     [shared, setShared] = useState(null),
     // null = not chosen yet, so the first published option wins over the "default" preset.
     [video, setVideo] = useState({
@@ -243,18 +263,24 @@ export default function Workspace() {
   const textMode = ["chat", "code", "uncensored"].includes(mode);
   const uncensoredIds = config?.releases?.uncensoredModels || [];
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
-  const visibleModels = models.filter((m) =>
-    mode === "image"
-      ? demo
-        ? m.imageCapable || m.type === "image"
-        : m.imageCapable && m.callable
-      : mode === "video"
-        ? m.type === "video" &&
-          (demo || (m.callable && videoPresets(m).length > 0))
-        : m.type === "chat" &&
-          (demo || m.callable) &&
-          (mode === "uncensored") === uncensoredIds.includes(m.id),
+  // Private mode narrows the text modes further, to private, callable models
+  // in the current section.
+  const inSection = (m) => (mode === "uncensored") === uncensoredIds.includes(m.id);
+  const privateModelsCallable = models.filter(
+    (m) => m.type === "chat" && m.private && m.callable && inSection(m),
   );
+  const visibleModels = models.filter((m) => {
+    const base =
+      mode === "image"
+        ? demo
+          ? m.imageCapable || m.type === "image"
+          : m.imageCapable && m.callable
+        : mode === "video"
+          ? m.type === "video" &&
+            (demo || (m.callable && videoPresets(m).length > 0))
+          : m.type === "chat" && (demo || m.callable) && inSection(m);
+    return base && (!textMode || !privateMode || m.private);
+  });
   const selected = models.find((m) => m.id === model);
   // Video choices come only from the model's published prices, as the server requires.
   const presets = mode === "video" && selected ? videoPresets(selected) : [];
@@ -435,6 +461,27 @@ export default function Workspace() {
     veilStateRef.current = loadVeilState(veilKeyRef.current);
     setVeilNote(null);
   }
+  // Off the record only ever applies to a fresh, unsaved thread: switching
+  // it either way starts a new chat rather than mixing saved and unsaved turns.
+  function toggleEphemeral() {
+    newChat();
+    setEphemeral((v) => !v);
+  }
+  // Private mode forces off the record on (private chats are never saved)
+  // and Veil on, and narrows the model choice to private models — like Off
+  // the record, switching it starts a fresh thread.
+  function togglePrivateMode() {
+    newChat();
+    setPrivateMode((v) => {
+      const next = !v;
+      setEphemeral(next);
+      if (next) {
+        setVeilOn(true);
+        setModel(privateModelsCallable[0]?.id || "");
+      }
+      return next;
+    });
+  }
   async function openChat(c) {
     if (mode !== c.mode) {
       navigate("/workspace/" + c.mode + "?" +
@@ -447,6 +494,7 @@ export default function Workspace() {
     veilKeyRef.current = c.id;
     veilStateRef.current = loadVeilState(c.id);
     setVeilNote(null);
+    setEphemeral(false);
     setCurrent(c.id);
     setMessages(c.messages || []);
     if (!demo) {
@@ -527,6 +575,10 @@ export default function Workspace() {
       }
       if (!target?.callable || !config?.services?.generation) {
         setError("This model is not currently available for generation.");
+        return;
+      }
+      if (privateMode && !target?.private) {
+        setError("Choose a private model, or turn off Private mode.");
         return;
       }
     }
@@ -699,7 +751,11 @@ export default function Workspace() {
     // context window before anything reaches the network. Detection and
     // tagging happen only in this browser; see src/veil.js.
     let next = rawNext,
-      veiledPayload = null;
+      veiledPayload = null,
+      // Veil's mask count for this request, carried onto the reply so a
+      // private-mode reply can show "<N> details masked" (see
+      // PrivateReplyNote); stays 0 when Veil is off or finds nothing.
+      requestMasked = 0;
     if (veilOn && !demo && isReleased(config, "veil")) {
       let veiledCount = 0;
       const tags = new Set();
@@ -709,6 +765,7 @@ export default function Workspace() {
         r.tags.forEach((t) => tags.add(t));
         return { ...m, content: r.text };
       });
+      requestMasked = veiledCount;
       saveVeilState(veilKeyRef.current, veilStateRef.current);
       if (veiledCount)
         setVeilNote({
@@ -744,17 +801,22 @@ export default function Workspace() {
       liveId = current,
       reasoning = "",
       images = [],
-      citations = [];
+      citations = [],
+      // Set once the final event's anonyma.private arrives; drives the
+      // "Sent to <provider> · not saved" line under this reply.
+      privateInfo = null;
+    const sendingPrivate = privateMode && !demo;
     try {
       await streamChat(
         {
           model: requestModel,
           messages: (veiledPayload || next.slice(-20)).map(toRequestMessage),
-          conversationId: current,
+          ...(ephemeral ? { ephemeral: true } : { conversationId: current }),
           mode,
           max_tokens: 4096,
           requestId,
           ...(webSearch ? { web_search: true } : {}),
+          ...(sendingPrivate ? { private: true } : {}),
         },
         (event) => {
           if (event.error)
@@ -773,6 +835,7 @@ export default function Workspace() {
           }
           if (event.anonyma) setReceipt(event.anonyma);
           if (event.anonyma?.citations) citations = event.anonyma.citations;
+          if (event.anonyma?.private) privateInfo = event.anonyma.private;
           setMessages([
             ...next,
             {
@@ -782,6 +845,9 @@ export default function Workspace() {
               images,
               citations,
               model: requestModel,
+              ...(privateInfo
+                ? { private: privateInfo, masked: requestMasked }
+                : {}),
             },
           ]);
         },
@@ -869,6 +935,23 @@ export default function Workspace() {
       setError(e.message);
     }
   }
+  // Owner only; for a collab conversation, the server further requires the
+  // collab owner (a member who merely started the thread gets a 403 here).
+  async function updateRetention(days) {
+    const expires = days ? Date.now() + days * 86400000 : null;
+    try {
+      await api("/api/conversations/" + dialog.item.id, {
+        method: "PATCH",
+        body: { retention: days },
+      });
+      setAll((prev) =>
+        prev.map((c) => (c.id === dialog.item.id ? { ...c, expires } : c)),
+      );
+      setDialog((d) => (d ? { ...d, item: { ...d.item, expires } } : d));
+    } catch (e) {
+      setError(e.message);
+    }
+  }
   const files = messages
     .filter((m) => m.role === "assistant")
     .flatMap((m) =>
@@ -924,11 +1007,15 @@ export default function Workspace() {
           {(demo ? all : user ? all : []).slice(0, 12).map((c) => (
             <div className={c.id === current ? "current" : ""} key={c.id}>
               <button onClick={() => openChat(c)}>{c.title}</button>
+              {!demo && isReleased(config, "ephemeral") && (
+                <RetentionIndicator expires={c.expires} />
+              )}
               <button
                 className="conversation-options"
                 aria-label={"Options for " + c.title}
                 onClick={() => {
                   setRename(c.title);
+                  setRetentionDays(retentionChoiceFor(c.expires));
                   setDialog({ type: "rename", item: c });
                 }}
               >
@@ -1193,6 +1280,9 @@ export default function Workspace() {
                               <p>{m.reasoning}</p>
                             </details>
                           )}
+                          {m.role === "assistant" && m.private && (
+                            <PrivateReplyNote info={m.private} masked={m.masked} />
+                          )}
                           {m.role === "assistant" && m.content && (
                             <CopyButton text={m.content} />
                           )}
@@ -1265,6 +1355,19 @@ export default function Workspace() {
                 )}
               </div>
               <div className="composer-zone" ref={composerZone}>
+                {isReleased(config, "ephemeral") &&
+                  ephemeral &&
+                  !privateMode &&
+                  textMode && <EphemeralNotice />}
+                {!demo &&
+                  privateModeReleased(config) &&
+                  privateMode &&
+                  textMode &&
+                  (privateModelsCallable.length ? (
+                    <PrivateModeNotice />
+                  ) : (
+                    <NoPrivateModelsNotice />
+                  ))}
                 {info && <Notice>{info}</Notice>}
                 {error && <Notice type="error">{error}</Notice>}
                 {receipt && (
@@ -1359,6 +1462,7 @@ export default function Workspace() {
                           }}
                         >
                           <b>{m.name}</b>
+                          {!demo && m.private && <PrivateModelTag />}
                           <span>@{m.id}</span>
                         </button>
                       ))}
@@ -1383,6 +1487,7 @@ export default function Workspace() {
                           const option = (m) => (
                             <option value={m.id} key={m.id}>
                               {m.name}
+                              {!demo && m.private ? " · Private" : ""}
                               {!m.callable && !demo ? " · catalog only" : ""}
                             </option>
                           );
@@ -1438,6 +1543,23 @@ export default function Workspace() {
                           <Icon name="globe" size={17} />
                           <span>Web</span>
                         </button>
+                      )}
+                      {!demo &&
+                        isReleased(config, "ephemeral") &&
+                        textMode && (
+                        <EphemeralToggle
+                          active={ephemeral}
+                          onToggle={toggleEphemeral}
+                          disabled={privateMode}
+                        />
+                      )}
+                      {!demo &&
+                        privateModeReleased(config) &&
+                        textMode && (
+                        <PrivateModeToggle
+                          active={privateMode}
+                          onToggle={togglePrivateMode}
+                        />
                       )}
                       {textMode &&
                         !demo &&
@@ -1537,7 +1659,10 @@ export default function Workspace() {
                       <button
                         type="submit"
                         className="send-button"
-                        disabled={!prompt.trim()}
+                        disabled={
+                          !prompt.trim() ||
+                          (privateMode && !privateModelsCallable.length)
+                        }
                         aria-label={demo ? "Run sample" : "Generate"}
                       >
                         <Icon name="arrow" size={21} />
@@ -1713,6 +1838,18 @@ export default function Workspace() {
                   autoFocus
                 />
               </label>
+              {!demo && isReleased(config, "ephemeral") && (
+                <div className="retention-row">
+                  <RetentionSelect
+                    value={retentionDays}
+                    onChange={(days) => {
+                      setRetentionDays(days);
+                      updateRetention(days);
+                    }}
+                  />
+                  <RetentionIndicator expires={dialog.item.expires} />
+                </div>
+              )}
               <div className="inline-actions">
                 <Button onClick={confirmDialog} disabled={!rename.trim()}>
                   Save name

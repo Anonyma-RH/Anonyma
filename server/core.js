@@ -126,6 +126,12 @@ export function config(overrides = {}) {
           .map((v) => v.trim())
           .filter(Boolean)
       : DEFAULT_MVP_MODELS,
+    // Private Mode follows the gateway's own zero-data-retention label; these
+    // model ids are also counted as private (an operator override).
+    privateModels: (e.PRIVATE_MODELS || "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean),
     ...overrides,
   };
   if (!(cfg.released instanceof Set))
@@ -327,6 +333,14 @@ export const MIGRATIONS = [
     CREATE TABLE IF NOT EXISTS rate_limits(key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires INTEGER NOT NULL);
     CREATE INDEX IF NOT EXISTS rate_limits_expiry ON rate_limits(expires);
   `),
+  // Auto-delete: a saved conversation can carry an expiry, and an account
+  // can set a default applied to conversations created after the change.
+  (db) => {
+    addColumn(db, "conversations", "expires", "INTEGER");
+    db.exec(
+      "CREATE TABLE IF NOT EXISTS retention_defaults(user_id TEXT PRIMARY KEY REFERENCES users(id), days INTEGER NOT NULL)",
+    );
+  },
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;

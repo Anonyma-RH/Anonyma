@@ -12,6 +12,7 @@ const object = (properties = {}, required = []) => ({
 const ref = (name) => ({ $ref: `#/components/schemas/${name}` });
 const array = (items) => ({ type: "array", items });
 const nullableString = { type: ["string", "null"] };
+const retentionDays = { type: ["integer", "null"], enum: [null, 1, 7, 30] };
 const requestId = {
   ...string,
   minLength: 1,
@@ -58,6 +59,16 @@ const chat = object(
       ...bool,
       description:
         'Search the web before answering (also accepted as plugins: [{ id: "web" }]). Adds the per-search fee; cited sources are returned as citations.',
+    },
+    ephemeral: {
+      ...bool,
+      description:
+        "Off the record: no conversation or message is stored, not even the user's message, and conversationId must be absent. Billing (hold, settlement, ledger entry, receipt) is unchanged.",
+    },
+    private: {
+      ...bool,
+      description:
+        'Private Mode: the model must be flagged private (see /api/models\' private field; 400 private_model_required otherwise), and requires both the private and ephemeral updates released (403 feature_unreleased otherwise). Always takes the ephemeral path, so conversationId must be absent. The final SSE event and JSON response carry anonyma.private: { provider, stored: false }. Billing is unchanged.',
     },
   },
   ["model", "messages"],
@@ -347,7 +358,10 @@ for (const [path, summary] of [
     "/api/config",
     "Public service availability; configured does not mean verified",
   ],
-  ["/api/models", "Model catalog including capability and pricing metadata"],
+  [
+    "/api/models",
+    "Model catalog including capability, pricing and private-mode metadata",
+  ],
   ["/api/market", "Public cryptocurrency market feed"],
   ["/api/rates", "Crypto units per USD; validated rates cached for 60 seconds"],
   [
@@ -358,6 +372,8 @@ for (const [path, summary] of [
   route("get", path, summary, { auth: null });
 route("get", "/api/conversations", "List latest 300 conversations", {
   response: object({ data: array(object()) }),
+  description:
+    "Each entry includes expires (epoch ms, or null for no auto-delete). An expired-but-not-yet-purged conversation is already excluded.",
 });
 route("post", "/api/conversations", "Create conversation", {
   body: object({ title: string, mode: string }),
@@ -378,12 +394,33 @@ route(
   "/api/conversations/{id}",
   "Read conversation and decoded messages",
 );
-route("patch", "/api/conversations/{id}", "Rename conversation", {
-  body: object({ title: string }, ["title"]),
+route("patch", "/api/conversations/{id}", "Rename or update conversation", {
+  body: object({
+    title: string,
+    retention: {
+      ...retentionDays,
+      description:
+        "Days until auto-delete from now; null clears it. Owner only — for a collab conversation, the collab owner.",
+    },
+  }),
   response: ref("Ok"),
+  description:
+    "A body without retention updates the title as before (defaulting to Untitled). A retention-only body leaves the title unchanged.",
 });
 route("delete", "/api/conversations/{id}", "Delete conversation", {
   response: ref("Ok"),
+});
+route(
+  "get",
+  "/api/retention",
+  "Account default auto-delete for new conversations",
+  { response: object({ days: retentionDays }, ["days"]) },
+);
+route("put", "/api/retention", "Set account default auto-delete", {
+  body: object({ days: retentionDays }, ["days"]),
+  response: object({ ok: bool, days: retentionDays }),
+  description:
+    "Applies only to conversations created after this is set; existing conversations are unchanged.",
 });
 route("post", "/api/quote", "Estimate maximum reserved credits", {
   body: object(
@@ -416,7 +453,7 @@ route("post", "/api/chat", "Stream chat, code or compatible image output", {
   body: ref("ChatRequest"),
   stream: true,
   description:
-    "Always SSE via fetch POST, not EventSource. Retains latest 20 messages. Parse data events across arbitrary byte boundaries; final usage event includes conversationId, askr and anonyma receipt, followed by [DONE]. Abort cancels work and settles delivered usage. Errors can follow HTTP 200. Use a stable requestId or Idempotency-Key; duplicates return 409, not a new charge.",
+    "Always SSE via fetch POST, not EventSource. Retains latest 20 messages. Parse data events across arbitrary byte boundaries; final usage event includes conversationId, askr and anonyma receipt, followed by [DONE]. Abort cancels work and settles delivered usage. Errors can follow HTTP 200. Use a stable requestId or Idempotency-Key; duplicates return 409, not a new charge. See the request body's private field for Private Mode.",
 });
 route("post", "/api/images", "Generate and save 1–4 images", {
   body: object(

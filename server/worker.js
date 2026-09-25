@@ -193,6 +193,11 @@ export function createWorker(ctx) {
         .prepare("SELECT * FROM media WHERE expires IS NOT NULL AND expires<?")
         .all(now()))
         deleteMedia(m);
+      // Auto-delete: messages cascade with their conversation. Access
+      // already treats an expired conversation as gone before this runs.
+      db.prepare(
+        "DELETE FROM conversations WHERE expires IS NOT NULL AND expires<?",
+      ).run(now());
       recoverExpiredHolds();
       if (cfg.rpc && cfg.token) {
         for (const user of db

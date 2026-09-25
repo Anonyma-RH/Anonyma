@@ -6,11 +6,12 @@ export function exportConversations(db, user) {
   return db
     .prepare(
       `SELECT c.* FROM conversations c
-    WHERE (c.collab_id IS NULL AND c.user_id=?) OR
-      EXISTS (SELECT 1 FROM collab_members m WHERE m.collab_id=c.collab_id AND m.user_id=?)
+    WHERE ((c.collab_id IS NULL AND c.user_id=?) OR
+      EXISTS (SELECT 1 FROM collab_members m WHERE m.collab_id=c.collab_id AND m.user_id=?))
+      AND (c.expires IS NULL OR c.expires>=?)
     ORDER BY c.updated DESC,c.rowid DESC`,
     )
-    .all(user, user)
+    .all(user, user, now())
     .map((c) => ({
       ...c,
       messages: db
@@ -26,10 +27,19 @@ export function exportConversations(db, user) {
     }));
 }
 
+// Days an auto-delete choice may hold; null clears it (kept forever).
+const RETENTION_DAYS = [1, 7, 30];
+const retentionExpiry = (value) => {
+  if (value === null) return null;
+  if (RETENTION_DAYS.includes(value)) return now() + value * 86400000;
+  fail(400, "Retention must be null, 1, 7 or 30 days.", "invalid_request");
+};
+
 export function conversationRoutes({ app, db, requireUser }) {
   // Read and post: a personal conversation's creator, or a current member of
   // a shared conversation's collab (leaving a collab ends access, even to
-  // conversations you started there).
+  // conversations you started there). An expired conversation is treated as
+  // gone immediately; the worker only reclaims its storage afterward.
   function accessConversation(id, user) {
     const c = db
       .prepare(
@@ -40,7 +50,8 @@ export function conversationRoutes({ app, db, requireUser }) {
          WHERE c.id=? AND (CASE WHEN c.collab_id IS NULL THEN c.user_id=? ELSE m.user_id IS NOT NULL END)`,
       )
       .get(user, id, user);
-    if (!c) fail(404, "Conversation not found.");
+    if (!c || (c.expires != null && c.expires < now()))
+      fail(404, "Conversation not found.");
     return c;
   }
   // Rename and delete: the creator, or the owner of its collab.
@@ -60,9 +71,15 @@ export function conversationRoutes({ app, db, requireUser }) {
     collab = null,
   ) {
     const id = uid("c_");
+    // An account's auto-delete default only reaches conversations created
+    // after it was set; existing ones keep whatever they already had.
+    const days = db
+      .prepare("SELECT days FROM retention_defaults WHERE user_id=?")
+      .get(user)?.days;
+    const expires = days ? now() + days * 86400000 : null;
     db.prepare(
-      "INSERT INTO conversations(id,user_id,title,mode,created,updated,collab_id) VALUES(?,?,?,?,?,?,?)",
-    ).run(id, user, title.slice(0, 70), mode, now(), now(), collab);
+      "INSERT INTO conversations(id,user_id,title,mode,created,updated,collab_id,expires) VALUES(?,?,?,?,?,?,?,?)",
+    ).run(id, user, title.slice(0, 70), mode, now(), now(), collab, expires);
     // Keep the newest 300 personal conversations; shared ones belong to their collab.
     db.prepare(
       "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL AND id NOT IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL ORDER BY updated DESC,rowid DESC LIMIT 300)",
@@ -73,9 +90,9 @@ export function conversationRoutes({ app, db, requireUser }) {
     res.json({
       data: db
         .prepare(
-          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL ORDER BY updated DESC,rowid DESC LIMIT 300",
+          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT 300",
         )
-        .all(req.user.id),
+        .all(req.user.id, now()),
     }),
   );
   app.post("/api/conversations", requireUser, (req, res) =>
@@ -106,7 +123,13 @@ export function conversationRoutes({ app, db, requireUser }) {
     res.json({
       ...c,
       ...(c.collab_id
-        ? { collab: { id: c.collab_id, name: collab_name } }
+        ? {
+            collab: {
+              id: c.collab_id,
+              name: collab_name,
+              owner: collab_owner === req.user.id,
+            },
+          }
         : {}),
       messages: db
         .prepare(
@@ -124,14 +147,30 @@ export function conversationRoutes({ app, db, requireUser }) {
     });
   });
   app.patch("/api/conversations/:id", requireUser, (req, res) => {
-    ownConversation(req.params.id, req.user.id);
-    db.prepare("UPDATE conversations SET title=?,updated=? WHERE id=?").run(
-      String(req.body.title || "Untitled")
-        .trim()
-        .slice(0, 70) || "Untitled",
-      now(),
-      req.params.id,
-    );
+    const c = ownConversation(req.params.id, req.user.id);
+    // Unchanged default: a body with no retention field always sets the
+    // title (as before). A retention-only body leaves the title alone.
+    if (!Object.hasOwn(req.body, "retention") || Object.hasOwn(req.body, "title"))
+      db.prepare("UPDATE conversations SET title=?,updated=? WHERE id=?").run(
+        String(req.body.title || "Untitled")
+          .trim()
+          .slice(0, 70) || "Untitled",
+        now(),
+        req.params.id,
+      );
+    if (Object.hasOwn(req.body, "retention")) {
+      // Auto-delete is stricter than rename/delete: a shared conversation's
+      // creator doesn't control it, only the collab's owner does.
+      if (c.collab_id && c.collab_owner !== req.user.id)
+        fail(
+          403,
+          "Only the collab owner can set auto-delete for a shared conversation.",
+        );
+      db.prepare("UPDATE conversations SET expires=? WHERE id=?").run(
+        retentionExpiry(req.body.retention),
+        req.params.id,
+      );
+    }
     res.json({ ok: true });
   });
   app.delete("/api/conversations/:id", requireUser, (req, res) => {

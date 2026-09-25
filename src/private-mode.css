@@ -1,0 +1,23 @@
+/* Private Mode: the composer toggle reuses .attachment-control/.web-toggle
+   (see EphemeralToggle/VeilToggle); this file covers what's new — the
+   disabled Off the record toggle, the model-picker tag and the reply note. */
+.app-shell .attachment-control:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.app-shell .private-tag {
+  margin-left: 8px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0135df;
+  background: #edf2ff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+  padding: 2px 6px;
+}
+.app-shell .private-reply-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--work-muted);
+}

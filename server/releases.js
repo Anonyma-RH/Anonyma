@@ -459,6 +459,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "routines",
+    title: "Routines",
+    tagline: "Your prompts, on a schedule, on a budget.",
+    points: [
+      "Daily, weekday or weekly runs in your own time zone",
+      "A per-run maximum and a monthly budget, refused rather than exceeded",
+      "Every answer in a Routines inbox, with its charge and signed receipt",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -647,6 +658,17 @@ export function featuresFor(req) {
     return ["sharelinks"];
   if (p === "/api/account/usage" || p.startsWith("/api/account/usage/"))
     return ["insights"];
+  // Routines, and the features a routine turns on for its runs: saving one
+  // with web search needs Live Web Search, and Private models only needs
+  // Private Mode (routing only: a routine's answers are kept in its inbox).
+  if (p === "/api/routines" || p.startsWith("/api/routines/")) {
+    const needed = ["routines"];
+    if (post || req.method === "PATCH") {
+      if (body.web_search === true) needed.push("search");
+      if (body.private_only === true) needed.push("private");
+    }
+    return needed;
+  }
   // Branching a saved conversation (edit and regenerate use it too).
   if (/^\/api\/conversations\/[^/]+\/branch$/.test(p)) return ["branches"];
   if (

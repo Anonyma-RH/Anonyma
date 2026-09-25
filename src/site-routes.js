@@ -45,6 +45,8 @@ const MODES = [
   "library",
   "tools",
   "veil",
+  // Routines: shows as coming soon until released.
+  "routines",
 ];
 // Public pages that exist only once their update is live, by the `served`
 // flag that names them: /token, the NYMA page, ships with Holder Early

@@ -1078,6 +1078,92 @@ route("get", "/s/{token}", "The shared conversation page (public)", {
   auth: null,
   description: "The web app's page for a share link, with the same headers and the same 404 as /api/s/{token}.",
 });
+// Routines (update "routines").
+const routineSchedule = object(
+  {
+    repeat: { enum: ["daily", "weekdays", "weekly"], description: "weekdays: Monday to Friday in the routine's time zone" },
+    time: { ...string, pattern: "^([01]\\d|2[0-3]):[0-5]\\d$", description: "Wall-clock time, 24-hour HH:MM" },
+    day: { ...integer, minimum: 0, maximum: 6, description: "Weekly only: 0 = Sunday … 6 = Saturday" },
+    timezone: { ...string, default: "UTC", description: "IANA time zone, stored in its canonical form. A time the clocks skip runs as far past the jump; a repeated time runs once, the first time." },
+  },
+  ["repeat", "time"],
+);
+const routineFields = {
+  name: { ...string, minLength: 1, maxLength: 80 },
+  prompt: { ...string, minLength: 1, maxLength: 8000, description: "Sent as written: Veil runs in the browser and can't mask a scheduled run." },
+  model: { ...string, description: "A text chat model this installation can run" },
+  web_search: { ...bool, default: false, description: "Needs Live Web Search released; each run pays its search fee." },
+  private_only: { ...bool, default: false, description: "Needs Private Mode released. Routes like Private Mode: zero data retention models only, never the backup gateway. Answers are still kept in the inbox." },
+  schedule: routineSchedule,
+  per_run_credits: { ...number, exclusiveMinimum: 0, maximum: 100000, description: "At most four decimals. Also sets the reply budget: the largest (256 to 4,096 tokens) whose worst-case hold fits." },
+  monthly_budget_credits: { ...number, exclusiveMinimum: 0, maximum: 1000000, description: "Per calendar month in the routine's time zone; at least per_run_credits." },
+  enabled: { ...bool, default: true },
+};
+const routine = object({
+  id: string,
+  ...routineFields,
+  next_run_at: { type: ["integer", "null"], description: "null while off" },
+  running: bool,
+  last_run_at: { type: ["integer", "null"], description: "The slot of the latest run" },
+  last_status: { type: ["string", "null"], enum: ["done", "refused", "failed", null] },
+  month: object({ spent: number, held: number, remaining: number, resets_at: integer }),
+  created: integer,
+  updated: integer,
+});
+const routineRun = object({
+  id: string,
+  routine_id: string,
+  routine_name: string,
+  scheduled_for: integer,
+  started_at: integer,
+  finished_at: { type: ["integer", "null"] },
+  status: { enum: ["running", "done", "refused", "failed"], description: "refused: nothing was reserved or charged" },
+  skipped: { ...integer, description: "Older missed slots skipped by this catch-up run" },
+  model: string,
+  web_search: bool,
+  private_only: bool,
+  request_id: string,
+  credits_charged: number,
+  reply_budget: { type: ["integer", "null"] },
+  finish_reason: { type: ["string", "null"] },
+  answer: { type: ["string", "null"] },
+  citations: array(object({ url: string, title: string })),
+  signed_receipt: { type: ["object", "null"], description: "Present once Signed Receipts is released; verify at /api/receipts/verify" },
+  code: { type: ["string", "null"], description: "Why a run was refused or failed: insufficient_credits, spending_limit, routine_run_cap, routine_budget, routine_gone, model_unavailable, search_unavailable, private_unavailable, private_model_required, interrupted or a provider error code" },
+  message: { type: ["string", "null"] },
+});
+route("get", "/api/routines", "Your routines", {
+  response: object({ routines: array(routine), max_routines: integer, keep_runs: integer }),
+  description: "Oldest first. month is this calendar month in each routine's own time zone: settled charges and open holds. 120 reads a minute.",
+});
+route("post", "/api/routines", "Create a routine", {
+  status: 201,
+  body: object(routineFields, ["name", "prompt", "model", "schedule", "per_run_credits", "monthly_budget_credits"]),
+  response: routine,
+  description:
+    "At most 10 per account (409 routine_limit). The first run is the next slot after now; saving never runs a routine at once. Runs start from the background worker on the same hold and settle path as /v1/chat/completions, and are refused, with nothing reserved, when the balance, the account's spending limits, the monthly budget or the per-run maximum can't cover the worst case. One run at a time per routine; after downtime only the latest missed slot runs. 400 invalid_routine, invalid_schedule, invalid_model or private_model_required. 120 changes an hour.",
+});
+route("patch", "/api/routines/{id}", "Change, switch on or switch off a routine", {
+  body: object(routineFields),
+  response: routine,
+  description: "Omitted fields keep their value. A new schedule, or switching on, moves the next run to the next slot after now.",
+});
+route("delete", "/api/routines/{id}", "Delete a routine and its inbox", {
+  response: ref("Ok"),
+  description: "409 routine_running while a run is in flight.",
+});
+route("get", "/api/routines/runs", "The Routines inbox", {
+  query: [
+    { name: "routine", in: "query", required: false, schema: string, description: "Only this routine's runs" },
+    { name: "before", in: "query", required: false, schema: integer, description: "Only runs started before this time, for the next page" },
+  ],
+  response: object({ runs: array(routineRun), more: bool }),
+  description: "Newest first, 50 at a time. Each routine keeps its newest 50 runs.",
+});
+route("delete", "/api/routines/runs/{id}", "Delete one run from the inbox", {
+  response: ref("Ok"),
+  description: "The ledger entry and signed receipt stay. 409 routine_running while it's in flight.",
+});
 paths["/s/{token}"].get.responses[200].content = { "text/html": { schema: string } };
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
@@ -1478,7 +1564,7 @@ route(
   "Download account JSON with explicit monetary units",
   {
     description:
-      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations and spending limits (spendingLimits, null when none were set). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
+      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set) and routines (routines: each routine and its inbox runs). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
   },
 );
 route("delete", "/api/account", "Close account and forfeit unused credits", {

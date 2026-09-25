@@ -406,6 +406,7 @@ export const releaseUpdate = (config, id) =>
 // The update each workspace mode belongs to; library needs any media studio.
 export const MODE_FEATURES = {
   tools: "tasktools",
+  routines: "routines",
   code: "code",
   image: "images",
   video: "video",

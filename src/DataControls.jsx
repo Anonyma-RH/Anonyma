@@ -6,6 +6,8 @@ export default function DataControls() {
   const { config } = useApp() || {};
   // Share a Chat is described only once it's live.
   const shares = !!config && isReleased(config, "sharelinks");
+  // So are Routines.
+  const routines = !!config && isReleased(config, "routines");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -46,6 +48,18 @@ export default function DataControls() {
             never listed publicly and ask search engines not to index them.
           </li>
         )}
+        {routines && (
+          <li>
+            Routines: each routine’s name, prompt, model, schedule and budget,
+            and its inbox: the newest 50 runs per routine, with their answers,
+            sources, charges and signed receipts. Runs happen on the server, so
+            Veil can’t mask a routine’s prompt, and a Private models only
+            routine’s answers are still kept in the inbox. Deleting a run or a
+            routine deletes its answers; the ledger entries stay. Closing your
+            account deletes every routine and its inbox, and no routine runs
+            after that.
+          </li>
+        )}
         <li>
           Temporary API-generated media expires after 24 hours when created with
           an expiry. Access stops at expiry; background maintenance removes the
@@ -79,6 +93,11 @@ export default function DataControls() {
         contributions to shared conversations. Another member’s private spending
         details are excluded.
       </p>
+      {routines && (
+        <p>
+          The export also includes your routines and their inbox runs.
+        </p>
+      )}
       {shares && (
         <p>
           The export also lists your live share links with their addresses,

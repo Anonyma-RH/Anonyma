@@ -188,7 +188,9 @@ export function chatRoutes(ctx) {
         amount: held,
         key: req.apiKey?.id,
         ttl: api ? 300000 : 240000,
-        guard: team?.guard,
+        // A server-side caller's own rules (Routines' per-run maximum and
+        // monthly budget), set in code, never from the request body.
+        guard: team?.guard ?? req.reserveGuard,
       });
     const headroom = Math.ceil(amount * cfg.holdMargin);
     try {
@@ -203,6 +205,8 @@ export function chatRoutes(ctx) {
           "treasury_insufficient",
           "treasury_limit",
           "spending_limit",
+          "routine_run_cap",
+          "routine_budget",
         ].includes(e.code)
       )
         throw e;

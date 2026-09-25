@@ -1,0 +1,320 @@
+/* Live Preview: Code & Build's Preview tab and chat's HTML preview. */
+.with-code.with-preview {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 46%);
+}
+@media (min-width: 1100px) {
+  .app-shell .with-code.with-preview .chat-area,
+  .app-shell .with-code.with-preview .composer-zone {
+    max-width: none;
+  }
+}
+.code-panel-tabs,
+.code-panel > div.code-panel-tabs {
+  display: flex;
+  justify-content: flex-start;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--work-line, #e3e8f0);
+}
+.code-panel-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+  cursor: pointer;
+}
+.code-panel-tabs button.active {
+  color: #0135df;
+  border-bottom-color: #0135df;
+}
+/* The preview stays in view while the conversation scrolls. */
+.code-panel.previewing {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  max-height: 100dvh;
+  overflow-y: auto;
+}
+.live-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.live-preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.live-preview-bar select,
+.live-preview-page {
+  font: inherit;
+  font-size: 12px;
+  color: var(--work-ink, #142343);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.live-preview-bar select {
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+  padding: 6px 8px;
+  border-radius: 2px;
+}
+.live-preview-page {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+.live-preview-viewports {
+  display: inline-flex;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-left: auto;
+}
+.live-preview-viewports button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border: 0;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+  cursor: pointer;
+}
+.live-preview-viewports button + button {
+  border-left: 1px solid var(--work-line, #e3e8f0);
+}
+.live-preview-viewports button[aria-pressed="true"] {
+  background: #0135df;
+  color: #fff;
+}
+.live-preview-reload {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.live-preview-stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: min(62vh, 640px);
+  min-height: 280px;
+  overflow: hidden;
+  background: repeating-linear-gradient(45deg, #eef2fa 0 6px, #f6f8fd 6px 12px);
+  border: 1px solid var(--work-line, #e3e8f0);
+}
+.live-preview-device {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 0 0 1px #d5ddeb;
+}
+.live-preview-device iframe {
+  display: block;
+  border: 0;
+  background: #fff;
+  transform-origin: 0 0;
+}
+.live-preview-empty {
+  align-self: center;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--work-muted, #68748a);
+}
+.live-preview-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.live-preview-meta svg {
+  color: #0135df;
+  flex: none;
+}
+.live-preview-size {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.live-preview-notes,
+.live-preview-console {
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+  font-size: 12px;
+}
+.live-preview-notes summary,
+.live-preview-console summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--work-ink, #142343);
+}
+.live-preview-notes summary svg {
+  color: #b7791f;
+}
+.live-preview-notes ul {
+  margin: 0;
+  padding: 0 12px 10px 28px;
+  color: #5b4a1c;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.live-preview-count {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: #eef2fa;
+  color: #3e5070;
+  font-size: 10px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.live-preview-console ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 180px;
+  overflow: auto;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+}
+.live-preview-console li {
+  display: flex;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid #f0f3f8;
+  line-height: 1.5;
+}
+.live-preview-console .console-level {
+  flex: none;
+  width: 58px;
+  font-family: inherit;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8a96ab;
+  padding-top: 2px;
+}
+.live-preview-console .console-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  color: #243454;
+}
+.live-preview-console .level-warn {
+  background: #fffaf0;
+}
+.live-preview-console .level-warn .console-level {
+  color: #b7791f;
+}
+.live-preview-console .level-error {
+  background: #fff5f4;
+}
+.live-preview-console .level-error .console-level,
+.live-preview-console .level-error .console-text {
+  color: #b42318;
+}
+.live-preview-console .level-blocked .console-level {
+  color: #0135df;
+}
+.live-preview-console .fine-print {
+  margin: 0;
+  padding: 6px 10px 10px;
+}
+.live-preview-console > .small-button {
+  margin: 8px 10px 10px;
+}
+/* Inside Code & Build's panel, its file-list styles stay out of the preview. */
+.app-shell .code-panel .live-preview details {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border-color: var(--work-line, #e3e8f0);
+}
+.app-shell .code-panel .live-preview summary {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.app-shell .code-panel .live-preview summary .live-preview-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: #3e5070;
+}
+/* Chat: the Preview button under an HTML block, and its dialog. */
+.preview-block {
+  position: relative;
+}
+.preview-block-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -6px 0 14px;
+}
+.modal:has(.live-preview-dialog) {
+  max-width: 1100px;
+  width: calc(100% - 32px);
+  max-height: 92vh;
+  padding: 22px;
+}
+.modal:has(.live-preview-dialog) .modal-head {
+  margin-bottom: 14px;
+}
+.live-preview-dialog .live-preview-stage {
+  height: min(58vh, 620px);
+}
+@media (max-width: 980px) {
+  .with-code.with-preview {
+    display: flex;
+    flex-direction: column;
+  }
+  .code-panel.previewing {
+    position: static;
+    align-self: stretch;
+    max-height: none;
+    overflow: visible;
+  }
+}
+@media (max-width: 700px) {
+  .live-preview-viewports span {
+    display: none;
+  }
+  .live-preview-viewports {
+    margin-left: 0;
+  }
+  .live-preview-stage {
+    height: 60vh;
+    min-height: 240px;
+  }
+  .modal:has(.live-preview-dialog) {
+    width: calc(100% - 16px);
+    padding: 14px;
+  }
+  .modal:has(.live-preview-dialog) .modal-head h2 {
+    font-size: 24px;
+  }
+}

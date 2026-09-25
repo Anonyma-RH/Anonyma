@@ -2529,7 +2529,89 @@
     "This page hid a nested frame, so the preview stopped it.": "此页面隐藏了一个嵌套框架，因此预览已将其停止。",
     "Storage here is temporary and separate from ANONYMA.": "这里的存储是临时的，并与 ANONYMA 分开。",
     "Forms don't send anywhere in the preview.": "在预览中，表单不会发送到任何地方。",
-    "Fit": "适应"
+    "Fit": "适应",
+    "Routines": "定时任务",
+    "Your prompts, on a schedule, on a budget.": "你的提示词，按时运行，预算可控。",
+    "Daily, weekday or weekly runs in your own time zone": "按你的时区每天、每个工作日或每周运行",
+    "A per-run maximum and a monthly budget, refused rather than exceeded": "单次上限加每月预算，宁可拒绝，绝不超支",
+    "Every answer in a Routines inbox, with its charge and signed receipt": "每个回答都进入定时任务收件箱，附带费用和签名收据",
+    "YOUR PROMPTS, ON A SCHEDULE": "你的提示词，按时运行",
+    "Save a prompt, choose when it runs and what it may spend. Every answer lands in your inbox.": "保存一条提示词，选择它何时运行、最多花费多少。每个回答都会送到你的收件箱。",
+    "New routine": "新建定时任务",
+    "Edit routine": "编辑定时任务",
+    "Save routine": "保存定时任务",
+    "Delete routine": "删除定时任务",
+    "Demo: these routines are samples. Nothing runs and nothing is charged.": "演示：这些定时任务均为示例。不会运行，也不会扣费。",
+    "to create routines.": "后即可创建定时任务。",
+    "Inbox": "收件箱",
+    "Your routines": "你的定时任务",
+    "You have the most routines an account can keep. Delete one to add another.": "你的定时任务数量已达账户上限。删除一个后才能新增。",
+    "No routines yet.": "还没有定时任务。",
+    "A routine is a saved prompt that runs on a schedule, with its own budget.": "定时任务是一条已保存的提示词，按计划运行，并有自己的预算。",
+    "Show": "显示",
+    "All routines": "全部定时任务",
+    "Nothing here yet.": "这里还没有内容。",
+    "Each run's answer lands here, with its time, status, charge and signed receipt.": "每次运行的回答都会出现在这里，附带时间、状态、费用和签名收据。",
+    "Show older runs": "显示更早的运行",
+    "Morning AI news": "每日早间 AI 新闻",
+    "Summarise the top AI news in 5 bullets.": "用 5 个要点总结最重要的 AI 新闻。",
+    "Routines run on our server, where Veil can't mask anything: the prompt is sent as written.": "定时任务在我们的服务器上运行，Veil 无法在这里遮盖任何内容：提示词会按原样发送。",
+    "Answers from the live web, with sources. Each run also pays the search fee.": "从实时网络获取答案并附来源。每次运行还需另付搜索费用。",
+    "Zero-data-retention models only, never the backup gateway. Answers are still kept in your inbox.": "仅限零数据保留模型，绝不使用备用网关。回答仍会保存在你的收件箱中。",
+    "Repeat": "重复",
+    "Every day": "每天",
+    "Weekdays (Monday to Friday)": "工作日（周一至周五）",
+    "Once a week": "每周一次",
+    "Day": "星期",
+    "Time zone": "时区",
+    "Sunday": "星期日",
+    "Monday": "星期一",
+    "Tuesday": "星期二",
+    "Wednesday": "星期三",
+    "Thursday": "星期四",
+    "Friday": "星期五",
+    "Saturday": "星期六",
+    "Per-run maximum (credits)": "单次上限（积分）",
+    "Monthly budget (credits)": "每月预算（积分）",
+    "A run is refused, and nothing is charged, when your balance, your spending limits, this routine's monthly budget or its per-run maximum can't cover it. The per-run maximum also caps how long a reply can be. The budget resets each calendar month in the routine's time zone.": "当你的余额、消费上限、此定时任务的每月预算或单次上限不足以支付一次运行时，该次运行会被拒绝，且不扣费。单次上限也会限制回复的长度。预算按定时任务所在时区的自然月重置。",
+    "Runs on schedule. Saving never runs it straight away.": "按计划运行。保存后不会立即运行。",
+    "Saved, but it won't run until you switch it on.": "已保存，但在你开启之前不会运行。",
+    "Delete this routine and its inbox? This can't be undone.": "删除此定时任务及其收件箱？此操作无法撤销。",
+    "Running": "运行中",
+    "Next run": "下次运行",
+    "Per run": "单次",
+    "This month": "本月",
+    "View inbox": "查看收件箱",
+    "Delivered": "已送达",
+    "Refused": "已拒绝",
+    "The reply reached this routine's length limit. Raise the per-run maximum for longer answers.": "回复已达到此定时任务的长度上限。提高单次上限可获得更长的回答。",
+    "Running now…": "正在运行……",
+    "Your balance couldn't cover this run. Nothing was charged.": "你的余额不足以支付此次运行。未扣费。",
+    "This routine's monthly budget couldn't cover this run. Nothing was charged.": "此定时任务的每月预算不足以支付此次运行。未扣费。",
+    "The per-run maximum couldn't cover this run with this model and prompt. Nothing was charged.": "使用此模型和提示词时，单次上限不足以支付此次运行。未扣费。",
+    "Your spending limits couldn't cover this run. Nothing was charged.": "你的消费上限不足以支付此次运行。未扣费。",
+    "This routine was switched off or deleted before it ran. Nothing was charged.": "此定时任务在运行前已被关闭或删除。未扣费。",
+    "This routine's model isn't available right now. Nothing was charged.": "此定时任务的模型目前不可用。未扣费。",
+    "Private models only is on, and this model isn't a zero-data-retention model. Nothing was charged.": "已开启“仅限私密模型”，但此模型不是零数据保留模型。未扣费。",
+    "Web search isn't available right now. Nothing was charged.": "联网搜索目前不可用。未扣费。",
+    "Private Mode isn't available right now. Nothing was charged.": "隐私模式目前不可用。未扣费。",
+    "Spending is paused while a payment is checked. Nothing was charged.": "付款核对期间暂停消费。未扣费。",
+    "The service restarted during this run.": "此次运行期间服务已重启。",
+    "The run didn't complete.": "此次运行未完成。",
+    "Copy answer": "复制回答",
+    "Routines: each routine’s name, prompt, model, schedule and budget, and its inbox: the newest 50 runs per routine, with their answers, sources, charges and signed receipts. Runs happen on the server, so Veil can’t mask a routine’s prompt, and a Private models only routine’s answers are still kept in the inbox. Deleting a run or a routine deletes its answers; the ledger entries stay. Closing your account deletes every routine and its inbox, and no routine runs after that.": "定时任务：每个定时任务的名称、提示词、模型、计划和预算，以及它的收件箱：每个定时任务最新的 50 次运行，包括回答、来源、费用和签名收据。运行在服务器上进行，因此 Veil 无法遮盖定时任务的提示词；开启“仅限私密模型”的定时任务，其回答仍会保存在收件箱中。删除某次运行或某个定时任务会删除其回答；账本条目会保留。关闭账户会删除所有定时任务及其收件箱，此后不会再运行任何定时任务。",
+    "The export also includes your routines and their inbox runs.": "导出内容还包括你的定时任务及其收件箱中的运行记录。",
+    "This routine is running. Delete it once the run finishes.": "此定时任务正在运行。请在运行结束后再删除。",
+    "Set a monthly budget at least as large as the per-run maximum.": "每月预算不能低于单次上限。",
+    "Choose a chat model you can use.": "请选择一个你可以使用的对话模型。",
+    "Private models only needs a model with zero data retention.": "“仅限私密模型”需要选择零数据保留的模型。",
+    "Set the time as HH:MM, from 00:00 to 23:59.": "请按 HH:MM 格式设置时间，范围为 00:00 至 23:59。",
+    "Choose a time zone such as UTC or Europe/London.": "请选择时区，例如 UTC 或 Europe/London。",
+    "Choose the day for a weekly routine: 0 (Sunday) to 6 (Saturday).": "请为每周定时任务选择星期：0（星期日）至 6（星期六）。",
+    "Repeat daily, on weekdays or weekly.": "请选择每天、工作日或每周重复。",
+    "Routine not found.": "未找到该定时任务。",
+    "Run not found.": "未找到该次运行。",
+    "This run is still in progress.": "此次运行仍在进行中。"
   },
   "patterns": [
     {
@@ -3887,6 +3969,86 @@
     {
       "en": "Blocked by the preview sandbox: {0} ({1})",
       "zh": "已被预览沙箱拦截：{0}（{1}）"
+    },
+    {
+      "en": "Every day at {0}",
+      "zh": "每天 {0}"
+    },
+    {
+      "en": "Weekdays at {0}",
+      "zh": "工作日 {0}"
+    },
+    {
+      "en": "Every Sunday at {0}",
+      "zh": "每周日 {0}"
+    },
+    {
+      "en": "Every Monday at {0}",
+      "zh": "每周一 {0}"
+    },
+    {
+      "en": "Every Tuesday at {0}",
+      "zh": "每周二 {0}"
+    },
+    {
+      "en": "Every Wednesday at {0}",
+      "zh": "每周三 {0}"
+    },
+    {
+      "en": "Every Thursday at {0}",
+      "zh": "每周四 {0}"
+    },
+    {
+      "en": "Every Friday at {0}",
+      "zh": "每周五 {0}"
+    },
+    {
+      "en": "Every Saturday at {0}",
+      "zh": "每周六 {0}"
+    },
+    {
+      "en": "Next run: {0} (your time)",
+      "zh": "下次运行：{0}（你的本地时间）"
+    },
+    {
+      "en": "Up to {0} credits",
+      "zh": "最多 {0} 积分"
+    },
+    {
+      "en": "{0} of {1} credits spent this month",
+      "zh": "本月已花费 {0} / {1} 积分"
+    },
+    {
+      "en": "Scheduled for {0}",
+      "zh": "计划时间 {0}"
+    },
+    {
+      "en": "Skipped {0} missed run",
+      "zh": "已跳过 {0} 次错过的运行"
+    },
+    {
+      "en": "Skipped {0} missed runs",
+      "zh": "已跳过 {0} 次错过的运行"
+    },
+    {
+      "en": "You can have up to {0} routines. Delete one to add another.",
+      "zh": "你最多可以有 {0} 个定时任务。删除一个后才能新增。"
+    },
+    {
+      "en": "Set the per-run maximum in credits, above 0 and up to {0}, with at most four decimals.",
+      "zh": "请以积分设置单次上限，需大于 0 且不超过 {0}，最多保留 4 位小数。"
+    },
+    {
+      "en": "Set the monthly budget in credits, above 0 and up to {0}, with at most four decimals.",
+      "zh": "请以积分设置每月预算，需大于 0 且不超过 {0}，最多保留 4 位小数。"
+    },
+    {
+      "en": "Give the routine a name of 1 to {0} characters.",
+      "zh": "请为定时任务取一个 1 至 {0} 个字符的名称。"
+    },
+    {
+      "en": "Write a prompt of 1 to {0} characters.",
+      "zh": "请输入 1 至 {0} 个字符的提示词。"
     }
   ]
 }

@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { createApp } from "../server/app.js";
 import { addCredit, balance, now } from "../server/core.js";
 import { UPDATES, featuresFor, CONNECT_UPDATES } from "../server/releases.js";
-import { redirectKind, cleanName, sweepOAuth } from "../server/oauth.js";
+import { redirectKind, cleanName, sweepOAuth, REFRESH_LEEWAY } from "../server/oauth.js";
 import { knownPage } from "../src/site-routes.js";
 
 // Release commits flip `released` on UPDATES entries. These tests cover the
@@ -474,7 +474,7 @@ test("registration takes public clients with safe redirect URIs only", async (t)
 
 test("registration is rate limited per IP, with an OAuth-shaped error", async (t) => {
   const s = fixture(t);
-  for (let i = 0; i < 20; i++)
+  for (let i = 0; i < 300; i++)
     await request(s.app)
       .post("/oauth/register")
       .send({ redirect_uris: [REDIRECT] })
@@ -655,8 +655,11 @@ test("authorization refuses bad requests, and never redirects to an untrusted ad
     { ...good, redirect_uri: "https://attacker.example/cb" },
     { ...good, redirect_uri: "https://app.example/cb/" },
     { ...good, redirect_uri: "https://app.example/cb?x=1" },
-    { ...good, redirect_uri: "http://127.0.0.1:33419/callback" },
+    { ...good, redirect_uri: "http://127.0.0.1:33418/other" },
+    { ...good, redirect_uri: "http://127.0.0.1:33418/callback?x=1" },
+    { ...good, redirect_uri: "http://localhost:33418/callback" },
     { ...good, redirect_uri: "HTTP://127.0.0.1:33418/callback" },
+    { ...good, redirect_uri: "HTTP://127.0.0.1:33419/callback" },
   ]) {
     const r = await request(s.app).get("/oauth/authorize").query(q).expect(400);
     assert.equal(r.headers.location, undefined);
@@ -973,11 +976,20 @@ test("refresh tokens rotate, never outlive the connection, and reuse revokes the
   const third = (await refresh(next.refresh_token).expect(200)).body;
   await ping(third.access_token).expect(200);
 
-  // The first refresh token again: reuse. Every token of the connection goes.
+  // The first refresh token again, moments after its rotation: an app's
+  // parallel refreshes, not theft. It still works and revokes nothing.
+  const twin = (await refresh(tokens.refresh_token).expect(200)).body;
+  await ping(twin.access_token).expect(200);
+  await ping(third.access_token).expect(200);
+  // Past the leeway it's reuse: every token of the connection goes.
+  s.db
+    .prepare("UPDATE oauth_tokens SET rotated=rotated-? WHERE rotated IS NOT NULL")
+    .run(REFRESH_LEEWAY + 1000);
   const reuse = await refresh(tokens.refresh_token).expect(400);
   assert.equal(reuse.body.error, "invalid_grant");
   await ping(third.access_token).expect(401);
   await ping(next.access_token).expect(401);
+  await ping(twin.access_token).expect(401);
   assert.equal(
     (await refresh(third.refresh_token).expect(400)).body.error,
     "invalid_grant",
@@ -1709,4 +1721,54 @@ test("an account can hold at most 20 connected apps", async (t) => {
     })
     .expect(400);
   assert.equal(r.body.error.code, "too_many_connections");
+});
+
+test("a loopback redirect may use another port; the code goes to the one asked for", async (t) => {
+  const s = fixture(t);
+  const client = await registerClient(s.app);
+  const { agent } = await signUp(s.app);
+  const p = pkce();
+  const moved = "http://127.0.0.1:50123/callback";
+  const query = authorizeQuery(client, p, { redirect_uri: moved });
+  await request(s.app).get("/oauth/authorize").query(query).expect(302);
+  const info = (
+    await agent.get("/api/connections/authorize").query(query).expect(200)
+  ).body;
+  assert.equal(info.app.redirect_host, "127.0.0.1:50123");
+  const back = await approve(agent, query);
+  assert.equal(back.origin + back.pathname, moved);
+  // The token request names the same address, port included.
+  const tokens = (
+    await exchange(s.app, client, back.searchParams.get("code"), p, {
+      redirect_uri: moved,
+    }).expect(200)
+  ).body;
+  assert.ok(tokens.access_token);
+  // A web redirect never gets that freedom.
+  const web = await registerClient(s.app, {
+    redirect_uris: ["https://app.example:8443/cb"],
+  });
+  await request(s.app)
+    .get("/oauth/authorize")
+    .query(authorizeQuery(web, pkce(), { redirect_uri: "https://app.example:9443/cb" }))
+    .expect(400);
+});
+
+test("a connected app pays the standard rate, whatever the account holds", async (t) => {
+  const s = fixture(t, undefined, { markup: 50 });
+  const { agent, user } = await signUp(s.app);
+  const { tokens } = await connect(s, { agent, form: { budget: 5000 } });
+  const charge = async () =>
+    (
+      await call(s.app, tokens.access_token, "ask", {
+        model: PRIVATE_MODEL,
+        prompt: "The same prompt each time",
+      }).expect(200)
+    ).body.result.structuredContent.credits_charged;
+  const standard = await charge();
+  assert.ok(standard > 0);
+  s.db
+    .prepare("UPDATE users SET token_balance=? WHERE id=?")
+    .run(40000000, user.id);
+  assert.equal(await charge(), standard);
 });

@@ -12,6 +12,7 @@ import {
   tokenCost,
   generationPrice,
   markupFactor,
+  standardFactor,
 } from "../core.js";
 import { chatStream, reportedProviderCost } from "../provider.js";
 import { FAILOVER_CODES } from "../fallback.js";
@@ -68,7 +69,10 @@ export function chatRoutes(ctx) {
       max = maxTokens(req.body.max_tokens);
     const requestId = requestIdentifier(req);
     const hold = req.user.id + ":" + requestId;
-    const factor = markupFactor(req.user, cfg);
+    // A connected app (set by the MCP server, never by the request body)
+    // pays the standard rate.
+    const factor =
+      req.standardRate === true ? standardFactor(cfg) : markupFactor(req.user, cfg);
     // Web search is a PPQ plugin with its own per-request fee.
     const webSearch =
       req.body.web_search === true ||

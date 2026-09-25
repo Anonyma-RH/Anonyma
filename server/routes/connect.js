@@ -101,7 +101,9 @@ export function connectRoutes(ctx) {
   // ---- Dynamic client registration (RFC 7591), public clients only ----
   app.post(
     "/oauth/register",
-    limit("oauth_register", 20, 3600000),
+    // Per IP. Hosted agent platforms register from shared servers, one
+    // client per user, so this is generous; unused clients go after a day.
+    limit("oauth_register", 300, 3600000),
     (req, res) => {
       res.set(noStore);
       const b = req.body;
@@ -223,7 +225,8 @@ export function connectRoutes(ctx) {
     req.body && typeof req.body === "object" && !Array.isArray(req.body)
       ? req.body
       : {};
-  app.post("/oauth/token", limit("oauth_token", 60, 60000), (req, res) => {
+  // Per IP, and hosted platforms refresh for many users from shared servers.
+  app.post("/oauth/token", limit("oauth_token", 600, 60000), (req, res) => {
     res.set(noStore);
     const p = bodyOf(req);
     try {

@@ -21,6 +21,10 @@ export const REFRESH_PREFIX = "anonyma_rt_";
 const CODE_PREFIX = "anonyma_ac_";
 export const ACCESS_TTL = 3600000; // one hour, never past the connection
 export const CODE_TTL = 60000;
+// A rotated refresh token still works this long after its rotation: an app
+// whose parallel requests all found the access token expired refreshes more
+// than once, and that isn't theft. Reuse after this revokes every token.
+export const REFRESH_LEEWAY = 30000;
 // An approval the app never picks up is closed after this long.
 export const PENDING_TTL = 10 * 60000;
 // A registered client that never completes an authorization is removed.
@@ -134,6 +138,26 @@ export function redirectKind(value) {
     return null;
   return "app";
 }
+// Whether a redirect URI is one the client registered: exactly, or for a
+// loopback address, on any port. A native app listens on whatever port is
+// free each time it connects (RFC 8252 section 7.3, OAuth 2.1). Everything
+// else about it (scheme, host, path, query) must match, and it must already
+// be in its normal form.
+export function redirectRegistered(registered, value) {
+  if (registered.includes(value)) return true;
+  if (redirectKind(value) !== "loopback") return false;
+  const url = new URL(value);
+  if (url.href !== value) return false;
+  return registered.some((r) => {
+    if (redirectKind(r) !== "loopback") return false;
+    const reg = new URL(r);
+    return (
+      reg.hostname === url.hostname &&
+      reg.pathname === url.pathname &&
+      reg.search === url.search
+    );
+  });
+}
 // What the consent screen shows as the place the code goes: the host for
 // web and loopback addresses (punycode, so look-alike letters show), the
 // scheme and host for an app's own scheme.
@@ -204,7 +228,7 @@ export function checkAuthorization(db, cfg, q) {
   const redirectUri = str(q.redirect_uri);
   if (
     !redirectUri ||
-    !JSON.parse(client.redirect_uris).includes(redirectUri) ||
+    !redirectRegistered(JSON.parse(client.redirect_uris), redirectUri) ||
     !redirectKind(redirectUri)
   )
     return { fatal: "invalid_redirect_uri" };
@@ -464,7 +488,8 @@ export function refreshTokens(db, cfg, clientId, params) {
     )
     .get(tokenHash);
   if (!row) oauthFail(400, "invalid_grant", "The refresh token is invalid.");
-  if (row.rotated != null) {
+  const leeway = row.rotated != null && now() - row.rotated <= REFRESH_LEEWAY;
+  if (row.rotated != null && !leeway) {
     revokeTokens(db, row.connection_id);
     oauthFail(
       400,
@@ -477,16 +502,12 @@ export function refreshTokens(db, cfg, clientId, params) {
   if (row.expires <= now())
     oauthFail(400, "invalid_grant", "The refresh token has expired.");
   checkTokenResource(cfg, params, null);
-  const rotated = db
-    .prepare(
+  // Within the leeway the token was rotated moments ago; its rotation time
+  // stays, so the leeway never extends.
+  if (!leeway)
+    db.prepare(
       "UPDATE oauth_tokens SET rotated=? WHERE hash=? AND rotated IS NULL",
-    )
-    .run(now(), tokenHash).changes;
-  if (!rotated) {
-    // Lost a race with another use of the same token: that is reuse too.
-    revokeTokens(db, row.connection_id);
-    oauthFail(400, "invalid_grant", "This refresh token was already used.");
-  }
+    ).run(now(), tokenHash);
   return transaction(db, () => {
     const connection = liveConnection(db, row.connection_id);
     if (!connection)

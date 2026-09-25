@@ -255,6 +255,9 @@ async function toolAsk(ctx, req, res, args) {
     apiKey: req.apiKey,
     headers: {},
     privateOnly,
+    // A connected app pays the standard rate, so its charges and the pace of
+    // its budget say nothing about the account behind it.
+    standardRate: !!req.appConnection,
     discardMedia: true,
   };
   let captured = null;

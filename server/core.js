@@ -763,3 +763,6 @@ export function discount(balance) {
 export function markupFactor(user, cfg) {
   return 1 + (cfg.markup / 100) * (1 - discount(user.token_balance));
 }
+// The rate before any per-account adjustment. A connected app is charged at
+// this rate, so what it's charged says nothing about the account.
+export const standardFactor = (cfg) => 1 + cfg.markup / 100;

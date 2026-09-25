@@ -1,4 +1,4 @@
-import { openapi } from "../openapi.js";
+import { openapiForConfig } from "../openapi.js";
 import { supportConfigured } from "../support.js";
 import { createRatesFeed } from "../rates.js";
 import { createMarketFeed } from "../market.js";
@@ -33,7 +33,7 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
       fail(503, "Market data temporarily unavailable.", "market_unavailable");
     }
   });
-  app.get("/api/openapi.json", (req, res) => res.json(openapi));
+  app.get("/api/openapi.json", (req, res) => res.json(openapiForConfig(cfg)));
   app.get("/api/config", (req, res) =>
     res.json({
       name: "Anonyma",

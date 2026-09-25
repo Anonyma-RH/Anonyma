@@ -1,3 +1,5 @@
+import { featureFor, isReleased, releaseInfo } from "./releases.js";
+
 const string = { type: "string" };
 const number = { type: "number" };
 const integer = { type: "integer" };
@@ -67,7 +69,15 @@ const generation = {
 };
 const apiChat = object(
   {
-    ...chat.properties,
+    model: string,
+    max_tokens: chat.properties.max_tokens,
+    stream: { ...bool, default: false },
+    requestId,
+    web_search: chat.properties.web_search,
+    plugins: {
+      ...array(object({ id: { const: "web" } }, ["id"])),
+      description: "Alternative to web_search: true.",
+    },
     messages: array(
       object(
         { role: { enum: ["system", "user", "assistant"] }, content: string },
@@ -651,7 +661,8 @@ route("get", "/api/account/summary", "Spending over the last 14 days", {
     {
       in: "query",
       name: "tz",
-      description: "Minutes behind UTC, as returned by Date.getTimezoneOffset().",
+      description:
+        "Minutes behind UTC, as returned by Date.getTimezoneOffset().",
       schema: integer,
     },
   ],
@@ -770,17 +781,29 @@ route("delete", "/api/account", "Close account and forfeit unused credits", {
 route("get", "/v1", "Free API connection check", {
   auth: null,
   description:
-    "Optional Bearer key includes balance/key metadata. Terminal user agents receive plain text.",
+    "Optional Bearer key includes balance/key metadata. An absent or invalid key returns authenticated: false rather than 401. Terminal user agents receive plain text; other clients receive JSON. No credits are charged.",
 });
-route("get", "/v1/models", "List API-callable models", { auth: "bearer" });
-route("get", "/v1/balance", "API key balance", { auth: "bearer" });
+route("get", "/v1/models", "List API-callable models", {
+  auth: "bearer",
+  description:
+    "Returns {object: list, data: [{id, object: model, owned_by, created}]}. Includes callable chat and image entries; chat completions accepts chat models only. Use /api/models type metadata to choose a chat model.",
+});
+route("get", "/v1/balance", "API key balance", {
+  auth: "bearer",
+  response: object({ balance: number, available: number }),
+  description:
+    "Total and available displayed credits; 1000 credits = USD 1. Available excludes holds.",
+});
 route("post", "/v1/chat/completions", "OpenAI-style chat completion", {
   auth: "bearer",
   body: ref("ApiChatRequest"),
   response: ref("ChatCompletion"),
   description:
-    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Unsupported optional parameters ignored. Tools, audio, embeddings and Responses are not implemented. Idempotency-Key prevents repeated charging. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged.",
+    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Other optional parameters such as temperature, tools and response_format are ignored. Tool calling, audio, embeddings and Responses are not implemented. web_search=true or plugins: [{id: web}] requests web search and its fee. Idempotency-Key (1–200 characters) overrides requestId; repeats return 409 duplicate_request without replaying output or charging again. Missing IDs generate a new request, so transport retries without an ID can create another charge. Errors use {error: {message, code, type, param}}. SSE errors may occur after HTTP 200; inspect every event through [DONE]. Timeouts and unreadable provider responses can charge the base estimate; see /docs/billing. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged.",
 });
+paths["/v1/chat/completions"].post.parameters = [
+  { name: "Idempotency-Key", in: "header", required: false, schema: requestId },
+];
 paths["/v1/chat/completions"].post.responses[200].content["text/event-stream"] =
   { schema: string };
 for (const [path, summary] of [
@@ -802,7 +825,7 @@ export const openapi = {
     title: "Anonyma Backend API",
     version: "1.0.0",
     description:
-      "Implementation contract; includes unreleased operations. Check /api/config and /roadmap for enabled features before integrating. Cookie routes must be served behind the same public origin as the frontend; no CORS is enabled. Use credentials: include and Content-Type: application/json for writes. Cookies are HttpOnly, SameSite=Lax, Secure on HTTPS. Timestamps are epoch milliseconds except OpenAI-compatible created seconds. USD 1 = 1000 displayed credits = 10000000 integer ledger subunits. Configuration is not live-service verification. Contract documents supported behavior; it is not a runtime schema validator.",
+      "Check /api/config and /roadmap for feature availability before integrating. Cookie routes must be served behind the same public origin as the frontend; no CORS is enabled. Use credentials: include and Content-Type: application/json for writes. Cookies are HttpOnly, SameSite=Lax, Secure on HTTPS. Timestamps are epoch milliseconds except OpenAI-compatible created seconds. USD 1 = 1000 displayed credits = 10000000 integer ledger subunits. Configuration is not live-service verification. Contract documents supported behavior; it is not a runtime schema validator.",
   },
   servers: [{ url: "/" }],
   paths,
@@ -815,3 +838,34 @@ export const openapi = {
     schemas,
   },
 };
+
+// Publish the routes allowed by the same gate used for incoming requests.
+// Body-dependent gates (code/search) still apply to individual requests.
+export function openapiForConfig(cfg) {
+  const enabled = isReleased(cfg, "api");
+  const availablePaths = Object.fromEntries(
+    Object.entries(openapi.paths).flatMap(([path, methods]) => {
+      const available = Object.fromEntries(
+        Object.entries(methods).filter(([method]) => {
+          const feature = featureFor({
+            path,
+            method: method.toUpperCase(),
+            body: {},
+          });
+          return !feature || isReleased(cfg, feature);
+        }),
+      );
+      return Object.keys(available).length ? [[path, available]] : [];
+    }),
+  );
+  return {
+    ...openapi,
+    info: {
+      ...openapi.info,
+      description: `Developer API & CLI: ${enabled ? "enabled" : "Coming soon; /v1, key creation and installers return 403 feature_unreleased"}. This document lists routes enabled for this installation. Model availability and body-dependent feature gates still apply. ${openapi.info.description}`,
+    },
+    paths: availablePaths,
+    "x-anonyma-releases": releaseInfo(cfg),
+    "x-anonyma-test-mode": cfg.testMode === true,
+  };
+}

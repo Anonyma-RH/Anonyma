@@ -163,7 +163,7 @@ export function modelReleased(m, cfg) {
 }
 
 // Which update a request belongs to, if it isn't part of the MVP.
-function featureFor(req) {
+export function featureFor(req) {
   const p = req.path,
     post = req.method === "POST",
     body = req.body || {};

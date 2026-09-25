@@ -3,7 +3,10 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { fail } from "../core.js";
 import { configurationStatus } from "../readiness.js";
-import { publicDocumentation } from "../public-documentation.js";
+import {
+  publicDocumentation,
+  publicDiscovery,
+} from "../public-documentation.js";
 import {
   cliDownload,
   shellInstaller,
@@ -22,14 +25,10 @@ export function siteRoutes({ app, db, cfg }) {
     }),
   );
   app.get("/llms.txt", (req, res) =>
-    res
-      .type("text")
-      .send(
-        "# Anonyma\nPrepaid model gateway.\n- Documentation: /docs\n- API: /v1\n- Full documentation: /llms-full.txt\n",
-      ),
+    res.type("text").send(publicDiscovery(cfg)),
   );
   app.get("/llms-full.txt", (req, res) =>
-    res.type("text").send(publicDocumentation()),
+    res.type("text").send(publicDocumentation(cfg)),
   );
   app.get("/install.sh", (req, res) =>
     res.type("text").send(shellInstaller(cfg)),

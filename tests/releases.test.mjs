@@ -55,10 +55,22 @@ const refused = async (res, title) => {
 test("the MVP refuses every unreleased update on the server", async (t) => {
   const svc = fixture(t, "mvp");
   const a = await signedIn(svc);
-  await refused(a.post("/api/chat").send(chat({ mode: "code" })), "Code & Build");
-  await refused(a.post("/api/conversations").send({ mode: "code" }), "Code & Build");
-  await refused(a.post("/api/chat").send(chat({ web_search: true })), "Live Web Search");
-  await refused(a.post("/api/chat").send(chat({ plugins: [{ id: "web" }] })), "Live Web Search");
+  await refused(
+    a.post("/api/chat").send(chat({ mode: "code" })),
+    "Code & Build",
+  );
+  await refused(
+    a.post("/api/conversations").send({ mode: "code" }),
+    "Code & Build",
+  );
+  await refused(
+    a.post("/api/chat").send(chat({ web_search: true })),
+    "Live Web Search",
+  );
+  await refused(
+    a.post("/api/chat").send(chat({ plugins: [{ id: "web" }] })),
+    "Live Web Search",
+  );
   await refused(a.post("/api/images").send({ prompt: "x" }), "Image Studio");
   await refused(a.get("/api/audio/models"), "Voice & Audio");
   await refused(a.post("/api/audio/speech").send({}), "Voice & Audio");
@@ -68,7 +80,10 @@ test("the MVP refuses every unreleased update on the server", async (t) => {
   await refused(a.post("/api/collabs/join").send({}), "Collab");
   await refused(a.post("/api/keys").send({ name: "k" }), "Developer API & CLI");
   await refused(request(svc.app).get("/v1/models"), "Developer API & CLI");
-  await refused(request(svc.app).post("/v1/chat/completions").send(chat()), "Developer API & CLI");
+  await refused(
+    request(svc.app).post("/v1/chat/completions").send(chat()),
+    "Developer API & CLI",
+  );
   await refused(request(svc.app).get("/install.sh"), "Developer API & CLI");
   await refused(a.get("/api/referrals"), "Referrals & Credits");
   await refused(a.post("/api/credits/send").send({}), "Referrals & Credits");
@@ -86,40 +101,59 @@ test("the MVP offers only its chat models", async (t) => {
   const svc = fixture(t, "mvp");
   const a = await signedIn(svc);
   const list = (await a.get("/api/models").expect(200)).body.data;
-  assert.deepEqual(list.map((m) => m.id), [MVP_MODEL]);
+  assert.deepEqual(
+    list.map((m) => m.id),
+    [MVP_MODEL],
+  );
   assert.equal(list[0].callable, true);
   assert.equal(list[0].apiCallable, false);
   const metadata = (await a.get("/api/models")).body;
   assert.equal(metadata.availabilityScope, "web-workspace");
   assert.equal(metadata.developerApiReleased, false);
-  const other = (await a.post("/api/chat").send(chat({ model: "openai/gpt-4o-mini" })).expect(503)).body;
+  const other = (
+    await a
+      .post("/api/chat")
+      .send(chat({ model: "openai/gpt-4o-mini" }))
+      .expect(503)
+  ).body;
   assert.equal(other.error.code, "model_unavailable");
 });
 
 test("releasing an update opens exactly that update", async (t) => {
   const svc = fixture(t, "mvp,code,catalog");
   const a = await signedIn(svc);
-  const r = await a.post("/api/chat").send(chat({ mode: "code" })).expect(200);
+  const r = await a
+    .post("/api/chat")
+    .send(chat({ mode: "code" }))
+    .expect(200);
   assert.match(r.text, /"credits_charged"/);
-  await refused(a.post("/api/chat").send(chat({ web_search: true })), "Live Web Search");
+  await refused(
+    a.post("/api/chat").send(chat({ web_search: true })),
+    "Live Web Search",
+  );
   const list = (await a.get("/api/models").expect(200)).body.data;
   assert.ok(list.filter((m) => m.type === "chat").length > 1);
   assert.ok(!list.some((m) => m.type === "video"));
-  const info = (await request(svc.app).get("/api/config").expect(200)).body.releases;
+  const info = (await request(svc.app).get("/api/config").expect(200)).body
+    .releases;
   assert.equal(info.all, false);
   assert.equal(info.features.code, true);
   assert.equal(info.features.search, false);
-  assert.deepEqual(info.updates.map((u) => [u.number, u.id, u.released]).slice(0, 4), [
-    [1, "code", true],
-    [2, "search", false],
-    [3, "images", false],
-    [4, "catalog", true],
-  ]);
+  assert.deepEqual(
+    info.updates.map((u) => [u.number, u.id, u.released]).slice(0, 4),
+    [
+      [1, "code", true],
+      [2, "search", false],
+      [3, "images", false],
+      [4, "catalog", true],
+    ],
+  );
 });
 
 test("by default everything is released", async (t) => {
   const svc = fixture(t, undefined);
-  const info = (await request(svc.app).get("/api/config").expect(200)).body.releases;
+  const info = (await request(svc.app).get("/api/config").expect(200)).body
+    .releases;
   assert.equal(info.all, true);
   assert.ok(Object.values(info.features).every(Boolean));
   const a = await signedIn(svc);
@@ -132,15 +166,124 @@ test("release settings are validated", () => {
   assert.equal(parseReleased("all"), "all");
   assert.equal(parseReleased(""), "all");
   assert.deepEqual([...parseReleased("mvp")], []);
-  assert.deepEqual([...parseReleased(" MVP, Code ,search")], ["code", "search"]);
-  assert.throws(() => parseReleased("mvp,vidoe"), /Unknown RELEASED_FEATURES: vidoe/);
+  assert.deepEqual(
+    [...parseReleased(" MVP, Code ,search")],
+    ["code", "search"],
+  );
+  assert.throws(
+    () => parseReleased("mvp,vidoe"),
+    /Unknown RELEASED_FEATURES: vidoe/,
+  );
   assert.equal(config({}).released, "all");
   assert.equal(config({}).mvpModels.length, 10);
   // The launch updates stay first and in order; later updates append.
   assert.deepEqual(
     UPDATES.slice(0, 9).map((u) => u.id),
-    ["code", "search", "images", "catalog", "audio", "video", "collab", "api", "social"],
+    [
+      "code",
+      "search",
+      "images",
+      "catalog",
+      "audio",
+      "video",
+      "collab",
+      "api",
+      "social",
+    ],
   );
   assert.equal(new Set(UPDATES.map((u) => u.id)).size, UPDATES.length);
   for (const u of UPDATES) assert.equal(u.points.length, 3);
+});
+
+test("public discovery and the served contract withhold unreleased developer operations", async (t) => {
+  const svc = fixture(t, "mvp");
+  const client = request(svc.app);
+  const short = (await client.get("/llms.txt").expect(200)).text;
+  const full = (await client.get("/llms-full.txt").expect(200)).text;
+  const spec = (await client.get("/api/openapi.json").expect(200)).body;
+  assert.match(short, /Developer API & CLI: Coming soon/);
+  assert.doesNotMatch(short, /API: \/v1/);
+  assert.match(full, /403 feature_unreleased/);
+  assert.doesNotMatch(
+    full,
+    /POST \/v1\/chat\/completions|POST \/api\/keys|GET \/install.sh/,
+  );
+  assert.equal(spec["x-anonyma-releases"].features.api, false);
+  assert.equal(spec.paths["/v1/chat/completions"], undefined);
+  assert.equal(spec.paths["/api/keys"].post, undefined);
+  assert.ok(
+    spec.paths["/api/keys"].get,
+    "existing key management remains documented",
+  );
+  assert.equal(spec.paths["/api/audio/models"], undefined);
+});
+
+test("enabled developer docs match authenticated models, balances, completions and duplicate behavior", async (t) => {
+  const svc = fixture(t, "mvp,api");
+  const client = request(svc.app);
+  const spec = (await client.get("/api/openapi.json").expect(200)).body;
+  assert.equal(spec["x-anonyma-releases"].features.api, true);
+  assert.ok(spec.paths["/v1/chat/completions"].post);
+  assert.equal(spec.paths["/api/audio/models"], undefined);
+  assert.match(
+    (await client.get("/llms.txt")).text,
+    /Developer API & CLI: enabled/,
+  );
+  assert.match(
+    (await client.get("/llms-full.txt")).text,
+    /POST \/v1\/chat\/completions/,
+  );
+  await client.get("/v1/models").expect(401);
+  const connection = (
+    await client.get("/v1").set("User-Agent", "integration-client")
+  ).body;
+  assert.equal(connection.authenticated, false);
+  assert.equal(connection.credits_charged, 0);
+  const account = await signedIn(svc);
+  const key = (
+    await account.post("/api/keys").send({ name: "docs-test" }).expect(201)
+  ).body;
+  const auth = `Bearer ${key.key}`;
+  const models = (
+    await client.get("/v1/models").set("Authorization", auth).expect(200)
+  ).body;
+  assert.equal(models.object, "list");
+  assert.ok(models.data.some((m) => m.id === MVP_MODEL));
+  const before = (
+    await client.get("/v1/balance").set("Authorization", auth).expect(200)
+  ).body;
+  const completion = (
+    await client
+      .post("/v1/chat/completions")
+      .set("Authorization", auth)
+      .set("Idempotency-Key", "docs-request")
+      .send(chat())
+      .expect(200)
+  ).body;
+  assert.equal(completion.object, "chat.completion");
+  assert.equal(completion.anonyma.request_id, "docs-request");
+  assert.equal(typeof completion.anonyma.credits_charged, "number");
+  const duplicate = await client
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .set("Idempotency-Key", "docs-request")
+    .send(chat())
+    .expect(409);
+  assert.equal(duplicate.body.error.code, "duplicate_request");
+  const after = (await client.get("/v1/balance").set("Authorization", auth))
+    .body;
+  assert.ok(
+    Math.abs(
+      before.balance - after.balance - completion.anonyma.credits_charged,
+    ) < 0.00001,
+  );
+  const stream = await client
+    .post("/v1/chat/completions")
+    .set("Authorization", auth)
+    .set("Idempotency-Key", "docs-stream")
+    .send(chat({ stream: true }))
+    .expect(200);
+  assert.match(stream.headers["content-type"], /text\/event-stream/);
+  assert.match(stream.text, /"choices":\[\],"usage":/);
+  assert.match(stream.text, /data: \[DONE\]/);
 });

@@ -1,3 +1,4 @@
+import ApiGuide, { ApiExample } from "./ApiGuide.jsx";
 import React, { useMemo, useState } from "react";
 import {
   Link,
@@ -520,7 +521,7 @@ const docsTopics = [
     "api",
     "Developer API",
     "Bring your own tools",
-    "Use an ANONYMA customer key with the documented /v1 subset. Available contracts include model listing, balance and chat completions. Audio, embeddings, tools, web search and the Responses API are excluded.",
+    "Use an ANONYMA customer key with the documented /v1 subset. Available contracts include model listing, balance and chat completions. Supported fields, streaming, retries and billing behavior are documented below.",
   ],
   [
     "privacy",
@@ -595,6 +596,7 @@ export function Docs() {
           {(!planned || topic[0] !== "api") && <p className="lead">{topic[3]}</p>}
           {topic[0] === "billing" && <BillingRules />}
           {topic[0] === "credits" && <p><Link to="/docs/billing">Read the full billing rules, including fees, refunds and failed requests.</Link></p>}
+          {topic[0] !== "api" && <>
           <h3>Try the experience</h3>
           <p>
             Open the interactive demo to explore the interface. Every sample
@@ -623,7 +625,8 @@ export function Docs() {
               Local demo data is different from an account saved on a server.
             </li>
           </ul>
-          {topic[0] === "api" && !planned && <ApiExample />}
+          </>}
+          {topic[0] === "api" && !planned && <ApiGuide />}
           <div className="doc-next">
             <span>Need a hand?</span>
             <Link to="/support">
@@ -633,24 +636,6 @@ export function Docs() {
         </article>
       </div>
     </main>
-  );
-}
-const example = `curl https://YOUR_ANONYMA_DOMAIN/v1/chat/completions \\\n  -H "Authorization: Bearer $ANONYMA_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"model":"YOUR_CALLABLE_MODEL_ID",\n       "messages":[{"role":"user","content":"Hello"}],\n       "stream":true}'`;
-function ApiExample() {
-  return (
-    <div className="code-example">
-      <div>
-        <span>CHAT COMPLETIONS</span>
-        <CopyButton text={example} />
-      </div>
-      <pre>
-        <code>{example}</code>
-      </pre>
-      <small>
-        Replace domain and model ID with your verified service settings. Keep
-        keys private.
-      </small>
-    </div>
   );
 }
 export function Developers() {

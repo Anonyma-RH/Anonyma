@@ -23,6 +23,16 @@ export default function DataControls() {
           type. These are count limits, not day limits.
         </li>
         <li>
+          Privacy Trail keeps only these facts with a saved reply: the model,
+          provider, gateway route, retention, storage, Veil's mask count and
+          the receipt id. No prompt text is added.
+        </li>
+        <li>
+          Seed Guard checks for wallet seed phrases and private keys in your
+          browser and stops them before sending; nothing about a match is logged
+          or saved.
+        </li>
+        <li>
           NYMA holders at 1,000,000+ keep twice as much: 600 conversations, 300
           Symposium runs, 200 images, 120 videos and 120 audio files. Below
           that, nothing is deleted at once; the standard caps apply again as new

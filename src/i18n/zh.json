@@ -2869,7 +2869,9 @@
     "ANONYMA support will never ask for your seed phrase or private key.": "ANONYMA 支持团队绝不会索要你的助记词或私钥。",
     "This looks like a private key or a transaction hash. If it's a private key, remove it.": "这看起来像私钥或交易哈希。如果是私钥，请删除。",
     "It's not a key, send": "这不是私钥，发送",
-    "It's not a key, save": "这不是私钥，保存"
+    "It's not a key, save": "这不是私钥，保存",
+    "Privacy Trail keeps only these facts with a saved reply: the model, provider, gateway route, retention, storage, Veil's mask count and the receipt id. No prompt text is added.": "隐私轨迹只会随已保存的回复保留以下信息：模型、提供商、网关路由、数据保留方式、存储方式、Veil 遮盖数量和收据编号。不会额外保存任何提示词内容。",
+    "Seed Guard checks for wallet seed phrases and private keys in your browser and stops them before sending; nothing about a match is logged or saved.": "助记词防护会在你的浏览器中检查钱包助记词和私钥，并在发送前拦截；与匹配相关的任何信息都不会被记录或保存。"
   },
   "patterns": [
     {

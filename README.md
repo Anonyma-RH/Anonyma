@@ -7,7 +7,7 @@ prepaid credit balance. This repository contains the React client, Node.js API,
 SQLite accounting and conversation storage, model gateway integration, CLI,
 and application tests.
 
-The hosted app includes chat, Code & Build, Live Web Search, a small model selection, dashboard,
+The hosted app includes chat, Code & Build, Live Web Search, Veil, Uncensored Models, a small model selection, dashboard,
 account and credits. The source also includes image, audio, video, collaboration,
 and developer features whose availability is controlled by release gates.
 Source availability does not mean every feature is enabled on the hosted app.
@@ -30,6 +30,9 @@ request current web information and follow cited sources. Includes its launch fi
 [Veil](docs/releases/veil.md): masks emails, card numbers, phone numbers, keys
 and other private details in your browser before a prompt is sent, then restores
 them on screen. Enabled on [askanonyma.com](https://askanonyma.com/workspace/chat). Includes its launch film.
+
+[Uncensored Models](docs/releases/uncensored-models.md): a dedicated section and
+curated model picker, using the same prepaid balance. Includes its launch film.
 
 ## How it works
 

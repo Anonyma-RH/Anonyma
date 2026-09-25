@@ -110,6 +110,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "uncensored",
+    released: true,
+    title: "Uncensored Models",
+    tagline: "Your space for uncensored models.",
+    points: [
+      "A dedicated uncensored collection",
+      "Choose your model",
+      "One prepaid balance",
+    ],
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -125,6 +136,21 @@ export const DEFAULT_MVP_MODELS = [
   "glm-5.3",
   "kimi-k3-fast",
   "deepseek/deepseek-v4.1-flash",
+];
+
+// The Uncensored section's models, offered once "uncensored" is released even
+// while the full catalog stays closed. Curated, never inferred from a
+// provider: add a model only when its catalog metadata explicitly labels it
+// uncensored and it is a live chat model with published token rates. The
+// current list is every such row in the catalog (all hosted by Venice) except
+// venice/e2ee-gemma-4-26b-a4b-uncensored-p, an enclave ("e2ee") variant that
+// publishes no supported parameters and hasn't been tested on this chat path.
+export const UNCENSORED_MODELS = [
+  "venice/venice-uncensored-1-2",
+  "cognitivecomputations/dolphin-mistral-24b-venice-edition",
+  "venice/venice-uncensored-role-play",
+  "venice/gemma-4-uncensored",
+  "venice/olafangensan-glm-4.7-flash-heretic",
 ];
 
 export function parseReleased(value) {
@@ -152,7 +178,8 @@ export const isReleased = (cfg, id) =>
   UPDATES.some((u) => u.id === id && u.released === true);
 
 // Whether a model is part of what's released: chat models need the full
-// catalog or a place on the MVP list; generators need their studio.
+// catalog, a place on the MVP list, or (for the curated uncensored models)
+// the Uncensored release; generators need their studio.
 export function modelReleased(m, cfg) {
   if (cfg.released === "all") return true;
   if (m.type === "video") return isReleased(cfg, "video");
@@ -162,40 +189,44 @@ export function modelReleased(m, cfg) {
     return isReleased(cfg, "images");
   return (
     isReleased(cfg, "catalog") ||
-    (cfg.mvpModels || DEFAULT_MVP_MODELS).includes(m.id)
+    (cfg.mvpModels || DEFAULT_MVP_MODELS).includes(m.id) ||
+    (isReleased(cfg, "uncensored") && UNCENSORED_MODELS.includes(m.id))
   );
 }
 
-// Which update a request belongs to, if it isn't part of the MVP.
-export function featureFor(req) {
+// All release gates required by a request. Discovery uses the first gate.
+export const featureFor = (req) => featuresFor(req)[0] || null;
+function featuresFor(req) {
   const p = req.path,
     post = req.method === "POST",
     body = req.body || {};
-  if (p.startsWith("/api/videos")) return "video";
-  if (p.startsWith("/api/audio")) return "audio";
-  if (p.startsWith("/api/collabs")) return "collab";
-  if (p === "/api/images" && post) return "images";
-  if (p === "/v1" || p.startsWith("/v1/")) return "api";
-  if (p === "/api/keys" && post) return "api";
-  if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return "api";
-  if (p === "/api/credits/send" || p === "/api/referrals") return "social";
+  if (p.startsWith("/api/videos")) return ["video"];
+  if (p.startsWith("/api/audio")) return ["audio"];
+  if (p.startsWith("/api/collabs")) return ["collab"];
+  if (p === "/api/images" && post) return ["images"];
+  if (p === "/v1" || p.startsWith("/v1/")) return ["api"];
+  if (p === "/api/keys" && post) return ["api"];
+  if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return ["api"];
+  if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
+  const needed = [];
   if ((p === "/api/chat" || p === "/api/conversations") && post) {
-    if (body.mode === "code") return "code";
+    if (body.mode === "code") needed.push("code");
+    if (body.mode === "uncensored") needed.push("uncensored");
     if (
       p === "/api/chat" &&
       (body.web_search === true ||
         (Array.isArray(body.plugins) &&
           body.plugins.some((x) => x?.id === "web")))
     )
-      return "search";
+      needed.push("search");
   }
-  return null;
+  return needed;
 }
 
 export function releaseGuard(cfg) {
   return (req, res, next) => {
-    const feature = featureFor(req);
-    if (feature && !isReleased(cfg, feature)) {
+    const feature = featuresFor(req).find((id) => !isReleased(cfg, id));
+    if (feature) {
       const update = UPDATES.find((u) => u.id === feature);
       fail(403, `${update.title} is coming soon.`, "feature_unreleased");
     }
@@ -213,5 +244,6 @@ export function releaseInfo(cfg) {
       number: i + 1,
       released: isReleased(cfg, u.id),
     })),
+    uncensoredModels: UNCENSORED_MODELS,
   };
 }

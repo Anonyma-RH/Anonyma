@@ -119,7 +119,7 @@ export function chatRoutes(ctx) {
           typeof messages.at(-1).content === "string"
             ? chatTitle(messages.at(-1).content)
             : "Image conversation",
-          ["code", "uncensored"].includes(req.body.mode) ? req.body.mode : "chat",
+          ["code", "uncensored", "symposium"].includes(req.body.mode) ? req.body.mode : "chat",
         );
         db.prepare(
           "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",

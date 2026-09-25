@@ -365,6 +365,7 @@ export const MODE_FEATURES = {
   audio: "audio",
   collab: "collab",
   uncensored: "uncensored",
+  symposium: "symposium",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

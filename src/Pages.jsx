@@ -787,6 +787,7 @@ const featureIcons = {
   private: "shield",
   zh: "globe",
   documents: "file",
+  symposium: "panel",
 };
 const launch = {
   id: "mvp",

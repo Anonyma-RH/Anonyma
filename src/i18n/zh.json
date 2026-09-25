@@ -321,7 +321,7 @@
     "Confirm": "确认",
     "Confirm closure": "确认关闭",
     "Confirm reset": "确认重置",
-    "Confirm the payment in your wallet…": "请在你的钱包中确认付款…",
+    "Confirm the payment in your wallet…": "请在你的钱包中确认付款……",
     "Confirm.": "确认。",
     "confirmations and transfer verification.": "次确认并完成转账验证。",
     "Connect": "连接",
@@ -839,7 +839,7 @@
     "Open workspace": "打开工作台",
     "Open workspace menu": "打开工作台菜单",
     "OpenAI-compatible /v1 API": "兼容 OpenAI 的 /v1 API",
-    "Opening your workspace…": "正在打开你的工作台…",
+    "Opening your workspace…": "正在打开你的工作台……",
     "Optional demo": "可选演示",
     "Or email": "或发送邮件至",
     "Origin checks.": "来源检查。",
@@ -1291,7 +1291,7 @@
     "Waiting for processor": "等待处理方响应",
     "Waiting for verified payment currencies": "正在等待已验证的付款币种",
     "Waiting for your wallet…": "正在等待你的钱包……",
-    "Waiting…": "等待中…",
+    "Waiting…": "等待中……",
     "Wallet": "钱包",
     "Wallet holdings refreshed.": "钱包持有量已刷新。",
     "Wallet linked. You can now sign in with it.": "钱包已关联。你现在可以使用钱包登录。",
@@ -1638,7 +1638,35 @@
     "Image provider": "图像提供商",
     "Video provider": "视频提供商",
     "Speech provider": "语音提供商",
-    "Transcription provider": "转录提供商"
+    "Transcription provider": "转录提供商",
+    "Symposium": "模型圆桌",
+    "SYMPOSIUM": "模型圆桌",
+    "Ask several models at once.": "同时向多个模型提问。",
+    "Up to four models side by side": "最多四个模型并排对比",
+    "A receipt for every answer": "每个回答都有收据",
+    "Fuse the answers into one": "将多个回答融合为一",
+    "Choose 2 to 4 chat models, ask them the same question, and compare what comes back. Fuse the answers into one when they're done.": "选择 2 到 4 个对话模型，向它们提出同一个问题，并对比各自的回答。全部完成后，可将这些回答融合为一个。",
+    "Symposium sends the same question to 2 to 4 chat models side by side, then can fuse their answers into one. Sign in to try it; it isn't part of the demo.": "模型圆桌会把同一个问题并排发送给 2 到 4 个对话模型，然后可将它们的回答融合为一个。登录后即可试用；演示中不包含此功能。",
+    "Answering…": "回答中……",
+    "Complete": "已完成",
+    "Failed": "失败",
+    "Stopped": "已停止",
+    "Stop": "停止",
+    "Stopped. Partial output may have been billed.": "已停止。部分输出可能已计费。",
+    "Not enough credits right now: the other answers are holding credits while they run. Add credits or compare fewer models.": "当前积分不足：其他回答在生成期间会冻结积分。请充值，或减少对比的模型数量。",
+    "Generation isn't currently available.": "生成功能目前暂不可用。",
+    "Not enough finished answers to fuse.": "已完成的回答不足，无法融合。",
+    "Fuse with": "融合模型",
+    "Fuse answers": "融合回答",
+    "Fused answer": "融合后的回答",
+    "Estimating…": "估算中……",
+    "Your question": "你的问题",
+    "Ask every model the same question…": "向所有模型提出同一个问题……",
+    "Ask all models": "向所有模型提问",
+    "Filter models": "筛选模型",
+    "Each model is billed separately at its own rate. AI can make mistakes.": "每个模型按各自的价格单独计费。AI 可能会出错。",
+    "Symposium runs are saved to your account, even with Private Mode on.": "即使开启隐私模式，模型圆桌的运行记录也会保存到你的账户。",
+    "symposium": "模型圆桌"
   },
   "patterns": [
     {
@@ -2019,7 +2047,7 @@
     },
     {
       "en": "Checking your payment on {0}…",
-      "zh": "正在 {0} 上检查你的付款…"
+      "zh": "正在 {0} 上检查你的付款……"
     },
     {
       "en": "Coming soon with {0}",
@@ -2031,7 +2059,7 @@
     },
     {
       "en": "Confirming on {0}: {1} of {2} blocks…",
-      "zh": "正在 {0} 上确认：{1}/{2} 个区块…"
+      "zh": "正在 {0} 上确认：{1}/{2} 个区块……"
     },
     {
       "en": "Connected catalog · {0}. Availability refers to this web workspace; developer API access has a separate release gate.",
@@ -2295,15 +2323,15 @@
     },
     {
       "en": "Veiled {0} detail",
-      "zh": "Veil 已隐藏 {0} 条详情"
+      "zh": "Veil 已遮盖 {0} 条详情"
     },
     {
       "en": "Veiled {0} details",
-      "zh": "Veil 已隐藏 {0} 条详情"
+      "zh": "Veil 已遮盖 {0} 条详情"
     },
     {
       "en": "Waiting for the transaction to appear on {0}…",
-      "zh": "正在等待交易出现在 {0} 上…"
+      "zh": "正在等待交易出现在 {0} 上……"
     },
     {
       "en": "Web search: ${0} ({1} credits) per searched request before platform markup. A searched request costs at least its token cost plus this fee.",
@@ -2420,6 +2448,26 @@
     {
       "en": "This transaction didn't send {0} from your linked wallet ({1}) to Anonyma's payment address. Only payments from your linked wallet are credited automatically.",
       "zh": "此交易未从你的关联钱包（{1}）向 ANONYMA 的付款地址发送 {0}。只有来自关联钱包的付款会自动入账。"
+    },
+    {
+      "en": "{0} of {1} models selected",
+      "zh": "已选 {0} 个，共 {1} 个模型"
+    },
+    {
+      "en": "Models to compare ({0}/4)",
+      "zh": "对比模型（{0}/4）"
+    },
+    {
+      "en": "Estimated total: {0} credits",
+      "zh": "预计总计：{0} 积分"
+    },
+    {
+      "en": "Veiled {0} detail before sending. The real values show only in this browser.",
+      "zh": "Veil 已在发送前遮盖 {0} 条详情。真实内容仅在此浏览器中显示。"
+    },
+    {
+      "en": "Veiled {0} details before sending. The real values show only in this browser.",
+      "zh": "Veil 已在发送前遮盖 {0} 条详情。真实内容仅在此浏览器中显示。"
     }
   ]
 }

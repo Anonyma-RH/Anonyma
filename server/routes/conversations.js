@@ -27,6 +27,11 @@ export function exportConversations(db, user) {
     }));
 }
 
+// Personal conversations kept per account, newest first. Symposium runs have
+// their own cap (see newConversation).
+export const CONVERSATION_CAP = 300;
+export const SYMPOSIUM_CAP = 150;
+
 // Days an auto-delete choice may hold; null clears it (kept forever).
 const RETENTION_DAYS = [1, 7, 30];
 const retentionExpiry = (value) => {
@@ -80,17 +85,23 @@ export function conversationRoutes({ app, db, requireUser }) {
     db.prepare(
       "INSERT INTO conversations(id,user_id,title,mode,created,updated,collab_id,expires) VALUES(?,?,?,?,?,?,?,?)",
     ).run(id, user, title.slice(0, 70), mode, now(), now(), collab, expires);
-    // Keep the newest 300 personal conversations; shared ones belong to their collab.
+    // Keep the newest 300 personal conversations; shared ones belong to their
+    // collab. Symposium runs (several conversations per question) are capped
+    // separately at 150, so they never push out ordinary chats. Messages go
+    // with their conversation (ON DELETE CASCADE).
+    const symposium = mode === "symposium" ? 1 : 0;
     db.prepare(
-      "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL AND id NOT IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL ORDER BY updated DESC,rowid DESC LIMIT 300)",
-    ).run(user, user);
+      "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL AND (mode IS 'symposium')=? AND id NOT IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL AND (mode IS 'symposium')=? ORDER BY updated DESC,rowid DESC LIMIT ?)",
+    ).run(user, symposium, user, symposium, symposium ? SYMPOSIUM_CAP : CONVERSATION_CAP);
     return id;
   }
   app.get("/api/conversations", requireUser, (req, res) =>
     res.json({
       data: db
         .prepare(
-          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT 300",
+          // Symposium runs are capped on their own and never shown here, so they
+          // can't crowd ordinary chats out of this list.
+          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium' AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT 300",
         )
         .all(req.user.id, now()),
     }),

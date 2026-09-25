@@ -53,7 +53,7 @@ const chat = object(
     },
     requestId,
     conversationId: string,
-    mode: { enum: ["chat", "code"] },
+    mode: { enum: ["chat", "code", "symposium"] },
     stream: bool,
     web_search: {
       ...bool,

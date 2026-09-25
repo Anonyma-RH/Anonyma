@@ -1,5 +1,10 @@
 import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
+import request from "supertest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { createApp } from "../server/app.js";
 import {
   MAX_TOTAL_CHARS,
   isSupportedDocument,
@@ -15,6 +20,7 @@ import {
   applyBudget,
 } from "../src/documents.js";
 import { UPDATES } from "../server/releases.js";
+import { veil, unveil, createVeilState } from "../src/veil.js";
 
 // Release commits flip `released` on UPDATES entries. These tests cover the
 // gate itself, so they pin every update to unreleased for this file and keep
@@ -186,4 +192,76 @@ test("The Documents update is registered and off by default", () => {
   ]);
   // Committed as false until its "Release …" commit flips it to true.
   assert.equal(typeof committed[UPDATES.indexOf(update)], "boolean");
+});
+
+test("Veil masks the composed message and the document blocks still parse", () => {
+  // Workspace veils the whole composed content (prompt plus <document>
+  // blocks) before sending; the masked message must still split into the
+  // prompt and chips, and the chips' text must unveil back on screen.
+  const state = createVeilState();
+  const sent = composeMessageWithDocuments("Email ana@example.com the summary", [
+    { name: "contacts.csv", text: "name,email,phone\nAna,ana@example.com,+1 415 555 0100" },
+    { name: "notes.txt", pages: null, text: "Key: sk-ant-abcdefghijklmnop" },
+  ]);
+  const masked = veil(sent, state);
+  assert.ok(masked.count >= 3);
+  assert.doesNotMatch(masked.text, /ana@example\.com|555 0100|sk-ant-/);
+  const { text, documents } = parseDocumentBlocks(masked.text);
+  assert.equal(text, "Email [EMAIL_1] the summary");
+  assert.equal(documents.length, 2);
+  assert.equal(documents[0].name, "contacts.csv");
+  // The same address gets the same tag in the prompt and the document.
+  assert.match(documents[0].text, /^name,email,phone\nAna,\[EMAIL_1\],\[PHONE_1\]$/);
+  assert.equal(
+    unveil(documents[0].text, state.map),
+    "name,email,phone\nAna,ana@example.com,+1 415 555 0100",
+  );
+  assert.equal(unveil(documents[1].text, state.map), "Key: sk-ant-abcdefghijklmnop");
+});
+
+function fixture(t, released) {
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-documents-"));
+  const svc = createApp({
+    testMode: true,
+    dbPath: join(dir, "test.sqlite"),
+    mediaPath: join(dir, "media"),
+    origin: "http://localhost:5175",
+    // The server defaults to the MVP; open every update explicitly.
+    released: released ?? "all",
+  });
+  t.after(() => {
+    svc.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  return svc;
+}
+
+test("A chat with documents is named after the typed prompt and saved whole", async (t) => {
+  const s = fixture(t);
+  const agent = request.agent(s.app);
+  await agent
+    .post("/api/auth/register")
+    .send({ username: "doc_tester", password: "test-password-long" })
+    .expect(201);
+  const content = composeMessageWithDocuments("Summarize the attached", [
+    { name: "report.pdf", pages: 2, text: "Revenue grew 14%." },
+  ]);
+  const r = await agent
+    .post("/api/chat")
+    .send({
+      model: "google/gemini-2.5-flash",
+      messages: [{ role: "user", content }],
+      max_tokens: 50,
+    })
+    .expect(200);
+  assert.match(r.text, /\[DONE\]/);
+  const [conversation] = (await agent.get("/api/conversations")).body.data;
+  assert.equal(conversation.title, "Summarize the attached");
+  const saved = s.db
+    .prepare("SELECT content FROM messages WHERE conversation_id=? AND role='user'")
+    .get(conversation.id);
+  const { text, documents } = parseDocumentBlocks(JSON.parse(saved.content));
+  assert.equal(text, "Summarize the attached");
+  assert.equal(documents[0].name, "report.pdf");
+  assert.equal(documents[0].text, "Revenue grew 14%.");
 });

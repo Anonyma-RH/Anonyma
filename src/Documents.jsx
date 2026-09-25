@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Icon, Notice } from "./ui.jsx";
 import { uid } from "./lib.js";
+import { unveil } from "./veil.js";
 import {
   MAX_DOCUMENTS,
   MAX_TOTAL_CHARS,
@@ -45,23 +46,29 @@ async function extractPdfText(file) {
 
 // One document, attached in the composer or recovered from a saved message.
 // onRemove is only passed for live attachments; history chips are read-only.
+// The file name and its text are user content, so they carry
+// data-i18n="off"; the size, count and notes around them are UI text.
 function DocumentChip({ doc, onRemove }) {
-  const meta = doc.pages
-    ? `${doc.pages} page${doc.pages === 1 ? "" : "s"}`
-    : doc.size != null
-      ? formatBytes(doc.size)
-      : null;
+  const meta = [
+    doc.pages
+      ? `${doc.pages} page${doc.pages === 1 ? "" : "s"}`
+      : doc.size != null
+        ? formatBytes(doc.size)
+        : null,
+    formatChars(doc.chars),
+    doc.truncated ? "trimmed" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <div className="document-chip">
       <details>
         <summary>
           <Icon name="file" size={14} />
-          <span className="document-chip-name">{doc.name}</span>
-          <span className="document-chip-meta">
-            {meta ? meta + " · " : ""}
-            {formatChars(doc.chars)}
-            {doc.truncated ? " · trimmed" : ""}
+          <span className="document-chip-name" data-i18n="off">
+            {doc.name}
           </span>
+          <span className="document-chip-meta">{meta}</span>
           {doc.warning && (
             <Icon
               name="warning"
@@ -77,9 +84,17 @@ function DocumentChip({ doc, onRemove }) {
             context budget.
           </p>
         )}
-        <pre className="document-chip-preview">
-          {doc.text || "No text was extracted from this file."}
-        </pre>
+        {doc.text ? (
+          <pre className="document-chip-preview" data-i18n="off">
+            {doc.text}
+          </pre>
+        ) : (
+          !doc.warning && (
+            <p className="document-chip-note">
+              No text was extracted from this file.
+            </p>
+          )
+        )}
       </details>
       {onRemove && (
         <button
@@ -168,7 +183,7 @@ export default function DocumentAttach({
   return (
     <label
       className={"attachment-control" + (busy ? " busy" : "")}
-      title="Attach a PDF, text or code file. Document text is sent to the model and saved with the conversation."
+      title="Attach PDF, text, CSV or code files. Their text is extracted in this browser, sent with your message and kept like the rest of the chat."
     >
       <Icon name="file" size={18} />
       <span className="sr-only">Attach document</span>
@@ -211,11 +226,19 @@ export function DocumentChips({ documents, setDocuments }) {
 
 // Collapsed, read-only chips for documents recovered from a saved message
 // (see documents.js parseDocumentBlocks), used in conversation history.
-export function MessageDocuments({ documents }) {
+// With Veil on, the saved text holds [TAG_n] placeholders; veilMap (this
+// browser's tag -> value map) restores the real values on screen only.
+export function MessageDocuments({ documents, veilMap }) {
   if (!documents?.length) return null;
+  const shown = veilMap
+    ? documents.map((doc) => {
+        const text = unveil(doc.text, veilMap);
+        return { ...doc, name: unveil(doc.name, veilMap), text, chars: text.length };
+      })
+    : documents;
   return (
     <div className="document-list document-list-history">
-      {documents.map((doc, i) => (
+      {shown.map((doc, i) => (
         <DocumentChip key={i} doc={doc} />
       ))}
     </div>

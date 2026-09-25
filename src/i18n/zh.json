@@ -183,6 +183,8 @@
     "Asynchronous video workflows": "异步视频工作流",
     "At launch, chat runs on a short list of models chosen by the operator, ten by default.": "上线时，对话功能使用运营方挑选的少量模型，默认 10 个。",
     "At least 10 characters": "至少 10 个字符",
+    "Attach document": "附加文档",
+    "Attach PDF, text, CSV or code files. Their text is extracted in this browser, sent with your message and kept like the rest of the chat.": "附加 PDF、文本、CSV 或代码文件。文件文本会在此浏览器中提取，随消息一起发送，并与会话的其他内容一样保留。",
     "Audio": "音频",
     "audio — ANONYMA": "语音 — ANONYMA",
     "audio model": "音频模型",
@@ -221,6 +223,7 @@
     "Billing rules, fees and refund information": "计费规则、费用和退款信息",
     "Billing rules: rates, fees, refunds, payment failures and interrupted requests.": "计费规则：价格、费用、退款、付款失败和中断的请求。",
     "Bring a supported chat workflow into your own tools.": "将受支持的对话工作流接入你自己的工具。",
+    "Bring the document. Ask the question.": "带上文档，直接提问。",
     "Bring your ideas to life with AI models.": "借助 AI 模型，让创意焕发生命力。",
     "Bring your own tools": "使用你自己的工具",
     "Browse documentation": "浏览文档",
@@ -356,6 +359,7 @@
     "Copy payment address": "复制付款地址",
     "Copy unavailable": "复制不可用",
     "Copy your link": "复制你的链接",
+    "Could not read this file.": "无法读取此文件。",
     "Create": "创建",
     "Create & explore": "创作与探索",
     "Create a key": "创建密钥",
@@ -467,6 +471,7 @@
     "Documentation": "文档",
     "DOCUMENTATION": "文档",
     "Documentation topics": "文档主题",
+    "Documents": "文档",
     "Done": "完成",
     "Download": "下载",
     "Download draft": "下载草稿",
@@ -764,12 +769,14 @@
     "No browser wallet found.": "未找到浏览器钱包。",
     "No browser wallet was found, and WalletConnect is not configured on this service.": "未找到浏览器钱包，且此服务未配置 WalletConnect。",
     "No deposits yet.": "暂无充值记录。",
+    "No extractable text found — this PDF may be a scanned image.": "未找到可提取的文本——此 PDF 可能是扫描图像。",
     "No invented privacy promises": "不作虚构的隐私承诺",
     "No models found": "未找到模型",
     "No private models are available right now.": "当前没有可用的私密模型。",
     "No shared conversations yet.": "暂无共享会话。",
     "No speech was recognised in that recording.": "未能识别这段录音中的语音。",
     "No subscription": "无需订阅",
+    "No text was extracted from this file.": "未从此文件中提取到文本。",
     "No topics found.": "未找到主题。",
     "No wallet account was selected.": "未选择钱包账户。",
     "None yet": "暂无",
@@ -818,6 +825,7 @@
     "One tap on Web in any chat": "在任意会话中轻点一下“联网”",
     "One workspace": "一个工作台",
     "One workspace.": "一个工作台。",
+    "Only part of this file was sent — it was trimmed to fit the context budget.": "此文件只发送了一部分——为适应上下文预算已被截断。",
     "Only zero-data-retention models": "仅使用零数据保留模型",
     "Open": "打开",
     "Open account menu": "打开账户菜单",
@@ -860,6 +868,7 @@
     "Payment status: creating. Credits are pending until the service confirms settlement.": "付款状态：正在创建。服务确认结算前，积分仍处于待处理状态。",
     "Payment verified. Your account balance has been refreshed.": "付款已验证。你的账户余额已刷新。",
     "Payments": "付款",
+    "PDFs, text, CSV and code files": "PDF、文本、CSV 和代码文件",
     "Pending or unconfirmed transfers are not yet spendable. If the payment check is unavailable, recheck the same transaction hash rather than sending again.": "待处理或未确认的转账尚不可用。如果付款检查不可用，请重新检查同一交易哈希，而不要再次发送。",
     "Per-key spending caps": "按密钥设置消费上限",
     "Personal conversations: the 300 most recently updated conversations. Creating another conversation removes the oldest personal conversation and its messages. Shared conversations have no automatic count or time limit.": "个人会话：最近更新的 300 个会话。创建新会话会移除最早的个人会话及其消息。共享会话没有自动数量或时间限制。",
@@ -1104,6 +1113,7 @@
     "Test receipt": "测试收据",
     "Test receipt · Unconfirmed fixture credits charged": "测试收据 · 已扣除未确认测试积分",
     "Text and image to video": "将文字和图像转换为视频",
+    "Text extracted in your browser": "文本在你的浏览器中提取",
     "Text to speak": "要朗读的文本",
     "Text to speech": "文本转语音",
     "The accounting, payments and data handling behind a prepaid AI workspace, described from the code that runs it.": "本文将介绍预付 AI 工作台背后的计费、付款与数据处理机制，所有内容均来自实际运行服务的代码。",
@@ -1185,6 +1195,7 @@
     "This secret is shown only once.": "此密钥仅显示一次。",
     "This video model has no published price for these options.": "此视频模型没有针对这些选项公布价格。",
     "This video model needs a public HTTPS start image.": "此视频模型需要一个公开的 HTTPS 起始图片。",
+    "Tidy document chips in every chat": "每段对话里都有整洁的文档卡片",
     "Timed out or unreadable.": "超时或无法读取。",
     "to authenticated endpoints. A browser session cookie does not replace an API key. Clients use this website’s origin with": "到经过身份验证的端点。浏览器会话 Cookie 不能替代 API 密钥。客户端使用此网站的来源，并以",
     "to bringing ideas to life.": "让创意成为现实。",
@@ -1199,6 +1210,7 @@
     "Transcribe any recording": "转录任意录音",
     "Transcribing…": "正在转录……",
     "Transfers more than seven days old require operator review. Wrong-network or wrong-address transfers have no guaranteed recovery; share the transaction hash with support, never a private key or recovery phrase.": "超过 7 天的转账需要运营人员审核。错误网络或错误地址的转账不保证能够追回；请将交易哈希分享给支持人员，绝不要分享私钥或恢复短语。",
+    "trimmed": "已截断",
     "Try another name or broaden your filters.": "尝试其他名称，或放宽筛选条件。",
     "Try the demo": "试用演示",
     "Try the experience": "体验功能",
@@ -1533,6 +1545,14 @@
       "zh": "“{0}”已使用 {1} / {2} 的每日积分额度。你还有另外 {3} 个密钥。"
     },
     {
+      "en": "\"{0}\" is larger than {1}.",
+      "zh": "“{0}”超过了 {1} 的大小上限。"
+    },
+    {
+      "en": "\"{0}\" isn't a supported document type.",
+      "zh": "“{0}”不是受支持的文档类型。"
+    },
+    {
       "en": "{0} — availability unavailable",
       "zh": "{0}——状态未知"
     },
@@ -1567,6 +1587,14 @@
     {
       "en": "{0} availability unknown",
       "zh": "{0}可用性未知"
+    },
+    {
+      "en": "{0} char",
+      "zh": "{0} 个字符"
+    },
+    {
+      "en": "{0} chars",
+      "zh": "{0} 个字符"
     },
     {
       "en": "{0} chat",
@@ -1685,6 +1713,14 @@
       "zh": "计划中的 {1} 个更新中还有 {0} 个尚未发布。在这些更新发布前，其功能不可用。"
     },
     {
+      "en": "{0} page",
+      "zh": "{0} 页"
+    },
+    {
+      "en": "{0} pages",
+      "zh": "{0} 页"
+    },
+    {
       "en": "{0} seconds",
       "zh": "{0} 秒"
     },
@@ -1781,6 +1817,14 @@
       "zh": "按本周的使用速度，预计可持续约 {0}。"
     },
     {
+      "en": "Attach up to {0} documents per message.",
+      "zh": "每条消息最多附加 {0} 个文档。"
+    },
+    {
+      "en": "Attached documents total {0}; only the first {1} will be sent to the model.",
+      "zh": "附加文档共 {0}，只有前 {1} 会发送给模型。"
+    },
+    {
       "en": "Aug {0}",
       "zh": "8月{0}日"
     },
@@ -1827,6 +1871,10 @@
     {
       "en": "Copy contract address: {0}",
       "zh": "复制合约地址：{0}"
+    },
+    {
+      "en": "Could not read this file: {0}",
+      "zh": "无法读取此文件：{0}"
     },
     {
       "en": "credits, worth ${0}.",

@@ -1223,11 +1223,27 @@ export default function Workspace() {
                     {messages.map((m, i) => {
                       // A saved user message may carry <document> blocks after
                       // the typed prompt; render those as collapsed chips
-                      // instead of a wall of extracted text.
-                      const parsed = parseDocumentBlocks(m.content);
+                      // instead of a wall of extracted text. Replies are left
+                      // as written, even if a model echoes the tags back.
+                      const parsed =
+                        m.role === "user"
+                          ? parseDocumentBlocks(m.content)
+                          : { text: m.content, documents: [] };
+                      const hasDocuments = parsed.documents.length > 0;
                       const shown =
-                        parsed.text ||
-                        (parsed.documents.length ? "" : "Preparing…");
+                        parsed.text || (hasDocuments ? "" : "Preparing…");
+                      const body = (
+                        <ReactMarkdown
+                          remarkPlugins={[
+                            remarkGfm,
+                            // Re-runs on every render (incl. mid-stream) so a
+                            // [TAG_n] split across chunks resolves once whole.
+                            [veilRemarkPlugin, { map: veilStateRef.current.map }],
+                          ]}
+                        >
+                          {shown}
+                        </ReactMarkdown>
+                      );
                       return (
                       <article
                         key={i}
@@ -1266,19 +1282,26 @@ export default function Workspace() {
                               </span>
                             )}
                           </div>
-                          <div className="markdown" data-i18n={m.content ? "off" : undefined}>
-                            <ReactMarkdown
-                              remarkPlugins={[
-                                remarkGfm,
-                                // Re-runs on every render (incl. mid-stream) so a
-                                // [TAG_n] split across chunks resolves once whole.
-                                [veilRemarkPlugin, { map: veilStateRef.current.map }],
-                              ]}
-                            >
-                              {shown}
-                            </ReactMarkdown>
-                            {parsed.documents.length > 0 && (
-                              <MessageDocuments documents={parsed.documents} />
+                          {/* The typed text is user content, so it stays
+                              untranslated; with documents attached only it is
+                              fenced off, leaving the chips' labels to the
+                              language switch while their names stay as sent. */}
+                          <div
+                            className="markdown"
+                            data-i18n={m.content && !hasDocuments ? "off" : undefined}
+                          >
+                            {hasDocuments ? (
+                              <div className="document-prompt" data-i18n="off">
+                                {body}
+                              </div>
+                            ) : (
+                              body
+                            )}
+                            {hasDocuments && (
+                              <MessageDocuments
+                                documents={parsed.documents}
+                                veilMap={veilStateRef.current.map}
+                              />
                             )}
                             {m.images?.map((url, j) => (
                               <img
@@ -1454,7 +1477,7 @@ export default function Workspace() {
                     </div>
                   )}
                   {!demo &&
-                    ["chat", "code"].includes(mode) &&
+                    textMode &&
                     isReleased(config, "documents") && (
                     <DocumentChips
                       documents={documents}
@@ -1576,7 +1599,7 @@ export default function Workspace() {
                         </label>
                       )}
                       {!demo &&
-                        ["chat", "code"].includes(mode) &&
+                        textMode &&
                         isReleased(config, "documents") && (
                         <DocumentAttach
                           documents={documents}

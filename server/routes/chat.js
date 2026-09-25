@@ -108,7 +108,9 @@ export function chatRoutes(ctx) {
         conversation ||= newConversation(
           req.user.id,
           typeof messages.at(-1).content === "string"
-            ? messages.at(-1).content
+            ? // Attached documents follow the typed prompt as <document>
+              // blocks (src/documents.js); only the prompt names the chat.
+              messages.at(-1).content.split("\n\n<document ")[0]
             : "Image conversation",
           ["code", "uncensored"].includes(req.body.mode) ? req.body.mode : "chat",
         );

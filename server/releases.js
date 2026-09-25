@@ -161,6 +161,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "scrolls",
+    title: "Scrolls",
+    tagline: "Save the prompt. Skip the retyping.",
+    points: [
+      "Saved prompts with fill-in blanks",
+      "Type / to insert one",
+      "Standing instructions for every chat",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -249,6 +260,13 @@ function featuresFor(req) {
   if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return ["api"];
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
   if (p.startsWith("/api/retention")) return ["ephemeral"];
+  if (
+    p === "/api/scrolls" ||
+    p.startsWith("/api/scrolls/") ||
+    p === "/api/instructions" ||
+    p.startsWith("/api/instructions/")
+  )
+    return ["scrolls"];
   if (
     req.method === "PATCH" &&
     p.startsWith("/api/conversations/") &&

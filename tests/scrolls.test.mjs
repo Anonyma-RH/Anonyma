@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "../server/app.js";
+import { UPDATES } from "../server/releases.js";
 import {
   extractVariables,
   fillTemplate,
@@ -15,13 +16,14 @@ import {
   MAX_INSTRUCTIONS,
 } from "../src/scrolls.js";
 
-function fixture(t) {
+function fixture(t, released) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-scrolls-"));
   const svc = createApp({
     testMode: true,
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
+    ...(released !== undefined ? { released } : {}),
   });
   t.after(() => {
     svc.close();
@@ -243,4 +245,64 @@ test("chat accepts a leading system message without changing what is saved", asy
   const userMessages = thread.messages.filter((m) => m.role === "user");
   assert.equal(userMessages.length, 1);
   assert.equal(userMessages[0].content, "Hello");
+});
+
+// --- Release gating ----------------------------------------------------
+
+test("scrolls: registered as an unreleased update", () => {
+  const entry = UPDATES[UPDATES.length - 1];
+  assert.equal(entry.id, "scrolls");
+  assert.equal(entry.released, false);
+  assert.equal(entry.title, "Scrolls");
+  assert.equal(entry.tagline, "Save the prompt. Skip the retyping.");
+  assert.deepEqual(entry.points, [
+    "Saved prompts with fill-in blanks",
+    "Type / to insert one",
+    "Standing instructions for every chat",
+  ]);
+});
+
+test("scrolls: the MVP refuses its endpoints until released", async (t) => {
+  const s = fixture(t, "mvp");
+  const { agent } = await register(s.app);
+  const refused = async (res) => {
+    const r = await res.expect(403);
+    assert.equal(r.body.error.code, "feature_unreleased");
+    assert.equal(r.body.error.message, "Scrolls is coming soon.");
+  };
+  await refused(agent.get("/api/scrolls"));
+  await refused(agent.post("/api/scrolls").send({ title: "t", body: "b" }));
+  await refused(agent.patch("/api/scrolls/scroll_x").send({ title: "t" }));
+  await refused(agent.delete("/api/scrolls/scroll_x"));
+  await refused(agent.get("/api/instructions"));
+  await refused(
+    agent.put("/api/instructions").send({ body: "x", enabled: true }),
+  );
+});
+
+test("scrolls: releasing the update opens its endpoints", async (t) => {
+  const s = fixture(t, "mvp,scrolls");
+  const { agent } = await register(s.app);
+  await agent.get("/api/scrolls").expect(200, { data: [] });
+  const created = (
+    await agent
+      .post("/api/scrolls")
+      .send({ title: "Daily standup", body: "Summarize {{topic}}." })
+      .expect(201)
+  ).body;
+  assert.ok(created.id);
+  await agent
+    .patch(`/api/scrolls/${created.id}`)
+    .send({ title: "Renamed" })
+    .expect(200);
+  await agent.get("/api/instructions").expect(200, {
+    body: "",
+    enabled: false,
+    updated: null,
+  });
+  await agent
+    .put("/api/instructions")
+    .send({ body: "Be terse.", enabled: true })
+    .expect(200);
+  await agent.delete(`/api/scrolls/${created.id}`).expect(200);
 });

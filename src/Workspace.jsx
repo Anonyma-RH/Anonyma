@@ -372,13 +372,16 @@ export default function Workspace() {
         .then((r) => setMedia(r.data))
         .catch((e) => setError(e.message));
       // Scrolls and standing instructions are quiet failures: the composer
-      // works the same as before either way.
-      api("/api/scrolls")
-        .then((r) => setScrolls(r.data))
-        .catch(() => {});
-      api("/api/instructions")
-        .then((r) => setInstructions(r))
-        .catch(() => {});
+      // works the same as before either way. Skipped entirely while the
+      // update is unreleased, so the client never calls its endpoints.
+      if (isReleased(config, "scrolls")) {
+        api("/api/scrolls")
+          .then((r) => setScrolls(r.data))
+          .catch(() => {});
+        api("/api/instructions")
+          .then((r) => setInstructions(r))
+          .catch(() => {});
+      }
     }
   }, [demo, user]);
   useEffect(
@@ -1714,7 +1717,9 @@ export default function Workspace() {
                           onError={setError}
                         />
                       )}
-                      {["chat", "code"].includes(mode) && !demo && (
+                      {["chat", "code"].includes(mode) &&
+                        !demo &&
+                        isReleased(config, "scrolls") && (
                         <button
                           type="button"
                           className="attachment-control scrolls-button"

@@ -1,0 +1,35 @@
+/* Model Finder & Presets: the model button beside the composer and its panel. */
+.app-shell .mf{position:relative;min-width:0;display:flex;flex-wrap:wrap;align-items:center}
+.app-shell .mf-trigger{display:flex;align-items:center;gap:8px;max-width:300px;min-height:38px;padding:7px 10px;border:1px solid var(--work-line);border-radius:6px;background:var(--work-surface);color:var(--work-ink);font:inherit;font-size:12px;cursor:pointer}
+.app-shell .mf-trigger b{font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app-shell .mf-trigger small{flex:none;padding:2px 6px;background:#eef2ff;color:#0135df;font-size:10px;letter-spacing:.04em}
+.app-shell .mf-trigger:focus-visible,.app-shell .mf-preset:focus-visible,.app-shell .mf-search:focus-visible{outline:2px solid #0135df;outline-offset:2px}
+.app-shell .mf-fallback{flex-basis:100%;margin:6px 0 0;font-size:11px;line-height:1.5;color:#8a4b00}
+.app-shell .mf-panel{position:absolute;left:0;bottom:calc(100% + 8px);z-index:30;display:flex;flex-direction:column;width:min(480px,calc(100vw - 32px));max-height:var(--mf-max,540px);background:#fff;border:1px solid var(--work-line);box-shadow:0 18px 40px rgba(1,20,90,.18)}
+.app-shell .mf-panel.below{top:calc(100% + 8px);bottom:auto}
+.app-shell .mf-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:10px}
+.app-shell .mf-preset{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;min-height:44px;padding:8px 10px;border:1px solid var(--work-line);background:#fff;color:var(--work-ink);font:inherit;text-align:left;cursor:pointer}
+.app-shell .mf-preset b{font-size:12px;font-weight:600}
+.app-shell .mf-preset span,.app-shell .mf-preset small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--work-muted)}
+.app-shell .mf-preset small{color:#0135df;font-variant-numeric:tabular-nums}
+.app-shell .mf-preset[aria-pressed="true"]{border-color:#0135df;background:#eef2ff}
+.app-shell .mf-preset:disabled{opacity:.5;cursor:default}
+.app-shell .mf-search{margin:0 10px 8px;padding:10px 12px;border:1px solid var(--work-line);border-radius:4px;font:inherit;font-size:13px;color:var(--work-ink);background:#fff}
+.app-shell .mf-list{flex:1;min-height:0;overflow:auto;margin:0;padding:0 4px 4px;list-style:none}
+.app-shell .mf-list>li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;min-height:44px;padding:8px 10px;cursor:pointer}
+.app-shell .mf-list>li.active{background:#eef2ff}
+.app-shell .mf-list>li[aria-selected="true"] .mf-name::after{content:" ✓";color:#0135df}
+.app-shell .mf-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--work-ink)}
+.app-shell .mf-meta{grid-column:1;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:11px;color:var(--work-muted)}
+.app-shell .mf-tag{padding:1px 5px;background:#f1f3f8;color:#4d5d78;font-size:10px}
+.app-shell .mf-tag.warn{background:#fff6e8;color:#8a4b00}
+.app-shell .mf-price{grid-column:2;grid-row:1/3;font-size:12px;color:#0135df;font-variant-numeric:tabular-nums;white-space:nowrap}
+.app-shell .mf-list>li.mf-empty{display:block;cursor:default;color:var(--work-muted);font-size:12px}
+.app-shell .mf-foot{margin:0;padding:8px 12px 10px;border-top:1px solid var(--work-line);font-size:11px;line-height:1.5;color:var(--work-muted)}
+@media(max-width:700px){
+  .app-shell .mf-trigger{max-width:220px}
+  .app-shell .mf-panel,.app-shell .mf-panel.below{position:fixed;left:0;right:0;top:auto;bottom:0;width:auto;max-height:82vh;border-radius:14px 14px 0 0}
+  .app-shell .mf-search{font-size:16px}
+  .app-shell .mf-presets{grid-template-columns:1fr}
+  .app-shell .mf-preset{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+}

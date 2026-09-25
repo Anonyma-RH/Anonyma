@@ -89,6 +89,8 @@ import {
 } from "./veil.js";
 import { buildChatRequest, cloneVeilState, quoteBody, REPLY_BUDGET } from "./estimate.js";
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
+import ModelFinder from "./ModelFinder.jsx";
+import { STORAGE_KEY as MODEL_CHOICES, loadChoices, resolveChoice, withChoice, requestNeedsVision } from "./model-finder.js";
 import { useShareTargetPrefill } from "./share-target.js";
 import { InstallAppEntry } from "./InstallApp.jsx";
 import { EarlyTag } from "./Holders.jsx";
@@ -237,7 +239,7 @@ export default function Workspace() {
     [current, setCurrent] = useState(null),
     [messages, setMessages] = useState([]),
     [prompt, setPrompt] = useState(""),
-    [model, setModel] = useState(params.get("model") || models[0]?.id || ""),
+    [legacyModel, setModel] = useState(params.get("model") || models[0]?.id || ""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [info, setInfo] = useState(""),
@@ -335,11 +337,39 @@ export default function Workspace() {
           : m.type === "chat" && (demo || m.callable) && inSection(m);
     return base && (!textMode || !privateMode || m.private);
   });
+  const trainingLive = !demo && trainingLabelsReleased(config);
+  const [trainingDismissed, dismissTraining] = useTrainingDismissals();
+  // Model Finder & Presets (src/model-finder.js): Cheap / Balanced / Best
+  // quality presets and a searchable list, remembered per mode in this
+  // browser. While it's unreleased the plain model select stays as it was.
+  const finderLive = isReleased(config, "finder");
+  const [modelChoices, setModelChoices] = useState(() => {
+    const saved = loadChoices(readStore);
+    // A ?model= link picks the model for this visit without remembering it.
+    const linked = params.get("model");
+    return linked ? withChoice(saved, mode, { model: linked }) : saved;
+  });
+  const instructionsActive =
+    scrollsLive && instructions.enabled && !!instructions.body.trim();
+  // Quote and Send retain image history; capability follows that exact context.
+  const needsVision = textMode && requestNeedsVision(buildChatRequest({
+    messages, attachments,
+    instructions: instructionsActive ? instructions.body.trim() : "",
+  }).request);
+  const finderModels = needsVision ? visibleModels.filter((m) => m.vision) : visibleModels;
+  const finderOpts = useMemo(
+    () => ({ mode, privateMode: textMode && privateMode, needsVision, avoidTraining: trainingLive && !privateMode, demo }),
+    [mode, textMode, privateMode, needsVision, trainingLive, demo],
+  );
+  const resolvedModel = finderLive
+    ? resolveChoice(modelChoices[mode], finderModels, models, finderOpts)
+    : null;
+  // One synchronous selection drives the picker, quote and Send. An empty
+  // eligible pool must clear the send target instead of retaining an old model.
+  const model = finderLive ? resolvedModel?.model?.id || "" : legacyModel;
   const selected = models.find((m) => m.id === model);
   // Training Labels: flag models whose provider trains on prompts, and
   // offer the listed version that doesn't. Private mode never lists them.
-  const trainingLive = !demo && trainingLabelsReleased(config);
-  const [trainingDismissed, dismissTraining] = useTrainingDismissals();
   const trainingSelected =
     trainingLive &&
     textMode &&
@@ -352,6 +382,13 @@ export default function Workspace() {
   const trainingAlternative = trainingSelected
     ? untrainedAlternative(trainingSelected, visibleModels)
     : null;
+
+  function chooseModel(choice) {
+    setModelChoices((prev) => withChoice(prev, mode, choice));
+    // Only what the person chose is remembered, never a fallback.
+    if (!demo) saveStore(MODEL_CHOICES, withChoice(loadChoices(readStore), mode, choice));
+    setQuote(null);
+  }
   // Video choices come only from the model's published prices, as the server requires.
   const presets = mode === "video" && selected ? videoPresets(selected) : [];
   const pick = (values, value) =>
@@ -652,7 +689,7 @@ export default function Workspace() {
   const mentionMatches =
     mentionQuery === undefined
       ? []
-      : visibleModels
+      : (finderLive ? finderModels : visibleModels)
           .filter((m) =>
             (m.id + " " + m.name).toLowerCase().includes(mentionQuery.toLowerCase()),
           )
@@ -663,6 +700,7 @@ export default function Workspace() {
   const mentioned = mention
     ? visibleModels.find((m) => m.id.toLowerCase() === mention[1].toLowerCase())
     : null;
+  const incompatibleMention = finderLive && mentioned && needsVision && !mentioned.vision;
   const target = mentioned || selected;
   // What a chat Send posts, shared with the credit estimate beside it.
   const sendText = mentioned ? mention[2].trim() : prompt.trim();
@@ -726,8 +764,6 @@ export default function Workspace() {
     const r = await api("/api/instructions", { method: "PUT", body: payload });
     setInstructions(r);
   }
-  const instructionsActive =
-    scrollsLive && instructions.enabled && !!instructions.body.trim();
   // The /api/quote body for what a chat Send would post right now. Veil masks
   // it with a copy of the conversation's tag map: the same tags Send would
   // use, without recording any for a message that may never be sent.
@@ -757,6 +793,7 @@ export default function Workspace() {
     !busy &&
     !branching &&
     !!sendText &&
+    !incompatibleMention &&
     !!target?.callable &&
     !!config?.services?.generation &&
     !(privateMode && !target?.private);
@@ -774,6 +811,17 @@ export default function Workspace() {
     if (!(redo ? redo.content.trim() : prompt.trim()) || busy || (!redo && branchFlight.current?.pending)) return;
     const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
     const effectiveModel = redo ? redoModel || selected : target;
+    const requestVision = redo
+      ? requestNeedsVision(buildChatRequest({
+          messages: redo.base,
+          attachments: (redo.images || []).map((url) => ({ url })),
+          instructions: instructionsActive ? instructions.body.trim() : "",
+        }).request)
+      : needsVision;
+    if (finderLive && textMode && requestVision && !effectiveModel?.vision) {
+      setError("Choose a model that can read the images in this conversation.");
+      return;
+    }
     if (!demo) {
       if (!user) {
         setError(
@@ -1994,6 +2042,22 @@ export default function Workspace() {
                     }
                   >
                     <div>
+                      {finderLive ? (
+                        <ModelFinder
+                          models={finderModels}
+                          mode={mode}
+                          markup={config?.markup}
+                          resolved={resolvedModel}
+                          onChoose={chooseModel}
+                          opts={finderOpts}
+                          notes={[
+                            textMode && privateMode ? "Private mode: zero-data-retention models only." : "",
+                            needsVision ? "Showing models that can read your images." : "",
+                          ].filter(Boolean)}
+                          trainingLive={trainingLive}
+                          demo={demo}
+                        />
+                      ) : (
                       <select
                         aria-label="Select model"
                         value={model}
@@ -2043,6 +2107,7 @@ export default function Workspace() {
                           );
                         })()}
                       </select>
+                      )}
                       {(mode === "image" || selected?.vision) && (
                         <label
                           className="attachment-control"
@@ -2205,6 +2270,9 @@ export default function Workspace() {
                         </>
                       )}
                     </div>
+                    {incompatibleMention && (
+                      <span role="status">The mentioned model cannot read this conversation’s images. Choose a vision model.</span>
+                    )}
                     <span className="send-cluster">
                     {estimatesLive && textMode && <CreditEstimate state={estimate} />}
                     {busy ? (
@@ -2222,6 +2290,8 @@ export default function Workspace() {
                         className="send-button"
                         disabled={
                           !prompt.trim() ||
+                          (finderLive && !selected) ||
+                          incompatibleMention ||
                           (privateMode && !privateModelsCallable.length)
                         }
                         aria-label={demo ? "Run sample" : "Generate"}
@@ -2237,7 +2307,8 @@ export default function Workspace() {
                       model={trainingSelected}
                       alternative={trainingAlternative}
                       onSwitch={() => {
-                        setModel(trainingAlternative.id);
+                        if (finderLive) chooseModel({ model: trainingAlternative.id });
+                        else setModel(trainingAlternative.id);
                         setQuote(null);
                       }}
                       onDismiss={() => dismissTraining(trainingSelected.id)}

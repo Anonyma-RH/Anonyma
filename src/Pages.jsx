@@ -827,6 +827,7 @@ const featureIcons = {
   mcp: "command",
   allowances: "coins",
   connect: "plug",
+  finder: "search",
   estimates: "coins",
   holders: "credits",
   v1media: "image",

@@ -335,6 +335,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "finder",
+    title: "Model Finder & Presets",
+    tagline: "The right model, found fast.",
+    points: [
+      "Search every model you can use, by name, provider or feature",
+      "Cheap, Balanced and Best quality presets, with manual override",
+      "Prices from the live catalog on every model",
+    ],
+    released: true,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

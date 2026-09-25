@@ -1,0 +1,549 @@
+/* NYMA Holder Program: the "Early access" tag, Account's NYMA holdings, the
+   hero's link to /token and the /token page itself. Flat cobalt and white,
+   with the brand yellow as the one accent. */
+
+/* The tag: a filled cobalt badge with a yellow square, next to the Private
+   tag (light cobalt) and the Training Labels tag (outlined). */
+.early-tag {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  flex: none;
+  gap: 5px;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+  background: #0135df;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  padding: 2px 6px;
+  vertical-align: 2px;
+}
+.early-tag::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: #ffb21c;
+}
+/* In the sidebar the tag takes the active dot's place at the row's end. */
+.app-sidebar nav a .early-tag {
+  margin-left: auto;
+  gap: 4px;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  padding: 1px 5px;
+}
+.app-sidebar nav a .early-tag::before {
+  width: 5px;
+  height: 5px;
+}
+.app-sidebar nav a .early-tag + .nav-active-dot {
+  display: none;
+}
+.workspace-header > span .early-tag {
+  margin: 0 4px 0 10px;
+}
+
+/* Account → Settings → NYMA holdings. */
+.identity-rows.holdings-rows > div > span {
+  width: 104px;
+}
+.holdings-rows b em {
+  display: block;
+  font-style: normal;
+}
+.holdings-bonus {
+  margin-top: 3px;
+  color: #0135df;
+}
+.holdings-hint {
+  color: #8da077;
+  font-weight: 400;
+}
+.settings-stack .holdings-note {
+  margin: 6px 0 0;
+  padding: 12px 14px;
+  background: #edf2ff;
+  border-left: 3px solid #0135df;
+  color: #16213f;
+  line-height: 1.6;
+}
+.holdings-vote {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.holdings-vote h3 {
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+.settings-stack .holdings-vote p {
+  margin-top: 6px;
+}
+.holdings-vote form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.holdings-vote select {
+  min-width: 0;
+  flex: 1 1 200px;
+  font: inherit;
+  font-size: 12px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--ink);
+}
+.holdings-vote form .holdings-hint {
+  flex-basis: 100%;
+  margin-top: 0;
+}
+.holdings-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.holdings-state::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  background: #c3cad8;
+}
+.holdings-state.on::before {
+  background: #ffb21c;
+  box-shadow: 0 0 0 2px #0135df;
+}
+.holdings-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: #0135df;
+}
+.holdings-more:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Homepage hero: the link under the contract address. */
+.hero-contract-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: -6px;
+  font: 500 12px/1.4 var(--font);
+  letter-spacing: 0.02em;
+  color: #fff;
+  opacity: 0.88;
+}
+.hero-contract-more:hover,
+.hero-contract-more:focus-visible {
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* /token: one reading column in the whitepaper's style. */
+.token-page .token-body {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 64px 24px 110px;
+  border-top: 1px solid var(--line);
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.token-page .token-section {
+  padding-bottom: 56px;
+  margin-bottom: 56px;
+  border-bottom: 1px solid var(--line);
+}
+.token-page .token-number {
+  color: var(--brand-blue);
+}
+.token-page .token-section h2 {
+  font-size: 46px;
+  line-height: 1.08;
+  letter-spacing: -1.2px;
+  margin: 10px 0 26px;
+}
+.token-page .token-section h3 {
+  font-size: 25px;
+  line-height: 1.2;
+  margin: 36px 0 10px;
+}
+.token-page .token-section p + p {
+  margin-top: 16px;
+}
+.token-page .token-section .early-tag {
+  margin-left: 0;
+}
+
+/* NYMA at a glance: a definition list, label and value per row. */
+.token-page .token-facts {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  margin: 0;
+}
+.token-page .token-facts dt,
+.token-page .token-facts dd {
+  margin: 0;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.token-page .token-facts dt:last-of-type,
+.token-page .token-facts dd:last-of-type {
+  border-bottom: 1px solid var(--line);
+}
+.token-page .token-facts dt {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  line-height: 2.4;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.token-page .token-facts dd {
+  font-family: var(--serif);
+  font-size: 22px;
+  line-height: 1.4;
+  color: var(--brand-deep);
+}
+.token-page .token-contract code {
+  display: block;
+  font: 400 15px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+  user-select: all;
+  color: var(--ink);
+}
+.token-page .token-contract-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  font-family: var(--font);
+}
+.token-page .token-contract-actions .small-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-blue);
+  border-color: #d7e1ff;
+  border-radius: 2px;
+}
+
+/* Lists: early updates, steps and plain points. */
+.token-page .token-early,
+.token-page .token-list,
+.token-page .token-steps {
+  list-style: none;
+  margin: 18px 0;
+  padding: 0;
+}
+.token-page .token-early li,
+.token-page .token-list li,
+.token-page .token-steps li {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.token-page .token-early li:last-child,
+.token-page .token-list li:last-child,
+.token-page .token-steps li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.token-page .token-early li {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 4px 18px;
+  align-items: baseline;
+}
+.token-page .token-early strong {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--brand-deep);
+}
+.token-page .token-early span {
+  font-size: 15px;
+  color: var(--muted);
+}
+.token-page .token-none {
+  padding: 16px 18px;
+  background: #edf2ff;
+  border-left: 3px solid var(--brand-blue);
+  font-size: 15px;
+  color: var(--brand-deep);
+}
+.token-page .token-list li {
+  position: relative;
+  padding-left: 26px;
+}
+.token-page .token-list li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 25px;
+  width: 7px;
+  height: 7px;
+  background: var(--brand-blue);
+}
+.token-page .token-steps {
+  counter-reset: token-step;
+}
+.token-page .token-steps li {
+  position: relative;
+  padding-left: 48px;
+  counter-increment: token-step;
+}
+.token-page .token-steps li::before {
+  content: counter(token-step);
+  position: absolute;
+  left: 0;
+  top: 16px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--brand-blue);
+}
+.token-page .token-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 28px;
+}
+
+@media (max-width: 700px) {
+  .token-page .token-body {
+    padding: 40px 18px 80px;
+    font-size: 16px;
+  }
+  .token-page .token-section {
+    padding-bottom: 40px;
+    margin-bottom: 40px;
+  }
+  .token-page .token-section h2 {
+    font-size: 34px;
+    letter-spacing: -0.8px;
+  }
+  .token-page .token-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .token-page .token-facts dd {
+    padding-top: 0;
+    border-top: 0;
+  }
+  .token-page .token-facts dt {
+    padding-bottom: 2px;
+  }
+  .token-page .token-facts dt:last-of-type {
+    border-bottom: 0;
+  }
+  .token-page .token-early li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* The tier table: tier, lowest balance, credits every 30 days, perks. */
+.token-page .token-tiers-scroll {
+  margin: 26px 0 8px;
+}
+.token-page .token-tiers {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.token-page .token-tiers th,
+.token-page .token-tiers td {
+  min-width: 0;
+  background: none;
+  padding: 14px 12px 14px 0;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--line);
+}
+.token-page .token-tiers tr:last-child th,
+.token-page .token-tiers tr:last-child td {
+  border-bottom: 1px solid var(--line);
+}
+.token-page .token-tiers thead th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-top: 0;
+}
+.token-page .token-tiers tbody th {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 400;
+  white-space: nowrap;
+  color: var(--brand-deep);
+}
+.token-page .token-tiers td b {
+  display: block;
+  font-weight: 600;
+  color: var(--brand-blue);
+}
+.token-page .token-tiers td small {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+.token-page .token-tiers ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.token-page .token-tiers li {
+  position: relative;
+  padding-left: 14px;
+}
+.token-page .token-tiers li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 6px;
+  height: 6px;
+  background: #ffb21c;
+  box-shadow: 0 0 0 1.5px #0135df;
+}
+.token-page .token-bonus {
+  padding: 14px 18px;
+  color: #fff;
+  background: var(--brand-blue);
+  font-size: 15px;
+}
+.token-page .token-plain {
+  font-family: var(--serif);
+  font-size: 21px;
+  line-height: 1.45;
+  color: var(--brand-deep);
+}
+
+/* The perks: one row each, with the tiers that get it. */
+.token-page .token-perks {
+  margin: 18px 0 0;
+}
+.token-page .token-perks dt {
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--brand-deep);
+}
+.token-page .token-perks dt small {
+  margin-left: 10px;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--brand-blue);
+}
+.token-page .token-perks dd {
+  margin: 6px 0 20px;
+  font-size: 15px;
+}
+.token-page .token-perks dd .token-early {
+  margin-bottom: 0;
+}
+
+/* Transparency: two totals and this month's vote counts. */
+.token-page .token-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 22px 0 0;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+.token-page .token-stats > div {
+  padding: 18px 20px;
+  background: #fff;
+}
+.token-page .token-stats dt {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.token-page .token-stats dd {
+  margin: 6px 0 0;
+  font-family: var(--serif);
+  font-size: 38px;
+  line-height: 1.1;
+  color: var(--brand-blue);
+}
+.token-page .token-votes {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+.token-page .token-votes li {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.token-page .token-votes li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.token-page .token-votes strong {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--brand-deep);
+}
+.token-page .token-votes span {
+  flex: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-blue);
+}
+@media (max-width: 700px) {
+  .token-page .token-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .token-page .token-stats dd {
+    font-size: 30px;
+  }
+  .token-page .token-tiers {
+    font-size: 14px;
+  }
+  .token-page .token-tiers tbody th {
+    font-size: 18px;
+  }
+}
+
+.token-page .token-tagged {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.token-page .token-tagged .early-tag {
+  flex: none;
+  margin: 0;
+  vertical-align: 0;
+  transform: translateY(-2px);
+}

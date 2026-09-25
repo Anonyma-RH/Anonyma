@@ -321,9 +321,13 @@ export function Empty({ icon = "models", title, children, action }) {
 }
 // Shown in place of an update that hasn't been released yet.
 export function ComingSoon({ update }) {
+  // An update open early to NYMA holders (NYMA Holder Program) says so.
+  const early = update?.early === true && !update.released;
   return (
     <div className="coming-soon">
-      <p className="eyebrow">COMING SOON</p>
+      <p className="eyebrow">
+        {early ? "EARLY ACCESS FOR NYMA HOLDERS" : "COMING SOON"}
+      </p>
       <h2>{update?.title || "Coming soon"}</h2>
       {update && <p className="coming-soon-tagline">{update.tagline}</p>}
       {update && (
@@ -336,8 +340,8 @@ export function ComingSoon({ update }) {
           ))}
         </ul>
       )}
-      <Button to="/roadmap">
-        See what's coming <Icon name="arrow" />
+      <Button to={early ? "/token" : "/roadmap"}>
+        {early ? "What NYMA does" : "See what's coming"} <Icon name="arrow" />
       </Button>
     </div>
   );

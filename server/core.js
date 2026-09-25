@@ -13,6 +13,7 @@ import {
   modelReleased,
   parseReleased,
 } from "./releases.js";
+import { parseHolderRewards, parseHolderLoyalty } from "./holder-tiers.js";
 
 export const uid = (prefix = "") => prefix + randomBytes(16).toString("hex");
 export const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -83,6 +84,11 @@ export function config(overrides = {}) {
     rpc: e.TOKEN_RPC_URL || "",
     token: e.TOKEN_CONTRACT || "",
     chain: Number(e.TOKEN_CHAIN_ID || 4663),
+    // NYMA Holder Program (server/holder-tiers.js): each tier's minimum
+    // NYMA and credits every 30-day cycle, and the Loyal bonus. Early access
+    // opens from the second tier (Insider).
+    holderRewards: e.HOLDER_REWARDS || "",
+    holderLoyalty: e.HOLDER_LOYALTY || "",
     walletChain: Number(e.WALLET_CHAIN_ID || 1),
     markup: Number(e.PLATFORM_MARKUP_PERCENT || 0),
     catalogPath: e.CATALOG_PATH || "runtime/models.cache.json",
@@ -227,6 +233,10 @@ export function config(overrides = {}) {
     throw Error("Wallet payment confirmations must be from 1 to 10000.");
   if (!Number.isFinite(cfg.markup) || cfg.markup < 0)
     throw Error("Markup must be a nonnegative percentage.");
+  if (!Array.isArray(cfg.holderRewards))
+    cfg.holderRewards = parseHolderRewards(cfg.holderRewards);
+  if (typeof cfg.holderLoyalty !== "object" || cfg.holderLoyalty === null)
+    cfg.holderLoyalty = parseHolderLoyalty(cfg.holderLoyalty);
   if (
     !Number.isFinite(cfg.gatewayFeePercent) ||
     cfg.gatewayFeePercent < 0 ||
@@ -400,6 +410,27 @@ export const MIGRATIONS = [
     db.exec(`
       CREATE UNIQUE INDEX IF NOT EXISTS conversations_branch_key ON conversations(branch_key) WHERE branch_key IS NOT NULL;
       CREATE INDEX IF NOT EXISTS conversations_parent ON conversations(parent_id) WHERE parent_id IS NOT NULL;
+    `);
+  },
+  // NYMA holdings: token_checked records only a successful balance
+  // read, so a failed one backs off here instead of looking like a check.
+  (db) => addColumn(db, "users", "token_retry", "INTEGER"),
+  // NYMA Holder Program (server/holders.js). On users: when the worker's
+  // next balance read is due (token_due, at a random time), the open 30-day
+  // cycle's start and lowest balance, and the paid cycles in a row.
+  // holder_rewards records each paid cycle once: its primary key is what
+  // makes a payout impossible to repeat. roadmap_votes holds one Inner
+  // Circle vote per account per UTC month.
+  (db) => {
+    addColumn(db, "users", "token_due", "INTEGER");
+    addColumn(db, "users", "holder_cycle", "INTEGER");
+    addColumn(db, "users", "holder_low", "TEXT");
+    addColumn(db, "users", "holder_paid", "INTEGER NOT NULL DEFAULT 0");
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS users_holder_cycle ON users(holder_cycle) WHERE holder_cycle IS NOT NULL;
+      CREATE TABLE IF NOT EXISTS holder_rewards(user_id TEXT NOT NULL REFERENCES users(id),cycle_start INTEGER NOT NULL,paid INTEGER NOT NULL,tier TEXT NOT NULL,amount INTEGER NOT NULL,bonus INTEGER NOT NULL DEFAULT 0,ref TEXT UNIQUE NOT NULL,PRIMARY KEY(user_id,cycle_start));
+      CREATE INDEX IF NOT EXISTS holder_rewards_paid ON holder_rewards(paid);
+      CREATE TABLE IF NOT EXISTS roadmap_votes(month TEXT NOT NULL,user_id TEXT NOT NULL REFERENCES users(id),update_id TEXT NOT NULL,created INTEGER NOT NULL,updated INTEGER NOT NULL,PRIMARY KEY(month,user_id));
     `);
   },
 ];

@@ -34,9 +34,7 @@ export default function BillingRules() {
         {billing ? (
           <ul>
             <li>
-              Platform markup: {billing.platformMarkupPercent}%, before any
-              applicable account discount. Discounts reduce the markup, not the
-              underlying model cost.
+              Platform markup: {billing.platformMarkupPercent}%.
             </li>
             <li>
               Primary gateway fee: {billing.gatewayFeePercent}% when the

@@ -34,6 +34,8 @@ import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
 import McpConnect from "./McpConnect.jsx";
 import { KeyAllowance } from "./Allowances.jsx";
 import { ConnectedApps, connectReleased } from "./Connect.jsx";
+import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
+import { holdersReleased } from "./holders.js";
 // Ledger entry kinds as readable labels; an unknown kind reads as words.
 const LEDGER_KINDS = {
   chat: "Chat",
@@ -47,6 +49,7 @@ const LEDGER_KINDS = {
   payment_correction: "Payment correction",
   referral: "Referral reward",
   referral_correction: "Referral correction",
+  holder_reward: "NYMA holder reward",
 };
 const ledgerKind = (kind) =>
   LEDGER_KINDS[kind] ||
@@ -806,13 +809,22 @@ export default function Account() {
                     >
                       {user?.wallet ? "Change wallet" : "Link wallet"}
                     </button>
+                    <UnlinkWallet
+                      config={config}
+                      user={user}
+                      demo={demo}
+                      refresh={refresh}
+                      onNotice={setNotice}
+                      onError={setError}
+                    />
                   </div>
-                  {user?.wallet && config?.services?.token && (
+                  {/* Once the Holder Program is live, NYMA holdings get their
+                      own section below. */}
+                  {!holdersReleased(config) && user?.wallet && config?.services?.token && (
                     <div>
                       <span>Holdings</span>
                       <b>
-                        {Number(user.tokenBalance || 0).toLocaleString()} tokens ·{" "}
-                        {Math.round((Number(user.discount) || 0) * 100)}% markup reduction
+                        {Number(user.tokenBalance || 0).toLocaleString()} NYMA
                       </b>
                       <button
                         className="small-button"
@@ -833,6 +845,14 @@ export default function Account() {
                   )}
                 </div>
               </section>
+              <HoldingsSettings
+                config={config}
+                user={user}
+                demo={demo}
+                refresh={refresh}
+                onNotice={setNotice}
+                onError={setError}
+              />
               <LanguageSettings config={config} />
               <section>
                 <div>

@@ -127,6 +127,27 @@ const schemas = {
     tokenBalance: string,
     tokenSince: { type: ["integer", "null"] },
     discount: number,
+    tokenChecked: { type: ["integer", "null"] },
+    earlyAccess: array(string),
+    holder: object({
+      eligible: bool,
+      threshold: number,
+      tier: { type: ["string", "null"], enum: [null, "holder", "insider", "inner"] },
+    }),
+    caps: ref("RetentionCaps"),
+  }),
+  RetentionCaps: object({
+  conversations: integer,
+  symposium: integer,
+  image: integer,
+  video: integer,
+  audio: integer,
+}),
+  HolderVote: object({
+    month: string,
+    open: bool,
+    choice: nullableString,
+    candidates: array(object({ id: string, title: string })),
   }),
   Session: object({ user: { oneOf: [ref("User"), { type: "null" }] } }, [
     "user",
@@ -429,6 +450,71 @@ route("get", "/api/account/sessions", "List active sessions", {
 route("post", "/api/account/token/refresh", "Refresh linked ERC20 holdings", {
   body: object(),
   response: ref("Session"),
+});
+route("post", "/api/account/wallet/unlink", "Unlink the account's wallet", {
+  body: object(),
+  response: ref("Session"),
+  description:
+    "NYMA Holder Program. Removes the linked wallet, its recorded holdings and its open cycle. 409 wallet_sign_in_only when the wallet is the account's only sign-in method.",
+});
+route("get", "/api/account/holdings", "The account's NYMA Holder Program state", {
+  response: object({
+    checks: bool,
+    tier: {
+      oneOf: [
+        object({ id: string, name: string, level: integer }),
+        { type: "null" },
+      ],
+    },
+    cycle: {
+      oneOf: [
+        object({
+          start: integer,
+          ends: integer,
+          daysLeft: integer,
+          low: number,
+          waiting: bool,
+          due: object({ credits: number, bonus: bool }),
+        }),
+        { type: "null" },
+      ],
+    },
+    paidInARow: integer,
+    loyalty: object({ after: integer, multiplier: number }),
+    lastReward: {
+      oneOf: [
+        object({ credits: number, tier: string, bonus: bool, paid: integer }),
+        { type: "null" },
+      ],
+    },
+    caps: ref("RetentionCaps"),
+    vote: ref("HolderVote"),
+  }),
+  description:
+    "The current tier is set by the lowest balance successful reads saw in the open 30-day cycle, with a read in the last 48 hours. cycle.due is what the cycle pays at its end at the current tier; waiting means it is due but needs a fresh read first.",
+});
+route("put", "/api/holders/vote", "Cast or change this month's roadmap vote", {
+  body: object({ update: string }, ["update"]),
+  response: ref("HolderVote"),
+  description:
+    "Inner Circle only (403 inner_circle_only otherwise). One vote per account per UTC month; voting again replaces it. update must be a registered, unreleased update that isn't open for early access (400 invalid_vote).",
+});
+route("get", "/api/holders/summary", "Holder Program transparency: aggregates only", {
+  auth: null,
+  response: object({
+    rewards: object({
+      since: integer,
+      until: integer,
+      credits: number,
+      holders: integer,
+    }),
+    vote: object({
+      month: string,
+      candidates: array(object({ id: string, title: string, votes: integer })),
+    }),
+  }),
+  description:
+    "Credits paid and accounts rewarded over the 30 whole UTC days before today, and this month's roadmap vote counts per candidate. Never names or identifies an account.",
 });
 for (const [path, summary] of [
   [

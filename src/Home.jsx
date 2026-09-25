@@ -68,7 +68,7 @@ const labels = [
   ["Video", "mint-light", "video"],
   ["API", "lavender", "key"],
 ];
-const CONTRACT_ADDRESS = "0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583";
+export const CONTRACT_ADDRESS = "0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583";
 function ContractAddress() {
   const [status, setStatus] = useState("Copy");
   const reset = useRef();
@@ -189,6 +189,11 @@ function Hero() {
             Get started
           </ArrowLink>
           <ContractAddress />
+          {featureEnabled(config, "holders") && (
+            <Link to="/token" className="hero-contract-more">
+              What NYMA does <Icon name="arrow" size={13} />
+            </Link>
+          )}
           <button
             className="hero-motion-toggle"
             onClick={() => setMotion(paused)}

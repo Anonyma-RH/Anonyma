@@ -1,5 +1,12 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { api, normalizeModel, sortModels } from "./lib.js";
+import { withEarlyAccess } from "./holders.js";
 import { models as fallbackModels } from "./data.js";
 import { useInstallAppGate } from "./InstallApp.jsx";
 const Context = createContext(null);
@@ -48,12 +55,19 @@ export function AppProvider({ children }) {
   useEffect(() => {
     refresh();
   }, []);
+  // NYMA Holder Program: the signed-in account's own early updates count as
+  // released for it, so every isReleased(config, id) gate opens for a holder
+  // (and closes again on sign-out). The server enforces the same rule.
+  const effective = useMemo(
+    () => withEarlyAccess(config, user),
+    [config, user],
+  );
   // Adds the installable-app shell once config confirms it's released.
   useInstallAppGate(config);
   return (
     <Context.Provider
       value={{
-        config,
+        config: effective,
         models,
         user,
         setUser,

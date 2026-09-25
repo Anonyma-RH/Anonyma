@@ -19,6 +19,12 @@ import {
   credits,
   discount,
 } from "./core.js";
+import {
+  earlyAccessFor,
+  recordCheck,
+  retentionCaps,
+  HOLDER_RESET,
+} from "./holders.js";
 
 export function sessionCookieOptions(cfg) {
   return {
@@ -53,6 +59,12 @@ export function authRoutes(app, db, cfg, limit) {
       tokenBalance: user.token_balance,
       tokenSince: user.token_since,
       discount: discount(user.token_balance, user.token_since),
+      // When the linked wallet's balance was last read successfully.
+      tokenChecked: user.token_checked ?? null,
+      // NYMA Holder Program: this account's own early updates, tier and
+      // retention caps (twice the standard ones from the Holder tier).
+      ...earlyAccessFor(cfg, user),
+      caps: retentionCaps(cfg, user),
     };
   }
   // A referral link sets the anonyma_ref cookie; any sign-up method honours it.
@@ -330,7 +342,7 @@ export function authRoutes(app, db, cfg, limit) {
         if (user && user.id !== req.user.id)
           fail(409, "Wallet belongs to another account.");
         db.prepare(
-          "UPDATE users SET wallet=?,token_balance='0',token_since=NULL,token_checked=NULL WHERE id=?",
+          `UPDATE users SET wallet=?,${HOLDER_RESET} WHERE id=?`,
         ).run(signer, req.user.id);
         user = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
       } else user ||= newUser({ wallet: signer }, req);
@@ -377,6 +389,31 @@ export function authRoutes(app, db, cfg, limit) {
       });
     },
   );
+  // NYMA Holder Program: unlinking removes the wallet, its holdings and its
+  // cycle from the account. An account that signs in only with that wallet must add
+  // an email first, or it could never sign in again.
+  app.post(
+    "/api/account/wallet/unlink",
+    requireUser,
+    limit("wallet_unlink", 10, 3600000),
+    (req, res) => {
+      if (!req.user.wallet) fail(400, "No wallet is linked.", "wallet_not_linked");
+      if (!req.user.password && !req.user.email)
+        fail(
+          409,
+          "This wallet is how you sign in. Link an email first, so you can still sign in without it.",
+          "wallet_sign_in_only",
+        );
+      db.prepare(
+        `UPDATE users SET wallet=NULL,${HOLDER_RESET} WHERE id=? AND deleted IS NULL`,
+      ).run(req.user.id);
+      res.json({
+        user: publicUser(
+          db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id),
+        ),
+      });
+    },
+  );
   return { requireUser, publicUser };
 }
 export const canonical = (v) =>
@@ -402,7 +439,10 @@ export function validIPN(body, signature, secret) {
   return timingSafeEqual(expected, Buffer.from(signature, "hex"));
 }
 
-export async function refreshTokenHoldings(db, cfg, user) {
+// Reads the linked wallet's NYMA balance and records it (recordCheck in
+// server/holders.js). `scheduled` marks the worker's own reads, which set
+// the next one; an account's Refresh never moves that schedule.
+export async function refreshTokenHoldings(db, cfg, user, { scheduled = false } = {}) {
   const rpc = new FetchRequest(cfg.rpc);
   rpc.timeout = cfg.rpcTimeoutMs || 10000;
   const provider = new JsonRpcProvider(rpc);
@@ -424,24 +464,9 @@ export async function refreshTokenHoldings(db, cfg, user) {
     ]);
     const amount = Number(raw) / 10 ** Number(decimals);
     if (!Number.isFinite(amount)) throw Error("Invalid token balance.");
-    // The wallet may have changed while the RPC was in flight. Never transfer
-    // the old wallet's discount to the newly linked wallet.
-    const current = db
-      .prepare(
-        "SELECT * FROM users WHERE id=? AND wallet=? AND deleted IS NULL",
-      )
-      .get(user.id, user.wallet);
-    if (!current) return;
-    const old = Number(current.token_balance);
-    const since =
-      amount >= 5000000
-        ? old >= 5000000
-          ? current.token_since || now()
-          : now()
-        : null;
-    db.prepare(
-      "UPDATE users SET token_balance=?,token_since=?,token_checked=? WHERE id=? AND wallet=? AND deleted IS NULL",
-    ).run(String(amount), since, now(), user.id, user.wallet);
+    // The wallet may have changed while the RPC was in flight: recordCheck
+    // writes nothing then, so the old wallet's holdings never carry over.
+    recordCheck(db, cfg, user, amount, { scheduled });
   } finally {
     provider.destroy();
   }

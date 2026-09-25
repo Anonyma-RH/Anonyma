@@ -1,4 +1,11 @@
 import { fail } from "./core.js";
+import {
+  parseHolderRewards,
+  parseHolderLoyalty,
+  BASE_CAPS,
+  HOLDER_CAPS,
+  CYCLE_DAYS,
+} from "./holder-tiers.js";
 
 // The app launches as an MVP (chat with a short list of models, credits and
 // the account) and the rest ships as named feature releases, in this order. RELEASED_FEATURES
@@ -282,11 +289,27 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "holders",
+    title: "NYMA Holder Program",
+    tagline: "Hold NYMA, get credits and perks.",
+    points: [
+      "ANONYMA credits every 30 days, by tier",
+      "A bigger library, early access and a roadmap vote",
+      "No staking or locking: your NYMA stays in your wallet",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
 export const CONNECT_UPDATES = ["api", "mcp", "allowances", "connect"];
 const IDS = UPDATES.map((u) => u.id);
+// The NYMA an account must hold for early access is the Insider tier's
+// minimum in HOLDER_REWARDS (server/holder-tiers.js): 5,000,000 by default,
+// 0.5% of the 1,000,000,000 supply.
+const holderTiers = (cfg) => cfg?.holderRewards ?? parseHolderRewards();
+export const earlyAccessMin = (cfg) => holderTiers(cfg)[1].min;
 
 // The MVP's chat models when "catalog" isn't released (override: MVP_MODELS).
 export const DEFAULT_MVP_MODELS = [
@@ -336,12 +359,30 @@ export function parseReleased(value) {
 // An update is live when RELEASED_FEATURES includes it, or when its entry in
 // UPDATES says `released: true`. The second way makes turning a feature on a
 // public commit ("Release Veil") rather than a hosting setting.
+//
+// Early access: an entry may also say `early: true`. Once the NYMA Holder
+// Program ("holders") is live, an early update that isn't released yet opens
+// for accounts at the Insider tier or above (the rule is earlyAccessHolder in
+// server/holders.js), and for no one else.
+// Absent means the update waits for its public release like any other.
 export const isReleased = (cfg, id) =>
   cfg.released === "all" ||
   (cfg.released instanceof Set && cfg.released.has(id)) ||
   UPDATES.some((u) => u.id === id && u.released === true);
 export const connectLive = (cfg) =>
   CONNECT_UPDATES.every((id) => isReleased(cfg, id));
+// Never early: the Holder Program itself, and Connect an App, whose OAuth
+// flow is driven by the outside app, which would learn from it whether the
+// account holds NYMA.
+const NEVER_EARLY = ["connect", "holders"];
+// An update open to early-access holders right now: marked `early`, not yet
+// released, and the Holder Program itself is live. Global, never per user.
+export const earlyOpen = (cfg, id) =>
+  !NEVER_EARLY.includes(id) &&
+  !isReleased(cfg, id) &&
+  isReleased(cfg, "holders") &&
+  UPDATES.some((u) => u.id === id && u.early === true);
+export const earlyUpdates = (cfg) => IDS.filter((id) => earlyOpen(cfg, id));
 
 // Whether a model is part of what's released: chat models need the full
 // catalog, a place on the MVP list, or (for the curated uncensored models)
@@ -400,6 +441,13 @@ export function featuresFor(req) {
   )
     return ["app"];
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
+  if (
+    p === "/api/account/wallet/unlink" ||
+    p === "/api/account/holdings" ||
+    p === "/api/holders" ||
+    p.startsWith("/api/holders/")
+  )
+    return ["holders"];
   if (p.startsWith("/api/receipts") || p === "/.well-known/anonyma-receipts.json")
     return ["receipts"];
   if (p.startsWith("/api/retention")) return ["ephemeral"];
@@ -438,9 +486,16 @@ export function featuresFor(req) {
   return needed;
 }
 
-export function releaseGuard(cfg) {
+// `holder(req)` says whether the request comes from an early-access holder
+// (requestHolder in server/holders.js). It's asked only when a gate is an
+// early update, at most once per request. Without it, nobody gets in early.
+export function releaseGuard(cfg, holder = () => false) {
   return (req, res, next) => {
-    const feature = featuresFor(req).find((id) => !isReleased(cfg, id));
+    let isHolder;
+    const open = (id) =>
+      isReleased(cfg, id) ||
+      (earlyOpen(cfg, id) && (isHolder ??= holder(req) === true));
+    const feature = featuresFor(req).find((id) => !open(id));
     if (feature) {
       const update = UPDATES.find((u) => u.id === feature);
       fail(403, `${update.title} is coming soon.`, "feature_unreleased");
@@ -458,7 +513,28 @@ export function releaseInfo(cfg) {
       ...u,
       number: i + 1,
       released: isReleased(cfg, u.id),
+      // Public product information: which updates holders can use early.
+      early: earlyOpen(cfg, u.id),
     })),
     uncensoredModels: UNCENSORED_MODELS,
+    earlyAccess: {
+      threshold: earlyAccessMin(cfg),
+    },
+    // The NYMA Holder Program's public settings, once it's live: the same
+    // for everyone, never anything about an account.
+    holderProgram: isReleased(cfg, "holders")
+      ? {
+          cycleDays: CYCLE_DAYS,
+          tiers: holderTiers(cfg).map(({ id, name, perk, min, credits }) => ({
+            id,
+            name,
+            perk,
+            min,
+            credits,
+          })),
+          loyalty: cfg?.holderLoyalty ?? parseHolderLoyalty(),
+          caps: { standard: BASE_CAPS, holder: HOLDER_CAPS },
+        }
+      : null,
   };
 }

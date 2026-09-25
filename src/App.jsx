@@ -20,11 +20,15 @@ import {
   NotFound,
 } from "./Pages.jsx";
 import Whitepaper from "./Whitepaper.jsx";
+import Token from "./Token.jsx";
 import { LanguageSwitch, Translation } from "./LanguageSwitch.jsx";
 import Verify from "./Verify.jsx";
 const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 const Connect = lazy(() => import("./Connect.jsx"));
+// Pages that exist only once their update is live: until then no link to
+// them shows at all (the NYMA page ships with the NYMA Holder Program).
+const unpublished = (config, to) => to === "/token" && !featureEnabled(config, "holders");
 // Links into updates that aren't released yet lead to the roadmap, tagged "Soon".
 function locked(config, to) {
   if (to.startsWith("/workspace/")) return !config?.releases ? to !== "/workspace/chat" : !modeReleased(config, to.slice(11));
@@ -107,6 +111,7 @@ function Navigation() {
             links: [
               ["/docs", "Documentation"],
               ["/whitepaper", "Whitepaper"],
+              ["/token", "NYMA token"],
               ["/verify", "Verify a receipt"],
               ["/guides/choose-a-model", "Model guide"],
               ["/guides/understanding-credits", "Understanding credits"],
@@ -138,7 +143,7 @@ function Navigation() {
             </button>
             {drop === group.id && (
               <div className="dropdown">
-                {group.links.map(([to, label]) =>
+                {group.links.filter(([to]) => !unpublished(config, to)).map(([to, label]) =>
                   locked(config, to) ? (
                     <Link to="/roadmap" key={to}>
                       {label}
@@ -253,6 +258,7 @@ function Footer() {
                 links: [
                   ["Documentation", "/docs"],
                   ["Whitepaper", "/whitepaper"],
+                  ["NYMA token", "/token"],
                   ["Verify a receipt", "/verify"],
                   ["Model guide", "/guides/choose-a-model"],
                   ["Understanding credits", "/guides/understanding-credits"],
@@ -271,7 +277,7 @@ function Footer() {
             ].map((g) => (
               <div className="footer-group" key={g.title}>
                 <span>{g.title}</span>
-                {g.links.map(([t, h]) =>
+                {g.links.filter(([, h]) => !unpublished(config, h)).map(([t, h]) =>
                   locked(config, h) ? (
                     <Link to="/roadmap" key={t}>
                       {t} <SoonTag />
@@ -349,6 +355,7 @@ function Shell() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/docs/*" element={<Docs />} />
           <Route path="/whitepaper" element={<Whitepaper />} />
+          <Route path="/token" element={<Token />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/developers" element={<Developers />} />
           <Route path="/guides/:slug" element={<Article />} />

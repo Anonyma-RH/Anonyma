@@ -43,19 +43,28 @@ const MODES = [
   "library",
   "veil",
 ];
+// Public pages that exist only once their update is live, by the `served`
+// flag that names them: /token, the NYMA page, ships with Holder Early
+// Access. Until then it's an unknown page and stays out of the sitemap.
+export const GATED_PUBLIC_PAGES = { token: "/token" };
+const gatedPages = (served = {}) =>
+  Object.entries(GATED_PUBLIC_PAGES)
+    .filter(([flag]) => served[flag] === true)
+    .map(([, path]) => path);
 // `served` names gated pages the server is currently serving: the consent
 // page for Connect an App exists only once that update is live.
 export function knownPage(path, served = {}) {
   if (path.length > 1) path = path.replace(/\/$/, "");
   return (
     PUBLIC_PAGES.includes(path) ||
+    gatedPages(served).includes(path) ||
     (served.connect === true && path === "/connect") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)
   );
 }
-export function sitemap(origin) {
+export function sitemap(origin, served = {}) {
   const escape = (s) =>
     s
       .replaceAll("&", "&amp;")
@@ -65,7 +74,7 @@ export function sitemap(origin) {
       .replaceAll("'", "&apos;");
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
-    PUBLIC_PAGES.map(
+    [...PUBLIC_PAGES, ...gatedPages(served)].map(
       (path) => `  <url><loc>${escape(origin + path)}</loc></url>`,
     ).join("\n") +
     "\n</urlset>\n"

@@ -2611,7 +2611,8 @@
     "Repeat daily, on weekdays or weekly.": "请选择每天、工作日或每周重复。",
     "Routine not found.": "未找到该定时任务。",
     "Run not found.": "未找到该次运行。",
-    "This run is still in progress.": "此次运行仍在进行中。"
+    "This run is still in progress.": "此次运行仍在进行中。",
+    "routines": "定时任务"
   },
   "patterns": [
     {
@@ -4020,7 +4021,7 @@
     },
     {
       "en": "Scheduled for {0}",
-      "zh": "计划时间 {0}"
+      "zh": "计划于 {0} 运行"
     },
     {
       "en": "Skipped {0} missed run",

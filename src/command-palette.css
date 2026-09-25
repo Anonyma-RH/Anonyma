@@ -1,0 +1,50 @@
+/* Command Palette: the header button and the ⌘K / Ctrl+K dialog. */
+.app-shell .palette-trigger{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 10px;border:1px solid var(--work-line);border-radius:6px;background:var(--work-surface);color:var(--work-muted);font:inherit;font-size:12px;white-space:nowrap;cursor:pointer}
+.app-shell .palette-trigger:hover{color:#0135df;border-color:#c9d4f5}
+.app-shell .palette-trigger:focus-visible{outline:2px solid #0135df;outline-offset:2px}
+.app-shell .palette-trigger kbd{padding:2px 5px;border:1px solid var(--work-line);border-radius:4px;background:#fff;color:var(--work-muted);font:inherit;font-size:10px;letter-spacing:.02em}
+.app-shell .workspace-header>.palette-trigger{margin-left:auto;margin-right:12px}
+
+.palette{position:fixed;inset:0;margin:12vh auto auto;padding:0;width:min(640px,calc(100vw - 32px));max-width:none;max-height:min(620px,76vh);max-height:min(620px,76dvh);border:1px solid var(--work-line,#e3e8f0);border-radius:10px;background:#fff;color:var(--work-ink,#142343);box-shadow:0 30px 80px rgba(1,20,90,.28);overflow:hidden}
+.palette::backdrop{background:rgba(1,20,90,.28);backdrop-filter:blur(3px)}
+.palette[open]{display:flex}
+.palette-box{display:flex;flex-direction:column;width:100%;min-height:0;max-height:inherit}
+.palette-search{display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;border-bottom:1px solid var(--work-line,#e3e8f0);color:var(--work-muted,#68748a)}
+.palette-search input{flex:1;min-width:0;height:58px;padding:0;border:0;outline:0;background:transparent;color:var(--work-ink,#142343);font:inherit;font-size:17px}
+.palette-search input::placeholder{color:#8e98ab}
+.palette-close{display:inline-grid;place-items:center;flex:none;width:34px;height:34px;border:0;border-radius:6px;background:transparent;color:var(--work-muted,#68748a);cursor:pointer}
+.palette-close:hover{background:var(--work-surface,#f7f9fc);color:#0135df}
+.palette-close:focus-visible{outline:2px solid #0135df;outline-offset:1px}
+.palette-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:6px 6px 8px}
+.palette-group{padding:12px 10px 5px;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#7a869b}
+.palette-option{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:12px;min-height:46px;padding:7px 10px;border-left:2px solid transparent;border-radius:6px;color:var(--work-ink,#142343);cursor:pointer}
+.palette-option>svg{color:#7a869b}
+.palette-option.active{background:#eef2ff;border-left-color:#0135df}
+.palette-option.active>svg{color:#0135df}
+.palette-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.palette-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.palette-label mark{background:transparent;color:#0135df;font-weight:700}
+.palette-label q{color:#0135df}
+.palette-detail{display:flex;flex-wrap:wrap;gap:2px 8px;min-width:0;font-size:11px;color:var(--work-muted,#68748a)}
+.palette-detail>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.palette-detail>span+span:not(.palette-tag)::before{content:"·";margin-right:8px;color:#b3bccb}
+.palette-tag{padding:0 5px;background:#f1f3f8;color:#4d5d78;font-size:10px;line-height:16px}
+.palette-badge{padding:2px 7px;border:1px solid var(--work-line,#e3e8f0);border-radius:10px;font-size:10px;color:var(--work-muted,#68748a);white-space:nowrap}
+.palette-badge.on{border-color:#0135df;background:#0135df;color:#fff}
+.palette-badge.current{border-color:#c9d4f5;color:#0135df}
+.palette-empty{margin:0;padding:22px 18px 26px;font-size:13px;color:var(--work-muted,#68748a)}
+.palette-hints{display:flex;flex-wrap:wrap;gap:6px 16px;padding:9px 16px;border-top:1px solid var(--work-line,#e3e8f0);background:var(--work-surface,#f7f9fc);font-size:11px;color:var(--work-muted,#68748a)}
+.palette-hints kbd{display:inline-block;min-width:18px;margin-right:3px;padding:1px 5px;border:1px solid var(--work-line,#e3e8f0);border-bottom-width:2px;border-radius:4px;background:#fff;font:inherit;font-size:10px;text-align:center}
+.palette-hint-shortcut{margin-left:auto}
+@media(max-width:700px){
+  .app-shell .palette-trigger{min-height:30px;width:30px;padding:0;justify-content:center;border-color:transparent;background:transparent}
+  .app-shell .palette-trigger-text,.app-shell .palette-trigger kbd{display:none}
+  .app-shell .workspace-header>.palette-trigger{margin-right:4px}
+  .palette{margin:8px auto auto;width:calc(100vw - 16px);max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px);border-radius:12px}
+  .palette-search input{height:52px;font-size:16px}
+  .palette-option{min-height:48px}
+  .palette-hint-shortcut{display:none}
+}
+@media(hover:none){.palette-hints{display:none}}
+@media(prefers-reduced-motion:no-preference){.palette[open]{animation:palette-in .14s ease-out}}
+@keyframes palette-in{from{opacity:0;transform:translateY(-6px) scale(.99)}to{opacity:1;transform:none}}

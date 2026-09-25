@@ -1227,6 +1227,9 @@ export default function Workspace() {
           entries: built.tags.map((tag) => ({ tag, value: veilStateRef.current.map[tag] })),
         });
     }
+    // What the composer and chat held before this send, put back if the
+    // server refuses it before anything starts (see the catch below).
+    const before = { messages, prompt, attachments, documents };
     if (!redo) {
       setPrompt("");
       setAttachments([]);
@@ -1342,14 +1345,30 @@ export default function Workspace() {
       if (err.data?.anonyma?.memory) memoryUsed = err.data.anonyma.memory;
       if (err.data?.anonyma?.privacy) trailInfo = err.data.anonyma.privacy;
       setCurrent(liveId);
-      if (chatControlLive || output || reasoning || images.length) setMessages([...next, {
+      // Refused before anything was reserved (out of credits, a spending
+      // limit, Seed Guard, a rate limit): nothing started and nothing was
+      // charged, so there's no interrupted reply or charge check, only the
+      // reason.
+      const refused =
+        err?.status >= 400 && err.status < 500 &&
+        (!err.data?.billing || err.data.billing.status === "not_charged") &&
+        !output && !reasoning && !images.length;
+      if (refused) {
+        setMessages(before.messages);
+        if (!redo) {
+          setPrompt(before.prompt);
+          setAttachments(before.attachments);
+          setDocuments(before.documents);
+        }
+      }
+      if (!refused && (chatControlLive || output || reasoning || images.length)) setMessages([...next, {
         role: "assistant", content: output, reasoning, images, citations, model: requestModel,
         finishReason: finishReason || "interrupted", interrupted: true, requestId,
         ...(memoryUsed ? { memoryUsed } : {}),
         ...(trailInfo ? { privacy: trailInfo } : {}),
         ...(sendingPrivate ? { private: { privacy: "zdr", stored: false }, masked: requestMasked } : {}),
       }]);
-      if (chatControlLive) charge.recover(requestId);
+      if (chatControlLive && !refused) charge.recover(requestId);
       setError(chatControlLive ? chatFailureMessage(err) : err.name === "AbortError"
         ? "Stopped. Partial billing may apply; refresh receipts before retrying." : err.message);
     } finally {

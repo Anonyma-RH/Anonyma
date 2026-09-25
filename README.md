@@ -18,6 +18,12 @@ Source availability does not mean every feature is enabled on the hosted app.
 0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583
 ```
 
+## Featured source release
+
+[Code & Build](docs/releases/code-and-build.md): a dedicated code workspace,
+generated files beside the chat and ZIP export. Includes the announcement film;
+the hosted feature rollout is still upcoming.
+
 ## How it works
 
 1. Create an account and choose an available model.

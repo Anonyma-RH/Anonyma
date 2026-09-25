@@ -77,22 +77,17 @@ test("an optional symposium chat mode is stored on its conversation, and existin
   );
 });
 
-test("symposium conversations are excluded when GET /api/conversations is filtered by mode client-side", async (t) => {
-  // The server keeps GET /api/conversations mode-agnostic (unchanged
-  // behaviour); Workspace.jsx leaves symposium runs out of the recent
-  // conversations list. This locks in the data that filter relies on: every
-  // conversation genuinely carries its own mode, and the account's
-  // conversation export still includes symposium runs.
+test("the conversation list leaves out symposium runs, and the export keeps them", async (t) => {
+  // Symposium runs have their own cap and never appear in the recent
+  // conversations list; the account's conversation export still has them.
   const s = fixture(t);
   const { agent, user } = await register(s.app);
   await agent.post("/api/chat").send(ask("symposium")).expect(200);
   await agent.post("/api/chat").send(ask("chat")).expect(200);
 
   const list = await agent.get("/api/conversations").expect(200);
-  assert.equal(list.body.data.length, 2);
-  const nonSymposium = list.body.data.filter((c) => c.mode !== "symposium");
-  assert.equal(nonSymposium.length, 1);
-  assert.equal(nonSymposium[0].mode, "chat");
+  assert.equal(list.body.data.length, 1);
+  assert.equal(list.body.data[0].mode, "chat");
 
   const exported = await agent.get("/api/conversations/export").expect(200);
   assert.deepEqual(
@@ -253,6 +248,10 @@ test("symposium runs have their own cap and never evict ordinary chats", async (
   assert.equal(count("symposium"), SYMPOSIUM_CAP);
   assert.equal(s.db.prepare("SELECT 1 FROM conversations WHERE id=?").get(firstRun), undefined);
   assert.equal(messagesOf(firstRun), 0);
+  // The conversation list shows every ordinary chat and no symposium runs.
+  const listed = (await agent.get("/api/conversations").expect(200)).body.data;
+  assert.equal(listed.length, CONVERSATION_CAP);
+  assert.ok(listed.every((c) => c.mode !== "symposium"));
 
   // A new ordinary chat still evicts only the oldest ordinary chat.
   await agent.post("/api/conversations").send({ mode: "chat" }).expect(201);

@@ -99,7 +99,9 @@ export function conversationRoutes({ app, db, requireUser }) {
     res.json({
       data: db
         .prepare(
-          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT 300",
+          // Symposium runs are capped on their own and never shown here, so they
+          // can't crowd ordinary chats out of this list.
+          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium' AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT 300",
         )
         .all(req.user.id, now()),
     }),

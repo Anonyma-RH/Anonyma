@@ -479,7 +479,7 @@ export const UPDATES = [
       "Always on, checked right in your browser",
       "Nothing about a match is logged or saved",
     ],
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

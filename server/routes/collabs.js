@@ -103,9 +103,13 @@ export function collabRoutes(ctx) {
   });
 
   app.delete("/api/collabs/:id", requireUser, (req, res) => {
-    owned(req.params.id, req.user.id);
-    // Shared conversations and memberships go with the collab.
-    db.prepare("DELETE FROM collabs WHERE id=?").run(req.params.id);
+    const c = owned(req.params.id, req.user.id);
+    transaction(db, () => {
+      // Any Team Treasury balance returns to the owner first.
+      ctx.treasury.closeCollab(c);
+      // Shared conversations and memberships go with the collab.
+      db.prepare("DELETE FROM collabs WHERE id=?").run(req.params.id);
+    });
     res.json({ ok: true });
   });
 

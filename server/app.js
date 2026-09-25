@@ -26,6 +26,7 @@ import { audioRoutes } from "./routes/audio.js";
 import { v1MediaRoutes } from "./routes/v1-media.js";
 import { creditRoutes } from "./routes/credits.js";
 import { collabRoutes } from "./routes/collabs.js";
+import { treasuryRoutes } from "./routes/treasury.js";
 import { retentionRoutes } from "./routes/retention.js";
 import { scrollsRoutes } from "./routes/scrolls.js";
 import { accountRoutes } from "./routes/account.js";
@@ -77,6 +78,7 @@ export function createApp(overrides = {}) {
   Object.assign(ctx, authRoutes(app, db, cfg, ctx.limit));
   catalogRoutes(ctx);
   ctx.conversations = conversationRoutes(ctx);
+  ctx.treasury = treasuryRoutes(ctx);
   Object.assign(ctx, apiRoutes(ctx));
   // Registered before chatRoutes: its /v1/*rest fallback must come last.
   v1MediaRoutes(ctx);

@@ -830,6 +830,7 @@ const featureIcons = {
   estimates: "coins",
   holders: "credits",
   v1media: "image",
+  treasury: "coins",
 };
 const launch = {
   id: "mvp",

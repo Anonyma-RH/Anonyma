@@ -219,6 +219,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
   // Updates that aren't out yet stay locked here, and their endpoints answer 403.
   const live = {
     collab: isReleased(config, "collab"),
+    treasury: isReleased(config, "treasury"),
     social: isReleased(config, "social"),
     api: isReleased(config, "api"),
     video: isReleased(config, "video"),
@@ -619,7 +620,11 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
               ) : (
                 <>
                   <h3>Work together</h3>
-                  <p>Share conversations with up to 11 other people. Everyone pays for their own requests.</p>
+                  <p>
+                    {live.treasury
+                      ? "Share conversations with up to 11 other people. Pay for your own requests, or from a shared team treasury."
+                      : "Share conversations with up to 11 other people. Everyone pays for their own requests."}
+                  </p>
                   <Link to={"/workspace/collab" + q}>Start a collab</Link>
                 </>
               )}

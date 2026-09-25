@@ -313,6 +313,17 @@ export const UPDATES = [
     // Open to NYMA Insiders and up before its public release.
     early: true,
   },
+  {
+    id: "treasury",
+    title: "Team Treasury",
+    tagline: "One balance for the whole team.",
+    points: [
+      "Pool credits in a collab",
+      "Spending limits for each member",
+      "Every contribution and spend on record",
+    ],
+    released: true,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -424,6 +435,15 @@ export function featuresFor(req) {
     body = req.body || {};
   if (p.startsWith("/api/videos")) return ["video"];
   if (p.startsWith("/api/audio")) return ["audio"];
+  // Team Treasury lives inside collabs, so its routes need both. Viewing a
+  // treasury and the owner's withdrawal need only Collab, so switching Team
+  // Treasury off again never traps credits already in one; those two routes
+  // refuse collabs without a treasury themselves (routes/treasury.js).
+  if (/^\/api\/collabs\/[^/]+\/treasury(\/|$)/.test(p))
+    return (req.method === "GET" && /\/treasury\/?$/.test(p)) ||
+      (post && /\/treasury\/withdraw\/?$/.test(p))
+      ? ["collab"]
+      : ["treasury", "collab"];
   if (p.startsWith("/api/collabs")) return ["collab"];
   if (p === "/api/images" && post) return ["images"];
   // The /v1 media endpoints need the API, the multimodal update itself, and
@@ -500,6 +520,9 @@ export function featuresFor(req) {
           body.plugins.some((x) => x?.id === "web")))
     )
       needed.push("search");
+    // A team-paid chat holds on the collab's treasury, so it needs both.
+    if (p === "/api/chat" && body.treasury === true)
+      needed.push("treasury", "collab");
   }
   return needed;
 }

@@ -616,6 +616,7 @@ route("post", "/api/quote", "Estimate credits for a request", {
   body: object(
     {
       ...chat.properties,
+      treasury: { ...bool, description: "Team-paid chat estimate: requires an accessible collab conversationId and the treasury release. Uses the standard team rate; available is the member's remaining spendable team balance. Does not reserve or charge." },
       ...generation,
       n: integer,
       ratio: string,
@@ -818,7 +819,7 @@ route("get", "/api/collabs/{id}", "Collab members and shared conversations", {
     ),
   }),
   description:
-    "Members only. Shared conversations are read and posted through /api/conversations/{id} and /api/chat; each member's requests are billed to their own balance.",
+    "Members only. Shared conversations are read and posted through /api/conversations/{id} and /api/chat; each member's requests are billed to their own balance unless the chat request sets treasury (Team Treasury).",
 });
 route("patch", "/api/collabs/{id}", "Rename a collab (owner)", {
   body: object({ name: string }, ["name"]),
@@ -830,6 +831,8 @@ route(
   "Delete a collab and its shared conversations (owner)",
   {
     response: ref("Ok"),
+    description:
+      "Any Team Treasury balance returns to the owner as a linked treasury_return ledger pair in the same transaction. 409 treasury_busy while team-paid requests still hold treasury credits.",
   },
 );
 route("post", "/api/collabs/{id}/invite", "Create an invite link (owner)", {
@@ -904,6 +907,107 @@ route(
       "When enabled, the client sends this as a leading system message on chat, code and Uncensored requests, masked by Veil when Veil is on. This endpoint only stores it; it does not itself alter /api/chat.",
   },
 );
+// Team Treasury (update "treasury", which also needs "collab").
+const treasuryAmount = (verb) =>
+  object(
+    {
+      credits: {
+        ...number,
+        minimum: 1,
+        maximum: 1000000,
+        description: `Credits to ${verb}, up to four decimals`,
+      },
+      idempotency_key: {
+        ...string,
+        minLength: 1,
+        maxLength: 200,
+        description:
+          "Required (or the Idempotency-Key header). A retry with the same key returns the original transfer; the same key with a different amount is refused with 409 idempotency_conflict.",
+      },
+    },
+    ["credits", "idempotency_key"],
+  );
+const treasuryTransfer = object({
+  id: string,
+  credits: number,
+  balance: { ...number, description: "Treasury balance after the transfer" },
+  available: {
+    ...number,
+    description: "Treasury balance less credits held by team-paid requests",
+  },
+});
+const creditLimit = {
+  type: ["number", "null"],
+  description: "Credits; null means no limit",
+};
+const treasuryMember = object({
+  id: string,
+  username: string,
+  role: string,
+  daily_limit: creditLimit,
+  monthly_limit: creditLimit,
+  daily_used: number,
+  monthly_used: number,
+});
+route("get", "/api/collabs/{id}/treasury", "Team Treasury balance, limits and activity", {
+  response: object({
+    id: string,
+    name: string,
+    role: string,
+    balance: number,
+    available: number,
+    held: number,
+    you: treasuryMember,
+    members: array(treasuryMember),
+    monthly_used: { ...number, description: "Collab-wide settled spend over 30 days plus active holds, including former members." },
+    activity: array(
+      object({
+        type: { enum: ["contribution", "withdrawal", "return", "spend"] },
+        member: string,
+        model: { ...string, description: "Spends only" },
+        status: {
+          enum: ["pending", "charged", "released"],
+          description: "Spends only. Pending shows the credits held.",
+        },
+        credits: number,
+        created: integer,
+      }),
+    ),
+  }),
+  description:
+    "Members only. Limits cover the last 24 hours (daily) and 30 days (monthly); usage is settled team spend in the window plus credits still held. Members start with a daily limit of 0, so they can't spend until the owner sets one, and no monthly limit; the owner has no limit unless they set one. Activity lists the latest 50 contributions, withdrawals, returns and spends.",
+});
+route("post", "/api/collabs/{id}/treasury/contribute", "Contribute credits to the treasury", {
+  body: treasuryAmount("contribute"),
+  response: treasuryTransfer,
+  status: 201,
+  description:
+    "Any member. Moves available credits atomically as a linked treasury_contribution ledger pair; the treasury is a hidden ledger account created on the first contribution. Contributed credits belong to the treasury, which its owner controls, and can't be taken back. Repeats return 200. 402 insufficient_credits; 409 payment_reconciliation_pending while the contributor has a credited payment under reconciliation.",
+});
+route("post", "/api/collabs/{id}/treasury/withdraw", "Withdraw treasury credits (owner)", {
+  body: treasuryAmount("withdraw"),
+  response: treasuryTransfer,
+  status: 201,
+  description:
+    "Owner only, back to the owner's own balance, as a linked treasury_withdrawal ledger pair. Only available credits (not those held by team-paid requests) can be withdrawn: 402 treasury_insufficient. Repeats return 200.",
+});
+route(
+  "patch",
+  "/api/collabs/{id}/treasury/members/{userId}",
+  "Set a member's team spending limits (owner)",
+  {
+    body: object({ daily_limit: creditLimit, monthly_limit: creditLimit }),
+    response: treasuryMember,
+    description:
+      "Omitted fields keep their value; null means no limit and 0 means the member can't spend. Limits go when the member leaves, is removed or closes their account; someone who rejoins starts at a daily limit of 0 again.",
+  },
+);
+// Workspace chat only; /v1 ignores it.
+chat.properties.treasury = {
+  ...bool,
+  description:
+    'Team Treasury "Team pays": hold and charge this request to the treasury of the collab that owns conversationId, within the member\'s daily and monthly limits (checked atomically with the hold, counting their held requests). 400 treasury_unavailable outside collab conversations; 402 treasury_limit or treasury_insufficient. Charged at the standard rate, since every member sees the spend. Settlement, receipts and refunds are unchanged.',
+};
 route("get", "/api/referrals", "Your referral link and rewards", {
   response: object({
     code: string,
@@ -1128,7 +1232,7 @@ route("delete", "/api/account", "Close account and forfeit unused credits", {
   body: object({ confirm: { const: "DELETE" } }, ["confirm"]),
   response: ref("Ok"),
   description:
-    "409 while holds or unresolved invoices exist. Deletes personal content, saved media files, account-linked tickets, video jobs, sessions and owned collaborations. Clears profile identifiers and API-key hashes/names/prefixes. Other owners shared content, financial records and external copies remain. Retained accounting has no automatic expiry. Media removal errors prevent a success response and may require retry; deletion does not erase provider copies or existing backups.",
+    "409 while holds or unresolved invoices exist, or while an owned collab's Team Treasury holds any credits (treasury_not_empty: withdraw or spend them first) or has team-paid requests in progress (treasury_busy). Deletes personal content, saved media files, account-linked tickets, video jobs, sessions and owned collaborations. Clears profile identifiers and API-key hashes/names/prefixes. Other owners shared content, financial records and external copies remain. Retained accounting has no automatic expiry. Media removal errors prevent a success response and may require retry; deletion does not erase provider copies or existing backups.",
 });
 route("get", "/v1", "Free API connection check", {
   auth: null,
@@ -1545,11 +1649,16 @@ export function openapiForConfig(cfg) {
         Object.entries(methods).filter(([method]) => {
           // Every gate, so a route that needs two updates (an allowance
           // needs api and allowances) stays unlisted until both are live.
-          return featuresFor({
+          // Team Treasury's view and withdrawal stay reachable while it's
+          // switched off only to rescue existing balances; they're listed
+          // only once it's released.
+          const needs = featuresFor({
             path,
             method: method.toUpperCase(),
             body: {},
-          }).every((id) => isReleased(cfg, id));
+          });
+          if (/\/treasury(\/|$)/.test(path)) needs.push("treasury");
+          return needs.every((id) => isReleased(cfg, id));
         }),
       );
       return Object.keys(available).length ? [[path, available]] : [];

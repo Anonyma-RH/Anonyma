@@ -349,11 +349,17 @@ export function accountRoutes(ctx) {
         409,
         "Resolve pending payment invoices before closing this account.",
       );
+    // Owned collabs' Team Treasuries must be empty: members' credits never
+    // disappear with the owner's account.
+    ctx.treasury.assertOwnedEmpty(req.user.id);
     for (const m of db
       .prepare("SELECT * FROM media WHERE user_id=?")
       .all(req.user.id))
       deleteMedia(m);
     transaction(db, () => {
+      // Checked again with the deletion, atomically; a database trigger
+      // backs this up (see the Team Treasury migration).
+      ctx.treasury.assertOwnedEmpty(req.user.id);
       // Owned collabs go (with their shared conversations); in other
       // collabs the member leaves and their messages stay, unattributed.
       db.prepare("DELETE FROM collabs WHERE owner_id=?").run(req.user.id);

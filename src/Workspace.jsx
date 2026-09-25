@@ -62,6 +62,7 @@ import { parseDocumentBlocks } from "./documents.js";
 import Symposium from "./Symposium.jsx";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
 import { extractVariables } from "./scrolls.js";
+import { useTeamPays } from "./Treasury.jsx";
 import {
   api,
   streamChat,
@@ -292,6 +293,7 @@ export default function Workspace() {
     // and never sent anywhere: see src/veil.js's local-only storage helpers.
     veilKeyRef = useRef("tmp-" + uid()),
     veilStateRef = useRef(loadVeilState(veilKeyRef.current));
+  const teamPays = useTeamPays(config, shared, demo, current);
   const validMode = [
     "home",
     "chat",
@@ -723,7 +725,7 @@ export default function Workspace() {
         ? { state: cloneVeilState(veilStateRef.current), words: veilWords }
         : null,
     });
-    return quoteBody({ model: sendModel, request, webSearch });
+    return quoteBody({ model: sendModel, request, webSearch, treasury: teamPays.on, conversationId: current });
   }
   // Credit Estimates: a live estimate beside Send in chat, code and
   // Uncensored, whenever Send would go through. Image, video and Symposium
@@ -1007,6 +1009,7 @@ export default function Workspace() {
           requestId,
           ...(webSearch ? { web_search: true } : {}),
           ...(sendingPrivate ? { private: true } : {}),
+          ...teamPays.body,
         },
         (event) => {
           if (event.error)
@@ -1455,8 +1458,10 @@ export default function Workspace() {
                 {shared && textMode && (
                   <div className="collab-banner">
                     <Icon name="users" size={16} />
-                    Shared in <b data-i18n="off">{shared.name}</b> · members see this
-                    conversation; each pays for their own requests.
+                    Shared in <b data-i18n="off">{shared.name}</b>
+                    {teamPays.on
+                      ? " · members see this conversation; Team pays charges the team treasury."
+                      : " · members see this conversation; each pays for their own requests."}
                     <Link to="/workspace/collab">Open collab</Link>
                   </div>
                 )}
@@ -2027,6 +2032,7 @@ export default function Workspace() {
                           <span>Web</span>
                         </button>
                       )}
+                      {["chat", "code"].includes(mode) && teamPays.toggle}
                       {!demo &&
                         isReleased(config, "ephemeral") &&
                         textMode && (

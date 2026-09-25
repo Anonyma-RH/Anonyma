@@ -22,11 +22,13 @@ import {
   quote,
   generationPrice,
   markupFactor,
+  standardFactor,
   wantsWebSearch,
 } from "../core.js";
 
 // Public service information, the model catalog, prices and quotes.
-export function catalogRoutes({ app, db, cfg, models, requireUser, limit }) {
+export function catalogRoutes(ctx) {
+  const { app, db, cfg, models, requireUser, limit } = ctx;
   const { getModel, validateMessages, maxTokens } = models;
   const marketFeed = createMarketFeed();
   app.get("/api/market", async (req, res) => {
@@ -117,6 +119,9 @@ export function catalogRoutes({ app, db, cfg, models, requireUser, limit }) {
   // debounced, so the limit leaves room for that and for Symposium's columns.
   app.post("/api/quote", requireUser, limit("quote", 120, 60000), (req, res) => {
     const m = getModel(req.body.model);
+    const teamPaid = req.body.treasury === true;
+    if (teamPaid && m.type !== "chat") fail(400, "Team pays supports chat requests only.");
+    const team = teamPaid ? ctx.treasury.forQuote(req.user.id, req.body.conversationId) : null;
     const video = m.type === "video" ? videoOptions(m, req.body) : null;
     const messages = validateMessages(
       req.body.messages || [{ role: "user", content: req.body.prompt || " " }],
@@ -132,12 +137,12 @@ export function catalogRoutes({ app, db, cfg, models, requireUser, limit }) {
       (video
         ? usdUnits(video.price)
         : base + (wantsWebSearch(req.body) ? usdUnits(cfg.webSearchPrice) : 0)) *
-        markupFactor(req.user, cfg),
+        (teamPaid ? standardFactor(cfg) : markupFactor(req.user, cfg)),
     );
     res.json({
       credits: credits(amount),
       usd: amount / 1e7,
-      available: credits(balance(db, req.user.id).available),
+      available: credits(team ? team.available : balance(db, req.user.id).available),
       model: m.id,
       estimate: true,
     });

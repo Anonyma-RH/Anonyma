@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon, Button, Notice, Empty, CopyButton } from "./ui.jsx";
-import { api } from "./lib.js";
+import { api, isReleased } from "./lib.js";
 import { t } from "./i18n.js";
+import { useApp } from "./context.jsx";
+import TreasuryPanel from "./Treasury.jsx";
 
 // Collab: shared workspaces of up to 12 people with shared conversations.
 export default function CollabHub({ demo, user }) {
+  const { config } = useApp();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [list, setList] = useState([]),
@@ -69,7 +72,12 @@ export default function CollabHub({ demo, user }) {
         <div>
           <p className="eyebrow">COLLAB</p>
           <h1>Think it through together.</h1>
-          <p>Shared conversations for up to 12 people. Everyone pays for their own requests.</p>
+          <p>
+            Shared conversations for up to 12 people.{" "}
+            {isReleased(config, "collab") && isReleased(config, "treasury")
+              ? "Pay for your own requests, or from a shared team treasury."
+              : "Everyone pays for their own requests."}
+          </p>
         </div>
       </div>
       {notice && <Notice>{notice}</Notice>}
@@ -229,6 +237,7 @@ export default function CollabHub({ demo, user }) {
                 )}
               </div>
             </div>
+            <TreasuryPanel collab={active} />
           </section>
         ) : (
           <Empty icon="users" title={list.length ? "Choose a collab." : "Start your first collab."}>

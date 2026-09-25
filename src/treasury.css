@@ -1,0 +1,39 @@
+/* Team Treasury panel in a collab, and its dialogs. */
+.app-shell .treasury-panel{margin-top:40px;border-top:1px solid var(--work-line)}
+.app-shell .treasury-panel .account-section-head{flex-wrap:wrap}
+.app-shell .treasury-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.app-shell .treasury-intro{max-width:60ch;margin:-8px 0 18px;font-size:12px}
+.app-shell .treasury-summary{margin:0 0 32px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.app-shell .treasury-summary b{font-size:34px;overflow-wrap:anywhere}
+.app-shell .treasury-members,.app-shell .treasury-activity{list-style:none;padding:0;margin:0}
+.app-shell .treasury-members>li{padding:14px 0;border-bottom:1px solid var(--work-line)}
+.app-shell .treasury-member-head{display:flex;align-items:center;gap:10px;min-width:0}
+.app-shell .treasury-member-head>span:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
+.app-shell .treasury-member-head small{color:var(--work-muted)}
+.app-shell .treasury-usage{display:grid;grid-template-columns:1fr auto;gap:5px 12px;margin-top:10px;font-size:12px;color:var(--work-muted)}
+.app-shell .treasury-usage>span:nth-child(2){color:var(--work-ink);font-variant-numeric:tabular-nums}
+.app-shell .treasury-bar{grid-column:1/-1;height:6px;background:#edf2ff}
+.app-shell .treasury-bar i{display:block;height:100%;max-width:100%;background:#0135df}
+.app-shell .treasury-limit-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.app-shell .treasury-limit-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#4d5d78}
+.app-shell .treasury-limit-form input{min-width:0;padding:9px 10px;border:1px solid var(--work-line);border-radius:2px;font:inherit;color:var(--work-ink);background:#fff}
+.app-shell .treasury-limit-form .inline-actions,.app-shell .treasury-limit-form .fine-print{grid-column:1/-1;margin:0}
+.app-shell .treasury-activity>li{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--work-line)}
+.app-shell .treasury-activity b{display:block;font-weight:500;font-size:13px;overflow-wrap:anywhere}
+.app-shell .treasury-activity small{font-size:11px;color:var(--work-muted)}
+.app-shell .treasury-mark{width:8px;height:8px;margin-top:6px;background:#9aa6bd}
+.app-shell .treasury-mark.contribution{background:#0135df}
+.app-shell .treasury-mark.spend{background:#ffb21c}
+.app-shell .treasury-amount{font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--work-ink)}
+.app-shell .treasury-amount.in{color:#0135df}
+.app-shell .treasury-dialog>p:first-child{font-size:13px;line-height:1.7;color:var(--work-muted);margin-bottom:20px}
+.app-shell .treasury-equivalent{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:12px 0 20px}
+.app-shell .treasury-equivalent b{font-size:24px;font-weight:500;font-variant-numeric:tabular-nums;color:#0135df}
+.app-shell .treasury-equivalent span{font-size:12px;color:var(--work-muted)}
+.app-shell .treasury-dialog .notice{margin-bottom:16px}
+@media (max-width:700px){
+  .app-shell .treasury-summary b{font-size:30px}
+  .app-shell .treasury-limit-form{grid-template-columns:1fr}
+  .app-shell .treasury-activity>li{grid-template-columns:8px minmax(0,1fr)}
+  .app-shell .treasury-amount{grid-column:2}
+}

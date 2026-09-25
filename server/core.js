@@ -285,6 +285,18 @@ const addColumn = (db, table, column, definition) => {
 // Only ever append: a released step must never be edited or reordered.
 // Steps must also be safe on databases created before versioning existed
 // (user_version 0), which is why they use IF NOT EXISTS / addColumn.
+// A migration that only adds tables, indexes or triggers records its version
+// in schema_additive, so an earlier build can still start on the upgraded
+// database (see migrate) and a rollback doesn't need a restore.
+const ADDITIVE =
+  "CREATE TABLE IF NOT EXISTS schema_additive(version INTEGER PRIMARY KEY)";
+const additive = (sql) => (db) => {
+  db.exec(sql);
+  db.exec(ADDITIVE);
+  db.prepare("INSERT OR IGNORE INTO schema_additive(version) VALUES(?)").run(
+    db.prepare("PRAGMA user_version").get().user_version + 1,
+  );
+};
 export const MIGRATIONS = [
   (db) =>
     db.exec(`
@@ -436,18 +448,66 @@ export const MIGRATIONS = [
       CREATE TABLE IF NOT EXISTS roadmap_votes(month TEXT NOT NULL,user_id TEXT NOT NULL REFERENCES users(id),update_id TEXT NOT NULL,created INTEGER NOT NULL,updated INTEGER NOT NULL,PRIMARY KEY(month,user_id));
     `);
   },
+  // Team Treasury: a collab's shared balance is its own ledger account (a
+  // hidden users row), with per-member limits that go when the membership
+  // goes, and the member behind each team-paid reservation. The trigger
+  // refuses to delete a collab whose treasury still has credits or holds,
+  // whichever build runs: members' contributions are never orphaned, even
+  // by code from before this migration after a rollback.
+  additive(`
+      CREATE TABLE IF NOT EXISTS treasury_accounts(collab_id TEXT PRIMARY KEY,account_user_id TEXT UNIQUE NOT NULL REFERENCES users(id),created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS treasury_members(collab_id TEXT NOT NULL,user_id TEXT NOT NULL,daily_limit INTEGER,monthly_limit INTEGER,updated INTEGER NOT NULL,PRIMARY KEY(collab_id,user_id),FOREIGN KEY(collab_id,user_id) REFERENCES collab_members(collab_id,user_id) ON DELETE CASCADE);
+      CREATE TABLE IF NOT EXISTS treasury_spends(hold_id TEXT PRIMARY KEY,collab_id TEXT NOT NULL,user_id TEXT NOT NULL,model TEXT,created INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS treasury_spends_member ON treasury_spends(collab_id,user_id,created);
+      CREATE TRIGGER IF NOT EXISTS treasury_keeps_collab BEFORE DELETE ON collabs
+      WHEN EXISTS (SELECT 1 FROM treasury_accounts t WHERE t.collab_id=OLD.id AND (
+        (SELECT COALESCE(SUM(amount),0) FROM ledger WHERE user_id=t.account_user_id)<>0
+        OR EXISTS (SELECT 1 FROM holds WHERE user_id=t.account_user_id AND status='held')))
+      BEGIN SELECT RAISE(ABORT,'treasury_not_empty'); END;
+    `),
 ];
+// The schema versions whose migrations were recorded as additive.
+const additiveVersions = (db) =>
+  db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_additive'")
+    .get()
+    ? new Set(db.prepare("SELECT version FROM schema_additive").all().map((r) => r.version))
+    : new Set();
+const newerAreAdditive = (db, from, to) => {
+  const additiveSet = additiveVersions(db);
+  for (let v = from + 1; v <= to; v++) if (!additiveSet.has(v)) return false;
+  return true;
+};
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;
-  if (version() > MIGRATIONS.length)
+  // A database upgraded by a newer build starts only when every migration
+  // this build doesn't know only added tables, indexes or triggers.
+  if (version() > MIGRATIONS.length) {
+    if (newerAreAdditive(db, MIGRATIONS.length, version())) return;
     throw Error(
       "This database was upgraded by a newer version of Anonyma. Update the software before starting it.",
     );
+  }
   for (let v = version(); v < MIGRATIONS.length; v++)
     transaction(db, () => {
       MIGRATIONS[v](db);
       db.exec(`PRAGMA user_version=${v + 1}`);
     });
+}
+// Before redeploying a build older than the additive-migration rule: lower
+// the schema version so that build starts. Only additive migrations can be
+// stepped over; their tables and triggers stay, and upgrading again re-runs
+// them harmlessly (IF NOT EXISTS). Take a backup first (operator.mjs does).
+export function rollbackSchema(db, target) {
+  const current = db.prepare("PRAGMA user_version").get().user_version;
+  if (!Number.isSafeInteger(target) || target < 0 || target > current)
+    throw Error(`Choose a schema version from 0 to ${current}.`);
+  if (!newerAreAdditive(db, target, current))
+    throw Error(
+      `Versions ${target + 1} to ${current} aren't all additive; restore a backup instead.`,
+    );
+  db.exec(`PRAGMA user_version=${target}`);
+  return { from: current, to: target };
 }
 export function database(path) {
   if (path !== ":memory:")
@@ -531,7 +591,7 @@ export function addCredit(
 }
 export function reserve(
   db,
-  { id, user, amount, key, kind = "chat", ttl = 300000 },
+  { id, user, amount, key, kind = "chat", ttl = 300000, guard },
 ) {
   return transaction(db, () => {
     if (db.prepare("SELECT id FROM holds WHERE id=?").get(id))
@@ -542,6 +602,9 @@ export function reserve(
       );
     if (!Number.isSafeInteger(amount) || amount < 0)
       fail(400, "Invalid reservation");
+    // Callers with their own spending rules (Team Treasury limits) check and
+    // record them here, atomically with the reservation.
+    guard?.(amount);
     if (hasDisputedCredit(db, user))
       fail(
         409,

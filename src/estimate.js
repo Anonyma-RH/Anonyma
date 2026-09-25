@@ -73,11 +73,12 @@ export const cloneVeilState = (state) => ({
 
 // The /api/quote body for a chat Send: same model, messages, reply budget and
 // web search flag, and nothing that reserves or charges.
-export function quoteBody({ model, request, webSearch = false }) {
+export function quoteBody({ model, request, webSearch = false, treasury = false, conversationId }) {
   return {
     model,
     messages: request,
     max_tokens: REPLY_BUDGET,
+    ...(treasury === true ? { treasury: true, conversationId } : {}),
     ...(webSearch ? { web_search: true } : {}),
   };
 }

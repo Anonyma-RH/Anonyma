@@ -71,10 +71,15 @@ export function chatRoutes(ctx) {
       max = maxTokens(req.body.max_tokens);
     const requestId = requestIdentifier(req);
     const hold = req.user.id + ":" + requestId;
+    // Team Treasury "Team pays": held on the collab's treasury (see below).
+    const teamPaid = !api && req.body.treasury === true;
     // A connected app (set by the MCP server, never by the request body)
-    // pays the standard rate.
+    // pays the standard rate. So does a team-paid request: every member sees
+    // its charge, so it must say nothing about the requester's account.
     const factor =
-      req.standardRate === true ? standardFactor(cfg) : markupFactor(req.user, cfg);
+      req.standardRate === true || teamPaid
+        ? standardFactor(cfg)
+        : markupFactor(req.user, cfg);
     // Web search is a PPQ plugin with its own per-request fee.
     const webSearch = wantsWebSearch(req.body);
     const searchFee = webSearch ? cfg.webSearchPrice : 0;
@@ -97,6 +102,11 @@ export function chatRoutes(ctx) {
         ? accessConversation(req.body.conversationId, req.user.id).id
         : null;
     }
+    // Team Treasury: with "Team pays" on, a collab conversation's request is
+    // held on the collab's treasury account, within the member's limits.
+    const team = teamPaid
+      ? ctx.treasury.forChat(req.user.id, conversation, m.id, hold)
+      : null;
     // Published token prices are a floor: the gateway may route to a pricier
     // provider (a live Llama request cost about 3x its listed rate). Hold
     // headroom when the balance and key cap allow it; settlement still
@@ -104,10 +114,11 @@ export function chatRoutes(ctx) {
     const reservation = (held) =>
       reserve(db, {
         id: hold,
-        user: req.user.id,
+        user: team?.account ?? req.user.id,
         amount: held,
         key: req.apiKey?.id,
         ttl: api ? 300000 : 240000,
+        guard: team?.guard,
       });
     const headroom = Math.ceil(amount * cfg.holdMargin);
     try {
@@ -115,9 +126,13 @@ export function chatRoutes(ctx) {
     } catch (e) {
       if (
         headroom <= amount ||
-        !["insufficient_credits", "key_cap_exceeded", "allowance_exhausted"].includes(
-          e.code,
-        )
+        ![
+          "insufficient_credits",
+          "key_cap_exceeded",
+          "allowance_exhausted",
+          "treasury_insufficient",
+          "treasury_limit",
+        ].includes(e.code)
       )
         throw e;
       reservation(amount);
@@ -569,8 +584,8 @@ export function chatRoutes(ctx) {
   }
   app.get("/api/requests/:id", requireUser, (req, res) => {
     const row = db
-      .prepare("SELECT * FROM holds WHERE id=? AND user_id=?")
-      .get(req.user.id + ":" + req.params.id, req.user.id);
+      .prepare(`SELECT h.* FROM holds h WHERE h.id=? AND (h.user_id=? OR EXISTS (SELECT 1 FROM treasury_spends s WHERE s.hold_id=h.id AND s.user_id=?))`)
+      .get(req.user.id + ":" + req.params.id, req.user.id, req.user.id);
     if (!row) fail(404, "Request not found.");
     res.json({
       requestId: req.params.id,

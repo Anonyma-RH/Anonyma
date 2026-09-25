@@ -2019,7 +2019,72 @@
     "TEXT TO SPEECH": "文本转语音",
     "TRANSCRIPTION": "转录",
     "Video generation is submitted with POST /v1/videos and polled with GET /v1/videos/{id}. See the API docs for the full reference.": "视频生成通过 POST /v1/videos 提交，并通过 GET /v1/videos/{id} 轮询结果。完整参考请查看 API 文档。",
-    "NYMA holders at 1,000,000+ keep twice as much: 600 conversations, 300 Symposium runs, 200 images, 120 videos and 120 audio files. Below that, nothing is deleted at once; the standard caps apply again as new items are saved.": "持有 1,000,000 枚以上 NYMA 的持有者可保留双倍内容：600 个会话、300 次模型圆桌运行、200 张图片、120 个视频和 120 个音频文件。持有量低于该数量时，不会立即删除任何内容；保存新内容时会重新适用标准上限。"
+    "NYMA holders at 1,000,000+ keep twice as much: 600 conversations, 300 Symposium runs, 200 images, 120 videos and 120 audio files. Below that, nothing is deleted at once; the standard caps apply again as new items are saved.": "持有 1,000,000 枚以上 NYMA 的持有者可保留双倍内容：600 个会话、300 次模型圆桌运行、200 张图片、120 个视频和 120 个音频文件。持有量低于该数量时，不会立即删除任何内容；保存新内容时会重新适用标准上限。",
+    "Team Treasury": "团队金库",
+    "One balance for the whole team.": "全队共用一个余额。",
+    "Pool credits in a collab": "在协作空间中汇集积分",
+    "Spending limits for each member": "为每位成员设置消费上限",
+    "Every contribution and spend on record": "每笔存入和消费都记入账本",
+    "Shared conversations for up to 12 people. Pay for your own requests, or from a shared team treasury.": "最多支持 12 人共享会话。你可以自己付费，也可以使用共享的团队金库。",
+    "· members see this conversation; Team pays charges the team treasury.": "· 成员可以查看此会话；开启团队付费后，费用从团队金库扣除。",
+    "Team pays": "团队付费",
+    "Charge requests to this collab's treasury, within your limits": "在你的上限内，由此协作空间的金库支付请求费用",
+    "Team treasury": "团队金库",
+    "Contribute": "存入",
+    "Withdraw": "提取",
+    "Credits pooled for this collab. Members spend them by turning on Team pays in a shared conversation, within the limits you set.": "为此协作空间汇集的积分。成员在共享会话中开启“团队付费”即可使用，但不能超过你设定的上限。",
+    "Credits pooled for this collab. Members spend them by turning on Team pays in a shared conversation, within the limits the owner sets.": "为此协作空间汇集的积分。成员在共享会话中开启“团队付费”即可使用，但不能超过所有者设定的上限。",
+    "Loading the treasury…": "正在加载金库……",
+    "Treasury balance": "金库余额",
+    "You can spend now": "你当前可用",
+    "Your limit is 0 until the owner raises it.": "在所有者调高之前，你的上限为 0。",
+    "With Team pays, within your limits": "开启团队付费后可用，不超过你的上限",
+    "Team spend, 30 days": "团队消费（30 天）",
+    "Including requests in progress": "含处理中的请求",
+    "Member limits": "成员上限",
+    "· you": "· 你",
+    "Set limits": "设置上限",
+    "Last 24 hours": "过去 24 小时",
+    "Last 30 days": "过去 30 天",
+    "Last 24 hours team spend": "过去 24 小时的团队消费",
+    "Last 30 days team spend": "过去 30 天的团队消费",
+    "Can't spend": "不可消费",
+    "contributed": "存入",
+    "withdrew": "提取",
+    "Returned to": "已退回给",
+    "Not charged": "未扣费",
+    "No activity yet. Contributions and team-paid requests appear here.": "暂无活动。存入记录和团队付费的请求会显示在这里。",
+    "Limits saved.": "上限已保存。",
+    "Per 24 hours": "每 24 小时",
+    "Per 30 days": "每 30 天",
+    "No limit": "不限额",
+    "Save": "保存",
+    "Credits. 0 stops spending; blank means no limit.": "单位为积分。0 表示禁止消费；留空表示不限额。",
+    "Use whole credits or up to four decimals, or leave a limit blank for none.": "请输入整数积分或最多 4 位小数，也可以留空表示不限额。",
+    "Add to the treasury.": "存入金库。",
+    "Withdraw to your balance.": "提取到你的余额。",
+    "Credits move from your balance to the": "积分将从你的余额转入",
+    "treasury. Only the owner can withdraw them, and if the collab is deleted what's left returns to the owner.": "的金库。只有所有者可以提取这些积分；如果协作空间被删除，剩余积分将退还给所有者。",
+    "Credits move from the treasury to your own balance. Credits held for requests in progress stay put.": "积分将从金库转入你自己的余额。为处理中的请求冻结的积分不会被提取。",
+    "Enter at least 1 credit, with up to four decimals.": "请输入至少 1 积分，最多保留 4 位小数。",
+    "Moving credits…": "正在转移积分……",
+    "Contribute between 1 and 1,000,000 credits, with at most four decimals.": "请存入 1 至 1,000,000 积分，最多保留 4 位小数。",
+    "Withdraw between 1 and 1,000,000 credits, with at most four decimals.": "请提取 1 至 1,000,000 积分，最多保留 4 位小数。",
+    "Send an idempotency_key of 1–200 characters so a retry can't apply twice.": "请发送 1–200 个字符的 idempotency_key，以免重试时重复执行。",
+    "That idempotency key was already used for a different amount.": "该幂等键已用于另一个金额。",
+    "Not enough available credits to contribute.": "可用积分不足，无法存入。",
+    "Only the collab owner can withdraw from the treasury.": "只有协作空间所有者可以从金库提取积分。",
+    "The treasury doesn't have that many available credits.": "金库没有这么多可用积分。",
+    "Only the collab owner can set spending limits.": "只有协作空间所有者可以设置消费上限。",
+    "Set each limit in credits from 0 to 1,000,000,000 with at most four decimals, or null for no limit.": "每项上限请设为 0 至 1,000,000,000 积分，最多保留 4 位小数；设为 null 表示不限额。",
+    "Team pays works only in collab conversations.": "团队付费仅适用于协作会话。",
+    "The team treasury doesn't have enough credits for this request.": "团队金库的积分不足，无法完成此请求。",
+    "Your team spending limit is 0. Ask the collab owner to raise it.": "你的团队消费上限为 0。请让协作空间所有者调高上限。",
+    "You've reached your daily team spending limit.": "你已达到每日团队消费上限。",
+    "You've reached your monthly team spending limit.": "你已达到每月团队消费上限。",
+    "Credits you add belong to the team treasury, which its owner controls, and can't be taken back.": "你存入的积分归团队金库所有，由协作空间所有者掌管，存入后无法取回。",
+    "Team Treasury is paused. Its balance stays on the ledger, and the owner can withdraw it.": "团队金库已暂停。余额仍记录在账本上，所有者可以将其提取。",
+    "Share conversations with up to 11 other people. Pay for your own requests, or from a shared team treasury.": "与最多 11 位其他成员共享会话。你可以自己付费，也可以使用共享的团队金库。"
   },
   "patterns": [
     {
@@ -3009,6 +3074,78 @@
     {
       "en": "The bigger library doubles the retention caps; below {0} the standard caps apply again as new items are saved, and nothing is deleted at once. Early access opens updates marked early, before their public release, and the server checks it on each update's routes. The Inner Circle's roadmap vote is one per account per month and advisory.",
       "zh": "更大的媒体库会让保留上限翻倍；余额低于 {0} 时，保存新内容时会重新适用标准上限，不会立即删除任何内容。抢先体验会在公开发布前开放标记为抢先体验的更新，服务器会在每个更新的路由上检查这一点。核心圈的路线图投票每个账户每月一票，仅供参考。"
+    },
+    {
+      "en": "${0} in credits",
+      "zh": "价值 ${0}"
+    },
+    {
+      "en": "{0} held for requests in progress",
+      "zh": "{0} 积分已为处理中的请求冻结"
+    },
+    {
+      "en": "{0} used · no limit",
+      "zh": "已用 {0} · 不限额"
+    },
+    {
+      "en": "Set limits for {0}",
+      "zh": "为 {0} 设置上限"
+    },
+    {
+      "en": "Holding {0}",
+      "zh": "冻结 {0} 积分"
+    },
+    {
+      "en": "You contributed {0} credit.",
+      "zh": "你已存入 {0} 积分。"
+    },
+    {
+      "en": "You contributed {0} credits.",
+      "zh": "你已存入 {0} 积分。"
+    },
+    {
+      "en": "{0} credit moved to your balance.",
+      "zh": "{0} 积分已转入你的余额。"
+    },
+    {
+      "en": "{0} credits moved to your balance.",
+      "zh": "{0} 积分已转入你的余额。"
+    },
+    {
+      "en": "{0} credit available in your balance. 1,000 credits = $1.",
+      "zh": "你的余额中有 {0} 积分可用。1,000 积分 = $1。"
+    },
+    {
+      "en": "{0} credits available in your balance. 1,000 credits = $1.",
+      "zh": "你的余额中有 {0} 积分可用。1,000 积分 = $1。"
+    },
+    {
+      "en": "{0} credit available in the treasury. 1,000 credits = $1.",
+      "zh": "金库中有 {0} 积分可用。1,000 积分 = $1。"
+    },
+    {
+      "en": "{0} credits available in the treasury. 1,000 credits = $1.",
+      "zh": "金库中有 {0} 积分可用。1,000 积分 = $1。"
+    },
+    {
+      "en": "Wait for team-paid requests in {0} to finish, then try again.",
+      "zh": "请等待 {0} 中团队付费的请求完成后再试。"
+    },
+    {
+      "en": "This request could cost up to {0} credits, more than the {1} left of your daily team spending limit.",
+      "zh": "此请求最多可能花费 {0} 积分，超过你每日团队消费上限剩余的 {1} 积分。"
+    },
+    {
+      "en": "This request could cost up to {0} credits, more than the {1} left of your monthly team spending limit.",
+      "zh": "此请求最多可能花费 {0} 积分，超过你每月团队消费上限剩余的 {1} 积分。"
+    },
+    {
+      "en": "A collab you own still has {0} credit in its team treasury. Withdraw or spend them before closing your account.",
+      "zh": "你拥有的一个协作空间的团队金库中仍有 {0} 积分。请先提取或用完这些积分，再关闭账户。"
+    },
+    {
+      "en": "A collab you own still has {0} credits in its team treasury. Withdraw or spend them before closing your account.",
+      "zh": "你拥有的一个协作空间的团队金库中仍有 {0} 积分。请先提取或用完这些积分，再关闭账户。"
     }
   ]
 }

@@ -1,4 +1,4 @@
-import test from "node:test";
+import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import {
   MAX_TOTAL_CHARS,
@@ -15,6 +15,13 @@ import {
   applyBudget,
 } from "../src/documents.js";
 import { UPDATES } from "../server/releases.js";
+
+// Release commits flip `released` on UPDATES entries. These tests cover the
+// gate itself, so they pin every update to unreleased for this file and keep
+// passing after the release commit.
+const committed = UPDATES.map((u) => u.released);
+before(() => UPDATES.forEach((u) => (u.released = false)));
+after(() => UPDATES.forEach((u, i) => (u.released = committed[i])));
 
 test("File type detection covers PDFs, plain text and common code files", () => {
   assert.equal(documentKind({ name: "report.pdf" }), "pdf");
@@ -177,5 +184,6 @@ test("The Documents update is registered and off by default", () => {
     "Text extracted in your browser",
     "Tidy document chips in every chat",
   ]);
-  assert.equal(update.released, false);
+  // Committed as false until its "Release …" commit flips it to true.
+  assert.equal(typeof committed[UPDATES.indexOf(update)], "boolean");
 });

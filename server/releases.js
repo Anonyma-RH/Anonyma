@@ -446,7 +446,7 @@ export const UPDATES = [
       "Totals that add up exactly to your ledger",
       "Export your own ledger as CSV or JSON",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "preview",

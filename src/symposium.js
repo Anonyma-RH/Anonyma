@@ -55,9 +55,12 @@ export function buildFusionMessages({ question, answers }) {
 
 // Sums per-model credit quotes into a total estimate; unresolved or failed
 // quotes (no numeric credits) are skipped rather than breaking the total.
+// Quotes carry up to four decimals (whole subcredits), so the sum is rounded
+// back to four to drop binary floating-point noise.
 export function totalEstimate(quotes) {
-  return Object.values(quotes || {}).reduce(
-    (sum, q) => sum + (Number.isFinite(q?.credits) ? q.credits : 0),
+  const sum = Object.values(quotes || {}).reduce(
+    (total, q) => total + (Number.isFinite(q?.credits) ? q.credits : 0),
     0,
   );
+  return Number(sum.toFixed(4));
 }

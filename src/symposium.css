@@ -108,3 +108,16 @@
   }
 }
 .symposium-filter{display:block;width:100%;margin:6px 0 10px;padding:8px 10px;border:1px solid var(--work-line,#dfe4ee);border-radius:2px;font:inherit;font-size:14px;background:#fff}
+/* Once answers are showing, the composer stops overlapping the welcome band
+   (the negative margin it uses on an empty workspace) and pins to the bottom
+   like the chat composer, so the fuse controls never sit underneath it. */
+.app-shell .workspace-body.workspace-start:has(.symposium-results) .workspace-welcome {
+  padding-bottom: 52px;
+}
+.app-shell .workspace-body.workspace-start:has(.symposium-results) .composer-zone {
+  position: sticky;
+  bottom: 0;
+  margin-top: 24px;
+  padding-top: 22px;
+  background: linear-gradient(#ffffff00, #fff 18px);
+}

@@ -28,7 +28,12 @@ function fixture(t, released) {
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
-    ...(released !== undefined ? { released, mvpModels: [chatModel] } : {}),
+    // The server defaults to the MVP, so the default fixture opens every
+    // update explicitly, as the other suites do.
+    released: released ?? "all",
+    // Gating fixtures release only part of the roadmap; the MVP list needs
+    // the test model so requests reach the release gate.
+    ...(released !== undefined ? { mvpModels: [chatModel] } : {}),
   });
   t.after(() => {
     svc.close();
@@ -73,9 +78,10 @@ test("an optional symposium chat mode is stored on its conversation, and existin
 
 test("symposium conversations are excluded when GET /api/conversations is filtered by mode client-side", async (t) => {
   // The server keeps GET /api/conversations mode-agnostic (unchanged
-  // behaviour); Symposium.jsx filters its own use of that list so it
-  // doesn't clutter Chat history. This locks in the data the client filter
-  // relies on: every conversation genuinely carries its own mode.
+  // behaviour); Workspace.jsx leaves symposium runs out of the recent
+  // conversations list. This locks in the data that filter relies on: every
+  // conversation genuinely carries its own mode, and the account's
+  // conversation export still includes symposium runs.
   const s = fixture(t);
   const { agent, user } = await register(s.app);
   await agent.post("/api/chat").send(ask("symposium")).expect(200);
@@ -86,7 +92,15 @@ test("symposium conversations are excluded when GET /api/conversations is filter
   const nonSymposium = list.body.data.filter((c) => c.mode !== "symposium");
   assert.equal(nonSymposium.length, 1);
   assert.equal(nonSymposium[0].mode, "chat");
-  void user;
+
+  const exported = await agent.get("/api/conversations/export").expect(200);
+  assert.deepEqual(
+    exported.body.conversations.map((c) => c.mode).sort(),
+    ["chat", "symposium"],
+  );
+  const symposium = exported.body.conversations.find((c) => c.mode === "symposium");
+  assert.equal(symposium.user_id, user.id);
+  assert.equal(symposium.messages[0].content, "Hello from the symposium test");
 });
 
 test("defaultSymposiumModels picks the first callable chat models and respects the requested count", () => {
@@ -130,6 +144,11 @@ test("totalEstimate sums resolved credit quotes and skips failed ones", () => {
     }),
     42,
   );
+  // Fractional quotes sum without floating-point noise.
+  assert.equal(
+    totalEstimate({ a: { credits: 108.4857 }, b: { credits: 3.8562 }, c: { credits: 14.3555 } }),
+    126.6974,
+  );
   assert.equal(totalEstimate({}), 0);
   assert.equal(totalEstimate(undefined), 0);
 });
@@ -168,6 +187,27 @@ test("mvp,symposium releases Symposium", async (t) => {
   const { agent } = await register(s.app);
   await agent.post("/api/chat").send(ask("symposium")).expect(200);
   await agent.post("/api/conversations").send({ mode: "symposium" }).expect(201);
+});
+
+test("Symposium's gate adds to a request's other gates instead of replacing them", async (t) => {
+  // Web search is still refused on a symposium request while search is
+  // unreleased, and releasing search alone doesn't open Symposium.
+  const s = fixture(t, "mvp,symposium");
+  const { agent } = await register(s.app);
+  const searched = await agent
+    .post("/api/chat")
+    .send({ ...ask("symposium"), web_search: true })
+    .expect(403);
+  assert.equal(searched.body.error.code, "feature_unreleased");
+  assert.equal(searched.body.error.message, "Live Web Search is coming soon.");
+
+  const other = fixture(t, "mvp,search");
+  const { agent: agent2 } = await register(other.app);
+  const refused = await agent2
+    .post("/api/chat")
+    .send({ ...ask("symposium"), web_search: true })
+    .expect(403);
+  assert.equal(refused.body.error.message, "Symposium is coming soon.");
 });
 
 test("Symposium is registered as an unreleased update", () => {

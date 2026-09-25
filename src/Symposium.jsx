@@ -34,7 +34,12 @@ export default function Symposium({ demo, user, models, config, refresh }) {
   const welcome = useRef();
   const controllers = useRef({});
   const fuseController = useRef(null);
-  const visibleModels = models.filter((m) => m.type === "chat" && m.callable);
+  // Callable chat models only. Uncensored models stay in their own section,
+  // as they do for the other text modes.
+  const uncensoredIds = config?.releases?.uncensoredModels || [];
+  const visibleModels = models.filter(
+    (m) => m.type === "chat" && m.callable && !uncensoredIds.includes(m.id),
+  );
   const [selected, setSelected] = useState([]),
     [prompt, setPrompt] = useState(""),
     [askedQuestion, setAskedQuestion] = useState(""),
@@ -59,7 +64,7 @@ export default function Symposium({ demo, user, models, config, refresh }) {
       const valid = prev.filter((id) => visibleModels.some((m) => m.id === id));
       return valid.length >= 2 ? valid : defaultSymposiumModels(visibleModels);
     });
-  }, [models]);
+  }, [models, config]);
   const busy = runModels.some((id) =>
     ["pending", "streaming"].includes(columns[id]?.status),
   );
@@ -256,14 +261,18 @@ export default function Symposium({ demo, user, models, config, refresh }) {
         </div>
         {runModels.length > 0 && (
           <div className="symposium-results" style={{ "--symposium-cols": runModels.length }}>
-            {askedQuestion && <p className="symposium-question">{askedQuestion}</p>}
+            {askedQuestion && (
+              <p className="symposium-question" data-i18n="off">
+                {askedQuestion}
+              </p>
+            )}
             <div className="symposium-columns">
               {runModels.map((id) => {
                 const col = columns[id] || emptyColumn();
                 return (
                   <article className="symposium-column" key={id}>
                     <header>
-                      <b>{modelName(id)}</b>
+                      <b data-i18n="off">{modelName(id)}</b>
                       {["pending", "streaming"].includes(col.status) ? (
                         <button type="button" className="small-button" onClick={() => stopOne(id)}>
                           <Icon name="stop" size={13} /> Stop
@@ -274,7 +283,7 @@ export default function Symposium({ demo, user, models, config, refresh }) {
                         </span>
                       )}
                     </header>
-                    <div className="markdown">
+                    <div className="markdown" data-i18n={col.text ? "off" : undefined}>
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {col.text || (col.status === "pending" ? "Preparing…" : "")}
                       </ReactMarkdown>
@@ -302,7 +311,11 @@ export default function Symposium({ demo, user, models, config, refresh }) {
                   <div className="symposium-fuse-controls">
                     <label>
                       Fuse with
-                      <select value={fuseModel} onChange={(e) => setFuseModel(e.target.value)}>
+                      <select
+                        data-i18n="off"
+                        value={fuseModel}
+                        onChange={(e) => setFuseModel(e.target.value)}
+                      >
                         {runModels.map((id) => (
                           <option key={id} value={id}>
                             {modelName(id)}
@@ -317,7 +330,9 @@ export default function Symposium({ demo, user, models, config, refresh }) {
                 ) : (
                   <article className="symposium-column symposium-fusion" ref={fusionCard}>
                     <header>
-                      <b>Fused answer · {modelName(fuseModel)}</b>
+                      <b>
+                        Fused answer · <span data-i18n="off">{modelName(fuseModel)}</span>
+                      </b>
                       {["pending", "streaming"].includes(fusion.status) ? (
                         <button type="button" className="small-button" onClick={stopFuse}>
                           <Icon name="stop" size={13} /> Stop
@@ -328,7 +343,7 @@ export default function Symposium({ demo, user, models, config, refresh }) {
                         </span>
                       )}
                     </header>
-                    <div className="markdown">
+                    <div className="markdown" data-i18n={fusion.text ? "off" : undefined}>
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {fusion.text || (fusion.status === "pending" ? "Preparing…" : "")}
                       </ReactMarkdown>
@@ -362,7 +377,8 @@ export default function Symposium({ demo, user, models, config, refresh }) {
               (id) =>
                 quotes[id] && (
                   <span className="receipt-part" key={id}>
-                    {modelName(id)} {quotes[id].error ? "—" : quotes[id].credits}
+                    <span data-i18n="off">{modelName(id)}</span>{" "}
+                    {quotes[id].error ? "—" : quotes[id].credits}
                   </span>
                 ),
             )}
@@ -415,7 +431,7 @@ export default function Symposium({ demo, user, models, config, refresh }) {
                   }
                   onChange={() => toggleModel(m.id)}
                 />
-                {m.name}
+                <span data-i18n="off">{m.name}</span>
               </label>
             ))}
           </details>

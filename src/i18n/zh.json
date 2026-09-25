@@ -1453,7 +1453,33 @@
     "Referral correction": "推荐奖励更正",
     "More models. One balance.": "更多模型，一个余额。",
     "Reference catalog snapshot": "参考目录快照",
-    "Dictate prompts into your composer": "在输入框中口述提示词"
+    "Dictate prompts into your composer": "在输入框中口述提示词",
+    "Symposium": "模型圆桌",
+    "SYMPOSIUM": "模型圆桌",
+    "Ask several models at once.": "同时向多个模型提问。",
+    "Up to four models side by side": "最多四个模型并排对比",
+    "A receipt for every answer": "每个回答都有收据",
+    "Fuse the answers into one": "将多个回答融合为一",
+    "Choose 2 to 4 chat models, ask them the same question, and compare what comes back. Fuse the answers into one when they're done.": "选择 2 到 4 个对话模型，向它们提出同一个问题，并对比各自的回答。全部完成后，可将这些回答融合为一个。",
+    "Symposium sends the same question to 2 to 4 chat models side by side, then can fuse their answers into one. Sign in to try it; it isn't part of the demo.": "模型圆桌会把同一个问题并排发送给 2 到 4 个对话模型，然后可将它们的回答融合为一个。登录后即可试用；演示中不包含此功能。",
+    "Answering…": "回答中…",
+    "Complete": "已完成",
+    "Failed": "失败",
+    "Stopped": "已停止",
+    "Stop": "停止",
+    "Stopped. Partial output may have been billed.": "已停止。部分输出可能已计费。",
+    "Not enough credits right now: the other answers are holding credits while they run. Add credits or compare fewer models.": "当前积分不足：其他回答在生成期间会冻结积分。请充值，或减少对比的模型数量。",
+    "Generation isn't currently available.": "生成功能目前暂不可用。",
+    "Not enough finished answers to fuse.": "已完成的回答不足，无法融合。",
+    "Fuse with": "融合模型",
+    "Fuse answers": "融合回答",
+    "Fused answer": "融合后的回答",
+    "Estimating…": "估算中…",
+    "Your question": "你的问题",
+    "Ask every model the same question…": "向所有模型提出同一个问题…",
+    "Ask all models": "向所有模型提问",
+    "Filter models": "筛选模型",
+    "Each model is billed separately at its own rate. AI can make mistakes.": "每个模型按各自的价格单独计费。AI 可能会出错。"
   },
   "patterns": [
     {
@@ -2147,6 +2173,18 @@
     {
       "en": "Received from @{0}",
       "zh": "来自 @{0} 的转账"
+    },
+    {
+      "en": "{0} of {1} models selected",
+      "zh": "已选择 {0} 个模型，共 {1} 个"
+    },
+    {
+      "en": "Models to compare ({0}/4)",
+      "zh": "对比模型（{0}/4）"
+    },
+    {
+      "en": "Estimated total: {0} credits",
+      "zh": "预计总计：{0} 积分"
     }
   ]
 }

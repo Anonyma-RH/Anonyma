@@ -92,6 +92,11 @@ const sampleChat =
   "Here is a starting point for your idea.\n\n### Make space for the possibility\n\n1. **Start with the outcome.** Describe what you want to create and who it is for.\n2. **Choose your approach.** Use chat to explore, code to build, and image or video to visualize.\n3. **Keep what works.** Refine your prompt and return to the conversation when you are ready.\n\nThis is a prepared UI demonstration, not a response from the selected model.";
 const sampleCode =
   'Here is an editable starting point for a simple idea card.\n\n```jsx\n// IdeaCard.jsx — prepared demo example\nexport default function IdeaCard({ title, description }) {\n  return (\n    <article className="idea-card">\n      <span>A LITTLE POSSIBILITY</span>\n      <h2>{title}</h2>\n      <p>{description}</p>\n    </article>\n  );\n}\n```\n\n```css\n/* idea-card.css */\n.idea-card {\n  padding: 32px;\n  background: #fdfff8;\n  border: 1px solid #dfe3d9;\n}\n```\n\nFiles are available in the code panel. This workspace does not execute code.';
+// Symposium runs are saved with their own conversation mode and have no
+// thread view to open, so they stay out of the recent-conversations list
+// and the workspace home.
+const recentConversations = (list) =>
+  list.filter((c) => c.mode !== "symposium");
 export function AppSidebar({
   active = "chat",
   demo = false,
@@ -359,9 +364,7 @@ export default function Workspace() {
     }
     if (!demo && user) {
       api("/api/conversations")
-        // Symposium runs get their own conversation mode so they don't
-        // clutter this shared recent-conversations list.
-        .then((r) => setAll(r.data.filter((c) => c.mode !== "symposium")))
+        .then((r) => setAll(recentConversations(r.data)))
         .catch((e) => setError(e.message));
       api("/api/media")
         .then((r) => setMedia(r.data))
@@ -877,7 +880,7 @@ export default function Workspace() {
       setBusy(false);
       refresh();
       api("/api/conversations")
-        .then((r) => setAll(r.data))
+        .then((r) => setAll(recentConversations(r.data)))
         .catch(() => {});
     }
   }

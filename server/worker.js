@@ -201,18 +201,21 @@ export function createWorker(ctx) {
       ).run(now());
       recoverExpiredHolds();
       if (cfg.rpc && cfg.token) {
+        // Daily, with a failed read retried after an hour. A failure never
+        // touches token_checked: early access needs a recent successful
+        // read (server/holders.js), so a balance nobody can confirm lapses.
         for (const user of db
           .prepare(
-            "SELECT * FROM users WHERE wallet IS NOT NULL AND deleted IS NULL AND COALESCE(token_checked,0)<? LIMIT 5",
+            "SELECT * FROM users WHERE wallet IS NOT NULL AND deleted IS NULL AND COALESCE(token_checked,0)<? AND COALESCE(token_retry,0)<? LIMIT 5",
           )
-          .all(now() - 86400000)) {
+          .all(now() - 86400000, now() - 3600000)) {
           if (closed) break;
           try {
             await refreshTokenHoldings(db, cfg, user);
           } catch {
             db.prepare(
-              "UPDATE users SET token_checked=? WHERE id=? AND wallet=? AND deleted IS NULL",
-            ).run(now() - 23 * 3600000, user.id, user.wallet);
+              "UPDATE users SET token_retry=? WHERE id=? AND wallet=? AND deleted IS NULL",
+            ).run(now(), user.id, user.wallet);
           }
         }
       }

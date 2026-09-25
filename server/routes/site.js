@@ -3,7 +3,7 @@ import { knownPage, sitemap, robots } from "../../src/site-routes.js";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fail } from "../core.js";
-import { connectLive } from "../releases.js";
+import { connectLive, isReleased } from "../releases.js";
 import { configurationStatus } from "../readiness.js";
 import {
   publicDocumentation,
@@ -17,6 +17,12 @@ import {
 
 // Health, machine-readable docs, installers and the built web client.
 export function siteRoutes({ app, db, cfg }) {
+  // Gated pages this installation serves: the Connect an App consent page
+  // and the public NYMA page (/token) exist only once their update is live.
+  const served = () => ({
+    connect: connectLive(cfg),
+    token: isReleased(cfg, "holders"),
+  });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))
     : { commit: null, dirty: null, builtAt: null };
@@ -31,7 +37,7 @@ export function siteRoutes({ app, db, cfg }) {
     }),
   );
   app.get("/sitemap.xml", (req, res) =>
-    res.type("application/xml").send(sitemap(cfg.origin)),
+    res.type("application/xml").send(sitemap(cfg.origin, served())),
   );
   app.get("/robots.txt", (req, res) =>
     res.type("text/plain").send(robots(cfg.origin)),
@@ -65,7 +71,7 @@ export function siteRoutes({ app, db, cfg }) {
     );
     app.get("/{*path}", (req, res) =>
       res
-        .status(knownPage(req.path, { connect: connectLive(cfg) }) ? 200 : 404)
+        .status(knownPage(req.path, served()) ? 200 : 404)
         .sendFile("index.html", { root: resolve("dist/client") }),
     );
   }

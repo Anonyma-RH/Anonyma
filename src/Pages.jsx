@@ -825,6 +825,7 @@ const featureIcons = {
   mcp: "command",
   allowances: "coins",
   connect: "plug",
+  holders: "credits",
 };
 const launch = {
   id: "mvp",
@@ -875,7 +876,9 @@ export function Roadmap() {
             >
               <Icon name={featureIcons[u.id] || "chat"} size={20} />
             </span>
-            <p className="eyebrow">{!config?.releases ? "STATUS UNAVAILABLE" : config.testMode ? "LOCAL TEST" : u.released ? "LIVE NOW" : u.id === "mvp" ? "TEMPORARILY UNAVAILABLE" : "COMING SOON"}</p>
+            {/* An early update is open to NYMA holders already, so it says so
+                even on a local test installation. */}
+            <p className="eyebrow">{!config?.releases ? "STATUS UNAVAILABLE" : !u.released && u.early ? "EARLY ACCESS FOR NYMA HOLDERS" : config.testMode ? "LOCAL TEST" : u.released ? "LIVE NOW" : u.id === "mvp" ? "TEMPORARILY UNAVAILABLE" : "COMING SOON"}</p>
             <h2>{u.title}</h2>
             <p className="coming-soon-tagline">{u.tagline}</p>
             <ul>

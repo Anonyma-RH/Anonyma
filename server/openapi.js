@@ -127,6 +127,9 @@ const schemas = {
     tokenBalance: string,
     tokenSince: { type: ["integer", "null"] },
     discount: number,
+    tokenChecked: { type: ["integer", "null"] },
+    earlyAccess: array(string),
+    holder: object({ eligible: bool, threshold: number }),
   }),
   Session: object({ user: { oneOf: [ref("User"), { type: "null" }] } }, [
     "user",
@@ -429,6 +432,12 @@ route("get", "/api/account/sessions", "List active sessions", {
 route("post", "/api/account/token/refresh", "Refresh linked ERC20 holdings", {
   body: object(),
   response: ref("Session"),
+});
+route("post", "/api/account/wallet/unlink", "Unlink the account's wallet", {
+  body: object(),
+  response: ref("Session"),
+  description:
+    "Holder Early Access. Removes the linked wallet and its recorded holdings. 409 wallet_sign_in_only when the wallet is the account's only sign-in method.",
 });
 for (const [path, summary] of [
   [

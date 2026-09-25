@@ -19,6 +19,7 @@ import {
   credits,
   discount,
 } from "./core.js";
+import { earlyAccessFor } from "./holders.js";
 
 export function sessionCookieOptions(cfg) {
   return {
@@ -53,6 +54,10 @@ export function authRoutes(app, db, cfg, limit) {
       tokenBalance: user.token_balance,
       tokenSince: user.token_since,
       discount: discount(user.token_balance, user.token_since),
+      // When the linked wallet's balance was last read successfully.
+      tokenChecked: user.token_checked ?? null,
+      // Holder Early Access: this account's own early updates and status.
+      ...earlyAccessFor(cfg, user),
     };
   }
   // A referral link sets the anonyma_ref cookie; any sign-up method honours it.
@@ -330,7 +335,7 @@ export function authRoutes(app, db, cfg, limit) {
         if (user && user.id !== req.user.id)
           fail(409, "Wallet belongs to another account.");
         db.prepare(
-          "UPDATE users SET wallet=?,token_balance='0',token_since=NULL,token_checked=NULL WHERE id=?",
+          "UPDATE users SET wallet=?,token_balance='0',token_since=NULL,token_checked=NULL,token_retry=NULL WHERE id=?",
         ).run(signer, req.user.id);
         user = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
       } else user ||= newUser({ wallet: signer }, req);
@@ -370,6 +375,31 @@ export function authRoutes(app, db, cfg, limit) {
         fail(503, "Token contract and RPC are not configured.");
       if (!req.user.wallet) fail(400, "Link a wallet first.");
       await refreshTokenHoldings(db, cfg, req.user);
+      res.json({
+        user: publicUser(
+          db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id),
+        ),
+      });
+    },
+  );
+  // Holder Early Access: unlinking removes the wallet and its holdings from
+  // the account. An account that signs in only with that wallet must add
+  // an email first, or it could never sign in again.
+  app.post(
+    "/api/account/wallet/unlink",
+    requireUser,
+    limit("wallet_unlink", 10, 3600000),
+    (req, res) => {
+      if (!req.user.wallet) fail(400, "No wallet is linked.", "wallet_not_linked");
+      if (!req.user.password && !req.user.email)
+        fail(
+          409,
+          "This wallet is how you sign in. Link an email first, so you can still sign in without it.",
+          "wallet_sign_in_only",
+        );
+      db.prepare(
+        "UPDATE users SET wallet=NULL,token_balance='0',token_since=NULL,token_checked=NULL,token_retry=NULL WHERE id=? AND deleted IS NULL",
+      ).run(req.user.id);
       res.json({
         user: publicUser(
           db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id),

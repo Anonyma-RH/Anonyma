@@ -91,6 +91,8 @@ import {
 } from "./veil.js";
 import { useShareTargetPrefill } from "./share-target.js";
 import { InstallAppEntry } from "./InstallApp.jsx";
+import { EarlyTag } from "./Holders.jsx";
+import { isEarlyAccess } from "./holders.js";
 const initial = [
   {
     id: "welcome",
@@ -160,6 +162,7 @@ export function AppSidebar({
             >
               <PixelTile name={id} />
               {t}
+              {isEarlyAccess(config, MODE_FEATURES[id]) && <EarlyTag />}
               {active === id && <span className="nav-active-dot" />}
             </Link>
           ) : (
@@ -1214,6 +1217,7 @@ export default function Workspace() {
                 library: "Your library",
               }[mode]
             }
+            {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
             <span className="workspace-slash">/</span>
             <small>{demo ? "Demo workspace" : "Personal workspace"}</small>
           </span>

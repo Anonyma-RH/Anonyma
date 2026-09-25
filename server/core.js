@@ -10,6 +10,7 @@ import { dirname, resolve } from "node:path";
 import { videoPresets } from "../data/video-presets.js";
 import {
   DEFAULT_MVP_MODELS,
+  EARLY_ACCESS_MIN_NYMA,
   modelReleased,
   parseReleased,
 } from "./releases.js";
@@ -83,6 +84,8 @@ export function config(overrides = {}) {
     rpc: e.TOKEN_RPC_URL || "",
     token: e.TOKEN_CONTRACT || "",
     chain: Number(e.TOKEN_CHAIN_ID || 4663),
+    // Holder Early Access: the NYMA a linked wallet must hold.
+    earlyAccessMin: Number(e.EARLY_ACCESS_MIN_NYMA || EARLY_ACCESS_MIN_NYMA),
     walletChain: Number(e.WALLET_CHAIN_ID || 1),
     markup: Number(e.PLATFORM_MARKUP_PERCENT || 0),
     catalogPath: e.CATALOG_PATH || "runtime/models.cache.json",
@@ -227,6 +230,9 @@ export function config(overrides = {}) {
     throw Error("Wallet payment confirmations must be from 1 to 10000.");
   if (!Number.isFinite(cfg.markup) || cfg.markup < 0)
     throw Error("Markup must be a nonnegative percentage.");
+  // Zero would make every linked wallet a holder, even an empty one.
+  if (!Number.isFinite(cfg.earlyAccessMin) || cfg.earlyAccessMin <= 0)
+    throw Error("EARLY_ACCESS_MIN_NYMA must be a positive number of NYMA.");
   if (
     !Number.isFinite(cfg.gatewayFeePercent) ||
     cfg.gatewayFeePercent < 0 ||
@@ -388,6 +394,9 @@ export const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS oauth_tokens_expiry ON oauth_tokens(expires);
     `);
   },
+  // Holder Early Access: token_checked records only a successful balance
+  // read, so a failed one backs off here instead of looking like a check.
+  (db) => addColumn(db, "users", "token_retry", "INTEGER"),
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;

@@ -5,6 +5,8 @@ import { Button, Icon } from "./ui.jsx";
 import { useApp } from "./context.jsx";
 import ReleaseStatus from "./ReleaseStatus.jsx";
 import { isReleased, releaseUpdate } from "./lib.js";
+import { CONTRACT_ADDRESS } from "./Home.jsx";
+import { earlyAccessThreshold } from "./holders.js";
 import "./whitepaper.css";
 
 // Every statement below is drawn from the server code (server/*.js). Anything
@@ -20,12 +22,17 @@ const SECTIONS = [
   ["privacy", "Privacy and data"],
   ["security", "Security"],
   ["releases", "The release model"],
+  // Shown once Holder Early Access is live.
+  ["nyma", "NYMA and early access"],
   ["roadmap", "Roadmap"],
   ["limitations", "Limitations and open questions"],
 ];
 
-function Section({ index, children }) {
-  const [id, title] = SECTIONS[index];
+// `sections` is the list shown: numbers follow it, so a section that isn't
+// live yet leaves no gap.
+function Section({ id, sections, children }) {
+  const index = sections.findIndex(([s]) => s === id);
+  const title = sections[index][1];
   const number = String(index + 1).padStart(2, "0");
   return (
     <section id={id} className="wp-section" aria-labelledby={id + "-title"}>
@@ -50,7 +57,7 @@ function Soon({ config, id }) {
   );
 }
 
-function Contents({ active }) {
+function Contents({ active, sections }) {
   const [open, setOpen] = useState(false);
   return (
     <nav className="wp-toc" aria-label="Contents">
@@ -66,7 +73,7 @@ function Contents({ active }) {
       </button>
       <p className="eyebrow wp-toc-label">CONTENTS</p>
       <ol id="wp-toc-list" className={open ? "open" : ""}>
-        {SECTIONS.map(([id, title], i) => (
+        {sections.map(([id, title], i) => (
           <li key={id}>
             <a
               href={"#" + id}
@@ -133,7 +140,7 @@ function Roadmap({ config }) {
       {updates.map((u) => (
         <li key={u.id} className={u.released ? "live" : ""}>
           <span className="wp-status">
-            {config.testMode ? "Local test" : u.released ? "Live" : "Coming soon"}
+            {!u.released && u.early ? "Early access" : config.testMode ? "Local test" : u.released ? "Live" : "Coming soon"}
           </span>
           <strong>{u.title}</strong>
           <span>{u.tagline}</span>
@@ -147,6 +154,7 @@ export default function Whitepaper() {
   const { config } = useApp();
   // Treat an unloaded config as unreleased, so nothing is overstated.
   const live = (id) => !!config && isReleased(config, id);
+  const sections = SECTIONS.filter(([id]) => id !== "nyma" || live("holders"));
   const [active, setActive] = useState(SECTIONS[0][0]);
   const pending = (config?.releases?.updates || []).filter(
     (u) => !u.released,
@@ -159,17 +167,17 @@ export default function Whitepaper() {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const e of entries) seen.set(e.target.id, e.isIntersecting);
-        const current = SECTIONS.find(([id]) => seen.get(id));
+        const current = sections.find(([id]) => seen.get(id));
         if (current) setActive(current[0]);
       },
       { rootMargin: "-20% 0px -65% 0px" },
     );
-    for (const [id] of SECTIONS) {
+    for (const [id] of sections) {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
     }
     return () => observer.disconnect();
-  }, []);
+  }, [sections.length]);
 
   return (
     <main id="main" className="wp-page">
@@ -193,10 +201,10 @@ export default function Whitepaper() {
         </Button>
       </div>
       <div className="wp-layout">
-        <Contents active={active} />
+        <Contents active={active} sections={sections} />
         <article className="wp-body">
           <ReleaseStatus payment />
-          <Section index={0}>
+          <Section id="abstract" sections={sections}>
             <p>
               ANONYMA is a prepaid AI workspace: one account and one credit
               balance for chatting with models from several AI labs. You add
@@ -212,7 +220,7 @@ export default function Whitepaper() {
             </p>
           </Section>
 
-          <Section index={1}>
+          <Section id="problem" sections={sections}>
             <p>
               Using several AI models usually means several accounts, several
               subscriptions and several bills. Monthly plans charge whether you
@@ -226,7 +234,7 @@ export default function Whitepaper() {
             </p>
           </Section>
 
-          <Section index={2}>
+          <Section id="principles" sections={sections}>
             <dl className="wp-principles">
               <dt>Prepaid</dt>
               <dd>
@@ -257,7 +265,7 @@ export default function Whitepaper() {
             </dl>
           </Section>
 
-          <Section index={3}>
+          <Section id="how-it-works" sections={sections}>
             <h3>Accounts and sign-in</h3>
             <p>
               You sign in with a username and password, or with a signature
@@ -302,7 +310,7 @@ export default function Whitepaper() {
             </p>
           </Section>
 
-          <Section index={4}>
+          <Section id="ledger" sections={sections}>
             <p>
               The ledger is the core of ANONYMA. It decides what you can spend,
               what each request costs and what you see afterwards.
@@ -385,7 +393,7 @@ export default function Whitepaper() {
             </p>
           </Section>
 
-          <Section index={5}>
+          <Section id="payments" sections={sections}>
             <p>
               Credit is added with USDG, a dollar stablecoin, on Robinhood
               Chain, sent from your own self-custodial wallet. 1 USDG = $1 =
@@ -432,7 +440,7 @@ export default function Whitepaper() {
             </p>
           </Section>
 
-          <Section index={6}>
+          <Section id="privacy" sections={sections}>
             <h3>What's stored</h3>
             <p>
               Your account (username, password hash, and an email or wallet
@@ -477,7 +485,7 @@ export default function Whitepaper() {
             </p>
           </Section>
 
-          <Section index={7}>
+          <Section id="security" sections={sections}>
             <ul className="wp-list">
               <li>
                 <b>Sessions.</b> A session is a random token in an HttpOnly,
@@ -528,7 +536,7 @@ export default function Whitepaper() {
             </ul>
           </Section>
 
-          <Section index={8}>
+          <Section id="releases" sections={sections}>
             <p>
               ANONYMA launched as an MVP: chat with a short list of models,
               credits and the account. Everything else ships as named updates,
@@ -545,7 +553,39 @@ export default function Whitepaper() {
             </p>
           </Section>
 
-          <Section index={9}>
+          {live("holders") && (
+            <Section id="nyma" sections={sections}>
+              <p>
+                NYMA is ANONYMA's token: an ERC-20 named Anonyma on Robinhood
+                Chain (chain ID 4663), with 18 decimals and a total supply of
+                1,000,000,000 NYMA. Its contract is{" "}
+                <code data-i18n="off">{CONTRACT_ADDRESS}</code>.
+              </p>
+              <p>
+                {`Holding it does one thing in ANONYMA: early access. An update marked early opens, before its public release, to accounts holding at least ${Number(earlyAccessThreshold(config)).toLocaleString("en-US")} NYMA in a linked wallet. The server checks this on the update's routes, and everyone else gets the same "coming soon" refusal as before.`}
+              </p>
+              <p>
+                The wallet is linked by signing a one-time message, never a
+                transaction. The server reads its NYMA balance and rechecks it
+                daily in the background. A balance counts only if it was read
+                in the last 48 hours, so access follows the balance. Linking is
+                optional, and a wallet can be unlinked in Account.
+              </p>
+              <p>
+                Public pages and the service configuration are the same for
+                everyone, and apps connected through OAuth never get early
+                access, so neither can tell whether an account holds NYMA.
+              </p>
+              <p>
+                NYMA isn't needed to use ANONYMA. It isn't a share of the
+                company, carries no revenue share and no promise of value, and
+                nothing here is financial advice. More at{" "}
+                <Link to="/token">the NYMA page</Link>.
+              </p>
+            </Section>
+          )}
+
+          <Section id="roadmap" sections={sections}>
             <p>
               {config?.releases
                 ? pending
@@ -556,7 +596,7 @@ export default function Whitepaper() {
             <Roadmap config={config} />
           </Section>
 
-          <Section index={10}>
+          <Section id="limitations" sections={sections}>
             <ul className="wp-list">
               <li>
                 <b>Third-party providers.</b> Models run on third-party

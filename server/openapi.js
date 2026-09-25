@@ -254,6 +254,24 @@ const schemas = {
     public_key_pem: string,
     jwk: object(),
   }),
+  McpMessage: object(
+    {
+      jsonrpc: { const: "2.0" },
+      id: { oneOf: [string, number, { type: "null" }] },
+      method: string,
+      params: object(),
+    },
+    ["jsonrpc", "method"],
+  ),
+  McpRequest: {
+    oneOf: [ref("McpMessage"), array(ref("McpMessage"))],
+    description: "A single JSON-RPC message, or a batch array of messages.",
+  },
+  McpResponse: {
+    oneOf: [object(), array(object())],
+    description:
+      "A single JSON-RPC response/error, or a batch array of them. A request made only of notifications returns 202 with no body.",
+  },
 };
 const paths = {
   "/sitemap.xml": { get: { operationId: "getSitemap", summary: "Public page sitemap", responses: { 200: { description: "XML sitemap" } } } },
@@ -974,6 +992,29 @@ paths["/v1/chat/completions"].post.parameters = [
 ];
 paths["/v1/chat/completions"].post.responses[200].content["text/event-stream"] =
   { schema: string };
+route(
+  "post",
+  "/mcp",
+  "Remote MCP server (Streamable HTTP, JSON-RPC 2.0)",
+  {
+    auth: "bearer",
+    body: ref("McpRequest"),
+    response: ref("McpResponse"),
+    description:
+      "Stateless: no Mcp-Session-Id, no SSE stream. Methods: initialize, ping, tools/list, tools/call (list_models, ask, balance). A notification (no id) is acknowledged with 202 and no body. Unknown methods return -32601; malformed input returns -32700/-32600. Same key authorization, rate limits and caps as /v1. Requires the api update released as well as mcp.",
+  },
+);
+for (const method of ["get", "delete"])
+  route(method, "/mcp", "Unsupported on the stateless MCP endpoint", {
+    auth: "bearer",
+    description: "Always 405. Use POST.",
+  });
+for (const method of ["get", "delete"]) paths["/mcp"][method].responses = {
+  405: {
+    description: "Method not allowed",
+    content: { "application/json": { schema: ref("Error") } },
+  },
+};
 for (const [path, summary] of [
   ["/install.sh", "POSIX CLI installer"],
   ["/install.ps1", "PowerShell CLI installer"],

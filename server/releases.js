@@ -227,6 +227,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "mcp",
+    title: "MCP Server",
+    tagline: "Your balance, inside any AI tool.",
+    points: [
+      "A remote MCP server at /mcp",
+      "Works with Claude Code, Cursor and other MCP clients",
+      "Same keys, same ledger, no new account",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -313,6 +324,9 @@ function featuresFor(req) {
   if (p === "/v1" || p.startsWith("/v1/")) return ["api"];
   if (p === "/api/keys" && post) return ["api"];
   if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return ["api"];
+  // The MCP server runs on the API's key auth, rate limits and hold/settle
+  // path, so it needs "api" released as well as "mcp".
+  if (p === "/mcp" || p.startsWith("/mcp/")) return ["mcp", "api"];
   // The installable app's manifest, service worker and offline page.
   if (
     ["/manifest.webmanifest", "/sw.js", "/offline.html", "/offline.js"].includes(

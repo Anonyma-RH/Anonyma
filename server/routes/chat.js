@@ -588,4 +588,7 @@ export function chatRoutes(ctx) {
       "unsupported_endpoint",
     ),
   );
+  // Exposed so other entry points (the MCP server) can run a request through
+  // the exact same hold -> settle path as /v1/chat/completions.
+  return { runChat };
 }

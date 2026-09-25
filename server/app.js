@@ -17,6 +17,7 @@ import { conversationRoutes } from "./routes/conversations.js";
 import { apiRoutes } from "./routes/api.js";
 import { chatRoutes } from "./routes/chat.js";
 import { receiptRoutes } from "./routes/receipts.js";
+import { mcpRoutes } from "./routes/mcp.js";
 import { mediaRoutes } from "./routes/media.js";
 import { videoRoutes } from "./routes/videos.js";
 import { audioRoutes } from "./routes/audio.js";
@@ -70,8 +71,9 @@ export function createApp(overrides = {}) {
   catalogRoutes(ctx);
   ctx.conversations = conversationRoutes(ctx);
   Object.assign(ctx, apiRoutes(ctx));
-  chatRoutes(ctx);
+  Object.assign(ctx, chatRoutes(ctx));
   receiptRoutes(ctx);
+  mcpRoutes(ctx);
   mediaRoutes(ctx);
   videoRoutes(ctx);
   audioRoutes(ctx);

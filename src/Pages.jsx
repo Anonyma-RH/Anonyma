@@ -24,6 +24,7 @@ import ReleaseStatus from "./ReleaseStatus.jsx";
 import BillingRules from "./BillingRules.jsx";
 import { featureEnabled, featureLabel, guideReleaseLabel, releaseCopy, modelAvailability } from "./release-copy.js";
 import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
+import "./mcp.css";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -667,6 +668,7 @@ export function Developers() {
       </div>
     </main>
   );
+  const mcpLive = featureEnabled(config, "mcp");
   return (
     <main id="main">
       <PageIntro
@@ -708,7 +710,9 @@ export function Developers() {
           </div>
           <ApiExample />
         </div>
-        <div className="developer-features">
+        <div
+          className={"developer-features" + (mcpLive ? " mcp-live" : "")}
+        >
           {[
             [
               "key",
@@ -725,6 +729,15 @@ export function Developers() {
               "A defined interface",
               "Chat completions, model listing and balance. Supported compatibility stays explicit.",
             ],
+            ...(mcpLive
+              ? [
+                  [
+                    "command",
+                    "An MCP server, too",
+                    "Connect Claude Code, Cursor and other MCP clients to your balance at /mcp.",
+                  ],
+                ]
+              : []),
           ].map(([i, t, b]) => (
             <article key={i}>
               <Icon name={i} size={27} />
@@ -797,6 +810,7 @@ const featureIcons = {
   scrolls: "book",
   app: "download",
   training: "eye",
+  mcp: "command",
 };
 const launch = {
   id: "mvp",

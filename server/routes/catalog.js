@@ -40,6 +40,8 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
     res.json({
       name: "Anonyma",
       testMode: cfg.testMode,
+      // Public origin for client-side snippets (e.g. connecting an MCP tool).
+      origin: cfg.publicUrl || cfg.origin,
       services: {
         generation: cfg.testMode || !!cfg.gatewayKey,
         payments: configurationStatus(cfg).configured.payments && !cfg.testMode,

@@ -306,6 +306,22 @@ test("en-US dates and times take the zh-CN form, inside patterns too", async () 
   assert.equal(translateText(" 9/24/2026 ", dict), " 2026/9/24 ");
 });
 
+test("a bare date cell takes the zh-CN form and restores", () => {
+  const cell = text("9/25/2026");
+  const split = [text("9/25/2026"), text(", "), text("1:22 PM")];
+  const number = text("42");
+  const s = createSession(dict);
+  s.translateRun([cell]);
+  s.translateRun(split);
+  s.translateRun([number]);
+  assert.equal(cell.nodeValue, "2026/9/25");
+  assert.deepEqual(values(split), ["2026/9/25 13:22", "", ""]);
+  assert.equal(number.nodeValue, "42");
+  s.restoreAll();
+  assert.equal(cell.nodeValue, "9/25/2026");
+  assert.deepEqual(values(split), ["9/25/2026", ", ", "1:22 PM"]);
+});
+
 test("names and handles inside patterns are never translated", async () => {
   const { translateText, compileDictionary, looksLikeHandle } = await import("../src/i18n.js");
   const dict = compileDictionary({

@@ -1,11 +1,16 @@
 // Documents in chat: pure helpers only (file-type detection, block building,
 // parsing and budget math). No DOM, File or pdfjs access here — that lives in
 // Documents.jsx, which is exempt from unit tests because it needs a browser.
-// The server trims a conversation to ~120,000 characters (server/models.js);
-// this keeps attached document text well under that on its own.
+// The server refuses a workspace message over 48,000 characters
+// (server/models.js), so what's attached is fitted to that together with
+// the typed prompt; see fitDocuments.
 
 export const MAX_DOCUMENTS = 5;
 export const MAX_TOTAL_CHARS = 100000;
+// The server's per-message cap for the workspace, and room left for Veil's
+// tags (a masked value can be a little longer than the original).
+export const MESSAGE_LIMIT = 48000;
+const MESSAGE_HEADROOM = 1000;
 // A soft guard so one huge upload can't freeze the tab before extraction
 // even starts; the character budget above is what actually limits context.
 export const MAX_FILE_BYTES = 25 * 1024 * 1024;
@@ -175,4 +180,29 @@ export function applyBudget(documents, maxTotal = MAX_TOTAL_CHARS) {
     totalChars: totalChars(documents),
     keptChars: used,
   };
+}
+
+// The documents, trimmed so the whole message (prompt, block markup and
+// escaping included) stays within the server's per-message cap. `budget` is
+// how many characters of document text that leaves.
+export function fitDocuments(prompt, documents, limit = MESSAGE_LIMIT) {
+  const room = limit - MESSAGE_HEADROOM;
+  // The message with every document empty: prompt, tags and separators.
+  const markup = composeMessageWithDocuments(
+    prompt,
+    (documents || []).map((d) => ({ ...d, text: "", truncated: true })),
+  ).length;
+  let budget = Math.min(MAX_TOTAL_CHARS, totalChars(documents));
+  let fitted = applyBudget(documents, budget);
+  for (let i = 0; i < 8; i++) {
+    const length = composeMessageWithDocuments(prompt, fitted.documents).length;
+    if (length <= room) break;
+    // Escaping can make text longer than its character count, so scale by
+    // the ratio actually seen, and step down a little more each round.
+    const text = Math.max(1, length - markup);
+    const next = Math.floor(((room - markup) * budget) / text) - 16 * (i + 1);
+    budget = Math.max(0, Math.min(budget - 1, next));
+    fitted = applyBudget(documents, budget);
+  }
+  return { ...fitted, budget };
 }

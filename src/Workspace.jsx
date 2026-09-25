@@ -48,8 +48,7 @@ import {
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
 import {
-  MAX_TOTAL_CHARS,
-  applyBudget,
+  fitDocuments,
   composeMessageWithDocuments,
   parseDocumentBlocks,
 } from "./documents.js";
@@ -757,7 +756,7 @@ export default function Workspace() {
     // Document text (already trimmed to the shared budget) rides along as
     // delimited blocks after the typed prompt; see src/documents.js.
     const budgeted = documents.length
-      ? applyBudget(documents, MAX_TOTAL_CHARS).documents
+      ? fitDocuments(text, documents).documents
       : [];
     const content = budgeted.length
       ? composeMessageWithDocuments(text, budgeted)
@@ -911,7 +910,7 @@ export default function Workspace() {
     }
     try {
       const budgeted = documents.length
-        ? applyBudget(documents, MAX_TOTAL_CHARS).documents
+        ? fitDocuments(prompt, documents).documents
         : [];
       const content = budgeted.length
         ? composeMessageWithDocuments(prompt, budgeted)
@@ -1482,6 +1481,7 @@ export default function Workspace() {
                     <DocumentChips
                       documents={documents}
                       setDocuments={setDocuments}
+                      prompt={prompt}
                     />
                   )}
                   <textarea

@@ -287,3 +287,22 @@ test("A chat with only documents is named after the first file", async (t) => {
   const [conversation] = (await agent.get("/api/conversations")).body.data;
   assert.equal(conversation.title, "q3-report.pdf");
 });
+
+test("documents are fitted with the prompt under the server's per-message cap", async () => {
+  const { fitDocuments, composeMessageWithDocuments, MESSAGE_LIMIT } = await import("../src/documents.js");
+  const big = { name: "big.txt", text: "a & b < c ".repeat(20000) }; // 200,000 chars, escaping grows it
+  const prompt = "Summarize this. ".repeat(100);
+  const fitted = fitDocuments(prompt, [big]);
+  const sent = composeMessageWithDocuments(prompt, fitted.documents);
+  assert.ok(sent.length <= MESSAGE_LIMIT, `sent ${sent.length}`);
+  assert.equal(fitted.truncated, true);
+  // Heavy escaping (& and <) makes each character cost more once sent.
+  assert.ok(fitted.budget > 20000, `budget ${fitted.budget}`);
+  const plain = fitDocuments(prompt, [{ name: "p.txt", text: "word ".repeat(40000) }]);
+  assert.ok(composeMessageWithDocuments(prompt, plain.documents).length <= MESSAGE_LIMIT);
+  assert.ok(plain.budget > 40000, `plain budget ${plain.budget}`);
+  // A small file fits whole.
+  const small = fitDocuments("Hi", [{ name: "n.txt", text: "hello" }]);
+  assert.equal(small.truncated, false);
+  assert.equal(small.documents[0].text, "hello");
+});

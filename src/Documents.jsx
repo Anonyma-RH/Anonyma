@@ -4,14 +4,13 @@ import { uid } from "./lib.js";
 import { unveil } from "./veil.js";
 import {
   MAX_DOCUMENTS,
-  MAX_TOTAL_CHARS,
   MAX_FILE_BYTES,
   DOCUMENT_ACCEPT,
   documentKind,
   isSupportedDocument,
   formatBytes,
   formatChars,
-  applyBudget,
+  fitDocuments,
 } from "./documents.js";
 import "./documents.css";
 
@@ -200,9 +199,9 @@ export default function DocumentAttach({
 
 // Chips for documents attached to the message being composed, plus a notice
 // once their combined size would be trimmed before sending.
-export function DocumentChips({ documents, setDocuments }) {
+export function DocumentChips({ documents, setDocuments, prompt = "" }) {
   if (!documents.length) return null;
-  const budget = applyBudget(documents, MAX_TOTAL_CHARS);
+  const budget = fitDocuments(prompt, documents);
   return (
     <div className="document-list">
       {documents.map((doc, i) => (
@@ -217,7 +216,7 @@ export function DocumentChips({ documents, setDocuments }) {
       {budget.truncated && (
         <Notice>
           Attached documents total {formatChars(budget.totalChars)}; only the
-          first {formatChars(MAX_TOTAL_CHARS)} will be sent to the model.
+          first {formatChars(budget.budget)} will be sent to the model.
         </Notice>
       )}
     </div>

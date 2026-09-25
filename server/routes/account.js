@@ -314,6 +314,7 @@ export function accountRoutes(ctx) {
         .prepare("SELECT * FROM media WHERE user_id=?")
         .all(req.user.id)
         .map(mediaJSON),
+      uploads: db.prepare("SELECT id,name,bytes,kind,text,truncated,created,expires FROM uploads WHERE user_id=? AND expires>?").all(req.user.id, now()),
       scrolls: db
         .prepare("SELECT * FROM scrolls WHERE user_id=?")
         .all(req.user.id),
@@ -398,6 +399,7 @@ export function accountRoutes(ctx) {
       ).run(req.user.email || "", req.user.wallet || "", req.user.id);
       db.prepare("DELETE FROM tickets WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM videos WHERE user_id=?").run(req.user.id);
+      db.prepare("DELETE FROM uploads WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM scrolls WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM user_instructions WHERE user_id=?").run(
         req.user.id,

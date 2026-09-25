@@ -228,6 +228,7 @@ export function createWorker(ctx) {
         .prepare("SELECT * FROM media WHERE expires IS NOT NULL AND expires<?")
         .all(now()))
         deleteMedia(m);
+      ctx.files.cleanup();
       // Auto-delete: messages cascade with their conversation. Access
       // already treats an expired conversation as gone before this runs.
       db.prepare(

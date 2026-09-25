@@ -44,6 +44,7 @@ export function apiRoutes({ app, db, cfg, models }) {
       endpoints: [
         "/v1/models",
         "/v1/chat/completions",
+        ...(isReleased(cfg, "files") ? ["/v1/files"] : []),
         ...(isReleased(cfg, "v1media")
           ? [
               "/v1/images/generations",

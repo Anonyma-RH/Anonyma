@@ -531,6 +531,15 @@ export const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS memory_facts_source ON memory_facts(source_conversation_id) WHERE source_conversation_id IS NOT NULL;
       CREATE TABLE IF NOT EXISTS memory_settings(user_id TEXT PRIMARY KEY REFERENCES users(id),enabled INTEGER NOT NULL DEFAULT 0,updated INTEGER NOT NULL);
   `),
+  // Files & Reusable Uploads: explicit, owner-only saved uploads with a
+  // mandatory expiry. Original bytes and bounded extracted text stay in SQLite
+  // with their owner, so no filesystem path comes from a submitted filename.
+  additive(`CREATE TABLE IF NOT EXISTS uploads(
+      id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),name TEXT NOT NULL,
+      bytes INTEGER NOT NULL,kind TEXT NOT NULL,mime TEXT NOT NULL,text TEXT,truncated INTEGER NOT NULL DEFAULT 0,
+      created INTEGER NOT NULL,expires INTEGER NOT NULL,content BLOB NOT NULL);
+      CREATE INDEX IF NOT EXISTS uploads_owner ON uploads(user_id,created,id);
+      CREATE INDEX IF NOT EXISTS uploads_expiry ON uploads(expires);`),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

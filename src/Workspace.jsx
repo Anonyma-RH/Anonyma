@@ -2273,10 +2273,15 @@ export default function Workspace() {
                         textMode &&
                         isReleased(config, "documents") && (
                         <DocumentAttach
+                          key={user?.id}
                           documents={documents}
                           setDocuments={setDocuments}
                           disabled={busy}
                           onError={setError}
+                          filesEnabled={isReleased(config, "files")}
+                          privateContext={privateMode || ephemeral || veilOn}
+                          audioEnabled={isReleased(config, "audio")}
+                          onRefresh={refresh}
                         />
                       )}
                       {["chat", "code"].includes(mode) &&

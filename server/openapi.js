@@ -29,9 +29,10 @@ const message = object(
         array(
           object(
             {
-              type: { enum: ["text", "image_url"] },
+              type: { enum: ["text", "image_url", "file"] },
               text: string,
               image_url: object({ url: string }, ["url"]),
+              file: object({ file_id: string }, ["file_id"]),
             },
             ["type"],
           ),
@@ -1611,6 +1612,19 @@ paths["/v1/audio/transcriptions"].post.requestBody.content = {
     ),
   },
 };
+// Files intentionally implements the user_data subset, not Assistants/vector storage.
+const storedFile = object({ id:string, object:{const:"file"}, bytes:integer, created_at:integer, filename:string, purpose:{const:"user_data"}, expires_at:integer, status:{const:"processed"}, anonyma:object({kind:{enum:["document","audio"]},characters:integer,truncated:bool,transcribed:{const:false}}) });
+for(const [prefix,auth] of [["/api/files","session"],["/v1/files","bearer"]]) {
+  route("get",prefix,"List your unexpired saved uploads",{auth,response:object({object:{const:"list"},data:array(storedFile),has_more:bool,first_id:nullableString,last_id:nullableString}),query:[{name:"limit",in:"query",schema:{type:"integer",minimum:1,maximum:50}},{name:"after",in:"query",schema:string},{name:"order",in:"query",schema:{enum:["asc","desc"]}},{name:"purpose",in:"query",schema:{const:"user_data"}}]});
+  route("get",prefix+"/{id}","Retrieve owned file metadata",{auth,response:storedFile});
+  route("get",prefix+"/{id}/content","Download original owned bytes",{auth,description:"Authenticated attachment download; not a public URL. Expired/deleted or other-owner IDs return 404."});
+  paths[prefix+"/{id}/content"].get.responses[200].content={"application/octet-stream":{schema:{type:"string",format:"binary"}}};
+  route("delete",prefix+"/{id}","Delete your saved original and extraction",{auth,response:object({id:string,object:{const:"file"},deleted:{const:true}}),description:"Does not erase copies already sent in conversations. Account deletion and expiry also delete uploads."});
+}
+route("post","/api/files","Explicitly save a reusable upload",{status:201,body:object({filename:string,data:{...string,description:"Base64 original bytes; up to 10 MB."},consent:{const:true},retention_seconds:{type:"integer",minimum:3600,maximum:2592000,default:604800}},["filename","data","consent"]),response:storedFile,description:"Modern Office/UTF-8 text/code and supported audio only. No automatic transcription or charge. Refuses private/ephemeral/Veil flags. Owner quota: 50 files/50 MB."});
+route("get","/api/files/{id}/text","Read owned extracted document text",{response:object({name:string,text:string,chars:integer,truncated:bool}),description:"Text only, up to 100,000 extracted characters. Audio must be transcribed explicitly through the audio endpoint."});
+route("post","/v1/files","Upload a user_data file (compatible subset)",{auth:"bearer",body:object(),response:storedFile,description:"Multipart file + purpose=user_data only. Optional expires_after[anchor]=created_at and expires_after[seconds] 3600–2592000; defaults to 7 days. 10 MB/file and 50 files/50 MB/owner. No Assistants, batch, fine-tuning, vector stores or automatic indexing. Personal active API keys only. Reuse document IDs in user chat content parts {type:file,file:{file_id:ID}} alongside text parts. No audio auto-transcription."});
+paths["/v1/files"].post.requestBody.content={"multipart/form-data":{schema:object({file:{type:"string",format:"binary"},purpose:{const:"user_data"},"expires_after[anchor]":{const:"created_at"},"expires_after[seconds]":{type:"integer",minimum:3600,maximum:2592000}},["file","purpose"])}};
 route("post", "/v1/videos", "Submit a durable video job", {
   auth: "bearer",
   body: object(

@@ -127,7 +127,7 @@ export function chatRoutes(ctx) {
           "invalid_request",
         );
     }
-    const messages = validateMessages(req.body.messages, m, api),
+    const messages = validateMessages(ctx.files.expandMessages(req, req.body.messages), m, api),
       max = maxTokens(req.body.max_tokens, m);
     // Optional Memory Across Models (routes/memory.js): only this user's own
     // stored, enabled facts, and never over the API, off the record, in

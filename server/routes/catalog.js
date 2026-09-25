@@ -127,7 +127,7 @@ export function catalogRoutes(ctx) {
     const team = teamPaid ? ctx.treasury.forQuote(req.user.id, req.body.conversationId) : null;
     const video = m.type === "video" ? videoOptions(m, req.body) : null;
     const messages = validateMessages(
-      req.body.messages || [{ role: "user", content: req.body.prompt || " " }],
+      ctx.files.expandMessages(req, req.body.messages || [{ role: "user", content: req.body.prompt || " " }]),
       m,
     );
     const max = maxTokens(req.body.max_tokens, m);

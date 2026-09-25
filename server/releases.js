@@ -169,6 +169,13 @@ export const UPDATES = [
     released: true,
   },
   {
+    id: "files",
+    title: "Files & Reusable Uploads",
+    tagline: "Bring your files back into the conversation.",
+    points: ["Office text and reusable uploads", "Owner-only files with expiry and delete", "Explicit audio transcription"],
+    released: false,
+  },
+  {
     id: "documents",
     title: "Documents",
     tagline: "Bring the document. Ask the question.",
@@ -500,6 +507,8 @@ export function featuresFor(req) {
     if (p === "/api/videos") return ["historylibrary", "video"];
     if (p === "/api/audio/speech") return ["historylibrary", "audio"];
   }
+  if (p.startsWith("/api/files")) return ["files", "documents"];
+  if (p.startsWith("/v1/files")) return ["api", "files"];
   if (p.startsWith("/api/videos")) return ["video"];
   if (p.startsWith("/api/audio")) return ["audio"];
   // Team Treasury lives inside collabs, so its routes need both. Viewing a

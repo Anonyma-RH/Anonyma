@@ -48,6 +48,9 @@ const TEXT_EXTENSIONS = [
 // report inconsistent (or empty) types for code files.
 export const DOCUMENT_KINDS = Object.fromEntries([
   [".pdf", "pdf"],
+  [".docx", "office"],
+  [".xlsx", "office"],
+  [".pptx", "office"],
   ...TEXT_EXTENSIONS.map((ext) => [ext, "text"]),
 ]);
 export const DOCUMENT_ACCEPT = Object.keys(DOCUMENT_KINDS).join(",");
@@ -169,7 +172,12 @@ export function applyBudget(documents, maxTotal = MAX_TOTAL_CHARS) {
     if (chars > remaining) {
       truncated = true;
       used = maxTotal;
-      return { ...doc, text: String(doc.text || "").slice(0, remaining), chars: remaining, truncated: true };
+      return {
+        ...doc,
+        text: String(doc.text || "").slice(0, remaining),
+        chars: remaining,
+        truncated: true,
+      };
     }
     used += chars;
     return { ...doc, truncated: !!doc.truncated };
@@ -205,4 +213,34 @@ export function fitDocuments(prompt, documents, limit = MESSAGE_LIMIT) {
     fitted = applyBudget(documents, budget);
   }
   return { ...fitted, budget };
+}
+
+// Each asynchronous saved-upload action belongs to one composer context.
+// Returning to a prior context never revives an older action.
+export function createUploadActivity() {
+  let alive = true,
+    blocked = false,
+    context,
+    epoch = 0;
+  return {
+    update(privateContext, disabled) {
+      const next = `${!!privateContext}:${!!disabled}`;
+      if (next !== context) {
+        context = next;
+        epoch++;
+      }
+      blocked = !!privateContext || !!disabled;
+    },
+    mount() {
+      alive = true;
+    },
+    dispose() {
+      alive = false;
+      epoch++;
+    },
+    capture() {
+      const started = epoch;
+      return () => alive && !blocked && epoch === started;
+    },
+  };
 }

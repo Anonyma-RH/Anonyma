@@ -22,6 +22,7 @@ import { receiptRoutes } from "./routes/receipts.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { mediaRoutes } from "./routes/media.js";
 import { videoRoutes } from "./routes/videos.js";
+import { fileRoutes } from "./files.js";
 import { audioRoutes } from "./routes/audio.js";
 import { v1MediaRoutes } from "./routes/v1-media.js";
 import { creditRoutes } from "./routes/credits.js";
@@ -83,6 +84,7 @@ export function createApp(overrides = {}) {
   ctx.library = historyLibrary(ctx);
   ctx.treasury = treasuryRoutes(ctx);
   Object.assign(ctx, apiRoutes(ctx));
+  ctx.files = fileRoutes(ctx);
   // Registered before chatRoutes: its /v1/*rest fallback must come last.
   v1MediaRoutes(ctx);
   Object.assign(ctx, chatRoutes(ctx));

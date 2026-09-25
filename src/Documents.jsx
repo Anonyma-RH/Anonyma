@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Icon, Notice } from "./ui.jsx";
 import { uid } from "./lib.js";
+import ReusableUploads from "./ReusableUploads.jsx";
+import { extractOffice, browserInflate, textBytes } from "./file-formats.js";
 import { unveil } from "./veil.js";
 import {
   MAX_DOCUMENTS,
@@ -116,6 +118,10 @@ export default function DocumentAttach({
   setDocuments,
   disabled,
   onError,
+  filesEnabled = false,
+  privateContext = false,
+  audioEnabled = false,
+  onRefresh,
 }) {
   const [busy, setBusy] = useState(false);
   async function addFiles(e) {
@@ -127,7 +133,7 @@ export default function DocumentAttach({
       onError?.(`Attach up to ${MAX_DOCUMENTS} documents per message.`);
       return;
     }
-    const unsupported = picked.find((f) => !isSupportedDocument(f));
+    const unsupported = picked.find((f) => !isSupportedDocument(f) || (!filesEnabled && documentKind(f) === "office"));
     if (unsupported) {
       onError?.(`"${unsupported.name}" isn't a supported document type.`);
       return;
@@ -155,8 +161,12 @@ export default function DocumentAttach({
             if (!text)
               warning =
                 "No extractable text found — this PDF may be a scanned image.";
+          } else if (kind === "office") {
+            const result = await extractOffice(await file.arrayBuffer(), file.name.split(".").at(-1).toLowerCase(), browserInflate);
+            text = result.text;
+            warning = result.warning + (result.truncated ? " Extracted text was trimmed." : "");
           } else {
-            text = await file.text();
+            text = textBytes(new Uint8Array(await file.arrayBuffer()));
           }
         } catch (err) {
           warning =
@@ -180,20 +190,23 @@ export default function DocumentAttach({
     }
   }
   return (
+    <>
     <label
       className={"attachment-control" + (busy ? " busy" : "")}
-      title="Attach PDF, text, CSV or code files. Their text is extracted in this browser, sent with your message and kept like the rest of the chat."
+      title={filesEnabled ? "Attach PDF, text, code, DOCX, XLSX or PPTX. Text is extracted locally and sent only with your message." : "Attach PDF, text, CSV or code files. Text is extracted in this browser and sent with your message."}
     >
       <Icon name="file" size={18} />
       <span className="sr-only">Attach document</span>
       <input
         type="file"
         multiple
-        accept={DOCUMENT_ACCEPT}
+        accept={filesEnabled ? DOCUMENT_ACCEPT : DOCUMENT_ACCEPT.replace(/,\.(docx|xlsx|pptx)/g, "")}
         disabled={disabled || busy}
         onChange={addFiles}
       />
     </label>
+    {filesEnabled && <ReusableUploads documents={documents} setDocuments={setDocuments} disabled={disabled} privateContext={privateContext} audioEnabled={audioEnabled} onRefresh={onRefresh} />}
+    </>
   );
 }
 

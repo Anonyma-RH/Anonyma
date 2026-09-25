@@ -9,6 +9,7 @@ import { fail } from "./core.js";
 export const UPDATES = [
   {
     id: "code",
+    released: true,
     title: "Code & Build",
     tagline: "Build with your favorite models.",
     points: [

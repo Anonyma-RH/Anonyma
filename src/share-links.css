@@ -1,0 +1,471 @@
+/* Share a Chat: the Share dialog, the account's list of links and the
+   public read-only snapshot page at /s/<token>. */
+
+/* ---- Share dialog (workspace) ---- */
+.share-dialog {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.share-dialog form {
+  display: grid;
+  min-width: 0;
+}
+.share-dialog select {
+  width: 100%;
+}
+.share-blocked {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #142343;
+  margin: 0;
+}
+.share-facts {
+  list-style: none;
+  margin: 4px 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.share-facts li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #142343;
+}
+.share-facts svg {
+  color: #0135df;
+  margin-top: 3px;
+}
+.share-created .eyebrow {
+  color: #0135df;
+  margin: 0 0 10px;
+}
+.share-url input {
+  width: 100%;
+  font-size: 13px;
+  padding: 11px 12px;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  background: #f5f8ff;
+  color: #061b69;
+  text-overflow: ellipsis;
+}
+.share-created .share-facts {
+  margin-top: 18px;
+}
+.share-existing {
+  margin-top: 18px;
+  border-top: 1px solid #e3e8f0;
+  padding-top: 16px;
+}
+.share-existing h3 {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #68748a;
+  margin: 0 0 6px;
+}
+.share-manage {
+  margin-top: 14px;
+  color: #0135df;
+}
+
+/* ---- A list of links (dialog and account) ---- */
+.share-link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  min-width: 0;
+}
+.share-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e3e8f0;
+  min-width: 0;
+}
+.share-link-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.share-link-text b {
+  font-size: 14px;
+  font-weight: 600;
+  color: #142343;
+  overflow-wrap: anywhere;
+}
+.share-link-text small {
+  font-size: 12px;
+  color: #68748a;
+}
+.share-link-text code {
+  font-size: 11px;
+  color: #0135df;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.share-link-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.share-link-actions .danger-text {
+  margin: 0;
+  padding: 9px 12px;
+}
+.settings-stack > section.share-links-manager {
+  align-items: start;
+}
+.share-empty {
+  font-size: 13px !important;
+  color: #68748a !important;
+  margin: 0 !important;
+}
+@media (max-width: 640px) {
+  .share-link-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .share-link-actions {
+    justify-content: flex-start;
+  }
+}
+
+/* ---- Workspace Share button ---- */
+.share-open-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 12px;
+  color: #0135df;
+  background: #fff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.share-open-button:hover {
+  background: #f0f4fc;
+}
+@media (max-width: 700px) {
+  .share-open-button {
+    padding: 8px;
+  }
+  .share-open-button span {
+    display: none;
+  }
+}
+
+/* ---- Public snapshot page ---- */
+.shared-chat {
+  min-height: 100dvh;
+  background: #fff;
+  color: #142343;
+}
+.shared-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 32px;
+  border-bottom: 1px solid #e3e8f0;
+}
+.shared-top .logo {
+  margin-right: auto;
+}
+.shared-top-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0135df;
+  border: 1px solid #c9d6f7;
+  padding: 6px 10px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.shared-hero {
+  background: var(--brand-blue, #0135df);
+  color: #fff;
+  padding: 56px 32px 48px;
+}
+.shared-hero > * {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.shared-hero .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #dfe7ff;
+  font-size: 11px;
+  letter-spacing: 1.3px;
+  margin-bottom: 18px;
+}
+.shared-hero .eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--brand-orange, #ffb21c);
+  flex: none;
+}
+.shared-hero h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -1px;
+  margin-top: 0;
+  margin-bottom: 18px;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+.shared-origin {
+  font-size: 14px;
+  color: #dfe7ff;
+  margin-bottom: 0;
+}
+.shared-banner {
+  max-width: 820px;
+  margin: 28px auto 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #f5f8ff;
+  border: 1px solid #d5def0;
+  border-left: 3px solid var(--brand-orange, #ffb21c);
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #142343;
+}
+.shared-banner svg {
+  flex: none;
+  color: #0135df;
+  margin-top: 3px;
+}
+.shared-messages {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 12px 32px 24px;
+}
+.shared-message {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 16px;
+  margin: 30px 0;
+}
+.shared-avatar {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dde5f5;
+  background: #f0f4fc;
+  color: #0135df;
+  border-radius: 2px;
+}
+.shared-message.assistant .shared-avatar {
+  background: #0135df;
+  border-color: #0135df;
+}
+.shared-avatar .brand-mark {
+  width: 29px;
+  height: 29px;
+}
+.shared-body {
+  min-width: 0;
+}
+.shared-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #142343;
+  margin-bottom: 10px;
+}
+.shared-model {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: #68748a;
+}
+.shared-message .markdown {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #142343;
+  overflow-wrap: anywhere;
+}
+.shared-message.user .markdown {
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  padding: 12px 16px;
+}
+.shared-message .markdown > :first-child {
+  margin-top: 0;
+}
+.shared-message .markdown > :last-child {
+  margin-bottom: 0;
+}
+.shared-message .markdown pre {
+  overflow: auto;
+  background: #f5f7fb;
+  border: 1px solid #e3e8f0;
+  padding: 14px;
+  font-size: 13px;
+  border-radius: 2px;
+}
+.shared-message .markdown code {
+  font-size: 0.9em;
+}
+.shared-message .markdown a {
+  color: #0135df;
+}
+.shared-message .markdown table {
+  display: block;
+  overflow-x: auto;
+}
+.shared-veil-tag {
+  background: #eef2ff;
+  color: #0135df;
+  border: 1px dashed #9db1ef;
+  border-radius: 2px;
+  padding: 0 4px;
+  font-size: 0.92em;
+  white-space: nowrap;
+}
+.shared-placeholder {
+  display: inline-block;
+  font-size: 13px;
+  color: #68748a;
+  border: 1px dashed #c9d2e3;
+  padding: 4px 10px;
+  border-radius: 2px;
+  margin: 10px 0 0;
+}
+.shared-note {
+  font-size: 12px;
+  color: #68748a;
+  margin: 8px 0 0;
+}
+.shared-citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 12px 0 0;
+  font-size: 13px;
+}
+.shared-citations span {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #68748a;
+}
+.shared-citations a {
+  border: 1px solid #e3e8f0;
+  padding: 4px 10px;
+  border-radius: 2px;
+  color: #0135df;
+  text-decoration: none;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shared-foot {
+  max-width: 820px;
+  margin: 12px auto 0;
+  padding: 28px 32px 56px;
+  border-top: 1px solid #e3e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.shared-foot p {
+  font-size: 13px;
+  color: #68748a;
+  margin: 0;
+  max-width: 520px;
+}
+.shared-missing {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 96px 32px;
+}
+.shared-missing h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.1;
+  margin: 0 0 18px;
+}
+.shared-missing p {
+  font-size: 15px;
+  color: #68748a;
+  margin: 0 0 28px;
+}
+@media (max-width: 700px) {
+  .shared-top {
+    padding: 14px 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .shared-top-tag {
+    font-size: 10px;
+    padding: 5px 8px;
+  }
+  .shared-hero {
+    padding: 36px 16px 32px;
+  }
+  .shared-banner {
+    margin: 20px 16px 0;
+    font-size: 13px;
+  }
+  .shared-messages {
+    padding: 4px 16px 16px;
+  }
+  .shared-message {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 11px;
+  }
+  .shared-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  .shared-message .markdown {
+    font-size: 14px;
+  }
+  .shared-foot {
+    padding: 24px 16px 44px;
+  }
+  .shared-missing {
+    padding: 64px 16px;
+  }
+}
+.share-created-title {
+  font-size: 14px;
+  color: #142343;
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}

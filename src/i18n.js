@@ -324,7 +324,8 @@ export function createSession(dict) {
     let bases;
     if (run.length > 1) {
       const all = ens.join("");
-      if (hasLetters(all)) {
+      // A date split across nodes has no letters but still translates.
+      if (hasLetters(all) || translateDate(normalize(all)) !== undefined) {
         const t = translateText(all, dict);
         if (t !== undefined) {
           bases = run.map((_, i) => (i ? "" : t));
@@ -337,7 +338,13 @@ export function createSession(dict) {
     }
     let missed = false;
     bases ??= ens.map((en) => {
-      if (!hasLetters(en)) return en;
+      // Letterless text stays as it is, except a bare en-US date or time
+      // ("9/25/2026" in a Created column).
+      if (!hasLetters(en)) {
+        const date = translateText(en, dict);
+        if (date !== undefined) remember(date, en);
+        return date ?? en;
+      }
       const [lead, core, trail] = splitSpace(en);
       const f = fixed?.get(normalize(core));
       if (f !== undefined) return lead + f + trail;

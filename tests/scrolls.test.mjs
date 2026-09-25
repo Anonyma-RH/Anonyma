@@ -1,4 +1,4 @@
-import test from "node:test";
+import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -6,6 +6,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "../server/app.js";
 import { UPDATES } from "../server/releases.js";
+
+// Release commits flip `released` on UPDATES entries. These tests cover the
+// gate itself, so they pin every update to unreleased for this file and keep
+// passing after the release commit.
+const committed = UPDATES.map((u) => u.released);
+before(() => UPDATES.forEach((u) => (u.released = false)));
+after(() => UPDATES.forEach((u, i) => (u.released = committed[i])));
 import {
   extractVariables,
   fillTemplate,
@@ -252,7 +259,8 @@ test("chat accepts a leading system message without changing what is saved", asy
 test("scrolls: registered as an unreleased update", () => {
   const entry = UPDATES.find((u) => u.id === "scrolls");
   assert.ok(entry);
-  assert.equal(entry.released, false);
+  // Committed as false until its "Release …" commit flips it to true.
+  assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");
   assert.equal(entry.title, "Scrolls");
   assert.equal(entry.tagline, "Save the prompt. Skip the retyping.");
   assert.deepEqual(entry.points, [

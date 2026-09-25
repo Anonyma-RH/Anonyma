@@ -435,7 +435,7 @@ export const UPDATES = [
       "Search runs in your browser and is never charged",
     ],
     // Browser only: no server routes, so nothing to gate in featuresFor.
-    released: false,
+    released: true,
   },
   {
     id: "insights",

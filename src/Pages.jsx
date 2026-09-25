@@ -33,6 +33,7 @@ import { featureEnabled, featureLabel, guideReleaseLabel, releaseCopy, modelAvai
 import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
 import "./mcp.css";
 import V1Media from "./V1Media.jsx";
+import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -837,6 +838,7 @@ const featureIcons = {
   chatcontrol: "book",
   voice: "audio",
   trail: "route",
+  seedguard: "lock",
 };
 const launch = {
   id: "mvp",
@@ -914,8 +916,13 @@ export function Support() {
     [body, setBody] = useState(""),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
-  async function submit(e) {
-    e.preventDefault();
+  // Seed Guard: a support request never carries a seed phrase or key, and
+  // there is no "Send anyway": support never needs one. A transaction hash
+  // (64-hex) is often exactly what support needs, so that asks once.
+  const seedHit = useSeedScan(seedGuardLive(config), subject + "\n" + body);
+  async function submit(e, { notKey = false } = {}) {
+    e?.preventDefault();
+    if (seedHit && !(notKey && seedHit.kind === "hex")) return;
     setMessage("");
     setBusy(true);
     try {
@@ -999,8 +1006,20 @@ export function Support() {
               placeholder="A little context goes a long way."
             />
           </label>
+          {canSend && (
+            <SeedGuardNotice
+              hit={seedHit}
+              busy={busy}
+              hardOverride={false}
+              onProceed={() => submit(null, { notKey: true })}
+            >
+              <p className="seed-guard-note">
+                ANONYMA support will never ask for your seed phrase or private key.
+              </p>
+            </SeedGuardNotice>
+          )}
           {canSend ? (
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy || !!seedHit}>
               {busy ? "Sending…" : "Send support request"}
               <Icon name="arrow" />
             </Button>

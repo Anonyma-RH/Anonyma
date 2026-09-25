@@ -8,6 +8,8 @@ import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
 import { createVeilState } from "./veil.js";
 import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
+import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
+import { scanSecrets } from "./seed-guard.js";
 import {
   defaultSymposiumModels,
   buildFusionMessages,
@@ -87,6 +89,9 @@ export default function Symposium({
     [quoting, setQuoting] = useState(false),
     [error, setError] = useState(""),
     [pickerQuery, setPickerQuery] = useState("");
+  // Seed Guard: the question is scanned before it can go to any model.
+  const seedLive = !demo && seedGuardLive(config);
+  const seedHit = useSeedScan(seedLive, prompt);
   const fusionCard = useRef(null);
   // Bring the fused answer into view as it starts, above the pinned composer.
   const fusionStarted = fusion?.status === "pending";
@@ -117,7 +122,7 @@ export default function Symposium({
   }
   async function estimate() {
     const question = prompt.trim();
-    if (!question || selected.length < 2 || quoting) return;
+    if (!question || selected.length < 2 || quoting || seedHit) return;
     setError("");
     setQuoting(true);
     // Quote what would be sent: masked with a throwaway map when Veil is on.
@@ -146,7 +151,7 @@ export default function Symposium({
     setQuotes(next);
     setQuoting(false);
   }
-  async function runOne(id, question) {
+  async function runOne(id, question, allowSeed = false) {
     const controller = new AbortController();
     controllers.current[id] = controller;
     let text = "",
@@ -161,6 +166,7 @@ export default function Symposium({
           max_tokens: COLUMN_TOKENS,
           requestId: uid(),
           ...trailBody(),
+          ...(allowSeed ? { allow_seed_phrase: true } : {}),
         },
         (event) => {
           if (event.error)
@@ -204,10 +210,12 @@ export default function Symposium({
       delete controllers.current[id];
     }
   }
-  async function send(e) {
-    e.preventDefault();
+  // `allowSeed` is Seed Guard's confirmed "Send anyway".
+  async function send(e, { allowSeed = false } = {}) {
+    e?.preventDefault();
     const question = prompt.trim();
     if (!question || busy || selected.length < 2) return;
+    if (seedHit && !allowSeed) return;
     if (!config?.services?.generation) {
       setError("Generation isn't currently available.");
       return;
@@ -229,7 +237,9 @@ export default function Symposium({
     setColumns(Object.fromEntries(selected.map((id) => [id, emptyColumn()])));
     setPrompt("");
     setQuotes({});
-    await Promise.allSettled(selected.map((id) => runOne(id, masked.text)));
+    await Promise.allSettled(
+      selected.map((id) => runOne(id, masked.text, seedHit?.kind === "seed")),
+    );
     if (!demo) refresh();
   }
   function stopOne(id) {
@@ -248,15 +258,21 @@ export default function Symposium({
     fuseController.current = controller;
     setFusion({ status: "pending", text: "", receipt: null, error: "" });
     let text = "";
+    // Fusing resends the question every column already received (confirmed
+    // then if Seed Guard stopped it) with the models' answers.
+    const messages = buildFusionMessages({ question: askedQuestion, answers });
+    const resent =
+      seedLive && scanSecrets(messages.map((m) => m.content))?.kind === "seed";
     try {
       await streamChat(
         {
           model: fuseModel,
-          messages: buildFusionMessages({ question: askedQuestion, answers }),
+          messages,
           mode: "symposium",
           max_tokens: 4096,
           requestId: uid(),
           ...trailBody(),
+          ...(resent ? { allow_seed_phrase: true } : {}),
         },
         (event) => {
           if (event.error)
@@ -479,6 +495,11 @@ export default function Symposium({
             )}
           </div>
         )}
+        <SeedGuardNotice
+          hit={seedHit}
+          busy={busy}
+          onProceed={() => send(null, { allowSeed: true })}
+        />
         <form className="composer" onSubmit={send}>
           <textarea
             aria-label="Your question"
@@ -509,7 +530,7 @@ export default function Symposium({
             <button
               type="submit"
               className="send-button"
-              disabled={!prompt.trim() || busy || selected.length < 2}
+              disabled={!prompt.trim() || busy || selected.length < 2 || !!seedHit}
               aria-label="Ask all models"
             >
               <Icon name="arrow" size={21} />
@@ -553,7 +574,7 @@ export default function Symposium({
           <button
             type="button"
             onClick={estimate}
-            disabled={!prompt.trim() || selected.length < 2 || quoting}
+            disabled={!prompt.trim() || selected.length < 2 || quoting || !!seedHit}
           >
             {quoting ? "Estimating…" : "Estimate credits"}
           </button>

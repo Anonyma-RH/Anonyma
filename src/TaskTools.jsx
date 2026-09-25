@@ -15,6 +15,7 @@ import {
 } from "./task-tools.js";
 import { createVeilState, veil, unveil, saveVeilState } from "./veil.js";
 import { VeilToggle, veilRemarkPlugin } from "./Veil.jsx";
+import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import "./task-tools.css";
 
 export default function TaskTools({
@@ -38,6 +39,11 @@ export default function TaskTools({
     [expression, setExpression] = useState("(120 + 80) * 15 / 100"),
     [answer, setAnswer] = useState(null),
     [calcError, setCalcError] = useState("");
+  // Seed Guard: the brief is scanned before a run or an estimate sends it.
+  const seedHit = useSeedScan(
+    !demo && seedGuardLive(config) && tab !== "calculator",
+    input,
+  );
   const controller = useRef(null),
     quoteController = useRef(null),
     lock = useRef(false),
@@ -68,7 +74,7 @@ export default function TaskTools({
     setQuote(null);
   }, [input, direction, model, tab, veilOn, veilWords]);
   const shown = results.filter((r) => r.kind === tab);
-  function requestBody() {
+  function requestBody(allowSeed = false) {
     const messages = taskMessages(tab, input, direction),
       state = createVeilState();
     if (veilOn && isReleased(config, "veil"))
@@ -82,11 +88,12 @@ export default function TaskTools({
         messages,
         max_tokens: 2048,
         ...(tab === "research" ? { web_search: true } : {}),
+        ...(allowSeed ? { allow_seed_phrase: true } : {}),
       },
     };
   }
   async function estimate() {
-    if (lock.current) return;
+    if (lock.current || seedHit) return;
     setError("");
     quoteController.current?.abort();
     const ctl = new AbortController();
@@ -103,9 +110,10 @@ export default function TaskTools({
       if (mounted.current && !ctl.signal.aborted) setError(e.message);
     }
   }
-  async function generate(e) {
-    e.preventDefault();
-    if (lock.current) return;
+  // `allowSeed` is Seed Guard's confirmed "Send anyway".
+  async function generate(e, { allowSeed = false } = {}) {
+    e?.preventDefault();
+    if (lock.current || (seedHit && !allowSeed)) return;
     if (demo || !user) {
       setError(
         "Sign in to run a task. The calculator works locally without a model call.",
@@ -115,7 +123,7 @@ export default function TaskTools({
     let setup;
     try {
       if (!model) throw Error("No callable chat model is available.");
-      setup = requestBody();
+      setup = requestBody(seedHit?.kind === "seed");
       if (results.length >= ALTERNATIVE_LIMIT)
         throw Error(
           "Keep up to eight results. Download or remove one before adding another.",
@@ -334,10 +342,15 @@ export default function TaskTools({
                   />
                 )}
               </div>
+              <SeedGuardNotice
+                hit={seedHit}
+                busy={busy}
+                onProceed={() => generate(null, { allowSeed: true })}
+              />
               <div className="task-actions">
                 <button
                   type="button"
-                  disabled={busy || !input.trim() || !model || demo || !user}
+                  disabled={busy || !input.trim() || !model || demo || !user || !!seedHit}
                   onClick={estimate}
                 >
                   Estimate credits
@@ -348,6 +361,7 @@ export default function TaskTools({
                     busy ||
                     !input.trim() ||
                     !model ||
+                    !!seedHit ||
                     results.length >= ALTERNATIVE_LIMIT
                   }
                   type="submit"

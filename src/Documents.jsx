@@ -123,6 +123,7 @@ export default function DocumentAttach({
   audioEnabled = false,
   onRefresh,
   openRequest = 0,
+  seedGuard = false,
 }) {
   const [busy, setBusy] = useState(false);
   async function addFiles(e) {
@@ -206,7 +207,7 @@ export default function DocumentAttach({
         onChange={addFiles}
       />
     </label>
-    {filesEnabled && <ReusableUploads documents={documents} setDocuments={setDocuments} disabled={disabled} privateContext={privateContext} audioEnabled={audioEnabled} onRefresh={onRefresh} openRequest={openRequest} />}
+    {filesEnabled && <ReusableUploads documents={documents} setDocuments={setDocuments} disabled={disabled} privateContext={privateContext} audioEnabled={audioEnabled} onRefresh={onRefresh} openRequest={openRequest} seedGuard={seedGuard} />}
     </>
   );
 }

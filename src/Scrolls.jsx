@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Icon, Modal, Button } from "./ui.jsx";
 import { extractVariables, fillTemplate, validateScroll, validateInstructions } from "./scrolls.js";
 import "./scrolls.css";
+import { SeedGuardNotice, useSeedScan } from "./SeedGuard.jsx";
 
 // Manage saved scrolls and the standing instructions sent with every chat,
 // code and Uncensored request. Opened from the composer's Scrolls button.
@@ -17,6 +18,9 @@ export function ScrollsPanel({
   onUpdate,
   onDelete,
   onSaveInstructions,
+  // Seed Guard is live: scrolls and instructions are saved to the account
+  // and sent with chats, so a seed phrase or key waits for "Save anyway".
+  seedGuard = false,
 }) {
   const [view, setView] = useState("list"); // "list" | "new" | a scroll id
   const [draft, setDraft] = useState({ title: "", body: "" });
@@ -27,6 +31,11 @@ export function ScrollsPanel({
   const [instructionsEnabled, setInstructionsEnabled] = useState(instructions.enabled);
   const [instructionsError, setInstructionsError] = useState("");
   const [instructionsSaved, setInstructionsSaved] = useState(false);
+  const instructionsSeed = useSeedScan(seedGuard, instructionsBody);
+  const draftSeed = useSeedScan(
+    seedGuard && view !== "list",
+    view !== "list" ? draft.title + "\n" + draft.body : "",
+  );
 
   function startEdit(scroll) {
     setDraft({ title: scroll.title, body: scroll.body });
@@ -40,7 +49,8 @@ export function ScrollsPanel({
     setError("");
     setView("new");
   }
-  async function saveDraft() {
+  async function saveDraft({ allowSeed = false } = {}) {
+    if (draftSeed && !allowSeed) return;
     const errs = validateScroll(draft);
     setErrors(errs);
     if (Object.keys(errs).length) return;
@@ -67,7 +77,8 @@ export function ScrollsPanel({
       setBusy(false);
     }
   }
-  async function saveInstructions() {
+  async function saveInstructions({ allowSeed = false } = {}) {
+    if (instructionsSeed && !allowSeed) return;
     const err = validateInstructions(instructionsBody);
     setInstructionsError(err || "");
     if (err) return;
@@ -115,13 +126,19 @@ export function ScrollsPanel({
               <button
                 type="button"
                 className="small-button"
-                onClick={saveInstructions}
-                disabled={busy}
+                onClick={() => saveInstructions()}
+                disabled={busy || !!instructionsSeed}
               >
                 <Icon name={instructionsSaved ? "check" : "settings"} size={14} />
                 {instructionsSaved ? "Saved" : "Save instructions"}
               </button>
             </div>
+            <SeedGuardNotice
+              hit={instructionsSeed}
+              verb="save"
+              busy={busy}
+              onProceed={() => saveInstructions({ allowSeed: true })}
+            />
             {instructionsError && <p className="scrolls-error">{instructionsError}</p>}
           </section>
           <section className="scrolls-list-section">
@@ -199,9 +216,15 @@ export function ScrollsPanel({
             />
           </label>
           {errors.body && <p className="scrolls-error">{errors.body}</p>}
+          <SeedGuardNotice
+            hit={draftSeed}
+            verb="save"
+            busy={busy}
+            onProceed={() => saveDraft({ allowSeed: true })}
+          />
           {error && <p className="scrolls-error">{error}</p>}
           <div className="inline-actions">
-            <Button onClick={saveDraft} disabled={busy}>
+            <Button onClick={() => saveDraft()} disabled={busy || !!draftSeed}>
               {view === "new" ? "Save scroll" : "Save changes"}
             </Button>
             <Button secondary onClick={() => setView("list")} disabled={busy}>

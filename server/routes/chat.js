@@ -25,6 +25,7 @@ import { isReleased } from "../releases.js";
 import { buildReceiptPayload } from "../receipts.js";
 import { providerKey, sameProvider } from "../../src/double-check.js";
 import { validateTaskRequest } from "../task-tools.js";
+import { withMemory } from "../../src/memory.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -128,7 +129,15 @@ export function chatRoutes(ctx) {
     }
     const messages = validateMessages(req.body.messages, m, api),
       max = maxTokens(req.body.max_tokens, m);
-    ctx.models.validateContext(messages, m, max);
+    // Optional Memory Across Models (routes/memory.js): only this user's own
+    // stored, enabled facts, and never over the API, off the record, in
+    // Private Mode, in Symposium or Double-check, or in a shared
+    // conversation. Sent upstream and priced like the rest of the request
+    // (and counted against the context allowance); never saved with the
+    // conversation.
+    const memory = api ? null : ctx.memory.forRequest(req.user.id, req.body);
+    const sent = withMemory(messages, memory?.message);
+    ctx.models.validateContext(sent, m, max);
     const requestId = requestIdentifier(req);
     const hold = req.user.id + ":" + requestId;
     // Team Treasury "Team pays": held on the collab's treasury (see below).
@@ -144,7 +153,7 @@ export function chatRoutes(ctx) {
     const webSearch = wantsWebSearch(req.body);
     const searchFee = webSearch ? cfg.webSearchPrice : 0;
     const amount = Math.ceil(
-      (quote(m, messages, max) + usdUnits(searchFee)) * factor,
+      (quote(m, sent, max) + usdUnits(searchFee)) * factor,
     );
     // Off the record: nothing about the chat is written to storage, not even
     // the user's message. Billing is unaffected — only persistence changes.
@@ -267,7 +276,7 @@ export function chatRoutes(ctx) {
         usage?.prompt_tokens,
         validTokenCount(
           usage?.input_tokens,
-          Math.ceil(JSON.stringify(messages).length / 4),
+          Math.ceil(JSON.stringify(sent).length / 4),
         ),
       ),
       out: validTokenCount(
@@ -326,7 +335,7 @@ export function chatRoutes(ctx) {
     let finishReason = null;
     const upstreamBody = {
       model: m.id,
-      messages,
+      messages: sent,
       max_tokens: max,
       ...(webSearch ? { plugins: [{ id: "web", max_results: 5 }] } : {}),
       ...(isPrivate ? ZDR_ROUTING : {}),
@@ -355,7 +364,7 @@ export function chatRoutes(ctx) {
         // The same model can have a smaller context window on another route.
         // Missing backup metadata uses the same conservative context allowance.
         try {
-          ctx.models.validateContext(messages, { ...fallback.infoFor(backupModel), id: backupModel, type: "chat" }, max);
+          ctx.models.validateContext(sent, { ...fallback.infoFor(backupModel), id: backupModel, type: "chat" }, max);
         } catch {
           throw e; // Keep the primary refusal; never send an incompatible fallback.
         }
@@ -480,7 +489,7 @@ export function chatRoutes(ctx) {
             creditsCharged: receipt.credits_charged,
             creditsReleased: receipt.released,
             keyId: receipts.keyId,
-            requestMessages: messages,
+            requestMessages: sent,
             answerText: output,
           });
           const signature = receipts.sign(payload);
@@ -504,6 +513,17 @@ export function chatRoutes(ctx) {
           ? { private: { privacy: "zdr", stored: false } }
           : {}),
         ...(signedReceipt ? { signed_receipt: signedReceipt } : {}),
+        // Exactly which facts went with this request, as sent.
+        ...(req.body.memory != null && memory
+          ? {
+              memory: {
+                used: memory.facts.length,
+                facts: memory.facts,
+                skipped: memory.skipped,
+                ...(memory.reason ? { reason: memory.reason } : {}),
+              },
+            }
+          : {}),
       };
       if (
         conversation &&

@@ -75,6 +75,12 @@ const chat = object(
       description:
         "Double-check This: a second opinion on an answer from source_model. Needs the Double-check This and Symposium updates released (403 feature_unreleased otherwise). The model must come from a different provider (maker) than source_model (400 double_check_same_provider; 400 double_check_provider_unknown when either maker can't be established). mode must be symposium and conversationId absent, so the reviewed conversation is never changed; ephemeral and private apply as usual. A saved check must name the reviewed conversation in source_conversation (which must be accessible and not itself a check) and stays linked to it: it never outlives it (its deletion time, or the account default if sooner), shortening that conversation's auto-delete shortens the check, nothing extends it, and it is deleted with the conversation or when its owner loses access (leaving the collab). Billed like any chat request.",
     },
+    memory: {
+      ...array(object({ id: string, text: { ...string, maxLength: 2400 }, updated: integer }, ["id", "text"])),
+      maxItems: 50,
+      description:
+        "Memory Across Models: the saved facts to send with this request, as { id, text, updated } (updated is the current fact revision and is required for masked text; text may be masked with Veil tags such as [EMAIL_1]). Needs the memory update released (403 feature_unreleased otherwise). The server keeps only this account's stored, enabled facts whose text is unchanged apart from masking, and only when memory is switched on for the account, the request is not ephemeral or private, the mode is chat, code or uncensored (not symposium or double_check) and conversationId is not a shared (collab) conversation; otherwise nothing is added. Kept facts are sent upstream as one system message after any leading system messages, priced like the rest of the request and never saved with the conversation. The final event's anonyma.memory reports { used, facts (exactly as sent), skipped, reason? }.",
+    },
   },
   ["model", "messages"],
 );
@@ -912,6 +918,34 @@ route(
       "When enabled, the client sends this as a leading system message on chat, code and Uncensored requests, masked by Veil when Veil is on. This endpoint only stores it; it does not itself alter /api/chat.",
   },
 );
+// Memory Across Models (update "memory").
+const memoryFact = object({ id: string, text: string, enabled: bool, created: integer, updated: integer, source: { type: ["object", "null"], properties: { conversation_id: string, title: { type: ["string", "null"] } } } });
+route("get", "/api/memory", "Your memory: on/off and every saved fact", {
+  response: object({ enabled: bool, facts: array(memoryFact), limit: integer }),
+  description: "Off until you switch it on. Facts are only ever written through these routes; chat requests never add to memory.",
+});
+route("put", "/api/memory/settings", "Switch memory on or off for your account", {
+  body: object({ enabled: bool }, ["enabled"]),
+  response: object({ enabled: bool }),
+  description: "Off: no fact is sent with any request, even if a request lists some.",
+});
+route("post", "/api/memory/facts", "Save a fact", {
+  status: 201,
+  body: object({ text: { ...string, maxLength: 300 }, enabled: bool, source_conversation: string }, ["text"]),
+  response: memoryFact,
+  description:
+    "Text is trimmed to one line (1–300 characters). Secret keys (API-key and private-key formats), card and bank account numbers are refused (400 memory_sensitive). Up to 50 facts (400 memory_full). source_conversation, when saving from a message, must be a saved personal conversation you can read (404 otherwise; 400 memory_shared_source for a shared one); off-the-record and Private chats are never saved, so they can't be sources.",
+});
+route("patch", "/api/memory/facts/{id}", "Edit, pause or resume a fact", {
+  body: object({ text: { ...string, maxLength: 300 }, enabled: bool }),
+  response: memoryFact,
+  description: "Takes effect on the next request: an edited fact's old text and a paused fact are no longer sent.",
+});
+route("delete", "/api/memory/facts/{id}", "Delete a fact", { response: ref("Ok") });
+route("delete", "/api/memory", "Delete every saved fact", {
+  response: ref("Ok"),
+  description: "The on/off choice is kept. Account deletion also deletes memory; account export includes it.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

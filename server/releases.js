@@ -347,6 +347,17 @@ export const UPDATES = [
     released: true,
   },
   {
+    id: "memory",
+    title: "Memory Across Models",
+    tagline: "Facts you choose, remembered by every model.",
+    points: [
+      "Off until you turn it on; you write every fact",
+      "Edit, pause or delete any fact, and see exactly what was sent",
+      "Never used off the record, in Private Mode or shared chats",
+    ],
+    released: false,
+  },
+  {
     id: "tasktools",
     released: true,
     title: "Research, Writing & Calculators",
@@ -545,6 +556,7 @@ export function featuresFor(req) {
   if (p.startsWith("/api/receipts") || p === "/.well-known/anonyma-receipts.json")
     return ["receipts"];
   if (p.startsWith("/api/retention")) return ["ephemeral"];
+  if (p === "/api/memory" || p.startsWith("/api/memory/")) return ["memory"];
   // Branching a saved conversation (edit and regenerate use it too).
   if (/^\/api\/conversations\/[^/]+\/branch$/.test(p)) return ["branches"];
   if (
@@ -562,6 +574,9 @@ export function featuresFor(req) {
     return ["ephemeral"];
   const needed = [];
   if (p === "/api/chat" && post && body.taskTool !== undefined) needed.push("tasktools");
+  // A chat (or its estimate) that asks for saved memory.
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.memory != null)
+    needed.push("memory");
   if ((p === "/api/chat" || p === "/api/conversations") && post) {
     if (body.mode === "code") needed.push("code");
     if (body.mode === "uncensored") needed.push("uncensored");

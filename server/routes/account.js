@@ -321,6 +321,18 @@ export function accountRoutes(ctx) {
         db
           .prepare("SELECT * FROM user_instructions WHERE user_id=?")
           .get(req.user.id) || null,
+      // Memory Across Models: the on/off choice and every saved fact.
+      memory: {
+        enabled: !!db
+          .prepare("SELECT enabled FROM memory_settings WHERE user_id=?")
+          .get(req.user.id)?.enabled,
+        facts: db
+          .prepare(
+            "SELECT id,text,enabled,source_conversation_id,created,updated FROM memory_facts WHERE user_id=? ORDER BY created,rowid",
+          )
+          .all(req.user.id)
+          .map((f) => ({ ...f, enabled: !!f.enabled })),
+      },
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {
@@ -390,6 +402,8 @@ export function accountRoutes(ctx) {
       db.prepare("DELETE FROM user_instructions WHERE user_id=?").run(
         req.user.id,
       );
+      db.prepare("DELETE FROM memory_facts WHERE user_id=?").run(req.user.id);
+      db.prepare("DELETE FROM memory_settings WHERE user_id=?").run(req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.
       db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);
       db.prepare(

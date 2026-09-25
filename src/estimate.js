@@ -6,6 +6,7 @@ import { toRequestMessage } from "./lib.js";
 import { historyLimit, withStanding } from "./scrolls.js";
 import { fitDocuments, composeMessageWithDocuments } from "./documents.js";
 import { veil } from "./veil.js";
+import { factsToSend } from "./memory.js";
 
 // The reply budget Send asks for; the estimate quotes the same one.
 export const REPLY_BUDGET = 4096;
@@ -23,6 +24,9 @@ export function buildChatRequest({
   instructions = "",
   veilWith = null,
   preserveHistory = false,
+  // Memory Across Models: the account's facts when memory applies to this
+  // request, else null. Sent as [{ id, text }]; the server adds them.
+  memoryFacts = null,
 }) {
   // Document text (already trimmed to the shared budget) rides along as
   // delimited blocks after the typed prompt; see src/documents.js.
@@ -40,6 +44,7 @@ export function buildChatRequest({
     return {
       next: rawNext,
       request: withStanding(standing, rawNext.slice(-history).map(toRequestMessage)),
+      memory: memoryFacts ? factsToSend(memoryFacts) : null,
       masked: 0,
       tags: [],
     };
@@ -61,6 +66,8 @@ export function buildChatRequest({
     // The just-sent message is displayed the way the server saw it.
     next: [...messages, payload[payload.length - 1]],
     request: withStanding(standing, payload.map(toRequestMessage)),
+    // Memory facts are masked with the same map, so a reply's tags unveil.
+    memory: memoryFacts ? factsToSend(memoryFacts, mask) : null,
     masked,
     tags: [...tags],
   };
@@ -74,13 +81,24 @@ export const cloneVeilState = (state) => ({
 
 // The /api/quote body for a chat Send: same model, messages, reply budget and
 // web search flag, and nothing that reserves or charges.
-export function quoteBody({ model, request, webSearch = false, maxTokens = REPLY_BUDGET, treasury = false, conversationId }) {
+export function quoteBody({
+  model,
+  request,
+  webSearch = false,
+  maxTokens = REPLY_BUDGET,
+  treasury = false,
+  conversationId,
+  memory = null,
+  mode,
+}) {
   return {
     model,
     messages: request,
     max_tokens: maxTokens,
     ...(treasury === true ? { treasury: true, conversationId } : {}),
     ...(webSearch ? { web_search: true } : {}),
+    // The same memory Send would carry, with what decides whether it's used.
+    ...(memory ? { memory, mode, ...(conversationId ? { conversationId } : {}) } : {}),
   };
 }
 

@@ -29,6 +29,7 @@ import { collabRoutes } from "./routes/collabs.js";
 import { treasuryRoutes } from "./routes/treasury.js";
 import { retentionRoutes } from "./routes/retention.js";
 import { scrollsRoutes } from "./routes/scrolls.js";
+import { memoryRoutes } from "./routes/memory.js";
 import { accountRoutes } from "./routes/account.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { connectRoutes } from "./routes/connect.js";
@@ -94,6 +95,7 @@ export function createApp(overrides = {}) {
   collabRoutes(ctx);
   retentionRoutes(ctx);
   scrollsRoutes(ctx);
+  Object.assign(ctx, memoryRoutes(ctx));
   holderRoutes(ctx);
   const worker = createWorker(ctx);
   accountRoutes(ctx);

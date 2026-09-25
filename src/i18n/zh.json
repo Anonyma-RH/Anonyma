@@ -2109,7 +2109,49 @@
     "A second opinion needs models whose providers are known.": "第二意见需要提供商已知的模型。",
     "A saved double-check needs its source conversation.": "保存的再核对需要注明其来源对话。",
     "source_conversation must be a conversation id.": "source_conversation 必须是对话 ID。",
-    "This second opinion uses your personal balance, even in a shared chat.": "即使在共享会话中，这次第二意见也使用你的个人余额。"
+    "This second opinion uses your personal balance, even in a shared chat.": "即使在共享会话中，这次第二意见也使用你的个人余额。",
+    "Memory": "记忆",
+    "Memory Across Models": "跨模型记忆",
+    "Facts you choose, remembered by every model.": "你选择的事实，每个模型都会记得。",
+    "Off until you turn it on; you write every fact": "默认关闭，由你开启；每条事实都由你亲自写下",
+    "Edit, pause or delete any fact, and see exactly what was sent": "可编辑、暂停或删除任意事实，并准确查看发送了什么",
+    "Never used off the record, in Private Mode or shared chats": "不记录模式、私密模式和共享会话中从不使用",
+    "Deleting a fact stops future use. Copies in existing answers remain.": "删除事实后，今后将不再使用该事实。已有回答中的副本仍会保留。",
+    "Use my memory in chats": "在对话中使用我的记忆",
+    "Off until you switch it on. When on, the facts below go with each chat, code and Uncensored message, to whichever model you pick. Only what you write here is remembered: chats never add to memory on their own.": "默认关闭，由你开启。开启后，下面的事实会随每条对话、代码和无审查消息一起发送给你选择的模型。只有你在这里写下的内容才会被记住：对话本身从不自动写入记忆。",
+    "Never used or saved off the record, in Private Mode, in shared (collab) chats, in Symposium or Double-check, or over the API. With Veil on, facts are masked in your browser before they're sent.": "在不记录模式、私密模式、共享（协作）会话、Symposium 或再核对中以及通过 API 时，从不使用或保存记忆。开启 Veil 后，事实会在发送前于你的浏览器中被遮蔽。",
+    "Remember from this chat": "从这段对话中记住",
+    "Add a fact": "添加一条事实",
+    "e.g. I'm vegetarian. I prefer metric units. I write in British English.": "例如：我吃素。我偏好公制单位。我用英式英语写作。",
+    "Don't store passwords, keys, card or bank numbers.": "请勿保存密码、密钥、银行卡号或银行账号。",
+    "Remember": "记住",
+    "Your facts": "你的事实",
+    "Delete all": "全部删除",
+    "Keep": "保留",
+    "No facts yet. Add one above, or use Remember under your message in a saved chat.": "还没有事实。可在上方添加，或在已保存对话中你的消息下方点“记住”。",
+    "Edit fact": "编辑事实",
+    "In use": "使用中",
+    "· Saved from": "· 保存自",
+    "a chat": "一段对话",
+    "Hide what models receive": "隐藏模型收到的内容",
+    "Show exactly what models receive": "准确显示模型收到的内容",
+    "Nothing: no fact is in use.": "无：没有正在使用的事实。",
+    "Sent as one system message after your standing instructions. With Veil on, detected details are replaced by tags first. Each reply lists the facts it was sent.": "作为一条系统消息，在你的常驻指令之后发送。开启 Veil 时，检测到的细节会先被替换为标签。每条回复都会列出随其发送的事实。",
+    "Once memory is switched on, this is sent as one system message after your standing instructions. With Veil on, detected details are replaced by tags first. Each reply lists the facts it was sent.": "开启记忆后，这些内容会作为一条系统消息，在你的常驻指令之后发送。开启 Veil 时，检测到的细节会先被替换为标签。每条回复都会列出随其发送的事实。",
+    "1 memory fact sent": "已发送 1 条记忆事实",
+    "Private Mode: memory isn't used or saved in this chat.": "私密模式：此对话中不使用也不保存记忆。",
+    "Off the record: memory isn't used or saved in this chat.": "不记录模式：此对话中不使用也不保存记忆。",
+    "Shared chat: memory isn't used here, so other members never see your facts.": "共享会话：此处不使用记忆，其他成员永远看不到你的事实。",
+    "Memory is used in chat, code and Uncensored.": "记忆用于对话、代码和无审查模式。",
+    "Memory: facts you choose to share with every model": "记忆：你选择与每个模型分享的事实",
+    "Save a fact from this message to your memory": "把这条消息中的一条事实保存到你的记忆",
+    "Write a fact to remember.": "请写下要记住的事实。",
+    "A fact can be at most 300 characters.": "一条事实最多 300 个字符。",
+    "Memory can't store secret keys, card or bank account numbers.": "记忆不能保存密钥、银行卡号或银行账号。",
+    "Memory holds up to 50 facts. Delete one first.": "记忆最多保存 50 条事实。请先删除一条。",
+    "Facts can't be saved from a shared conversation.": "不能从共享会话中保存事实。",
+    "Memory fact not found.": "未找到该记忆事实。",
+    "enabled must be true or false.": "enabled 必须为 true 或 false。"
   },
   "patterns": [
     {
@@ -3183,6 +3225,18 @@
     {
       "en": "{0} credits charged for this second opinion.",
       "zh": "此次第二意见收取了 {0} 积分。"
+    },
+    {
+      "en": "{0} memory facts sent",
+      "zh": "已发送 {0} 条记忆事实"
+    },
+    {
+      "en": "Delete all {0}?",
+      "zh": "全部删除 {0} 条？"
+    },
+    {
+      "en": "Memory on: {0} facts go with this chat",
+      "zh": "记忆已开启：{0} 条事实随此对话发送"
     }
   ]
 }

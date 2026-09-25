@@ -521,6 +521,16 @@ export const MIGRATIONS = [
     CREATE TRIGGER IF NOT EXISTS library_member_access_removed AFTER DELETE ON collab_members
     BEGIN UPDATE library_items SET source_id=NULL,recipe=NULL WHERE media_id IN (SELECT id FROM media WHERE user_id=OLD.user_id) AND source_id IN (SELECT id FROM conversations WHERE collab_id=OLD.collab_id); END;
   `),
+  // Optional Memory Across Models: facts a user writes (or saves from a
+  // message of a saved personal chat) and shares with every model, plus the
+  // account's opt-in switch, off by default. A fact saved from a chat keeps a
+  // link to it only for display; deleting that chat leaves the fact.
+  additive(`
+      CREATE TABLE IF NOT EXISTS memory_facts(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),text TEXT NOT NULL,enabled INTEGER NOT NULL DEFAULT 1,source_conversation_id TEXT REFERENCES conversations(id) ON DELETE SET NULL,created INTEGER NOT NULL,updated INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS memory_facts_user ON memory_facts(user_id,created);
+      CREATE INDEX IF NOT EXISTS memory_facts_source ON memory_facts(source_conversation_id) WHERE source_conversation_id IS NOT NULL;
+      CREATE TABLE IF NOT EXISTS memory_settings(user_id TEXT PRIMARY KEY REFERENCES users(id),enabled INTEGER NOT NULL DEFAULT 0,updated INTEGER NOT NULL);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

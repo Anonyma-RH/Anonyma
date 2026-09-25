@@ -11,6 +11,7 @@ import {
 } from "../wallet-payments.js";
 import { modelReleased, releaseInfo, isReleased } from "../releases.js";
 import { isPrivateModel } from "../private-mode.js";
+import { withMemory } from "../../src/memory.js";
 import { trainingFields, liveIds } from "../training.js";
 import {
   fail,
@@ -130,12 +131,16 @@ export function catalogRoutes(ctx) {
       m,
     );
     const max = maxTokens(req.body.max_tokens, m);
-    const budget = models.validateContext(messages, m, max);
     // A chat model is priced exactly as /api/chat prices the request (see
     // routes/chat.js), which then holds up to HOLD_MARGIN times this amount
-    // while it runs; other models keep their per-option prices.
+    // while it runs; other models keep their per-option prices. That includes
+    // the same saved memory /api/chat would add (routes/memory.js), which also
+    // counts against the context allowance.
+    const memory = m.type === "chat" ? ctx.memory.forRequest(req.user.id, req.body) : null;
+    const sent = m.type === "chat" ? withMemory(messages, memory?.message) : messages;
+    const budget = models.validateContext(sent, m, max);
     const base =
-      m.type === "chat" ? quote(m, messages, max) : quote(m, messages, max, req.body);
+      m.type === "chat" ? quote(m, sent, max) : quote(m, messages, max, req.body);
     const amount = Math.ceil(
       (video
         ? usdUnits(video.price)
@@ -149,6 +154,9 @@ export function catalogRoutes(ctx) {
       model: m.id,
       estimate: true,
       ...(budget ? { budget } : {}),
+      ...(memory && req.body.memory != null
+        ? { memory: { used: memory.facts.length, skipped: memory.skipped } }
+        : {}),
     });
   });
 }

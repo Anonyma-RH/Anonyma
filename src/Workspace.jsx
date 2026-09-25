@@ -67,6 +67,8 @@ import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx
 import { parseDocumentBlocks } from "./documents.js";
 import Symposium from "./Symposium.jsx";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
+import { MemoryPanel, MemoryUsedNote, useMemory } from "./Memory.jsx";
+import { MEMORY_MODES, MAX_FACT_LENGTH } from "./memory.js";
 import { extractVariables } from "./scrolls.js";
 import { useTeamPays } from "./Treasury.jsx";
 import {
@@ -285,6 +287,9 @@ export default function Workspace() {
     [scrolls, setScrolls] = useState([]),
     [instructions, setInstructions] = useState({ body: "", enabled: false }),
     [scrollsPanel, setScrollsPanel] = useState(false),
+    // Memory Across Models: the account's switch and facts, and the panel
+    // (null, or { draft } when opened from "Remember" under a message).
+    [memoryPanel, setMemoryPanel] = useState(null),
     [scrollFill, setScrollFill] = useState(null),
     [slashDismissedFor, setSlashDismissedFor] = useState(null),
     [slashIndex, setSlashIndex] = useState(0),
@@ -365,6 +370,55 @@ export default function Workspace() {
   });
   const instructionsActive =
     scrollsLive && instructions.enabled && !!instructions.body.trim();
+  // Memory Across Models goes with chat, code and Uncensored messages once
+  // switched on, never off the record, in Private Mode or in a shared chat
+  // (the server refuses those too; see server/routes/memory.js).
+  const memoryLive = !demo && !!user && isReleased(config, "memory");
+  const memoryExcluded = !memoryLive
+    ? ""
+    : privateMode
+      ? "Private Mode: memory isn't used or saved in this chat."
+      : ephemeral
+        ? "Off the record: memory isn't used or saved in this chat."
+        : shared
+          ? "Shared chat: memory isn't used here, so other members never see your facts."
+          : !MEMORY_MODES.includes(mode)
+            ? "Memory is used in chat, code and Uncensored."
+            : "";
+  const memoryScope = memoryLive && !memoryExcluded ? `${user.id}:${current || "new"}:${mode}` : null;
+  const memoryClient = useMemory(memoryScope);
+  const memory = memoryClient.memory;
+  useEffect(() => { setMemoryPanel(null); }, [memoryScope]);
+  const memoryUse =
+    memoryLive && memory.enabled && !memoryExcluded && memory.facts.some((f) => f.enabled);
+  const memoryFacts = memoryUse ? memory.facts : null;
+  // "Remember" under your own message in a saved personal chat: opens Memory
+  // with a draft from it. Never off the record, in Private Mode or shared.
+  const rememberButton = (m) =>
+    memoryLive &&
+    m.role === "user" &&
+    typeof m.content === "string" &&
+    !m.sample &&
+    current &&
+    !shared &&
+    !ephemeral &&
+    !privateMode &&
+    !memoryExcluded &&
+    !busy ? (
+      <button
+        type="button"
+        className="memory-remember"
+        title="Save a fact from this message to your memory"
+        onClick={() =>
+          setMemoryPanel({
+            draft: { text: promptParts(m.content).typed.slice(0, MAX_FACT_LENGTH), source: current },
+          })
+        }
+      >
+        <Icon name="memory" size={13} />
+        Remember
+      </button>
+    ) : null;
   // Quote and Send retain image history; capability follows that exact context.
   const needsVision = textMode && requestNeedsVision(buildChatRequest({
     messages, attachments,
@@ -793,9 +847,10 @@ export default function Workspace() {
   // The /api/quote body for what a chat Send would post right now. Veil masks
   // it with a copy of the conversation's tag map: the same tags Send would
   // use, without recording any for a message that may never be sent.
-  function estimateRequest() {
+  // `facts` lets Memory preview its facts before it is switched on.
+  function estimateRequest(facts = memoryFacts) {
     const veiling = veilOn && !demo && isReleased(config, "veil");
-    const { request } = buildChatRequest({
+    const { request, memory } = buildChatRequest({
       messages,
       text: sendText,
       attachments,
@@ -805,8 +860,18 @@ export default function Workspace() {
       veilWith: veiling
         ? { state: cloneVeilState(veilStateRef.current), words: veilWords }
         : null,
+      memoryFacts: facts,
     });
-    return quoteBody({ model: sendModel, request, webSearch, maxTokens: selectedReplyBudget, treasury: teamPays.on, conversationId: current });
+    return quoteBody({
+      model: sendModel,
+      request,
+      webSearch,
+      maxTokens: selectedReplyBudget,
+      treasury: teamPays.on,
+      conversationId: current,
+      memory,
+      mode,
+    });
   }
   // Credit Estimates: a live estimate beside Send in chat, code and
   // Uncensored, whenever Send would go through. Image, video and Symposium
@@ -828,7 +893,7 @@ export default function Workspace() {
     () => (autoEstimate ? estimateRequest() : null),
     // Everything estimateRequest reads that can change between renders.
     [autoEstimate, sendText, sendModel, messages, attachments, documents,
-      instructionsActive, instructions.body, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive],
+      instructionsActive, instructions.body, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive, memoryFacts, mode],
   );
   const estimate = useCreditEstimate(estimateBody);
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
@@ -1045,6 +1110,7 @@ export default function Workspace() {
       instructions: instructionsActive ? instructions.body.trim() : "",
       preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
+      memoryFacts,
     });
     const next = built.next,
       // Veil's mask count for this request, carried onto the reply so a
@@ -1093,7 +1159,9 @@ export default function Workspace() {
       finishReason = null,
       // Set once the final event's anonyma.private arrives; drives the
       // "Sent to <provider> · not saved" line under this reply.
-      privateInfo = null;
+      privateInfo = null,
+      // The memory facts the server says it sent with this request.
+      memoryUsed = null;
     const sendingPrivate = privateMode && !demo;
     try {
       await streamChat(
@@ -1106,6 +1174,7 @@ export default function Workspace() {
           requestId,
           ...(webSearch ? { web_search: true } : {}),
           ...(sendingPrivate ? { private: true } : {}),
+          ...(built.memory ? { memory: built.memory } : {}),
           ...teamPays.body,
         },
         (event) => {
@@ -1114,6 +1183,7 @@ export default function Workspace() {
           if (event.conversationId) liveId = event.conversationId;
           if (event.anonyma) setReceipt(event.anonyma);
           finishReason = event.anonyma?.finish_reason || event.choices?.[0]?.finish_reason || finishReason;
+          if (event.anonyma?.memory) memoryUsed = event.anonyma.memory;
           if (event.error)
             throw new ApiError(
               event.error.message || "The stream ended with an error.",
@@ -1146,6 +1216,7 @@ export default function Workspace() {
               ...(privateInfo
                 ? { private: privateInfo, masked: requestMasked }
                 : {}),
+              ...(memoryUsed ? { memoryUsed } : {}),
             },
           ]);
         },
@@ -1157,10 +1228,12 @@ export default function Workspace() {
       if (chatControlLive && !charge.isCurrent(requestId)) return;
       if (err.data?.billing) charge.accept(requestId, err.data.billing);
       if (err.data?.anonyma) setReceipt(err.data.anonyma);
+      if (err.data?.anonyma?.memory) memoryUsed = err.data.anonyma.memory;
       setCurrent(liveId);
       if (chatControlLive || output || reasoning || images.length) setMessages([...next, {
         role: "assistant", content: output, reasoning, images, citations, model: requestModel,
         finishReason: finishReason || "interrupted", interrupted: true, requestId,
+        ...(memoryUsed ? { memoryUsed } : {}),
         ...(sendingPrivate ? { private: { privacy: "zdr", stored: false }, masked: requestMasked } : {}),
       }]);
       if (chatControlLive) charge.recover(requestId);
@@ -1725,6 +1798,9 @@ export default function Workspace() {
                           {m.role === "assistant" && m.private && (
                             <PrivateReplyNote info={m.private} masked={m.masked} />
                           )}
+                          {m.role === "assistant" && m.memoryUsed && (
+                            <MemoryUsedNote memory={m.memoryUsed} />
+                          )}
                           {m.role === "assistant" && m.content && (
                             <CopyButton text={m.content} />
                           )}
@@ -1740,6 +1816,8 @@ export default function Workspace() {
                               )}
                             </div>
                           )}
+                          {!(branchesLive && !busy && !branching && editing?.index !== i && !m.sample) &&
+                            rememberButton(m) && <div className="turn-actions">{rememberButton(m)}</div>}
                           {branchesLive && editing?.index === i && (
                             <form
                               className="edit-turn"
@@ -1784,6 +1862,7 @@ export default function Workspace() {
                                   Edit
                                 </button>
                               )}
+                              {rememberButton(m)}
                               {m.role === "assistant" && m.content && (
                                 <button type="button" onClick={() => rewind(i, "regenerate")}>
                                   Regenerate
@@ -2281,6 +2360,27 @@ export default function Workspace() {
                           <span>Higher budgets can cost and reserve more. Reasoning can use this budget. Chat history is kept or refused, never trimmed.</span>
                         </label>
                       )}
+                      {textMode && memoryLive && (
+                        <button
+                          type="button"
+                          className={
+                            "attachment-control memory-button" + (memoryExcluded ? " excluded" : "")
+                          }
+                          disabled={!!memoryExcluded}
+                          aria-pressed={memoryUse}
+                          title={
+                            memoryExcluded ||
+                            (memoryUse
+                              ? `Memory on: ${memory.facts.filter((f) => f.enabled).length} facts go with this chat`
+                              : "Memory: facts you choose to share with every model")
+                          }
+                          onClick={() => setMemoryPanel({})}
+                        >
+                          <Icon name="memory" size={17} />
+                          <span>Memory</span>
+                          {memoryUse && <span className="memory-dot" aria-hidden="true" />}
+                        </button>
+                      )}
                       {mode === "image" && (
                         <select
                           aria-label="Number of images"
@@ -2625,6 +2725,21 @@ export default function Workspace() {
           onUpdate={updateScroll}
           onDelete={deleteScroll}
           onSaveInstructions={saveInstructions}
+        />
+      )}
+      {memoryPanel && memoryScope && (
+        <MemoryPanel
+          key={memoryScope}
+          memory={memory}
+          draft={memoryPanel.draft}
+          excluded={memoryExcluded}
+          onClose={() => setMemoryPanel(null)}
+          previewFacts={estimateRequest(memory.facts).memory || []}
+          onToggle={memoryClient.toggle}
+          onCreate={memoryClient.create}
+          onUpdate={memoryClient.update}
+          onDelete={memoryClient.remove}
+          onDeleteAll={memoryClient.clear}
         />
       )}
       {scrollFill && (

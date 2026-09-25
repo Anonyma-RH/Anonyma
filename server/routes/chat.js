@@ -90,7 +90,7 @@ export function chatRoutes(ctx) {
           typeof messages.at(-1).content === "string"
             ? messages.at(-1).content
             : "Image conversation",
-          req.body.mode === "code" ? "code" : "chat",
+          ["code", "uncensored"].includes(req.body.mode) ? req.body.mode : "chat",
         );
         db.prepare(
           "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",

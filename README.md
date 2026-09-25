@@ -49,6 +49,8 @@ reference images, with model-specific frame and duration options. Includes its G
 
 [Voice & Audio](docs/releases/voice-and-audio.md): Turn text into speech saved in your library, and dictate prompts into the chat composer using the microphone. Includes its launch film.
 
+[Collab](docs/releases/collab.md): Create shared workspaces for up to 12 people total, invite participants by link, and work in shared conversations. Each person pays for their own requests. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

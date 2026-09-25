@@ -75,6 +75,7 @@ export const UPDATES = [
   },
   {
     id: "collab",
+    released: true,
     title: "Collab",
     tagline: "Build it together.",
     points: [

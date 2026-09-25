@@ -1910,13 +1910,13 @@
     "You can unlink it any time in Account.": "你可以随时在账户中解除关联。",
     "Connected apps never learn you hold NYMA. They're treated like any account without early access.": "已连接的应用永远不会知道你持有 NYMA。它们得到的待遇与没有抢先体验的账户相同。",
     "Not needed to use ANONYMA. Credits are bought as usual.": "使用 ANONYMA 不需要 NYMA。积分照常购买。",
-    "Not a share of the company, and no revenue share.": "不是公司股份，也没有收益分成。",
+    "Not a share of the company, and no revenue share.": "不是公司股份，也没有收入分成。",
     "No promise of value.": "不承诺任何价值。",
-    "Not financial advice.": "不构成投资建议。",
+    "Not financial advice.": "不构成财务建议。",
     "Link a wallet in Account": "在账户中关联钱包",
     "Log in to link a wallet": "登录以关联钱包",
     "NYMA is ANONYMA's token: an ERC-20 named Anonyma on Robinhood Chain (chain ID 4663), with 18 decimals and a total supply of 1,000,000,000 NYMA. Its contract is": "NYMA 是 ANONYMA 的代币：Robinhood Chain（链 ID 4663）上名为 Anonyma 的 ERC-20 代币，18 位小数，总供应量 1,000,000,000 NYMA。其合约地址为",
-    "NYMA isn't needed to use ANONYMA. It isn't a share of the company, carries no revenue share and no promise of value, and nothing here is financial advice. More at": "使用 ANONYMA 不需要 NYMA。它不是公司股份，没有收益分成，也不承诺任何价值，这里的任何内容都不构成投资建议。详见",
+    "NYMA isn't needed to use ANONYMA. It isn't a share of the company, carries no revenue share and no promise of value, and nothing here is financial advice. More at": "使用 ANONYMA 不需要 NYMA。它不是公司股份，没有收入分成，也不承诺任何价值，这里的任何内容都不构成财务建议。详见",
     "the NYMA page": "NYMA 页面",
     "NYMA Holder Program": "NYMA 持有者计划",
     "Hold NYMA, get credits and perks.": "持有 NYMA，获得积分和权益。",
@@ -1928,7 +1928,7 @@
     "Hold NYMA in a wallet linked to your ANONYMA account. Every 30 days, your account gets the credits for its tier, plus the tier's perk and every perk below it.": "在关联到你 ANONYMA 账户的钱包中持有 NYMA。每 30 天，你的账户会获得所在等级的积分，并享有该等级及以下所有等级的权益。",
     "Tier": "等级",
     "Lowest balance": "最低余额",
-    "Credits every 30 days": "每 30 天积分",
+    "Credits every 30 days": "每 30 天发放积分",
     "Perks": "权益",
     "Holder": "持有者",
     "Insider": "资深持有者",
@@ -2888,7 +2888,7 @@
     },
     {
       "en": "Loyal bonus: after {0} paid cycles in a row, every later payout is {1}, until a cycle ends unpaid.",
-      "zh": "忠诚加成：连续 {0} 个周期获得发放后，之后每次发放都乘以 {1}，直到某个周期未获发放为止。"
+      "zh": "忠诚加成：连续 {0} 个周期获得发放后，之后每次发放按 {1} 计算，直到某个周期未获发放为止。"
     },
     {
       "en": "A cycle is 30 days. It starts at the first check that sees at least {0} in your linked wallet.",
@@ -2972,7 +2972,7 @@
     },
     {
       "en": "After {0} paid cycles in a row, each payout is {1} until a cycle ends unpaid.",
-      "zh": "连续 {0} 个周期获得发放后，每次发放都乘以 {1}，直到某个周期未获发放为止。"
+      "zh": "连续 {0} 个周期获得发放后，每次发放按 {1} 计算，直到某个周期未获发放为止。"
     },
     {
       "en": "The bigger library doubles the retention caps; below {0} the standard caps apply again as new items are saved, and nothing is deleted at once. Early access opens updates marked early, before their public release, and the server checks it on each update's routes. The Inner Circle's roadmap vote is one per account per month and advisory.",

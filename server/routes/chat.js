@@ -352,23 +352,29 @@ export function chatRoutes(ctx) {
       // The signed id is the requestId alone, never the user-prefixed hold.
       let signedReceipt = null;
       if (isReleased(cfg, "receipts")) {
-        const payload = buildReceiptPayload({
-          id: requestId,
-          service: cfg.publicUrl || cfg.origin,
-          model: receipt.model,
-          inputTokens: receipt.usage?.prompt_tokens,
-          outputTokens: receipt.usage?.completion_tokens,
-          creditsCharged: receipt.credits_charged,
-          creditsReleased: receipt.released,
-          keyId: receipts.keyId,
-          requestMessages: messages,
-          answerText: output,
-        });
-        const signature = receipts.sign(payload);
-        db.prepare(
-          "INSERT OR IGNORE INTO receipt_signatures(receipt_id,user_id,key_id,payload,signature,created) VALUES(?,?,?,?,?,?)",
-        ).run(hold, req.user.id, receipts.keyId, JSON.stringify(payload), signature, now());
-        signedReceipt = { receipt: payload, signature, key_id: receipts.keyId };
+        // Best effort: the request is already settled, so a signing failure
+        // must never cost the user the answer they paid for.
+        try {
+          const payload = buildReceiptPayload({
+            id: requestId,
+            service: cfg.publicUrl || cfg.origin,
+            model: receipt.model,
+            inputTokens: receipt.usage?.prompt_tokens,
+            outputTokens: receipt.usage?.completion_tokens,
+            creditsCharged: receipt.credits_charged,
+            creditsReleased: receipt.released,
+            keyId: receipts.keyId,
+            requestMessages: messages,
+            answerText: output,
+          });
+          const signature = receipts.sign(payload);
+          db.prepare(
+            "INSERT OR IGNORE INTO receipt_signatures(receipt_id,user_id,key_id,payload,signature,created) VALUES(?,?,?,?,?,?)",
+          ).run(hold, req.user.id, receipts.keyId, JSON.stringify(payload), signature, now());
+          signedReceipt = { receipt: payload, signature, key_id: receipts.keyId };
+        } catch (e) {
+          console.error("Receipt signing failed:", e.message);
+        }
       }
       const extension = {
         credits_charged: receipt.credits_charged,

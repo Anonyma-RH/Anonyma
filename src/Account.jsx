@@ -32,6 +32,7 @@ import {
 } from "./lib.js";
 import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
 import McpConnect from "./McpConnect.jsx";
+import { KeyAllowance } from "./Allowances.jsx";
 // Ledger entry kinds as readable labels; an unknown kind reads as words.
 const LEDGER_KINDS = {
   chat: "Chat",
@@ -55,6 +56,9 @@ export default function Account() {
   const [params] = useSearchParams();
   const demo = params.get("demo") === "1";
   const { user, connected, config, refresh } = useApp();
+  // Agent allowances extend API keys, so they show only once both are live.
+  const allowancesOn =
+    isReleased(config, "api") && isReleased(config, "allowances");
   const [menu, setMenu] = useState(false),
     [keys, setKeys] = useState(() => (demo ? readStore("keys", []) : [])),
     [ledger, setLedger] = useState([]),
@@ -645,6 +649,9 @@ export default function Account() {
                       <tr>
                         <th>Name / prefix</th>
                         <th>Rolling 24h cap</th>
+                        {allowancesOn && (
+                          <th>Allowance</th>
+                        )}
                         <th>Created</th>
                         <th>Manage</th>
                       </tr>
@@ -668,6 +675,31 @@ export default function Account() {
                               </>
                             )}
                           </td>
+                          {allowancesOn && (
+                            <td>
+                              {!k.revoked && (
+                                <KeyAllowance
+                                  k={k}
+                                  demo={demo}
+                                  onChange={
+                                    demo
+                                      ? (patch) =>
+                                          setKeys((prev) =>
+                                            prev.map((x) =>
+                                              x.id === k.id
+                                                ? { ...x, ...patch }
+                                                : x,
+                                            ),
+                                          )
+                                      : () =>
+                                          api("/api/keys")
+                                            .then((r) => setKeys(r.data))
+                                            .catch((e) => setError(e.message))
+                                  }
+                                />
+                              )}
+                            </td>
+                          )}
                           <td>
                             {new Date(
                               k.created || Date.now(),

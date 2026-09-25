@@ -805,6 +805,7 @@ const featureIcons = {
   scrolls: "book",
   app: "download",
   mcp: "command",
+  allowances: "coins",
 };
 const launch = {
   id: "mvp",

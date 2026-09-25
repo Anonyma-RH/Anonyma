@@ -108,7 +108,9 @@ export function chatRoutes(ctx) {
     } catch (e) {
       if (
         headroom <= amount ||
-        !["insufficient_credits", "key_cap_exceeded"].includes(e.code)
+        !["insufficient_credits", "key_cap_exceeded", "allowance_exhausted"].includes(
+          e.code,
+        )
       )
         throw e;
       reservation(amount);

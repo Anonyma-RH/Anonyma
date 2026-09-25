@@ -122,6 +122,12 @@ export default function ApiGuide() {
           requests per minute per IP; each key can also have a rolling 24-hour
           credit cap.
         </li>
+        {featureEnabled(config, "allowances") && (
+          <li>
+            402 allowance_exhausted, 403 key_paused or key_expired — the key’s
+            agent allowance is used up, paused or past its expiry.
+          </li>
+        )}
         <li>
           502 provider_unreadable or 504 provider_timeout — generation failed
           and the base estimate may still be charged.

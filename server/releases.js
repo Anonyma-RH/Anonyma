@@ -227,6 +227,17 @@ export const UPDATES = [
     ],
     released: false,
   },
+  {
+    id: "allowances",
+    title: "Agent Allowances",
+    tagline: "Give an agent a budget, not your wallet.",
+    points: [
+      "A lifetime credit cap per key",
+      "Optional expiry and a pause switch",
+      "One glance at what an agent spent",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -300,9 +311,9 @@ export function modelReleased(m, cfg) {
   );
 }
 
-// All release gates required by a request. Discovery uses the first gate.
+// All release gates required by a request. featureFor is the first gate.
 export const featureFor = (req) => featuresFor(req)[0] || null;
-function featuresFor(req) {
+export function featuresFor(req) {
   const p = req.path,
     post = req.method === "POST",
     body = req.body || {};
@@ -312,6 +323,10 @@ function featuresFor(req) {
   if (p === "/api/images" && post) return ["images"];
   if (p === "/v1" || p.startsWith("/v1/")) return ["api"];
   if (p === "/api/keys" && post) return ["api"];
+  // Allowances extend an API key's authorization, so they need the API
+  // update released too.
+  if (/^\/api\/keys\/[^/]+\/(allowance|pause|resume|usage)$/.test(p))
+    return ["api", "allowances"];
   if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return ["api"];
   // The MCP server runs on the API's key auth, rate limits and hold/settle
   // path, so it needs "api" released as well as "mcp".

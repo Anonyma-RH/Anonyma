@@ -457,7 +457,7 @@ export const UPDATES = [
       "A Preview button on HTML code in chat replies",
       "Sandboxed in your browser: network requests blocked, no account access",
     ],
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

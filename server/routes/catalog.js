@@ -10,6 +10,7 @@ import {
 } from "../wallet-payments.js";
 import { modelReleased, releaseInfo, isReleased } from "../releases.js";
 import { isPrivateModel } from "../private-mode.js";
+import { trainingFields, liveIds } from "../training.js";
 import {
   fail,
   balance,
@@ -75,13 +76,16 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
   app.get("/api/models", async (req, res) => {
     const current = await models.current();
     const privateFlagged = isReleased(cfg, "private");
+    // Training Labels: models whose provider trains on prompts, and the
+    // listed version that doesn't (see server/training.js).
+    const trainingFlagged = isReleased(cfg, "training");
+    const listed = current.data.filter((m) => modelReleased(m, cfg));
+    const offered = trainingFlagged ? liveIds(listed) : null;
     res.json({
       ...current,
       availabilityScope: "web-workspace",
       developerApiReleased: isReleased(cfg, "api"),
-      data: current.data
-        .filter((m) => modelReleased(m, cfg))
-        .map((m) => ({
+      data: listed.map((m) => ({
         ...m,
         callable: callable(m, cfg),
         apiCallable: isReleased(cfg, "api") && m.type === "chat" && callable(m, cfg),
@@ -89,6 +93,7 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
         imagePrice: generationPrice(m),
         vision: vision(m),
         ...(privateFlagged && isPrivateModel(m, cfg) ? { private: true } : {}),
+        ...(trainingFlagged ? trainingFields(m, offered) : {}),
       })),
     });
   });

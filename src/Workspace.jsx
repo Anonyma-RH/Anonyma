@@ -46,6 +46,14 @@ import {
   PrivateReplyNote,
   privateModeReleased,
 } from "./PrivateMode.jsx";
+import {
+  TrainingTag,
+  TrainingNotice,
+  trainingTitle,
+  untrainedAlternative,
+  trainingLabelsReleased,
+  useTrainingDismissals,
+} from "./TrainingLabels.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
 import {
@@ -314,6 +322,22 @@ export default function Workspace() {
     return base && (!textMode || !privateMode || m.private);
   });
   const selected = models.find((m) => m.id === model);
+  // Training Labels: flag models whose provider trains on prompts, and
+  // offer the listed version that doesn't. Private mode never lists them.
+  const trainingLive = !demo && trainingLabelsReleased(config);
+  const [trainingDismissed, dismissTraining] = useTrainingDismissals();
+  const trainingSelected =
+    trainingLive &&
+    textMode &&
+    !privateMode &&
+    selected?.trainsOnPrompts &&
+    visibleModels.some((m) => m.id === selected.id) &&
+    !trainingDismissed.includes(selected.id)
+      ? selected
+      : null;
+  const trainingAlternative = trainingSelected
+    ? untrainedAlternative(trainingSelected, visibleModels)
+    : null;
   // Video choices come only from the model's published prices, as the server requires.
   const presets = mode === "video" && selected ? videoPresets(selected) : [];
   const pick = (values, value) =>
@@ -1685,6 +1709,9 @@ export default function Workspace() {
                         >
                           <b>{m.name}</b>
                           {!demo && m.private && <PrivateModelTag />}
+                          {trainingLive && m.trainsOnPrompts && (
+                            <TrainingTag model={m} models={visibleModels} />
+                          )}
                           <span>@{m.id}</span>
                         </button>
                       ))}
@@ -1733,9 +1760,20 @@ export default function Workspace() {
                       >
                         {(() => {
                           const option = (m) => (
-                            <option value={m.id} key={m.id}>
+                            <option
+                              value={m.id}
+                              key={m.id}
+                              title={
+                                trainingLive && m.trainsOnPrompts
+                                  ? trainingTitle(m, visibleModels)
+                                  : undefined
+                              }
+                            >
                               {m.name}
                               {!demo && m.private ? " · Private" : ""}
+                              {trainingLive && m.trainsOnPrompts
+                                ? " · Trains on prompts"
+                                : ""}
                               {!m.callable && !demo ? " · catalog only" : ""}
                             </option>
                           );
@@ -1945,6 +1983,18 @@ export default function Workspace() {
                       </button>
                     )}
                   </div>
+                  {/* Training Labels: under the model picker, never blocking Send. */}
+                  {trainingSelected && (
+                    <TrainingNotice
+                      model={trainingSelected}
+                      alternative={trainingAlternative}
+                      onSwitch={() => {
+                        setModel(trainingAlternative.id);
+                        setQuote(null);
+                      }}
+                      onDismiss={() => dismissTraining(trainingSelected.id)}
+                    />
+                  )}
                   {mode === "image" && (
                     <details className="compare-options">
                       <summary>Compare image models (up to 4)</summary>

@@ -430,8 +430,14 @@ const NO_TEXT = "script,style,code,pre,textarea,noscript,kbd,samp";
 const OFF = '[data-i18n="off"],[contenteditable]:not([contenteditable="false"])';
 const ATTRS = ["placeholder", "title", "aria-label", "alt"];
 // "How" "it" "works" animate word by word; the dictionary's "工作" "原理"
-// already say it all, so the third word is left blank.
-const SCOPED = [[".flow-word", "works", ""]];
+// already say it all, so the third word is left blank. Likewise "Use
+// <model> instead" (Training Labels) reads "改用 <model>", with the model
+// name kept as written.
+const SCOPED = [
+  [".flow-word", "works", ""],
+  [".training-switch", "Use", "改用"],
+  [".training-switch", "instead", ""],
+];
 const scopedFor = (el) => {
   const found = SCOPED.filter(([selector]) => el.matches(selector));
   return found.length ? new Map(found.map(([, en, zh]) => [en, zh])) : undefined;

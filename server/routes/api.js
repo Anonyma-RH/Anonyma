@@ -1,4 +1,6 @@
 import { hash, now, fail, balance, credits, callable } from "../core.js";
+import { isReleased } from "../releases.js";
+import { apiTrainingFields, liveIds } from "../training.js";
 
 const bearerKey = (db, req) => {
   const secret = req.headers.authorization?.match(/^Bearer (\S+)$/)?.[1];
@@ -65,19 +67,23 @@ export function apiRoutes({ app, db, cfg, models }) {
         );
     else res.json(msg);
   });
-  app.get("/v1/models", apiAuth, (req, res) =>
+  app.get("/v1/models", apiAuth, (req, res) => {
+    const listed = models.snapshot.data.filter(
+      (m) => callable(m, cfg) && ["chat", "image"].includes(m.type),
+    );
+    // Training Labels (see server/training.js), once released.
+    const offered = isReleased(cfg, "training") ? liveIds(listed) : null;
     res.json({
       object: "list",
-      data: models.snapshot.data
-        .filter((m) => callable(m, cfg) && ["chat", "image"].includes(m.type))
-        .map((m) => ({
-          id: m.id,
-          object: "model",
-          owned_by: m.owned_by,
-          created: 0,
-        })),
-    }),
-  );
+      data: listed.map((m) => ({
+        id: m.id,
+        object: "model",
+        owned_by: m.owned_by,
+        created: 0,
+        ...(offered ? apiTrainingFields(m, offered) : {}),
+      })),
+    });
+  });
   app.get("/v1/balance", apiAuth, (req, res) =>
     res.json({
       balance: credits(balance(db, req.user.id).total),

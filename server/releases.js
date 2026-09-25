@@ -216,6 +216,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "training",
+    title: "Training Labels",
+    tagline: "Know when a provider learns from your prompts.",
+    points: [
+      "A clear label on models whose provider trains on what you send",
+      "One tap to the version that doesn't",
+      "Flagged in the API too",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 

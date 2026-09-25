@@ -6,6 +6,7 @@ import AsciiField from "./AsciiField.jsx";
 import { api, streamChat, uid, isReleased } from "./lib.js";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
 import { createVeilState } from "./veil.js";
+import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
 import {
   defaultSymposiumModels,
   buildFusionMessages,
@@ -58,6 +59,7 @@ export default function Symposium({
   const veilState = useRef(createVeilState());
   const [veilNote, setVeilNote] = useState(null);
   const veilLive = !demo && isReleased(config, "veil");
+  const trainingLive = !demo && trainingLabelsReleased(config);
   const veilMarks = [veilRemarkPlugin, { map: veilState.current.map }];
   const controllers = useRef({});
   const fuseController = useRef(null);
@@ -505,6 +507,9 @@ export default function Symposium({
                   onChange={() => toggleModel(m.id)}
                 />
                 <span data-i18n="off">{m.name}</span>
+                {trainingLive && m.trainsOnPrompts && (
+                  <TrainingTag model={m} models={visibleModels} />
+                )}
               </label>
             ))}
           </details>

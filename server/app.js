@@ -21,6 +21,7 @@ import { chatRoutes } from "./routes/chat.js";
 import { receiptRoutes } from "./routes/receipts.js";
 import { mcpRoutes } from "./routes/mcp.js";
 import { mediaRoutes } from "./routes/media.js";
+import { usageInsightRoutes } from "./routes/usage-insights.js";
 import { videoRoutes } from "./routes/videos.js";
 import { fileRoutes } from "./files.js";
 import { audioRoutes } from "./routes/audio.js";
@@ -99,6 +100,7 @@ export function createApp(overrides = {}) {
   collabRoutes(ctx);
   retentionRoutes(ctx);
   scrollsRoutes(ctx);
+  usageInsightRoutes(ctx);
   Object.assign(ctx, memoryRoutes(ctx));
   shareRoutes(ctx);
   holderRoutes(ctx);

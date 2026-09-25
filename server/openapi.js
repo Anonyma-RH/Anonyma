@@ -1254,6 +1254,87 @@ route("get", "/api/account/summary", "Spending over the last 14 days", {
     },
   ],
 });
+// Usage Insights & Export (update "insights"; server/usage-insights.js).
+const exactMoney = object({
+  units: { ...integer, description: "Integer ledger subcredits (10000 = 1 credit)." },
+  credits: { ...string, description: "Exact decimal string, 4 places." },
+  usd: { ...string, description: "Exact decimal string, 7 places (1 USD = 1000 credits)." },
+});
+const usageQuery = [
+  {
+    in: "query",
+    name: "from",
+    description: "First UTC day, YYYY-MM-DD (inclusive). Send with to, not with days.",
+    schema: string,
+  },
+  {
+    in: "query",
+    name: "to",
+    description: "Last UTC day, YYYY-MM-DD (inclusive), no later than today (UTC).",
+    schema: string,
+  },
+  {
+    in: "query",
+    name: "days",
+    description: "The last N UTC days including today, 1–366. Default 30 when from/to are absent.",
+    schema: { ...integer, minimum: 1, maximum: 366, default: 30 },
+  },
+];
+const usageRow = (label) =>
+  array(object({ [label]: string, requests: integer, spent: exactMoney }));
+route("get", "/api/account/usage", "Where your credits went, from your own ledger", {
+  query: usageQuery,
+  response: object({
+    range: object({ from: string, to: string, days: integer, timezone: { const: "UTC" }, start: string, end: string }),
+    units: object({ credits: string, usd: string }),
+    totals: object({
+      spent: exactMoney,
+      topups: exactMoney,
+      sent: exactMoney,
+      received: exactMoney,
+      rewards: exactMoney,
+      team_transfers: exactMoney,
+      other: exactMoney,
+      net: exactMoney,
+      requests: integer,
+      entries: integer,
+    }),
+    held: object({ ...exactMoney.properties, requests: integer }),
+    team_paid: object({ ...exactMoney.properties, requests: integer }),
+    daily: array(object({ date: string, requests: integer, spent: exactMoney })),
+    by_model: usageRow("model"),
+    by_feature: usageRow("feature"),
+    by_source: array(
+      object({
+        source: { enum: ["web", "api_key", "connected_app"] },
+        id: nullableString,
+        label: nullableString,
+        revoked: bool,
+        requests: integer,
+        spent: exactMoney,
+      }),
+    ),
+  }),
+  description:
+    "Needs the insights update released (403 feature_unreleased otherwise); only the signed-in account's own ledger; 60 requests a minute. Days are UTC days, and the range is at most 366 of them (400 invalid_range or range_too_long). All sums are integer subcredits written as exact decimal strings, so net equals the ledger's own sum for the range and equals topups + received + rewards + team_transfers + other - spent - sent. spent is settled requests only (a released hold adds nothing), and daily, by_model, by_feature and by_source each add up to it. by_feature is chat, web_search, symposium, double_check (chat requests labelled from this release on; off the record and Private only chat or web_search), image, video, speech, transcription. held is what is reserved right now, not a range figure. team_paid is what this account's Team pays requests cost Team Treasuries in the range: not this account's balance, so it is in no other figure and not exported. No prompts, replies or media are read.",
+});
+route("get", "/api/account/usage/export", "Download your ledger rows as CSV or JSON", {
+  query: [
+    {
+      in: "query",
+      name: "format",
+      description: "csv (default) or json.",
+      schema: { enum: ["csv", "json"], default: "csv" },
+    },
+    ...usageQuery,
+  ],
+  description:
+    "Needs the insights update released (403 feature_unreleased otherwise). Every ledger entry of the signed-in account in the range (same from/to/days rules as /api/account/usage), oldest first, as a download (Content-Disposition attachment; X-Export-Rows gives the count). Columns: timestamp_utc (ISO 8601), entry_id, type (ledger kind), category (spend, topup, sent, received, reward, team, other), credits and usd (exact signed decimal strings from integer subcredits), subcredits (the integer), model, feature and source (spend rows), key_or_app (API key or connected app name), receipt_id (request id of a signed receipt, for GET /api/receipts/{id}), ledger_ref, description (server-written). The credits column sums exactly to the ledger for those rows. CSV is RFC 4180 with CRLF and a UTF-8 byte-order mark; a text cell starting with = + - @, a tab or a line break (or a full-width = + - @) is prefixed with an apostrophe so spreadsheets don't run it. JSON has the same entries plus range, units and a summary. Team pays charges (a Team Treasury's ledger) and all prompt, reply and media content are never included. At most 100,000 entries per file (400 export_too_large with the count; nothing is truncated); 20 exports per 10 minutes.",
+});
+paths["/api/account/usage/export"].get.responses[200].content = {
+  "text/csv": { schema: { type: "string" } },
+  "application/json": { schema: object() },
+};
 route("get", "/api/keys", "List key metadata; raw keys never returned");
 route("post", "/api/keys", "Create API key; secret returned once", {
   body: object({

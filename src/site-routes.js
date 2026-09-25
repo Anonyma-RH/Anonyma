@@ -29,8 +29,9 @@ export const PUBLIC_PAGES = [
   ...DOC_TOPICS.map((x) => "/docs/" + x),
   ...GUIDE_SLUGS.map((x) => "/guides/" + x),
 ];
-// "limits" is Spending Limits; it shows as coming soon until released.
-const ACCOUNT = ["overview", "credits", "limits", "keys", "settings"];
+// "usage" is Usage Insights and "limits" is Spending Limits; each shows as
+// coming soon until released.
+const ACCOUNT = ["overview", "usage", "credits", "limits", "keys", "settings"];
 const MODES = [
   "home",
   "chat",

@@ -352,6 +352,8 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
     ],
   ];
   const kinds = summary?.byKind || [];
+  // Usage Insights & Export: the full breakdown and the ledger file.
+  const insightsOn = isReleased(config, "insights");
   const kindMax = Math.max(0, ...kinds.map((k) => k.spent));
   const activeKeys = (keys || []).filter((k) => !k.revoked);
   const key = activeKeys.find((k) => k.cap != null) || activeKeys[0];
@@ -556,6 +558,11 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
             ) : (
               <p className="dash-empty">
                 Once you use a model, this shows which kinds of work your credits went to.
+              </p>
+            )}
+            {insightsOn && (
+              <p className="dash-empty dash-usage-more" style={{ marginTop: 20 }}>
+                <Link to={"/account/usage" + q}>Usage insights and export</Link>
               </p>
             )}
           </div>

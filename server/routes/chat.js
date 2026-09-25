@@ -26,6 +26,7 @@ import { buildReceiptPayload } from "../receipts.js";
 import { providerKey, sameProvider } from "../../src/double-check.js";
 import { validateTaskRequest } from "../task-tools.js";
 import { withMemory } from "../../src/memory.js";
+import { tagUsage, chatFeature } from "../usage-insights.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -207,6 +208,11 @@ export function chatRoutes(ctx) {
         throw e;
       reservation(amount);
     }
+    // Usage Insights: what this spend is filed under, without content.
+    tagUsage(db, cfg, hold, {
+      feature: chatFeature({ api, ephemeral, body: req.body, webSearch }),
+      model: m.id,
+    });
     // Nothing can be sent upstream yet, so a failure here releases the hold
     // immediately instead of leaving credits reserved until it expires.
     if (!api && !ephemeral)

@@ -32,6 +32,7 @@ import {
 } from "./lib.js";
 import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
 import McpConnect from "./McpConnect.jsx";
+import UsageInsights from "./UsageInsights.jsx";
 import { KeyAllowance } from "./Allowances.jsx";
 import { SpendingLimits } from "./SpendingLimits.jsx";
 import { ConnectedApps, connectReleased } from "./Connect.jsx";
@@ -274,8 +275,11 @@ export default function Account() {
   }
   // Spending Limits shows only once it's released.
   const limitsOn = isReleased(config, "limits");
+  // Usage Insights & Export shows only once it's released.
+  const insightsOn = isReleased(config, "insights");
   const tabs = [
     ["overview", "Overview"],
+    ...(insightsOn ? [["usage", "Usage"]] : []),
     ["credits", "Credits & funding"],
     ...(limitsOn ? [["limits", "Spending limits"]] : []),
     ["keys", "API keys"],
@@ -342,6 +346,8 @@ export default function Account() {
                 ? "API keys"
                 : section === "limits"
                   ? "Spending limits"
+                : section === "usage"
+                  ? "Usage insights"
                   : section === "credits"
                   ? "Credits & funding"
                   : section === "settings"
@@ -660,6 +666,12 @@ export default function Account() {
           )}
           {section === "limits" && limitsOn && (demo || user) && (
             <SpendingLimits demo={demo} />
+          )}
+          {section === "usage" && !insightsOn && (
+            <ComingSoon update={releaseUpdate(config, "insights")} />
+          )}
+          {section === "usage" && insightsOn && (demo || user) && (
+            <UsageInsights demo={demo} />
           )}
           {section === "keys" && !isReleased(config, "api") && (
             <ComingSoon update={releaseUpdate(config, "api")} />

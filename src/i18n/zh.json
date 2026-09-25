@@ -2440,7 +2440,64 @@
     "1 result": "1 个结果",
     "Move": "移动",
     "Choose": "选择",
-    "Open or close": "打开或关闭"
+    "Open or close": "打开或关闭",
+    "Usage": "用量",
+    "Usage insights": "用量洞察",
+    "Usage Insights & Export": "用量洞察与导出",
+    "Every credit, accounted for.": "每一笔积分，都有据可查。",
+    "Spending by day, model, feature and key": "按日期、模型、功能和密钥查看消费",
+    "Totals that add up exactly to your ledger": "合计与你的账本分毫不差",
+    "Export your own ledger as CSV or JSON": "将你自己的账本导出为 CSV 或 JSON",
+    "Where your credits went": "你的积分去了哪里",
+    "From your own ledger, exact to 0.0001 credit. Days are UTC days (00:00–24:00 UTC).": "数据来自你自己的账本，精确到 0.0001 积分。日期按 UTC 日计算（UTC 00:00–24:00）。",
+    "Range": "范围",
+    "Spent": "已消费",
+    "Top-ups": "充值",
+    "Held now": "当前冻结",
+    "Rewards": "奖励",
+    "Team Treasury transfers": "团队金库转账",
+    "Settled requests": "已结算的请求",
+    "Deposits, net of any reversals": "充值（已扣除冲正）",
+    "To other accounts": "转给其他账户",
+    "From other accounts": "来自其他账户",
+    "Reserved for requests still running": "为仍在运行的请求冻结",
+    "Referral and holder rewards": "推荐与持有者奖励",
+    "Into and out of Team Treasuries": "转入和转出团队金库",
+    "Credits spent per UTC day": "每个 UTC 日消费的积分",
+    "Nothing spent in this range.": "此范围内没有消费。",
+    "By model": "按模型",
+    "By feature": "按功能",
+    "By key or app": "按密钥或应用",
+    "No requests in this range.": "此范围内没有请求。",
+    "Unrecorded model": "未记录的模型",
+    "Web search, Symposium and Double-check labels start with this release; earlier chat requests show as Chat. Off-the-record and Private chats are labelled only by model and web search.": "联网搜索、模型圆桌和再核对的标签从此版本开始记录；更早的对话请求显示为“对话”。不留记录和隐私模式的对话只按模型和联网搜索标注。",
+    "Export your ledger": "导出你的账本",
+    "Every ledger entry in the range, oldest first: time (UTC), type, credits and USD (exact), model, feature, key or app, receipt ID and ledger reference. Never prompts or replies.": "范围内的每一条账本记录，按时间先后排列：时间（UTC）、类型、积分和美元（精确值）、模型、功能、密钥或应用、收据 ID 和账本引用。绝不包含提示词或回复。",
+    "From (UTC)": "起始（UTC）",
+    "To (UTC)": "截止（UTC）",
+    "Format": "格式",
+    "Preparing file…": "正在准备文件……",
+    "Up to 366 days and 100,000 entries per file. Cells that a spreadsheet could run as a formula start with an apostrophe.": "每个文件最多 366 天、100,000 条记录。可能被电子表格当作公式执行的单元格会以撇号开头。",
+    "Sign in to export your own ledger. The sample account has no ledger.": "登录后即可导出你自己的账本。示例账户没有账本。",
+    "Loading usage…": "正在加载用量……",
+    "Choose both dates.": "请选择两个日期。",
+    "The start date must be on or before the end date.": "开始日期必须早于或等于结束日期。",
+    "The end date can't be after today (UTC).": "结束日期不能晚于今天（UTC）。",
+    "Choose a range of at most 366 days.": "请选择最多 366 天的范围。",
+    "The export failed. Try again.": "导出失败。请重试。",
+    "Usage insights and export": "用量洞察与导出",
+    "Export CSV": "导出 CSV",
+    "Export JSON": "导出 JSON",
+    "Web search": "联网搜索",
+    "Double-check": "再核对",
+    "Transcription": "转录",
+    "Other": "其他",
+    "API key": "API 密钥",
+    "Send both from and to as UTC dates (YYYY-MM-DD).": "请以 UTC 日期（YYYY-MM-DD）同时提供 from 和 to。",
+    "Send either from and to, or days, not both.": "请提供 from 和 to，或提供 days，不要同时提供。",
+    "days must be a whole number from 1 to 366.": "days 必须是 1 到 366 之间的整数。",
+    "from must be on or before to.": "from 必须早于或等于 to。",
+    "format must be csv or json.": "format 必须是 csv 或 json。"
   },
   "patterns": [
     {
@@ -3730,6 +3787,34 @@
     {
       "en": "{0} results",
       "zh": "{0} 个结果"
+    },
+    {
+      "en": "{0} requests",
+      "zh": "{0} 个请求"
+    },
+    {
+      "en": "{0} request",
+      "zh": "{0} 个请求"
+    },
+    {
+      "en": "Net change in this range: {0} credits",
+      "zh": "此范围内的净变化：{0} 积分"
+    },
+    {
+      "en": "Team pays: {0} credits across {1} were charged to Team Treasuries, not your balance, so they're not counted above or exported.",
+      "zh": "团队付费：{1}共计 {0} 积分由团队金库支付，未从你的余额扣除，因此不计入上方合计，也不会导出。"
+    },
+    {
+      "en": "{0} entries exported.",
+      "zh": "已导出 {0} 条记录。"
+    },
+    {
+      "en": "This range has {0} ledger entries; one export holds at most {1}. Choose a shorter range.",
+      "zh": "此范围共有 {0} 条账本记录；每次导出最多 {1} 条。请选择更短的范围。"
+    },
+    {
+      "en": "to can't be after today's UTC date ({0}).",
+      "zh": "to 不能晚于今天的 UTC 日期（{0}）。"
     }
   ]
 }

@@ -591,6 +591,14 @@ export const MIGRATIONS = [
             WHERE conversation_id=NEW.id AND (expires IS NULL OR expires>NEW.expires);
         END;
   `),
+  // Usage Insights (server/usage-insights.js): what a chat request's spend is
+  // filed under (chat, web search, Symposium or Double-check) and its model
+  // id, keyed by its hold. Written when the request is reserved, only while
+  // the update is released; no content, and no user id of its own.
+  additive(`CREATE TABLE IF NOT EXISTS usage_tags(
+      hold_id TEXT PRIMARY KEY REFERENCES holds(id),
+      feature TEXT NOT NULL,
+      model TEXT);`),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

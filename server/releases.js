@@ -437,6 +437,17 @@ export const UPDATES = [
     // Browser only: no server routes, so nothing to gate in featuresFor.
     released: false,
   },
+  {
+    id: "insights",
+    title: "Usage Insights & Export",
+    tagline: "Every credit, accounted for.",
+    points: [
+      "Spending by day, model, feature and key",
+      "Totals that add up exactly to your ledger",
+      "Export your own ledger as CSV or JSON",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -621,6 +632,8 @@ export function featuresFor(req) {
     p.startsWith("/s/")
   )
     return ["sharelinks"];
+  if (p === "/api/account/usage" || p.startsWith("/api/account/usage/"))
+    return ["insights"];
   // Branching a saved conversation (edit and regenerate use it too).
   if (/^\/api\/conversations\/[^/]+\/branch$/.test(p)) return ["branches"];
   if (

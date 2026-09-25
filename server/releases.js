@@ -203,7 +203,7 @@ export const UPDATES = [
       "Type / to insert one",
       "Standing instructions for every chat",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

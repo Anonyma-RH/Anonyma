@@ -2586,6 +2586,7 @@ test("credits can be sent once per request to another account and never overdraw
   const s = fixture(t);
   const alice = await register(s.app, "alice");
   const bob = await register(s.app, "bob");
+  const carol = await register(s.app, "carol");
   const send = (body) => alice.agent.post("/api/credits/send").send(body);
   const aliceBefore = balance(s.db, alice.user.id).total;
   const bobBefore = balance(s.db, bob.user.id).total;
@@ -2599,7 +2600,22 @@ test("credits can be sent once per request to another account and never overdraw
   // A retry with the same request ID doesn't send twice.
   await send({ to: "bob", amount: 2.5, requestId: "gift-1" }).expect(200);
   assert.equal(balance(s.db, bob.user.id).total - bobBefore, 25000);
+  // The request ID binds the recipient as well as the amount. A retry must
+  // never claim to have paid a different account or move either balance.
+  const ledgerBeforeMismatch = s.db.prepare("SELECT * FROM ledger ORDER BY rowid").all();
+  const balancesBeforeMismatch = [alice, bob, carol].map(({ user }) =>
+    balance(s.db, user.id),
+  );
+  await send({ to: "carol", amount: 2.5, requestId: "gift-1" }).expect(409);
   await send({ to: "bob", amount: 3, requestId: "gift-1" }).expect(409);
+  assert.deepEqual(
+    s.db.prepare("SELECT * FROM ledger ORDER BY rowid").all(),
+    ledgerBeforeMismatch,
+  );
+  assert.deepEqual(
+    [alice, bob, carol].map(({ user }) => balance(s.db, user.id)),
+    balancesBeforeMismatch,
+  );
 
   await send({ to: "alice", amount: 1 }).expect(400);
   await send({ to: "nobody", amount: 1 }).expect(404);

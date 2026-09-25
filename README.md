@@ -7,10 +7,7 @@ prepaid credit balance. This repository contains the React client, Node.js API,
 SQLite accounting and conversation storage, model gateway integration, CLI,
 and application tests.
 
-The hosted app includes chat, Code & Build, Live Web Search, Veil, Uncensored Models, the expanded chat model catalog, Video Studio, dashboard,
-account and credits. The source also includes image, audio, collaboration,
-and developer features whose availability is controlled by release gates.
-Source availability does not mean every feature is enabled on the hosted app.
+The hosted app includes chat, Code & Build, Live Web Search, Veil, Uncensored Models, the expanded model catalog, Image Studio, Voice & Audio, Video Studio, Collab, Developer API & CLI, Referrals & Credits, dashboard, account and credits. Availability remains controlled by named release gates.
 
 ## Contract address
 
@@ -52,6 +49,8 @@ reference images, with model-specific frame and duration options. Includes its G
 [Collab](docs/releases/collab.md): Create shared workspaces for up to 12 people total, invite participants by link, and work in shared conversations. Each person pays for their own requests. Includes its launch film.
 
 [Developer API & CLI](docs/releases/developer-api-and-cli.md): Use an API key for OpenAI-compatible chat completions and model discovery, or send requests from the terminal CLI. Optional per-key caps apply over a rolling 24 hours. Includes its launch film.
+
+[Referrals & Credits](docs/releases/referrals-and-credits.md): Share your referral link and get 5% back in credits on confirmed top-ups from friends who joined through it. Separately, send existing prepaid credits to another account by username. Includes its launch film.
 
 ## How it works
 

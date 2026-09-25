@@ -97,6 +97,7 @@ export const UPDATES = [
   },
   {
     id: "social",
+    released: true,
     title: "Referrals & Credits",
     tagline: "Invite friends. Get credits back.",
     points: [

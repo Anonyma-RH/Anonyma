@@ -8,7 +8,7 @@ import { createApp } from "../server/app.js";
 import { UNCENSORED_MODELS, UPDATES } from "../server/releases.js";
 
 // These fixtures test an unreleased catalog independently of release commits.
-const controlled = UPDATES.filter((u) => ["uncensored", "catalog"].includes(u.id));
+const controlled = UPDATES.filter((u) => ["uncensored", "catalog", "images"].includes(u.id));
 const committedReleases = controlled.map((u) => u.released);
 before(() => controlled.forEach((u) => { u.released = false; }));
 after(() => controlled.forEach((u, i) => { u.released = committedReleases[i]; }));
@@ -124,7 +124,7 @@ test("releasing Uncensored leaves every other gate as it was", async (t) => {
     if (!expected[feature])
       assert.equal(response.body.error.code, "feature_unreleased");
   }
-  await request(svc.app).get("/v1/models").expect(403);
+  await request(svc.app).get("/v1/models").expect(expected.api ? 401 : 403);
   // A request needing two releases is checked against both.
   if (!expected.search)
     await a.post("/api/chat").send(chat({ web_search: true })).expect(403);

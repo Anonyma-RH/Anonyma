@@ -1452,7 +1452,8 @@
     "Payment correction": "付款更正",
     "Referral correction": "推荐奖励更正",
     "More models. One balance.": "更多模型，一个余额。",
-    "Reference catalog snapshot": "参考目录快照"
+    "Reference catalog snapshot": "参考目录快照",
+    "Dictate prompts into your composer": "在输入框中口述提示词"
   },
   "patterns": [
     {

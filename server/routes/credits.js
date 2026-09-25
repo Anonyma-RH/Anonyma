@@ -97,7 +97,14 @@ export function creditRoutes(ctx) {
           .prepare("SELECT amount FROM ledger WHERE ref=?")
           .get(id + ":out");
         if (previous) {
-          if (-previous.amount !== units)
+          const received = db
+            .prepare("SELECT user_id,amount FROM ledger WHERE ref=?")
+            .get(id + ":in");
+          if (
+            -previous.amount !== units ||
+            received?.user_id !== recipient.id ||
+            received.amount !== units
+          )
             fail(
               409,
               "That request ID was already used for a different transfer.",

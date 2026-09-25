@@ -249,10 +249,15 @@ export function accountRoutes(ctx) {
         })),
       keys: db
         .prepare(
-          "SELECT id,name,prefix,cap,created,revoked,last_used FROM api_keys WHERE user_id=?",
+          "SELECT id,name,prefix,cap,created,revoked,last_used,agent_label,allowance_total,allowance_expires,paused_at FROM api_keys WHERE user_id=?",
         )
         .all(req.user.id)
-        .map((k) => ({ ...k, cap: k.cap == null ? null : credits(k.cap) })),
+        .map((k) => ({
+          ...k,
+          cap: k.cap == null ? null : credits(k.cap),
+          allowance_total:
+            k.allowance_total == null ? null : credits(k.allowance_total),
+        })),
       sessions: db
         .prepare(
           "SELECT created,expires FROM sessions WHERE user_id=? AND expires>?",

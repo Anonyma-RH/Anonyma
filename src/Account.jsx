@@ -55,6 +55,9 @@ export default function Account() {
   const [params] = useSearchParams();
   const demo = params.get("demo") === "1";
   const { user, connected, config, refresh } = useApp();
+  // Agent allowances extend API keys, so they show only once both are live.
+  const allowancesOn =
+    isReleased(config, "api") && isReleased(config, "allowances");
   const [menu, setMenu] = useState(false),
     [keys, setKeys] = useState(() => (demo ? readStore("keys", []) : [])),
     [ledger, setLedger] = useState([]),
@@ -645,7 +648,7 @@ export default function Account() {
                       <tr>
                         <th>Name / prefix</th>
                         <th>Rolling 24h cap</th>
-                        {isReleased(config, "allowances") && (
+                        {allowancesOn && (
                           <th>Allowance</th>
                         )}
                         <th>Created</th>
@@ -671,7 +674,7 @@ export default function Account() {
                               </>
                             )}
                           </td>
-                          {isReleased(config, "allowances") && (
+                          {allowancesOn && (
                             <td>
                               {!k.revoked && (
                                 <KeyAllowance

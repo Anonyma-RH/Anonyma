@@ -3,6 +3,15 @@ import { Icon, Button, Modal, Notice } from "./ui.jsx";
 import { api } from "./lib.js";
 import "./allowances.css";
 
+// A timestamp as the local calendar date a date input shows ("2026-10-25").
+// toISOString would give the UTC date, a day off west or east of UTC, and
+// saving the dialog unchanged would then move the expiry by a day.
+const localDate = (ms) => {
+  const d = new Date(ms);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+
 // A budgeted agent credential built on top of a regular API key: a lifetime
 // credit allowance, an optional expiry and a pause switch. Mounted per key in
 // the keys section of Account.jsx. In demo mode nothing is sent to the
@@ -64,8 +73,10 @@ export function KeyAllowance({ k, demo, onChange }) {
     try {
       if (demo) onChange({ paused: !k.paused });
       else {
+        // The server takes only JSON posts, so an empty object is sent.
         await api(`/api/keys/${k.id}/${k.paused ? "resume" : "pause"}`, {
           method: "POST",
+          body: {},
         });
         onChange();
       }
@@ -102,7 +113,11 @@ export function KeyAllowance({ k, demo, onChange }) {
         <p className="allowance-figures muted">No allowance set</p>
       )}
       <div className="allowance-meta">
-        {k.label && <span className="allowance-tag">{k.label}</span>}
+        {k.label && (
+          <span className="allowance-tag" data-i18n="off">
+            {k.label}
+          </span>
+        )}
         {k.expires_at != null && (
           <span className={"allowance-tag" + (expired ? " expired" : "")}>
             {expired ? "Expired" : "Expires"}{" "}
@@ -152,7 +167,7 @@ export function KeyAllowance({ k, demo, onChange }) {
                 name="total_credits"
                 type="number"
                 min="0"
-                step="1"
+                step="any"
                 value={creditsInput}
                 onChange={(e) => setCreditsInput(e.target.value)}
                 placeholder="Leave blank to remove the allowance"
@@ -168,11 +183,7 @@ export function KeyAllowance({ k, demo, onChange }) {
               <input
                 name="expires_at"
                 type="date"
-                defaultValue={
-                  k.expires_at
-                    ? new Date(k.expires_at).toISOString().slice(0, 10)
-                    : ""
-                }
+                defaultValue={k.expires_at ? localDate(k.expires_at) : ""}
               />
             </label>
             <Button disabled={busy}>

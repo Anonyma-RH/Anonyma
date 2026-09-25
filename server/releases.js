@@ -300,9 +300,9 @@ export function modelReleased(m, cfg) {
   );
 }
 
-// All release gates required by a request. Discovery uses the first gate.
+// All release gates required by a request. featureFor is the first gate.
 export const featureFor = (req) => featuresFor(req)[0] || null;
-function featuresFor(req) {
+export function featuresFor(req) {
   const p = req.path,
     post = req.method === "POST",
     body = req.body || {};

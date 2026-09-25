@@ -1,4 +1,4 @@
-import { featureFor, isReleased, releaseInfo } from "./releases.js";
+import { featuresFor, isReleased, releaseInfo } from "./releases.js";
 
 const string = { type: "string" };
 const number = { type: "number" };
@@ -889,7 +889,7 @@ route(
 route("post", "/api/keys/{id}/pause", "Pause an API key", {
   response: ref("KeyUsage"),
   description:
-    "Owner only. A paused key is authenticated as normal but every request is refused with 403 key_paused until resumed.",
+    "Owner only. A paused key still authenticates, but every request that would spend credits is refused with 403 key_paused until it is resumed.",
 });
 route("post", "/api/keys/{id}/resume", "Resume a paused API key", {
   response: ref("KeyUsage"),
@@ -1068,12 +1068,13 @@ export function openapiForConfig(cfg) {
     Object.entries(openapi.paths).flatMap(([path, methods]) => {
       const available = Object.fromEntries(
         Object.entries(methods).filter(([method]) => {
-          const feature = featureFor({
+          // Every gate, so a route that needs two updates (an allowance
+          // needs api and allowances) stays unlisted until both are live.
+          return featuresFor({
             path,
             method: method.toUpperCase(),
             body: {},
-          });
-          return !feature || isReleased(cfg, feature);
+          }).every((id) => isReleased(cfg, id));
         }),
       );
       return Object.keys(available).length ? [[path, available]] : [];

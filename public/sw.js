@@ -1,47 +1,61 @@
-// Service worker for the installable ANONYMA app shell. Scope is "/" (the
-// file is served from the origin root), so no Service-Worker-Allowed header
-// is needed. Only GET, same-origin requests are ever intercepted.
+// Service worker for the installable ANONYMA app. It is registered only once
+// the "app" update is released (useInstallAppGate in src/InstallApp.jsx), and
+// its scope is "/" because the file is served from the origin root.
 //
-// Bump CACHE_VERSION when this file's caching *strategy* changes. Content
-// changes to hashed build assets do not need a bump: a new deploy produces
-// new hashed filenames, which simply miss the existing cache and get fetched
-// fresh — the old, now-unreferenced entries are cleared on the next activate.
-const CACHE_VERSION = "v1";
-const CACHE_NAME = "anonyma-shell-" + CACHE_VERSION;
+// It deliberately does very little:
+// - Page navigations always go to the network, so a new deploy's HTML (and
+//   the hashed asset URLs it names) is what people see whenever they are
+//   online. Pages are never cached; the offline page is shown only when the
+//   network request itself fails.
+// - Hashed build files under /assets/ never change under a given name, so
+//   they are served cache-first and the cache is kept to a bounded size.
+// - Every other request (the API, /v1, /mcp, /health, /version.json, media,
+//   audio/video, byte ranges, downloads, other origins, anything that isn't
+//   a GET) is left alone: the worker doesn't call respondWith for it.
+//
+// Bump CACHE_VERSION whenever this file's caching strategy changes; activate
+// deletes every cache from an older version.
+const CACHE_VERSION = "v2";
+const SHELL_CACHE = "anonyma-shell-" + CACHE_VERSION;
+const ASSET_CACHE = "anonyma-assets-" + CACHE_VERSION;
 const OFFLINE_URL = "/offline.html";
+// The offline page and the script that picks its language. Nothing else is
+// precached: the app itself needs the network to reach models and accounts.
+const SHELL_URLS = [OFFLINE_URL, "/offline.js"];
+// Roughly one and a half builds' worth of hashed files; the oldest go first.
+const MAX_ASSETS = 120;
 
-// A minimal, always-available shell. Everything else (hashed JS/CSS, icons,
-// fonts) is cached opportunistically the first time it is requested, via the
-// runtime strategy below.
-const SHELL_URLS = ["/", "/workspace", "/manifest.webmanifest", OFFLINE_URL];
-
-// Requests that must always reach the network untouched: the API, the
-// OpenAI-compatible /v1 surface, health checks and any private media (media
-// is itself served under /api/media/*, so the /api/ rule already covers it).
-function isNeverCached(url) {
+// Requests the worker must never answer or cache, even as navigations.
+function isNeverHandled(url, request) {
+  const p = url.pathname;
   return (
-    url.pathname.startsWith("/api/") ||
-    url.pathname === "/api" ||
-    url.pathname.startsWith("/v1") ||
-    url.pathname === "/health"
+    p === "/api" ||
+    p.startsWith("/api/") ||
+    p === "/v1" ||
+    p.startsWith("/v1/") ||
+    p === "/mcp" ||
+    p.startsWith("/mcp/") ||
+    p === "/health" ||
+    p === "/version.json" ||
+    p.startsWith("/media/") ||
+    request.headers.has("range") ||
+    request.destination === "video" ||
+    request.destination === "audio" ||
+    /\.(mp4|webm|mov|m4v|mp3|wav|m4a|aac|ogg|oga|flac)$/i.test(p)
   );
 }
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(CACHE_NAME);
-      // Tolerate any single missing shell URL (e.g. offline.html not yet
-      // built in a dev checkout) instead of failing the whole install.
-      await Promise.allSettled(
-        SHELL_URLS.map((url) =>
-          cache.add(new Request(url, { cache: "reload" })),
-        ),
+      const cache = await caches.open(SHELL_CACHE);
+      // All or nothing: if the offline page can't be stored the install
+      // fails and the browser tries again on a later visit.
+      await cache.addAll(
+        SHELL_URLS.map((url) => new Request(url, { cache: "reload" })),
       );
-      // Take over from any previous worker as soon as this one finishes
-      // installing. Safe here because navigations are network-first (below),
-      // so an immediately-activated worker never serves stale HTML paired
-      // with mismatched hashed assets — see clients.claim() note below.
+      // Safe to take over at once: pages are never served from cache while
+      // online, so a new worker can't pair stale HTML with new assets.
       await self.skipWaiting();
     })(),
   );
@@ -50,17 +64,13 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
+      const current = [SHELL_CACHE, ASSET_CACHE];
       const names = await caches.keys();
       await Promise.all(
         names
-          .filter((name) => name.startsWith("anonyma-shell-") && name !== CACHE_NAME)
+          .filter((name) => name.startsWith("anonyma-") && !current.includes(name))
           .map((name) => caches.delete(name)),
       );
-      // Control already-open tabs immediately. Paired with skipWaiting and
-      // network-first navigations, this is how a new deploy is picked up
-      // without an interstitial "reload to update" prompt: the very next
-      // navigation or fetch already goes through the new worker, and it
-      // still prefers the network over anything cached.
       await self.clients.claim();
     })(),
   );
@@ -71,63 +81,67 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return; // never intercept writes
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return; // same-origin only
-  if (isNeverCached(url)) return; // let the API/health/v1 hit the network directly
-  // Films and audio stream with byte-range requests (206 responses can't be
-  // cached) and are tens of megabytes; leave them to the browser's own cache.
-  if (
-    request.headers.has("range") ||
-    request.destination === "video" ||
-    request.destination === "audio" ||
-    /\.(mp4|webm|mov|mp3|wav|m4a|ogg)$/i.test(url.pathname)
-  )
-    return;
+  if (isNeverHandled(url, request)) return;
 
-  const isNavigation =
-    request.mode === "navigate" ||
-    (request.headers.get("accept") || "").includes("text/html");
-
-  if (isNavigation) {
-    event.respondWith(networkFirstNavigation(request));
+  if (request.mode === "navigate") {
+    // Only app pages (no file extension): downloads such as /install.sh,
+    // /cli.mjs or /llms.txt and opened files stay plain browser navigations.
+    if (/\.[a-z0-9]+$/i.test(url.pathname) && url.pathname !== OFFLINE_URL)
+      return;
+    event.respondWith(networkFirstPage(request));
     return;
   }
-
-  event.respondWith(staleWhileRevalidate(request));
+  if (url.pathname.startsWith("/assets/")) {
+    event.respondWith(cacheFirstAsset(event));
+    return;
+  }
+  if (SHELL_URLS.includes(url.pathname)) {
+    event.respondWith(networkFirstShell(request));
+  }
+  // Anything else goes to the network exactly as if there were no worker.
 });
 
-// Always prefer a live page so a fresh deploy's HTML (and the new hashed
-// asset URLs it references) is what people see whenever they are online.
-// Cache is only a fallback for genuinely offline starts.
-async function networkFirstNavigation(request) {
+// The live page whenever the network answers at all (including 404s and
+// server errors, which are real answers); the offline page only when the
+// request itself fails.
+async function networkFirstPage(request) {
   try {
-    const response = await fetch(request);
-    if (response && response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
+    return await fetch(request);
   } catch {
-    const cache = await caches.open(CACHE_NAME);
-    return (
-      (await cache.match(request)) ||
-      (await cache.match(OFFLINE_URL)) ||
-      Response.error()
-    );
+    const cached = await caches.match(OFFLINE_URL, { cacheName: SHELL_CACHE });
+    return cached || Response.error();
   }
 }
 
-// Serve instantly from cache when available, refreshing it in the
-// background. Hashed build assets never change under a given filename, so
-// this is effectively cache-first for them; unhashed static files (fonts,
-// icons, the hero clip) still get refreshed on every successful fetch
-// instead of staying stale forever.
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(CACHE_NAME);
+async function networkFirstShell(request) {
+  try {
+    return await fetch(request);
+  } catch {
+    const cached = await caches.match(new URL(request.url).pathname, {
+      cacheName: SHELL_CACHE,
+    });
+    return cached || Response.error();
+  }
+}
+
+async function cacheFirstAsset(event) {
+  const { request } = event;
+  const cache = await caches.open(ASSET_CACHE);
   const cached = await cache.match(request);
-  const network = fetch(request)
-    .then((response) => {
-      if (response && response.ok) cache.put(request, response.clone());
-      return response;
-    })
-    .catch(() => null);
-  return cached || (await network) || Response.error();
+  if (cached) return cached;
+  const response = await fetch(request);
+  // Only complete, successful answers: a missing old chunk falls through to
+  // the server's HTML 404 page, which must never be stored as a script.
+  if (response.status === 200) {
+    const copy = response.clone();
+    event.waitUntil(cache.put(request, copy).then(() => trim(cache)));
+  }
+  return response;
+}
+
+// Cache keys come back in insertion order, so the oldest entries go first.
+async function trim(cache) {
+  const keys = await cache.keys();
+  for (const key of keys.slice(0, Math.max(0, keys.length - MAX_ASSETS)))
+    await cache.delete(key);
 }

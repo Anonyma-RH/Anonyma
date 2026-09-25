@@ -258,6 +258,13 @@ function featuresFor(req) {
   if (p === "/v1" || p.startsWith("/v1/")) return ["api"];
   if (p === "/api/keys" && post) return ["api"];
   if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return ["api"];
+  // The installable app's manifest, service worker and offline page.
+  if (
+    ["/manifest.webmanifest", "/sw.js", "/offline.html", "/offline.js"].includes(
+      p,
+    )
+  )
+    return ["app"];
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
   if (p.startsWith("/api/retention")) return ["ephemeral"];
   if (

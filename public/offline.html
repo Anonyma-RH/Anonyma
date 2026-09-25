@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0135df" />
 <title>You're offline — ANONYMA</title>
+<!-- Static and outside React, so it carries both languages itself:
+     offline.js shows the Chinese copy when the site's own language switch
+     (localStorage "anonyma.lang") is set to Chinese. No inline script or
+     handlers, so the site's Content-Security-Policy applies unchanged. -->
 <style>
   html, body { margin: 0; padding: 0; }
   body {
@@ -14,7 +18,7 @@
     justify-content: center;
     background: #0135df;
     color: #fff;
-    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
     text-align: center;
     padding: 24px;
     box-sizing: border-box;
@@ -22,25 +26,35 @@
   main { max-width: 360px; }
   h1 { font-size: 20px; font-weight: 600; margin: 0 0 10px; }
   p { font-size: 14px; line-height: 1.6; color: #d9e3ff; margin: 0 0 24px; }
-  button {
-    font: inherit;
+  a {
+    display: inline-block;
     font-size: 13px;
     font-weight: 600;
     color: #0135df;
     background: #fff;
-    border: 0;
     border-radius: 2px;
     padding: 12px 20px;
-    cursor: pointer;
+    text-decoration: none;
   }
-  button:hover { background: #eef2ff; }
+  a:hover { background: #eef2ff; }
+  .zh-copy, html.zh .en-copy { display: none; }
+  html.zh .zh-copy { display: block; }
 </style>
+<script src="/offline.js"></script>
 </head>
 <body>
-  <main>
+<main>
+  <div class="en-copy" lang="en">
     <h1>You're offline</h1>
     <p>ANONYMA needs a connection to reach your models and account. Reconnect, then try again.</p>
-    <button onclick="location.reload()">Try again</button>
-  </main>
+    <!-- An empty href reloads the address that was requested. -->
+    <a href="">Try again</a>
+  </div>
+  <div class="zh-copy" lang="zh-CN">
+    <h1>你已离线</h1>
+    <p>ANONYMA 需要联网才能连接你的模型和账户。请恢复网络连接后重试。</p>
+    <a href="">重试</a>
+  </div>
+</main>
 </body>
 </html>

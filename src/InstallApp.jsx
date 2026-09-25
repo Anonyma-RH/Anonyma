@@ -7,14 +7,18 @@ import "./install-app.css";
 // meta tags and the service worker registration — but only once config
 // confirms the "app" update is released (see server/releases.js). index.html
 // itself never references any of this statically, so the app isn't
-// installable while the update is off. Requires an actually-loaded config:
-// isReleased() treats a still-loading (null) config as released so the rest
-// of the app doesn't flash a locked state, but that default would defeat
-// this gate on every page load (the effect below always runs before the
-// initial /api/config fetch resolves), so wait for the real config instead.
+// installable while the update is off. Nothing happens until config has
+// actually loaded: a failed or pending /api/config leaves everything as is.
 export function useInstallAppGate(config) {
   useEffect(() => {
-    if (!config || !isReleased(config, "app")) return;
+    if (!config) return;
+    if (!isReleased(config, "app")) {
+      // Only matters if the update is ever withdrawn after a release: retire
+      // the worker and caches an earlier visit installed. Reading existing
+      // registrations never creates one.
+      retireServiceWorker();
+      return;
+    }
     if (!document.querySelector('link[rel="manifest"]')) {
       const link = document.createElement("link");
       link.rel = "manifest";
@@ -23,6 +27,7 @@ export function useInstallAppGate(config) {
     }
     for (const [name, content] of [
       ["apple-mobile-web-app-capable", "yes"],
+      ["mobile-web-app-capable", "yes"],
       ["apple-mobile-web-app-status-bar-style", "black-translucent"],
       ["apple-mobile-web-app-title", "ANONYMA"],
     ]) {
@@ -43,6 +48,23 @@ export function useInstallAppGate(config) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
   }, [config]);
+}
+
+function retireServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker
+    .getRegistrations()
+    .then((list) => list.forEach((r) => r.unregister()))
+    .catch(() => {});
+  if (typeof caches !== "undefined")
+    caches
+      .keys()
+      .then((names) =>
+        names
+          .filter((n) => n.startsWith("anonyma-"))
+          .forEach((n) => caches.delete(n)),
+      )
+      .catch(() => {});
 }
 
 function isStandalone() {

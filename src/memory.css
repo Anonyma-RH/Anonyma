@@ -1,0 +1,163 @@
+/* Memory Across Models: the Memory panel, the composer button and the note
+   under a reply. Reuses the Scrolls panel's toggle, hint, list-head and
+   empty/error styles (scrolls.css) and .modal/.small-button from styles.css. */
+.app-shell .memory-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.app-shell .memory-button .memory-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffb21c;
+  border: 1.5px solid #fff;
+}
+.app-shell .memory-button.excluded {
+  opacity: 0.55;
+}
+.memory-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.memory-panel h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.memory-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line, #e3e7dc);
+}
+.memory-never {
+  padding-left: 10px;
+  border-left: 3px solid #0135df;
+}
+.memory-excluded {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: #fff6e0;
+  border: 1px solid #f1d9a0;
+}
+.memory-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.memory-add textarea,
+.memory-edit textarea {
+  width: 100%;
+}
+.memory-add-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.memory-add-row .small-button {
+  margin-left: auto;
+}
+.memory-count,
+.memory-hint,
+.memory-meta {
+  font-size: 11px;
+  color: var(--muted, #6c7066);
+  font-weight: normal;
+}
+.memory-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.memory-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow: auto;
+}
+.memory-items li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line, #e3e7dc);
+  border-left: 3px solid #0135df;
+  border-radius: 3px;
+}
+.memory-items li.paused {
+  border-left-color: var(--line, #e3e7dc);
+  opacity: 0.7;
+}
+.memory-items li > div:first-child {
+  min-width: 0;
+}
+.memory-text {
+  margin: 0 0 4px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.memory-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.memory-sent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.memory-preview {
+  width: 100%;
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f4f6fd;
+  border: 1px solid #cfd6ee;
+}
+.app-shell .memory-used {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted, #6c7066);
+}
+.app-shell .memory-used summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.app-shell .memory-used ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.app-shell .turn-actions .memory-remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+@media (max-width: 700px) {
+  .memory-items li {
+    flex-direction: column;
+  }
+}

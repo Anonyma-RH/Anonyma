@@ -1,0 +1,135 @@
+/* Spending Limits: flat cobalt-on-white, like Agent Allowances. */
+.spending-limits .account-section-head p {
+  margin: 8px 0 0;
+  max-width: 620px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--work-muted, #68748a);
+}
+.limit-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+.limit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  background: #fff;
+}
+.limit-card.full {
+  border-color: #eecfc1;
+}
+.limit-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.limit-card h3 {
+  margin: 0;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--work-ink, #142343);
+}
+.limit-card header span {
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--work-muted, #68748a);
+}
+.limit-figure {
+  margin: 0;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  color: #0135df;
+  overflow-wrap: anywhere;
+}
+.limit-figure.muted {
+  color: var(--work-muted, #68748a);
+}
+.limit-card.full .limit-figure {
+  color: #9c5543;
+}
+.limit-bar {
+  height: 8px;
+  background: var(--work-surface, #f7f9fc);
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.limit-bar-fill {
+  height: 100%;
+  background: #0135df;
+  transition: width 0.3s ease;
+}
+.limit-card.full .limit-bar-fill {
+  background: #c2410c;
+}
+.limit-caption {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.limit-pending {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #ffd9a0;
+  border-radius: 2px;
+  background: #fff6e8;
+  color: #8a4b00;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.limit-pending p {
+  margin: 0;
+}
+.limit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.limit-form h3,
+.limit-rules h3 {
+  margin: 0 0 16px;
+  font-family: inherit;
+  font-size: 16px;
+}
+.limit-form .fine-print {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+}
+.limit-rules ul {
+  margin: 0 0 18px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--work-ink, #142343);
+}
+.limit-rules h3 + ul {
+  margin-top: -6px;
+}
+@media (max-width: 760px) {
+  .limit-cards,
+  .limit-layout {
+    grid-template-columns: 1fr;
+  }
+  .limit-card {
+    padding: 18px;
+  }
+}

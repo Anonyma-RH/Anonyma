@@ -463,8 +463,9 @@ export function treasuryRoutes(ctx) {
     closeCollab: returnToOwner,
     // An owner can't close their account while a collab they own has credits
     // in its treasury: members' contributions would go with the account. The
-    // owner withdraws or spends them first.
-    assertOwnedEmpty(user) {
+    // owner withdraws or spends them first. Panic Wipe deletes owned collabs
+    // the same way, so it asks the same (`action` names what is waiting).
+    assertOwnedEmpty(user, action = "closing your account") {
       for (const c of db
         .prepare("SELECT * FROM collabs WHERE owner_id=? ORDER BY created")
         .all(user)) {
@@ -480,7 +481,7 @@ export function treasuryRoutes(ctx) {
         if (b.total > 0)
           fail(
             409,
-            `A collab you own still has ${credits(b.total)} ${b.total === 10000 ? "credit" : "credits"} in its team treasury. Withdraw or spend them before closing your account.`,
+            `A collab you own still has ${credits(b.total)} ${b.total === 10000 ? "credit" : "credits"} in its team treasury. Withdraw or spend them before ${action}.`,
             "treasury_not_empty",
           );
       }

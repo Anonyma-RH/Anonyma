@@ -167,7 +167,9 @@ export function createMediaStore(db, cfg) {
         `?expires=${meta.expires}&sig=${signMedia(id, meta.expires)}`;
     return result;
   }
-  function deleteMedia(m) {
+  // The file only; a file that is already gone counts as removed, so a
+  // retried deletion goes on where the last one stopped.
+  function removeMediaFile(m) {
     try {
       unlinkSync(join(cfg.mediaPath, m.filename));
     } catch (error) {
@@ -178,6 +180,9 @@ export function createMediaStore(db, cfg) {
           "media_delete_failed",
         );
     }
+  }
+  function deleteMedia(m) {
+    removeMediaFile(m);
     db.prepare("DELETE FROM media WHERE id=?").run(m.id);
   }
   // Record each item's share of a settled charge.
@@ -190,5 +195,12 @@ export function createMediaStore(db, cfg) {
     );
     return costs;
   }
-  return { mediaJSON, signMedia, saveMedia, deleteMedia, assignCosts };
+  return {
+    mediaJSON,
+    signMedia,
+    saveMedia,
+    deleteMedia,
+    removeMediaFile,
+    assignCosts,
+  };
 }

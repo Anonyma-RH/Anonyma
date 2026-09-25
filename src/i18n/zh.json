@@ -2529,7 +2529,48 @@
     "This page hid a nested frame, so the preview stopped it.": "此页面隐藏了一个嵌套框架，因此预览已将其停止。",
     "Storage here is temporary and separate from ANONYMA.": "这里的存储是临时的，并与 ANONYMA 分开。",
     "Forms don't send anywhere in the preview.": "在预览中，表单不会发送到任何地方。",
-    "Fit": "适应"
+    "Fit": "适应",
+    "Panic Wipe": "紧急清除",
+    "Everything gone in one tap. Your credits stay.": "一键清空一切，积分原样保留。",
+    "Erase chats, files, memory and keys in one confirmed step": "确认一次，即可清除会话、文件、记忆和密钥",
+    "Signs out every device and clears this browser": "所有设备退出登录，并清空此浏览器中的数据",
+    "Your balance, ledger and receipts stay intact": "你的余额、账本和收据完好保留",
+    "Wipe everything now.": "立即清除一切。",
+    "Erase your chats, files, memory and keys in one step, and sign out everywhere. Your credits stay.": "一步清除你的会话、文件、记忆和密钥，并在所有设备上退出登录。你的积分会保留。",
+    "Wipe everything now": "立即清除一切",
+    "Wipe everything now?": "立即清除一切？",
+    "This can’t be undone. If you want a copy, export your data first.": "此操作无法撤销。如需保留副本，请先导出你的数据。",
+    "What goes": "将被清除",
+    "What stays": "将会保留",
+    "All your chats and messages, including Symposium runs, branches and share links": "你的所有会话和消息，包括模型圆桌记录、分支和分享链接",
+    "Saved images, videos and audio, and the files themselves": "已保存的图像、视频和音频，以及文件本身",
+    "Saved uploads and video jobs": "已保存的上传文件和视频任务",
+    "Memory facts, Scrolls and standing instructions": "记忆事实、卷轴和常驻指令",
+    "Collabs you own, with everything shared in them": "你拥有的协作空间，以及其中共享的全部内容",
+    "Support requests you sent while signed in": "你在登录状态下提交的支持请求",
+    "API keys and connected apps, revoked": "API 密钥和已连接的应用，均会被撤销",
+    "Every sign-in, on every device, including this one": "所有设备上的登录状态，包括当前设备",
+    "Unsent drafts and everything ANONYMA keeps in this browser, such as Veil words, recent searches and the offline copy": "未发送的草稿，以及 ANONYMA 保存在此浏览器中的全部内容，例如 Veil 词语、最近搜索和离线副本",
+    "Your account and every credit in it": "你的账户及其中的每一个积分",
+    "Your ledger, deposits and receipts": "你的账本、充值记录和收据",
+    "Your settings, such as spending limits and auto-delete": "你的设置，例如消费上限和自动删除",
+    "What you wrote in other people’s collabs. You leave those collabs.": "你在他人协作空间中写下的内容。你将退出这些协作空间。",
+    "The records the data-controls guide says are always kept": "数据控制指南中说明始终保留的记录",
+    "Your language choice in this browser": "你在此浏览器中的语言选择",
+    "Read the data-controls guide.": "阅读数据控制指南。",
+    "A wallet payment from this browser is still being confirmed. Wait until it’s credited, then wipe.": "此浏览器发起的一笔钱包付款仍在确认中。请等到账后再清除。",
+    "Type WIPE to confirm": "输入 WIPE 以确认",
+    "Wiping…": "正在清除……",
+    "Type WIPE to confirm the wipe.": "请输入 WIPE 以确认清除。",
+    "Wait for your requests in progress to finish, then wipe again.": "请等待进行中的请求完成后，再重新清除。",
+    "PANIC WIPE": "紧急清除",
+    "Wiped.": "已清除。",
+    "Everything your account stored is gone, and every device is signed out. This browser is cleared too.": "你的账户存储的一切都已清除，所有设备均已退出登录。此浏览器中的数据也已清空。",
+    "Still here": "仍然保留",
+    "A wipe can’t reach copies outside your account: exports you downloaded, data already sent to AI providers, and server backups.": "清除无法触及账户以外的副本：你已下载的导出文件、已发送给 AI 提供商的数据，以及服务器备份。",
+    "Sign in again": "重新登录",
+    "Loading…": "正在加载……",
+    "wiped — ANONYMA": "已清除 — ANONYMA"
   },
   "patterns": [
     {
@@ -3887,6 +3928,14 @@
     {
       "en": "Blocked by the preview sandbox: {0} ({1})",
       "zh": "已被预览沙箱拦截：{0}（{1}）"
+    },
+    {
+      "en": "A collab you own still has {0} credit in its team treasury. Withdraw or spend them before wiping your account.",
+      "zh": "你拥有的一个协作空间的团队金库中仍有 {0} 积分。请先提取或用完这些积分，再清除账户。"
+    },
+    {
+      "en": "A collab you own still has {0} credits in its team treasury. Withdraw or spend them before wiping your account.",
+      "zh": "你拥有的一个协作空间的团队金库中仍有 {0} 积分。请先提取或用完这些积分，再清除账户。"
     }
   ]
 }

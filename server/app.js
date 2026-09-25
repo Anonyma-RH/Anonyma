@@ -34,6 +34,7 @@ import { scrollsRoutes } from "./routes/scrolls.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { shareRoutes } from "./routes/shares.js";
 import { accountRoutes } from "./routes/account.js";
+import { wipeRoutes } from "./routes/wipe.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
 import { connectRoutes } from "./routes/connect.js";
@@ -107,6 +108,8 @@ export function createApp(overrides = {}) {
   holderRoutes(ctx);
   const worker = createWorker(ctx);
   accountRoutes(ctx);
+  // Panic Wipe: erases the account's content, keeps its credits.
+  wipeRoutes(ctx);
   allowanceRoutes(ctx);
   // Also registers the Spending Limits check every reservation runs.
   spendingLimitRoutes(ctx);

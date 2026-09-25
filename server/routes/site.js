@@ -17,11 +17,13 @@ import {
 
 // Health, machine-readable docs, installers and the built web client.
 export function siteRoutes({ app, db, cfg }) {
-  // Gated pages this installation serves: the Connect an App consent page
-  // and the public NYMA page (/token) exist only once their update is live.
+  // Gated pages this installation serves: the Connect an App consent page,
+  // the public NYMA page (/token) and Panic Wipe's "Wiped" page exist only
+  // once their update is live.
   const served = () => ({
     connect: connectLive(cfg),
     token: isReleased(cfg, "holders"),
+    wipe: isReleased(cfg, "wipe"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

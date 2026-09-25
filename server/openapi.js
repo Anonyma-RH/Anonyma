@@ -1487,6 +1487,12 @@ route("delete", "/api/account", "Close account and forfeit unused credits", {
   description:
     "409 while holds or unresolved invoices exist, or while an owned collab's Team Treasury holds any credits (treasury_not_empty: withdraw or spend them first) or has team-paid requests in progress (treasury_busy). Deletes personal content, saved media files, account-linked tickets, video jobs, sessions and owned collaborations. Clears profile identifiers and API-key hashes/names/prefixes. Other owners shared content, financial records and external copies remain. Retained accounting has no automatic expiry. Media removal errors prevent a success response and may require retry; deletion does not erase provider copies or existing backups.",
 });
+route("post", "/api/account/wipe", "Panic Wipe: erase the account's content, keep its credits", {
+  body: object({ confirm: { const: "WIPE" } }, ["confirm"]),
+  response: ref("Ok"),
+  description:
+    "Needs the wipe update released (403 feature_unreleased otherwise). 400 confirmation_required unless confirm is WIPE. 409 requests_in_flight while a request reserved on the account, or a team-paid request it started, is in progress; 409 treasury_not_empty or treasury_busy while a collab it owns has Team Treasury credits or team-paid requests (the account-closure rule). Saved media files are removed first (503 media_delete_failed stops the wipe with nothing else changed; retry). Then one transaction deletes personal conversations and messages (Symposium runs, branches, Double-checks), share links, saved media and library entries, saved uploads, video jobs, memory facts, Scrolls, standing instructions, account-linked support tickets, owned collabs with their shared conversations, membership of other collabs (their shared messages stay), every session and pending sign-in code, and connected apps' tokens and codes; it revokes every API key and connected app, overwriting deleted rows in the database file. The account, balance, ledger, deposits, request records, receipts and settings (spending limits, auto-delete, the memory switch) are unchanged. Clears the session cookie. Safe to repeat: already-removed content is skipped and revocation times are kept. 10 requests an hour. Backups, exports and provider copies are not erased.",
+});
 route("get", "/v1", "Free API connection check", {
   auth: null,
   description:

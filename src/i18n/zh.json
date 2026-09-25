@@ -2151,7 +2151,64 @@
     "Memory holds up to 50 facts. Delete one first.": "记忆最多保存 50 条事实。请先删除一条。",
     "Facts can't be saved from a shared conversation.": "不能从共享会话中保存事实。",
     "Memory fact not found.": "未找到该记忆事实。",
-    "enabled must be true or false.": "enabled 必须为 true 或 false。"
+    "enabled must be true or false.": "enabled 必须为 true 或 false。",
+    "Read-aloud & Voice Conversations": "朗读与语音对话",
+    "Speak, review, send and listen.": "说话、检查、发送、收听。",
+    "Record each turn by choice": "每一轮都由你主动录音",
+    "Review paid transcription before Send": "发送前先检查付费转录",
+    "Read replies with an available device voice": "用可用的设备语音朗读回复",
+    "The recording could not be read.": "无法读取这段录音。",
+    "Transcription models are unavailable. You can still type your message.": "转录模型暂不可用。你仍可以输入消息。",
+    "Voice input stopped when the tab was hidden. Press Record to start again. A submitted transcription may still have a charge; check its status.": "标签页被隐藏时语音输入已停止。请按“录一轮”重新开始。已提交的转录仍可能产生费用，请查看其状态。",
+    "No words were recognised. Check the receipt, then record again or type.": "未识别到任何文字。请先查看收据，然后重新录音或直接输入。",
+    "Stopped waiting. The transcription may still have a charge; check status before another paid request.": "已停止等待。这次转录仍可能产生费用；在发起下一次付费请求前请先查看状态。",
+    "Could not refresh the charge status. Any last confirmed receipt remains below. Checking never resends the transcription.": "无法刷新费用状态。最后一次已确认的收据仍显示在下方。检查状态绝不会重新发送转录。",
+    "Voice-assisted chat": "语音辅助对话",
+    "Close voice-assisted chat": "关闭语音辅助对话",
+    "Close": "关闭",
+    "Record → transcribe → review in the composer → Send. Then use Read aloud on the reply. Each new turn starts with you.": "录音 → 转录 → 在输入框中检查 → 发送。然后对回复使用“朗读”。每一轮都由你开始。",
+    "Recording stays in this tab until you choose paid transcription. Audio goes to the speech provider and cannot be masked by Veil.": "在你选择付费转录之前，录音只保留在此标签页中。音频会发送给语音服务提供商，Veil 无法遮蔽音频。",
+    "Off the record does not save the chat here; provider retention still applies.": "不留记录模式下本站不会保存此对话，但提供商的保留政策仍然适用。",
+    "Review the text before sending it through your usual chat settings.": "请先检查文字，再按你平常的对话设置发送。",
+    "Recording stays in this tab until you choose paid transcription. Audio goes to the speech provider and cannot be masked by Veil. Off the record does not save the chat here; provider retention still applies.": "在你选择付费转录之前，录音只保留在此标签页中。音频会发送给语音服务提供商，Veil 无法遮蔽音频。不留记录模式下本站不会保存此对话，但提供商的保留政策仍然适用。",
+    "Recording stays in this tab until you choose paid transcription. Audio goes to the speech provider and cannot be masked by Veil. Review the text before sending it through your usual chat settings.": "在你选择付费转录之前，录音只保留在此标签页中。音频会发送给语音服务提供商，Veil 无法遮蔽音频。请先检查文字，再按你平常的对话设置发送。",
+    "Record a turn": "录一轮",
+    "Waiting for microphone permission…": "正在等待麦克风权限……",
+    "Microphone on · up to 2 minutes": "麦克风已开启 · 最长 2 分钟",
+    "Stop recording": "停止录音",
+    "Finishing recording…": "正在结束录音……",
+    "Cancel waiting": "取消等待",
+    "Mute & discard": "静音并丢弃",
+    "Transcription model": "转录模型",
+    "Transcribe · paid": "转录 · 付费",
+    "Review transcript": "检查转录文字",
+    "Use transcript in composer": "将转录文字放入输入框",
+    "Discard transcript": "丢弃转录文字",
+    "Transcription hold released; no credits charged.": "转录冻结额已释放；未收取积分。",
+    "Transcription charge not confirmed here.": "此处尚未确认转录费用。",
+    "Checking…": "正在检查……",
+    "Check transcription charge": "检查转录费用",
+    "Playback stopped when the tab was hidden. Press Play to start again.": "标签页被隐藏时播放已停止。请按“播放回答”重新开始。",
+    "Read aloud": "朗读",
+    "Device speech · no Anonyma credits. Only voices your browser reports as local are offered. Masked details stay masked.": "设备语音 · 不消耗 Anonyma 积分。仅提供浏览器报告为本地的语音。已遮蔽的细节仍保持遮蔽。",
+    "No local device voice is available. Keep reading, or enable a voice in browser/system settings. Reopen this panel after adding one.": "没有可用的本地设备语音。你可以继续阅读文字，或在浏览器/系统设置中启用一个语音，添加后请重新打开此面板。",
+    "Device voice": "设备语音",
+    "Reading speed": "朗读速度",
+    "Stop reading": "停止朗读",
+    "Play answer": "播放回答",
+    "Reading with the selected device voice…": "正在用所选设备语音朗读……",
+    "Nothing plays until you press Play.": "在你按下“播放回答”之前不会播放任何内容。",
+    "Microphone permission was denied. Allow it in browser settings, then press Record again. You can keep typing.": "麦克风权限被拒绝。请在浏览器设置中允许，然后再次按“录一轮”。你也可以继续输入。",
+    "No microphone was found. Connect one or keep typing.": "未找到麦克风。请连接一个麦克风，或继续输入。",
+    "The microphone is busy or unavailable. Close other recording apps, then try again.": "麦克风正忙或不可用。请关闭其他录音应用后重试。",
+    "Recording is unavailable in this browser. Use HTTPS, check microphone access, or keep typing.": "此浏览器无法录音。请使用 HTTPS、检查麦克风访问权限，或继续输入。",
+    "Recording stopped unexpectedly. No audio was sent. Record again or type your message.": "录音意外停止，未发送任何音频。请重新录音或输入消息。",
+    "No audio was captured. Nothing was sent; try recording again.": "没有录到音频，未发送任何内容；请重新录音。",
+    "Playback was blocked. Press Play again, choose another local voice, or read the text.": "播放被阻止。请再次按“播放回答”、选择其他本地语音，或直接阅读文字。",
+    "The device voice could not finish. Choose another local voice or read the text.": "设备语音未能读完。请选择其他本地语音，或直接阅读文字。",
+    "The device voice did not finish. Press Play again or read the text.": "设备语音没有读完。请再次按“播放回答”，或直接阅读文字。",
+    "This device could not start speech. Choose another local voice or read the text.": "此设备无法开始朗读。请选择其他本地语音，或直接阅读文字。",
+    "No local device voice is available. Keep reading the text, or enable a device voice in browser or system settings.": "没有可用的本地设备语音。你可以继续阅读文字，或在浏览器或系统设置中启用设备语音。"
   },
   "patterns": [
     {
@@ -3237,6 +3294,18 @@
     {
       "en": "Memory on: {0} facts go with this chat",
       "zh": "记忆已开启：{0} 条事实随此对话发送"
+    },
+    {
+      "en": "{0} credits/minute. The service may reserve up to {1} credits from your personal balance, including in a shared chat. The receipt uses provider-reported duration; if unavailable, the maximum applies. Sending the reviewed text is a separate chat charge using your chat settings. Recording is local until Transcribe.",
+      "zh": "{0} 积分/分钟。服务最多可能从你的个人余额中冻结 {1} 积分，在共享会话中也是如此。收据按提供商报告的时长计费；若无法获取时长，则按最大值计费。发送检查后的文字是另一笔对话费用，按你的对话设置计费。在你点击“转录 · 付费”之前，录音只保存在本地。"
+    },
+    {
+      "en": "{0} credits charged for transcription.",
+      "zh": "此次转录收取了 {0} 积分。"
+    },
+    {
+      "en": "{0} credits reserved; final charge pending.",
+      "zh": "已冻结 {0} 积分；最终费用待定。"
     }
   ]
 }

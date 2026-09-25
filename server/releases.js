@@ -401,7 +401,7 @@ export const UPDATES = [
       "Review paid transcription before Send",
       "Read replies with an available device voice",
     ],
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

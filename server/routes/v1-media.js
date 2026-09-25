@@ -22,6 +22,7 @@ import {
 import { requestIdentifier } from "../middleware.js";
 import { issueMediaReceipt } from "../receipts.js";
 import { submitVideoJob } from "./videos.js";
+import { seedGuardMiddleware } from "../seed-guard.js";
 
 // Matches /api/audio/transcriptions' recording cap.
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -120,7 +121,8 @@ export function v1MediaRoutes(ctx) {
   const { app, db, cfg, limit, apiAuth, inflight } = ctx;
   const { saveMedia, assignCosts, signMedia } = ctx.media;
   const { getModel } = ctx.models;
-  const guard = [limit("api_ip", 120, 60000), apiAuth];
+  // Seed Guard reads each POST's prompt or input once the key is known.
+  const guard = [limit("api_ip", 120, 60000), apiAuth, seedGuardMiddleware(cfg)];
 
   function signedMediaURL(media) {
     const base = (cfg.publicUrl || cfg.origin) + "/api/media/" + media.id;

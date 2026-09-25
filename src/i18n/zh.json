@@ -2298,7 +2298,23 @@
     "The device voice could not finish. Choose another local voice or read the text.": "设备语音未能读完。请选择其他本地语音，或直接阅读文字。",
     "The device voice did not finish. Press Play again or read the text.": "设备语音没有读完。请再次按“播放回答”，或直接阅读文字。",
     "This device could not start speech. Choose another local voice or read the text.": "此设备无法开始朗读。请选择其他本地语音，或直接阅读文字。",
-    "No local device voice is available. Keep reading the text, or enable a device voice in browser or system settings.": "没有可用的本地设备语音。你可以继续阅读文字，或在浏览器或系统设置中启用设备语音。"
+    "No local device voice is available. Keep reading the text, or enable a device voice in browser or system settings.": "没有可用的本地设备语音。你可以继续阅读文字，或在浏览器或系统设置中启用设备语音。",
+    "Seed Guard": "助记词防护",
+    "SEED GUARD": "助记词防护",
+    "Your seed phrase never leaves your browser.": "你的助记词绝不会离开你的浏览器。",
+    "Stops wallet seed phrases and private keys before they're sent": "在发送之前拦截钱包助记词和私钥",
+    "Always on, checked right in your browser": "始终开启，直接在你的浏览器中检查",
+    "Nothing about a match is logged or saved": "任何检测结果都不会被记录或保存",
+    "This looks like a wallet seed phrase. ANONYMA won't send it. Remove it to continue.": "这看起来像钱包助记词。ANONYMA 不会发送它。请删除后再继续。",
+    "This looks like a wallet private key. ANONYMA won't send it. Remove it to continue.": "这看起来像钱包私钥。ANONYMA 不会发送它。请删除后再继续。",
+    "Anyone with this phrase controls its wallet. Continue only if it's a test phrase with no funds.": "任何拿到这组助记词的人都能控制对应的钱包。仅当它是没有资金的测试助记词时才继续。",
+    "Anyone with this key controls its wallet. Continue only if it's a test key with no funds.": "任何拿到这个私钥的人都能控制对应的钱包。仅当它是没有资金的测试私钥时才继续。",
+    "Checked in this browser. Nothing about it is saved or sent.": "已在此浏览器中检查。相关内容不会被保存或发送。",
+    "Send anyway": "仍然发送",
+    "Yes, send it": "是的，发送",
+    "Save anyway": "仍然保存",
+    "Yes, save it": "是的，保存",
+    "ANONYMA support will never ask for your seed phrase or private key.": "ANONYMA 支持人员绝不会索要你的助记词或私钥。"
   },
   "patterns": [
     {

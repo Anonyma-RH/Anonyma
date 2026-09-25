@@ -26,6 +26,7 @@ import { buildReceiptPayload } from "../receipts.js";
 import { providerKey, sameProvider } from "../../src/double-check.js";
 import { validateTaskRequest } from "../task-tools.js";
 import { withMemory } from "../../src/memory.js";
+import { refuseSeedPhrase } from "../seed-guard.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -56,6 +57,8 @@ export function chatRoutes(ctx) {
   const validTokenCount = (value, fallback) =>
     Number.isSafeInteger(value) && value >= 0 ? value : fallback;
   async function runChat(req, res, api) {
+    // Seed Guard: refused before anything is validated, reserved or stored.
+    refuseSeedPhrase(cfg, req, api);
     if (!api) validateTaskRequest(req.body);
     const m = getModel(req.body.model);
     // Dedicated image models are priced per option and served by

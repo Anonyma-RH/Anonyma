@@ -403,6 +403,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "seedguard",
+    title: "Seed Guard",
+    tagline: "Your seed phrase never leaves your browser.",
+    points: [
+      "Stops wallet seed phrases and private keys before they're sent",
+      "Always on, checked right in your browser",
+      "Nothing about a match is logged or saved",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -594,6 +605,9 @@ export function featuresFor(req) {
     return ["ephemeral"];
   const needed = [];
   if (p === "/api/chat" && post && body.taskTool !== undefined) needed.push("tasktools");
+  // Seed Guard's "Send anyway" override (server/seed-guard.js).
+  if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
+    needed.push("seedguard");
   // A chat (or its estimate) that asks for saved memory.
   if ((p === "/api/chat" || p === "/api/quote") && post && body.memory != null)
     needed.push("memory");

@@ -76,6 +76,11 @@ const chat = object(
       description:
         "Double-check This: a second opinion on an answer from source_model. Needs the Double-check This and Symposium updates released (403 feature_unreleased otherwise). The model must come from a different provider (maker) than source_model (400 double_check_same_provider; 400 double_check_provider_unknown when either maker can't be established). mode must be symposium and conversationId absent, so the reviewed conversation is never changed; ephemeral and private apply as usual. A saved check must name the reviewed conversation in source_conversation (which must be accessible and not itself a check) and stays linked to it: it never outlives it (its deletion time, or the account default if sooner), shortening that conversation's auto-delete shortens the check, nothing extends it, and it is deleted with the conversation or when its owner loses access (leaving the collab). Billed like any chat request.",
     },
+    allow_seed_phrase: {
+      ...bool,
+      description:
+        "Seed Guard: once the seedguard update is released, a request whose newest user message or system instructions contain a valid BIP39 seed phrase (12, 15, 18, 21 or 24 English wordlist words with a valid checksum) is refused with 400 seed_phrase_blocked before anything is reserved, stored or sent. Send true only after the user has confirmed sending it anyway (the workspace asks twice). Needs the seedguard update released (403 feature_unreleased otherwise). Nothing about a match is logged or stored.",
+    },
     memory: {
       ...array(object({ id: string, text: { ...string, maxLength: 2400 }, updated: integer }, ["id", "text"])),
       maxItems: 50,
@@ -1325,6 +1330,17 @@ for (const method of ["get", "delete"]) paths["/mcp"][method].responses = {
     content: { "application/json": { schema: ref("Error") } },
   },
 };
+// Seed Guard's opt-out header for API clients (server/seed-guard.js).
+const seedGuardHeader = {
+  name: "X-Anonyma-Seed-Guard",
+  in: "header",
+  required: false,
+  schema: { enum: ["off"] },
+  description:
+    "Seed Guard: once the seedguard update is released, a request whose newest user message, system instructions, prompt or input contains a valid BIP39 seed phrase (12, 15, 18, 21 or 24 English wordlist words with a valid checksum) is refused with 400 seed_phrase_blocked before anything is reserved or sent upstream. Send off to allow it, for example for a known test mnemonic. Nothing about a match is logged or stored.",
+};
+for (const path of ["/v1/chat/completions", "/mcp"])
+  (paths[path].post.parameters ||= []).push(seedGuardHeader);
 // Connect an App: OAuth 2.1 for the MCP server (public clients, PKCE S256,
 // no identity). Error bodies on /oauth/* follow RFC 6749:
 // {error, error_description}.
@@ -1659,6 +1675,8 @@ route("get", "/v1/videos/{id}", "Poll a submitted video job", {
   description:
     "Owner-scoped to the API key's account. status mirrors /api/videos (submitting, pending, processing, completed, failed, reconciliation). url is a signed link, present once completed, that expires 24 hours after the job finished.",
 });
+for (const path of ["/v1/images/generations", "/v1/audio/speech", "/v1/videos"])
+  (paths[path].post.parameters ||= []).push(seedGuardHeader);
 for (const [path, summary] of [
   ["/install.sh", "POSIX CLI installer"],
   ["/install.ps1", "PowerShell CLI installer"],

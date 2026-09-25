@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Icon, Notice, BandLines, BandSteps } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { api, uid } from "./lib.js";
+import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 
 const MAX_RECORDING_SECONDS = 10 * 60;
 
@@ -25,6 +26,8 @@ export default function AudioStudio({
     [error, setError] = useState(""),
     [receipt, setReceipt] = useState(null),
     preview = useRef(new Audio());
+  // Seed Guard: the script is scanned before it goes to a voice provider.
+  const seedHit = useSeedScan(!demo && seedGuardLive(config), text);
   useEffect(() => {
     if (demo) return;
     api("/api/audio/models")
@@ -46,9 +49,10 @@ export default function AudioStudio({
       10000
     : 0;
   const available = !demo && user && config?.services?.generation && selected;
-  async function generate(e) {
-    e.preventDefault();
-    if (!text.trim() || busy) return;
+  // `allowSeed` is Seed Guard's confirmed "Send anyway".
+  async function generate(e, { allowSeed = false } = {}) {
+    e?.preventDefault();
+    if (!text.trim() || busy || (seedHit && !allowSeed)) return;
     if (!available) {
       setError(
         demo
@@ -112,6 +116,11 @@ export default function AudioStudio({
             {receipt.credits_charged} credits charged
           </div>
         )}
+        <SeedGuardNotice
+          hit={seedHit}
+          busy={busy}
+          onProceed={() => generate(null, { allowSeed: true })}
+        />
         <form className="composer" onSubmit={generate}>
           <textarea
             aria-label="Text to speak"
@@ -163,7 +172,7 @@ export default function AudioStudio({
             <button
               type="submit"
               className="send-button"
-              disabled={!text.trim() || busy}
+              disabled={!text.trim() || busy || !!seedHit}
               aria-label="Create audio"
             >
               {busy ? (

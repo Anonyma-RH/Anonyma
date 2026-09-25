@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import { Notice } from "./ui.jsx";
 import { api, streamChat, uid } from "./lib.js";
 import { veilRemarkPlugin } from "./Veil.jsx";
+import { SeedGuardNotice, useSeedScan } from "./SeedGuard.jsx";
 import {
   checkerCandidates,
   checkSnapshot,
@@ -35,6 +36,9 @@ export default function DoubleCheck({
   veilMap,
   onClose,
   refresh,
+  // Seed Guard is live: the question and answer are scanned before the
+  // check's estimate or request can send them to another provider.
+  seedGuard = false,
 }) {
   const source = models.find((m) => m.id === answer.model) || {
     id: answer.model,
@@ -65,11 +69,19 @@ export default function DoubleCheck({
     // `mask` is recreated on every render; the policy key stands for it.
     [question, answer.content, sourceName, maskPolicy],
   );
+  const seedTexts = useMemo(
+    () => snapshot.messages.map((m) => (typeof m.content === "string" ? m.content : "")),
+    [snapshot.key],
+  );
+  const seedHit = useSeedScan(seedGuard, seedTexts);
+  // "Send anyway", confirmed: the estimate and Ask go ahead as usual.
+  const [seedAllowed, setSeedAllowed] = useState(false);
+  const seedBlocked = !!seedHit && !seedAllowed;
   useEffect(() => () => controller.current?.abort(), []);
   // The estimate is for this checker and this exact snapshot; anything else
   // is stale and Ask stays disabled until a fresh one settles.
   useEffect(() => {
-    if (!checker) return;
+    if (!checker || seedBlocked) return;
     let live = true;
     const key = snapshot.key;
     setQuote(null);
@@ -86,13 +98,13 @@ export default function DoubleCheck({
     return () => {
       live = false;
     };
-  }, [checker, snapshot.key, retry]);
+  }, [checker, snapshot.key, retry, seedBlocked]);
   const running =
     result?.status === "pending" || result?.status === "streaming";
   const ready = canAsk({ checker, snapshotKey: snapshot.key, quote, running });
   const checkerName = models.find((m) => m.id === checker)?.name || checker;
   async function ask() {
-    if (inflight.current || !ready) return;
+    if (inflight.current || !ready || seedBlocked) return;
     inflight.current = true;
     controller.current = new AbortController();
     setResult({
@@ -122,6 +134,7 @@ export default function DoubleCheck({
           },
           ...(unsaved ? { ephemeral: true } : {}),
           ...(privateMode ? { private: true } : {}),
+          ...(seedHit ? { allow_seed_phrase: true } : {}),
         },
         (event) => {
           if (event.error)
@@ -175,6 +188,10 @@ export default function DoubleCheck({
         </Notice>
       ) : (
         <>
+          <SeedGuardNotice
+            hit={seedBlocked ? seedHit : null}
+            onProceed={() => setSeedAllowed(true)}
+          />
           <div className="double-check-controls">
             <label>
               Second opinion from
@@ -191,13 +208,15 @@ export default function DoubleCheck({
               </select>
             </label>
             <span className="double-check-cost" aria-live="polite">
-              {quote?.credits != null &&
-              quote.checker === checker &&
-              quote.key === snapshot.key
-                ? `Estimated extra: ~${quote.credits} credits`
-                : quote?.error
-                  ? "Estimate unavailable"
-                  : "Estimating…"}
+              {seedBlocked
+                ? ""
+                : quote?.credits != null &&
+                    quote.checker === checker &&
+                    quote.key === snapshot.key
+                  ? `Estimated extra: ~${quote.credits} credits`
+                  : quote?.error
+                    ? "Estimate unavailable"
+                    : "Estimating…"}
             </span>
             {running ? (
               <button

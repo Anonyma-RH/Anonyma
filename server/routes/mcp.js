@@ -1,6 +1,7 @@
 import { balance, credits, usdUnits, callable, now } from "../core.js";
 import { isPrivateModel } from "../private-mode.js";
 import { connectLive } from "../releases.js";
+import { SEED_GUARD_HEADER } from "../seed-guard.js";
 import {
   ACCESS_PREFIX,
   authenticateAccessToken,
@@ -253,7 +254,10 @@ async function toolAsk(ctx, req, res, args) {
     },
     user: req.user,
     apiKey: req.apiKey,
-    headers: {},
+    // Seed Guard's API opt-out travels with the MCP request.
+    headers: req.headers[SEED_GUARD_HEADER] != null
+      ? { [SEED_GUARD_HEADER]: req.headers[SEED_GUARD_HEADER] }
+      : {},
     privateOnly,
     // A connected app pays the standard rate, so its charges and the pace of
     // its budget say nothing about the account behind it.

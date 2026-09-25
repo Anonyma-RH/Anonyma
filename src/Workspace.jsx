@@ -99,6 +99,8 @@ import {
 } from "./veil.js";
 import { buildChatRequest, cloneVeilState, quoteBody, REPLY_BUDGET } from "./estimate.js";
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
+import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
+import { scanSecrets } from "./seed-guard.js";
 import ModelFinder from "./ModelFinder.jsx";
 import { STORAGE_KEY as MODEL_CHOICES, loadChoices, resolveChoice, withChoice, requestNeedsVision } from "./model-finder.js";
 import { useShareTargetPrefill } from "./share-target.js";
@@ -889,11 +891,26 @@ export default function Workspace() {
       mode,
     });
   }
+  // Seed Guard: what Send would carry right now (the prompt, attached
+  // documents' text and active standing instructions), scanned in this
+  // browser. A find blocks Send, and the estimate too, since a quote posts
+  // the same text, until the user removes it or confirms "Send anyway".
+  const seedLive = seedGuardLive(config) && !demo;
+  const documentTexts = useMemo(() => documents.map((d) => d.text || ""), [documents]);
+  const promptSeed = useSeedScan(seedLive, sendText);
+  const documentSeed = useSeedScan(seedLive && textMode, documentTexts);
+  const instructionsSeed = useSeedScan(
+    seedLive && textMode && instructionsActive,
+    instructions.body,
+  );
+  const seedHit = promptSeed || documentSeed || instructionsSeed;
+  const editSeed = useSeedScan(seedLive, editing?.text || "");
   // Credit Estimates: a live estimate beside Send in chat, code and
   // Uncensored, whenever Send would go through. Image, video and Symposium
   // keep their own explicit pricing.
   const estimatesLive = isReleased(config, "estimates");
   const autoEstimate =
+    !seedHit &&
     estimatesLive &&
     textMode &&
     !demo &&
@@ -914,9 +931,22 @@ export default function Workspace() {
   const estimate = useCreditEstimate(estimateBody);
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
   // history before it and the conversation to add to, instead of the composer.
-  async function send(e, redo = null) {
+  // `allowSeed` is Seed Guard's confirmed "Send anyway".
+  async function send(e, redo = null, { allowSeed = false } = {}) {
     e?.preventDefault?.();
     if (!(redo ? redo.content.trim() : prompt.trim()) || busy || (!redo && branchFlight.current?.pending)) return;
+    // Seed Guard: a new or edited message waits for "Send anyway" (the notice
+    // is already showing). Regenerating resends a turn that was already sent,
+    // so it goes ahead and tells the server so.
+    const seedFound = !seedLive
+      ? null
+      : redo
+        ? scanSecrets(redo.edited ?? redo.content, instructionsActive ? instructions.body : "")
+        : seedHit;
+    if (seedFound && !allowSeed && (!redo || redo.edited != null)) return;
+    // The server checks the same text; anything found here was confirmed
+    // above or already sent (an edited turn keeps its original attachments).
+    const allowSeedPhrase = !!(seedFound || (seedLive && redo && scanSecrets(redo.content)));
     const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
     const effectiveModel = redo ? redoModel || selected : target;
     const requestVision = redo
@@ -1191,6 +1221,7 @@ export default function Workspace() {
           ...(webSearch ? { web_search: true } : {}),
           ...(sendingPrivate ? { private: true } : {}),
           ...(built.memory ? { memory: built.memory } : {}),
+          ...(allowSeedPhrase ? { allow_seed_phrase: true } : {}),
           ...teamPays.body,
         },
         (event) => {
@@ -1273,8 +1304,10 @@ export default function Workspace() {
   // Edit a user turn or regenerate an answer. A saved conversation is first
   // branched just before that turn, so the original keeps every message;
   // off-the-record and demo chats rewind only here and stay unsaved.
-  async function rewind(index, kind, editedText = null) {
+  async function rewind(index, kind, editedText = null, { allowSeed = false } = {}) {
     if (busy) return;
+    // Seed Guard: an edit is new text; stop before any branch is made.
+    if (editedText != null && !allowSeed && seedLive && scanSecrets(editedText)) return;
     const plan = rewindPlan(messages, index, kind);
     if (!plan) return;
     // Synchronous guard: a second click while this one is pending is ignored.
@@ -1310,11 +1343,12 @@ export default function Workspace() {
         }
         await send(null, {
           content: resendContent(plan.prompt, editedText),
+          edited: editedText,
           images: plan.prompt.images || [],
           base: plan.base,
           model: plan.model,
           conversationId,
-        });
+        }, { allowSeed });
       } catch (e) {
         setError(e.message);
       } finally {
@@ -1353,6 +1387,7 @@ export default function Workspace() {
   }
   async function quoteRequest() {
     setError("");
+    if (seedHit) return;
     if (demo) {
       setQuote({ credits: 0, sample: true });
       return;
@@ -1863,11 +1898,16 @@ export default function Workspace() {
                                   ? "Sends from this point again. Nothing here is saved."
                                   : "Sends from this point in a new branch. The original conversation stays as it is."}
                               </p>
+                              <SeedGuardNotice
+                                hit={editSeed}
+                                busy={busy || branching}
+                                onProceed={() => rewind(i, "edit", editing.text, { allowSeed: true })}
+                              />
                               <div className="edit-turn-actions">
                                 <button type="button" className="small-button" onClick={() => setEditing(null)}>
                                   Cancel
                                 </button>
-                                <button className="small-button primary" disabled={!editing.text.trim() || busy || branching}>
+                                <button className="small-button primary" disabled={!editing.text.trim() || busy || branching || !!editSeed}>
                                   Send edit
                                 </button>
                               </div>
@@ -1937,6 +1977,7 @@ export default function Workspace() {
                                 veilMap={veilStateRef.current.map}
                                 onClose={() => setChecking(null)}
                                 refresh={refresh}
+                                seedGuard={seedLive}
                               />
                             ) : (
                               <button
@@ -2072,6 +2113,11 @@ export default function Workspace() {
                       : `Estimated reservation: ${quote.credits} credits`}
                   </div>
                 )}
+                <SeedGuardNotice
+                  hit={seedHit}
+                  busy={busy}
+                  onProceed={() => send(null, null, { allowSeed: true })}
+                />
                 <form className="composer" onSubmit={send}>
                   {attachments.length > 0 && (
                     <div className="attachment-list">
@@ -2316,6 +2362,7 @@ export default function Workspace() {
                           privateContext={privateMode || ephemeral || veilOn}
                           audioEnabled={isReleased(config, "audio")}
                           onRefresh={refresh}
+                          seedGuard={seedLive}
                         />
                       )}
                       {["chat", "code"].includes(mode) &&
@@ -2515,6 +2562,7 @@ export default function Workspace() {
                         className="send-button"
                         disabled={
                           !prompt.trim() ||
+                          !!seedHit ||
                           (finderLive && !selected) ||
                           incompatibleMention ||
                           (privateMode && !privateModelsCallable.length)
@@ -2618,7 +2666,7 @@ export default function Workspace() {
                   {textMode && !estimatesLive && (
                     <button
                       onClick={quoteRequest}
-                      disabled={!prompt.trim() || busy}
+                      disabled={!prompt.trim() || busy || !!seedHit}
                     >
                       Estimate credits
                     </button>
@@ -2772,6 +2820,7 @@ export default function Workspace() {
           onUpdate={updateScroll}
           onDelete={deleteScroll}
           onSaveInstructions={saveInstructions}
+          seedGuard={seedLive}
         />
       )}
       {memoryPanel && memoryScope && (
@@ -2787,6 +2836,7 @@ export default function Workspace() {
           onUpdate={memoryClient.update}
           onDelete={memoryClient.remove}
           onDeleteAll={memoryClient.clear}
+          seedGuard={seedLive}
         />
       )}
       {scrollFill && (

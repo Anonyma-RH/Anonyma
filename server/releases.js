@@ -130,7 +130,7 @@ export const UPDATES = [
       "Auto-delete after 1, 7 or 30 days",
       "A receipt either way",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "private",

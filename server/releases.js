@@ -41,8 +41,9 @@ export const UPDATES = [
   },
   {
     id: "catalog",
+    released: true,
     title: "Full Model Catalog",
-    tagline: "Hundreds of models. One balance.",
+    tagline: "More models. One balance.",
     points: [
       "Models from OpenAI, Anthropic, Google and more",
       "@mention any model mid-conversation",

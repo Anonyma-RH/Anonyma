@@ -7,10 +7,11 @@ import { join } from "node:path";
 import { createApp } from "../server/app.js";
 import { UNCENSORED_MODELS, UPDATES } from "../server/releases.js";
 
-const update = UPDATES.find((u) => u.id === "uncensored");
-const committedRelease = update.released;
-before(() => { update.released = false; });
-after(() => { update.released = committedRelease; });
+// These fixtures test an unreleased catalog independently of release commits.
+const controlled = UPDATES.filter((u) => ["uncensored", "catalog"].includes(u.id));
+const committedReleases = controlled.map((u) => u.released);
+before(() => controlled.forEach((u) => { u.released = false; }));
+after(() => controlled.forEach((u, i) => { u.released = committedReleases[i]; }));
 
 const MVP_MODEL = "google/gemini-2.5-flash";
 const UNCENSORED = "venice/venice-uncensored-1-2";

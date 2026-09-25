@@ -7,7 +7,7 @@ prepaid credit balance. This repository contains the React client, Node.js API,
 SQLite accounting and conversation storage, model gateway integration, CLI,
 and application tests.
 
-The hosted app includes chat, Code & Build, Live Web Search, Veil, Uncensored Models, a small model selection, dashboard,
+The hosted app includes chat, Code & Build, Live Web Search, Veil, Uncensored Models, the expanded chat model catalog, dashboard,
 account and credits. The source also includes image, audio, video, collaboration,
 and developer features whose availability is controlled by release gates.
 Source availability does not mean every feature is enabled on the hosted app.
@@ -37,6 +37,10 @@ curated model picker, using the same prepaid balance. Includes its launch film.
 [Private Mode](docs/releases/private-mode.md): one switch for zero-data-retention
 models only, nothing saved and Veil on, in Chat and Uncensored. Ships with
 Ephemeral Chats. Includes its launch film.
+
+[Full Model Catalog](docs/releases/full-model-catalog.md): explore beyond the
+launch lineup and switch models with @mentions, using one prepaid balance.
+Includes its Greek ASCII launch film.
 
 ## How it works
 

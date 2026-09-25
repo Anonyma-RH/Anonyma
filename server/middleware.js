@@ -42,7 +42,9 @@ export function applyMiddleware(app, cfg) {
   app.use((req, res, next) => {
     if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
       if (req.body == null) req.body = {};
-      if (Array.isArray(req.body) || typeof req.body !== "object")
+      // /mcp accepts a single JSON-RPC message or a batch array.
+      const arrayOk = req.path === "/mcp" && Array.isArray(req.body);
+      if (!arrayOk && (Array.isArray(req.body) || typeof req.body !== "object"))
         return next(
           Object.assign(new Error("Send a JSON object."), {
             status: 400,
@@ -57,6 +59,7 @@ export function applyMiddleware(app, cfg) {
     if (
       ["POST", "PUT", "PATCH", "DELETE"].includes(req.method) &&
       !req.path.startsWith("/v1") &&
+      req.path !== "/mcp" &&
       req.path !== "/api/payments/ipn"
     ) {
       if (req.headers.origin && req.headers.origin !== cfg.origin)

@@ -31,6 +31,7 @@ import {
   releaseUpdate,
 } from "./lib.js";
 import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
+import McpConnect from "./McpConnect.jsx";
 // Ledger entry kinds as readable labels; an unknown kind reads as words.
 const LEDGER_KINDS = {
   chat: "Chat",
@@ -705,6 +706,7 @@ export default function Account() {
               <Link to="/developers" className="text-link">
                 Read the API guide <Icon name="arrow" size={16} />
               </Link>
+              {isReleased(config, "mcp") && <McpConnect config={config} />}
             </>
           )}
           {section === "settings" && (

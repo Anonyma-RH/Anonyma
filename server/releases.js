@@ -107,7 +107,7 @@ export const UPDATES = [
       "Real values restored only on your screen",
       "Your own always-veil word list",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

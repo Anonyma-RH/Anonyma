@@ -154,7 +154,7 @@ export const UPDATES = [
       "Every page, the workspace and your account",
       "Your chats stay exactly as written",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

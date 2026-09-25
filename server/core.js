@@ -540,6 +540,21 @@ export const MIGRATIONS = [
       created INTEGER NOT NULL,expires INTEGER NOT NULL,content BLOB NOT NULL);
       CREATE INDEX IF NOT EXISTS uploads_owner ON uploads(user_id,created,id);
       CREATE INDEX IF NOT EXISTS uploads_expiry ON uploads(expires);`),
+  // Spending Limits (server/spending-limits.js): an account's own daily
+  // (rolling 24 hours) and monthly (rolling 30 days) limits on what its
+  // personal balance can spend, in integer subcredits; NULL means no limit.
+  // A raise or removal waits in the *_pending columns until *_pending_at
+  // (a NULL pending value with a time set is a pending removal). Settings
+  // only: a limit change never writes the ledger.
+  additive(`CREATE TABLE IF NOT EXISTS spending_limits(
+      user_id TEXT PRIMARY KEY REFERENCES users(id),
+      daily_limit INTEGER CHECK(daily_limit IS NULL OR (typeof(daily_limit)='integer' AND daily_limit>=0)),
+      monthly_limit INTEGER CHECK(monthly_limit IS NULL OR (typeof(monthly_limit)='integer' AND monthly_limit>=0)),
+      daily_pending INTEGER CHECK(daily_pending IS NULL OR (typeof(daily_pending)='integer' AND daily_pending>=0)),
+      daily_pending_at INTEGER,
+      monthly_pending INTEGER CHECK(monthly_pending IS NULL OR (typeof(monthly_pending)='integer' AND monthly_pending>=0)),
+      monthly_pending_at INTEGER,
+      updated INTEGER NOT NULL);`),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>
@@ -664,6 +679,11 @@ export function addCredit(
     "INSERT OR IGNORE INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES(?,?,?,?,?,?,?,?)",
   ).run(uid("l_"), user, amount, kind, ref, null, description, now());
 }
+// Checks another module runs inside every reservation's transaction, for the
+// account the hold is placed on: Spending Limits registers one per database
+// (server/spending-limits.js), so no reservation path can skip it.
+const reserveChecks = new WeakMap();
+export const onReserve = (db, check) => reserveChecks.set(db, check);
 export function reserve(
   db,
   { id, user, amount, key, kind = "chat", ttl = 300000, guard },
@@ -692,6 +712,9 @@ export function reserve(
         "Not enough credits for this request. Add credits or reduce the output limit.",
         "insufficient_credits",
       );
+    // The account's own spending limits, counting this hold with its settled
+    // spend and every hold still open (402 spending_limit).
+    reserveChecks.get(db)?.(user, amount);
     if (key) {
       const k = db
         .prepare("SELECT * FROM api_keys WHERE id=? AND revoked IS NULL")

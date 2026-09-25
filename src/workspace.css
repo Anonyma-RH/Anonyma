@@ -335,5 +335,7 @@
 .app-shell .credit-estimate{min-width:150px;justify-content:center}.app-shell .credit-estimate.loading{color:#5b6477}
 .app-shell .credit-estimate.unavailable{color:#5b6477;background:#f4f5f8;border-color:#e3e6ee}
 .app-shell .credit-estimate.short{color:#8a4b00;background:#fff6e8;border-color:#ffd9a0}
+.app-shell .credit-estimate.limited{color:#8a4b00;background:#fff6e8;border-color:#ffd9a0}
 .app-shell .credit-estimate b{font-weight:600}
 @media(max-width:700px){.app-shell .credit-estimate{font-size:10px;padding:5px 7px}.app-shell .credit-estimate b{display:none}.app-shell .composer-controls.with-estimate{flex-wrap:wrap}.app-shell .composer-controls.with-estimate>div{flex:1 1 100%}.app-shell .with-estimate .send-cluster{margin-left:auto}}
+.app-shell .notice .limit-link{margin-left:6px;white-space:nowrap}

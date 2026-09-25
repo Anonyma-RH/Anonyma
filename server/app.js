@@ -33,6 +33,7 @@ import { scrollsRoutes } from "./routes/scrolls.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { accountRoutes } from "./routes/account.js";
 import { allowanceRoutes } from "./routes/allowances.js";
+import { spendingLimitRoutes } from "./routes/spending-limits.js";
 import { connectRoutes } from "./routes/connect.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { historyLibrary } from "./history-library.js";
@@ -102,6 +103,8 @@ export function createApp(overrides = {}) {
   const worker = createWorker(ctx);
   accountRoutes(ctx);
   allowanceRoutes(ctx);
+  // Also registers the Spending Limits check every reservation runs.
+  spendingLimitRoutes(ctx);
   connectRoutes(ctx);
   paymentRoutes(ctx);
   siteRoutes(ctx);

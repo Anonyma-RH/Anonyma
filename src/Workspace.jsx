@@ -2042,7 +2042,18 @@ export default function Workspace() {
                     <NoPrivateModelsNotice />
                   ))}
                 {info && <Notice>{info}</Notice>}
-                {error && <Notice type="error">{error}</Notice>}
+                {error && (
+                  <Notice type="error">
+                    {error}
+                    {/* A refusal by the account's own Spending Limits. */}
+                    {isReleased(config, "limits") &&
+                      /\byour (whole )?(daily|monthly) spending limit\b/i.test(error) && (
+                        <Link className="limit-link" to={"/account/limits" + (demo ? "?demo=1" : "")}>
+                          Spending limits
+                        </Link>
+                      )}
+                  </Notice>
+                )}
                 {chatControlLive && <ChargeStatus state={charge.state} checking={charge.checking} recover={charge.recover} />}
                 {receipt && (!chatControlLive || receipt.request_id || receipt.signed_receipt) && (
                   <div className="receipt">

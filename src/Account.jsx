@@ -33,6 +33,7 @@ import {
 import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
 import McpConnect from "./McpConnect.jsx";
 import { KeyAllowance } from "./Allowances.jsx";
+import { SpendingLimits } from "./SpendingLimits.jsx";
 import { ConnectedApps, connectReleased } from "./Connect.jsx";
 import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
 import { holdersReleased } from "./holders.js";
@@ -258,9 +259,12 @@ export default function Account() {
     setModal(null);
     setSecret("");
   }
+  // Spending Limits shows only once it's released.
+  const limitsOn = isReleased(config, "limits");
   const tabs = [
     ["overview", "Overview"],
     ["credits", "Credits & funding"],
+    ...(limitsOn ? [["limits", "Spending limits"]] : []),
     ["keys", "API keys"],
     ["settings", "Account settings"],
   ];
@@ -320,7 +324,9 @@ export default function Account() {
             <h1>
               {section === "keys"
                 ? "API keys"
-                : section === "credits"
+                : section === "limits"
+                  ? "Spending limits"
+                  : section === "credits"
                   ? "Credits & funding"
                   : section === "settings"
                     ? "Account settings"
@@ -632,6 +638,12 @@ export default function Account() {
                 )}
               </div>
             </div>
+          )}
+          {section === "limits" && !limitsOn && (
+            <ComingSoon update={releaseUpdate(config, "limits")} />
+          )}
+          {section === "limits" && limitsOn && (demo || user) && (
+            <SpendingLimits demo={demo} />
           )}
           {section === "keys" && !isReleased(config, "api") && (
             <ComingSoon update={releaseUpdate(config, "api")} />

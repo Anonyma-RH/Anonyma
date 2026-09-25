@@ -201,6 +201,7 @@ export function chatRoutes(ctx) {
           "allowance_exhausted",
           "treasury_insufficient",
           "treasury_limit",
+          "spending_limit",
         ].includes(e.code)
       )
         throw e;

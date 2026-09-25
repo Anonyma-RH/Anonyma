@@ -170,6 +170,10 @@ export function createEstimator({
               status: "ready",
               credits: Number(r.credits),
               available: r.available == null ? null : Number(r.available),
+              // Spending Limits: room left under the account's own limits.
+              ...(r.spending_limit?.remaining != null
+                ? { room: Number(r.spending_limit.remaining) }
+                : {}),
               model: r.model,
               ...(body.max_tokens ? { replyBudget: body.max_tokens } : {}),
             });
@@ -203,7 +207,11 @@ export function estimateLabel(state) {
       return {
         text: `Estimated ≈${formatCredits(state.credits)} credits`,
         tone:
-          state.available != null && state.credits > state.available ? "short" : "ready",
+          state.available != null && state.credits > state.available
+            ? "short"
+            : state.room != null && state.credits > state.room
+              ? "limited"
+              : "ready",
       };
     case "loading":
       return { text: "Updating estimate…", tone: "loading" };

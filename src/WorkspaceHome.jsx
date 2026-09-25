@@ -47,6 +47,11 @@ const fmt = (n) =>
   (Number(n) || 0).toLocaleString(undefined, {
     maximumFractionDigits: Math.abs(n) >= 10 ? 0 : 2,
   });
+// Limit room is never rounded up to look larger than it is.
+const exact = (n) =>
+  (Math.floor((Number(n) || 0) * 100) / 100).toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  });
 const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
 function ago(t) {
   const s = (Date.now() - Number(t)) / 1000;
@@ -119,6 +124,10 @@ function demoData() {
     collabs: [{ id: "demo", name: "Launch team", members: 3, role: "owner" }],
     referrals: { percent: 5, invited: 2, earned: 100, link: "" },
     keys: [{ id: "demo", name: "Production app", cap: 100, spent: 62, revoked: null }],
+    limits: {
+      daily: { limit: 50, remaining: 17.6 },
+      monthly: { limit: 1000, remaining: 589 },
+    },
   };
 }
 
@@ -224,6 +233,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
     api: isReleased(config, "api"),
     video: isReleased(config, "video"),
     search: isReleased(config, "search"),
+    limits: isReleased(config, "limits"),
   };
 
   useEffect(() => {
@@ -237,13 +247,26 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
     if (live.collab) get("/api/collabs", "collabs", (r) => r.data || []);
     if (live.social) get("/api/referrals", "referrals");
     if (live.api) get("/api/keys", "keys", (r) => r.data || []);
+    if (live.limits) get("/api/spending-limits", "limits");
     if (live.video)
       api("/api/videos")
         .then((r) => setJobs(r.data || []))
         .catch(() => {});
-  }, [demo, user?.id, live.collab, live.social, live.api, live.video]);
+  }, [demo, user?.id, live.collab, live.social, live.api, live.video, live.limits]);
 
   const { summary, collabs, referrals, keys } = data;
+  // Spending Limits: the room left under each limit in force.
+  const limitNotes = live.limits
+    ? [
+        ["daily", "Daily limit"],
+        ["monthly", "Monthly limit"],
+      ]
+        .filter(([name]) => data.limits?.[name]?.limit != null)
+        .map(
+          ([name, title]) =>
+            `${title}: ${exact(data.limits[name].remaining)} of ${exact(data.limits[name].limit)} credits left`,
+        )
+    : [];
   const running = jobs.filter((j) =>
     ["submitting", "pending", "processing", "reconciliation"].includes(j.status),
   ).length;
@@ -469,6 +492,13 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
                     ? " Fixture credits in local test mode."
                     : ""}
               </p>
+              {limitNotes.length > 0 && (
+                <p className="dash-limit">
+                  {limitNotes.join(" · ")}
+                  {" · "}
+                  <Link to={"/account/limits" + q}>Spending limits</Link>
+                </p>
+              )}
               <div className="dash-actions">
                 <Link className="solid" to={"/account/credits" + q}>
                   Add credits

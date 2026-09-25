@@ -1,6 +1,7 @@
 import { balance, credits, usdUnits, callable, now } from "../core.js";
 import { isPrivateModel } from "../private-mode.js";
 import { connectLive } from "../releases.js";
+import { limitsLive, spendingRoom } from "../spending-limits.js";
 import {
   ACCESS_PREFIX,
   authenticateAccessToken,
@@ -98,7 +99,8 @@ const toolsFor = (req) => (req.appConnection ? CONNECTION_TOOLS : TOOLS);
 // the balance. So:
 // - an ask only runs while the account's available balance covers what's
 //   left of the budget (one fixed yes/no, which the app's own spending
-//   can't move, since it lowers both sides alike);
+//   can't move, since it lowers both sides alike), and so does the room
+//   left under the account's own spending limits, when it has any;
 // - a request too big to reserve always gets the same answer, stated in
 //   the budget's terms, whichever check refused it.
 const USED_UP = "This connection has used its full budget.";
@@ -111,7 +113,11 @@ function connectionMessage(ctx, req, e) {
   if (e.code === "key_paused") return PAUSED;
   if (e.code === "key_expired")
     return "This connection has expired. Connect the app again.";
-  if (["insufficient_credits", "allowance_exhausted"].includes(e.code)) {
+  if (
+    ["insufficient_credits", "allowance_exhausted", "spending_limit"].includes(
+      e.code,
+    )
+  ) {
     const left = budgetLeft(ctx.db, req.apiKey);
     return left > 0 ? tooBig(left) : USED_UP;
   }
@@ -224,6 +230,10 @@ async function toolAsk(ctx, req, res, args) {
     if (left <= 0) return refusal(USED_UP);
     if (balance(ctx.db, req.user.id).available < left)
       return refusal(CANT_SPEND);
+    const room = limitsLive(ctx.cfg)
+      ? spendingRoom(ctx.db, req.user.id)
+      : null;
+    if (room != null && room < left) return refusal(CANT_SPEND);
   }
   if (privateOnly) {
     const m = ctx.models.find(args.model);

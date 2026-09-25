@@ -141,6 +141,14 @@ export default function ApiGuide() {
             agent allowance is used up, paused or past its expiry.
           </li>
         )}
+        {featureEnabled(config, "limits") && (
+          <li>
+            402 spending_limit — the request would go over the account’s own
+            daily or monthly spending limit. Nothing is reserved; the
+            spending_limit object says which limit and frees_at when room
+            frees up.
+          </li>
+        )}
         <li>
           502 provider_unreadable or 504 provider_timeout — generation failed
           and the base estimate may still be charged.

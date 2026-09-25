@@ -403,6 +403,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "limits",
+    title: "Spending Limits",
+    tagline: "Your balance, with a ceiling you set.",
+    points: [
+      "Daily and monthly limits on your own balance",
+      "Refused before anything is reserved or spent",
+      "Raising a limit waits 24 hours",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -577,6 +588,8 @@ export function featuresFor(req) {
     return ["receipts"];
   if (p.startsWith("/api/retention")) return ["ephemeral"];
   if (p === "/api/memory" || p.startsWith("/api/memory/")) return ["memory"];
+  if (p === "/api/spending-limits" || p.startsWith("/api/spending-limits/"))
+    return ["limits"];
   // Branching a saved conversation (edit and regenerate use it too).
   if (/^\/api\/conversations\/[^/]+\/branch$/.test(p)) return ["branches"];
   if (

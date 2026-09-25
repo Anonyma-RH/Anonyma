@@ -13,6 +13,7 @@ import { modelReleased, releaseInfo, isReleased } from "../releases.js";
 import { isPrivateModel } from "../private-mode.js";
 import { withMemory } from "../../src/memory.js";
 import { trainingFields, liveIds } from "../training.js";
+import { limitsLive, spendingRoom } from "../spending-limits.js";
 import {
   fail,
   balance,
@@ -147,10 +148,15 @@ export function catalogRoutes(ctx) {
         : base + (wantsWebSearch(req.body) ? usdUnits(cfg.webSearchPrice) : 0)) *
         (teamPaid ? standardFactor(cfg) : markupFactor(req.user, cfg)),
     );
+    // Spending Limits: the room left under the account's own limits, which
+    // a personal request can't go over (team-paid requests don't count).
+    const room =
+      !team && limitsLive(cfg) ? spendingRoom(db, req.user.id) : null;
     res.json({
       credits: credits(amount),
       usd: amount / 1e7,
       available: credits(team ? team.available : balance(db, req.user.id).available),
+      ...(room != null ? { spending_limit: { remaining: credits(room) } } : {}),
       model: m.id,
       estimate: true,
       ...(budget ? { budget } : {}),

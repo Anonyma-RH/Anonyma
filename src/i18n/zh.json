@@ -2298,7 +2298,48 @@
     "The device voice could not finish. Choose another local voice or read the text.": "设备语音未能读完。请选择其他本地语音，或直接阅读文字。",
     "The device voice did not finish. Press Play again or read the text.": "设备语音没有读完。请再次按“播放回答”，或直接阅读文字。",
     "This device could not start speech. Choose another local voice or read the text.": "此设备无法开始朗读。请选择其他本地语音，或直接阅读文字。",
-    "No local device voice is available. Keep reading the text, or enable a device voice in browser or system settings.": "没有可用的本地设备语音。你可以继续阅读文字，或在浏览器或系统设置中启用设备语音。"
+    "No local device voice is available. Keep reading the text, or enable a device voice in browser or system settings.": "没有可用的本地设备语音。你可以继续阅读文字，或在浏览器或系统设置中启用设备语音。",
+    "Spending Limits": "消费上限",
+    "Your balance, with a ceiling you set.": "你的余额，由你设定上限。",
+    "Daily and monthly limits on your own balance": "为你自己的余额设置每日和每月上限",
+    "Refused before anything is reserved or spent": "在冻结或花费任何积分之前就会拒绝",
+    "Raising a limit waits 24 hours": "调高上限需等待 24 小时",
+    "Spending limits": "消费上限",
+    "Daily limit": "每日上限",
+    "Monthly limit": "每月上限",
+    "Rolling 24 hours": "滚动 24 小时",
+    "Rolling 30 days": "滚动 30 天",
+    "Pending": "待生效",
+    "Cancel change": "取消更改",
+    "Set the ceiling.": "设定上限。",
+    "Daily and monthly limits on what your own balance can spend, so a runaway session, script or leaked key can't drain it.": "为你自己的余额设置每日和每月消费上限，这样失控的会话、脚本或泄露的密钥都无法将它耗尽。",
+    "Loading your limits…": "正在加载你的上限……",
+    "Change your limits": "更改你的上限",
+    "Daily limit (credits)": "每日上限（积分）",
+    "Monthly limit (credits)": "每月上限（积分）",
+    "Lowering or adding a limit applies now. Raising or removing one waits 24 hours, and you can cancel it until then.": "降低或新增上限会立即生效。调高或移除上限需等待 24 小时，在此之前你可以随时取消。",
+    "Save limits": "保存上限",
+    "What counts.": "计入哪些。",
+    "What doesn't.": "不计入哪些。",
+    "Chat, image, video and voice requests paid from your balance": "从你的余额支付的对话、图像、视频和语音请求",
+    "The API, your API keys, connected apps and the MCP server": "API、你的 API 密钥、已连接的应用和 MCP 服务器",
+    "Credits you send and treasury contributions": "你发送的积分和向金库的贡献",
+    "Requests still in progress, at the most they could cost": "仍在进行中的请求，按其最高可能费用计算",
+    "Team-paid collab requests, which spend the team treasury": "由团队支付的协作请求（花费的是团队金库）",
+    "Top-ups, refunds and rewards": "充值、退款和奖励",
+    "A request that would go over a limit is refused before anything is reserved or spent, with the time room frees up.": "会超出上限的请求会在冻结或花费任何积分之前被拒绝，并告诉你何时会腾出额度。",
+    "Enter each limit in credits, 0 or more, or leave it blank for no limit.": "请以积分为单位输入每个上限（0 或以上），留空则表示不限额。",
+    "Nothing to change.": "没有需要更改的内容。",
+    "Your daily spending limit is 0 credits, so nothing can be spent.": "你的每日消费上限为 0 积分，因此无法消费。",
+    "Your monthly spending limit is 0 credits, so nothing can be spent.": "你的每月消费上限为 0 积分，因此无法消费。",
+    "over your spending limit": "超出你的消费上限",
+    "over your balance": "超出你的余额",
+    "Daily limit: pending change cancelled. The current limit stays.": "每日上限：待生效的更改已取消。当前上限保持不变。",
+    "Monthly limit: pending change cancelled. The current limit stays.": "每月上限：待生效的更改已取消。当前上限保持不变。",
+    "There's no pending change to your daily limit.": "你的每日上限没有待生效的更改。",
+    "There's no pending change to your monthly limit.": "你的每月上限没有待生效的更改。",
+    "Room frees up as requests in progress finish.": "进行中的请求完成后会腾出额度。",
+    "402 spending_limit — the request would go over the account’s own daily or monthly spending limit. Nothing is reserved; the spending_limit object says which limit and frees_at when room frees up.": "402 spending_limit——请求会超出账户自己设定的每日或每月消费上限。不会冻结任何积分；spending_limit 对象会说明是哪个上限，frees_at 表示何时会腾出额度。"
   },
   "patterns": [
     {
@@ -3436,6 +3477,110 @@
     {
       "en": "{0} credits reserved; final charge pending.",
       "zh": "已冻结 {0} 积分；最终费用待定。"
+    },
+    {
+      "en": "{0} credits spent in the last 24 hours",
+      "zh": "过去 24 小时花费了 {0} 积分"
+    },
+    {
+      "en": "{0} credits spent in the last 30 days",
+      "zh": "过去 30 天花费了 {0} 积分"
+    },
+    {
+      "en": "{0} of {1} credits left",
+      "zh": "剩余 {0} / {1} 积分"
+    },
+    {
+      "en": "{0} used in the last 24 hours",
+      "zh": "过去 24 小时已用 {0}"
+    },
+    {
+      "en": "{0} used in the last 30 days",
+      "zh": "过去 30 天已用 {0}"
+    },
+    {
+      "en": "{0} on hold",
+      "zh": "{0} 冻结中"
+    },
+    {
+      "en": "Room frees up from {0}.",
+      "zh": "{0} 起开始腾出额度。"
+    },
+    {
+      "en": "No limit from {0}.",
+      "zh": "自 {0} 起不限额。"
+    },
+    {
+      "en": "Rises to {0} credits at {1}.",
+      "zh": "将于 {1} 调高至 {0} 积分。"
+    },
+    {
+      "en": "Daily limit: {0} credits, in force now.",
+      "zh": "每日上限：{0} 积分，现已生效。"
+    },
+    {
+      "en": "Monthly limit: {0} credits, in force now.",
+      "zh": "每月上限：{0} 积分，现已生效。"
+    },
+    {
+      "en": "Daily limit: removed at {0}, 24 hours from now. You can cancel it until then.",
+      "zh": "每日上限：将于 {0}（24 小时后）移除。在此之前你可以随时取消。"
+    },
+    {
+      "en": "Monthly limit: removed at {0}, 24 hours from now. You can cancel it until then.",
+      "zh": "每月上限：将于 {0}（24 小时后）移除。在此之前你可以随时取消。"
+    },
+    {
+      "en": "Daily limit: rises to {0} credits at {1}, 24 hours from now. You can cancel it until then.",
+      "zh": "每日上限：将于 {1}（24 小时后）调高至 {0} 积分。在此之前你可以随时取消。"
+    },
+    {
+      "en": "Monthly limit: rises to {0} credits at {1}, 24 hours from now. You can cancel it until then.",
+      "zh": "每月上限：将于 {1}（24 小时后）调高至 {0} 积分。在此之前你可以随时取消。"
+    },
+    {
+      "en": "Daily limit: {0} of {1} credits left",
+      "zh": "每日上限：剩余 {0} / {1} 积分"
+    },
+    {
+      "en": "Monthly limit: {0} of {1} credits left",
+      "zh": "每月上限：剩余 {0} / {1} 积分"
+    },
+    {
+      "en": "This would spend up to {0} credits, more than the {1} credits left of your daily spending limit.",
+      "zh": "这最多会花费 {0} 积分，超过你每日消费上限剩余的 {1} 积分。"
+    },
+    {
+      "en": "This would spend up to {0} credits, more than the {1} credits left of your monthly spending limit.",
+      "zh": "这最多会花费 {0} 积分，超过你每月消费上限剩余的 {1} 积分。"
+    },
+    {
+      "en": "This would spend up to {0} credits, more than your whole daily spending limit of {1} credits.",
+      "zh": "这最多会花费 {0} 积分，超过你全部的每日消费上限 {1} 积分。"
+    },
+    {
+      "en": "This would spend up to {0} credits, more than your whole monthly spending limit of {1} credits.",
+      "zh": "这最多会花费 {0} 积分，超过你全部的每月消费上限 {1} 积分。"
+    },
+    {
+      "en": "You've reached your daily spending limit of {0} credits.",
+      "zh": "你已达到每日消费上限 {0} 积分。"
+    },
+    {
+      "en": "You've reached your monthly spending limit of {0} credits.",
+      "zh": "你已达到每月消费上限 {0} 积分。"
+    },
+    {
+      "en": "{0} Room frees up at {1}.",
+      "zh": "{0}额度将于 {1} 腾出。"
+    },
+    {
+      "en": "{0} Room frees up as requests in progress finish.",
+      "zh": "{0}进行中的请求完成后会腾出额度。"
+    },
+    {
+      "en": "An estimate, not a final charge: this message and a {0}-token reply budget at the model's published rates. Actual usage, and the amount held while the reply runs, can differ. {1} credits are left under your spending limits.",
+      "zh": "这是估算，不是最终费用：按模型公布的价格，计算此消息加上 {0} Token 回复预算的费用。实际用量以及回复运行期间冻结的金额可能不同。你的消费上限还剩 {1} 积分。"
     }
   ]
 }

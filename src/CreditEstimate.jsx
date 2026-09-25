@@ -30,6 +30,7 @@ export function CreditEstimate({ state }) {
   const label = estimateLabel(state);
   if (!label) return null;
   const short = label.tone === "short";
+  const limited = label.tone === "limited";
   const EXPLAIN = explain(state.replyBudget);
   return (
     <span
@@ -41,12 +42,15 @@ export function CreditEstimate({ state }) {
           ? state.message
           : short
             ? `${EXPLAIN} You have ${formatCredits(state.available)} credits available.`
-            : EXPLAIN
+            : limited
+              ? `${EXPLAIN} ${formatCredits(state.room)} credits are left under your spending limits.`
+              : EXPLAIN
       }
     >
       {label.tone !== "loading" && label.tone !== "unavailable" && <Icon name="coins" size={13} />}
       {label.text}
       {short && <b> · over your balance</b>}
+      {limited && <b> · over your spending limit</b>}
     </span>
   );
 }

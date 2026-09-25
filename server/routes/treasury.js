@@ -9,6 +9,7 @@ import {
   transaction,
 } from "../core.js";
 import { isReleased } from "../releases.js";
+import { assertSpendingRoom, limitsLive } from "../spending-limits.js";
 
 export const MAX_TREASURY_TRANSFER = 1_000_000; // credits
 export const MAX_TREASURY_LIMIT = 1_000_000_000; // credits
@@ -278,6 +279,9 @@ export function treasuryRoutes(ctx) {
             "Not enough available credits to contribute.",
             "insufficient_credits",
           );
+        // A contribution leaves the personal balance, so it counts against
+        // the contributor's own spending limits (402 spending_limit).
+        if (limitsLive(cfg)) assertSpendingRoom(db, req.user.id, amount);
         transfer(
           req.user.id,
           openAccount(c.id),

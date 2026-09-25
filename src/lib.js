@@ -9,6 +9,33 @@ export class ApiError extends Error {
     this.data = data;
   }
 }
+// Spending Limits: a 402 spending_limit refusal, said in the reader's own
+// time. The server's message says how long until room frees up; this says
+// when, from the error body's spending_limit details. Null for any other
+// error, whose own message is shown.
+export function spendingLimitMessage(data) {
+  const s = data?.spending_limit;
+  if (data?.error?.code !== "spending_limit" || !s) return null;
+  const name = s.limit === "monthly" ? "monthly" : "daily";
+  const fmt = (v) =>
+    Number(v).toLocaleString(undefined, { maximumFractionDigits: 4 });
+  const limit = Number(s.limit_credits),
+    asked = Number(s.requested_credits),
+    left = Number(s.remaining_credits);
+  let text =
+    limit === 0
+      ? `Your ${name} spending limit is 0 credits, so nothing can be spent.`
+      : asked > limit
+        ? `This would spend up to ${fmt(asked)} credits, more than your whole ${name} spending limit of ${fmt(limit)} credits.`
+        : left <= 0
+          ? `You've reached your ${name} spending limit of ${fmt(limit)} credits.`
+          : `This would spend up to ${fmt(asked)} credits, more than the ${fmt(left)} credits left of your ${name} spending limit.`;
+  if (Number.isFinite(s.frees_at))
+    text += ` Room frees up at ${new Date(s.frees_at).toLocaleString(undefined, { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })}.`;
+  else if (Number(s.held_credits) > 0 && asked <= limit)
+    text += " Room frees up as requests in progress finish.";
+  return text;
+}
 export async function api(path, { method = "GET", body, signal } = {}) {
   let response;
   try {
@@ -31,7 +58,9 @@ export async function api(path, { method = "GET", body, signal } = {}) {
   const data = await response.json();
   if (!response.ok)
     throw new ApiError(
-      data.error?.message || "The request could not be completed.",
+      spendingLimitMessage(data) ||
+        data.error?.message ||
+        "The request could not be completed.",
       response.status,
       data.error?.code,
       data,
@@ -55,7 +84,9 @@ export async function streamChat(body, onEvent, signal) {
       error = await response.json();
     } catch {}
     throw new ApiError(
-      error?.error?.message || "Chat is unavailable.",
+      spendingLimitMessage(error) ||
+        error?.error?.message ||
+        "Chat is unavailable.",
       response.status,
       error?.error?.code,
       error,

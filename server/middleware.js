@@ -149,6 +149,8 @@ export function errorHandler(cfg) {
         param: null,
       },
       ...(e.billing ? { billing: e.billing } : {}),
+      // Spending Limits: which limit refused the request and when room frees.
+      ...(e.spendingLimit ? { spending_limit: e.spendingLimit } : {}),
       ...(e.receipt
         ? {
             askr: { credits_charged: e.receipt.credits_charged },

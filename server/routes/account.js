@@ -1,6 +1,7 @@
 import { sessionCookieOptions } from "../auth.js";
 import { exportConversations } from "./conversations.js";
 import { HOLDER_RESET } from "../holders.js";
+import { limitsView } from "../spending-limits.js";
 import {
   uid,
   hash,
@@ -25,6 +26,11 @@ import {
 // Ledger, API keys, support tickets, data export and account closure.
 export function accountRoutes(ctx) {
   const { app, db, cfg, limit, requireUser, publicUser } = ctx;
+  // Spending Limits: the limits in force, pending changes and usage.
+  const exportLimits = (user) =>
+    db.prepare("SELECT 1 FROM spending_limits WHERE user_id=?").get(user)
+      ? limitsView(db, user)
+      : null;
   const { mediaJSON, deleteMedia } = ctx.media;
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -334,6 +340,7 @@ export function accountRoutes(ctx) {
           .all(req.user.id)
           .map((f) => ({ ...f, enabled: !!f.enabled })),
       },
+      spendingLimits: exportLimits(req.user.id),
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {
@@ -406,6 +413,7 @@ export function accountRoutes(ctx) {
       );
       db.prepare("DELETE FROM memory_facts WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM memory_settings WHERE user_id=?").run(req.user.id);
+      db.prepare("DELETE FROM spending_limits WHERE user_id=?").run(req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.
       db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);
       db.prepare(

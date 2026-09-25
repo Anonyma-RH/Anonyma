@@ -10,6 +10,7 @@ import {
   transaction,
 } from "../core.js";
 import { requestIdentifier } from "../middleware.js";
+import { assertSpendingRoom, limitsLive } from "../spending-limits.js";
 
 export const MIN_TRANSFER = 1; // credits
 export const MAX_TRANSFER = 1_000_000; // credits
@@ -123,6 +124,9 @@ export function creditRoutes(ctx) {
             "Not enough available credits to send.",
             "insufficient_credits",
           );
+        // Credits sent spend the balance, so they count against the
+        // sender's own spending limits (402 spending_limit).
+        if (limitsLive(cfg)) assertSpendingRoom(db, req.user.id, units);
         const entry = db.prepare(
           "INSERT INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES(?,?,?,?,?,?,?,?)",
         );

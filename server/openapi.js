@@ -123,6 +123,20 @@ const schemas = {
         ["message", "code", "type"],
       ),
       anonyma: object({ credits_charged: number }),
+      spending_limit: {
+        ...object({
+          limit: { enum: ["daily", "monthly"] },
+          window_hours: integer,
+          limit_credits: number,
+          used_credits: number,
+          held_credits: number,
+          remaining_credits: number,
+          requested_credits: number,
+          frees_at: { type: ["integer", "null"] },
+        }),
+        description:
+          "Present with 402 spending_limit: which of the account's own limits refused the request, its usage (settled spend in the rolling window plus open holds), what this request would have held, and frees_at, the millisecond time enough settled spend leaves the window for it to fit (null when it depends on requests still in progress, or the request is larger than the whole limit).",
+      },
     },
     ["error"],
   ),
@@ -220,6 +234,11 @@ const schemas = {
     available: number,
     model: string,
     estimate: { const: true },
+    spending_limit: {
+      ...object({ remaining: number }),
+      description:
+        "Spending Limits: present when the account has a daily or monthly limit in force (and the limits update is released). remaining is the room left under the tightest one; a personal request larger than it is refused with 402 spending_limit. Not present on team-paid estimates, which don't count.",
+    },
   }),
   ChatCompletion: object({
     id: string,
@@ -693,7 +712,7 @@ route("post", "/api/chat", "Stream chat, code or compatible image output", {
   body: ref("ChatRequest"),
   stream: true,
   description:
-    "Always SSE via fetch POST, not EventSource. Retains latest 20 messages. Parse data events across arbitrary byte boundaries; final usage event includes conversationId, askr and anonyma receipt, followed by [DONE]. Abort cancels work and settles delivered usage. Errors can follow HTTP 200. Use a stable requestId or Idempotency-Key; duplicates return 409, not a new charge. See the request body's private field for Private Mode.",
+    "Always SSE via fetch POST, not EventSource. Retains latest 20 messages. Parse data events across arbitrary byte boundaries; final usage event includes conversationId, askr and anonyma receipt, followed by [DONE]. Abort cancels work and settles delivered usage. Errors can follow HTTP 200. Use a stable requestId or Idempotency-Key; duplicates return 409, not a new charge. See the request body's private field for Private Mode. A request paid from the personal balance that would go over the account's own spending limits is refused with 402 spending_limit before anything is reserved (see GET /api/spending-limits); team-paid requests don't count.",
 });
 route("post", "/api/images", "Generate and save 1–4 images", {
   body: object(
@@ -947,6 +966,61 @@ route("delete", "/api/memory", "Delete every saved fact", {
   response: ref("Ok"),
   description: "The on/off choice is kept. Account deletion also deletes memory; account export includes it.",
 });
+// Spending Limits (update "limits").
+const limitCredits = {
+  type: ["number", "null"],
+  minimum: 0,
+  maximum: 1e9,
+  description: "Credits with at most four decimals; null means no limit.",
+};
+const limitWindow = object({
+  limit: { ...limitCredits, description: "The limit in force now, in credits; null means none." },
+  window_hours: integer,
+  settled: { ...number, description: "Settled spend in the rolling window." },
+  held: { ...number, description: "Every open hold on the personal balance." },
+  used: { ...number, description: "settled + held." },
+  remaining: { type: ["number", "null"], description: "limit minus used, never below 0; null without a limit." },
+  pending: {
+    type: ["object", "null"],
+    properties: { limit: limitCredits, applies_at: integer },
+    description: "A raise or removal waiting its 24 hours: the new limit (null removes it) and when it applies.",
+  },
+  next_room_at: { type: ["integer", "null"], description: "When the oldest counted spend in the window leaves it." },
+});
+const spendingLimits = object({
+  daily: limitWindow,
+  monthly: limitWindow,
+  held: number,
+  raise_delay_hours: integer,
+});
+route("get", "/api/spending-limits", "Your spending limits and usage", {
+  response: spendingLimits,
+  description:
+    "Off until you set one. daily covers the last 24 hours, monthly the last 30 days, both rolling. What counts: settled charges on your personal balance (workspace, /v1 API, API keys, connected apps and the MCP server), credits you send, treasury contributions, and every hold still open. Team-paid collab requests (charged to the treasury), top-ups, refunds and rewards don't count.",
+});
+route("patch", "/api/spending-limits", "Set, lower, raise or remove a spending limit", {
+  body: object({ daily_limit: limitCredits, monthly_limit: limitCredits }),
+  response: {
+    ...spendingLimits,
+    properties: {
+      ...spendingLimits.properties,
+      changes: {
+        ...object({
+          daily_limit: { enum: ["applied", "pending", "unchanged"] },
+          monthly_limit: { enum: ["applied", "pending", "unchanged"] },
+        }),
+        description: "What happened to each field sent.",
+      },
+    },
+  },
+  description:
+    "Omitted fields keep their value. Adding or lowering a limit applies immediately (applied). Raising or removing one (null) applies 24 hours later (pending) and can be cancelled until then; a new value replaces any pending change, and a new raise starts the 24 hours again. Sending the limit in force cancels a pending change (unchanged). Limits are stored as integer ledger subunits and never write the ledger. 400 invalid_limit.",
+});
+route("delete", "/api/spending-limits/pending/{limit}", "Cancel a pending raise or removal", {
+  response: spendingLimits,
+  description:
+    "limit is daily or monthly. The limit in force stays. 404 no_pending_change when nothing is pending.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(
@@ -1022,7 +1096,7 @@ route("post", "/api/collabs/{id}/treasury/contribute", "Contribute credits to th
   response: treasuryTransfer,
   status: 201,
   description:
-    "Any member. Moves available credits atomically as a linked treasury_contribution ledger pair; the treasury is a hidden ledger account created on the first contribution. Contributed credits belong to the treasury, which its owner controls, and can't be taken back. Repeats return 200. 402 insufficient_credits; 409 payment_reconciliation_pending while the contributor has a credited payment under reconciliation.",
+    "Any member. Moves available credits atomically as a linked treasury_contribution ledger pair; the treasury is a hidden ledger account created on the first contribution. Contributed credits belong to the treasury, which its owner controls, and can't be taken back. Repeats return 200. 402 insufficient_credits; 402 spending_limit when the contribution would go over the contributor's own spending limits (contributions count toward them); 409 payment_reconciliation_pending while the contributor has a credited payment under reconciliation.",
 });
 route("post", "/api/collabs/{id}/treasury/withdraw", "Withdraw treasury credits (owner)", {
   body: treasuryAmount("withdraw"),
@@ -1084,7 +1158,7 @@ route("post", "/api/credits/send", "Send credits to another account", {
   }),
   status: 201,
   description:
-    "Moves available credits atomically as a linked transfer_out/transfer_in ledger pair. Reusing a requestId returns the original transfer instead of sending again. Paused while a credited payment is under reconciliation.",
+    "Moves available credits atomically as a linked transfer_out/transfer_in ledger pair. Reusing a requestId returns the original transfer instead of sending again. Paused while a credited payment is under reconciliation. Credits sent count toward the sender's own spending limits: 402 spending_limit when a transfer would go over one.",
 });
 route("get", "/api/media", "List private workspace library", {
   response: object({ data: array(ref("Media")) }),
@@ -1265,7 +1339,7 @@ route(
   "Download account JSON with explicit monetary units",
   {
     description:
-      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata and accessible conversations. Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
+      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations and spending limits (spendingLimits, null when none were set). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
   },
 );
 route("delete", "/api/account", "Close account and forfeit unused credits", {
@@ -1295,7 +1369,7 @@ route("post", "/v1/chat/completions", "OpenAI-style chat completion", {
   body: ref("ApiChatRequest"),
   response: ref("ChatCompletion"),
   description:
-    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Other optional parameters such as temperature, tools and response_format are ignored. Tool calling, audio, embeddings and Responses are not implemented. web_search=true or plugins: [{id: web}] requests web search and its fee. Idempotency-Key (1–200 characters) overrides requestId; repeats return 409 duplicate_request without replaying output or charging again. Missing IDs generate a new request, so transport retries without an ID can create another charge. Errors use {error: {message, code, type, param}}. SSE errors may occur after HTTP 200; inspect every event through [DONE]. Timeouts and unreadable provider responses can charge the base estimate; see /docs/billing. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged.",
+    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Other optional parameters such as temperature, tools and response_format are ignored. Tool calling, audio, embeddings and Responses are not implemented. web_search=true or plugins: [{id: web}] requests web search and its fee. Idempotency-Key (1–200 characters) overrides requestId; repeats return 409 duplicate_request without replaying output or charging again. Missing IDs generate a new request, so transport retries without an ID can create another charge. Errors use {error: {message, code, type, param}}. 402 spending_limit (with a spending_limit object) means the account's own daily or monthly spending limit would be exceeded; it is returned before anything is reserved. SSE errors may occur after HTTP 200; inspect every event through [DONE]. Timeouts and unreadable provider responses can charge the base estimate; see /docs/billing. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged.",
 });
 paths["/v1/chat/completions"].post.parameters = [
   { name: "Idempotency-Key", in: "header", required: false, schema: requestId },
@@ -1528,7 +1602,7 @@ const mediaExtension = object({
   },
 });
 const keyRefusals =
-  " Every request holds its worst-case cost against the key first: a paused key (403 key_paused), an expired allowance (403 key_expired), a used-up allowance (402 allowance_exhausted) or the rolling 24-hour cap (429 key_cap_exceeded) refuses it before any provider work. Idempotency-Key or requestId works as on chat completions.";
+  " Every request holds its worst-case cost against the key first: a paused key (403 key_paused), an expired allowance (403 key_expired), a used-up allowance (402 allowance_exhausted), the rolling 24-hour cap (429 key_cap_exceeded) or the account's own spending limits (402 spending_limit, once Spending Limits is released) refuses it before any provider work. Idempotency-Key or requestId works as on chat completions.";
 route(
   "post",
   "/v1/images/generations",

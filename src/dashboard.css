@@ -44,6 +44,8 @@
 .dash-balance span{font:inherit}
 .dash-note{margin:14px 0 0;font-size:17px;line-height:1.5;max-width:46ch}
 .dash-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.dash-limit{margin:10px 0 0;font-size:14px;line-height:1.5;max-width:52ch;color:var(--soft);font-variant-numeric:tabular-nums}
+.dash-limit a{color:var(--blue);text-decoration:underline;text-underline-offset:3px}
 .dash-actions a{padding:11px 18px;font-weight:700;font-size:15px;border:1px solid var(--blue);color:var(--blue)}
 .dash-actions a:hover{background:#eef2fc}
 .dash-actions a.solid{background:var(--blue);color:#fff}

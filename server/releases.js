@@ -258,7 +258,7 @@ export const UPDATES = [
       "Its own budget, expiry and off switch",
       "Private models only by default",
     ],
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

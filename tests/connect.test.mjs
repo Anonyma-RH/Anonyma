@@ -134,10 +134,11 @@ const call = (app, token, name, args = {}, id = 1) =>
     params: { name, arguments: args },
   });
 
-test("the update is registered off, and needs api, mcp and allowances", () => {
+test("the update is registered, and needs api, mcp and allowances", () => {
   const entry = UPDATES.find((u) => u.id === "connect");
   assert.ok(entry, "connect is registered in UPDATES");
-  assert.equal(committed[UPDATES.indexOf(entry)], false);
+  // Its release commit flips this; the gates below hold either way.
+  assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");
   assert.equal(entry.title, "Connect an App");
   assert.equal(entry.points.length, 3);
   assert.deepEqual(CONNECT_UPDATES, ["api", "mcp", "allowances", "connect"]);

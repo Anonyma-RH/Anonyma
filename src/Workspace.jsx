@@ -691,7 +691,7 @@ export default function Workspace() {
     // tagging happen only in this browser; see src/veil.js.
     let next = rawNext,
       veiledPayload = null;
-    if (veilOn && !demo) {
+    if (veilOn && !demo && isReleased(config, "veil")) {
       let veiledCount = 0;
       const tags = new Set();
       veiledPayload = rawNext.slice(-20).map((m) => {
@@ -1425,7 +1425,9 @@ export default function Workspace() {
                           <span>Web</span>
                         </button>
                       )}
-                      {["chat", "code"].includes(mode) && !demo && (
+                      {["chat", "code"].includes(mode) &&
+                        !demo &&
+                        isReleased(config, "veil") && (
                         <VeilToggle on={veilOn} onToggle={() => setVeilOn((v) => !v)} />
                       )}
                       {["chat", "code"].includes(mode) &&
@@ -1593,7 +1595,9 @@ export default function Workspace() {
                       ? "Sample outputs are illustrative. No provider request or charge."
                       : "AI can make mistakes. Check important information."}
                   </span>
-                  {["chat", "code"].includes(mode) && !demo && (
+                  {["chat", "code"].includes(mode) &&
+                    !demo &&
+                    isReleased(config, "veil") && (
                     <VeilPanel note={veilNote} words={veilWords} onWordsChange={setVeilWords} />
                   )}
                   {["chat", "code"].includes(mode) && (

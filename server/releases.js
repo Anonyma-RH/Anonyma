@@ -97,6 +97,17 @@ export const UPDATES = [
       "Instant, on the ledger",
     ],
   },
+  {
+    id: "veil",
+    title: "Veil",
+    tagline: "Private details stay in your browser.",
+    points: [
+      "Emails, cards, phone numbers and keys masked before sending",
+      "Real values restored only on your screen",
+      "Your own always-veil word list",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 

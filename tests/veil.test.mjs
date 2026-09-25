@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { veil, unveil, createVeilState, luhnValid, ibanValid } from "../src/veil.js";
+import { UPDATES } from "../server/releases.js";
 
 function veilOnce(text, words) {
   const state = createVeilState();
@@ -165,4 +166,22 @@ test("Does not flag short git SHAs (7-12 chars)", () => {
 test("An empty or missing 'always veil' list flags nothing extra", () => {
   assert.equal(veilOnce("Acme Corp is a normal sentence.", []).count, 0);
   assert.equal(veilOnce("Acme Corp is a normal sentence.").count, 0);
+});
+
+// --- release registration --------------------------------------------------
+// Veil has no server endpoints (masking is client-only), so it has no
+// releaseGuard route mapping to test — only that it's registered off by
+// default, which is what hides its toggle/panel in the client (see
+// isReleased(config, "veil") in src/Workspace.jsx) until this flips to true.
+test("Veil is registered in UPDATES, off by default", () => {
+  const update = UPDATES.find((u) => u.id === "veil");
+  assert.ok(update, "expected a UPDATES entry with id 'veil'");
+  assert.equal(update.title, "Veil");
+  assert.equal(update.tagline, "Private details stay in your browser.");
+  assert.deepEqual(update.points, [
+    "Emails, cards, phone numbers and keys masked before sending",
+    "Real values restored only on your screen",
+    "Your own always-veil word list",
+  ]);
+  assert.equal(update.released, false);
 });

@@ -82,6 +82,9 @@ clients with an API key. Includes its launch film.
 [Agent Allowances](docs/releases/agent-allowances.md): give an API key a lifetime credit budget,
 an expiry and a pause switch. Includes its launch film.
 
+[NYMA Holder Program](docs/releases/nyma-holder-program.md): hold NYMA in a linked wallet and get
+ANONYMA credits every 30 days, plus perks by tier. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

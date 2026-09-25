@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
+import { useApp } from "./context.jsx";
+import { isReleased } from "./lib.js";
 
 export default function DataControls() {
+  const { config } = useApp() || {};
+  // Share a Chat is described only once it's live.
+  const shares = !!config && isReleased(config, "sharelinks");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -30,6 +35,17 @@ export default function DataControls() {
           Its sign-in tokens are kept only as hashes and deleted when they
           expire or you revoke the app.
         </li>
+        {shares && (
+          <li>
+            Share links: when you share a conversation, a read-only copy of its
+            messages’ text is stored with the link’s title and random address.
+            Veil tags stay tags, and attachments, images and files are left
+            out. The copy is deleted when the link expires, when you revoke it,
+            when its conversation is deleted or auto-deleted, and when you
+            close your account. Anyone with the link can read it; links are
+            never listed publicly and ask search engines not to index them.
+          </li>
+        )}
         <li>
           Temporary API-generated media expires after 24 hours when created with
           an expiry. Access stops at expiry; background maintenance removes the
@@ -63,6 +79,13 @@ export default function DataControls() {
         contributions to shared conversations. Another member’s private spending
         details are excluded.
       </p>
+      {shares && (
+        <p>
+          The export also lists your live share links with their addresses,
+          titles and dates. The shared text itself is a copy of the
+          conversation’s own messages, which the export already includes.
+        </p>
+      )}
       <p>
         Exports never include passwords, password hashes, session tokens,
         API-key secrets or their hashes. Monetary units are recorded in the

@@ -2339,7 +2339,59 @@
     "There's no pending change to your daily limit.": "你的每日上限没有待生效的更改。",
     "There's no pending change to your monthly limit.": "你的每月上限没有待生效的更改。",
     "Room frees up as requests in progress finish.": "进行中的请求完成后会腾出额度。",
-    "402 spending_limit — the request would go over the account’s own daily or monthly spending limit. Nothing is reserved; the spending_limit object says which limit and frees_at when room frees up.": "402 spending_limit——请求会超出账户自己设定的每日或每月消费上限。不会冻结任何积分；spending_limit 对象会说明是哪个上限，frees_at 表示何时会腾出额度。"
+    "402 spending_limit — the request would go over the account’s own daily or monthly spending limit. Nothing is reserved; the spending_limit object says which limit and frees_at when room frees up.": "402 spending_limit——请求会超出账户自己设定的每日或每月消费上限。不会冻结任何积分；spending_limit 对象会说明是哪个上限，frees_at 表示何时会腾出额度。",
+    "Share a Chat": "分享对话",
+    "One link. Read-only. Yours to revoke.": "一个链接。只读。由你随时撤销。",
+    "A read-only snapshot of one saved chat": "一段已保存对话的只读快照",
+    "Masked details stay masked; attachments aren't shared": "已遮盖的信息保持遮盖；附件不会分享",
+    "Expires when you choose, or revoke it any time": "按你选择的时间到期，也可随时撤销",
+    "Private Mode chats are never saved, so there's nothing to share.": "隐私模式的对话从不保存，因此没有可分享的内容。",
+    "Off-the-record chats are never saved, so there's nothing to share.": "不留记录的对话从不保存，因此没有可分享的内容。",
+    "Collab conversations include other members' messages, so they can't be shared by link yet.": "协作会话包含其他成员的消息，因此暂时无法通过链接分享。",
+    "Only chat, code and uncensored conversations can be shared.": "只有对话、代码和无审查会话可以分享。",
+    "Send a message first: only saved conversations can be shared.": "请先发送一条消息：只有已保存的会话才能分享。",
+    "There's nothing to share in this conversation yet.": "这个会话中还没有可分享的内容。",
+    "This conversation is too long to share as one link.": "这个会话太长，无法通过一个链接分享。",
+    "This shared conversation isn't available.": "这个分享的会话不可用。",
+    "Share link not found.": "未找到分享链接。",
+    "Share": "分享",
+    "Share this chat": "分享此对话",
+    "Share a chat": "分享对话",
+    "LINK CREATED": "链接已创建",
+    "Shared as": "分享标题",
+    "Share link": "分享链接",
+    "Copy link": "复制链接",
+    "Never expires": "永不过期",
+    "ends with its conversation": "随会话一同结束",
+    "1 message": "1 条消息",
+    "1 masked detail stays masked.": "1 处已遮盖的信息保持遮盖。",
+    "1 attachment replaced with a placeholder.": "1 个附件已替换为占位符。",
+    "Title on the shared page": "分享页面上的标题",
+    "Link expires after": "链接有效期",
+    "A snapshot, not a window: messages you send later aren't added.": "是快照，不是窗口：之后发送的消息不会加入。",
+    "Masked details stay masked: Veil tags like [EMAIL_1] are shared as tags, never the real values.": "已遮盖的信息保持遮盖：像 [EMAIL_1] 这样的 Veil 标签会以标签形式分享，绝不会分享真实值。",
+    "Attachments, images and files become a placeholder. Costs, receipts and your account details are never shared.": "附件、图片和文件会显示为占位符。费用、收据和你的账户信息从不分享。",
+    "Anyone with the link can read it. Revoke it any time.": "任何拥有链接的人都能阅读。你可以随时撤销。",
+    "Create link": "创建链接",
+    "Live links to this conversation": "此会话的有效链接",
+    "Manage all share links": "管理所有分享链接",
+    "Share links.": "分享链接。",
+    "Read-only snapshots of your chats. Anyone with a link can read it until it expires or you revoke it. Deleting a conversation deletes its links.": "你的对话的只读快照。任何拥有链接的人都能阅读，直到链接到期或你将其撤销。删除会话也会删除其链接。",
+    "No live share links. Open a saved chat and choose Share.": "没有有效的分享链接。打开一个已保存的对话，然后选择“分享”。",
+    "Masked with Veil before it was sent. The real value isn't part of this snapshot.": "发送前已由 Veil 遮盖。真实值不在此快照中。",
+    "[image not shared]": "[图片未分享]",
+    "[attachment not shared]": "[附件未分享]",
+    "Reply": "回复",
+    "Reply interrupted.": "回复已中断。",
+    "Opening the shared conversation…": "正在打开分享的会话……",
+    "Read-only snapshot": "只读快照",
+    "SHARED CONVERSATION": "分享的会话",
+    "The link may have expired or been revoked, or the conversation was deleted.": "链接可能已过期或已被撤销，或者会话已被删除。",
+    "The shared conversation couldn't be loaded.": "无法加载分享的会话。",
+    "Shared snapshot": "分享的快照",
+    "Share links: when you share a conversation, a read-only copy of its messages’ text is stored with the link’s title and random address. Veil tags stay tags, and attachments, images and files are left out. The copy is deleted when the link expires, when you revoke it, when its conversation is deleted or auto-deleted, and when you close your account. Anyone with the link can read it; links are never listed publicly and ask search engines not to index them.": "分享链接：当你分享一个会话时，服务器会存储其消息文本的只读副本，以及链接的标题和随机地址。Veil 标签保持为标签，附件、图片和文件不包含在内。链接到期、你撤销链接、其会话被删除或自动删除，以及你关闭账户时，副本都会被删除。任何拥有链接的人都能阅读；链接从不公开列出，并会要求搜索引擎不要收录。",
+    "The export also lists your live share links with their addresses, titles and dates. The shared text itself is a copy of the conversation’s own messages, which the export already includes.": "导出内容还会列出你有效的分享链接及其地址、标题和日期。分享的文本本身是会话自身消息的副本，而这些消息已包含在导出内容中。",
+    "If you share a conversation, a read-only copy of its message text is stored at a random link, with Veil tags left as tags and attachments left out. It lasts until the link expires, you revoke it, or the conversation or account is deleted.": "如果你分享一个会话，其消息文本的只读副本会存储在一个随机链接上，Veil 标签保持为标签，附件不包含在内。副本会一直保留，直到链接到期、你将其撤销，或会话或账户被删除。"
   },
   "patterns": [
     {
@@ -3581,6 +3633,50 @@
     {
       "en": "An estimate, not a final charge: this message and a {0}-token reply budget at the model's published rates. Actual usage, and the amount held while the reply runs, can differ. {1} credits are left under your spending limits.",
       "zh": "这是估算，不是最终费用：按模型公布的价格，计算此消息加上 {0} Token 回复预算的费用。实际用量以及回复运行期间冻结的金额可能不同。你的消费上限还剩 {1} 积分。"
+    },
+    {
+      "en": "You can have up to {0} active share links. Revoke one first.",
+      "zh": "你最多可以拥有 {0} 个有效的分享链接。请先撤销一个。"
+    },
+    {
+      "en": "A conversation can have up to {0} active share links. Revoke one first.",
+      "zh": "每个会话最多可以有 {0} 个有效的分享链接。请先撤销一个。"
+    },
+    {
+      "en": "{0} messages",
+      "zh": "{0} 条消息"
+    },
+    {
+      "en": "A snapshot of {0}. Messages you send later aren't added.",
+      "zh": "快照包含 {0}。之后发送的消息不会加入。"
+    },
+    {
+      "en": "{0} masked details stay masked.",
+      "zh": "{0} 处已遮盖的信息保持遮盖。"
+    },
+    {
+      "en": "{0} attachments replaced with a placeholder.",
+      "zh": "{0} 个附件已替换为占位符。"
+    },
+    {
+      "en": "This conversation auto-deletes on {0}. Its links end then too.",
+      "zh": "此会话将于 {0} 自动删除，其链接也会同时失效。"
+    },
+    {
+      "en": "[{0} attachments not shared]",
+      "zh": "[{0} 个附件未分享]"
+    },
+    {
+      "en": "Shared from ANONYMA · snapshot from {0}",
+      "zh": "分享自 ANONYMA · {0} 的快照"
+    },
+    {
+      "en": "A snapshot, not a window: this is the conversation as it was on {0}. Later messages aren't included, and it can't be replied to.",
+      "zh": "这是快照，不是窗口：这是 {0} 时的会话内容。之后的消息不包含在内，也无法回复。"
+    },
+    {
+      "en": "Shared from ANONYMA · snapshot from {0}. Masked details stay masked, and attachments aren't shared.",
+      "zh": "分享自 ANONYMA · {0} 的快照。已遮盖的信息保持遮盖，附件不会分享。"
     }
   ]
 }

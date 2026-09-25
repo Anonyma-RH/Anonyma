@@ -27,6 +27,7 @@ import { InstallAppFooterLink } from "./InstallApp.jsx";
 const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 const Connect = lazy(() => import("./Connect.jsx"));
+const SharedChat = lazy(() => import("./SharedChat.jsx"));
 // Pages that exist only once their update is live: until then no link to
 // them shows at all (the NYMA page ships with the NYMA Holder Program).
 const unpublished = (config, to) => to === "/token" && !featureEnabled(config, "holders");
@@ -320,10 +321,14 @@ function ScrollManager() {
         100,
       );
     } else window.scrollTo(0, 0);
+    // A shared conversation's token never goes into the tab title (or the
+    // browser history built from it).
     document.title =
       pathname === "/"
         ? "ANONYMA — One account. Many AI models."
-        : `${pathname.split("/").filter(Boolean).pop()?.replaceAll("-", " ")} — ANONYMA`;
+        : pathname.toLowerCase().startsWith("/s/")
+          ? "Shared snapshot — ANONYMA"
+          : `${pathname.split("/").filter(Boolean).pop()?.replaceAll("-", " ")} — ANONYMA`;
     return () => clearTimeout(timer);
   }, [pathname, hash, key]);
   return null;
@@ -331,11 +336,13 @@ function ScrollManager() {
 function Shell() {
   const location = useLocation();
   const { config } = useApp();
-  // The consent page for Connect an App is a focused page of its own.
+  // The consent page for Connect an App and a shared conversation's
+  // read-only page are focused pages of their own.
   const app =
     location.pathname.startsWith("/workspace") ||
     location.pathname.startsWith("/account") ||
-    location.pathname === "/connect";
+    location.pathname === "/connect" ||
+    location.pathname.startsWith("/s/");
   return (
     <>
       <a className="skip-link" href="#main">
@@ -368,6 +375,7 @@ function Shell() {
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth register />} />
           <Route path="/connect" element={<Connect />} />
+          <Route path="/s/:token" element={<SharedChat />} />
           <Route
             path="/workspace/:mode?"
             element={

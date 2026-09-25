@@ -2,6 +2,7 @@ import { sessionCookieOptions } from "../auth.js";
 import { exportConversations } from "./conversations.js";
 import { HOLDER_RESET } from "../holders.js";
 import { limitsView } from "../spending-limits.js";
+import { isReleased } from "../releases.js";
 import {
   uid,
   hash,
@@ -32,6 +33,23 @@ export function accountRoutes(ctx) {
       ? limitsView(db, user)
       : null;
   const { mediaJSON, deleteMedia } = ctx.media;
+  function shareLinksExport(user) {
+    const t = now();
+    const links = db
+      .prepare(
+        `SELECT s.id,s.conversation_id,s.token,s.title,s.message_count,s.created,s.expires FROM share_links s JOIN conversations c ON c.id=s.conversation_id
+         WHERE s.user_id=? AND (s.expires IS NULL OR s.expires>?) AND (c.expires IS NULL OR c.expires>=?) ORDER BY s.created,s.rowid`,
+      )
+      .all(user, t, t)
+      .map(({ token, message_count, ...s }) => ({
+        ...s,
+        url: String(cfg.publicUrl || cfg.origin).replace(/\/+$/, "") + "/s/" + token,
+        messages: message_count,
+      }));
+    return links.length || isReleased(cfg, "sharelinks")
+      ? { shareLinks: links }
+      : {};
+  }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
       data: db
@@ -328,6 +346,11 @@ export function accountRoutes(ctx) {
         db
           .prepare("SELECT * FROM user_instructions WHERE user_id=?")
           .get(req.user.id) || null,
+      // Share a Chat: every live link, with its address (once the update is
+      // live, or while any link exists). A snapshot's text is a copy of
+      // messages already exported with their conversation above, so it isn't
+      // repeated here.
+      ...shareLinksExport(req.user.id),
       // Memory Across Models: the on/off choice and every saved fact.
       memory: {
         enabled: !!db
@@ -384,6 +407,9 @@ export function accountRoutes(ctx) {
       // collabs the member leaves and their messages stay, unattributed.
       db.prepare("DELETE FROM collabs WHERE owner_id=?").run(req.user.id);
       db.prepare("DELETE FROM collab_members WHERE user_id=?").run(req.user.id);
+      // Share links stop working with the account (their conversations go
+      // next, which would take them anyway).
+      db.prepare("DELETE FROM share_links WHERE user_id=?").run(req.user.id);
       db.prepare(
         "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
       ).run(req.user.id);

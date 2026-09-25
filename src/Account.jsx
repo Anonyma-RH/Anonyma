@@ -36,6 +36,7 @@ import { KeyAllowance } from "./Allowances.jsx";
 import { SpendingLimits } from "./SpendingLimits.jsx";
 import { ConnectedApps, connectReleased } from "./Connect.jsx";
 import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
+import { ShareLinksManager } from "./ShareLinks.jsx";
 import { holdersReleased } from "./holders.js";
 // Ledger entry kinds as readable labels; an unknown kind reads as words.
 const LEDGER_KINDS = {
@@ -932,6 +933,9 @@ export default function Account() {
                   <Icon name="download" size={16} />
                 </Button>
               </section>
+              {!demo && user && isReleased(config, "sharelinks") && (
+                <ShareLinksManager onError={setError} />
+              )}
               {!demo && isReleased(config, "ephemeral") && (
                 <section>
                   <div>

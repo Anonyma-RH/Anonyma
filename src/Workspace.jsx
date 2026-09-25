@@ -69,6 +69,8 @@ import { parseDocumentBlocks } from "./documents.js";
 import Symposium from "./Symposium.jsx";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
 import { MemoryPanel, MemoryUsedNote, useMemory } from "./Memory.jsx";
+import { ShareDialog } from "./ShareLinks.jsx";
+import { shareBlocked } from "./share-links.js";
 import { MEMORY_MODES, MAX_FACT_LENGTH } from "./memory.js";
 import { extractVariables } from "./scrolls.js";
 import { useTeamPays } from "./Treasury.jsx";
@@ -293,6 +295,8 @@ export default function Workspace() {
     // Memory Across Models: the account's switch and facts, and the panel
     // (null, or { draft } when opened from "Remember" under a message).
     [memoryPanel, setMemoryPanel] = useState(null),
+    // Share a Chat: null, or { conversation, blocked } for the Share dialog.
+    [share, setShare] = useState(null),
     [scrollFill, setScrollFill] = useState(null),
     [slashDismissedFor, setSlashDismissedFor] = useState(null),
     [slashIndex, setSlashIndex] = useState(0),
@@ -377,6 +381,25 @@ export default function Workspace() {
   // switched on, never off the record, in Private Mode or in a shared chat
   // (the server refuses those too; see server/routes/memory.js).
   const memoryLive = !demo && !!user && isReleased(config, "memory");
+  // Share a Chat: a read-only snapshot link for a saved personal chat. Off
+  // the record, Private Mode and collab chats say why they can't be shared
+  // (the server refuses them too; see server/routes/shares.js).
+  const sharesLive = !demo && !!user && isReleased(config, "sharelinks");
+  function openShare() {
+    const saved = all.find((c) => c.id === current);
+    setShare({
+      conversation: current
+        ? { id: current, title: saved?.title || "", expires: saved?.expires ?? null }
+        : null,
+      blocked: shareBlocked({
+        saved: !!current,
+        ephemeral,
+        privateMode,
+        collab: !!shared,
+        mode,
+      }),
+    });
+  }
   const memoryExcluded = !memoryLive
     ? ""
     : privateMode
@@ -604,6 +627,8 @@ export default function Workspace() {
     setVoiceOpen(false);
     setReadAloud(null);
   }, [user?.id]);
+  // The Share dialog belongs to the signed-in account too.
+  useEffect(() => setShare(null), [user?.id]);
   useEffect(() => {
     if (chatControlLive) return;
     const end = streamEnd.current;
@@ -1523,6 +1548,17 @@ export default function Workspace() {
             <small>{demo ? "Demo workspace" : "Personal workspace"}</small>
           </span>
           <div>
+            {sharesLive && textMode && messages.length > 0 && (
+              <button
+                type="button"
+                className="share-open-button"
+                aria-label="Share this chat"
+                onClick={openShare}
+              >
+                <Icon name="share" size={15} />
+                <span>Share</span>
+              </button>
+            )}
             <Link
               to={"/account/credits" + (demo ? "?demo=1" : "")}
               className="balance-chip"
@@ -2747,6 +2783,22 @@ export default function Workspace() {
                   <Icon name="download" size={14} />
                   Export
                 </button>
+                {sharesLive && (
+                  <button
+                    className="small-button"
+                    onClick={() => {
+                      const c = dialog.item;
+                      setDialog(null);
+                      setShare({
+                        conversation: { id: c.id, title: c.title, expires: c.expires ?? null },
+                        blocked: shareBlocked({ saved: true, mode: c.mode }),
+                      });
+                    }}
+                  >
+                    <Icon name="share" size={14} />
+                    Share
+                  </button>
+                )}
                 <button
                   className="small-button danger-text"
                   onClick={() => setDialog({ ...dialog, type: "delete" })}
@@ -2809,6 +2861,14 @@ export default function Workspace() {
       )}
       {readAloud != null && (
         <ReadAloud text={readAloud} onClose={() => setReadAloud(null)} />
+      )}
+      {share && sharesLive && (
+        <ShareDialog
+          key={share.conversation?.id || share.blocked}
+          conversation={share.conversation}
+          blocked={share.blocked}
+          onClose={() => setShare(null)}
+        />
       )}
     </main>
   );

@@ -31,6 +31,7 @@ import { treasuryRoutes } from "./routes/treasury.js";
 import { retentionRoutes } from "./routes/retention.js";
 import { scrollsRoutes } from "./routes/scrolls.js";
 import { memoryRoutes } from "./routes/memory.js";
+import { shareRoutes } from "./routes/shares.js";
 import { accountRoutes } from "./routes/account.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
@@ -99,6 +100,7 @@ export function createApp(overrides = {}) {
   retentionRoutes(ctx);
   scrollsRoutes(ctx);
   Object.assign(ctx, memoryRoutes(ctx));
+  shareRoutes(ctx);
   holderRoutes(ctx);
   const worker = createWorker(ctx);
   accountRoutes(ctx);

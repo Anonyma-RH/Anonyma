@@ -458,6 +458,14 @@ export default function Whitepaper() {
               their messages, your ledger and receipts, deposit records, and
               any support tickets you write.
             </p>
+            {live("sharelinks") && (
+              <p>
+                If you share a conversation, a read-only copy of its message
+                text is stored at a random link, with Veil tags left as tags
+                and attachments left out. It lasts until the link expires, you
+                revoke it, or the conversation or account is deleted.
+              </p>
+            )}
             <h3>What providers receive</h3>
             <p>
               The model ID, the recent messages of the conversation (up to the

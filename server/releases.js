@@ -414,6 +414,17 @@ export const UPDATES = [
     ],
     released: false,
   },
+  {
+    id: "sharelinks",
+    title: "Share a Chat",
+    tagline: "One link. Read-only. Yours to revoke.",
+    points: [
+      "A read-only snapshot of one saved chat",
+      "Masked details stay masked; attachments aren't shared",
+      "Expires when you choose, or revoke it any time",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -590,6 +601,14 @@ export function featuresFor(req) {
   if (p === "/api/memory" || p.startsWith("/api/memory/")) return ["memory"];
   if (p === "/api/spending-limits" || p.startsWith("/api/spending-limits/"))
     return ["limits"];
+  // Share a Chat: managing links, and the public snapshot page and its data.
+  if (
+    p === "/api/shares" ||
+    p.startsWith("/api/shares/") ||
+    p.startsWith("/api/s/") ||
+    p.startsWith("/s/")
+  )
+    return ["sharelinks"];
   // Branching a saved conversation (edit and regenerate use it too).
   if (/^\/api\/conversations\/[^/]+\/branch$/.test(p)) return ["branches"];
   if (

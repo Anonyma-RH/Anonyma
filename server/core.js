@@ -555,6 +555,42 @@ export const MIGRATIONS = [
       monthly_pending INTEGER CHECK(monthly_pending IS NULL OR (typeof(monthly_pending)='integer' AND monthly_pending>=0)),
       monthly_pending_at INTEGER,
       updated INTEGER NOT NULL);`),
+  // Share a Chat: a read-only snapshot of one saved personal conversation,
+  // published at an unguessable token (routes/shares.js). The snapshot is a
+  // copy taken once. It goes with its conversation whatever deletes it
+  // (delete, delete all, cap pruning, auto-delete cleanup, account closure)
+  // and never outlives the conversation's auto-delete: a new link is capped
+  // at it, a shorter auto-delete shortens every link, and a longer or cleared
+  // one never extends them. Only the conversation's creator can share it, and
+  // never a collab conversation, whichever code writes the row.
+  additive(`
+      CREATE TABLE IF NOT EXISTS share_links(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,token TEXT UNIQUE NOT NULL,title TEXT NOT NULL,snapshot TEXT NOT NULL,message_count INTEGER NOT NULL,created INTEGER NOT NULL,expires INTEGER);
+      CREATE INDEX IF NOT EXISTS share_links_user ON share_links(user_id,created);
+      CREATE INDEX IF NOT EXISTS share_links_conversation ON share_links(conversation_id);
+      CREATE INDEX IF NOT EXISTS share_links_expiry ON share_links(expires) WHERE expires IS NOT NULL;
+      CREATE TRIGGER IF NOT EXISTS share_links_personal_only BEFORE INSERT ON share_links
+        WHEN (SELECT collab_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NULL
+          OR (SELECT user_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NEW.user_id
+        BEGIN SELECT RAISE(ABORT,'share_personal_only'); END;
+      CREATE TRIGGER IF NOT EXISTS share_links_bounded AFTER INSERT ON share_links
+        WHEN (SELECT expires FROM conversations WHERE id=NEW.conversation_id) IS NOT NULL
+          AND (NEW.expires IS NULL OR NEW.expires>(SELECT expires FROM conversations WHERE id=NEW.conversation_id))
+        BEGIN
+          UPDATE share_links SET expires=(SELECT expires FROM conversations WHERE id=NEW.conversation_id) WHERE id=NEW.id;
+        END;
+      CREATE TRIGGER IF NOT EXISTS share_links_bounded_update AFTER UPDATE OF expires ON share_links
+        WHEN (SELECT expires FROM conversations WHERE id=NEW.conversation_id) IS NOT NULL
+          AND (NEW.expires IS NULL OR NEW.expires>(SELECT expires FROM conversations WHERE id=NEW.conversation_id))
+        BEGIN
+          UPDATE share_links SET expires=(SELECT expires FROM conversations WHERE id=NEW.conversation_id) WHERE id=NEW.id;
+        END;
+      CREATE TRIGGER IF NOT EXISTS share_links_follow_retention AFTER UPDATE OF expires ON conversations
+        WHEN NEW.expires IS NOT NULL
+        BEGIN
+          UPDATE share_links SET expires=NEW.expires
+            WHERE conversation_id=NEW.id AND (expires IS NULL OR expires>NEW.expires);
+        END;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

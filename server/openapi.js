@@ -1021,6 +1021,64 @@ route("delete", "/api/spending-limits/pending/{limit}", "Cancel a pending raise 
   description:
     "limit is daily or monthly. The limit in force stays. 404 no_pending_change when nothing is pending.",
 });
+// Share a Chat (update "sharelinks").
+const shareLink = object({
+  id: string,
+  url: { ...string, description: "The public link: <origin>/s/<token>, 32 base64url characters (192 random bits)" },
+  path: string,
+  title: string,
+  conversation_id: string,
+  conversation_title: string,
+  messages: { ...integer, description: "Messages in the snapshot" },
+  created: integer,
+  expires: { type: ["integer", "null"], description: "null: until revoked or the conversation is deleted" },
+  ends_with_conversation: { ...bool, description: "The conversation's auto-delete is the deadline that applies" },
+});
+const sharedMessage = object({
+  role: { enum: ["user", "assistant"] },
+  text: { ...string, description: "The text as saved; Veil tags such as [EMAIL_1] stay as tags" },
+  withheld: { ...integer, description: "Attachments, images or files left out; shown as a placeholder" },
+  model: { ...string, description: "The model that wrote a reply" },
+  interrupted: bool,
+  citations: array(object({ url: string, title: string })),
+});
+route("get", "/api/shares", "Your live share links", {
+  query: [{ name: "conversation", in: "query", required: false, schema: string, description: "Only links to this conversation" }],
+  response: object({
+    data: array(shareLink),
+    limits: object({ active: integer, per_conversation: integer }),
+  }),
+  description: "Newest first. Revoked and expired links, and links whose conversation is gone, aren't listed.",
+});
+route("post", "/api/shares", "Share a saved conversation as a read-only snapshot link", {
+  status: 201,
+  body: object(
+    {
+      conversationId: string,
+      expires_in_days: { type: ["integer", "null"], enum: [1, 7, 30, null], default: 7, description: "null: never (until revoked). Never later than the conversation's own auto-delete." },
+      title: { ...string, maxLength: 70, description: "Shown on the shared page; defaults to the conversation's title" },
+    },
+    ["conversationId"],
+  ),
+  response: object({ ...shareLink.properties, withheld: integer, masked: { ...integer, description: "Veil tags in the snapshot" } }),
+  description:
+    "Copies the conversation's messages once: user and assistant text as saved (Veil tags stay tags), a placeholder count for attachments, images and files, and the model that wrote each reply. Later messages are not added. Never includes the account's username, email, wallet, balance, costs, receipts or request ids. Only your own saved personal chat, code or uncensored conversations (404 otherwise); off-the-record and Private chats are never saved (400 share_excluded), collab conversations are refused (400 share_collab), as are Symposium runs (400 share_mode), empty conversations (400 share_empty) and snapshots over 400 messages or 2,000,000 characters (400 share_too_large). Up to 100 live links per account and 5 per conversation (400 share_limit). Deleting the conversation or closing the account deletes its links.",
+});
+route("delete", "/api/shares/{id}", "Revoke a share link", {
+  response: ref("Ok"),
+  description: "Deletes the snapshot; the link returns 404 at once.",
+});
+route("get", "/api/s/{token}", "A shared conversation snapshot (public)", {
+  auth: null,
+  response: object({ title: string, created: { ...integer, description: "When the snapshot was taken" }, messages: array(sharedMessage) }),
+  description:
+    "No sign-in. Rate-limited per address. Unknown, revoked, expired and deleted links all return the same 404 share_not_found. Sent with X-Robots-Tag: noindex, nofollow and Referrer-Policy: no-referrer.",
+});
+route("get", "/s/{token}", "The shared conversation page (public)", {
+  auth: null,
+  description: "The web app's page for a share link, with the same headers and the same 404 as /api/s/{token}.",
+});
+paths["/s/{token}"].get.responses[200].content = { "text/html": { schema: string } };
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

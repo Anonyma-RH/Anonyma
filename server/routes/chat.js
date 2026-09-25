@@ -596,7 +596,9 @@ export function chatRoutes(ctx) {
   app.all("/v1/*rest", (req, res) =>
     fail(
       404,
-      "Unsupported endpoint. Use /v1/models, /v1/chat/completions, /v1/images/generations, /v1/audio/speech, /v1/audio/transcriptions or /v1/videos.",
+      isReleased(cfg, "v1media")
+        ? "Unsupported endpoint. Use /v1/models, /v1/chat/completions, /v1/images/generations, /v1/audio/speech, /v1/audio/transcriptions or /v1/videos."
+        : "Unsupported endpoint. Use /v1/models or /v1/chat/completions.",
       "unsupported_endpoint",
     ),
   );

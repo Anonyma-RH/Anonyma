@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   now,
+  hash,
   fail,
   usdUnits,
   reserve,
@@ -19,6 +20,7 @@ import {
   MAX_TRANSCRIPTION_MINUTES,
 } from "../audio.js";
 import { requestIdentifier } from "../middleware.js";
+import { issueMediaReceipt } from "../receipts.js";
 import { submitVideoJob } from "./videos.js";
 
 // Matches /api/audio/transcriptions' recording cap.
@@ -111,6 +113,9 @@ function readMultipart(body, boundary) {
 // /v1 API. Every endpoint reserves, generates and settles through the same
 // core ledger helpers, provider adapters and media store as the matching web
 // studio (images, audio, video); only request/response shape and auth differ.
+// Every hold carries the caller's key, so reserve() applies the key's pause
+// switch, expiry, allowance and rolling 24-hour cap before any provider work,
+// and every settled request gets a signed receipt once receipts are live.
 export function v1MediaRoutes(ctx) {
   const { app, db, cfg, limit, apiAuth, inflight } = ctx;
   const { saveMedia, assignCosts, signMedia } = ctx.media;
@@ -123,10 +128,16 @@ export function v1MediaRoutes(ctx) {
       ? `${base}?expires=${media.expires}&sig=${signMedia(media.id, media.expires)}`
       : base;
   }
-  function fileBase64(id) {
+  function fileBytes(id) {
     const row = db.prepare("SELECT filename FROM media WHERE id=?").get(id);
-    return readFileSync(join(cfg.mediaPath, row.filename)).toString("base64");
+    return readFileSync(join(cfg.mediaPath, row.filename));
   }
+  // The anonyma extension every /v1 media response carries.
+  const extension = (receipt, requestId, signed) => ({
+    credits_charged: receipt.credits_charged,
+    request_id: requestId,
+    ...(signed ? { signed_receipt: signed } : {}),
+  });
 
   app.post(
     "/v1/images/generations",
@@ -143,7 +154,8 @@ export function v1MediaRoutes(ctx) {
       if (!["url", "b64_json"].includes(format))
         fail(400, 'response_format must be "url" or "b64_json".');
       assertPricedImageOption(m, req.body);
-      const hold = req.user.id + ":" + requestIdentifier(req),
+      const requestId = requestIdentifier(req),
+        hold = req.user.id + ":" + requestId,
         factor = markupFactor(req.user, cfg),
         amount = Math.ceil(
           quote(m, [{ role: "user", content: prompt }], 4096, {
@@ -169,22 +181,38 @@ export function v1MediaRoutes(ctx) {
         if (!res.writableEnded)
           controller.abort(new Error("Client disconnected"));
       });
-      const respond = (receipt, extra = {}) =>
+      const respond = ({ receipt, signed }, extra = {}) =>
         res.json({
           created: Math.floor(now() / 1000),
           data: data.map((item) =>
             format === "b64_json"
-              ? { b64_json: fileBase64(item.id) }
+              ? { b64_json: fileBytes(item.id).toString("base64") }
               : { url: item.url },
           ),
-          anonyma: { credits_charged: receipt.credits_charged },
+          anonyma: extension(receipt, requestId, signed),
           testMode: cfg.testMode,
           ...extra,
         });
       const finish = () => {
         const receipt = settle(db, hold, usdUnits(deliveredCost * factor), m.name);
         assignCosts(data.map((item) => item.id), receipt.charged, req.user.id);
-        return receipt;
+        const signed = issueMediaReceipt(ctx, {
+          hold,
+          user: req.user.id,
+          requestId,
+          receipt,
+          model: m.id,
+          kind: "image",
+          request: {
+            model: m.id,
+            prompt,
+            n,
+            size: req.body.size ?? null,
+            quality: req.body.quality ?? null,
+          },
+          output: () => data.map((item) => fileBytes(item.id)),
+        });
+        return { receipt, signed };
       };
       try {
         await generateImages(
@@ -264,7 +292,8 @@ export function v1MediaRoutes(ctx) {
         fail(400, "Choose a supported response_format.");
       const factor = markupFactor(req.user, cfg);
       const amount = usdUnits((text.length / 1000) * m.pricing.api_price * factor);
-      const hold = req.user.id + ":" + requestIdentifier(req);
+      const requestId = requestIdentifier(req),
+        hold = req.user.id + ":" + requestId;
       reserve(db, {
         id: hold,
         user: req.user.id,
@@ -290,15 +319,37 @@ export function v1MediaRoutes(ctx) {
           mime,
           prompt: text.slice(0, 500),
           model: m.id,
+          expires: now() + API_MEDIA_TTL_MS,
         });
         const receipt = settle(db, hold, amount, "Speech: " + m.name, {
           model: m.id,
           characters: text.length,
         });
         assignCosts([media.id], receipt.charged, req.user.id);
+        const signed = issueMediaReceipt(ctx, {
+          hold,
+          user: req.user.id,
+          requestId,
+          receipt,
+          model: m.id,
+          kind: "speech",
+          request: { model: m.id, input: text, voice },
+          output: bytes,
+        });
+        // The body is the audio itself, so the extension travels in headers;
+        // the signed receipt is base64 JSON of { receipt, signature, key_id }.
         res.set("Content-Type", mime);
         res.set("X-Anonyma-Credits-Charged", String(receipt.credits_charged));
+        // A body requestId may hold characters a header can't carry; the
+        // signed receipt (base64) still names it.
+        if (/^[\x20-\x7e]+$/.test(requestId))
+          res.set("X-Anonyma-Request-Id", requestId);
         res.set("X-Anonyma-Media-Id", media.id);
+        if (signed)
+          res.set(
+            "X-Anonyma-Signed-Receipt",
+            Buffer.from(JSON.stringify(signed)).toString("base64"),
+          );
         res.send(bytes);
       } catch (e) {
         release(db, hold);
@@ -326,7 +377,8 @@ export function v1MediaRoutes(ctx) {
       const perMinute = m.pricing.api_price * factor;
       // Duration is only known afterwards: hold the maximum, charge the actual.
       const amount = usdUnits(MAX_TRANSCRIPTION_MINUTES * perMinute);
-      const hold = req.user.id + ":" + requestIdentifier(req);
+      const requestId = requestIdentifier(req),
+        hold = req.user.id + ":" + requestId;
       reserve(db, {
         id: hold,
         user: req.user.id,
@@ -357,10 +409,21 @@ export function v1MediaRoutes(ctx) {
           "Transcription: " + m.name,
           { model: m.id, seconds: duration },
         );
-        res.json({
-          text,
-          anonyma: { credits_charged: receipt.credits_charged },
+        const signed = issueMediaReceipt(ctx, {
+          hold,
+          user: req.user.id,
+          requestId,
+          receipt,
+          model: m.id,
+          kind: "transcription",
+          request: {
+            model: m.id,
+            file_sha256: hash(file.bytes),
+            language,
+          },
+          output: text,
         });
+        res.json({ text, anonyma: extension(receipt, requestId, signed) });
       } catch (e) {
         release(db, hold);
         throw e;
@@ -386,11 +449,38 @@ export function v1MediaRoutes(ctx) {
     const media =
       job.media_id &&
       db.prepare("SELECT * FROM media WHERE id=?").get(job.media_id);
+    // Once the worker has settled the job: what it cost and, when receipts
+    // are live, the receipt the worker signed.
+    const hold =
+      job.status === "completed" &&
+      db
+        .prepare("SELECT result FROM holds WHERE id=? AND status='settled'")
+        .get(job.hold_id);
+    const signed =
+      hold &&
+      db
+        .prepare(
+          "SELECT payload,signature,key_id FROM receipt_signatures WHERE receipt_id=? AND user_id=?",
+        )
+        .get(job.hold_id, req.user.id);
     res.json({
       id: job.id,
       status: job.status,
       ...(media ? { url: signedMediaURL(media) } : {}),
       ...(job.error ? { error: job.error } : {}),
+      ...(hold
+        ? {
+            anonyma: extension(
+              JSON.parse(hold.result),
+              job.hold_id.slice(req.user.id.length + 1),
+              signed && {
+                receipt: JSON.parse(signed.payload),
+                signature: signed.signature,
+                key_id: signed.key_id,
+              },
+            ),
+          }
+        : {}),
     });
   });
 }

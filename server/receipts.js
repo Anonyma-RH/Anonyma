@@ -8,6 +8,7 @@ import {
 } from "node:crypto";
 import { now, hash } from "./core.js";
 import { canonical } from "./auth.js";
+import { isReleased } from "./releases.js";
 
 // Bytes actually signed/verified: sorted-key JSON, so field order never
 // changes the signature. Reuses the IPN payload's canonicalization helper.
@@ -159,4 +160,69 @@ export function buildReceiptPayload({
     response_sha256: hash(answerText || ""),
     key_id: keyId,
   };
+}
+// The canonical receipt payload for a settled /v1 media request. Same v1
+// envelope and signer as a chat receipt, so /api/receipts/verify checks it
+// unchanged. Media isn't billed by tokens, so it carries kind (image,
+// speech, transcription or video) instead of usage. request_sha256 covers
+// the billed request (model, prompt or input, options; an uploaded file by
+// its sha256) and response_sha256 the delivered output: a transcript's text,
+// or the bytes of the delivered file(s) in order.
+export function buildMediaReceiptPayload({
+  id,
+  service,
+  model,
+  kind,
+  request,
+  output,
+  creditsCharged,
+  creditsReleased,
+  keyId,
+}) {
+  const response = createHash("sha256");
+  for (const part of [].concat(output ?? "")) response.update(part);
+  return {
+    v: 1,
+    id,
+    issued: new Date().toISOString(),
+    service,
+    model,
+    kind,
+    credits_charged: creditsCharged,
+    credits_released: creditsReleased,
+    request_sha256: hash(JSON.stringify(canonical(request))),
+    response_sha256: response.digest("hex"),
+    key_id: keyId,
+  };
+}
+// Sign a settled /v1 media request's receipt and keep a copy under its hold
+// (so GET /api/receipts/:id finds it), as the chat path does. Only once the
+// receipts update is released. Best effort: the request is already settled,
+// so a signing failure never costs the caller what they paid for.
+// `output` may be a function, so reading a saved file happens inside that
+// best-effort guard too.
+export function issueMediaReceipt(
+  { db, cfg, receipts },
+  { hold, user, requestId, receipt, output, ...fields },
+) {
+  if (!isReleased(cfg, "receipts")) return null;
+  try {
+    const payload = buildMediaReceiptPayload({
+      id: requestId,
+      service: cfg.publicUrl || cfg.origin,
+      creditsCharged: receipt.credits_charged,
+      creditsReleased: receipt.released,
+      keyId: receipts.keyId,
+      output: typeof output === "function" ? output() : output,
+      ...fields,
+    });
+    const signature = receipts.sign(payload);
+    db.prepare(
+      "INSERT OR IGNORE INTO receipt_signatures(receipt_id,user_id,key_id,payload,signature,created) VALUES(?,?,?,?,?,?)",
+    ).run(hold, user, receipts.keyId, JSON.stringify(payload), signature, now());
+    return { receipt: payload, signature, key_id: receipts.keyId };
+  } catch (e) {
+    console.error("Receipt signing failed:", e.message);
+    return null;
+  }
 }

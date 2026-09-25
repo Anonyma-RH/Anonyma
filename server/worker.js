@@ -13,6 +13,7 @@ import { pollVideo, payment } from "./provider.js";
 import { recordPayment, OPEN_PAYMENT_STATUSES, sqlList } from "./payments.js";
 import { refreshTokenHoldings } from "./auth.js";
 import { sweepOAuth } from "./oauth.js";
+import { issueMediaReceipt } from "./receipts.js";
 
 // Background maintenance: video completion, payment status checks, expired
 // media and reservations, token holdings and table cleanup.
@@ -126,6 +127,32 @@ export function createWorker(ctx) {
               receipt.charged,
               media.id,
             );
+            // A /v1/videos job gets the same signed receipt as the rest of
+            // the API; GET /v1/videos/:id returns it.
+            if (request.api) {
+              issueMediaReceipt(ctx, {
+                hold: job.hold_id,
+                user: job.user_id,
+                requestId: job.hold_id.slice(job.user_id.length + 1),
+                receipt,
+                model: request.model,
+                kind: "video",
+                request: {
+                  model: request.model,
+                  prompt: request.prompt,
+                  aspect_ratio: request.aspect_ratio,
+                  duration: request.duration,
+                  quality: request.quality,
+                  image_url: request.image_url ?? null,
+                },
+                output: () => {
+                  const file = db
+                    .prepare("SELECT filename FROM media WHERE id=?")
+                    .get(media.id);
+                  return readFileSync(join(cfg.mediaPath, file.filename));
+                },
+              });
+            }
             db.prepare(
               "UPDATE videos SET status='completed',media_id=?,updated=? WHERE id=?",
             ).run(media.id, now(), job.id);

@@ -1872,7 +1872,18 @@
     "Balance below budget": "余额低于预算",
     "Your balance is below what's left of this budget, so the app can't spend until you add credits.": "你的余额低于此连接的剩余预算，因此在你充值之前，该应用无法消费。",
     "Connected apps: the name you gave each one, the name it gave itself, its return address, budget and expiry. Its charges are in the ledger like any other; prompts and answers sent through it aren't stored. Its sign-in tokens are kept only as hashes and deleted when they expire or you revoke the app.": "已连接的应用：你为它设定的名称、它自报的名称、返回地址、预算和有效期。它的扣费与其他扣费一样记入账本；通过它发送的提示词和收到的回答不会被保存。它的登录令牌仅以哈希形式保存，并会在过期或你撤销该应用时删除。",
-    "An app you connect in one click signs in with OAuth and PKCE and gets tokens only: no email, username, chats or balance. Tokens are stored only as SHA-256 hashes. Each app has its own budget, expiry and pause switch, uses private models only unless you turn that off, and loses access the moment you revoke it.": "你一键连接的应用通过 OAuth 和 PKCE 登录，只会获得令牌，无法获取你的邮箱、用户名、会话或余额。令牌仅以 SHA-256 哈希形式保存。每个应用都有独立的预算、有效期和暂停开关，除非你关闭该选项，否则只能使用私密模型；你一撤销，它就会立即失去访问权限。"
+    "An app you connect in one click signs in with OAuth and PKCE and gets tokens only: no email, username, chats or balance. Tokens are stored only as SHA-256 hashes. Each app has its own budget, expiry and pause switch, uses private models only unless you turn that off, and loses access the moment you revoke it.": "你一键连接的应用通过 OAuth 和 PKCE 登录，只会获得令牌，无法获取你的邮箱、用户名、会话或余额。令牌仅以 SHA-256 哈希形式保存。每个应用都有独立的预算、有效期和暂停开关，除非你关闭该选项，否则只能使用私密模型；你一撤销，它就会立即失去访问权限。",
+    "Multimodal API": "多模态 API",
+    "Images, voice and video in your code.": "在代码中生成图像、语音和视频。",
+    "Generate images with one POST": "一个 POST 请求即可生成图像",
+    "Text to speech and speech to text": "文本转语音，语音转文本",
+    "Submit and poll video jobs": "提交视频任务并轮询结果",
+    "Images, voice and video.": "图像、语音和视频。",
+    "The same key, allowance, spending cap and signed receipts as chat completions, extended to image generation, text-to-speech, transcription and video.": "与聊天补全相同的密钥、额度、消费上限和签名收据，扩展到图像生成、文本转语音、转录和视频。",
+    "IMAGES": "图像",
+    "TEXT TO SPEECH": "文本转语音",
+    "TRANSCRIPTION": "转录",
+    "Video generation is submitted with POST /v1/videos and polled with GET /v1/videos/{id}. See the API docs for the full reference.": "视频生成通过 POST /v1/videos 提交，并通过 GET /v1/videos/{id} 轮询结果。完整参考请查看 API 文档。"
   },
   "patterns": [
     {

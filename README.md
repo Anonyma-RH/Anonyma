@@ -52,6 +52,9 @@ reference images, with model-specific frame and duration options. Includes its G
 
 [Referrals & Credits](docs/releases/referrals-and-credits.md): Share your referral link and get 5% back in credits on confirmed top-ups from friends who joined through it. Separately, send existing prepaid credits to another account by username. Includes its launch film.
 
+[Simplified Chinese](docs/releases/simplified-chinese.md): an EN / 中文 switch for the
+whole site, workspace and account; your chats stay as written. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

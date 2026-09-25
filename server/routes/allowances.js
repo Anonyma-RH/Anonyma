@@ -7,7 +7,7 @@ import { now, fail, credits, keySpendTotal } from "../core.js";
 function ownedKey(db, req) {
   const k = db
     .prepare(
-      "SELECT * FROM api_keys WHERE id=? AND user_id=? AND revoked IS NULL",
+      "SELECT * FROM api_keys WHERE id=? AND user_id=? AND revoked IS NULL AND connection_id IS NULL",
     )
     .get(req.params.id, req.user.id);
   if (!k) fail(404, "Key not found.");

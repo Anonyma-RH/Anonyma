@@ -249,7 +249,21 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "connect",
+    title: "Connect an App",
+    tagline: "Let an app in. Keep the rest private.",
+    points: [
+      "One click, no key to paste",
+      "Its own budget, expiry and off switch",
+      "Private models only by default",
+    ],
+    released: false,
+  },
 ];
+// Connect an App issues MCP tokens that spend through an agent allowance on
+// the API's hold/settle path, so it is live only when all four are.
+export const CONNECT_UPDATES = ["api", "mcp", "allowances", "connect"];
 const IDS = UPDATES.map((u) => u.id);
 
 // The MVP's chat models when "catalog" isn't released (override: MVP_MODELS).
@@ -304,6 +318,8 @@ export const isReleased = (cfg, id) =>
   cfg.released === "all" ||
   (cfg.released instanceof Set && cfg.released.has(id)) ||
   UPDATES.some((u) => u.id === id && u.released === true);
+export const connectLive = (cfg) =>
+  CONNECT_UPDATES.every((id) => isReleased(cfg, id));
 
 // Whether a model is part of what's released: chat models need the full
 // catalog, a place on the MVP list, or (for the curated uncensored models)
@@ -325,7 +341,9 @@ export function modelReleased(m, cfg) {
 // All release gates required by a request. featureFor is the first gate.
 export const featureFor = (req) => featuresFor(req)[0] || null;
 export function featuresFor(req) {
-  const p = req.path,
+  // Express matches routes regardless of case, so the gates must too:
+  // /OAuth/register reaches the same handler as /oauth/register.
+  const p = String(req.path).toLowerCase(),
     post = req.method === "POST",
     body = req.body || {};
   if (p.startsWith("/api/videos")) return ["video"];
@@ -342,6 +360,16 @@ export function featuresFor(req) {
   // The MCP server runs on the API's key auth, rate limits and hold/settle
   // path, so it needs "api" released as well as "mcp".
   if (p === "/mcp" || p.startsWith("/mcp/")) return ["mcp", "api"];
+  // One-click connect: OAuth discovery, registration, authorization, tokens
+  // and the account's connected-apps controls.
+  if (
+    p.startsWith("/.well-known/oauth-") ||
+    p === "/oauth" ||
+    p.startsWith("/oauth/") ||
+    p === "/api/connections" ||
+    p.startsWith("/api/connections/")
+  )
+    return [...CONNECT_UPDATES];
   // The installable app's manifest, service worker and offline page.
   if (
     ["/manifest.webmanifest", "/sw.js", "/offline.html", "/offline.js"].includes(

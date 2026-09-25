@@ -24,6 +24,7 @@ import { LanguageSwitch, Translation } from "./LanguageSwitch.jsx";
 import Verify from "./Verify.jsx";
 const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
+const Connect = lazy(() => import("./Connect.jsx"));
 // Links into updates that aren't released yet lead to the roadmap, tagged "Soon".
 function locked(config, to) {
   if (to.startsWith("/workspace/")) return !config?.releases ? to !== "/workspace/chat" : !modeReleased(config, to.slice(11));
@@ -322,9 +323,11 @@ function ScrollManager() {
 function Shell() {
   const location = useLocation();
   const { config } = useApp();
+  // The consent page for Connect an App is a focused page of its own.
   const app =
     location.pathname.startsWith("/workspace") ||
-    location.pathname.startsWith("/account");
+    location.pathname.startsWith("/account") ||
+    location.pathname === "/connect";
   return (
     <>
       <a className="skip-link" href="#main">
@@ -355,6 +358,7 @@ function Shell() {
           <Route path="/terms" element={<Legal type="terms" />} />
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth register />} />
+          <Route path="/connect" element={<Connect />} />
           <Route
             path="/workspace/:mode?"
             element={

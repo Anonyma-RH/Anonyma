@@ -1,9 +1,12 @@
 import { readChatEvents } from "./stream.js";
 export class ApiError extends Error {
-  constructor(message, status = 0, code = "unavailable") {
+  constructor(message, status = 0, code = "unavailable", data = null) {
     super(message);
     this.status = status;
     this.code = code;
+    // The whole error body, for the few callers that need more than the
+    // message (Connect an App's "Return to the app").
+    this.data = data;
   }
 }
 export async function api(path, { method = "GET", body, signal } = {}) {
@@ -31,6 +34,7 @@ export async function api(path, { method = "GET", body, signal } = {}) {
       data.error?.message || "The request could not be completed.",
       response.status,
       data.error?.code,
+      data,
     );
   return data;
 }
@@ -353,6 +357,12 @@ export async function walletSign(config, link = false) {
 
 // Released updates (see server/releases.js). Without config (preview or
 // offline) gated features stay unavailable.
+// Where signing in may send someone back to: only the Connect an App
+// consent page on this site, with its request, never anywhere else.
+export function safeNext(value) {
+  if (typeof value !== "string" || value.length > 4096) return null;
+  return /^\/connect\?[^\\#]*$/.test(value) ? value : null;
+}
 export const isReleased = (config, id) =>
   config?.releases?.features?.[id] === true;
 export const releaseUpdate = (config, id) =>

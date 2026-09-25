@@ -44,6 +44,19 @@ export default function ApiGuide() {
         A browser session cookie does not replace an API key. Clients use this
         website’s origin with <code>/v1</code> as the base URL.
       </p>
+      {["mcp", "allowances", "connect"].every((id) =>
+        featureEnabled(config, id),
+      ) && (
+        <p>
+          MCP clients can also connect in one click: OAuth 2.1 with PKCE (S256)
+          and dynamic registration of public clients, discovered from{" "}
+          <code>/.well-known/oauth-protected-resource/mcp</code>. You approve
+          each app with its own budget and expiry. Its access token works only
+          on <code>/mcp</code>, never on <code>/v1</code>, and it carries no
+          identity. The discovery, registration, token and revocation
+          endpoints allow cross-origin calls without credentials.
+        </p>
+      )}
       <ul>
         <li>
           <code>GET /v1</code> — free connection check. Optional Bearer

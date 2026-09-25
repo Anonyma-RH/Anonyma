@@ -3,6 +3,7 @@ import { knownPage, sitemap, robots } from "../../src/site-routes.js";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fail } from "../core.js";
+import { connectLive } from "../releases.js";
 import { configurationStatus } from "../readiness.js";
 import {
   publicDocumentation,
@@ -64,7 +65,7 @@ export function siteRoutes({ app, db, cfg }) {
     );
     app.get("/{*path}", (req, res) =>
       res
-        .status(knownPage(req.path) ? 200 : 404)
+        .status(knownPage(req.path, { connect: connectLive(cfg) }) ? 200 : 404)
         .sendFile("index.html", { root: resolve("dist/client") }),
     );
   }

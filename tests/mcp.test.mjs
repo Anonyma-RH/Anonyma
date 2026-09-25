@@ -251,7 +251,12 @@ test("auth failures return 401 with a WWW-Authenticate header", async (t) => {
     id: 1,
     method: "ping",
   }).expect(401);
-  assert.equal(badKey.headers["www-authenticate"], 'Bearer realm="anonyma"');
+  // A bearer that was sent but refused is reported as invalid_token (RFC
+  // 6750). Before Connect an App is live, no resource_metadata is offered.
+  assert.equal(
+    badKey.headers["www-authenticate"],
+    'Bearer realm="anonyma", error="invalid_token"',
+  );
 });
 
 test("GET and DELETE are refused; a batch mixes requests and notifications correctly", async (t) => {

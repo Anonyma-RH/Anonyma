@@ -23,6 +23,7 @@ import { isPrivateModel, ZDR_ROUTING } from "../private-mode.js";
 import { isReleased } from "../releases.js";
 import { buildReceiptPayload } from "../receipts.js";
 import { providerKey, sameProvider } from "../../src/double-check.js";
+import { validateTaskRequest } from "../task-tools.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -43,6 +44,7 @@ export function chatRoutes(ctx) {
   const validTokenCount = (value, fallback) =>
     Number.isSafeInteger(value) && value >= 0 ? value : fallback;
   async function runChat(req, res, api) {
+    if (!api) validateTaskRequest(req.body);
     const m = getModel(req.body.model);
     // Dedicated image models are priced per option and served by
     // /v1/images/generations; through chat they would be held at the

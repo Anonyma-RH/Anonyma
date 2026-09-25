@@ -41,6 +41,7 @@ const MODES = [
   "audio",
   "collab",
   "library",
+  "tools",
   "veil",
 ];
 // Public pages that exist only once their update is live, by the `served`

@@ -369,6 +369,7 @@ export const releaseUpdate = (config, id) =>
   config?.releases?.updates?.find((u) => u.id === id) || null;
 // The update each workspace mode belongs to; library needs any media studio.
 export const MODE_FEATURES = {
+  tools: "tasktools",
   code: "code",
   image: "images",
   video: "video",

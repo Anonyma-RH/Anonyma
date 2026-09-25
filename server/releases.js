@@ -346,6 +346,13 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "tasktools",
+    released: true,
+    title: "Research, Writing & Calculators",
+    tagline: "Sources, alternatives and arithmetic, clearly apart.",
+    points: ["Research with provider-returned source links", "Compare writing alternatives without overwriting them", "Calculate arithmetic locally without a model call"],
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -527,6 +534,7 @@ export function featuresFor(req) {
   )
     return ["ephemeral"];
   const needed = [];
+  if (p === "/api/chat" && post && body.taskTool !== undefined) needed.push("tasktools");
   if ((p === "/api/chat" || p === "/api/conversations") && post) {
     if (body.mode === "code") needed.push("code");
     if (body.mode === "uncensored") needed.push("uncensored");

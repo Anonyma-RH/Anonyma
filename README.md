@@ -70,6 +70,18 @@ instructions on every message.
 [Install the App](docs/releases/install-the-app.md): install ANONYMA on Android or desktop and
 share links or text straight into a chat.
 
+[Training Labels](docs/releases/training-labels.md): models whose provider uses what you send to
+improve its products are tagged where you pick them, with one tap to the standard tier. Includes its launch film.
+
+[Connect an App](docs/releases/connect-an-app.md): approve an MCP app once, with its own budget,
+expiry and off switch, private models only by default. Includes its launch film.
+
+[MCP Server](docs/releases/mcp-server.md): use ANONYMA from Claude Code, Cursor and other MCP
+clients with an API key. Includes its launch film.
+
+[Agent Allowances](docs/releases/agent-allowances.md): give an API key a lifetime credit budget,
+an expiry and a pause switch. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

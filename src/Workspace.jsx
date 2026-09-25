@@ -1453,7 +1453,9 @@ export default function Workspace() {
                       ))}
                     </div>
                   )}
-                  {!demo && ["chat", "code"].includes(mode) && (
+                  {!demo &&
+                    ["chat", "code"].includes(mode) &&
+                    isReleased(config, "documents") && (
                     <DocumentChips
                       documents={documents}
                       setDocuments={setDocuments}
@@ -1573,7 +1575,9 @@ export default function Workspace() {
                           />
                         </label>
                       )}
-                      {!demo && ["chat", "code"].includes(mode) && (
+                      {!demo &&
+                        ["chat", "code"].includes(mode) &&
+                        isReleased(config, "documents") && (
                         <DocumentAttach
                           documents={documents}
                           setDocuments={setDocuments}

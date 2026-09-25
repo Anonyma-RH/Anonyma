@@ -14,6 +14,7 @@ import {
   totalChars,
   applyBudget,
 } from "../src/documents.js";
+import { UPDATES } from "../server/releases.js";
 
 test("File type detection covers PDFs, plain text and common code files", () => {
   assert.equal(documentKind({ name: "report.pdf" }), "pdf");
@@ -164,4 +165,17 @@ test("buildDocumentsBlock joins multiple blocks and handles an empty list", () =
     buildDocumentsBlock([{ name: "a.txt", text: "1" }, { name: "b.txt", text: "2" }]),
     '<document name="a.txt">1</document>\n\n<document name="b.txt">2</document>',
   );
+});
+
+test("The Documents update is registered and off by default", () => {
+  const update = UPDATES.find((u) => u.id === "documents");
+  assert.ok(update, "UPDATES is missing the documents entry");
+  assert.equal(update.title, "Documents");
+  assert.equal(update.tagline, "Bring the document. Ask the question.");
+  assert.deepEqual(update.points, [
+    "PDFs, text, CSV and code files",
+    "Text extracted in your browser",
+    "Tidy document chips in every chat",
+  ]);
+  assert.equal(update.released, false);
 });

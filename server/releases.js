@@ -161,6 +161,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "documents",
+    title: "Documents",
+    tagline: "Bring the document. Ask the question.",
+    points: [
+      "PDFs, text, CSV and code files",
+      "Text extracted in your browser",
+      "Tidy document chips in every chat",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 

@@ -22,10 +22,11 @@ import {
   quote,
   generationPrice,
   markupFactor,
+  wantsWebSearch,
 } from "../core.js";
 
 // Public service information, the model catalog, prices and quotes.
-export function catalogRoutes({ app, db, cfg, models, requireUser }) {
+export function catalogRoutes({ app, db, cfg, models, requireUser, limit }) {
   const { getModel, validateMessages, maxTokens } = models;
   const marketFeed = createMarketFeed();
   app.get("/api/market", async (req, res) => {
@@ -111,18 +112,26 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
       );
     }
   });
-  app.post("/api/quote", requireUser, (req, res) => {
+  // Quoting reads prices only: nothing is reserved, charged or stored. The
+  // workspace asks automatically while a prompt is typed (Credit Estimates),
+  // debounced, so the limit leaves room for that and for Symposium's columns.
+  app.post("/api/quote", requireUser, limit("quote", 120, 60000), (req, res) => {
     const m = getModel(req.body.model);
     const video = m.type === "video" ? videoOptions(m, req.body) : null;
     const messages = validateMessages(
       req.body.messages || [{ role: "user", content: req.body.prompt || " " }],
       m,
     );
+    const max = maxTokens(req.body.max_tokens);
+    // A chat model is priced exactly as /api/chat prices the request (see
+    // routes/chat.js), which then holds up to HOLD_MARGIN times this amount
+    // while it runs; other models keep their per-option prices.
+    const base =
+      m.type === "chat" ? quote(m, messages, max) : quote(m, messages, max, req.body);
     const amount = Math.ceil(
       (video
         ? usdUnits(video.price)
-        : quote(m, messages, maxTokens(req.body.max_tokens), req.body) +
-          (req.body.web_search === true ? usdUnits(cfg.webSearchPrice) : 0)) *
+        : base + (wantsWebSearch(req.body) ? usdUnits(cfg.webSearchPrice) : 0)) *
         markupFactor(req.user, cfg),
     );
     res.json({

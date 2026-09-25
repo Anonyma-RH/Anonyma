@@ -754,6 +754,11 @@ export function quote(m, messages, maxTokens = 4096, opts = {}) {
       : generationPrice(m, opts) * (opts.n || 1),
   );
 }
+// Whether a chat request asks for PPQ's web plugin, which carries its own
+// per-request fee: `web_search: true`, or a plugins entry with id "web".
+export const wantsWebSearch = (body) =>
+  body?.web_search === true ||
+  (Array.isArray(body?.plugins) && body.plugins.some((p) => p?.id === "web"));
 export function discount(balance) {
   const b = Number(balance);
   // 25% off markup per 1% of the one-billion reference supply.

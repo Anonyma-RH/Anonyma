@@ -13,6 +13,7 @@ import {
   generationPrice,
   markupFactor,
   standardFactor,
+  wantsWebSearch,
 } from "../core.js";
 import { chatStream, reportedProviderCost } from "../provider.js";
 import { FAILOVER_CODES } from "../fallback.js";
@@ -74,10 +75,7 @@ export function chatRoutes(ctx) {
     const factor =
       req.standardRate === true ? standardFactor(cfg) : markupFactor(req.user, cfg);
     // Web search is a PPQ plugin with its own per-request fee.
-    const webSearch =
-      req.body.web_search === true ||
-      (Array.isArray(req.body.plugins) &&
-        req.body.plugins.some((p) => p?.id === "web"));
+    const webSearch = wantsWebSearch(req.body);
     const searchFee = webSearch ? cfg.webSearchPrice : 0;
     const amount = Math.ceil(
       (quote(m, messages, max) + usdUnits(searchFee)) * factor,

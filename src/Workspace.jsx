@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
   useLocation,
@@ -56,14 +56,10 @@ import {
 } from "./TrainingLabels.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
-import {
-  fitDocuments,
-  composeMessageWithDocuments,
-  parseDocumentBlocks,
-} from "./documents.js";
+import { parseDocumentBlocks } from "./documents.js";
 import Symposium from "./Symposium.jsx";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
-import { extractVariables, historyLimit, withStanding } from "./scrolls.js";
+import { extractVariables } from "./scrolls.js";
 import {
   api,
   streamChat,
@@ -72,7 +68,6 @@ import {
   download,
   uid,
   messageFromServer,
-  toRequestMessage,
   videoPresets,
   isReleased,
   modeReleased,
@@ -80,7 +75,6 @@ import {
   MODE_FEATURES,
 } from "./lib.js";
 import {
-  veil,
   loadVeilState,
   saveVeilState,
   moveVeilState,
@@ -89,6 +83,8 @@ import {
   loadVeilOn,
   saveVeilOn,
 } from "./veil.js";
+import { buildChatRequest, cloneVeilState, quoteBody, REPLY_BUDGET } from "./estimate.js";
+import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
 import { useShareTargetPrefill } from "./share-target.js";
 import { InstallAppEntry } from "./InstallApp.jsx";
 const initial = [
@@ -641,6 +637,9 @@ export default function Workspace() {
     ? visibleModels.find((m) => m.id.toLowerCase() === mention[1].toLowerCase())
     : null;
   const target = mentioned || selected;
+  // What a chat Send posts, shared with the credit estimate beside it.
+  const sendText = mentioned ? mention[2].trim() : prompt.trim();
+  const sendModel = target?.id || model;
   // Typing "/" at the start of an empty prompt opens a scroll picker, filtered
   // by title, in chat, code and Uncensored. Users with no saved scrolls see
   // no change in behaviour.
@@ -687,6 +686,44 @@ export default function Workspace() {
   }
   const instructionsActive =
     scrollsLive && instructions.enabled && !!instructions.body.trim();
+  // The /api/quote body for what a chat Send would post right now. Veil masks
+  // it with a copy of the conversation's tag map: the same tags Send would
+  // use, without recording any for a message that may never be sent.
+  function estimateRequest() {
+    const veiling = veilOn && !demo && isReleased(config, "veil");
+    const { request } = buildChatRequest({
+      messages,
+      text: sendText,
+      attachments,
+      documents,
+      instructions: instructionsActive ? instructions.body.trim() : "",
+      veilWith: veiling
+        ? { state: cloneVeilState(veilStateRef.current), words: veilWords }
+        : null,
+    });
+    return quoteBody({ model: sendModel, request, webSearch });
+  }
+  // Credit Estimates: a live estimate beside Send in chat, code and
+  // Uncensored, whenever Send would go through. Image, video and Symposium
+  // keep their own explicit pricing.
+  const estimatesLive = isReleased(config, "estimates");
+  const autoEstimate =
+    estimatesLive &&
+    textMode &&
+    !demo &&
+    !!user &&
+    !busy &&
+    !!sendText &&
+    !!target?.callable &&
+    !!config?.services?.generation &&
+    !(privateMode && !target?.private);
+  const estimateBody = useMemo(
+    () => (autoEstimate ? estimateRequest() : null),
+    // Everything estimateRequest reads that can change between renders.
+    [autoEstimate, sendText, sendModel, messages, attachments, documents,
+      instructionsActive, instructions.body, veilOn, veilWords, webSearch, current],
+  );
+  const estimate = useCreditEstimate(estimateBody);
   async function send(e) {
     e?.preventDefault();
     if (!prompt.trim() || busy) return;
@@ -714,8 +751,8 @@ export default function Workspace() {
     setVeilNote(null);
     setBusy(true);
     controller.current = new AbortController();
-    const text = mentioned ? mention[2].trim() : prompt.trim();
-    const requestModel = target?.id || model;
+    const text = sendText;
+    const requestModel = sendModel;
     const requestId = uid();
     if (mode === "image" || mode === "video") {
       try {
@@ -869,59 +906,33 @@ export default function Workspace() {
       }
       return;
     }
-    // Document text (already trimmed to the shared budget) rides along as
-    // delimited blocks after the typed prompt; see src/documents.js.
-    const budgeted = documents.length
-      ? fitDocuments(text, documents).documents
-      : [];
-    const content = budgeted.length
-      ? composeMessageWithDocuments(text, budgeted)
-      : text;
-    const rawNext = [
-      ...messages,
-      { role: "user", content, images: attachments.map((a) => a.url) },
-    ];
-    // Standing instructions (Scrolls) lead the request as a system message,
-    // in one of the 20 context slots (see historyLimit). They are sent, never
-    // saved: the server stores only the new user message and the reply.
-    let standing = instructionsActive ? instructions.body.trim() : "";
-    const history = historyLimit(standing);
-    // Veil masks the new message and any earlier turns in this request's
-    // context window before anything reaches the network. Detection and
-    // tagging happen only in this browser; see src/veil.js.
-    let next = rawNext,
-      veiledPayload = null,
+    // Documents, standing instructions (Scrolls) and Veil are applied in
+    // buildChatRequest (src/estimate.js), which the credit estimate beside
+    // Send also uses. Standing instructions are sent, never saved. Veil masks
+    // the instructions, the new message and earlier turns in the context
+    // window with this conversation's tag map before anything reaches the
+    // network; detection and tagging happen only in this browser.
+    const veiling = veilOn && !demo && isReleased(config, "veil");
+    const built = buildChatRequest({
+      messages,
+      text,
+      attachments,
+      documents,
+      instructions: instructionsActive ? instructions.body.trim() : "",
+      veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
+    });
+    const next = built.next,
       // Veil's mask count for this request, carried onto the reply so a
       // private-mode reply can show "<N> details masked" (see
       // PrivateReplyNote); stays 0 when Veil is off or finds nothing.
-      requestMasked = 0;
-    if (veilOn && !demo && isReleased(config, "veil")) {
-      let veiledCount = 0;
-      const tags = new Set();
-      // Standing instructions are masked too, with this conversation's tag
-      // map, so a detail saved in them never leaves the browser and a reply
-      // that repeats its tag is restored on screen like any other.
-      if (standing) {
-        const r = veil(standing, veilStateRef.current, veilWords);
-        veiledCount += r.count;
-        r.tags.forEach((t) => tags.add(t));
-        standing = r.text;
-      }
-      veiledPayload = rawNext.slice(-history).map((m) => {
-        const r = veil(m.content || "", veilStateRef.current, veilWords);
-        veiledCount += r.count;
-        r.tags.forEach((t) => tags.add(t));
-        return { ...m, content: r.text };
-      });
-      requestMasked = veiledCount;
+      requestMasked = built.masked;
+    if (veiling) {
       saveVeilState(veilKeyRef.current, veilStateRef.current);
-      if (veiledCount)
+      if (built.masked)
         setVeilNote({
-          count: veiledCount,
-          entries: [...tags].map((tag) => ({ tag, value: veilStateRef.current.map[tag] })),
+          count: built.masked,
+          entries: built.tags.map((tag) => ({ tag, value: veilStateRef.current.map[tag] })),
         });
-      // Display the just-sent message the same way the server saw it.
-      next = [...messages, veiledPayload[veiledPayload.length - 1]];
     }
     setPrompt("");
     setAttachments([]);
@@ -959,13 +970,10 @@ export default function Workspace() {
       await streamChat(
         {
           model: requestModel,
-          messages: withStanding(
-            standing,
-            (veiledPayload || next.slice(-history)).map(toRequestMessage),
-          ),
+          messages: built.request,
           ...(ephemeral ? { ephemeral: true } : { conversationId: current }),
           mode,
-          max_tokens: 4096,
+          max_tokens: REPLY_BUDGET,
           requestId,
           ...(webSearch ? { web_search: true } : {}),
           ...(sendingPrivate ? { private: true } : {}),
@@ -1042,21 +1050,7 @@ export default function Workspace() {
       return;
     }
     try {
-      const budgeted = documents.length
-        ? fitDocuments(prompt, documents).documents
-        : [];
-      const content = budgeted.length
-        ? composeMessageWithDocuments(prompt, budgeted)
-        : prompt;
-      const r = await api("/api/quote", {
-        method: "POST",
-        body: {
-          model,
-          messages: [...messages, { role: "user", content }],
-          max_tokens: 4096,
-          ...(webSearch ? { web_search: true } : {}),
-        },
-      });
+      const r = await api("/api/quote", { method: "POST", body: estimateRequest() });
       setQuote(r);
     } catch (e) {
       setError(e.message);
@@ -1748,7 +1742,12 @@ export default function Workspace() {
                       This message goes to <b>{mentioned.name}</b>.
                     </p>
                   )}
-                  <div className="composer-controls">
+                  <div
+                    className={
+                      "composer-controls" +
+                      (estimatesLive && textMode ? " with-estimate" : "")
+                    }
+                  >
                     <div>
                       <select
                         aria-label="Select model"
@@ -1960,6 +1959,8 @@ export default function Workspace() {
                         </>
                       )}
                     </div>
+                    <span className="send-cluster">
+                    {estimatesLive && textMode && <CreditEstimate state={estimate} />}
                     {busy ? (
                       <button
                         type="button"
@@ -1982,6 +1983,7 @@ export default function Workspace() {
                         <Icon name="arrow" size={21} />
                       </button>
                     )}
+                    </span>
                   </div>
                   {/* Training Labels: under the model picker, never blocking Send. */}
                   {trainingSelected && (
@@ -2071,7 +2073,7 @@ export default function Workspace() {
                     isReleased(config, "veil") && (
                     <VeilPanel note={veilNote} words={veilWords} onWordsChange={setVeilWords} />
                   )}
-                  {textMode && (
+                  {textMode && !estimatesLive && (
                     <button
                       onClick={quoteRequest}
                       disabled={!prompt.trim() || busy}

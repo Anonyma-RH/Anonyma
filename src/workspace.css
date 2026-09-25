@@ -329,3 +329,11 @@
 .app-shell .collab-banner{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 16px;padding:10px 14px;background:#eef2ff;color:#0b1b57;font-size:13px}
 .app-shell .collab-banner a{margin-left:auto;color:#0135df}
 @media (max-width:900px){.app-shell .collab-layout,.app-shell .collab-columns{grid-template-columns:1fr}}
+/* Credit Estimates: the live estimate beside Send. Loading and unavailable never read as zero. */
+.app-shell .send-cluster{display:flex;align-items:center;gap:10px;flex:none}
+.app-shell .credit-estimate{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#24498b;background:#f0f5ff;border:1px solid #dae5ff;padding:6px 9px;border-radius:2px;white-space:nowrap;font-variant-numeric:tabular-nums;transition:opacity .2s}
+.app-shell .credit-estimate{min-width:150px;justify-content:center}.app-shell .credit-estimate.loading{color:#5b6477}
+.app-shell .credit-estimate.unavailable{color:#5b6477;background:#f4f5f8;border-color:#e3e6ee}
+.app-shell .credit-estimate.short{color:#8a4b00;background:#fff6e8;border-color:#ffd9a0}
+.app-shell .credit-estimate b{font-weight:600}
+@media(max-width:700px){.app-shell .credit-estimate{font-size:10px;padding:5px 7px}.app-shell .credit-estimate b{display:none}.app-shell .composer-controls.with-estimate{flex-wrap:wrap}.app-shell .composer-controls.with-estimate>div{flex:1 1 100%}.app-shell .with-estimate .send-cluster{margin-left:auto}}

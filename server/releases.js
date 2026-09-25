@@ -260,6 +260,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "estimates",
+    title: "Credit Estimates",
+    tagline: "See the cost before you send.",
+    points: [
+      "A live credit estimate beside Send",
+      "Updates as you type, switch models or turn on Web",
+      "Priced on the same request Send makes, Veil masking included",
+    ],
+    released: true,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

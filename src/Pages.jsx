@@ -825,6 +825,7 @@ const featureIcons = {
   mcp: "command",
   allowances: "coins",
   connect: "plug",
+  estimates: "coins",
 };
 const launch = {
   id: "mvp",

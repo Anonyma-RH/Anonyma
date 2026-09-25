@@ -499,7 +499,7 @@ route("put", "/api/retention", "Set account default auto-delete", {
   description:
     "Applies only to conversations created after this is set; existing conversations are unchanged.",
 });
-route("post", "/api/quote", "Estimate maximum reserved credits", {
+route("post", "/api/quote", "Estimate credits for a request", {
   body: object(
     {
       ...chat.properties,
@@ -514,7 +514,7 @@ route("post", "/api/quote", "Estimate maximum reserved credits", {
   ),
   response: ref("Quote"),
   description:
-    "Estimate only. Final charge follows usage and the documented failure-billing policy.",
+    "Estimate only: nothing is reserved, charged or stored. For a chat model it is the amount /api/chat prices the same messages, max_tokens and web search at; a chat request may hold up to the reservation multiplier times it while it runs. Final charge follows usage and the documented failure-billing policy. Limited to 120 quotes a minute per account.",
 });
 route(
   "get",

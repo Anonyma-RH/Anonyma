@@ -46,6 +46,12 @@ import {
   privateModeReleased,
 } from "./PrivateMode.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
+import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
+import {
+  fitDocuments,
+  composeMessageWithDocuments,
+  parseDocumentBlocks,
+} from "./documents.js";
 import {
   api,
   streamChat,
@@ -213,6 +219,7 @@ export default function Workspace() {
     [info, setInfo] = useState(""),
     [receipt, setReceipt] = useState(null),
     [attachments, setAttachments] = useState([]),
+    [documents, setDocuments] = useState([]),
     [media, setMedia] = useState(() => (demo ? readStore("media", []) : [])),
     [dialog, setDialog] = useState(null),
     [menu, setMenu] = useState(false),
@@ -327,6 +334,7 @@ export default function Workspace() {
     setPrompt(location.state?.prompt || "");
     setWebSearch(!!location.state?.web);
     setAttachments([]);
+    setDocuments([]);
     setCurrent(null);
     setMessages([]);
     setMenu(false);
@@ -745,9 +753,17 @@ export default function Workspace() {
       }
       return;
     }
+    // Document text (already trimmed to the shared budget) rides along as
+    // delimited blocks after the typed prompt; see src/documents.js.
+    const budgeted = documents.length
+      ? fitDocuments(text, documents).documents
+      : [];
+    const content = budgeted.length
+      ? composeMessageWithDocuments(text, budgeted)
+      : text;
     const rawNext = [
       ...messages,
-      { role: "user", content: text, images: attachments.map((a) => a.url) },
+      { role: "user", content, images: attachments.map((a) => a.url) },
     ];
     // Veil masks the new message and any earlier turns in this request's
     // context window before anything reaches the network. Detection and
@@ -779,6 +795,7 @@ export default function Workspace() {
     }
     setPrompt("");
     setAttachments([]);
+    setDocuments([]);
     setMessages([...next, { role: "assistant", content: "", sample: demo }]);
     if (demo) {
       const answer = mode === "code" ? sampleCode : sampleChat;
@@ -892,11 +909,17 @@ export default function Workspace() {
       return;
     }
     try {
+      const budgeted = documents.length
+        ? fitDocuments(prompt, documents).documents
+        : [];
+      const content = budgeted.length
+        ? composeMessageWithDocuments(prompt, budgeted)
+        : prompt;
       const r = await api("/api/quote", {
         method: "POST",
         body: {
           model,
-          messages: [...messages, { role: "user", content: prompt }],
+          messages: [...messages, { role: "user", content }],
           max_tokens: 4096,
           ...(webSearch ? { web_search: true } : {}),
         },
@@ -1196,7 +1219,31 @@ export default function Workspace() {
                 )}
                 {messages.length && textMode ? (
                   <div className="messages">
-                    {messages.map((m, i) => (
+                    {messages.map((m, i) => {
+                      // A saved user message may carry <document> blocks after
+                      // the typed prompt; render those as collapsed chips
+                      // instead of a wall of extracted text. Replies are left
+                      // as written, even if a model echoes the tags back.
+                      const parsed =
+                        m.role === "user"
+                          ? parseDocumentBlocks(m.content)
+                          : { text: m.content, documents: [] };
+                      const hasDocuments = parsed.documents.length > 0;
+                      const shown =
+                        parsed.text || (hasDocuments ? "" : "Preparing…");
+                      const body = (
+                        <ReactMarkdown
+                          remarkPlugins={[
+                            remarkGfm,
+                            // Re-runs on every render (incl. mid-stream) so a
+                            // [TAG_n] split across chunks resolves once whole.
+                            [veilRemarkPlugin, { map: veilStateRef.current.map }],
+                          ]}
+                        >
+                          {shown}
+                        </ReactMarkdown>
+                      );
+                      return (
                       <article
                         key={i}
                         className={
@@ -1234,17 +1281,27 @@ export default function Workspace() {
                               </span>
                             )}
                           </div>
-                          <div className="markdown" data-i18n={m.content ? "off" : undefined}>
-                            <ReactMarkdown
-                              remarkPlugins={[
-                                remarkGfm,
-                                // Re-runs on every render (incl. mid-stream) so a
-                                // [TAG_n] split across chunks resolves once whole.
-                                [veilRemarkPlugin, { map: veilStateRef.current.map }],
-                              ]}
-                            >
-                              {m.content || "Preparing…"}
-                            </ReactMarkdown>
+                          {/* The typed text is user content, so it stays
+                              untranslated; with documents attached only it is
+                              fenced off, leaving the chips' labels to the
+                              language switch while their names stay as sent. */}
+                          <div
+                            className="markdown"
+                            data-i18n={m.content && !hasDocuments ? "off" : undefined}
+                          >
+                            {hasDocuments ? (
+                              <div className="document-prompt" data-i18n="off">
+                                {body}
+                              </div>
+                            ) : (
+                              body
+                            )}
+                            {hasDocuments && (
+                              <MessageDocuments
+                                documents={parsed.documents}
+                                veilMap={veilStateRef.current.map}
+                              />
+                            )}
                             {m.images?.map((url, j) => (
                               <img
                                 className="message-image"
@@ -1291,7 +1348,8 @@ export default function Workspace() {
                           )}
                         </div>
                       </article>
-                    ))}
+                      );
+                    })}
                     <div ref={streamEnd} />
                   </div>
                 ) : (
@@ -1417,6 +1475,15 @@ export default function Workspace() {
                       ))}
                     </div>
                   )}
+                  {!demo &&
+                    textMode &&
+                    isReleased(config, "documents") && (
+                    <DocumentChips
+                      documents={documents}
+                      setDocuments={setDocuments}
+                      prompt={prompt}
+                    />
+                  )}
                   <textarea
                     ref={promptBox}
                     aria-label="Your prompt"
@@ -1530,6 +1597,16 @@ export default function Workspace() {
                             onChange={addFiles}
                           />
                         </label>
+                      )}
+                      {!demo &&
+                        textMode &&
+                        isReleased(config, "documents") && (
+                        <DocumentAttach
+                          documents={documents}
+                          setDocuments={setDocuments}
+                          disabled={busy}
+                          onError={setError}
+                        />
                       )}
                       {["chat", "code"].includes(mode) &&
                         isReleased(config, "search") && (

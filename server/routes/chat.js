@@ -18,6 +18,15 @@ import { FAILOVER_CODES } from "../fallback.js";
 import { requestIdentifier } from "../middleware.js";
 import { isPrivateModel, ZDR_ROUTING } from "../private-mode.js";
 
+// Attached documents follow the typed prompt as <document> blocks
+// (src/documents.js): the prompt names the chat, or the first file's name
+// when only documents were sent.
+function chatTitle(content) {
+  const typed = content.split("\n\n<document ")[0];
+  if (!typed.startsWith("<document")) return typed;
+  return /\bname="([^"]*)"/.exec(typed)?.[1] || "Documents";
+}
+
 // Streamed chat for the workspace and the compatible /v1 API.
 export function chatRoutes(ctx) {
   const { app, db, cfg, limit, requireUser, apiAuth, inflight, fallback } = ctx;
@@ -108,7 +117,7 @@ export function chatRoutes(ctx) {
         conversation ||= newConversation(
           req.user.id,
           typeof messages.at(-1).content === "string"
-            ? messages.at(-1).content
+            ? chatTitle(messages.at(-1).content)
             : "Image conversation",
           ["code", "uncensored"].includes(req.body.mode) ? req.body.mode : "chat",
         );

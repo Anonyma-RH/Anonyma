@@ -2529,7 +2529,77 @@
     "This page hid a nested frame, so the preview stopped it.": "此页面隐藏了一个嵌套框架，因此预览已将其停止。",
     "Storage here is temporary and separate from ANONYMA.": "这里的存储是临时的，并与 ANONYMA 分开。",
     "Forms don't send anywhere in the preview.": "在预览中，表单不会发送到任何地方。",
-    "Fit": "适应"
+    "Fit": "适应",
+    "Device Vault": "本机保险库",
+    "Keep your chats, but only on your device.": "对话照样保留，但只存在你的设备上。",
+    "Save a chat on this device only, never on our servers": "对话只保存在此设备上，绝不存到我们的服务器",
+    "Encrypted in your browser with a passphrase only you know": "在你的浏览器中用只有你知道的密码短语加密",
+    "Export the encrypted vault to move it to another device": "导出加密的保险库，迁移到其他设备",
+    "Device only": "仅存本机",
+    "Device only: saved encrypted in this browser, never on ANONYMA's servers": "仅存本机：加密保存在此浏览器中，绝不保存在 ANONYMA 的服务器上",
+    "Device Vault is locked. Unlock it to keep saving this chat on this device.": "本机保险库已锁定。解锁后才能继续将此对话保存在此设备上。",
+    "Unlock": "解锁",
+    "Device only: this chat is encrypted and saved in this browser. ANONYMA's servers store none of it; the model provider still receives what you send.": "仅存本机：此对话已加密并保存在此浏览器中。ANONYMA 的服务器不会存储其中任何内容；但模型提供商仍会收到你发送的内容。",
+    "Lose the passphrase and these chats are gone; ANONYMA can't recover them.": "忘记密码短语，这些对话就会永久丢失；ANONYMA 无法恢复。",
+    "Anyone using this browser unlocked can read them.": "保险库解锁期间，任何使用此浏览器的人都能读取这些对话。",
+    "The model provider still receives what you send.": "模型提供商仍会收到你发送的内容。",
+    "DEVICE VAULT": "本机保险库",
+    "Lock": "锁定",
+    "Lock Device Vault": "锁定本机保险库",
+    "This browser can't store a vault.": "此浏览器无法存储保险库。",
+    "Keep chats encrypted on this device only.": "将对话加密，只保存在此设备上。",
+    "Set up Device Vault": "设置本机保险库",
+    "Locked. Unlock to see the chats saved on this device.": "已锁定。解锁后可查看保存在此设备上的对话。",
+    "Delete this vault chat": "删除此保险库对话",
+    "No device-only chats yet. Turn on Device only in the composer.": "还没有仅存本机的对话。在输入框中开启“仅存本机”即可。",
+    "1 chat couldn't be read.": "有 1 个对话无法读取。",
+    "Manage vault": "管理保险库",
+    "Lock after this long idle": "闲置多久后锁定",
+    "1 hour": "1 小时",
+    "Vault file": "保险库文件",
+    "That file's passphrase": "该文件的密码短语",
+    "Import": "导入",
+    "Importing…": "正在导入……",
+    "1 chat imported.": "已导入 1 个对话。",
+    "The vault file couldn't be imported.": "无法导入保险库文件。",
+    "Unlock Device Vault": "解锁本机保险库",
+    "Delete this vault chat?": "删除此保险库对话？",
+    "It's removed from this browser's vault. It was never on ANONYMA's servers, so this can't be undone.": "它将从此浏览器的保险库中删除。它从未存到 ANONYMA 的服务器上，因此此操作无法撤销。",
+    "Device-only chats are encrypted in this browser with a key made from your passphrase. ANONYMA never receives the passphrase or the chats.": "仅存本机的对话会在此浏览器中加密，密钥由你的密码短语生成。ANONYMA 永远不会收到你的密码短语或这些对话。",
+    "Repeat the passphrase": "再次输入密码短语",
+    "The passphrases don't match.": "两次输入的密码短语不一致。",
+    "I understand that a lost passphrase can't be recovered.": "我明白，忘记的密码短语无法恢复。",
+    "Create vault": "创建保险库",
+    "Import a vault file instead": "改为导入保险库文件",
+    "Bring a vault from another device: choose its exported file and enter the passphrase it was made with.": "从其他设备迁入保险库：选择导出的文件，并输入创建它时使用的密码短语。",
+    "Create a new vault instead": "改为创建新的保险库",
+    "Enter your vault passphrase to see and continue the chats saved on this device.": "输入保险库密码短语，查看并继续保存在此设备上的对话。",
+    "Passphrase": "密码短语",
+    "Unlocking…": "正在解锁……",
+    "Forgot it? ANONYMA can't recover it or these chats. You can delete this vault and start again.": "忘记了？ANONYMA 无法恢复密码短语或这些对话。你可以删除此保险库，然后重新开始。",
+    "Delete this vault": "删除此保险库",
+    "Delete Device Vault and every chat in it from this browser? This can't be undone.": "要从此浏览器中删除本机保险库及其中的所有对话吗？此操作无法撤销。",
+    "Delete vault": "删除保险库",
+    "1 chat is saved on this device, encrypted.": "此设备上已加密保存 1 个对话。",
+    "Move to another device": "迁移到其他设备",
+    "The exported file stays encrypted: it opens only with this vault's passphrase.": "导出的文件仍然是加密的：只有用此保险库的密码短语才能打开。",
+    "Export vault file": "导出保险库文件",
+    "Import a vault file": "导入保险库文件",
+    "Chats from the file are added to this vault; newer copies replace older ones.": "文件中的对话会添加到此保险库；较新的版本会替换较旧的版本。",
+    "Lock now": "立即锁定",
+    "That passphrase doesn't open this vault.": "此密码短语无法打开这个保险库。",
+    "This isn't a Device Vault file, or it's damaged.": "这不是本机保险库文件，或者文件已损坏。",
+    "A chat in this vault couldn't be read. It may be damaged.": "此保险库中有一个对话无法读取，可能已损坏。",
+    "This browser can't encrypt a vault.": "此浏览器无法加密保险库。",
+    "Device Vault is locked.": "本机保险库已锁定。",
+    "There's no vault on this device yet.": "此设备上还没有保险库。",
+    "Close other ANONYMA tabs and try again.": "请关闭其他 ANONYMA 标签页后重试。",
+    "Vault storage was interrupted.": "保险库存储被中断。",
+    "Device Vault locked after being idle. Unlock it to continue.": "本机保险库因闲置已锁定。解锁后即可继续。",
+    "Unlock Device Vault to keep chatting on this device only.": "请解锁本机保险库，以继续仅存本机的对话。",
+    "This chat couldn't be saved to Device Vault.": "此对话无法保存到本机保险库。",
+    "Sends from this point again. Device Vault keeps the new version.": "从这里重新发送。本机保险库会保留新版本。",
+    "Device-only chats are kept only in this browser, so they can't be shared by link.": "仅存本机的对话只保存在此浏览器中，因此无法通过链接分享。"
   },
   "patterns": [
     {
@@ -3887,6 +3957,30 @@
     {
       "en": "Blocked by the preview sandbox: {0} ({1})",
       "zh": "已被预览沙箱拦截：{0}（{1}）"
+    },
+    {
+      "en": "{0} chats couldn't be read.",
+      "zh": "有 {0} 个对话无法读取。"
+    },
+    {
+      "en": "{0} chats imported.",
+      "zh": "已导入 {0} 个对话。"
+    },
+    {
+      "en": "{0} chats are saved on this device, encrypted.",
+      "zh": "此设备上已加密保存 {0} 个对话。"
+    },
+    {
+      "en": "Passphrase (at least {0} characters)",
+      "zh": "密码短语（至少 {0} 个字符）"
+    },
+    {
+      "en": "Use a passphrase of at least {0} characters.",
+      "zh": "请使用至少 {0} 个字符的密码短语。"
+    },
+    {
+      "en": "{0} minutes",
+      "zh": "{0} 分钟"
     }
   ]
 }

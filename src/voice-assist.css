@@ -1,0 +1,46 @@
+.voice-assist {
+  background: var(--paper, #fff);
+  border: 1px solid var(--line);
+  padding: 15px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.voice-assist-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+.voice-assist-head button {
+  text-decoration: underline;
+}
+.voice-assist-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+.voice-assist-controls select {
+  max-width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+}
+.voice-assist textarea {
+  display: block;
+  width: 100%;
+  min-height: 85px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+}
+.voice-assist [role="alert"] {
+  color: #a43e16;
+}
+.voice-assist .fine-print button {
+  text-decoration: underline;
+}
+
+.voice-assist .fine-print {
+  color: #536177;
+}

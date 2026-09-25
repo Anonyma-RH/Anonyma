@@ -223,6 +223,13 @@ export function moveVeilState(fromKey, toKey) {
     localStorage.removeItem("anonyma:" + KEY_PREFIX + fromKey);
   } catch {}
 }
+// Drops a conversation's plain-text map from this browser's storage, for a
+// Device Vault chat whose map is kept encrypted in the vault instead.
+export function forgetVeilState(conversationKey) {
+  try {
+    localStorage.removeItem("anonyma:" + KEY_PREFIX + conversationKey);
+  } catch {}
+}
 export function loadVeilWords() {
   return readStore("veil:words", []);
 }

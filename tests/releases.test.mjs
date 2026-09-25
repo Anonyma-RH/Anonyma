@@ -125,6 +125,11 @@ test("release settings are validated", () => {
   assert.throws(() => parseReleased("mvp,vidoe"), /Unknown RELEASED_FEATURES: vidoe/);
   assert.equal(config({}).released, "all");
   assert.equal(config({}).mvpModels.length, 10);
-  assert.equal(UPDATES.length, 9);
+  // The launch updates stay first and in order; later updates append.
+  assert.deepEqual(
+    UPDATES.slice(0, 9).map((u) => u.id),
+    ["code", "search", "images", "catalog", "audio", "video", "collab", "api", "social"],
+  );
+  assert.equal(new Set(UPDATES.map((u) => u.id)).size, UPDATES.length);
   for (const u of UPDATES) assert.equal(u.points.length, 3);
 });

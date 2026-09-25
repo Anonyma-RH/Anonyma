@@ -1,0 +1,15 @@
+/* Edit, Regenerate & Branch Chats: turn actions, the inline editor, the
+   "branched from" banner and branch chips, inside the workspace shell. */
+.app-shell .turn-actions,
+.app-shell .branch-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.app-shell .turn-actions button,
+.app-shell .branch-chips button{font:inherit;font-size:12px;padding:5px 10px;border:1px solid var(--line,#d8dcea);border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.app-shell .turn-actions button:hover,
+.app-shell .branch-chips button:hover{border-color:#0135df;color:#0135df}
+.app-shell .branch-chips span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;align-self:center}
+.app-shell .edit-turn{margin-top:10px;display:grid;gap:8px}
+.app-shell .edit-turn textarea{width:100%;min-height:96px;font:inherit;padding:10px 12px;border:1px solid #0135df;border-radius:8px;resize:vertical}
+.app-shell .edit-turn-actions{display:flex;gap:8px;justify-content:flex-end}
+.app-shell .branch-banner{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px auto 0;max-width:814px;padding:10px 32px;font-size:13px}
+.app-shell .branch-banner button{font:inherit;font-weight:600;background:none;border:0;padding:0;color:#0135df;text-decoration:underline;cursor:pointer}
+.app-shell .branch-banner span{opacity:.65}

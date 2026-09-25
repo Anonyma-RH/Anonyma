@@ -484,6 +484,26 @@ route("patch", "/api/conversations/{id}", "Rename or update conversation", {
   description:
     "A body without retention updates the title as before (defaulting to Untitled). A retention-only body leaves the title unchanged.",
 });
+route(
+  "post",
+  "/api/conversations/{id}/branch",
+  "Branch a conversation from one of its messages",
+  {
+    body: object(
+      {
+        before: { ...string, description: "Copy every message ahead of this message id (edit or regenerate that turn)." },
+        through: { ...string, description: "Copy messages up to and including this message id." },
+        requestId: { ...string, description: "1–200 characters; retrying with the same id returns the same branch." },
+        title: string,
+      },
+      ["requestId"],
+    ),
+    response: object({ id: string, title: string, mode: string, parent: object(), copied: integer }),
+    status: 201,
+    description:
+      "Needs the Edit, Regenerate & Branch Chats update released (403 feature_unreleased otherwise). Give exactly one of before or through. The original conversation is unchanged. A shared conversation's branch stays in its collab (current members only). Copied messages carry origin_id and cost 0; nothing is charged. The branch never outlives an auto-deleting source. A retry with the same requestId returns 200 with the same branch; reusing it for a different branch is 409 idempotency_conflict. Symposium runs can't be branched. GET /api/conversations/{id} returns parent (if you can still open it) and branches (those you can open).",
+  },
+);
 route("delete", "/api/conversations/{id}", "Delete conversation", {
   response: ref("Ok"),
 });

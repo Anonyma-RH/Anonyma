@@ -1,4 +1,4 @@
-import { uid, now, fail, credits } from "../core.js";
+import { uid, now, fail, credits, transaction } from "../core.js";
 
 // Use the same membership boundary as conversation reads. A removed member
 // cannot export other members' messages from a shared conversation they created.
@@ -31,6 +31,10 @@ export function exportConversations(db, user) {
 // their own cap (see newConversation).
 export const CONVERSATION_CAP = 300;
 export const SYMPOSIUM_CAP = 150;
+
+// Modes a conversation can be branched from. Symposium runs are several
+// conversations per question and are not edited turn by turn.
+const BRANCHABLE = [null, "chat", "code", "uncensored"];
 
 // Days an auto-delete choice may hold; null clears it (kept forever).
 const RETENTION_DAYS = [1, 7, 30];
@@ -74,6 +78,9 @@ export function conversationRoutes({ app, db, requireUser }) {
     title = "New conversation",
     mode = "chat",
     collab = null,
+    // A conversation that must survive this call's pruning (the source of a
+    // branch): it always counts among the kept newest, so an older one goes.
+    protect = null,
   ) {
     const id = uid("c_");
     // An account's auto-delete default only reaches conversations created
@@ -91,8 +98,8 @@ export function conversationRoutes({ app, db, requireUser }) {
     // with their conversation (ON DELETE CASCADE).
     const symposium = mode === "symposium" ? 1 : 0;
     db.prepare(
-      "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL AND (mode IS 'symposium')=? AND id NOT IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL AND (mode IS 'symposium')=? ORDER BY updated DESC,rowid DESC LIMIT ?)",
-    ).run(user, symposium, user, symposium, symposium ? SYMPOSIUM_CAP : CONVERSATION_CAP);
+      "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL AND (mode IS 'symposium')=? AND id NOT IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL AND (mode IS 'symposium')=? ORDER BY (id IS ?) DESC,updated DESC,rowid DESC LIMIT ?)",
+    ).run(user, symposium, user, symposium, protect, symposium ? SYMPOSIUM_CAP : CONVERSATION_CAP);
     return id;
   }
   app.get("/api/conversations", requireUser, (req, res) =>
@@ -131,8 +138,35 @@ export function conversationRoutes({ app, db, requireUser }) {
       req.params.id,
       req.user.id,
     );
+    // Provenance: the parent (only if this user can still open it) and the
+    // branches cut from this conversation that this user can open.
+    const visible = (id) => {
+      try {
+        return accessConversation(id, req.user.id);
+      } catch {
+        return null;
+      }
+    };
+    const parent = c.parent_id ? visible(c.parent_id) : null;
+    const branches = db
+      .prepare(
+        "SELECT id FROM conversations WHERE parent_id=? ORDER BY created,rowid",
+      )
+      .all(c.id)
+      .map((b) => visible(b.id))
+      .filter(Boolean)
+      .map((b) => ({
+        id: b.id,
+        title: b.title,
+        mode: b.mode,
+        branch_point: b.branch_point,
+        created: b.created,
+      }));
+    const { branch_key, branch_cut, ...rest } = c;
     res.json({
-      ...c,
+      ...rest,
+      parent: parent ? { id: parent.id, title: parent.title, mode: parent.mode } : null,
+      branches,
       ...(c.collab_id
         ? {
             collab: {
@@ -155,6 +189,88 @@ export function conversationRoutes({ app, db, requireUser }) {
             m.author_id && m.author_id !== req.user.id ? null : credits(m.cost),
           cost: m.author_id && m.author_id !== req.user.id ? null : m.cost,
         })),
+    });
+  });
+  // Branch: copy the start of a conversation into a new one, leaving the
+  // original untouched. `before` copies every message ahead of the given one
+  // (edit or regenerate that turn); `through` copies up to and including it
+  // (continue from there). A shared conversation's branch stays in the same
+  // collab, so only its current members can read it. Copies carry no cost:
+  // nothing was charged again. A retried request (same requestId) returns
+  // the branch it already made.
+  app.post("/api/conversations/:id/branch", requireUser, (req, res) => {
+    const source = accessConversation(req.params.id, req.user.id);
+    if (!BRANCHABLE.includes(source.mode ?? null))
+      fail(400, "This conversation can't be branched.", "invalid_request");
+    const { before, through } = req.body;
+    const point = before ?? through;
+    const cut = before != null ? "before" : "through";
+    if (
+      (before == null) === (through == null) ||
+      typeof point !== "string" ||
+      !point
+    )
+      fail(400, "Give exactly one of before or through (a message id).", "invalid_request");
+    const requestId = req.body.requestId;
+    if (typeof requestId !== "string" || !requestId.trim() || requestId.length > 200)
+      fail(400, "Request ID must contain 1–200 characters.", "invalid_request_id");
+    const key = req.user.id + ":" + requestId;
+    const existing = db
+      .prepare("SELECT * FROM conversations WHERE branch_key=?")
+      .get(key);
+    if (existing) {
+      if (
+        existing.parent_id !== source.id ||
+        existing.branch_point !== point ||
+        existing.branch_cut !== cut
+      )
+        fail(409, "This request ID was already used for a different branch.", "idempotency_conflict");
+      return res.status(200).json({
+        id: existing.id,
+        title: existing.title,
+        mode: existing.mode,
+        parent: { id: source.id, title: source.title, mode: source.mode || "chat" },
+        copied: db
+          .prepare("SELECT COUNT(*) n FROM messages WHERE conversation_id=?")
+          .get(existing.id).n,
+      });
+    }
+    const all = db
+      .prepare(
+        "SELECT * FROM messages WHERE conversation_id=? ORDER BY created,rowid",
+      )
+      .all(source.id);
+    const at = all.findIndex((m) => m.id === point);
+    if (at < 0) fail(404, "Message not found in this conversation.");
+    const copy = all.slice(0, before != null ? at : at + 1);
+    const title = String(req.body.title || "Branch · " + (source.title || "Untitled"))
+      .trim()
+      .slice(0, 70) || "Branch";
+    const id = transaction(db, () => {
+      // The source is protected from the personal-conversation cap: making a
+      // branch never deletes the conversation it was cut from.
+      const id = newConversation(req.user.id, title, source.mode || "chat", source.collab_id, source.id);
+      // A branch never outlives an auto-deleting source: it keeps the earlier
+      // of the source's expiry and the account default newConversation set.
+      const own = db.prepare("SELECT expires FROM conversations WHERE id=?").get(id).expires;
+      const expires =
+        source.expires == null ? own : own == null ? source.expires : Math.min(own, source.expires);
+      db.prepare(
+        "UPDATE conversations SET parent_id=?,branch_point=?,branch_cut=?,branch_key=?,expires=?,created=?,updated=? WHERE id=?",
+      ).run(source.id, point, cut, key, expires, now(), now(), id);
+      const insert = db.prepare(
+        "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id,origin_id) VALUES(?,?,?,?,?,?,?,?,?)",
+      );
+      for (const m of copy)
+        insert.run(uid("m_"), id, m.role, m.content, m.model, 0, m.created, m.author_id, m.id);
+      return id;
+    });
+    res.status(201).json({
+      id,
+      title,
+      mode: source.mode || "chat",
+      parent: { id: source.id, title: source.title, mode: source.mode || "chat" },
+      copied: copy.length,
     });
   });
   app.patch("/api/conversations/:id", requireUser, (req, res) => {

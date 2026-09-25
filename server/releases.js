@@ -271,6 +271,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "branches",
+    title: "Edit, Regenerate & Branch Chats",
+    tagline: "Try it another way. Keep the original.",
+    points: [
+      "Edit an earlier prompt and ask again",
+      "Regenerate an answer without losing the first one",
+      "Branches link back to where they started",
+    ],
+    released: true,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -392,6 +403,8 @@ export function featuresFor(req) {
   if (p.startsWith("/api/receipts") || p === "/.well-known/anonyma-receipts.json")
     return ["receipts"];
   if (p.startsWith("/api/retention")) return ["ephemeral"];
+  // Branching a saved conversation (edit and regenerate use it too).
+  if (/^\/api\/conversations\/[^/]+\/branch$/.test(p)) return ["branches"];
   if (
     p === "/api/scrolls" ||
     p.startsWith("/api/scrolls/") ||

@@ -38,6 +38,8 @@ import {
   RetentionIndicator,
 } from "./Ephemeral.jsx";
 import { retentionChoiceFor } from "./ephemeral.js";
+import { rewindPlan, resendContent, promptParts, branchesAt, singleFlight } from "./branches.js";
+import "./branches.css";
 import {
   PrivateModeToggle,
   PrivateModeNotice,
@@ -254,6 +256,12 @@ export default function Workspace() {
     [veilWords, setVeilWords] = useState(() => loadVeilWords()),
     [veilNote, setVeilNote] = useState(null),
     [ephemeral, setEphemeral] = useState(false),
+    // Edit, Regenerate & Branch Chats: where this conversation came from, the
+    // branches cut from it, and the user message being edited in place.
+    [lineage, setLineage] = useState({ parent: null, branches: [] }),
+    [editing, setEditing] = useState(null),
+    // True while a branch is being made and its resend runs (see branchFlight).
+    [branching, setBranching] = useState(false),
     [privateMode, setPrivateMode] = useState(false),
     [shared, setShared] = useState(null),
     [scrolls, setScrolls] = useState([]),
@@ -274,6 +282,8 @@ export default function Workspace() {
     streamEnd = useRef(),
     composerZone = useRef(),
     promptBox = useRef(),
+    // One edit/regenerate/branch at a time; reset when the open chat changes.
+    branchFlight = useRef(null),
     // Veil's tag<->value map for the open conversation. Keyed on a temporary
     // id until the server assigns a real conversationId (see send/openChat),
     // and never sent anywhere: see src/veil.js's local-only storage helpers.
@@ -525,6 +535,9 @@ export default function Workspace() {
   function newChat() {
     if (linked) navigate("/workspace/" + mode + (demo ? "?demo=1" : ""));
     setShared(null);
+    setLineage({ parent: null, branches: [] });
+    setEditing(null);
+    branchFlight.current?.reset();
     controller.current?.abort();
     clearInterval(timer.current);
     setBusy(false);
@@ -573,11 +586,15 @@ export default function Workspace() {
     setEphemeral(false);
     setCurrent(c.id);
     setMessages(c.messages || []);
+    setLineage({ parent: null, branches: [] });
+    setEditing(null);
+    branchFlight.current?.reset();
     if (!demo) {
       try {
         const r = await api("/api/conversations/" + c.id);
         setCurrent(c.id);
         setShared(r.collab || null);
+        setLineage({ parent: r.parent || null, branches: r.branches || [] });
         setMessages(r.messages.map(messageFromServer));
       } catch (e) {
         setError(e.message);
@@ -640,6 +657,8 @@ export default function Workspace() {
   // What a chat Send posts, shared with the credit estimate beside it.
   const sendText = mentioned ? mention[2].trim() : prompt.trim();
   const sendModel = target?.id || model;
+  const branchesLive = isReleased(config, "branches");
+  if (!branchFlight.current) branchFlight.current = singleFlight();
   // Typing "/" at the start of an empty prompt opens a scroll picker, filtered
   // by title, in chat, code and Uncensored. Users with no saved scrolls see
   // no change in behaviour.
@@ -713,6 +732,7 @@ export default function Workspace() {
     !demo &&
     !!user &&
     !busy &&
+    !branching &&
     !!sendText &&
     !!target?.callable &&
     !!config?.services?.generation &&
@@ -724,9 +744,13 @@ export default function Workspace() {
       instructionsActive, instructions.body, veilOn, veilWords, webSearch, current],
   );
   const estimate = useCreditEstimate(estimateBody);
-  async function send(e) {
-    e?.preventDefault();
-    if (!prompt.trim() || busy) return;
+  // `redo` resends an earlier turn (edit or regenerate): its own text, the
+  // history before it and the conversation to add to, instead of the composer.
+  async function send(e, redo = null) {
+    e?.preventDefault?.();
+    if (!(redo ? redo.content.trim() : prompt.trim()) || busy || (!redo && branchFlight.current?.pending)) return;
+    const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
+    const effectiveModel = redo ? redoModel || selected : target;
     if (!demo) {
       if (!user) {
         setError(
@@ -736,11 +760,11 @@ export default function Workspace() {
         );
         return;
       }
-      if (!target?.callable || !config?.services?.generation) {
+      if (!effectiveModel?.callable || !config?.services?.generation) {
         setError("This model is not currently available for generation.");
         return;
       }
-      if (privateMode && !target?.private) {
+      if (privateMode && !effectiveModel?.private) {
         setError("Choose a private model, or turn off Private mode.");
         return;
       }
@@ -751,8 +775,8 @@ export default function Workspace() {
     setVeilNote(null);
     setBusy(true);
     controller.current = new AbortController();
-    const text = sendText;
-    const requestModel = sendModel;
+    const text = redo ? redo.content : sendText;
+    const requestModel = effectiveModel?.id || model;
     const requestId = uid();
     if (mode === "image" || mode === "video") {
       try {
@@ -914,10 +938,10 @@ export default function Workspace() {
     // network; detection and tagging happen only in this browser.
     const veiling = veilOn && !demo && isReleased(config, "veil");
     const built = buildChatRequest({
-      messages,
+      messages: redo ? redo.base : messages,
       text,
-      attachments,
-      documents,
+      attachments: redo ? (redo.images || []).map((url) => ({ url })) : attachments,
+      documents: redo ? [] : documents,
       instructions: instructionsActive ? instructions.body.trim() : "",
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
     });
@@ -934,9 +958,11 @@ export default function Workspace() {
           entries: built.tags.map((tag) => ({ tag, value: veilStateRef.current.map[tag] })),
         });
     }
-    setPrompt("");
-    setAttachments([]);
-    setDocuments([]);
+    if (!redo) {
+      setPrompt("");
+      setAttachments([]);
+      setDocuments([]);
+    }
     setMessages([...next, { role: "assistant", content: "", sample: demo }]);
     if (demo) {
       const answer = mode === "code" ? sampleCode : sampleChat;
@@ -957,8 +983,9 @@ export default function Workspace() {
       }, 25);
       return;
     }
+    const conversationId = redo ? redo.conversationId : current;
     let output = "",
-      liveId = current,
+      liveId = conversationId,
       reasoning = "",
       images = [],
       citations = [],
@@ -971,7 +998,7 @@ export default function Workspace() {
         {
           model: requestModel,
           messages: built.request,
-          ...(ephemeral ? { ephemeral: true } : { conversationId: current }),
+          ...(ephemeral ? { ephemeral: true } : { conversationId }),
           mode,
           max_tokens: REPLY_BUDGET,
           requestId,
@@ -1033,6 +1060,78 @@ export default function Workspace() {
         .then((r) => setAll(recentConversations(r.data)))
         .catch(() => {});
     }
+  }
+  // Edit a user turn or regenerate an answer. A saved conversation is first
+  // branched just before that turn, so the original keeps every message;
+  // off-the-record and demo chats rewind only here and stay unsaved.
+  async function rewind(index, kind, editedText = null) {
+    if (busy) return;
+    const plan = rewindPlan(messages, index, kind);
+    if (!plan) return;
+    // Synchronous guard: a second click while this one is pending is ignored.
+    await branchFlight.current.run(async (fresh) => {
+      setBranching(true);
+      setError("");
+      setEditing(null);
+      try {
+        let conversationId = current;
+        if (!demo && !ephemeral && current) {
+          let point = plan.prompt.id;
+          // Turns sent in this session have no server id yet: read them back.
+          if (!point) {
+            const r = await api("/api/conversations/" + current);
+            const saved = r.messages[plan.userIndex];
+            if (r.messages.length !== messages.length || saved?.role !== "user")
+              throw new Error("This conversation changed. Reopen it and try again.");
+            point = saved.id;
+          }
+          if (!fresh()) return;
+          const branch = await api(`/api/conversations/${current}/branch`, {
+            method: "POST",
+            body: { before: point, requestId: uid() },
+          });
+          // Opened something else meanwhile: keep the branch, don't resend into it.
+          if (!fresh()) return;
+          // The branch reuses this conversation's local Veil map.
+          saveVeilState(branch.id, loadVeilState(veilKeyRef.current));
+          veilKeyRef.current = branch.id;
+          conversationId = branch.id;
+          setCurrent(branch.id);
+          setLineage({ parent: branch.parent, branches: [] });
+        }
+        await send(null, {
+          content: resendContent(plan.prompt, editedText),
+          images: plan.prompt.images || [],
+          base: plan.base,
+          model: plan.model,
+          conversationId,
+        });
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setBranching(false);
+      }
+    });
+  }
+  // Branch from here: a copy through this message, opened so it can go on.
+  async function branchFrom(message) {
+    if (busy || !current || !message.id) return;
+    await branchFlight.current.run(async (fresh) => {
+      setBranching(true);
+      try {
+        const b = await api(`/api/conversations/${current}/branch`, {
+          method: "POST",
+          body: { through: message.id, requestId: uid() },
+        });
+        if (!fresh()) return;
+        saveVeilState(b.id, loadVeilState(veilKeyRef.current));
+        await openChat({ id: b.id, mode: b.mode });
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setBranching(false);
+      }
+    });
   }
   function stop() {
     clearInterval(timer.current);
@@ -1357,6 +1456,20 @@ export default function Workspace() {
                     <Link to="/workspace/collab">Open collab</Link>
                   </div>
                 )}
+                {branchesLive && textMode && lineage.parent && (
+                  <div className="branch-banner">
+                    <Icon name="arrow" size={14} />
+                    Branched from{" "}
+                    <button
+                      type="button"
+                      data-i18n="off"
+                      onClick={() => openChat({ mode, ...lineage.parent })}
+                    >
+                      {lineage.parent.title || "Untitled"}
+                    </button>
+                    <span>The original is unchanged.</span>
+                  </div>
+                )}
                 {messages.length && textMode ? (
                   <div className="messages">
                     {messages.map((m, i) => {
@@ -1485,6 +1598,77 @@ export default function Workspace() {
                           )}
                           {m.role === "assistant" && m.content && (
                             <CopyButton text={m.content} />
+                          )}
+                          {branchesLive && editing?.index === i && (
+                            <form
+                              className="edit-turn"
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                rewind(i, "edit", editing.text);
+                              }}
+                            >
+                              <textarea
+                                aria-label="Edit your message"
+                                data-i18n="off"
+                                value={editing.text}
+                                autoFocus
+                                onChange={(e) =>
+                                  setEditing({ index: i, text: e.target.value })
+                                }
+                              />
+                              <p className="fine-print">
+                                {ephemeral || demo || !current
+                                  ? "Sends from this point again. Nothing here is saved."
+                                  : "Sends from this point in a new branch. The original conversation stays as it is."}
+                              </p>
+                              <div className="edit-turn-actions">
+                                <button type="button" className="small-button" onClick={() => setEditing(null)}>
+                                  Cancel
+                                </button>
+                                <button className="small-button primary" disabled={!editing.text.trim() || busy || branching}>
+                                  Send edit
+                                </button>
+                              </div>
+                            </form>
+                          )}
+                          {branchesLive && !busy && !branching && editing?.index !== i && !m.sample && (
+                            <div className="turn-actions">
+                              {m.role === "user" && m.content !== undefined && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEditing({ index: i, text: promptParts(m.content).typed })
+                                  }
+                                >
+                                  Edit
+                                </button>
+                              )}
+                              {m.role === "assistant" && m.content && (
+                                <button type="button" onClick={() => rewind(i, "regenerate")}>
+                                  Regenerate
+                                </button>
+                              )}
+                              {!ephemeral && !demo && current && m.id && (
+                                <button type="button" onClick={() => branchFrom(m)}>
+                                  Branch from here
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {branchesLive && branchesAt(lineage.branches, m.id).length > 0 && (
+                            <div className="branch-chips">
+                              <span>Branches</span>
+                              {branchesAt(lineage.branches, m.id).map((b) => (
+                                <button
+                                  type="button"
+                                  key={b.id}
+                                  data-i18n="off"
+                                  onClick={() => openChat({ mode, ...b })}
+                                >
+                                  {b.title || "Untitled"}
+                                </button>
+                              ))}
+                            </div>
                           )}
                         </div>
                       </article>

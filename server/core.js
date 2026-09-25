@@ -388,6 +388,20 @@ export const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS oauth_tokens_expiry ON oauth_tokens(expires);
     `);
   },
+  // Branch chats: a branch records the conversation and message it was cut
+  // from, and copied messages point back at their originals. branch_key
+  // (user + request id) makes a retried branch request return the same copy.
+  (db) => {
+    addColumn(db, "conversations", "parent_id", "TEXT");
+    addColumn(db, "conversations", "branch_point", "TEXT");
+    addColumn(db, "conversations", "branch_key", "TEXT");
+    addColumn(db, "conversations", "branch_cut", "TEXT");
+    addColumn(db, "messages", "origin_id", "TEXT");
+    db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS conversations_branch_key ON conversations(branch_key) WHERE branch_key IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS conversations_parent ON conversations(parent_id) WHERE parent_id IS NOT NULL;
+    `);
+  },
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;

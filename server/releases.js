@@ -392,6 +392,17 @@ export const UPDATES = [
     points: ["Search saved conversations", "Reopen accessible source chats", "Review a fresh quote before rerunning media"],
     released: true,
   },
+  {
+    id: "voice",
+    title: "Read-aloud & Voice Conversations",
+    tagline: "Speak, review, send and listen.",
+    points: [
+      "Record each turn by choice",
+      "Review paid transcription before Send",
+      "Read replies with an available device voice",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

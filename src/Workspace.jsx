@@ -3,6 +3,7 @@ import { chatFailureMessage } from "./chat-control.js";
 import { useReadingPosition, useRequestCharge, ChargeStatus } from "./ChatControl.jsx";
 import HistoryLibrary from "./HistoryLibrary.jsx";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { VoiceAssist, ReadAloud } from "./VoiceAssist.jsx";
 import {
   Link,
   useLocation,
@@ -281,6 +282,8 @@ export default function Workspace() {
     // True while a branch is being made and its resend runs (see branchFlight).
     [branching, setBranching] = useState(false),
     [privateMode, setPrivateMode] = useState(false),
+    [voiceOpen, setVoiceOpen] = useState(false),
+    [readAloud, setReadAloud] = useState(null),
     // Double-check This: the index of the answer whose second-opinion panel is open.
     [checking, setChecking] = useState(null),
     [shared, setShared] = useState(null),
@@ -499,6 +502,8 @@ export default function Workspace() {
     setReceipt(null);
     charge.reset();
     reading.reset();
+    setVoiceOpen(false);
+    setReadAloud(null);
     setQuote(null);
     setPrompt(location.state?.prompt || "");
     setWebSearch(!!location.state?.web);
@@ -592,6 +597,13 @@ export default function Workspace() {
       return () => clearInterval(id);
     }
   }, [mode, demo, user]);
+  // Voice panels belong to the signed-in account, like Memory and Saved files:
+  // an account change closes them, which stops recording and device speech
+  // and drops an untranscribed clip.
+  useEffect(() => {
+    setVoiceOpen(false);
+    setReadAloud(null);
+  }, [user?.id]);
   useEffect(() => {
     if (chatControlLive) return;
     const end = streamEnd.current;
@@ -652,6 +664,8 @@ export default function Workspace() {
   function newChat() {
     charge.reset();
     reading.reset();
+    setVoiceOpen(false);
+    setReadAloud(null);
     setChecking(null);
     if (linked) navigate("/workspace/" + mode + (demo ? "?demo=1" : ""));
     setShared(null);
@@ -697,6 +711,8 @@ export default function Workspace() {
     reading.reset();
     setReceipt(null);
     setBusy(false);
+    setVoiceOpen(false);
+    setReadAloud(null);
     if (mode !== c.mode) {
       navigate("/workspace/" + c.mode + "?" +
         new URLSearchParams({ ...(demo ? { demo: "1" } : {}), c: c.id }));
@@ -1816,6 +1832,13 @@ export default function Workspace() {
                               )}
                             </div>
                           )}
+                          {!demo && isReleased(config, "voice") &&
+                            m.role === "assistant" && m.content && !busy && (
+                            <button type="button" className="small-button"
+                              onClick={() => setReadAloud(m.content)}>
+                              Read aloud
+                            </button>
+                          )}
                           {!(branchesLive && !busy && !branching && editing?.index !== i && !m.sample) &&
                             rememberButton(m) && <div className="turn-actions">{rememberButton(m)}</div>}
                           {branchesLive && editing?.index === i && (
@@ -1994,6 +2017,17 @@ export default function Workspace() {
                 )}
               </div>
               <div className="composer-zone" ref={composerZone}>
+                {voiceOpen && !privateMode && textMode && !demo &&
+                  isReleased(config, "voice") && isReleased(config, "audio") && (
+                  <VoiceAssist
+                    ephemeral={ephemeral} disabled={busy} refresh={refresh}
+                    onClose={() => setVoiceOpen(false)}
+                    onText={t => {
+                      setPrompt(p => p.trim() ? p.trimEnd() + " " + t : t);
+                      promptBox.current?.focus();
+                    }}
+                  />
+                )}
                 {isReleased(config, "ephemeral") &&
                   ephemeral &&
                   !privateMode &&
@@ -2323,8 +2357,16 @@ export default function Workspace() {
                         isReleased(config, "veil") && (
                         <VeilToggle on={veilOn} onToggle={() => setVeilOn((v) => !v)} />
                       )}
-                      {["chat", "code"].includes(mode) &&
-                        isReleased(config, "audio") && (
+                      {textMode && !demo && !privateMode &&
+                        isReleased(config, "voice") && isReleased(config, "audio") && (
+                        <button type="button" className="attachment-control"
+                          disabled={busy} aria-pressed={voiceOpen}
+                          onClick={() => setVoiceOpen(v => !v)}>
+                          Voice-assisted chat
+                        </button>
+                      )}
+                      {["chat", "code"].includes(mode) && !privateMode &&
+                        !isReleased(config, "voice") && isReleased(config, "audio") && (
                         <MicButton
                           demo={demo}
                           disabled={busy}
@@ -2753,6 +2795,9 @@ export default function Workspace() {
           onInsert={insertScroll}
           onCancel={() => setScrollFill(null)}
         />
+      )}
+      {readAloud != null && (
+        <ReadAloud text={readAloud} onClose={() => setReadAloud(null)} />
       )}
     </main>
   );

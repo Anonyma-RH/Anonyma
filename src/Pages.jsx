@@ -834,6 +834,7 @@ const featureIcons = {
   v1media: "image",
   treasury: "coins",
   chatcontrol: "book",
+  voice: "audio",
 };
 const launch = {
   id: "mvp",

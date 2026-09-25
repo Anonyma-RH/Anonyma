@@ -1,4 +1,6 @@
 import { uid, now, fail, credits } from "../core.js";
+import { capsFor } from "../holders.js";
+import { BASE_CAPS, HOLDER_CAPS } from "../holder-tiers.js";
 
 // Use the same membership boundary as conversation reads. A removed member
 // cannot export other members' messages from a shared conversation they created.
@@ -28,9 +30,10 @@ export function exportConversations(db, user) {
 }
 
 // Personal conversations kept per account, newest first. Symposium runs have
-// their own cap (see newConversation).
-export const CONVERSATION_CAP = 300;
-export const SYMPOSIUM_CAP = 150;
+// their own cap (see newConversation). An account at the NYMA Holder
+// Program's Holder tier keeps twice as many (capsFor, server/holders.js).
+export const CONVERSATION_CAP = BASE_CAPS.conversations;
+export const SYMPOSIUM_CAP = BASE_CAPS.symposium;
 
 // Days an auto-delete choice may hold; null clears it (kept forever).
 const RETENTION_DAYS = [1, 7, 30];
@@ -40,7 +43,7 @@ const retentionExpiry = (value) => {
   fail(400, "Retention must be null, 1, 7 or 30 days.", "invalid_request");
 };
 
-export function conversationRoutes({ app, db, requireUser }) {
+export function conversationRoutes({ app, db, cfg, requireUser }) {
   // Read and post: a personal conversation's creator, or a current member of
   // a shared conversation's collab (leaving a collab ends access, even to
   // conversations you started there). An expired conversation is treated as
@@ -85,14 +88,18 @@ export function conversationRoutes({ app, db, requireUser }) {
     db.prepare(
       "INSERT INTO conversations(id,user_id,title,mode,created,updated,collab_id,expires) VALUES(?,?,?,?,?,?,?,?)",
     ).run(id, user, title.slice(0, 70), mode, now(), now(), collab, expires);
-    // Keep the newest 300 personal conversations; shared ones belong to their
-    // collab. Symposium runs (several conversations per question) are capped
-    // separately at 150, so they never push out ordinary chats. Messages go
-    // with their conversation (ON DELETE CASCADE).
+    // Keep the newest 300 personal conversations (600 at the Holder tier);
+    // shared ones belong to their collab. Symposium runs (several
+    // conversations per question) are capped separately at 150 (300), so
+    // they never push out ordinary chats. Messages go with their
+    // conversation (ON DELETE CASCADE). Caps are read at each save, so an
+    // account that leaves the tier loses nothing at once: the oldest beyond
+    // the standard cap go as new ones are saved.
     const symposium = mode === "symposium" ? 1 : 0;
+    const caps = capsFor(db, cfg, user);
     db.prepare(
       "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL AND (mode IS 'symposium')=? AND id NOT IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL AND (mode IS 'symposium')=? ORDER BY updated DESC,rowid DESC LIMIT ?)",
-    ).run(user, symposium, user, symposium, symposium ? SYMPOSIUM_CAP : CONVERSATION_CAP);
+    ).run(user, symposium, user, symposium, symposium ? caps.symposium : caps.conversations);
     return id;
   }
   app.get("/api/conversations", requireUser, (req, res) =>
@@ -100,10 +107,11 @@ export function conversationRoutes({ app, db, requireUser }) {
       data: db
         .prepare(
           // Symposium runs are capped on their own and never shown here, so they
-          // can't crowd ordinary chats out of this list.
-          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium' AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT 300",
+          // can't crowd ordinary chats out of this list. Everything kept is
+          // listed, up to the Holder tier's larger cap.
+          "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium' AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT ?",
         )
-        .all(req.user.id, now()),
+        .all(req.user.id, now(), HOLDER_CAPS.conversations),
     }),
   );
   app.post("/api/conversations", requireUser, (req, res) =>

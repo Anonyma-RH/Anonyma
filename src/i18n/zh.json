@@ -1871,20 +1871,13 @@
     "Your balance is below what's left of this budget, so the app can't spend until you add credits.": "你的余额低于此连接的剩余预算，因此在你充值之前，该应用无法消费。",
     "Connected apps: the name you gave each one, the name it gave itself, its return address, budget and expiry. Its charges are in the ledger like any other; prompts and answers sent through it aren't stored. Its sign-in tokens are kept only as hashes and deleted when they expire or you revoke the app.": "已连接的应用：你为它设定的名称、它自报的名称、返回地址、预算和有效期。它的扣费与其他扣费一样记入账本；通过它发送的提示词和收到的回答不会被保存。它的登录令牌仅以哈希形式保存，并会在过期或你撤销该应用时删除。",
     "An app you connect in one click signs in with OAuth and PKCE and gets tokens only: no email, username, chats or balance. Tokens are stored only as SHA-256 hashes. Each app has its own budget, expiry and pause switch, uses private models only unless you turn that off, and loses access the moment you revoke it.": "你一键连接的应用通过 OAuth 和 PKCE 登录，只会获得令牌，无法获取你的邮箱、用户名、会话或余额。令牌仅以 SHA-256 哈希形式保存。每个应用都有独立的预算、有效期和暂停开关，除非你关闭该选项，否则只能使用私密模型；你一撤销，它就会立即失去访问权限。",
-    "Holder Early Access": "持有者抢先体验",
-    "Hold NYMA, get what's next first.": "持有 NYMA，抢先用上新功能。",
-    "New features before their public release": "在公开发布前用上新功能",
-    "Hold NYMA in a wallet linked to your account": "在关联到你账户的钱包中持有 NYMA",
-    "Read-only balance checks, never a transaction": "只读取余额，从不发起交易",
     "No wallet is linked.": "尚未关联钱包。",
     "This wallet is how you sign in. Link an email first, so you can still sign in without it.": "你正在用这个钱包登录。请先关联邮箱，这样没有钱包也能登录。",
     "Early access": "抢先体验",
-    "Open early for NYMA holders, before its public release": "在公开发布前向 NYMA 持有者提前开放",
     "NYMA holdings.": "NYMA 持有量。",
     "Linking a wallet is optional. ANONYMA only reads its NYMA balance.": "关联钱包是可选的。ANONYMA 只读取其中的 NYMA 余额。",
     "What NYMA does": "NYMA 的用途",
     "NYMA balance": "NYMA 余额",
-    "Threshold": "门槛",
     "Last checked": "上次检查",
     "Not yet": "尚未检查",
     "No wallet linked": "未关联钱包",
@@ -1898,8 +1891,6 @@
     "token": "NYMA 代币",
     "THE NYMA TOKEN": "NYMA 代币",
     "Hold NYMA.": "持有 NYMA，",
-    "Get what's next first.": "抢先用上新功能。",
-    "NYMA is ANONYMA's token on Robinhood Chain. Hold it in a linked wallet and new ANONYMA features open to you before their public release.": "NYMA 是 ANONYMA 在 Robinhood Chain 上的代币。在关联的钱包中持有它，ANONYMA 的新功能会在公开发布前向你开放。",
     "NYMA at a glance": "NYMA 概览",
     "What holding does": "持有的作用",
     "How it's checked": "如何检查",
@@ -1912,11 +1903,8 @@
     "Total supply": "总供应量",
     "Robinhood Chain, chain ID 4663": "Robinhood Chain，链 ID 4663",
     "View on Blockscout": "在 Blockscout 上查看",
-    "In the workspace, those features carry this tag. Once a feature is released to everyone, it's open to every account as usual.": "在工作台中，这些功能会带有这个标签。功能向所有人发布后，所有账户都能照常使用。",
-    "In early access now": "当前抢先体验",
     "Nothing is in early access right now. The next one opens here.": "目前没有功能处于抢先体验阶段。下一个将在这里开放。",
     "Link a wallet in Account by signing a one-time message. No transaction, no approval, nothing to spend.": "在账户中签署一条一次性消息即可关联钱包。不发起交易，不授权，也不花费任何东西。",
-    "ANONYMA reads that wallet's NYMA balance and rechecks it in the background. Access follows the balance.": "ANONYMA 读取该钱包的 NYMA 余额，并在后台定期复查。访问权限随余额而定。",
     "Linking is optional. ANONYMA works fully without a wallet.": "关联是可选的。没有钱包也能完整使用 ANONYMA。",
     "Linking ties that wallet to your account inside ANONYMA, so use one you're comfortable linking.": "关联会在 ANONYMA 内把该钱包与你的账户绑定，所以请使用你愿意关联的钱包。",
     "You can unlink it any time in Account.": "你可以随时在账户中解除关联。",
@@ -1927,12 +1915,79 @@
     "Not financial advice.": "不构成投资建议。",
     "Link a wallet in Account": "在账户中关联钱包",
     "Log in to link a wallet": "登录以关联钱包",
-    "NYMA and early access": "NYMA 与抢先体验",
     "NYMA is ANONYMA's token: an ERC-20 named Anonyma on Robinhood Chain (chain ID 4663), with 18 decimals and a total supply of 1,000,000,000 NYMA. Its contract is": "NYMA 是 ANONYMA 的代币：Robinhood Chain（链 ID 4663）上名为 Anonyma 的 ERC-20 代币，18 位小数，总供应量 1,000,000,000 NYMA。其合约地址为",
-    "The wallet is linked by signing a one-time message, never a transaction. The server reads its NYMA balance and rechecks it daily in the background. A balance counts only if it was read in the last 48 hours, so access follows the balance. Linking is optional, and a wallet can be unlinked in Account.": "关联钱包只需签署一条一次性消息，从不发起交易。服务器读取其 NYMA 余额，并每天在后台复查。余额只有在过去 48 小时内读取过才算数，因此访问权限随余额而定。关联是可选的，钱包也可以在账户中解除关联。",
-    "Public pages and the service configuration are the same for everyone, and apps connected through OAuth never get early access, so neither can tell whether an account holds NYMA.": "公开页面和服务配置对所有人都一样，通过 OAuth 连接的应用也永远不会获得抢先体验，因此两者都无法判断某个账户是否持有 NYMA。",
     "NYMA isn't needed to use ANONYMA. It isn't a share of the company, carries no revenue share and no promise of value, and nothing here is financial advice. More at": "使用 ANONYMA 不需要 NYMA。它不是公司股份，没有收益分成，也不承诺任何价值，这里的任何内容都不构成投资建议。详见",
-    "the NYMA page": "NYMA 页面"
+    "the NYMA page": "NYMA 页面",
+    "NYMA Holder Program": "NYMA 持有者计划",
+    "Hold NYMA, get credits and perks.": "持有 NYMA，获得积分和权益。",
+    "ANONYMA credits every 30 days, by tier": "按等级每 30 天获得 ANONYMA 积分",
+    "A bigger library, early access and a roadmap vote": "更大的媒体库、抢先体验和路线图投票",
+    "No staking or locking: your NYMA stays in your wallet": "无需质押或锁仓：你的 NYMA 始终留在你的钱包中",
+    "Get credits and perks.": "获得积分和权益。",
+    "NYMA is ANONYMA's token on Robinhood Chain. Hold it in a linked wallet and your account gets ANONYMA credits every 30 days, plus perks by tier.": "NYMA 是 ANONYMA 在 Robinhood Chain 上的代币。在关联的钱包中持有它，你的账户每 30 天都会获得 ANONYMA 积分，并按等级享有权益。",
+    "Hold NYMA in a wallet linked to your ANONYMA account. Every 30 days, your account gets the credits for its tier, plus the tier's perk and every perk below it.": "在关联到你 ANONYMA 账户的钱包中持有 NYMA。每 30 天，你的账户会获得所在等级的积分，并享有该等级及以下所有等级的权益。",
+    "Tier": "等级",
+    "Lowest balance": "最低余额",
+    "Credits every 30 days": "每 30 天积分",
+    "Perks": "权益",
+    "Holder": "持有者",
+    "Insider": "资深持有者",
+    "Inner Circle": "核心圈",
+    "Holder.": "持有者。",
+    "Insider.": "资深持有者。",
+    "Inner Circle.": "核心圈。",
+    "No credits": "无积分",
+    "no credits": "无积分",
+    "Bigger library": "更大的媒体库",
+    "Roadmap vote": "路线图投票",
+    "Credit rewards are off right now. The perks still apply.": "积分奖励目前已关闭，权益仍然有效。",
+    "No staking, no locking, no deposits. Your NYMA stays in your own wallet. You link it by signing a message and hold.": "无需质押，无需锁仓，无需存入。你的 NYMA 始终留在你自己的钱包中。只需签署一条消息关联钱包，然后持有即可。",
+    "How a cycle works": "周期如何运作",
+    "Your tier is the lowest balance any check sees during the cycle, so adding NYMA just before it ends doesn't raise it. It counts from the next cycle.": "你的等级取决于周期内任意一次检查看到的最低余额，所以在周期结束前增加 NYMA 持有量并不会提高等级，新增部分会从下一个周期开始计入。",
+    "After 30 days, the cycle's credits go to your balance and the next cycle starts. They need a check from the last 48 hours; if there isn't one yet, the cycle waits for it.": "30 天后，该周期的积分会计入你的余额，下一个周期随即开始。发放需要过去 48 小时内有一次检查；如果还没有，周期会等待这次检查。",
+    "The perks": "权益",
+    "Holder and up": "持有者及以上",
+    "Insider and up": "资深持有者及以上",
+    "New features before their public release, marked with this tag in the workspace.": "在新功能公开发布前抢先使用，工作台中会用这个标签标出。",
+    "Each month, vote for one update that isn't released yet, in Account. You can change it until the month ends. Inner Circle votes help decide what ships next.": "每月可在账户中为一项尚未发布的更新投票，月底前都可以更改。核心圈的投票会帮助决定接下来发布什么。",
+    "Transparency": "公开透明",
+    "Totals only, updated daily. ANONYMA never publishes who holds, who was paid or who voted.": "仅显示总数，每日更新。ANONYMA 从不公开谁在持有、谁获得了发放或谁投了票。",
+    "Credits paid, last 30 days": "过去 30 天发放的积分",
+    "Holders rewarded, last 30 days": "过去 30 天获得奖励的持有者",
+    "Roadmap vote this month": "本月路线图投票",
+    "Every update is out or in early access. The next vote opens here.": "所有更新都已发布或处于抢先体验阶段。下一次投票将在这里开放。",
+    "Loading the vote…": "正在加载投票……",
+    "ANONYMA reads that wallet's NYMA balance about once a day, at a random time, and you can refresh it yourself in Account. Your tier and perks follow the balance.": "ANONYMA 大约每天在随机时间读取一次该钱包的 NYMA 余额，你也可以在账户中自行刷新。你的等级和权益随余额而定。",
+    "A check that can't reach the chain changes nothing: it neither ends a cycle nor counts toward one. A balance that can't be rechecked for 48 hours stops counting until it can.": "无法连接到链的检查不会改变任何东西：它既不会结束周期，也不会计入周期。如果余额 48 小时内无法复查，在复查成功前不再计入。",
+    "Public numbers are totals only: never who holds, who was paid or who voted.": "公开的数字只有总数：从不显示谁在持有、谁获得了发放或谁投了票。",
+    "Rewards are ANONYMA credits, not tokens or cash, and have no cash value.": "奖励是 ANONYMA 积分，不是代币或现金，没有现金价值。",
+    "No staking, no locking, no deposits. Your NYMA stays in your own wallet.": "无需质押，无需锁仓，无需存入。你的 NYMA 始终留在你自己的钱包中。",
+    "Lowest this cycle": "本周期最低余额",
+    "No cycle open": "暂无进行中的周期",
+    "Cycle": "周期",
+    "Due, waiting for a balance check": "已到期，等待余额检查",
+    "Due now": "已到期",
+    "At cycle end": "周期结束时",
+    "No credits for this tier": "此等级暂无积分",
+    "Paid in a row": "连续发放",
+    "Last reward": "上次奖励",
+    "Inner Circle votes help decide what ships next.": "核心圈的投票会帮助决定接下来发布什么。",
+    "Nothing to vote on this month: every update is out or in early access.": "本月没有可投票的更新：所有更新都已发布或处于抢先体验阶段。",
+    "Change vote": "更改投票",
+    "Vote": "投票",
+    "One vote a month, changeable until the month ends.": "每月一票，月底前都可以更改。",
+    "Update to vote for": "要投票的更新",
+    "Vote saved. You can change it until the month ends.": "投票已保存。月底前你都可以更改。",
+    "Open early for NYMA holders at the Insider tier and up, before its public release": "在公开发布前向资深持有者及以上等级的 NYMA 持有者提前开放",
+    "The roadmap vote is for Inner Circle accounts.": "路线图投票仅限核心圈账户。",
+    "Choose an update that isn't released yet.": "请选择一项尚未发布的更新。",
+    "NYMA holder reward": "NYMA 持有者奖励",
+    "NYMA and the Holder Program": "NYMA 与持有者计划",
+    "Holding it in a linked wallet earns ANONYMA credits every 30 days, by tier, and each tier adds a perk to those below it:": "在关联的钱包中持有它，每 30 天可按等级获得 ANONYMA 积分，并且每个等级都会在较低等级的权益之上再增加一项权益：",
+    "No staking, no locking, no deposits. The wallet is linked by signing a one-time message, never a transaction, and the server only reads its NYMA balance, about once a day at a random time. Rewards are ANONYMA credits, not tokens or cash, and have no cash value.": "无需质押，无需锁仓，无需存入。关联钱包只需签署一条一次性消息，从不发起交易，服务器只读取其 NYMA 余额，大约每天在随机时间读取一次。奖励是 ANONYMA 积分，不是代币或现金，没有现金价值。",
+    "Public pages show totals only: credits paid and holders rewarded over the last 30 days, and the vote counts. Nothing names an account, and apps connected through OAuth never get early access, so neither can tell whether an account holds NYMA.": "公开页面只显示总数：过去 30 天发放的积分和获得奖励的持有者数量，以及投票数。任何内容都不会指明某个账户，通过 OAuth 连接的应用也永远不会获得抢先体验，因此两者都无法判断某个账户是否持有 NYMA。",
+    "Bigger library, Early access": "更大的媒体库、抢先体验",
+    "Bigger library, Early access, Roadmap vote": "更大的媒体库、抢先体验、路线图投票"
   },
   "patterns": [
     {
@@ -2820,20 +2875,108 @@
       "zh": "{0} / {1} 积分"
     },
     {
-      "en": "Hold at least {0} NYMA in a wallet linked to your ANONYMA account, and you get new features before their public release.",
-      "zh": "在关联到你 ANONYMA 账户的钱包中持有至少 {0} NYMA，即可在新功能公开发布前用上它们。"
-    },
-    {
-      "en": "Below {0} NYMA, early access turns off at the next check. A balance that can't be rechecked for 48 hours stops counting until it can. You can also refresh it yourself in Account.",
-      "zh": "余额低于 {0} NYMA 时，抢先体验会在下次检查时关闭。如果余额 48 小时内无法复查，在复查成功前不再计入。你也可以在账户中自行刷新。"
-    },
-    {
-      "en": "Holding it does one thing in ANONYMA: early access. An update marked early opens, before its public release, to accounts holding at least {0} NYMA in a linked wallet. The server checks this on the update's routes, and everyone else gets the same \"coming soon\" refusal as before.",
-      "zh": "在 ANONYMA 中，持有它只有一个作用：抢先体验。标记为抢先体验的更新会在公开发布前，向在关联钱包中持有至少 {0} NYMA 的账户开放。服务器会在该更新的路由上检查这一点，其他人收到的仍是和以前一样的“即将推出”拒绝。"
-    },
-    {
       "en": "Platform markup: {0}%.",
       "zh": "平台加价：{0}%。"
+    },
+    {
+      "en": "{0} NYMA",
+      "zh": "{0} NYMA"
+    },
+    {
+      "en": "${0} of usage",
+      "zh": "可抵 ${0} 用量"
+    },
+    {
+      "en": "Loyal bonus: after {0} paid cycles in a row, every later payout is {1}, until a cycle ends unpaid.",
+      "zh": "忠诚加成：连续 {0} 个周期获得发放后，之后每次发放都乘以 {1}，直到某个周期未获发放为止。"
+    },
+    {
+      "en": "A cycle is 30 days. It starts at the first check that sees at least {0} in your linked wallet.",
+      "zh": "一个周期为 30 天。它从第一次检查到你关联的钱包中至少有 {0} 时开始。"
+    },
+    {
+      "en": "If a check sees less than {0}, the cycle ends unpaid, and a new one starts at the next check at or above it.",
+      "zh": "如果某次检查看到的余额低于 {0}，该周期结束且不发放，新的周期会在下一次余额达到或超过该数额的检查时开始。"
+    },
+    {
+      "en": "Twice the saved items: {0} conversations instead of {1}, {2} Symposium runs instead of {3}, and {4} images, {5} videos and {6} audio files.",
+      "zh": "保存的内容翻倍：{0} 个会话（原为 {1} 个）、{2} 次模型圆桌（原为 {3} 次），以及 {4} 张图像、{5} 个视频和 {6} 个音频文件。"
+    },
+    {
+      "en": "If your balance drops below {0}, nothing is deleted at once. The normal caps simply apply again, so the oldest items beyond them are removed as new ones are saved.",
+      "zh": "如果你的余额降到 {0} 以下，不会立即删除任何内容。普通上限会重新生效，因此在保存新内容时，超出上限的最早内容会被移除。"
+    },
+    {
+      "en": "{0} vote",
+      "zh": "{0} 票"
+    },
+    {
+      "en": "{0} votes",
+      "zh": "{0} 票"
+    },
+    {
+      "en": "{0} day left",
+      "zh": "剩余 {0} 天"
+    },
+    {
+      "en": "{0} days left",
+      "zh": "剩余 {0} 天"
+    },
+    {
+      "en": "A cycle opens at {0} or more",
+      "zh": "余额达到 {0} 或以上时开启周期"
+    },
+    {
+      "en": "Loyal bonus {0}",
+      "zh": "忠诚加成 {0}"
+    },
+    {
+      "en": "{0} cycle",
+      "zh": "{0} 个周期"
+    },
+    {
+      "en": "{0} cycles",
+      "zh": "{0} 个周期"
+    },
+    {
+      "en": "Loyal bonus after {0}",
+      "zh": "连续 {0} 个周期后享忠诚加成"
+    },
+    {
+      "en": "Bigger library, from the Holder tier: {0} saved conversations, {1} Symposium runs, {2} images, {3} videos and {4} audio files.",
+      "zh": "更大的媒体库，持有者等级起享：{0} 个已保存会话、{1} 次模型圆桌、{2} 张图像、{3} 个视频和 {4} 个音频文件。"
+    },
+    {
+      "en": "Open to Inner Circle accounts, from {0}.",
+      "zh": "仅向核心圈账户开放，需持有 {0} 起。"
+    },
+    {
+      "en": "Your vote this month: {0}",
+      "zh": "你本月的投票：{0}"
+    },
+    {
+      "en": "NYMA holder reward: {0}",
+      "zh": "NYMA 持有者奖励：{0}"
+    },
+    {
+      "en": "NYMA holder reward: {0}, Loyal bonus",
+      "zh": "NYMA 持有者奖励：{0}，忠诚加成"
+    },
+    {
+      "en": "{0}: {1} every 30 days; {2}.",
+      "zh": "{0}：每 30 天 {1}；{2}。"
+    },
+    {
+      "en": "A cycle starts at the first check that sees at least {0}. The lowest balance any check sees during it sets the tier, a check below {1} ends it unpaid, and a failed check changes nothing. After 30 days, with a check from the last 48 hours, the server credits the tier's amount as one ledger entry and the next cycle starts. Each paid cycle is recorded once, in the same transaction as its credit, so a rerun or restart never pays twice.",
+      "zh": "周期从第一次看到至少 {0} 的检查开始。周期内任意检查看到的最低余额决定等级；低于 {1} 的检查会使周期结束且不发放；失败的检查不会改变任何东西。30 天后，只要过去 48 小时内有一次检查，服务器就会把该等级的积分作为一条账本条目发放，下一个周期随即开始。每个已发放的周期只记录一次，并与其积分在同一事务中写入，因此重跑或重启永远不会重复发放。"
+    },
+    {
+      "en": "After {0} paid cycles in a row, each payout is {1} until a cycle ends unpaid.",
+      "zh": "连续 {0} 个周期获得发放后，每次发放都乘以 {1}，直到某个周期未获发放为止。"
+    },
+    {
+      "en": "The bigger library doubles the retention caps; below {0} the standard caps apply again as new items are saved, and nothing is deleted at once. Early access opens updates marked early, before their public release, and the server checks it on each update's routes. The Inner Circle's roadmap vote is one per account per month and advisory.",
+      "zh": "更大的媒体库会让保留上限翻倍；余额低于 {0} 时，保存新内容时会重新适用标准上限，不会立即删除任何内容。抢先体验会在公开发布前开放标记为抢先体验的更新，服务器会在每个更新的路由上检查这一点。核心圈的路线图投票每个账户每月一票，仅供参考。"
     }
   ]
 }

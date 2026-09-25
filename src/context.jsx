@@ -55,7 +55,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     refresh();
   }, []);
-  // Holder Early Access: the signed-in account's own early updates count as
+  // NYMA Holder Program: the signed-in account's own early updates count as
   // released for it, so every isReleased(config, id) gate opens for a holder
   // (and closes again on sign-out). The server enforces the same rule.
   const effective = useMemo(

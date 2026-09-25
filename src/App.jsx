@@ -27,7 +27,7 @@ const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 const Connect = lazy(() => import("./Connect.jsx"));
 // Pages that exist only once their update is live: until then no link to
-// them shows at all (the NYMA page ships with Holder Early Access).
+// them shows at all (the NYMA page ships with the NYMA Holder Program).
 const unpublished = (config, to) => to === "/token" && !featureEnabled(config, "holders");
 // Links into updates that aren't released yet lead to the roadmap, tagged "Soon".
 function locked(config, to) {

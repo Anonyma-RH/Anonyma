@@ -6,7 +6,13 @@ import { useApp } from "./context.jsx";
 import ReleaseStatus from "./ReleaseStatus.jsx";
 import { isReleased, releaseUpdate } from "./lib.js";
 import { CONTRACT_ADDRESS } from "./Home.jsx";
-import { earlyAccessThreshold } from "./holders.js";
+import {
+  holderProgram,
+  tierPerks,
+  nymaAmount,
+  creditAmount,
+  multiplierText,
+} from "./holders.js";
 import "./whitepaper.css";
 
 // Every statement below is drawn from the server code (server/*.js). Anything
@@ -22,8 +28,8 @@ const SECTIONS = [
   ["privacy", "Privacy and data"],
   ["security", "Security"],
   ["releases", "The release model"],
-  // Shown once Holder Early Access is live.
-  ["nyma", "NYMA and early access"],
+  // Shown once the NYMA Holder Program is live.
+  ["nyma", "NYMA and the Holder Program"],
   ["roadmap", "Roadmap"],
   ["limitations", "Limitations and open questions"],
 ];
@@ -155,6 +161,10 @@ export default function Whitepaper() {
   // Treat an unloaded config as unreleased, so nothing is overstated.
   const live = (id) => !!config && isReleased(config, id);
   const sections = SECTIONS.filter(([id]) => id !== "nyma" || live("holders"));
+  const program = holderProgram(config);
+  const tiers = program?.tiers || [];
+  const loyalty = program?.loyalty;
+  const holderMin = nymaAmount(tiers[0]?.min ?? 1_000_000);
   const [active, setActive] = useState(SECTIONS[0][0]);
   const pending = (config?.releases?.updates || []).filter(
     (u) => !u.released,
@@ -562,19 +572,38 @@ export default function Whitepaper() {
                 <code data-i18n="off">{CONTRACT_ADDRESS}</code>.
               </p>
               <p>
-                {`Holding it does one thing in ANONYMA: early access. An update marked early opens, before its public release, to accounts holding at least ${Number(earlyAccessThreshold(config)).toLocaleString("en-US")} NYMA in a linked wallet. The server checks this on the update's routes, and everyone else gets the same "coming soon" refusal as before.`}
+                Holding it in a linked wallet earns ANONYMA credits every 30
+                days, by tier, and each tier adds a perk to those below it:
+              </p>
+              <ul className="wp-list">
+                {tiers.map((t, i) => (
+                  <li key={t.id}>
+                    <b>{t.name}.</b>{" "}
+                    {`${nymaAmount(t.min)}: ${t.credits > 0 ? creditAmount(t.credits) : "no credits"} every 30 days; ${tierPerks(program, i).join(", ")}.`}
+                  </li>
+                ))}
+              </ul>
+              <p>
+                {`A cycle starts at the first check that sees at least ${holderMin}. The lowest balance any check sees during it sets the tier, a check below ${holderMin} ends it unpaid, and a failed check changes nothing. After 30 days, with a check from the last 48 hours, the server credits the tier's amount as one ledger entry and the next cycle starts. Each paid cycle is recorded once, in the same transaction as its credit, so a rerun or restart never pays twice.`}
+                {loyalty?.multiplier > 1 &&
+                  ` After ${loyalty.after} paid cycles in a row, each payout is ${multiplierText(loyalty.multiplier)} until a cycle ends unpaid.`}
               </p>
               <p>
-                The wallet is linked by signing a one-time message, never a
-                transaction. The server reads its NYMA balance and rechecks it
-                daily in the background. A balance counts only if it was read
-                in the last 48 hours, so access follows the balance. Linking is
-                optional, and a wallet can be unlinked in Account.
+                {`The bigger library doubles the retention caps; below ${holderMin} the standard caps apply again as new items are saved, and nothing is deleted at once. Early access opens updates marked early, before their public release, and the server checks it on each update's routes. The Inner Circle's roadmap vote is one per account per month and advisory.`}
               </p>
               <p>
-                Public pages and the service configuration are the same for
-                everyone, and apps connected through OAuth never get early
-                access, so neither can tell whether an account holds NYMA.
+                No staking, no locking, no deposits. The wallet is linked by
+                signing a one-time message, never a transaction, and the server
+                only reads its NYMA balance, about once a day at a random time.
+                Rewards are ANONYMA credits, not tokens or cash, and have no
+                cash value.
+              </p>
+              <p>
+                Public pages show totals only: credits paid and holders
+                rewarded over the last 30 days, and the vote counts. Nothing
+                names an account, and apps connected through OAuth never get
+                early access, so neither can tell whether an account holds
+                NYMA.
               </p>
               <p>
                 NYMA isn't needed to use ANONYMA. It isn't a share of the

@@ -1,5 +1,6 @@
-// Holder Early Access in the browser. The server decides who gets in (see
-// server/holders.js); this only mirrors it so the right things show.
+// The NYMA Holder Program in the browser. The server decides tiers, pays
+// credits and opens early access (see server/holders.js); this only mirrors
+// it so the right things show.
 
 // NYMA as read on-chain. The contract address itself is CONTRACT_ADDRESS in
 // Home.jsx, the one shown in the homepage hero.
@@ -31,6 +32,34 @@ export const earlyAccessThreshold = (config, user) =>
   Number(
     config?.releases?.earlyAccess?.threshold ?? user?.holder?.threshold ?? 5_000_000,
   );
+
+// The program's public settings from /api/config, once it's live: tiers
+// with their minimum and credits every cycle, the Loyal bonus and the caps.
+export const holderProgram = (config) =>
+  holdersReleased(config) ? config?.releases?.holderProgram || null : null;
+
+export const PERKS = {
+  library: "Bigger library",
+  early: "Early access",
+  vote: "Roadmap vote",
+};
+export const TIER_NAMES = {
+  holder: "Holder",
+  insider: "Insider",
+  inner: "Inner Circle",
+};
+// Perks are cumulative: a tier has its own and every one below it.
+export const tierPerks = (program, index) =>
+  (program?.tiers || []).slice(0, index + 1).map((t) => PERKS[t.perk]);
+
+export const nymaAmount = (n) =>
+  `${Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} NYMA`;
+export const creditAmount = (n) =>
+  `${Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 4 })} credits`;
+// 1,000 credits cover $1 of usage, as when credits are added.
+export const usageValue = (n) =>
+  `$${(Number(n || 0) / 1000).toLocaleString("en-US", { maximumFractionDigits: 2 })} of usage`;
+export const multiplierText = (m) => `${Number(m)}×`;
 
 // The config the app runs on for a signed-in holder: the early updates in
 // the account's own session (user.earlyAccess) count as released, so every

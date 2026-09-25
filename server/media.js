@@ -2,6 +2,7 @@ import { writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { createHmac } from "node:crypto";
 import { uid, now, fail, credits, splitCharge } from "./core.js";
+import { capsFor } from "./holders.js";
 
 const imageType = (bytes) =>
   bytes.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex"))
@@ -122,11 +123,16 @@ export function createMediaStore(db, cfg) {
       now(),
       meta.expires || null,
     );
+    // The library keeps the latest 100 images, 60 videos and 60 audio files
+    // (twice that at the NYMA Holder Program's Holder tier: capsFor in
+    // server/holders.js). Read at each save, so leaving the tier deletes
+    // nothing at once; the oldest beyond the standard cap go from here on.
+    const caps = capsFor(db, cfg, user);
     const old = db
       .prepare(
         "SELECT * FROM media WHERE user_id=? AND kind=? AND expires IS NULL AND id NOT IN (SELECT id FROM media WHERE user_id=? AND kind=? AND expires IS NULL ORDER BY created DESC,rowid DESC LIMIT ?)",
       )
-      .all(user, kind, user, kind, kind === "image" ? 100 : 60);
+      .all(user, kind, user, kind, caps[kind] ?? caps.video);
     for (const item of old) deleteMedia(item);
     const result = mediaJSON(
       db.prepare("SELECT * FROM media WHERE id=?").get(id),

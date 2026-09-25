@@ -49,6 +49,7 @@ const LEDGER_KINDS = {
   payment_correction: "Payment correction",
   referral: "Referral reward",
   referral_correction: "Referral correction",
+  holder_reward: "NYMA holder reward",
 };
 const ledgerKind = (kind) =>
   LEDGER_KINDS[kind] ||
@@ -817,7 +818,7 @@ export default function Account() {
                       onError={setError}
                     />
                   </div>
-                  {/* Once Holder Early Access is live, NYMA holdings get their
+                  {/* Once the Holder Program is live, NYMA holdings get their
                       own section below. */}
                   {!holdersReleased(config) && user?.wallet && config?.services?.token && (
                     <div>

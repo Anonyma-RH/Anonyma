@@ -1,5 +1,6 @@
 import { sessionCookieOptions } from "../auth.js";
 import { exportConversations } from "./conversations.js";
+import { HOLDER_RESET } from "../holders.js";
 import {
   uid,
   hash,
@@ -284,6 +285,17 @@ export function accountRoutes(ctx) {
         )
         .all(req.user.id)
         .map((v) => ({ ...v, request: JSON.parse(v.request || "null") })),
+      holderRewards: db
+        .prepare(
+          "SELECT cycle_start,paid,tier,amount,bonus FROM holder_rewards WHERE user_id=? ORDER BY paid",
+        )
+        .all(req.user.id)
+        .map((r) => ({ ...r, amount: credits(r.amount), bonus: !!r.bonus })),
+      roadmapVotes: db
+        .prepare(
+          "SELECT month,update_id,created,updated FROM roadmap_votes WHERE user_id=? ORDER BY month",
+        )
+        .all(req.user.id),
       collaborations: db
         .prepare(
           "SELECT c.id,c.name,c.created,m.role,m.joined FROM collabs c JOIN collab_members m ON c.id=m.collab_id WHERE m.user_id=?",
@@ -372,8 +384,10 @@ export function accountRoutes(ctx) {
       db.prepare("DELETE FROM user_instructions WHERE user_id=?").run(
         req.user.id,
       );
+      // NYMA Holder Program: votes go; paid cycles stay with the ledger.
+      db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);
       db.prepare(
-        "UPDATE users SET username=NULL,password=NULL,email=NULL,wallet=NULL,token_balance='0',token_since=NULL,deleted=? WHERE id=?",
+        `UPDATE users SET username=NULL,password=NULL,email=NULL,wallet=NULL,${HOLDER_RESET},deleted=? WHERE id=?`,
       ).run(now(), req.user.id);
     });
     res

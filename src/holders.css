@@ -1,4 +1,4 @@
-/* Holder Early Access: the "Early access" tag, Account's NYMA holdings, the
+/* NYMA Holder Program: the "Early access" tag, Account's NYMA holdings, the
    hero's link to /token and the /token page itself. Flat cobalt and white,
    with the brand yellow as the one accent. */
 
@@ -53,6 +53,60 @@
 /* Account → Settings → NYMA holdings. */
 .identity-rows.holdings-rows > div > span {
   width: 104px;
+}
+.holdings-rows b em {
+  display: block;
+  font-style: normal;
+}
+.holdings-bonus {
+  margin-top: 3px;
+  color: #0135df;
+}
+.holdings-hint {
+  color: #8da077;
+  font-weight: 400;
+}
+.settings-stack .holdings-note {
+  margin: 6px 0 0;
+  padding: 12px 14px;
+  background: #edf2ff;
+  border-left: 3px solid #0135df;
+  color: #16213f;
+  line-height: 1.6;
+}
+.holdings-vote {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.holdings-vote h3 {
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+.settings-stack .holdings-vote p {
+  margin-top: 6px;
+}
+.holdings-vote form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.holdings-vote select {
+  min-width: 0;
+  flex: 1 1 200px;
+  font: inherit;
+  font-size: 12px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--ink);
+}
+.holdings-vote form .holdings-hint {
+  flex-basis: 100%;
+  margin-top: 0;
 }
 .holdings-state {
   display: inline-flex;
@@ -305,6 +359,183 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* The tier table: tier, lowest balance, credits every 30 days, perks. */
+.token-page .token-tiers-scroll {
+  margin: 26px 0 8px;
+}
+.token-page .token-tiers {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.token-page .token-tiers th,
+.token-page .token-tiers td {
+  min-width: 0;
+  background: none;
+  padding: 14px 12px 14px 0;
+  text-align: left;
+  vertical-align: top;
+  border-top: 1px solid var(--line);
+}
+.token-page .token-tiers tr:last-child th,
+.token-page .token-tiers tr:last-child td {
+  border-bottom: 1px solid var(--line);
+}
+.token-page .token-tiers thead th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-top: 0;
+}
+.token-page .token-tiers tbody th {
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 400;
+  white-space: nowrap;
+  color: var(--brand-deep);
+}
+.token-page .token-tiers td b {
+  display: block;
+  font-weight: 600;
+  color: var(--brand-blue);
+}
+.token-page .token-tiers td small {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+.token-page .token-tiers ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.token-page .token-tiers li {
+  position: relative;
+  padding-left: 14px;
+}
+.token-page .token-tiers li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 6px;
+  height: 6px;
+  background: #ffb21c;
+  box-shadow: 0 0 0 1.5px #0135df;
+}
+.token-page .token-bonus {
+  padding: 14px 18px;
+  color: #fff;
+  background: var(--brand-blue);
+  font-size: 15px;
+}
+.token-page .token-plain {
+  font-family: var(--serif);
+  font-size: 21px;
+  line-height: 1.45;
+  color: var(--brand-deep);
+}
+
+/* The perks: one row each, with the tiers that get it. */
+.token-page .token-perks {
+  margin: 18px 0 0;
+}
+.token-page .token-perks dt {
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--brand-deep);
+}
+.token-page .token-perks dt small {
+  margin-left: 10px;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--brand-blue);
+}
+.token-page .token-perks dd {
+  margin: 6px 0 20px;
+  font-size: 15px;
+}
+.token-page .token-perks dd .token-early {
+  margin-bottom: 0;
+}
+
+/* Transparency: two totals and this month's vote counts. */
+.token-page .token-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: 22px 0 0;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+.token-page .token-stats > div {
+  padding: 18px 20px;
+  background: #fff;
+}
+.token-page .token-stats dt {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.token-page .token-stats dd {
+  margin: 6px 0 0;
+  font-family: var(--serif);
+  font-size: 38px;
+  line-height: 1.1;
+  color: var(--brand-blue);
+}
+.token-page .token-votes {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+.token-page .token-votes li {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.token-page .token-votes li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.token-page .token-votes strong {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--brand-deep);
+}
+.token-page .token-votes span {
+  flex: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--brand-blue);
+}
+@media (max-width: 700px) {
+  .token-page .token-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .token-page .token-stats dd {
+    font-size: 30px;
+  }
+  .token-page .token-tiers {
+    font-size: 14px;
+  }
+  .token-page .token-tiers tbody th {
+    font-size: 18px;
+  }
+}
+
 .token-page .token-tagged {
   display: flex;
   align-items: baseline;

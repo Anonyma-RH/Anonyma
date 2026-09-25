@@ -12,6 +12,7 @@ import { pollVideo, payment } from "./provider.js";
 import { recordPayment, OPEN_PAYMENT_STATUSES, sqlList } from "./payments.js";
 import { refreshTokenHoldings } from "./auth.js";
 import { sweepOAuth } from "./oauth.js";
+import { settleHolderCycles, monthOf } from "./holders.js";
 
 // Background maintenance: video completion, payment status checks, expired
 // media and reservations, token holdings and table cleanup.
@@ -201,17 +202,19 @@ export function createWorker(ctx) {
       ).run(now());
       recoverExpiredHolds();
       if (cfg.rpc && cfg.token) {
-        // Daily, with a failed read retried after an hour. A failure never
-        // touches token_checked: early access needs a recent successful
-        // read (server/holders.js), so a balance nobody can confirm lapses.
+        // About daily: each read schedules the next 12 to 36 hours on, at a
+        // random time (token_due, server/holders.js). A failed read is
+        // retried after an hour and never touches token_checked: tiers and
+        // early access need a recent successful read, so a balance nobody
+        // can confirm lapses, and a Holder Program cycle waits for one.
         for (const user of db
           .prepare(
-            "SELECT * FROM users WHERE wallet IS NOT NULL AND deleted IS NULL AND COALESCE(token_checked,0)<? AND COALESCE(token_retry,0)<? LIMIT 5",
+            "SELECT * FROM users WHERE wallet IS NOT NULL AND deleted IS NULL AND COALESCE(token_due,0)<=? AND COALESCE(token_retry,0)<? ORDER BY COALESCE(token_due,0) LIMIT 5",
           )
-          .all(now() - 86400000, now() - 3600000)) {
+          .all(now(), now() - 3600000)) {
           if (closed) break;
           try {
-            await refreshTokenHoldings(db, cfg, user);
+            await refreshTokenHoldings(db, cfg, user, { scheduled: true });
           } catch {
             db.prepare(
               "UPDATE users SET token_retry=? WHERE id=? AND wallet=? AND deleted IS NULL",
@@ -219,6 +222,15 @@ export function createWorker(ctx) {
           }
         }
       }
+      if (closed) return;
+      // NYMA Holder Program: pay every cycle that's due, each in its own
+      // transaction and at most once. Then keep roadmap votes only for this
+      // month and the last.
+      settleHolderCycles(db, cfg);
+      const today = new Date(now());
+      db.prepare("DELETE FROM roadmap_votes WHERE month<?").run(
+        monthOf(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() - 1, 1)),
+      );
       db.prepare("DELETE FROM challenges WHERE expires<?").run(now() - 3600000);
       db.prepare("DELETE FROM rate_events WHERE created<?").run(
         now() - 86400000,

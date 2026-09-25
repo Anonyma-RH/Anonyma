@@ -54,7 +54,7 @@ export function VeilPanel({ note, words, onWordsChange }) {
           <p>Always veil these words</p>
           <div className="veil-word-list">
             {words.map((w, i) => (
-              <span key={w + i} className="veil-word">
+              <span key={w + i} className="veil-word" data-i18n="off">
                 {w}
                 <button
                   type="button"

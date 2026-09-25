@@ -1,0 +1,82 @@
+{
+  "strings": {
+    "Platform": "平台",
+    "Workflows": "工作流",
+    "Models": "模型",
+    "Company": "公司",
+    "Knowledge Base": "知识库",
+    "Log in": "登录",
+    "Get started": "开始使用",
+    "Explore workspace →": "探索工作台 →",
+    "Main navigation": "主导航",
+    "Open navigation": "打开导航",
+    "Close navigation": "关闭导航",
+    "Bring your ideas to life with AI models.": "借助 AI 模型，让创意焕发生命力。",
+    "ANONYMA — One account. Many AI models.": "ANONYMA — 一个账户，畅用众多 AI 模型",
+    "One account. Many AI models. ANONYMA brings chat, code, image and video workflows into one prepaid AI workspace.": "一个账户，畅用众多 AI 模型。ANONYMA 将对话、代码、图像与视频工作流整合进一个预付 AI 工作台。",
+    "WORKSPACE": "工作台",
+    "Home": "首页",
+    "Chat & reason": "对话与推理",
+    "CHAT & REASON": "对话与推理",
+    "What’s on your mind?": "你在想什么？",
+    "Choose a model. Start a conversation. Keep your best ideas together.": "选择模型，开始对话，把最好的想法留在一起。",
+    "Give your idea a place to begin…": "给你的想法一个起点…",
+    "Your prompt": "你的提示词",
+    "New conversation": "新会话",
+    "RECENT CONVERSATIONS": "最近会话",
+    "Personal workspace": "个人工作台",
+    "Explore models": "探索模型",
+    "Credits": "积分",
+    "You": "你",
+    "Preparing…": "准备中…",
+    "Good morning": "早上好",
+    "Good afternoon": "下午好",
+    "Good evening": "晚上好",
+    "Account settings": "账户设置",
+    "Language.": "语言。",
+    "Show the site in English or Simplified Chinese. Your chats stay exactly as written.": "以英文或简体中文显示网站。你的对话始终保持原文。",
+    "Language": "语言",
+    "just now": "刚刚",
+    "yesterday": "昨天",
+    "last week": "上周",
+    "last month": "上个月",
+    "The whole site in Simplified Chinese.": "整个网站，简体中文呈现。",
+    "One switch between English and 中文": "一键切换英文与中文",
+    "Every page, the workspace and your account": "每个页面、工作台和你的账户",
+    "Your chats stay exactly as written": "你的对话始终保持原文"
+  },
+  "patterns": [
+    {
+      "en": "{0} — ANONYMA",
+      "zh": "{0} — ANONYMA"
+    },
+    {
+      "en": "{0} is coming soon.",
+      "zh": "{0}即将推出。"
+    },
+    {
+      "en": "{0} credits available",
+      "zh": "{0} 积分可用"
+    },
+    {
+      "en": "{0} minutes ago",
+      "zh": "{0} 分钟前"
+    },
+    {
+      "en": "{0} hours ago",
+      "zh": "{0} 小时前"
+    },
+    {
+      "en": "{0} days ago",
+      "zh": "{0} 天前"
+    },
+    {
+      "en": "{0} detail masked",
+      "zh": "已遮盖 {0} 项信息"
+    },
+    {
+      "en": "{0} details masked",
+      "zh": "已遮盖 {0} 项信息"
+    }
+  ]
+}

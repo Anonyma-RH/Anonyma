@@ -368,6 +368,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
               <>
                 Your {last.mode === "code" ? "code session" : "conversation"}{" "}
                 <a
+                  data-i18n="off"
                   href={`/workspace/${last.mode === "code" ? "code" : "chat"}?c=${last.id}`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -538,7 +539,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
                   <button type="button" onClick={() => onOpen(c)}>
                     <Tile name={modeNames[c.mode] ? c.mode : "chat"} />
                     <span>
-                      <b>{c.title}</b>
+                      <b data-i18n="off">{c.title}</b>
                       <small>
                         {modeNames[c.mode] || "Conversation"}
                         {c.updated ? ", " + ago(c.updated) : ""}
@@ -579,7 +580,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
                     <img src={m.url} alt="" loading="lazy" />
                   )}
                   {m.kind === "video" && <span className="dash-play" aria-hidden="true" />}
-                  <span className="dash-figcaption">{m.prompt || modeNames[m.kind]}</span>
+                  <span className="dash-figcaption" data-i18n={m.prompt ? "off" : undefined}>{m.prompt || modeNames[m.kind]}</span>
                 </Link>
               ))}
             </div>
@@ -606,7 +607,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
             <div>
               {collabs?.length ? (
                 <>
-                  <h3>{collabs[0].name}</h3>
+                  <h3 data-i18n="off">{collabs[0].name}</h3>
                   <p>
                     {plural(collabs[0].members, "member")}, and you're the {collabs[0].role}.
                     {collabs.length > 1 && ` You're in ${plural(collabs.length - 1, "other collab")} too.`}

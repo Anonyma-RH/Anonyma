@@ -143,6 +143,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "zh",
+    title: "简体中文",
+    tagline: "The whole site in Simplified Chinese.",
+    points: [
+      "One switch between English and 中文",
+      "Every page, the workspace and your account",
+      "Your chats stay exactly as written",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 

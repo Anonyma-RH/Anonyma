@@ -45,6 +45,7 @@ import {
   PrivateReplyNote,
   privateModeReleased,
 } from "./PrivateMode.jsx";
+import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import {
   api,
   streamChat,
@@ -163,6 +164,7 @@ export function AppSidebar({
           <PixelTile name="credits" />
           Credits
         </Link>
+        <LanguageSwitch config={config} />
         <Link to={"/account" + q}>
           <span className="avatar">
             {demo
@@ -1006,7 +1008,7 @@ export default function Workspace() {
         <div className="conversation-list">
           {(demo ? all : user ? all : []).slice(0, 12).map((c) => (
             <div className={c.id === current ? "current" : ""} key={c.id}>
-              <button onClick={() => openChat(c)}>{c.title}</button>
+              <button data-i18n="off" onClick={() => openChat(c)}>{c.title}</button>
               {!demo && isReleased(config, "ephemeral") && (
                 <RetentionIndicator expires={c.expires} />
               )}
@@ -1187,7 +1189,7 @@ export default function Workspace() {
                 {shared && textMode && (
                   <div className="collab-banner">
                     <Icon name="users" size={16} />
-                    Shared in <b>{shared.name}</b> · members see this
+                    Shared in <b data-i18n="off">{shared.name}</b> · members see this
                     conversation; each pays for their own requests.
                     <Link to="/workspace/collab">Open collab</Link>
                   </div>
@@ -1232,7 +1234,7 @@ export default function Workspace() {
                               </span>
                             )}
                           </div>
-                          <div className="markdown">
+                          <div className="markdown" data-i18n={m.content ? "off" : undefined}>
                             <ReactMarkdown
                               remarkPlugins={[
                                 remarkGfm,
@@ -1262,6 +1264,7 @@ export default function Workspace() {
                               {m.citations.map((c) => (
                                 <a
                                   key={c.url}
+                                  data-i18n="off"
                                   href={c.url}
                                   target="_blank"
                                   rel="noopener noreferrer nofollow"
@@ -1277,7 +1280,7 @@ export default function Workspace() {
                           {m.reasoning && (
                             <details>
                               <summary>Reasoning</summary>
-                              <p>{m.reasoning}</p>
+                              <p data-i18n="off">{m.reasoning}</p>
                             </details>
                           )}
                           {m.role === "assistant" && m.private && (
@@ -1927,7 +1930,7 @@ function MediaGrid({ media, onDelete }) {
             <span className="eyebrow">
               {m.sample ? "PREPARED SAMPLE" : m.model}
             </span>
-            <h3>{m.prompt}</h3>
+            <h3 data-i18n="off">{m.prompt}</h3>
             <p>
               {m.model}
               {m.cost != null ? " · " + m.cost + " credits" : ""}

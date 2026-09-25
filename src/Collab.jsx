@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Icon, Button, Notice, Empty, CopyButton } from "./ui.jsx";
 import { api } from "./lib.js";
+import { t } from "./i18n.js";
 
 // Collab: shared workspaces of up to 12 people with shared conversations.
 export default function CollabHub({ demo, user }) {
@@ -98,7 +99,7 @@ export default function CollabHub({ demo, user }) {
           <nav className="collab-list" aria-label="Your collabs">
             {list.map((c) => (
               <button key={c.id} className={active?.id === c.id ? "active" : ""} onClick={() => open(c.id)}>
-                <b>{c.name}</b>
+                <b data-i18n="off">{c.name}</b>
                 <span>
                   {c.members} member{c.members === 1 ? "" : "s"} · {c.role}
                 </span>
@@ -109,12 +110,12 @@ export default function CollabHub({ demo, user }) {
         {active ? (
           <section className="collab-detail">
             <div className="account-section-head">
-              <h2>{active.name}</h2>
+              <h2 data-i18n="off">{active.name}</h2>
               {owner ? (
                 <button
                   className="small-button danger-text"
                   onClick={() =>
-                    confirm(`Delete ${active.name} and its shared conversations?`) &&
+                    confirm(t(`Delete ${active.name} and its shared conversations?`)) &&
                     act(async () => {
                       await api("/api/collabs/" + active.id, { method: "DELETE" });
                       setActive(null);
@@ -161,7 +162,7 @@ export default function CollabHub({ demo, user }) {
                 {active.conversations.length ? (
                   active.conversations.map((c) => (
                     <button key={c.id} className="collab-conversation" onClick={() => navigate(`/workspace/${c.mode}?c=${c.id}`)}>
-                      <b>{c.title}</b>
+                      <b data-i18n="off">{c.title}</b>
                       <span>
                         {c.author ? "by " + c.author + " · " : ""}
                         {new Date(c.updated).toLocaleString()}

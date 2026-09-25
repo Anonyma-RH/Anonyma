@@ -18,6 +18,7 @@ import {
 import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
 import { RetentionSelect } from "./Ephemeral.jsx";
+import { LanguageSettings } from "./LanguageSwitch.jsx";
 import {
   api,
   readStore,
@@ -634,7 +635,7 @@ export default function Account() {
                       {keys.map((k) => (
                         <tr key={k.id}>
                           <td>
-                            <b>{k.name}</b>
+                            <b data-i18n="off">{k.name}</b>
                             <br />
                             <code>{k.prefix}</code>
                           </td>
@@ -770,6 +771,7 @@ export default function Account() {
                   )}
                 </div>
               </section>
+              <LanguageSettings config={config} />
               <section>
                 <div>
                   <h2>Active sessions.</h2>

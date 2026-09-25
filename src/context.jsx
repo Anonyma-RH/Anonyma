@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { api, normalizeModel, sortModels } from "./lib.js";
 import { models as fallbackModels } from "./data.js";
+import { useInstallAppGate } from "./InstallApp.jsx";
 const Context = createContext(null);
 export const useApp = () => useContext(Context);
 // Where "get started" links lead: the real workspace when signed in,
@@ -47,6 +48,8 @@ export function AppProvider({ children }) {
   useEffect(() => {
     refresh();
   }, []);
+  // Adds the installable-app shell once config confirms it's released.
+  useInstallAppGate(config);
   return (
     <Context.Provider
       value={{

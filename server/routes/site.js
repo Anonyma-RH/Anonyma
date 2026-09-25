@@ -50,7 +50,18 @@ export function siteRoutes({ app, db, cfg }) {
   app.get("/cli.mjs", (req, res) => res.type("text").send(cliDownload(cfg)));
   app.use("/api", (req, res) => fail(404, "API route not found."));
   if (existsSync("dist/client")) {
-    app.use(express.static("dist/client", { index: false, redirect: false }));
+    app.use(
+      express.static("dist/client", {
+        index: false,
+        redirect: false,
+        // The service worker file itself should always be revalidated, so a
+        // new deploy's worker is never served stale from an intermediate
+        // cache. Every other static file keeps express.static's defaults.
+        setHeaders(res, path) {
+          if (path.endsWith("/sw.js")) res.set("Cache-Control", "no-cache");
+        },
+      }),
+    );
     app.get("/{*path}", (req, res) =>
       res
         .status(knownPage(req.path) ? 200 : 404)

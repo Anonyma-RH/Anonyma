@@ -19,3 +19,8 @@ createRoot(document.getElementById("root")).render(
     <App />
   </BrowserRouter>,
 );
+// The installable app shell (manifest link, apple-mobile-web-app meta tags,
+// service worker registration) is added from within the app once config
+// confirms the "app" update is released — see useInstallAppGate in
+// InstallApp.jsx, called from context.jsx. index.html never references any
+// of it statically, so the app isn't installable while the update is off.

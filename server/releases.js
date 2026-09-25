@@ -205,6 +205,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "app",
+    title: "Install the App",
+    tagline: "Your workspace, one tap away.",
+    points: [
+      "Install on phone or desktop",
+      "Opens straight into your workspace",
+      "Share links and text into a chat",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 
@@ -291,6 +302,13 @@ function featuresFor(req) {
   if (p === "/v1" || p.startsWith("/v1/")) return ["api"];
   if (p === "/api/keys" && post) return ["api"];
   if (["/install.sh", "/install.ps1", "/cli.mjs"].includes(p)) return ["api"];
+  // The installable app's manifest, service worker and offline page.
+  if (
+    ["/manifest.webmanifest", "/sw.js", "/offline.html", "/offline.js"].includes(
+      p,
+    )
+  )
+    return ["app"];
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
   if (p.startsWith("/api/receipts") || p === "/.well-known/anonyma-receipts.json")
     return ["receipts"];

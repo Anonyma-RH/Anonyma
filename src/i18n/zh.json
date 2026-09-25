@@ -1735,7 +1735,14 @@
     "Title must be 1–80 characters.": "标题长度需为 1–80 个字符。",
     "Body must be 1–8000 characters.": "提示词长度需为 1–8000 个字符。",
     "You can save up to 200 scrolls.": "最多可保存 200 个卷轴。",
-    "Scroll not found.": "未找到该卷轴。"
+    "Scroll not found.": "未找到该卷轴。",
+    "Install app": "安装应用",
+    "Share → Add to Home Screen": "共享 → 添加到主屏幕",
+    "Install the App": "安装应用",
+    "Your workspace, one tap away.": "轻点一下，直达你的工作台。",
+    "Install on phone or desktop": "可安装到手机或电脑",
+    "Opens straight into your workspace": "打开即进入你的工作台",
+    "Share links and text into a chat": "将链接和文字分享到对话中"
   },
   "patterns": [
     {

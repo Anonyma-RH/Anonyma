@@ -81,6 +81,8 @@ import {
   loadVeilOn,
   saveVeilOn,
 } from "./veil.js";
+import { useShareTargetPrefill } from "./share-target.js";
+import { InstallAppEntry } from "./InstallApp.jsx";
 const initial = [
   {
     id: "welcome",
@@ -180,6 +182,7 @@ export function AppSidebar({
           <PixelTile name="credits" />
           Credits
         </Link>
+        {isReleased(config, "app") && <InstallAppEntry />}
         <LanguageSwitch config={config} />
         <Link to={"/account" + q}>
           <span className="avatar">
@@ -362,6 +365,16 @@ export default function Workspace() {
     veilStateRef.current = loadVeilState(veilKeyRef.current);
     setVeilNote(null);
   }, [mode, demo]);
+  // Share-to-ANONYMA: prefill the composer from a share_target request
+  // (public/manifest.webmanifest) and drop the params from the URL. Runs
+  // after the reset above so a shared prompt survives it.
+  useShareTargetPrefill({
+    mode,
+    search: location.search,
+    setPrompt,
+    onConsumed: (search) => navigate(location.pathname + search, { replace: true }),
+    enabled: isReleased(config, "app"),
+  });
   useEffect(() => {
     if (demo && !saveStore("conversations", all))
       setInfo("Browser storage is full. Export your work before leaving.");

@@ -790,6 +790,7 @@ const featureIcons = {
   symposium: "panel",
   receipts: "shield",
   scrolls: "book",
+  app: "download",
 };
 const launch = {
   id: "mvp",

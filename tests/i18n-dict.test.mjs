@@ -40,7 +40,11 @@ test("every value contains Chinese characters", () => {
     assert.equal(typeof zh, "string", en);
     assert.match(zh, han, `strings[${JSON.stringify(en)}]`);
   }
-  for (const p of dict.patterns) assert.match(p.zh, han, `pattern ${JSON.stringify(p.en)}`);
+  // A wrapper such as "{0} — ANONYMA" keeps its fixed text and translates
+  // only what fills the placeholder, so it may carry no Chinese of its own.
+  for (const p of dict.patterns)
+    if (p.zh.replace(/\{\d+\}/g, "") !== p.en.replace(/\{\d+\}/g, ""))
+      assert.match(p.zh, han, `pattern ${JSON.stringify(p.en)}`);
 });
 
 test("keys are visible English text, whitespace-normalised, never code or URLs", () => {

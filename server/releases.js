@@ -148,7 +148,7 @@ export const UPDATES = [
     title: "简体中文",
     tagline: "The whole site in Simplified Chinese.",
     points: [
-      "One switch between English and 中文",
+      "One switch between English and Chinese",
       "Every page, the workspace and your account",
       "Your chats stay exactly as written",
     ],

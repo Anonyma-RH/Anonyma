@@ -228,7 +228,7 @@ test("the update is registered as off by default", () => {
   assert.equal(entry.title, "简体中文");
   assert.equal(entry.tagline, "The whole site in Simplified Chinese.");
   assert.deepEqual(entry.points, [
-    "One switch between English and 中文",
+    "One switch between English and Chinese",
     "Every page, the workspace and your account",
     "Your chats stay exactly as written",
   ]);

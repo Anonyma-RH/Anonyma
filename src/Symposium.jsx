@@ -386,6 +386,13 @@ export default function Symposium({
                           </option>
                         ))}
                       </select>
+                      {trainingLive &&
+                        visibleModels.find((m) => m.id === fuseModel)?.trainsOnPrompts && (
+                          <TrainingTag
+                            model={visibleModels.find((m) => m.id === fuseModel)}
+                            models={visibleModels}
+                          />
+                        )}
                     </label>
                     <button type="button" className="small-button" onClick={fuse}>
                       <Icon name="models" size={14} /> Fuse answers

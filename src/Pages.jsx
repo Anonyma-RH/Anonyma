@@ -726,6 +726,7 @@ const featureIcons = {
   api: "key",
   social: "gift",
   veil: "eyeoff",
+  uncensored: "chat",
 };
 const launch = {
   id: "mvp",

@@ -102,6 +102,7 @@ export function AppSidebar({
         {[
           ["home", "Home"],
           ["chat", "Chat & reason"],
+          ["uncensored", "Uncensored"],
           ["code", "Code & build"],
           ["image", "Images"],
           ["video", "Video"],
@@ -229,6 +230,7 @@ export default function Workspace() {
   const validMode = [
     "home",
     "chat",
+    "uncensored",
     "code",
     "image",
     "video",
@@ -236,6 +238,10 @@ export default function Workspace() {
     "collab",
     "library",
   ].includes(mode);
+  // Chat, code and Uncensored all show text conversations; Uncensored keeps
+  // its own curated models, which the other text modes leave out.
+  const textMode = ["chat", "code", "uncensored"].includes(mode);
+  const uncensoredIds = config?.releases?.uncensoredModels || [];
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
   const visibleModels = models.filter((m) =>
     mode === "image"
@@ -245,7 +251,9 @@ export default function Workspace() {
       : mode === "video"
         ? m.type === "video" &&
           (demo || (m.callable && videoPresets(m).length > 0))
-        : m.type === "chat" && (demo || m.callable),
+        : m.type === "chat" &&
+          (demo || m.callable) &&
+          (mode === "uncensored") === uncensoredIds.includes(m.id),
   );
   const selected = models.find((m) => m.id === model);
   // Video choices come only from the model's published prices, as the server requires.
@@ -365,14 +373,17 @@ export default function Workspace() {
       (composerZone.current?.offsetHeight || 0) + "px";
     end.scrollIntoView({ block: "nearest" });
   }, [messages, busy]);
-  // /workspace/chat?c=ID opens a conversation directly (used by Collab).
+  // Load linked conversations after the destination section has reset its state.
   // Keyed on the user's id: the balance refresh after every reply replaces
   // the user object, and re-opening would blank the thread.
   const linked = params.get("c");
   useEffect(() => {
-    if (linked && user && !demo && ["chat", "code"].includes(mode))
-      openChat({ id: linked, mode });
-  }, [linked, user?.id, mode]);
+    if (!linked || !textMode) return;
+    if (demo) {
+      const saved = all.find((c) => c.id === linked);
+      if (saved) openChat(saved);
+    } else if (user) openChat({ id: linked, mode });
+  }, [linked, user?.id, mode, demo]);
   // Shared conversations refresh while open so members see each other.
   useEffect(() => {
     if (!shared || !current || busy) return;
@@ -410,6 +421,7 @@ export default function Workspace() {
     });
   }
   function newChat() {
+    if (linked) navigate("/workspace/" + mode + (demo ? "?demo=1" : ""));
     setShared(null);
     controller.current?.abort();
     clearInterval(timer.current);
@@ -424,22 +436,19 @@ export default function Workspace() {
     setVeilNote(null);
   }
   async function openChat(c) {
+    if (mode !== c.mode) {
+      navigate("/workspace/" + c.mode + "?" +
+        new URLSearchParams({ ...(demo ? { demo: "1" } : {}), c: c.id }));
+      return;
+    }
     // Load this conversation's local veil map (if this browser has one) so
     // history unveils immediately; a conversation this browser has never
     // veiled in just gets an empty map, and tags show as-is.
     veilKeyRef.current = c.id;
     veilStateRef.current = loadVeilState(c.id);
     setVeilNote(null);
-    if (mode !== c.mode) {
-      navigate("/workspace/" + c.mode + (demo ? "?demo=1" : ""));
-      setTimeout(() => {
-        setCurrent(c.id);
-        setMessages(c.messages || []);
-      }, 100);
-    } else {
-      setCurrent(c.id);
-      setMessages(c.messages || []);
-    }
+    setCurrent(c.id);
+    setMessages(c.messages || []);
     if (!demo) {
       try {
         const r = await api("/api/conversations/" + c.id);
@@ -486,7 +495,7 @@ export default function Workspace() {
     e.target.value = "";
   }
   // "@model-id your message" sends that one message to another chat model.
-  const mentionQuery = ["chat", "code"].includes(mode)
+  const mentionQuery = textMode
     ? prompt.match(/^@([^\s]*)$/)?.[1]
     : undefined;
   const mentionMatches =
@@ -497,7 +506,7 @@ export default function Workspace() {
             (m.id + " " + m.name).toLowerCase().includes(mentionQuery.toLowerCase()),
           )
           .slice(0, 6);
-  const mention = ["chat", "code"].includes(mode)
+  const mention = textMode
     ? prompt.trim().match(/^@(\S+)\s+([\s\S]+)$/)
     : null;
   const mentioned = mention
@@ -950,6 +959,7 @@ export default function Workspace() {
               {
                 home: "Home",
                 chat: "Chat & reason",
+                uncensored: "Uncensored",
                 code: "Code & build",
                 image: "Image studio",
                 video: "Video studio",
@@ -1087,7 +1097,7 @@ export default function Workspace() {
           ) : (
             <>
               <div className="chat-area">
-                {shared && ["chat", "code"].includes(mode) && (
+                {shared && textMode && (
                   <div className="collab-banner">
                     <Icon name="users" size={16} />
                     Shared in <b>{shared.name}</b> · members see this
@@ -1095,7 +1105,7 @@ export default function Workspace() {
                     <Link to="/workspace/collab">Open collab</Link>
                   </div>
                 )}
-                {messages.length && ["chat", "code"].includes(mode) ? (
+                {messages.length && textMode ? (
                   <div className="messages">
                     {messages.map((m, i) => (
                       <article
@@ -1199,6 +1209,7 @@ export default function Workspace() {
                       {
                         {
                           chat: "CHAT & REASON",
+                          uncensored: "UNCENSORED MODELS",
                           code: "CODE & BUILD",
                           image: "IMAGE STUDIO",
                           video: "VIDEO STUDIO",
@@ -1210,6 +1221,7 @@ export default function Workspace() {
                         {
                           {
                             chat: <>What’s on your mind?</>,
+                            uncensored: <>Uncensored models.</>,
                             code: <>What will you build?</>,
                             image: <>Create something worth seeing.</>,
                             video: <>Set your ideas in motion.</>,
@@ -1221,6 +1233,8 @@ export default function Workspace() {
                       {
                         {
                           chat: "Choose a model. Start a conversation. Keep your best ideas together.",
+                          uncensored:
+                            "Models their providers explicitly label uncensored. Choose one below; each message is billed per token from your prepaid balance.",
                           code: "Turn a thought into code you can make your own.",
                           image:
                             "A fresh perspective, a new direction, a world of your own.",
@@ -1322,7 +1336,7 @@ export default function Workspace() {
                       if (
                         e.key === "Enter" &&
                         !e.shiftKey &&
-                        ["chat", "code"].includes(mode)
+                        textMode
                       ) {
                         e.preventDefault();
                         send();
@@ -1425,7 +1439,7 @@ export default function Workspace() {
                           <span>Web</span>
                         </button>
                       )}
-                      {["chat", "code"].includes(mode) &&
+                      {textMode &&
                         !demo &&
                         isReleased(config, "veil") && (
                         <VeilToggle on={veilOn} onToggle={() => setVeilOn((v) => !v)} />
@@ -1564,6 +1578,12 @@ export default function Workspace() {
                           "Make a complex topic simple",
                           "Find a fresh perspective",
                         ]
+                      : mode === "uncensored"
+                        ? [
+                            "Write a gritty short story opening",
+                            "Argue the other side of a debate",
+                            "Play a character in a scene",
+                          ]
                       : mode === "code"
                         ? [
                             "Build a simple idea card",
@@ -1595,12 +1615,12 @@ export default function Workspace() {
                       ? "Sample outputs are illustrative. No provider request or charge."
                       : "AI can make mistakes. Check important information."}
                   </span>
-                  {["chat", "code"].includes(mode) &&
+                  {textMode &&
                     !demo &&
                     isReleased(config, "veil") && (
                     <VeilPanel note={veilNote} words={veilWords} onWordsChange={setVeilWords} />
                   )}
-                  {["chat", "code"].includes(mode) && (
+                  {textMode && (
                     <button
                       onClick={quoteRequest}
                       disabled={!prompt.trim() || busy}

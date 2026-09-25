@@ -214,7 +214,7 @@ export const UPDATES = [
       "Opens straight into your workspace",
       "Share links and text into a chat",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

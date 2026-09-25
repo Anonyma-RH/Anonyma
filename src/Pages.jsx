@@ -819,6 +819,7 @@ const featureIcons = {
   private: "shield",
   zh: "globe",
   documents: "file",
+  files: "file",
   symposium: "panel",
   receipts: "shield",
   scrolls: "book",

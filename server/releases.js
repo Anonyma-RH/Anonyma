@@ -173,7 +173,7 @@ export const UPDATES = [
     title: "Files & Reusable Uploads",
     tagline: "Bring your files back into the conversation.",
     points: ["Office text and reusable uploads", "Owner-only files with expiry and delete", "Explicit audio transcription"],
-    released: false,
+    released: true,
   },
   {
     id: "documents",

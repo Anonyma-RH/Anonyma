@@ -247,7 +247,7 @@ export const UPDATES = [
       "Optional expiry and a pause switch",
       "One glance at what an agent spent",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

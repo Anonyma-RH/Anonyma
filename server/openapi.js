@@ -741,18 +741,20 @@ route("post", "/api/payments/ipn", "NOWPayments signed callback", {
   description:
     "Processor-only endpoint. HMAC-SHA512 of recursively key-sorted JSON using the private IPN secret. Unknown orders are acknowledged; invalid signatures or inconsistent invoice values are rejected.",
 });
-route("post", "/api/support", "Persist operator support ticket", {
+route("post", "/api/support", "Send a support request to the operator inbox", {
+  auth: false,
   body: object(
     {
       subject: { ...string, maxLength: 200 },
       body: { ...string, maxLength: 10000 },
+      email: { ...string, format: "email", maxLength: 254 },
     },
     ["subject", "body"],
   ),
   status: 201,
-  response: object({ id: string, message: string }),
+  response: object({ id: string, message: string, delivery: string }),
   description:
-    "Stored locally for operator review; no external email is sent by this endpoint.",
+    "Public endpoint; sign-in is optional. Reply email is required unless the signed-in account has one. Five requests per hour per account or visitor IP. Persists the ticket before SMTP delivery to the configured operator inbox. 201 with delivery=accepted means SMTP accepted the message, not verified inbox receipt. 202 with delivery=failed means saved but email failed; an operator may retry. Missing live mail configuration returns 503 without saving. Test mode saves locally and never sends email.",
 });
 route(
   "get",
@@ -800,7 +802,7 @@ export const openapi = {
     title: "Anonyma Backend API",
     version: "1.0.0",
     description:
-      "Backend-first integration contract. Cookie routes must be served behind the same public origin as the frontend; no CORS is enabled. Use credentials: include and Content-Type: application/json for writes. Cookies are HttpOnly, SameSite=Lax, Secure on HTTPS. Timestamps are epoch milliseconds except OpenAI-compatible created seconds. USD 1 = 1000 displayed credits = 10000000 integer ledger subunits. Configuration is not live-service verification. Contract documents supported behavior; it is not a runtime schema validator.",
+      "Implementation contract; includes unreleased operations. Check /api/config and /roadmap for enabled features before integrating. Cookie routes must be served behind the same public origin as the frontend; no CORS is enabled. Use credentials: include and Content-Type: application/json for writes. Cookies are HttpOnly, SameSite=Lax, Secure on HTTPS. Timestamps are epoch milliseconds except OpenAI-compatible created seconds. USD 1 = 1000 displayed credits = 10000000 integer ledger subunits. Configuration is not live-service verification. Contract documents supported behavior; it is not a runtime schema validator.",
   },
   servers: [{ url: "/" }],
   paths,

@@ -284,7 +284,7 @@ export default function Account() {
                     : "Workspace overview"}
             </h1>
             </Reveal>
-            <p>1 USD = 1,000 credits. One balance for the workspace and the API.</p>
+            <p>1 USD = 1,000 credits. One balance for released workspace features.</p>
           </div>
           <BandSteps />
         </div>
@@ -396,7 +396,7 @@ export default function Account() {
                 <Link to={"/account/keys" + q}>
                   <Icon name="key" />
                   <h3>Connect your tools.</h3>
-                  <p>Explore API keys and usage caps.</p>
+                  <p>{isReleased(config, "api") ? "Explore API keys and usage caps." : "Developer API & CLI — coming soon."}</p>
                   <Icon name="diagonal" />
                 </Link>
                 <Link to={"/account/settings" + q}>
@@ -425,6 +425,7 @@ export default function Account() {
               {(config?.services?.payments || !config?.walletPayments) && (
               <form className="form-panel" onSubmit={submitDeposit}>
                 <h2>Add credits</h2>
+                <p><Link to="/docs/billing">Billing rules, fees and refund information</Link></p>
                 <p>1 USD = 1,000 credits</p>
                 <label>
                   Amount in USD
@@ -491,9 +492,9 @@ export default function Account() {
                 </Button>
                 <Notice>
                   {!connected
-                    ? "Checkout is unavailable in the preview."
+                    ? "The payment service is currently unavailable."
                     : !config?.services?.payments
-                      ? "Payments are not configured on this service yet."
+                      ? "Invoice payments are currently unavailable. Check above for other enabled funding methods."
                       : currencies.length
                         ? "Invoices come from the payment processor."
                         : "Payment currencies are still loading."}{" "}

@@ -12,10 +12,15 @@ import {
   UNCONFIRMED_INVOICE_STATUSES,
   sqlList,
 } from "../payments.js";
+import {
+  deliverSupport,
+  supportConfigured,
+  validSupportEmail,
+} from "../support.js";
 
 // Ledger, API keys, support tickets, data export and account closure.
 export function accountRoutes(ctx) {
-  const { app, db, limit, requireUser, publicUser } = ctx;
+  const { app, db, cfg, limit, requireUser, publicUser } = ctx;
   const { mediaJSON, deleteMedia } = ctx.media;
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -146,31 +151,41 @@ export function accountRoutes(ctx) {
     if (!r.changes) fail(404, "Key not found.");
     res.json({ ok: true });
   });
-  app.post(
-    "/api/support",
-    requireUser,
-    limit("support", 5, 3600000),
-    (req, res) => {
-      const subject = String(req.body.subject || ""),
-        body = String(req.body.body || "");
-      if (
-        !subject.trim() ||
-        subject.length > 200 ||
-        !body.trim() ||
-        body.length > 10000
-      )
-        fail(400, "Include a subject and a message (up to 10,000 characters).");
-      const id = uid("ticket_");
-      db.prepare(
-        "INSERT INTO tickets(id,user_id,subject,body,created) VALUES(?,?,?,?,?)",
-      ).run(id, req.user.id, subject, body, now());
-      res.status(201).json({
-        id,
-        message:
-          "Saved for this installation’s operator. No external message has been sent.",
-      });
-    },
-  );
+  app.post("/api/support", limit("support", 5, 3600000), async (req, res) => {
+    const subject = String(req.body.subject || ""),
+      body = String(req.body.body || "");
+    if (
+      !subject.trim() ||
+      subject.length > 200 ||
+      !body.trim() ||
+      body.length > 10000
+    )
+      fail(400, "Include a subject and a message (up to 10,000 characters).");
+    const email = String(req.body.email || req.user?.email || "").trim();
+    if (!validSupportEmail(email))
+      fail(400, "Include a valid email address so support can reply.");
+    if (!supportConfigured(cfg) && !cfg.testMode)
+      fail(
+        503,
+        "Support email is temporarily unavailable. Your message has not been sent.",
+        "support_unavailable",
+      );
+    const id = uid("ticket_");
+    db.prepare(
+      "INSERT INTO tickets(id,user_id,subject,body,created,email) VALUES(?,?,?,?,?,?)",
+    ).run(id, req.user?.id || null, subject, body, now(), email);
+    const delivery = await deliverSupport(db, cfg, id);
+    res.status(delivery === "failed" ? 202 : 201).json({
+      id,
+      delivery,
+      message:
+        delivery === "accepted"
+          ? `Support request ${id} sent. Keep this reference for follow-up.`
+          : delivery === "failed"
+            ? `Request ${id} saved, but email delivery failed. Contact support directly and include this reference.`
+            : `Test ticket ${id} saved locally. No email was sent.`,
+    });
+  });
   app.get("/api/account/export", requireUser, (req, res) =>
     res.attachment("anonyma-account.json").json({
       user: publicUser(req.user),

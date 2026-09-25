@@ -22,7 +22,7 @@ export async function api(path, { method = "GET", body, signal } = {}) {
   }
   if (!response.headers.get("content-type")?.includes("application/json"))
     throw new ApiError(
-      "The ANONYMA service is not connected to this preview.",
+      "The ANONYMA service is currently unavailable. Please try again.",
       503,
     );
   const data = await response.json();

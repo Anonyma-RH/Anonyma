@@ -10,7 +10,8 @@ export function publicDocumentation() {
   return [
     '# Anonyma',
     '',
-    'Prepaid AI workspace with chat, image and video integrations.',
+    'Prepaid AI workspace. Check /api/config and /roadmap for current feature availability.',
+    'The contract below includes implemented but unreleased features; it does not establish live access. Unreleased endpoints return feature_unreleased.',
     'Machine-readable API contract: /api/openapi.json',
     'Interactive product documentation: /docs',
     'API requests use a Bearer API key; browser sessions use a protected cookie.',

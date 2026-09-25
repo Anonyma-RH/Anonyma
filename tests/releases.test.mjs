@@ -88,6 +88,10 @@ test("the MVP offers only its chat models", async (t) => {
   const list = (await a.get("/api/models").expect(200)).body.data;
   assert.deepEqual(list.map((m) => m.id), [MVP_MODEL]);
   assert.equal(list[0].callable, true);
+  assert.equal(list[0].apiCallable, false);
+  const metadata = (await a.get("/api/models")).body;
+  assert.equal(metadata.availabilityScope, "web-workspace");
+  assert.equal(metadata.developerApiReleased, false);
   const other = (await a.post("/api/chat").send(chat({ model: "openai/gpt-4o-mini" })).expect(503)).body;
   assert.equal(other.error.code, "model_unavailable");
 });

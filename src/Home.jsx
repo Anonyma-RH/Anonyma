@@ -5,7 +5,7 @@ import AsciiField from "./AsciiField.jsx";
 import { Reveal, useHeroMotion } from "./ReferenceMotion.jsx";
 import ReferenceFlow from "./ReferenceFlow.jsx";
 import { useApp, useStartPath } from "./context.jsx";
-import { isReleased } from "./lib.js";
+import { featureEnabled, featureLabel } from "./release-copy.js";
 import { reducedMotion, setMotion, useReducedMotion } from "./motion.js";
 
 const clamp = (n, a = 0, b = 1) => Math.max(a, Math.min(b, n));
@@ -64,9 +64,9 @@ const labels = [
   ["Chat & reasoning", "sage", "chat"],
   ["Code generation", "mint", "code"],
   ["Model selection", "yellow", "models"],
-  ["Image creation", "pink", "image"],
-  ["Video generation", "mint-light", "video"],
-  ["Developer API", "lavender", "key"],
+  ["Images", "pink", "image"],
+  ["Video", "mint-light", "video"],
+  ["API", "lavender", "key"],
 ];
 const CONTRACT_ADDRESS = "0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583";
 function ContractAddress() {
@@ -114,6 +114,7 @@ function ContractAddress() {
   );
 }
 function Hero() {
+  const { config } = useApp();
   const start = useStartPath();
   const ref = useRef(),
     video = useRef(),
@@ -169,7 +170,7 @@ function Hero() {
             <span>
               <img src={`/reference/pill-${i + 1}.svg`} alt="" />
             </span>
-            <b>{t}</b>
+            <b>{({ code: "code", image: "images", video: "video", key: "api" })[ic] ? featureLabel(config, ({ code: "code", image: "images", video: "video", key: "api" })[ic], t) : t}</b>
           </div>
         ))}
       </div>
@@ -180,9 +181,9 @@ function Hero() {
         <div className="n-hero-copy">
           <Reveal><h1>Bring your ideas to life with AI models.</h1></Reveal>
           <p>
-            ANONYMA brings chat, code, images and video into one workspace — so
-            you can spend less time switching tools and more time bringing your
-            ideas to life.
+            ANONYMA brings available AI models into one prepaid workspace.
+            Check the <Link to="/roadmap">roadmap</Link> for released features
+            and what’s coming next.
           </p>
           <ArrowLink to={start()} className="n-primary">
             Get started
@@ -208,7 +209,7 @@ function Hero() {
           loop
           playsInline
           preload="auto"
-          aria-label="ANONYMA workspace hero animation: sample tasks complete across chat, code, images and video"
+          aria-label="Illustrative workspace animation. Feature availability is listed on the roadmap."
         />
         <button
           className="n-video-toggle"
@@ -236,7 +237,7 @@ const families = [
   "Google",
   "DeepSeek",
   "Models",
-  "One API",
+  "One balance",
 ];
 function Providers() {
   return (
@@ -260,12 +261,12 @@ function Providers() {
 }
 const capabilities = [
   {
-    title: "Chat & code",
+    title: "Chat & workspace",
     description: "Everything you need to think, write and build.",
     items: [
-      "Multi-model conversations",
-      "Code generation",
-      "Project file exports",
+      "Available chat models",
+      "Code & Build",
+      "Usage receipts",
       "Conversation history",
     ],
     to: "/workspace/chat",
@@ -273,22 +274,22 @@ const capabilities = [
   {
     title: "Images & video",
     description: "Visual creation in one workspace.",
-    items: ["Image generation", "Reference images", "Asynchronous video"],
+    items: ["Image Studio", "Video Studio", "Reference images when Image Studio is released"],
     to: "/workspace/image",
     feature: "images",
   },
   {
-    title: "Credits & API",
-    description: "One balance across every AI workflow.",
-    items: ["Prepaid credits", "Developer API keys", "Usage & receipts"],
-    to: "/developers",
+    title: "Credits & account",
+    description: "One balance for released workspace features.",
+    items: ["Prepaid credits", "Account settings", "Usage & receipts"],
+    to: "/account/credits",
   },
 ];
 function Capabilities() {
   const start = useStartPath();
   const { config } = useApp();
   // A card for an update that isn't released yet leads to the roadmap.
-  const soon = (c) => c.feature && !isReleased(config, c.feature);
+  const soon = (c) => c.feature && !featureEnabled(config, c.feature);
   const [slide, setSlide] = useState(0);
   return (
     <section className="n-capabilities" id="platform">
@@ -325,7 +326,7 @@ function Capabilities() {
                   {c.items.map((t) => (
                     <li key={t}>
                       <span className="n-bullet" />
-                      {t}
+                      {({ "Code & Build": "code", "Image Studio": "images", "Video Studio": "video" })[t] ? featureLabel(config, ({ "Code & Build": "code", "Image Studio": "images", "Video Studio": "video" })[t], t) : t}
                     </li>
                   ))}
                 </ul>
@@ -360,13 +361,13 @@ const creditSlides = [
     quote:
       "A conversation here. A creation there. One prepaid balance connects the work you do across models and tools.",
     name: "One shared balance",
-    sub: "Chat, code, images, video and API",
+    sub: "Released workflows share one balance",
   },
   {
-    stat: "4",
-    label: "Ways to bring an idea to life",
+    stat: "1",
+    label: "Workspace for your ideas",
     quote:
-      "Think it through, build something, make it visual. Move between chat, code, images and video in the same workspace.",
+      "Think it through with available chat models. Additional workflows arrive as named releases on the roadmap.",
     name: "A connected workflow",
     sub: "Choose the model that fits your task",
   },
@@ -376,7 +377,7 @@ const creditSlides = [
     quote:
       "Return to your conversations, revisit your creations, and see a receipt for each completed request.",
     name: "Your work, together",
-    sub: "Private history, media and usage receipts",
+    sub: "Saved conversations and usage receipts",
   },
 ];
 function Outcomes() {
@@ -467,7 +468,7 @@ const steps = [
       "Choose the intelligence that fits your task. Explore the catalog from the same place you create.",
     items: [
       "Chat and reasoning models",
-      "Image and video capabilities",
+      "Current feature availability",
       "Availability before you begin",
     ],
   },
@@ -475,7 +476,7 @@ const steps = [
     title: "Shared credits",
     color: "#aebfff",
     description:
-      "One prepaid balance connects your workspace and developer tools, with estimates before work begins.",
+      "One prepaid balance covers released workflows, with estimates before work begins.",
     items: [
       "1 USD = 1,000 credits",
       "Available and held credits",
@@ -486,23 +487,23 @@ const steps = [
     title: "AI workflows",
     color: "#9bb5ed",
     description:
-      "Go from a prompt to a conversation, code, an image or a video. Keep your ideas moving in one place.",
+      "Start with an available model. See the roadmap for Code & Build, Image Studio and Video Studio availability.",
     items: [
       "Stream conversations",
-      "Build and export code",
-      "Compare image results",
-      "Track video generation",
+      "Choose an available model",
+      "Check the release roadmap",
+      "Review usage receipts",
     ],
   },
   {
     title: "Your workspace",
     color: "#cedcf6",
     description:
-      "Return to your conversations and creations. Your history, media and account stay connected.",
+      "Return to saved conversations and manage your account. Media workflows and developer access follow their own release gates.",
     items: [
       "Saved conversation history",
-      "A private media library",
-      "Developer keys and controls",
+      "Account and session controls",
+      "Current release roadmap",
     ],
   },
 ];
@@ -758,6 +759,8 @@ function Workflow() {
   );
 }
 function ModelGrid() {
+  const { config } = useApp();
+  const mediaSoon = !featureEnabled(config, "images") || !featureEnabled(config, "video");
   return (
     <section className="n-models">
       <Heading
@@ -775,14 +778,14 @@ function ModelGrid() {
           "Image & Video",
           null,
         ].map((t, i) => (
-          <Link key={i} to={t && i < 4 ? "/models?provider=" + t : "/models"}>
+          <Link key={i} to={i === 4 && mediaSoon ? "/roadmap" : t && i < 4 ? "/models?provider=" + t : "/models"}>
             {t ? (
-              <strong className={"n-provider-name provider-" + i}>{t}</strong>
+              <strong className={"n-provider-name provider-" + i}>{t}{i === 4 && mediaSoon && <> <SoonTag /></>}</strong>
             ) : (
               <p>
                 Find the right model.
                 <br />
-                Explore the complete catalog.
+                Explore available models.
               </p>
             )}
             <span>
@@ -829,6 +832,7 @@ function ArticleArt({ index }) {
   );
 }
 function Resources() {
+  const { config } = useApp();
   return (
     <>
       <div className="n-stair-transition" aria-hidden="true">
@@ -865,7 +869,7 @@ function Resources() {
                 <p className="n-article-tag">
                   ANONYMA Guide <span /> {tag}
                 </p>
-                <h3>{title}</h3>
+                <h3>{title}{slug === "one-api" && !featureEnabled(config, "api") && <> <SoonTag /></>}</h3>
               </Link>
             ))}
           </div>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { PageIntro } from "./Pages.jsx";
 import { Button, Icon } from "./ui.jsx";
 import { useApp } from "./context.jsx";
+import ReleaseStatus from "./ReleaseStatus.jsx";
 import { isReleased, releaseUpdate } from "./lib.js";
 import "./whitepaper.css";
 
@@ -125,14 +126,14 @@ function Roadmap({ config }) {
   return (
     <ol className="wp-roadmap">
       <li className="live">
-        <span className="wp-status">Live</span>
+        <span className="wp-status">{config.testMode ? "Local test" : config.services?.generation ? "Live" : "Unavailable"}</span>
         <strong>Chat &amp; Credits</strong>
         <span>The launch: top models on one prepaid balance.</span>
       </li>
       {updates.map((u) => (
         <li key={u.id} className={u.released ? "live" : ""}>
           <span className="wp-status">
-            {u.released ? "Live" : "Coming soon"}
+            {config.testMode ? "Local test" : u.released ? "Live" : "Coming soon"}
           </span>
           <strong>{u.title}</strong>
           <span>{u.tagline}</span>
@@ -194,6 +195,7 @@ export default function Whitepaper() {
       <div className="wp-layout">
         <Contents active={active} />
         <article className="wp-body">
+          <ReleaseStatus payment />
           <Section index={0}>
             <p>
               ANONYMA is a prepaid AI workspace: one account and one credit

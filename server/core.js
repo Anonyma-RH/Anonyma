@@ -281,6 +281,11 @@ export const MIGRATIONS = [
       "CREATE INDEX IF NOT EXISTS conversations_collab ON conversations(collab_id,updated)",
     );
   },
+  (db) => {
+    addColumn(db, "tickets", "email", "TEXT");
+    addColumn(db, "tickets", "delivery", "TEXT DEFAULT 'saved'");
+    addColumn(db, "tickets", "delivered_at", "INTEGER");
+  },
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;

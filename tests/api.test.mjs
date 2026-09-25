@@ -704,16 +704,38 @@ test("account closure revokes access and deletes content while retaining financi
       .n > 0,
   );
 });
+test("published billing settings follow the configured fees and reservation policy", async (t) => {
+  const s = fixture(t, {
+    markup: 12.5,
+    gatewayFeePercent: 6,
+    holdMargin: 3,
+    webSearchPrice: 0.04,
+    gateway2Key: "",
+  });
+  const published = (await request(s.app).get("/api/config").expect(200)).body.billing;
+  assert.deepEqual(published, {
+    creditsPerUsd: 1000,
+    creditPrecision: 4,
+    platformMarkupPercent: 12.5,
+    gatewayFeePercent: 6,
+    backupGatewayFeePercent: null,
+    reservationMultiplier: 3,
+    webSearchUsd: 0.04,
+    timeoutCharge: "base_estimate",
+    unreadableResponseCharge: "base_estimate",
+  });
+});
+
 test("support requests, session listings, and exports are owner-scoped", async (t) => {
   const s = fixture(t);
   const { agent } = await register(s.app);
   await request(s.app)
     .post("/api/support")
     .send({ subject: "a", body: "b" })
-    .expect(401);
+    .expect(400);
   const ticket = await agent
     .post("/api/support")
-    .send({ subject: "Fixture help", body: "Local integration test." })
+    .send({ subject: "Fixture help", body: "Local integration test.", email: "tester@example.invalid" })
     .expect(201);
   assert.ok(ticket.body.id);
   const exported = await agent.get("/api/account/export").expect(200);

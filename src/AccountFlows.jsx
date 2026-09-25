@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   api,
   claimWalletPayment,
@@ -108,9 +109,10 @@ export function WalletPayPanel({ config, user, demo, onChanged }) {
       }}
     >
       <h2>Pay with {wp.symbol}</h2>
+      <p className="fine-print"><Link to="/docs/billing">Read billing rules, fees and refund information before funding.</Link></p>
       <p>
         1 {wp.symbol} = $1 = 1,000 credits, on {wp.chainName}. Credited
-        automatically in seconds.
+        automatically after the transfer is verified. Confirmation times can vary.
       </p>
       {!user?.wallet ? (
         <>

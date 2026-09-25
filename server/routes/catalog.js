@@ -1,4 +1,5 @@
 import { openapi } from "../openapi.js";
+import { supportConfigured } from "../support.js";
 import { createRatesFeed } from "../rates.js";
 import { createMarketFeed } from "../market.js";
 import { configurationStatus } from "../readiness.js";
@@ -7,7 +8,7 @@ import {
   walletPaymentInfo,
   walletPaymentsEnabled,
 } from "../wallet-payments.js";
-import { modelReleased, releaseInfo } from "../releases.js";
+import { modelReleased, releaseInfo, isReleased } from "../releases.js";
 import {
   fail,
   balance,
@@ -41,6 +42,7 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
         generation: cfg.testMode || !!cfg.gatewayKey,
         payments: configurationStatus(cfg).configured.payments && !cfg.testMode,
         email: configurationStatus(cfg).configured.email || cfg.testMode,
+        support: supportConfigured(cfg),
         walletConnect: !!cfg.walletProject,
         token: !!cfg.rpc && !!cfg.token,
         walletPayments: walletPaymentsEnabled(cfg),
@@ -51,6 +53,17 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
       chain: cfg.chain,
       token: cfg.token,
       markup: cfg.markup,
+      billing: {
+        creditsPerUsd: 1000,
+        creditPrecision: 4,
+        platformMarkupPercent: cfg.markup,
+        gatewayFeePercent: cfg.gatewayFeePercent,
+        backupGatewayFeePercent: cfg.gateway2Key ? cfg.gateway2FeePercent : null,
+        reservationMultiplier: cfg.holdMargin,
+        webSearchUsd: cfg.webSearchPrice,
+        timeoutCharge: "base_estimate",
+        unreadableResponseCharge: "base_estimate",
+      },
       supportEmail: cfg.supportEmail,
       telegram: cfg.telegram,
       catalogUpdatedAt: models.snapshot.updatedAt,
@@ -62,11 +75,14 @@ export function catalogRoutes({ app, db, cfg, models, requireUser }) {
     const current = await models.current();
     res.json({
       ...current,
+      availabilityScope: "web-workspace",
+      developerApiReleased: isReleased(cfg, "api"),
       data: current.data
         .filter((m) => modelReleased(m, cfg))
         .map((m) => ({
         ...m,
         callable: callable(m, cfg),
+        apiCallable: isReleased(cfg, "api") && callable(m, cfg),
         imageCapable: imageCallable(m),
         imagePrice: generationPrice(m),
         vision: vision(m),

@@ -335,9 +335,9 @@ export function ComingSoon({ update }) {
     </div>
   );
 }
-// A small "Soon" tag for navigation items that aren't released yet.
+// Use the same explicit label on every unreleased feature entry point.
 export function SoonTag() {
-  return <span className="soon-tag">Soon</span>;
+  return <span className="soon-tag">Coming soon</span>;
 }
 export function Notice({ children, type = "" }) {
   return (

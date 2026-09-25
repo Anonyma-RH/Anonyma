@@ -4828,6 +4828,8 @@ td code {
   font-size: 14px;
 }
 .soon-tag {
+  display: inline-block;
+  white-space: nowrap;
   margin-left: auto;
   padding: 2px 7px;
   border-radius: 999px;

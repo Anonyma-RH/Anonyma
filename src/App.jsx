@@ -3,7 +3,8 @@ import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { AppProvider, useApp, useStartPath } from "./context.jsx";
 import { reducedMotion } from "./motion.js";
 import { Logo, Icon, Button, Mark, SoonTag } from "./ui.jsx";
-import { isReleased, modeReleased } from "./lib.js";
+import { modeReleased } from "./lib.js";
+import { featureEnabled } from "./release-copy.js";
 import Home from "./Home.jsx";
 import { Reveal, useClosingMotion } from "./ReferenceMotion.jsx";
 import {
@@ -23,10 +24,10 @@ const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 // Links into updates that aren't released yet lead to the roadmap, tagged "Soon".
 function locked(config, to) {
-  if (to.startsWith("/workspace/")) return !modeReleased(config, to.slice(11));
+  if (to.startsWith("/workspace/")) return !config?.releases ? to !== "/workspace/chat" : !modeReleased(config, to.slice(11));
   return (
-    ["/developers", "/docs/api", "/account/keys"].includes(to) &&
-    !isReleased(config, "api")
+    ["/developers", "/docs/api", "/account/keys", "/guides/one-api"].includes(to) &&
+    !featureEnabled(config, "api")
   );
 }
 function Navigation() {
@@ -82,6 +83,7 @@ function Navigation() {
             links: [
               ["/models", "Explore models"],
               ["/pricing", "Credits & pricing"],
+              ["/docs/billing", "Billing rules"],
               ["/developers", "Developer API"],
             ],
           },
@@ -217,6 +219,7 @@ function Footer() {
                   ["Explore the platform", "/#platform"],
                   ["Compare models", "/models"],
                   ["Credits & pricing", "/pricing"],
+                  ["Billing rules", "/docs/billing"],
                   ["Savings calculator", "/pricing#calculator"],
                 ],
               },

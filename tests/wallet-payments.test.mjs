@@ -175,6 +175,38 @@ test("a confirmed USDG transfer from the linked wallet is credited exactly once"
   );
 });
 
+test("concurrent 1 USDG claims credit only the paying account and expose its exact balance", async (t) => {
+  const node = await chain(t);
+  const svc = fixture(t, node.url);
+  const alice = await register(svc, "alice", ALICE_WALLET);
+  const bob = await register(svc, "bob", BOB_WALLET);
+  const before = (await alice.agent.get("/api/me").expect(200)).body.user.balance;
+  const bobBefore = (await bob.agent.get("/api/me").expect(200)).body.user.balance;
+  node.pay(hashOf(20), { amount: 1_000_000n });
+  const claims = await Promise.all([
+    pay(alice.agent, hashOf(20)),
+    pay(alice.agent, hashOf(20)),
+  ]);
+  assert.ok(claims.every((r) => [200, 201].includes(r.status)));
+  assert.equal(claims[0].body.id, claims[1].body.id);
+  assert.equal(claims[0].body.user_id, alice.user.id);
+  assert.equal(claims[0].body.credited, 1);
+  const after = (await alice.agent.get("/api/me").expect(200)).body.user;
+  assert.equal(after.balance, before + 1000);
+  assert.equal(after.available, after.balance);
+  assert.equal(after.held, 0);
+  const ledger = (await alice.agent.get("/api/account/ledger").expect(200)).body;
+  const entries = ledger.data.filter((r) => r.ref === `payment_wallet:4663:${hashOf(20)}`);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].user_id, alice.user.id);
+  assert.equal(entries[0].amount, 1000);
+  assert.equal(ledger.balance.balance, after.balance);
+  await bob.agent.get("/api/deposits/" + claims[0].body.id).expect(404);
+  assert.equal((await bob.agent.get("/api/deposits").expect(200)).body.data.length, 0);
+  assert.equal((await pay(bob.agent, hashOf(20)).expect(409)).body.error.code, "payment_already_claimed");
+  assert.equal((await bob.agent.get("/api/me").expect(200)).body.user.balance, bobBefore);
+});
+
 test("a payment waits for confirmations before it is credited", async (t) => {
   const node = await chain(t);
   const svc = fixture(t, node.url);

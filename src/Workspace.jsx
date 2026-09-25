@@ -999,7 +999,7 @@ export default function Workspace() {
               ? config?.testMode
                 ? "Local test mode · Fixture balance · No real provider, payment or email"
                 : "Connected account service"
-              : "Preview · Account and generation services are not connected"}
+              : "Service unavailable · Account and generation could not be reached"}
           {!demo && (
             <Link to={"/workspace/" + mode + "?demo=1"}>
               Try the demo <Icon name="arrow" size={13} />

@@ -120,7 +120,7 @@ export const capabilities = [
 export const faqs = [
   [
     "What is ANONYMA?",
-    "ANONYMA is a prepaid AI workspace designed to bring chat, code, image and video workflows together. Choose a supported model, use a shared credit balance and return to your saved work.",
+    "ANONYMA is a prepaid AI workspace. Choose an available model, use a shared credit balance and return to your saved work. The roadmap identifies enabled features and upcoming releases.",
   ],
   [
     "Do I need a separate subscription for each model?",
@@ -135,12 +135,12 @@ export const faqs = [
     "The planned integration supports a documented subset of OpenAI-compatible chat completions at /v1, using an ANONYMA customer API key. It does not imply support for every client, tools, embeddings or the Responses API.",
   ],
   [
-    "What can I try in this preview?",
+    "What can I try in the optional demo?",
     "The interactive demo includes sample conversations, code export, illustrative image results and account controls stored in this browser. It does not contact AI providers, accept payments or create a production account.",
   ],
   [
     "Is my work private?",
-    "The intended service restricts conversations and media to their account owner. This preview stores demo work only in this browser. Neither the preview nor the documented architecture provides end-to-end encryption.",
+    "The connected service restricts saved work to its account owner. The optional demo stores its sample work only in this browser. Neither mode provides end-to-end encryption.",
   ],
 ];
 export const articles = [
@@ -154,7 +154,7 @@ export const articles = [
     body: [
       "Different tasks benefit from different strengths. For writing, compare clarity and tone. For code, examine correctness, explanation and how easily you can revise the result.",
       "Use the catalog to inspect capabilities and context limits. A catalog listing does not establish that a model is currently available to run. ANONYMA keeps availability separate from discovery.",
-      "For images, select an image-capable model. Reference input additionally requires vision support. For video, duration, ratio and quality must come from the provider’s supported options.",
+      "Image Studio and Video Studio have separate release gates. Once a studio is released, use its listed models and supported options; a guide does not establish availability.",
     ],
   },
   {
@@ -167,7 +167,7 @@ export const articles = [
     body: [
       "The documented conversion is 1 USD to 1,000 displayed credits. Available credits exclude the portion reserved for work in progress.",
       "An estimate appears before generation. A final receipt reports the charge after completion. Interrupted work can still have a charge; stopping a request is not a guarantee of free usage.",
-      "ANONYMA customer credits and the operator’s provider balance are separate systems. Real funding and usage remain unavailable in this standalone preview.",
+      "Customer credits and the operator’s provider balance are separate. Use the payment method shown in your account to add real credits. The optional demo accepts no payments and uses illustrative balances.",
     ],
   },
   {

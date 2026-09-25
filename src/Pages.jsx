@@ -18,6 +18,9 @@ import {
 } from "./ui.jsx";
 import { api, download, savings, walletSign, walletAvailable } from "./lib.js";
 import { articles } from "./data.js";
+import ReleaseStatus from "./ReleaseStatus.jsx";
+import BillingRules from "./BillingRules.jsx";
+import { featureEnabled, featureLabel, guideReleaseLabel, releaseCopy } from "./release-copy.js";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -28,7 +31,7 @@ export function PageIntro({ eyebrow, title, children }) {
   );
 }
 export function Catalog() {
-  const { models, catalogMeta } = useApp();
+  const { models, catalogMeta, config } = useApp();
   const [params] = useSearchParams();
   const [query, setQuery] = useState(""),
     [type, setType] = useState("all"),
@@ -74,9 +77,10 @@ export function Catalog() {
         Different strengths. One place to explore them.
       </PageIntro>
       <div className="content-width">
+        <ReleaseStatus />
         <Notice>
           {catalogMeta.connected
-            ? `Connected catalog · ${catalogMeta.source || "ANONYMA service"}. Only models marked available can run.`
+            ? `Connected catalog · ${catalogMeta.source || "ANONYMA service"}. Availability refers to this web workspace; developer API access has a separate release gate.`
             : "Illustrative catalog · Live availability and pricing are not connected."}
           {catalogMeta.refreshError && " Last refresh failed: " + catalogMeta.refreshError}
           {catalogMeta.updatedAt &&
@@ -142,7 +146,7 @@ export function Catalog() {
                   {m.icon || "✧"}
                 </span>
                 <span className={"status-tag " + (m.callable ? "ready" : "")}>
-                  {m.callable ? "Available" : "Catalog only"}
+                  {m.callable ? (config?.testMode ? "Test model" : "Available in workspace") : "Catalog only"}
                 </span>
               </div>
               <p className="eyebrow">{m.provider || m.id.split("/")[0]}</p>
@@ -307,6 +311,8 @@ export function Catalog() {
   );
 }
 export function Pricing() {
+  const { config } = useApp();
+  const paymentCopy = releaseCopy(config).payment;
   const [monthly, setMonthly] = useState(60),
     [usage, setUsage] = useState(15),
     [amount, setAmount] = useState(10);
@@ -326,6 +332,8 @@ export function Pricing() {
         A shared prepaid balance. Use what you need, when you need it.
       </PageIntro>
       <div className="content-width">
+        <ReleaseStatus payment />
+        <p><Link to="/docs/billing" className="text-link">Read billing rules: rates, fees, refunds and failed requests <Icon name="arrow" size={16} /></Link></p>
         <div className="pricing-main">
           <div>
             <p className="eyebrow">ONE BALANCE. EVERY WORKFLOW.</p>
@@ -335,8 +343,8 @@ export function Pricing() {
               Keep the freedom.
             </h2>
             <p>
-              Chat, code, images and video draw from the same credit balance.
-              Your developer API does, too.
+              Released workspace features draw from one credit balance.
+              The roadmap shows which workflows are currently enabled.
             </p>
             <ul className="check-list">
               {[
@@ -382,8 +390,7 @@ export function Pricing() {
               <span>credits</span>
             </div>
             <small>
-              Conversion only. Checkout and live model rates are not connected
-              in this preview.
+              Conversion estimate only. {paymentCopy}
             </small>
           </div>
         </div>
@@ -470,9 +477,9 @@ export function Pricing() {
           </div>
         </section>
         <Notice>
-          Live prices must come from the shared model catalog. Payment processor
-          fees, platform markup and commercial terms require operator approval
-          before launch.
+          Use the model catalog and request estimate for current rates. The final
+          receipt records the charge. Published commercial policies still need
+          operator completion; this calculator does not establish refund terms.
         </Notice>
       </div>
     </main>
@@ -480,10 +487,16 @@ export function Pricing() {
 }
 const docsTopics = [
   [
+    "billing",
+    "Billing rules",
+    "Understand every charge",
+    "Rates, fees, payment verification, refunds and what happens when a request stops or fails.",
+  ],
+  [
     "getting-started",
     "Getting started",
     "Your first workspace",
-    "Choose a workflow, explore the model catalog and sign in when the service is connected. The demo opens a local sample workspace so you can explore the experience without creating an account.",
+    "Check the current release below, create an account or sign in, and choose an available chat model. Add credits using the payment method shown in your account. The optional demo uses local sample outputs and makes no AI requests or payments.",
   ],
   [
     "models",
@@ -516,13 +529,18 @@ const docsTopics = [
     "The documented retention limits are 300 conversations, 100 images and 60 videos per account. API images have separate 24-hour expiry. Demo data lives only in this browser and can be exported or cleared.",
   ],
 ];
+const guideFeatures = { images: ["images", "video"], api: ["api"] };
 export function Docs() {
+  const { config } = useApp();
   const [search, setSearch] = useState("");
   const location = useParams()["*"];
-  const topic = docsTopics.find((t) => t[0] === location) || docsTopics[0];
+  const topic = docsTopics.find((t) => t[0] === location) || (!location ? docsTopics.find((t) => t[0] === "getting-started") : null);
+  const guideStatus = guideReleaseLabel(config, guideFeatures[topic?.[0]]);
+  const planned = !!guideStatus;
   const shown = docsTopics.filter((t) =>
     t.join(" ").toLowerCase().includes(search.toLowerCase()),
   );
+  if (!topic) return <NotFound />;
   return (
     <main id="main">
       <PageIntro
@@ -549,7 +567,9 @@ export function Docs() {
                 className={topic[0] === id ? "active" : ""}
                 to={"/docs/" + id}
               >
-                {title}
+                <span>{title}{guideReleaseLabel(config, guideFeatures[id]) && (
+                  <> <span className="soon-tag">{guideReleaseLabel(config, guideFeatures[id])}</span></>
+                )}</span>
                 <Icon name="arrow" size={14} />
               </Link>
             ))}
@@ -557,9 +577,24 @@ export function Docs() {
           {!shown.length && <p>No topics found.</p>}
         </aside>
         <article className="doc-article">
-          <p className="eyebrow">WORKSPACE GUIDE</p>
+          <ReleaseStatus payment={topic[0] === "credits"} />
+          <p className="eyebrow">{guideStatus || "WORKSPACE GUIDE"}</p>
           <h2>{topic[2]}</h2>
-          <p className="lead">{topic[3]}</p>
+          {planned ? <Notice>
+            {topic[0] === "api"
+              ? "Developer API & CLI is coming soon. Production API keys and completions are not available in this release."
+              : "Image Studio and Video Studio are separate releases. The labels below show which studio is available; unreleased functionality is planned."}
+            {" "}<Link to="/roadmap">View the roadmap</Link>.
+          </Notice> : null}
+          {topic[0] === "images" && (
+            <ul>
+              <li>{featureLabel(config, "images", "Image Studio")}</li>
+              <li>{featureLabel(config, "video", "Video Studio")}</li>
+            </ul>
+          )}
+          {(!planned || topic[0] !== "api") && <p className="lead">{topic[3]}</p>}
+          {topic[0] === "billing" && <BillingRules />}
+          {topic[0] === "credits" && <p><Link to="/docs/billing">Read the full billing rules, including fees, refunds and failed requests.</Link></p>}
           <h3>Try the experience</h3>
           <p>
             Open the interactive demo to explore the interface. Every sample
@@ -588,7 +623,7 @@ export function Docs() {
               Local demo data is different from an account saved on a server.
             </li>
           </ul>
-          {topic[0] === "api" && <ApiExample />}
+          {topic[0] === "api" && !planned && <ApiExample />}
           <div className="doc-next">
             <span>Need a hand?</span>
             <Link to="/support">
@@ -619,6 +654,18 @@ function ApiExample() {
   );
 }
 export function Developers() {
+  const { config } = useApp();
+  if (!featureEnabled(config, "api")) return (
+    <main id="main">
+      <PageIntro eyebrow="COMING SOON" title="Developer API & CLI">
+        API keys, external client integrations and the CLI are not available in the current release.
+      </PageIntro>
+      <div className="content-width">
+        <ReleaseStatus />
+        <Button to="/roadmap">View the roadmap <Icon name="arrow" /></Button>
+      </div>
+    </main>
+  );
   return (
     <main id="main">
       <PageIntro
@@ -653,8 +700,9 @@ export function Developers() {
               </Button>
             </div>
             <Notice>
-              The API is a documented integration contract. This preview does
-              not serve live completions or issue production keys.
+              Developer API access is enabled for this installation. Create an
+              account key, check available models, and review the API contract
+              before connecting a client.
             </Notice>
           </div>
           <ApiExample />
@@ -689,6 +737,7 @@ export function Developers() {
   );
 }
 export function Article() {
+  const { config } = useApp();
   const { slug } = useParams();
   const a = articles.find((a) => a.slug === slug);
   if (!a) return <NotFound />;
@@ -698,8 +747,19 @@ export function Article() {
         {a.intro}
       </PageIntro>
       <article className="reading-width">
+        <ReleaseStatus payment={slug === "understanding-credits"} />
+        {slug === "understanding-credits" && <p><Link to="/docs/billing">Read billing rules: rates, fees, refunds and interrupted requests.</Link></p>}
+        {slug === "choose-a-model" && (
+          <Notice>
+            {featureLabel(config, "images", "Image Studio")}.{" "}
+            {featureLabel(config, "video", "Video Studio")}.
+          </Notice>
+        )}
+        {slug === "one-api" && !featureEnabled(config, "api") && <Notice>
+          Coming soon: Developer API & CLI. The notes below describe planned behavior, not an available integration.
+        </Notice>}
         <Art kind={a.icon} color={a.color} />
-        {a.body.map((b, i) => (
+        {(slug === "one-api" && !featureEnabled(config, "api") ? [] : a.body).map((b, i) => (
           <section key={b}>
             <p className="eyebrow">0{i + 1}</p>
             <p className="article-paragraph">{b}</p>
@@ -744,7 +804,7 @@ export function Roadmap() {
   const updates = config?.releases?.updates || [];
   // Live first (launch, then released updates), then what's coming, in order.
   const cards = [
-    launch,
+    { ...launch, points: [launch.points[0], launch.points[1], releaseCopy(config).payment, launch.points[3]], released: !!config && !config.testMode && !!config.services?.generation },
     ...updates.filter((u) => u.released),
     ...updates.filter((u) => !u.released),
   ];
@@ -763,8 +823,9 @@ export function Roadmap() {
       >
         {pending
           ? "What you can use today comes first. The rest arrives feature by feature, in the order below."
-          : "Everything below is live today, on one prepaid balance."}
+          : config?.testMode ? "Local test configuration; no live service is implied." : !config?.releases ? "Current release status could not be loaded." : "All listed features are enabled for this installation."}
       </PageIntro>
+      <div className="content-width"><ReleaseStatus payment /></div>
       <div className="content-width roadmap-grid">
         {cards.map((u, i) => (
           <article key={u.id}>
@@ -775,7 +836,7 @@ export function Roadmap() {
             >
               <Icon name={featureIcons[u.id] || "chat"} size={20} />
             </span>
-            <p className="eyebrow">{u.released ? "LIVE NOW" : "COMING SOON"}</p>
+            <p className="eyebrow">{!config?.releases ? "STATUS UNAVAILABLE" : config.testMode ? "LOCAL TEST" : u.released ? "LIVE NOW" : u.id === "mvp" ? "TEMPORARILY UNAVAILABLE" : "COMING SOON"}</p>
             <h2>{u.title}</h2>
             <p className="coming-soon-tagline">{u.tagline}</p>
             <ul>
@@ -793,7 +854,9 @@ export function Roadmap() {
   );
 }
 export function Support() {
-  const { connected, user } = useApp();
+  const { connected, user, config } = useApp();
+  const canSend = connected && config?.services?.support;
+  const [email, setEmail] = useState(null);
   const [subject, setSubject] = useState(""),
     [body, setBody] = useState(""),
     [message, setMessage] = useState(""),
@@ -805,13 +868,13 @@ export function Support() {
     try {
       const r = await api("/api/support", {
         method: "POST",
-        body: { subject, body },
+        body: { subject, body, email: email ?? user?.email ?? "" },
       });
-      setMessage(
-        `Support ticket ${r.id} saved for the operator. No email delivery is implied.`,
-      );
-      setSubject("");
-      setBody("");
+      setMessage(r.message);
+      if (r.delivery === "accepted") {
+        setSubject("");
+        setBody("");
+      }
     } catch (e) {
       setMessage(e.message);
     } finally {
@@ -821,7 +884,7 @@ export function Support() {
   return (
     <main id="main">
       <PageIntro eyebrow="HELP & SUPPORT" title="A good place to ask.">
-        Find an answer, or prepare a note for the team.
+        Help with your account, payments, privacy or workspace.
       </PageIntro>
       <div className="support-layout content-width">
         <div>
@@ -835,12 +898,33 @@ export function Support() {
             Browse documentation <Icon name="arrow" />
           </Link>
           <Notice>
-            {connected && user
-              ? "Your note will be saved as a support ticket for the operator."
-              : "Support delivery is not connected. You can download a draft of your note."}
+            {canSend
+              ? "Send a request to our support inbox. You do not need to sign in. Never include passwords, API keys or wallet recovery phrases."
+              : "The support form is temporarily unavailable. You can keep a draft of your message."}
           </Notice>
+          {config?.supportEmail && (
+            <p>
+              Or email{" "}
+              <a href={`mailto:${config.supportEmail}`}>
+                {config.supportEmail}
+              </a>{" "}
+              directly.
+            </p>
+          )}
         </div>
         <form onSubmit={submit} className="form-panel">
+          <label>
+            Reply email
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              maxLength="254"
+              value={email ?? user?.email ?? ""}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          </label>
           <label>
             Subject
             <input
@@ -862,9 +946,9 @@ export function Support() {
               placeholder="A little context goes a long way."
             />
           </label>
-          {connected && user ? (
+          {canSend ? (
             <Button type="submit" disabled={busy}>
-              {busy ? "Saving…" : "Save support ticket"}
+              {busy ? "Sending…" : "Send support request"}
               <Icon name="arrow" />
             </Button>
           ) : (
@@ -874,7 +958,7 @@ export function Support() {
               onClick={() => {
                 download(
                   "anonyma-support-draft.txt",
-                  `Subject: ${subject}\n\n${body}`,
+                  `Reply email: ${email || user?.email || ""}\nSubject: ${subject}\n\n${body}`,
                   "text/plain",
                 );
                 setMessage("Draft downloaded. It has not been sent.");
@@ -883,7 +967,11 @@ export function Support() {
               Download draft <Icon name="download" />
             </Button>
           )}
-          {message && <Notice>{message}</Notice>}
+          {message && (
+            <div role="status">
+              <Notice>{message}</Notice>
+            </div>
+          )}
         </form>
       </div>
     </main>
@@ -893,7 +981,7 @@ export function Legal({ type }) {
   return (
     <main id="main">
       <PageIntro
-        eyebrow="PREVIEW INFORMATION"
+        eyebrow={type === "privacy" ? "PRIVACY INFORMATION" : "SERVICE INFORMATION"}
         title={
           type === "privacy"
             ? "Your work, considered."
@@ -901,14 +989,17 @@ export function Legal({ type }) {
         }
       >
         {type === "privacy"
-          ? "How this preview handles information."
-          : "The boundaries of this interactive preview."}
+          ? "How the connected service and optional demo handle information."
+          : "Current service availability and outstanding policy information."}
       </PageIntro>
       <article className="reading-width legal">
+        <ReleaseStatus payment />
         <Notice>
-          This is a frontend preview notice. Final operator policies and legal
-          entity details must be supplied before a public service launch.
+          These disclosures are incomplete. Final operator identity, jurisdiction,
+          contact details and commercial policies still need to be published.
+          This page does not present them as finalized Terms or a complete Privacy Policy.
         </Notice>
+        {type === "terms" && <p><Link to="/docs/billing">Billing rules: rates, fees, refunds, payment failures and interrupted requests.</Link></p>}
         {(type === "privacy"
           ? [
               [
@@ -917,24 +1008,24 @@ export function Legal({ type }) {
               ],
               [
                 "Service connections",
-                "When a backend is configured, account data and submitted prompts go to that service and its configured providers. Production retention, processing locations and contact details must be disclosed by the operator.",
+                "In the connected service, account data is stored on the server and submitted prompts are sent to configured AI providers. Production retention, processing locations and contact details still need to be disclosed by the operator.",
               ],
               [
                 "No invented privacy promises",
-                "This preview does not claim end-to-end encryption, independent security certification or a production deletion guarantee. The intended account service scopes stored work to its owner.",
+                "ANONYMA does not claim end-to-end encryption or independent security certification. Account access controls restrict saved work; complete retention and deletion policies remain outstanding.",
               ],
             ]
           : [
               [
-                "An interface you can explore",
-                "Demo outputs are prepared examples. They are not live model responses, purchased credits or proof that a provider request succeeded. No payment can be made in the standalone preview.",
+                "Connected service and optional demo",
+                "The connected service provides the features shown in the current release above. The optional interactive demo uses prepared examples stored in your browser, makes no provider requests and cannot accept payments. Demo balances are not purchased credits.",
               ],
               [
                 "Usage and availability",
-                "Live model rates, service availability, refund terms and interrupted-request billing must be confirmed by the operator. Calculator amounts are user assumptions and do not create a commercial offer.",
+                "Current rates and availability are shown in the connected catalog and request estimates. Final receipts record usage charges; interrupted requests may still incur costs. Refund requests are reviewed individually, with no automatic refunds. See the billing rules for the review process. Calculator amounts are assumptions, not invoices.",
               ],
               [
-                "Before launch",
+                "Outstanding policies",
                 "The operator must supply final service terms, privacy policy, contact details, pricing policies and confirmed integrations. Planned capabilities are not included in current service availability.",
               ],
             ]
@@ -1175,7 +1266,7 @@ export function Auth({ register = false }) {
         )}
         {!connected && (
           <p className="auth-status">
-            Account services are not connected in this preview.
+            Account services are currently unavailable. Try again when the service reconnects.
           </p>
         )}
         <div className="auth-bottom">

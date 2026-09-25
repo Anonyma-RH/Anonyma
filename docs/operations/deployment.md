@@ -18,6 +18,8 @@ Single-server limits use the persistent SQLite database. For a shared quota acro
 
 From a clean checkout run `npm ci --ignore-scripts` and `npm run release:check`. Install Gitleaks 8.30.1 and Redis/redis-cli first. The release command requires the real Redis integration test locally and in CI. The command blocks on static JS/JSX checks, dependency advisories at moderate severity or above, secret scans of history and tracked working files, a production build, and the test suite. Missing scanners fail. GitHub's **Mandatory release checks** job repeats these checks with read-only permissions, pinned actions and a checksum-pinned scanner. Review dependency updates before changing the lockfile; do not bypass findings to release.
 
+The installed public-mirror pre-push hook runs this command too; a failed or missing check blocks a normal push. Server-side publication holds remain in force. GitHub CI provides independent verification after publication.
+
 A successful run creates `dist/release-checks.json` with the exact commit and lockfile hash. Publish through the existing reviewed identity/allowlist mirror procedure. Require the GitHub check on the target commit before release. Do not reuse a green result from another revision. Public and private commits may differ: record both mapped hashes and the artifact actually deployed.
 
 ## Deployment and revision verification

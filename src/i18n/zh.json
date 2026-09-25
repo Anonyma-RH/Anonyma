@@ -2529,7 +2529,305 @@
     "This page hid a nested frame, so the preview stopped it.": "此页面隐藏了一个嵌套框架，因此预览已将其停止。",
     "Storage here is temporary and separate from ANONYMA.": "这里的存储是临时的，并与 ANONYMA 分开。",
     "Forms don't send anywhere in the preview.": "在预览中，表单不会发送到任何地方。",
-    "Fit": "适应"
+    "Fit": "适应",
+    "left": "剩余",
+    "Check charge status": "检查扣费状态",
+    "Shared conversations for up to 12 people.": "最多支持 12 人共享会话。",
+    "Everyone pays for their own requests.": "每个人支付自己的请求费用。",
+    "Extracted text was trimmed.": "提取的文本已截断。",
+    "Could not read this file": "无法读取此文件",
+    "Attach PDF, text, code, DOCX, XLSX or PPTX. Text is extracted locally and sent only with your message.": "附加 PDF、文本、代码、DOCX、XLSX 或 PPTX。文本会在本地提取，且仅随你的消息发送。",
+    "Attach PDF, text, CSV or code files. Text is extracted in this browser and sent with your message.": "附加 PDF、文本、CSV 或代码文件。文本会在此浏览器中提取，并随你的消息发送。",
+    "Attached documents total": "附件文档总计",
+    "; only the first": "；仅前",
+    "will be sent to the model.": "会发送给模型。",
+    "credits charged for this second opinion.": "积分已为本次第二意见扣除。",
+    "Sign in to search your saved conversations.": "登录后即可搜索已保存的会话。",
+    "This quote expired. Get a fresh quote.": "此报价已过期。请获取最新报价。",
+    "Video submitted. Check Video Studio and your library for completion.": "视频已提交。请前往视频工作室和媒体库查看完成情况。",
+    "New media saved. The original is unchanged.": "新媒体已保存。原始内容未发生变化。",
+    "Stopped waiting. Check your library and ledger before retrying.": "已停止等待。请在重试前检查媒体库和账本。",
+    "History & library.": "历史记录与媒体库。",
+    "Saved media": "已保存的媒体",
+    "Search conversations": "搜索会话",
+    "Saved conversation preview": "已保存的会话预览",
+    "Saved result": "已保存的结果",
+    "Close saved result": "关闭已保存的结果",
+    "Saved result · read only. Nothing is generated or charged when you open it.": "已保存的结果 · 只读。打开后不会生成内容或扣除积分。",
+    "Assistant": "助手",
+    "Saved reasoning": "已保存的推理",
+    "Search the titles and messages of saved chats you can access. Private, off-the-record and auto-deleting chats are excluded.": "搜索你有权访问的已保存会话的标题和消息。隐私模式、不留记录和自动删除的会话不会包含在内。",
+    "Find a conversation": "查找会话",
+    "A phrase you remember…": "你记得的短语……",
+    "Shared workspace": "共享工作台",
+    "Title match": "标题匹配",
+    "No results shown. Search a phrase to find saved conversations.": "未显示结果。搜索短语即可查找已保存的会话。",
+    "Load more conversations": "加载更多会话",
+    "Inspect the original settings, open an accessible source chat, or review a fresh quote before generating again.": "检查原始设置，打开有权访问的来源聊天，或在再次生成前查看最新报价。",
+    "Review saved media": "查看已保存的媒体",
+    "Review saved": "查看已保存的",
+    "Loading original settings…": "正在加载原始设置……",
+    "Script": "脚本",
+    "Resolution": "分辨率",
+    "Size": "尺寸",
+    "Output format": "输出格式",
+    "Duration (seconds)": "时长（秒）",
+    "Reference assets": "参考资源",
+    "saved reference": "已保存的参考资源",
+    "· External HTTPS image; availability may have changed.": "· 外部 HTTPS 图片；可用性可能已发生变化。",
+    "Generating again uses credits. Results may differ. Nothing runs when you open this panel.": "再次生成将消耗积分。结果可能有所不同。打开此面板不会执行任何操作。",
+    "Refresh quote": "刷新报价",
+    "Get fresh quote": "获取最新报价",
+    "Current model and settings checked. Quote expires in two minutes; actual usage may differ.": "已检查当前模型和设置。报价将在两分钟后过期；实际用量可能有所不同。",
+    "This generation studio is not released.": "此生成工作室尚未发布。",
+    "Copy contract address:": "复制合约地址：",
+    "Memory is unavailable in this context.": "在此上下文中无法使用记忆功能。",
+    "the model's cheapest length and size": "该模型最便宜的时长和尺寸",
+    "No published price": "暂无公开价格",
+    ". Using": "。使用",
+    "instead.": "代替。",
+    ", and no model here qualifies right now.": "，当前没有符合条件的模型。",
+    "Presets": "预设",
+    "No reviewed pick available": "暂无经过评估的推荐",
+    "None available": "暂无可用项",
+    "Search by name, provider or feature": "按名称、提供商或功能搜索",
+    "No model here matches that search.": "没有模型匹配此搜索条件。",
+    "No model is available here right now.": "目前没有可用模型。",
+    "Prices are for": "价格按",
+    "at the standard rate, from the live catalog. Best quality is our task recommendation, not a benchmark or price ranking.": "的标准费率计算，数据来自实时目录。“最佳质量”是我们针对任务的推荐，并非基准测试或价格排名。",
+    "No reviewed recommendation is available for this selection.": "此选择没有可用的审核推荐。",
+    "ANONYMA service": "ANONYMA 服务",
+    "Last refresh failed:": "上次刷新失败：",
+    "Updated": "更新于",
+    "Could not read file.": "无法读取文件。",
+    "If a transcription result is uncertain, check your credits before starting another request.": "如果转录结果不确定，请在开始其他请求前检查你的积分。",
+    "This saved audio file is no longer available.": "此保存的音频文件已不可用。",
+    "Audio exceeds the 10 MB limit.": "音频超过 10 MB 限制。",
+    "Saved uploads are unavailable in Private, off-the-record or Veil contexts. Local attachments still work.": "在隐私模式、不留记录或 Veil 上下文中，保存的上传文件不可用。本地附件仍可使用。",
+    "Save and reuse owner-only files": "保存并复用仅限账户所有者使用的文件",
+    "Saved files": "已保存的文件",
+    "Files & Reusable Uploads": "文件与可复用上传",
+    "YOUR ACCOUNT · SAVED UPLOADS": "你的账户 · 已保存的上传文件",
+    "Save only files you want on your account. Local attachments never enter this list automatically. Reusing text sends a copy with the next chat; deleting the upload does not erase copies already sent.": "仅保存你希望保留在账户中的文件。本地附件不会自动加入此列表。复用文本会在下一次对话中发送副本；删除上传文件不会删除已经发送的副本。",
+    "Up to 10 MB each · 50 files / 50 MB total · expires in 1, 7 or 30 days. DOCX, XLSX and PPTX are text-only; no macros or formula calculation. PDF stays in local attachments.": "每个文件最大 10 MB · 共 50 个文件 / 50 MB · 1、7 或 30 天后过期。DOCX、XLSX 和 PPTX 仅支持文本；不支持宏或公式计算。PDF 会保留在本地附件中。",
+    "Choose a file to save": "选择要保存的文件",
+    "Files must be at most 10 MB.": "文件大小不得超过 10 MB。",
+    "Save the original bytes and extracted text to my account.": "将原始文件和提取的文本保存到我的账户。",
+    "Save for reuse · no generation charge": "保存以便复用 · 不收取生成费用",
+    "No saved files yet.": "还没有保存的文件。",
+    "· expires": "· 过期时间",
+    "· extracted text trimmed": "· 提取的文本已截断",
+    "Attach text": "附加文本",
+    "Review transcription": "审核转录结果",
+    "Download original": "下载原文件",
+    "Load more": "加载更多",
+    "Transcribe": "转录",
+    "The audio goes to the selected transcription provider only when you confirm below. The transcript remains in this panel until you attach it. Attaching does not send the chat.": "仅在你于下方确认后，音频才会发送给所选的转录提供商。转录文本会保留在此面板中，直到你将其附加。附加不会发送对话。",
+    "credits per minute. Up to": "积分/分钟。最多冻结",
+    "credits reserved for": "积分，可用于",
+    "minutes; actual duration charged. If duration is unavailable, the maximum is charged. Personal balance pays. Uploads over": "分钟；按实际时长扣费。如果无法获取时长，将按最长时长扣费。由个人余额支付。超过",
+    "minutes are not supported.": "分钟的上传不受支持。",
+    "I authorize this transcription and its credit charge.": "我授权进行此次转录并支付相应积分。",
+    "Working…": "处理中…",
+    "credits charged. Review names and numbers before sending.": "积分已扣除。发送前请检查名称和数字。",
+    "Attach reviewed transcript": "附加已审核的转录文本",
+    "No scrolls yet. Save a prompt to reuse it later. Use": "还没有卷轴。保存提示词，方便以后重复使用。每次需要填写的内容，用",
+    "for anything you want to fill in each time.": "标记。",
+    "A snapshot of": "以下会话的快照：",
+    ". Messages you send later aren't added.": "。之后发送的消息不会添加进来。",
+    "This conversation auto-deletes on": "此会话将自动删除于",
+    ". Its links end then too.": "。届时它的分享链接也会失效。",
+    "Shared from ANONYMA · snapshot from": "来自 ANONYMA 的分享 · 快照时间：",
+    "A snapshot, not a window: this is the conversation as it was on": "这是快照，而非实时窗口：此会话内容截至",
+    ". Later messages aren't included, and it can't be replied to.": "。之后的消息不会包含在内，也无法回复。",
+    ". Masked details stay masked, and attachments aren't shared.": "。已遮盖的详细信息仍会保持遮盖，附件不会共享。",
+    "in the last 24 hours": "最近 24 小时内",
+    "Estimated total:": "预计总计：",
+    "Models to compare (": "要对比的模型（",
+    "credits; actual usage may differ.": "积分；实际用量可能有所不同。",
+    "Alternative": "替代方案",
+    "MODEL-GENERATED": "模型生成",
+    "· CHECK IMPORTANT CLAIMS": "· 请核实重要声明",
+    "says prompts sent to": "表示发送至",
+    "Use": "使用",
+    "instead": "替代",
+    "Paste the reply text to check it against this receipt": "粘贴回复文本，与此收据进行核对",
+    "credits/minute. The service may reserve up to": "积分/分钟。服务最多可能冻结",
+    "credits from your personal balance, including in a shared chat. The receipt uses provider-reported duration; if unavailable, the maximum applies. Sending the reviewed text is a separate chat charge using your chat settings. Recording is local until Transcribe.": "积分，冻结额度将从你的个人余额中扣除，包括共享会话中的余额。收据采用提供商报告的时长；如果无法获取，则按最大时长计算。发送审核后的文本会根据你的对话设置单独计费。在点击“转写”之前，录音仅保存在本地。",
+    "more": "多",
+    "less": "少",
+    "Nobody has joined through your link yet.": "目前还没有人通过你的链接加入。",
+    "Choose a model that can read the images in this conversation.": "请选择一个能够读取此会话中图片的模型。",
+    "Jump to latest ↓": "跳转到最新消息 ↓",
+    "Reply interrupted. Check charge status below.": "回复已中断。请在下方查看扣费状态。",
+    "regenerate": "重新生成",
+    "Usage receipt": "用量收据",
+    "Unconfirmed": "未确认",
+    "Private mode: zero-data-retention models only.": "隐私模式：仅限零数据保留模型。",
+    "Showing models that can read your images.": "正在显示能够读取你图片的模型。",
+    "seconds": "秒",
+    "The mentioned model cannot read this conversation’s images. Choose a vision model.": "提及的模型无法读取此会话中的图片。请选择视觉模型。",
+    "Source & rerun": "查看来源并重新运行",
+    "Team balance": "团队余额",
+    "Your balance": "你的余额",
+    "The server refused this request before reserving credits.": "服务器在冻结积分前拒绝了此请求。",
+    "last confirmed hold; current status unavailable.": "上次确认的冻结额度；当前状态不可用。",
+    "a hold, not a final charge.": "这是冻结额度，不是最终扣费。",
+    "Charge status pending": "扣费状态待定",
+    "Charge status unknown": "扣费状态未知",
+    "No final charge is confirmed here. Check status before sending another paid request; checking never resends it.": "此处尚未确认最终扣费。请在发送其他付费请求前检查状态；检查不会重新发送请求。",
+    "The provider connection ended before the reply finished. Any partial reply stays here. Check the charge state below.": "提供商连接在回复完成前已中断。任何部分回复都会保留在此处。请在下方查看扣费状态。",
+    "The provider took too long to finish. Check the charge state below before sending again.": "提供商完成回复所用时间过长。请在再次发送前查看下方的扣费状态。",
+    "The provider sent a reply that could not be read. Check the charge state below before sending again.": "提供商发送的回复无法读取。请在再次发送前查看下方的扣费状态。",
+    "The provider could not complete this reply. Check the charge state below.": "提供商无法完成此回复。请在下方查看扣费状态。",
+    "Stopped waiting for the reply. Check charge status before sending another paid request.": "已停止等待回复。请在发送其他付费请求前检查扣费状态。",
+    "The connection was lost. Any partial reply stays here. Check charge status before sending again.": "连接已丢失。任何部分回复都会保留在此处。请在再次发送前查看扣费状态。",
+    "The reply could not finish. Check charge status before sending again.": "回复未能完成。请在再次发送前查看扣费状态。",
+    "recent": "最近",
+    "Untitled scroll": "未命名卷轴",
+    "Illustrative catalog from product brief": "产品简介中的示例模型目录",
+    "char": "个字符",
+    "chars": "个字符",
+    "The estimate is unavailable.": "估算不可用。",
+    "Updating estimate…": "正在更新估算……",
+    "The file is not supported UTF-8 text.": "文件不是受支持的 UTF-8 文本。",
+    "Office files must be non-empty and at most 10 MB.": "Office 文件必须非空且不超过 10 MB。",
+    "Unsupported or malformed ZIP archive.": "不支持或格式错误的 ZIP 压缩包。",
+    "Office archive exceeds its entry limit or is malformed.": "Office 压缩包超出条目限制或格式错误。",
+    "Malformed ZIP directory.": "ZIP 目录格式错误。",
+    "Encrypted, split or ZIP64 archives are not supported.": "不支持加密、分卷或 ZIP64 压缩包。",
+    "Unsafe or duplicate archive entry.": "不安全或重复的压缩包条目。",
+    "Macros and embedded executable objects are not supported.": "不支持宏和嵌入式可执行对象。",
+    "Expanded Office content exceeds the safe extraction limit.": "展开后的 Office 内容超出安全提取限制。",
+    "Malformed ZIP entry.": "ZIP 条目格式错误。",
+    "Malformed ZIP entry bounds.": "ZIP 条目边界格式错误。",
+    "Inconsistent ZIP entry.": "ZIP 条目不一致。",
+    "Overlapping ZIP entries are not supported.": "不支持重叠的 ZIP 条目。",
+    "Malformed ZIP directory size.": "ZIP 目录大小格式错误。",
+    "Custom XML entities are not supported.": "不支持自定义 XML 实体。",
+    "Invalid XML character.": "XML 字符无效。",
+    "XML entities and document types are not supported.": "不支持 XML 实体和文档类型。",
+    "Malformed or excessive XML content.": "XML 内容格式错误或超出限制。",
+    "Malformed XML entity.": "XML 实体格式错误。",
+    "Malformed XML nesting.": "XML 嵌套格式错误。",
+    "Unsupported or malformed XML markup.": "XML 标记不受支持或格式错误。",
+    "Malformed or duplicate XML attribute.": "XML 属性格式错误或重复。",
+    "XML nesting is too deep.": "XML 嵌套层级过深。",
+    "Malformed XML document.": "XML 文档格式错误。",
+    "Choose DOCX, XLSX or PPTX. Legacy and macro-enabled Office files are not supported.": "请选择 DOCX、XLSX 或 PPTX。不支持旧版和启用宏的 Office 文件。",
+    "The Office file is missing required content.": "Office 文件缺少必需内容。",
+    "Office entry checksum or size is invalid.": "Office 条目校验和或大小无效。",
+    "The file contents do not match its Office extension.": "文件内容与其 Office 扩展名不匹配。",
+    "No supported slides found.": "未找到受支持的幻灯片。",
+    "Shared string text exceeds the extraction limit.": "共享字符串文本超出提取限制。",
+    "No supported worksheets found.": "未找到受支持的工作表。",
+    "Text only. Layout, comments, embedded objects and formula calculation are not included.": "仅提取文本。不包含布局、评论、嵌入对象和公式计算。",
+    "Office extraction is unavailable in this browser. Export as text or PDF.": "此浏览器不支持 Office 提取。请导出为文本或 PDF。",
+    "Expanded Office entry exceeds its safe limit.": "展开后的 Office 条目超出安全限制。",
+    "Cheap": "低价",
+    "Lowest eligible published price": "符合条件的最低公开价格",
+    "Balanced": "均衡",
+    "A popular model at a middle price": "价格适中的热门模型",
+    "Best quality": "最佳质量",
+    "Our task recommendation, based on documented capabilities; not a benchmark": "基于文档所述能力的任务推荐，并非基准测试",
+    "Coding and software-engineering work": "编程和软件工程工作",
+    "Careful knowledge work and complex problem-solving": "严谨的知识工作和复杂问题解决",
+    "Multimodal reasoning and coding; a reviewed alternative for Private mode": "多模态推理和编程；经审核的隐私模式替代模型",
+    "Precision for detailed image creation and editing": "精准完成细节丰富的图像创建和编辑",
+    "High-fidelity image generation and editing": "高保真图像生成和编辑",
+    "Video realism, prompt adherence and native audio": "视频真实感、提示词遵循能力和原生音频",
+    "isn't in the catalog any more": "已不在模型目录中",
+    "isn't available right now": "当前暂不可用",
+    "isn't a zero-data-retention model, which Private mode needs": "不是隐私模式所需的零数据保留模型",
+    "can't read the images you attached": "无法读取你附加的图像",
+    "isn't available here": "此处暂不可用",
+    "has no reviewed recommendation among the models available here": "可用模型中没有经过审核的推荐模型",
+    "That isn't valid JSON. Paste the signed receipt as copied.": "这不是有效的 JSON。请粘贴复制的签名收据。",
+    "Expected an object with \"receipt\" and \"signature\".": "应为包含 \"receipt\" 和 \"signature\" 的对象。",
+    "Model availability and rates are shown in the catalog.": "模型目录中显示模型可用性和价格。",
+    "AI generation is currently unavailable.": "AI 生成目前不可用。",
+    "Other features remain coming soon on the roadmap.": "其他功能将在路线图中陆续推出。",
+    "See the roadmap for the full release list.": "查看路线图，了解完整的发布列表。",
+    "Bring your files back into the conversation.": "将文件重新带回会话。",
+    "Office text and reusable uploads": "Office 文本与可复用上传",
+    "Owner-only files with expiry and delete": "仅所有者可访问的文件，支持过期和删除",
+    "Explicit audio transcription": "需手动确认的音频转录",
+    "Credit Estimates": "积分预估",
+    "See the cost before you send.": "发送前查看费用。",
+    "A live credit estimate beside Send": "发送按钮旁实时显示积分预估",
+    "Updates as you type, switch models or turn on Web": "输入内容、切换模型或开启联网后，预估会随之更新",
+    "Priced on the same request Send makes, Veil masking included": "按照发送操作实际发出的同一请求计价，包含 Veil 遮盖",
+    "Model Finder & Presets": "模型查找与预设",
+    "The right model, found fast.": "快速找到合适的模型。",
+    "Search every model you can use, by name, provider or feature": "按名称、提供商或功能搜索所有可用模型",
+    "Cheap, Balanced and Best quality presets, with manual override": "提供低价、均衡和最佳质量预设，并支持手动调整",
+    "Sources, alternatives and arithmetic, clearly apart.": "清晰区分来源、替代方案和算术结果。",
+    "Research with provider-returned source links": "使用提供商返回的来源链接进行研究",
+    "Compare writing alternatives without overwriting them": "对比不同写作方案，不会覆盖原内容",
+    "Calculate arithmetic locally without a model call": "无需调用模型，在本地计算算术结果",
+    "Longer, More Reliable Answers": "更长、更可靠的回答",
+    "More room to finish your thought.": "为完善你的想法提供更多空间。",
+    "Choose a larger reply budget where supported": "在支持的模型上选择更大的回复预算",
+    "Keep context and partial answers": "保留上下文和部分回答",
+    "Continue only when you choose": "仅在你选择时继续生成",
+    "Reading & Charge Clarity": "清晰阅读与计费",
+    "Keep your place. Know your charge.": "保持阅读位置，了解计费情况。",
+    "Read older replies without forced scrolling": "无需强制滚动即可阅读较早的回答",
+    "Jump to the latest reply when ready": "准备好后跳转到最新回答",
+    "Check actual charge status without resending": "无需重新发送即可查看实际计费状态",
+    "History Search & Library Actions": "历史记录搜索与媒体库操作",
+    "Pick up where you left off.": "从上次停下的地方继续。",
+    "Search saved conversations": "搜索已保存的会话",
+    "Review a fresh quote before rerunning media": "重新运行媒体前查看最新报价",
+    "Use a filename of 1–180 characters without paths.": "请使用长度为 1–180 个字符且不含路径的文件名。",
+    "Files must be non-empty and at most 10 MB.": "文件不能为空，且大小不得超过 10 MB。",
+    "The audio contents do not match its filename.": "音频内容与文件名不匹配。",
+    "The document could not be extracted.": "无法提取文档内容。",
+    "Reusable uploads support UTF-8 text/code, DOCX, XLSX, PPTX, WAV, MP3, FLAC, OGG, WebM and M4A. PDF remains a local chat attachment; legacy/macro Office files are unsupported.": "可复用上传支持 UTF-8 文本/代码、DOCX、XLSX、PPTX、WAV、MP3、FLAC、OGG、WebM 和 M4A。PDF 仍属于本地对话附件；不支持旧版或宏版 Office 文件。",
+    "The upload exceeds 10 MB.": "上传文件超过 10 MB。",
+    "Malformed multipart body.": "multipart 请求体格式错误。",
+    "Unexpected multipart trailing content.": "multipart 末尾包含意外内容。",
+    "Invalid multipart headers.": "multipart 标头无效。",
+    "Unsupported multipart headers.": "不支持的 multipart 标头。",
+    "Malformed multipart disposition.": "multipart disposition 格式错误。",
+    "Missing multipart closing boundary.": "缺少 multipart 结束边界。",
+    "Send exactly one file.": "请准确发送一个文件。",
+    "Unsupported or duplicate multipart field.": "不支持或重复的 multipart 字段。",
+    "Incomplete multipart body.": "multipart 请求体不完整。",
+    "File not found.": "未找到文件。",
+    "Saved uploads are unavailable in Private, off-the-record or Veil contexts. Attach locally instead.": "隐私模式、不留记录或 Veil 上下文不支持保存的上传文件。请改为本地附加。",
+    "File retention must be between one hour and 30 days.": "文件保留时间必须介于 1 小时和 30 天之间。",
+    "Account is unavailable.": "账户不可用。",
+    "Sign in again to save this file.": "请重新登录以保存此文件。",
+    "Saved files are limited to 50 files and 50 MB. Delete an older upload first.": "保存的文件上限为 50 个文件和 50 MB。请先删除较早的上传文件。",
+    "Audio needs an explicit transcription request before it can be attached as text.": "音频必须先明确请求转录，才能作为文本附加。",
+    "Confirm saving the original file to your account for reuse.": "请确认将原始文件保存到账户中以便重复使用。",
+    "Send valid base64 file bytes.": "请发送有效的 base64 文件字节。",
+    "Files & Reusable Uploads is not available.": "文件与可复用上传功能尚未上线。",
+    "Audio files must be explicitly transcribed first.": "音频文件必须先明确进行转录。",
+    "The saved script no longer fits this voice model.": "保存的脚本不再适用于此语音模型。",
+    "The saved voice is no longer offered.": "保存的语音已不再提供。",
+    "Saved reference images are not supported.": "不支持保存的参考图。",
+    "This model no longer supports the saved reference-image settings.": "此模型不再支持保存的参考图设置。",
+    "Saved image count is unsupported.": "不支持保存的图片数量。",
+    "Get a fresh quote before rerunning this item.": "请在重新运行此项目之前获取最新报价。",
+    "The settings or price changed. Review a fresh quote.": "设置或价格已发生变化。请查看最新报价。",
+    "Search for 2–160 characters; use a page size of 1–50.": "请搜索 2–160 个字符；页面大小请设为 1–50。",
+    "The source chat is no longer available. This media was not saved.": "源会话已不可用。此媒体未保存。",
+    "Team pays supports chat requests only.": "团队付费仅支持对话请求。",
+    "A second opinion can't itself be double-checked.": "第二意见本身无法再次核查。",
+    "Memory cannot be changed from this chat context.": "无法从此对话上下文更改记忆。",
+    "Facts cannot be saved from this conversation mode.": "无法从此会话模式保存记忆。",
+    "Receipt not found.": "未找到收据。",
+    "Provide the signed receipt object.": "请提供已签名的收据对象。",
+    "Provide the receipt's signature.": "请提供收据的签名。",
+    "Choose the daily or monthly limit.": "请选择每日或每月上限。",
+    "Choose a supported task tool.": "请选择受支持的任务工具。",
+    "Task tools create a separate chat for every result.": "任务工具会为每个结果创建单独的会话。",
+    "Task tools need a brief of 1–10,000 characters.": "任务工具需要 1–10,000 个字符的任务说明。",
+    "Research requires Web search.": "研究任务需要联网搜索。",
+    "daily": "每日",
+    "monthly": "每月"
   },
   "patterns": [
     {
@@ -3887,6 +4185,254 @@
     {
       "en": "Blocked by the preview sandbox: {0} ({1})",
       "zh": "已被预览沙箱拦截：{0}（{1}）"
+    },
+    {
+      "en": "{0} You have {1} credits available.",
+      "zh": "{0} 你有 {1} 积分可用。"
+    },
+    {
+      "en": "{0} {1} credits are left under your spending limits.",
+      "zh": "{0} 在你的消费上限内还剩 {1} 积分。"
+    },
+    {
+      "en": "a typical exchange ({0} tokens in, {1} out)",
+      "zh": "典型交互（输入 {0} 个 Token，输出 {1} 个）"
+    },
+    {
+      "en": "≈{0} credits",
+      "zh": "≈{0} 积分"
+    },
+    {
+      "en": "Model: {0}{1}. Change model",
+      "zh": "模型：{0}{1}。更改模型"
+    },
+    {
+      "en": ", {0} preset",
+      "zh": "，{0}预设"
+    },
+    {
+      "en": "Reply email: {0} Subject: {1} {2}",
+      "zh": "回复邮件：{0} 主题：{1} {2}"
+    },
+    {
+      "en": "{0} credits spent {1}",
+      "zh": "{1}已花费 {0} 积分"
+    },
+    {
+      "en": "{0} used {1}",
+      "zh": "{1}已使用 {0}"
+    },
+    {
+      "en": "{0}: {1} credits, in force now.",
+      "zh": "{0}：{1} 积分，现已生效。"
+    },
+    {
+      "en": "{0}: removed at {1}, 24 hours from now. You can cancel it until then.",
+      "zh": "{0}：于 {1} 移除，距现在 24 小时。你可以在此之前取消。"
+    },
+    {
+      "en": "{0}: rises to {1} credits at {2}, 24 hours from now. You can cancel it until then.",
+      "zh": "{0}：将于 {2} 增至 {1} 积分，距现在 24 小时。你可以在此之前取消。"
+    },
+    {
+      "en": "{0}: pending change cancelled. The current limit stays.",
+      "zh": "{0}：待处理的更改已取消。当前上限保持不变。"
+    },
+    {
+      "en": "{0} {1} Provider-returned sources: {2}",
+      "zh": "{0} {1} 提供商返回的来源：{2}"
+    },
+    {
+      "en": "{0}, chain ID {1}",
+      "zh": "{0}，链 ID 为 {1}"
+    },
+    {
+      "en": "· {0} held for requests in progress",
+      "zh": "· {0} 已冻结，用于处理中的请求"
+    },
+    {
+      "en": "Export {0}",
+      "zh": "导出 {0}"
+    },
+    {
+      "en": "Net change in this range: {0}{1} credits",
+      "zh": "此范围内的净变化：{0}{1} 积分"
+    },
+    {
+      "en": "· {0} released",
+      "zh": "· {0} 已释放"
+    },
+    {
+      "en": "{0}: {1} of {2} credits left",
+      "zh": "{0}：剩余 {1}/{2} 积分"
+    },
+    {
+      "en": "{0}% {1} than last week",
+      "zh": "比上周{1} {0}%"
+    },
+    {
+      "en": "for {0} still rendering",
+      "zh": "还有 {0} 正在渲染"
+    },
+    {
+      "en": "You're in {0} too.",
+      "zh": "你还加入了{0}。"
+    },
+    {
+      "en": "You get {0}% back in credits when they top up.",
+      "zh": "他们充值后，你可获得 {0}% 的积分返还。"
+    },
+    {
+      "en": "{0} joined through your link so far, giving you {1} credits back.",
+      "zh": "目前已有 {0}通过你的链接加入，为你返还了 {1} 积分。"
+    },
+    {
+      "en": "You have {0}.",
+      "zh": "你还有{0}。"
+    },
+    {
+      "en": "Saved {0}",
+      "zh": "已保存 {0}"
+    },
+    {
+      "en": "saved {0}",
+      "zh": "已保存的 {0}"
+    },
+    {
+      "en": "{0} credits charged",
+      "zh": "{0} 积分已扣除"
+    },
+    {
+      "en": "{0} · settled receipt.{1}",
+      "zh": "{0} · 已结算收据。{1}"
+    },
+    {
+      "en": "{0} unused reserved credits released.",
+      "zh": "未使用的 {0} 冻结积分已释放。"
+    },
+    {
+      "en": "{0} · {1} reserved credits released. This is a released hold, not a refund.",
+      "zh": "{0} · {1} 冻结积分已释放。这是释放冻结，不是退款。"
+    },
+    {
+      "en": "{0} credits reserved",
+      "zh": "已冻结 {0} 积分"
+    },
+    {
+      "en": "{0} · {1} Check status before sending another paid request.",
+      "zh": "{0} · {1} 请在发送其他付费请求前检查状态。"
+    },
+    {
+      "en": "{0} via {1}",
+      "zh": "{0}（通过 {1}）"
+    },
+    {
+      "en": "Estimated ≈{0} credits",
+      "zh": "预计约为 {0} 积分"
+    },
+    {
+      "en": "Slide {0}",
+      "zh": "幻灯片 {0}"
+    },
+    {
+      "en": "Worksheet {0} (stored values; formulas are not evaluated)",
+      "zh": "工作表 {0}（存储值；不计算公式）"
+    },
+    {
+      "en": "Your {0} spending limit is 0 credits, so nothing can be spent.",
+      "zh": "你的 {0} 消费上限为 0 积分，因此无法消费。"
+    },
+    {
+      "en": "This would spend up to {0} credits, more than your whole {1} spending limit of {2} credits.",
+      "zh": "此次最多将消费 {0} 积分，超过你的 {1} 消费上限（上限为 {2} 积分）。"
+    },
+    {
+      "en": "You've reached your {0} spending limit of {1} credits.",
+      "zh": "你已达到 {0} 消费上限（{1} 积分）。"
+    },
+    {
+      "en": "This would spend up to {0} credits, more than the {1} credits left of your {2} spending limit.",
+      "zh": "此次最多将消费 {0} 积分，超过你的 {2} 消费上限剩余的 {1} 积分。"
+    },
+    {
+      "en": "Room frees up at {0}.",
+      "zh": "额度将在 {0} 释放。"
+    },
+    {
+      "en": "A fact can be at most {0} characters.",
+      "zh": "每条记忆最多 {0} 个字符。"
+    },
+    {
+      "en": "Enabled: {0}. {1} {2}",
+      "zh": "已启用：{0}。{1} {2}"
+    },
+    {
+      "en": "Title cannot exceed {0} characters.",
+      "zh": "标题不能超过 {0} 个字符。"
+    },
+    {
+      "en": "Body cannot exceed {0} characters.",
+      "zh": "提示词不能超过 {0} 个字符。"
+    },
+    {
+      "en": "Instructions cannot exceed {0} characters.",
+      "zh": "常驻指令不能超过 {0} 个字符。"
+    },
+    {
+      "en": "This conversation and reply budget exceed the {0} context allowance (conservative estimate: {1} input + {2} reply tokens; allowance {3}). Reduce the reply budget or start a new conversation with selected context. Nothing was sent or charged.",
+      "zh": "此会话和回复预算超出 {0} 上下文限制（保守估算：{1} 个输入 Token + {2} 个回复 Token；限制为 {3}）。请减少回复预算，或使用选定上下文开始新会话。未发送任何内容，也未扣除积分。"
+    },
+    {
+      "en": "Memory holds up to {0} facts. Delete one first.",
+      "zh": "记忆最多可保存 {0} 条。请先删除一条。"
+    },
+    {
+      "en": "Title must be 1–{0} characters.",
+      "zh": "标题长度需为 1–{0} 个字符。"
+    },
+    {
+      "en": "Body must be 1–{0} characters.",
+      "zh": "提示词长度需为 1–{0} 个字符。"
+    },
+    {
+      "en": "You can save up to {0} scrolls.",
+      "zh": "最多可保存 {0} 个卷轴。"
+    },
+    {
+      "en": "Set each limit in credits from 0 to {0} with at most four decimals, or null for no limit.",
+      "zh": "请将每项上限设置为 0 至 {0} 积分，最多四位小数；如不设上限，请使用 null。"
+    },
+    {
+      "en": "There's no pending change to your {0} limit.",
+      "zh": "你的 {0} 上限没有待处理的更改。"
+    },
+    {
+      "en": "Choose a range of at most {0} days.",
+      "zh": "请选择不超过 {0} 天的范围。"
+    },
+    {
+      "en": "{0} other collab",
+      "zh": "另外 {0} 个协作空间"
+    },
+    {
+      "en": "{0} other collabs",
+      "zh": "另外 {0} 个协作空间"
+    },
+    {
+      "en": "{0} person has",
+      "zh": "{0} 人"
+    },
+    {
+      "en": "{0} people have",
+      "zh": "{0} 人"
+    },
+    {
+      "en": "{0} other key",
+      "zh": "另外 {0} 个密钥"
+    },
+    {
+      "en": "{0} other keys",
+      "zh": "另外 {0} 个密钥"
     }
   ]
 }

@@ -85,6 +85,9 @@ an expiry and a pause switch. Includes its launch film.
 [NYMA Holder Program](docs/releases/nyma-holder-program.md): hold NYMA in a linked wallet and get
 ANONYMA credits every 30 days, plus perks by tier. Includes its launch film.
 
+[Team Treasury](docs/releases/team-treasury.md): a shared balance for a Collab workspace, with
+per-member limits and Team pays in shared chats. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

@@ -1,0 +1,162 @@
+.uploads-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: #0b193977;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: left;
+}
+.uploads-panel {
+  width: min(760px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #d3def3;
+  border-radius: 8px;
+  padding: 24px;
+  color: #142343;
+  box-shadow: 0 20px 90px #07163940;
+}
+.uploads-panel header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: start;
+}
+.uploads-panel h2 {
+  font-size: 25px;
+  margin: 6px 0 12px;
+}
+.uploads-panel h3 {
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+.uploads-panel small {
+  font-size: 11px;
+  color: #5d6b83;
+}
+.uploads-panel p {
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: normal;
+}
+.uploads-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  align-items: start;
+}
+.uploads-panel button,
+.uploads-panel a {
+  font-size: 12px;
+  border: 1px solid #c4d0e7;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #0135df;
+  background: #fff;
+  cursor: pointer;
+  text-decoration: none;
+}
+.uploads-panel button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.uploads-panel select,
+.uploads-panel textarea {
+  border: 1px solid #bdcce7;
+  border-radius: 4px;
+  padding: 8px;
+  background: #fff;
+  color: #142343;
+  max-width: 100%;
+}
+.uploads-panel textarea {
+  width: 100%;
+  resize: vertical;
+}
+.uploads-panel .uploads-check {
+  display: flex;
+  flex-direction: row;
+  align-items: start;
+  gap: 8px;
+}
+.uploads-check input {
+  margin-top: 2px;
+}
+.uploads-save,
+.uploads-audio {
+  background: #f3f6fc;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid #dfe7f5;
+  margin: 16px 0;
+}
+.uploads-save strong {
+  overflow-wrap: anywhere;
+}
+.uploads-list article {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e1e6f0;
+}
+.uploads-list strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+.uploads-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.uploads-note {
+  color: #5d6b83;
+}
+.uploads-error {
+  color: #a72932;
+  background: #fff1f1;
+  padding: 10px;
+}
+.uploads-panel:focus {
+  outline: none;
+}
+@media (max-width: 600px) {
+  .uploads-backdrop {
+    padding: 8px;
+  }
+  .uploads-panel {
+    padding: 16px;
+    max-height: 95vh;
+  }
+  .uploads-panel h2 {
+    font-size: 21px;
+  }
+  .uploads-panel input[type="file"] {
+    max-width: 100%;
+    font-size: 12px;
+  }
+}
+
+.uploads-dialog {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  max-width: calc(100vw - 16px);
+  max-height: 95vh;
+  overflow: visible;
+}
+.uploads-dialog::backdrop {
+  background: #0b193977;
+}
+.uploads-dialog .uploads-panel {
+  width: min(760px, calc(100vw - 16px));
+  box-sizing: border-box;
+}

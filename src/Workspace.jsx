@@ -65,6 +65,8 @@ import {
 } from "./TrainingLabels.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
+import { CleanImageChip } from "./CleanUploads.jsx";
+import { IMAGE_TYPES, IMAGE_LIMIT, HEIC_LIMIT, isHeicFile, withKeep } from "./clean-notes.js";
 import { parseDocumentBlocks } from "./documents.js";
 import Symposium from "./Symposium.jsx";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
@@ -244,6 +246,7 @@ export default function Workspace() {
   const navigate = useNavigate();
   const demo = params.get("demo") === "1";
   const { models, user, connected, config, refresh } = useApp();
+  const cleanLive = isReleased(config, "cleanuploads");
   const [all, setAll] = useState(() =>
       demo ? readStore("conversations", initial) : [],
     ),
@@ -255,7 +258,9 @@ export default function Workspace() {
     [error, setError] = useState(""),
     [info, setInfo] = useState(""),
     [receipt, setReceipt] = useState(null),
-    [attachments, setAttachments] = useState([]),
+    // Every chosen reference image. Clean Uploads can hold one back (no url)
+    // until the user keeps its original; `attachments` are the ones Send uses.
+    [imageItems, setAttachments] = useState([]),
     [documents, setDocuments] = useState([]),
     [media, setMedia] = useState(() => (demo ? readStore("media", []) : [])),
     [dialog, setDialog] = useState(null),
@@ -422,6 +427,7 @@ export default function Workspace() {
         Remember
       </button>
     ) : null;
+  const attachments = useMemo(() => imageItems.filter((a) => a.url), [imageItems]);
   // Quote and Send retain image history; capability follows that exact context.
   const needsVision = textMode && requestNeedsVision(buildChatRequest({
     messages, attachments,
@@ -747,11 +753,12 @@ export default function Workspace() {
   async function addFiles(e) {
     setError("");
     const files = [...e.target.files];
-    if (files.length + attachments.length > 8) {
+    if (files.length + imageItems.length > 8) {
       setError("Choose up to 8 reference images.");
       e.target.value = "";
       return;
     }
+    if (cleanLive) return addCleanImages(files, e.target);
     if (
       files.some(
         (f) =>
@@ -776,6 +783,25 @@ export default function Workspace() {
     );
     setAttachments((prev) => [...prev, ...values]);
     e.target.value = "";
+  }
+  // Clean Uploads: hidden details (location, camera, author) are removed in
+  // this browser before an image is attached, and HEIC photos are converted
+  // to JPEG. The cleaner loads only when an image is chosen.
+  async function addCleanImages(files, input) {
+    input.value = "";
+    if (
+      files.some((f) =>
+        IMAGE_TYPES.includes(f.type) ? f.size > IMAGE_LIMIT : !isHeicFile(f) || f.size > HEIC_LIMIT,
+      )
+    ) {
+      setError("Use PNG, JPEG, WebP or GIF images up to 1.5 MiB each, or HEIC photos up to 20 MiB.");
+      return;
+    }
+    const { prepareImageAttachment } = await import("./clean-uploads.js");
+    const prepared = await Promise.all(files.map((f) => prepareImageAttachment(f)));
+    const problem = prepared.find((p) => p.error);
+    if (problem) setError(problem.error);
+    setAttachments((prev) => [...prev, ...prepared.filter((p) => !p.error)]);
   }
   // "@model-id your message" sends that one message to another chat model.
   const mentionQuery = textMode
@@ -917,6 +943,10 @@ export default function Workspace() {
   async function send(e, redo = null) {
     e?.preventDefault?.();
     if (!(redo ? redo.content.trim() : prompt.trim()) || busy || (!redo && branchFlight.current?.pending)) return;
+    if (!redo && attachments.length !== imageItems.length) {
+      setError("Metadata couldn't be removed from an image. Tick Keep original to send it as it is, or remove it.");
+      return;
+    }
     const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
     const effectiveModel = redo ? redoModel || selected : target;
     const requestVision = redo
@@ -2073,9 +2103,18 @@ export default function Workspace() {
                   </div>
                 )}
                 <form className="composer" onSubmit={send}>
-                  {attachments.length > 0 && (
+                  {imageItems.length > 0 && (
                     <div className="attachment-list">
-                      {attachments.map((a, i) => (
+                      {imageItems.map((a, i) => a.clean ? (
+                        <CleanImageChip
+                          key={i}
+                          item={a}
+                          onKeep={(keep) =>
+                            setAttachments((p) => p.map((x, j) => (j === i ? withKeep(x, keep) : x)))
+                          }
+                          onRemove={() => setAttachments((p) => p.filter((_, j) => j !== i))}
+                        />
+                      ) : (
                         <span key={i}>
                           <img src={a.url} alt={a.name} />
                           <button
@@ -2298,7 +2337,10 @@ export default function Workspace() {
                           <input
                             type="file"
                             multiple
-                            accept="image/png,image/jpeg,image/webp,image/gif"
+                            accept={
+                              "image/png,image/jpeg,image/webp,image/gif" +
+                              (cleanLive ? ",image/heic,image/heif,.heic,.heif" : "")
+                            }
                             onChange={addFiles}
                           />
                         </label>
@@ -2313,6 +2355,7 @@ export default function Workspace() {
                           disabled={busy}
                           onError={setError}
                           filesEnabled={isReleased(config, "files")}
+                          cleanEnabled={cleanLive}
                           privateContext={privateMode || ephemeral || veilOn}
                           audioEnabled={isReleased(config, "audio")}
                           onRefresh={refresh}

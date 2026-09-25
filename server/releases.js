@@ -403,6 +403,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "cleanuploads",
+    title: "Clean Uploads",
+    tagline: "Your files arrive without their hidden details.",
+    points: [
+      "Location, camera and author details removed in your browser",
+      "Photos keep their quality and stay the right way up",
+      "See what was removed, or keep the original",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

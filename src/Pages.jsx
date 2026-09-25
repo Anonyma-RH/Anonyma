@@ -836,6 +836,7 @@ const featureIcons = {
   treasury: "coins",
   chatcontrol: "book",
   voice: "audio",
+  cleanuploads: "eraser",
 };
 const launch = {
   id: "mvp",

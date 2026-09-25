@@ -2298,7 +2298,35 @@
     "The device voice could not finish. Choose another local voice or read the text.": "设备语音未能读完。请选择其他本地语音，或直接阅读文字。",
     "The device voice did not finish. Press Play again or read the text.": "设备语音没有读完。请再次按“播放回答”，或直接阅读文字。",
     "This device could not start speech. Choose another local voice or read the text.": "此设备无法开始朗读。请选择其他本地语音，或直接阅读文字。",
-    "No local device voice is available. Keep reading the text, or enable a device voice in browser or system settings.": "没有可用的本地设备语音。你可以继续阅读文字，或在浏览器或系统设置中启用设备语音。"
+    "No local device voice is available. Keep reading the text, or enable a device voice in browser or system settings.": "没有可用的本地设备语音。你可以继续阅读文字，或在浏览器或系统设置中启用设备语音。",
+    "Clean Uploads": "净化上传",
+    "Your files arrive without their hidden details.": "你的文件送达时，不再附带隐藏信息。",
+    "Location, camera and author details removed in your browser": "位置、相机和作者信息在你的浏览器中移除",
+    "Photos keep their quality and stay the right way up": "照片保持原有画质，方向始终正确",
+    "See what was removed, or keep the original": "查看移除了哪些信息，或保留原文件",
+    "No hidden details found": "未发现隐藏信息",
+    "Metadata couldn't be removed from this file.": "无法移除此文件的元数据。",
+    "Original kept with its hidden details": "已保留原文件及其隐藏信息",
+    "Keep original": "保留原文件",
+    "location": "位置",
+    "camera details": "相机信息",
+    "author": "作者",
+    "company": "公司",
+    "dates": "日期",
+    "software": "软件信息",
+    "edit history": "编辑记录",
+    "comments": "备注",
+    "titles and tags": "标题和标签",
+    "custom properties": "自定义属性",
+    "file paths": "文件路径",
+    "cover art": "封面图",
+    "thumbnail": "缩略图",
+    "other details": "其他信息",
+    "Use PNG, JPEG, WebP or GIF images up to 1.5 MiB each, or HEIC photos up to 20 MiB.": "请使用 PNG、JPEG、WebP 或 GIF 图片（每张不超过 1.5 MiB），或不超过 20 MiB 的 HEIC 照片。",
+    "Metadata couldn't be removed from an image. Tick Keep original to send it as it is, or remove it.": "有一张图片的元数据无法移除。勾选“保留原文件”即可按原样发送，或将其移除。",
+    "Tick Keep original to save it as it is, or choose another file.": "勾选“保留原文件”即可按原样保存，或选择其他文件。",
+    "Save the cleaned file and extracted text to my account.": "将已净化的文件和提取的文本保存到我的账户。",
+    "Save the original bytes and extracted text to my account.": "将原始文件和提取的文本保存到我的账户。"
   },
   "patterns": [
     {
@@ -3436,6 +3464,18 @@
     {
       "en": "{0} credits reserved; final charge pending.",
       "zh": "已冻结 {0} 积分；最终费用待定。"
+    },
+    {
+      "en": "Removed: {0}",
+      "zh": "已移除：{0}"
+    },
+    {
+      "en": "Not sent: {0}",
+      "zh": "未发送：{0}"
+    },
+    {
+      "en": "\"{0}\" can't be opened in this browser. Save it as JPEG, then attach it.",
+      "zh": "此浏览器无法打开“{0}”。请先另存为 JPEG，再附加。"
     }
   ]
 }

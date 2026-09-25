@@ -250,8 +250,8 @@ test("chat accepts a leading system message without changing what is saved", asy
 // --- Release gating ----------------------------------------------------
 
 test("scrolls: registered as an unreleased update", () => {
-  const entry = UPDATES[UPDATES.length - 1];
-  assert.equal(entry.id, "scrolls");
+  const entry = UPDATES.find((u) => u.id === "scrolls");
+  assert.ok(entry);
   assert.equal(entry.released, false);
   assert.equal(entry.title, "Scrolls");
   assert.equal(entry.tagline, "Save the prompt. Skip the retyping.");

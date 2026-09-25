@@ -1358,11 +1358,11 @@ export default function Workspace() {
                 {isReleased(config, "ephemeral") &&
                   ephemeral &&
                   !privateMode &&
-                  ["chat", "code"].includes(mode) && <EphemeralNotice />}
+                  textMode && <EphemeralNotice />}
                 {!demo &&
                   privateModeReleased(config) &&
                   privateMode &&
-                  ["chat", "code"].includes(mode) &&
+                  textMode &&
                   (privateModelsCallable.length ? (
                     <PrivateModeNotice />
                   ) : (
@@ -1555,7 +1555,7 @@ export default function Workspace() {
                       )}
                       {!demo &&
                         privateModeReleased(config) &&
-                        ["chat", "code"].includes(mode) && (
+                        textMode && (
                         <PrivateModeToggle
                           active={privateMode}
                           onToggle={togglePrivateMode}

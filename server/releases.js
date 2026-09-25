@@ -423,7 +423,7 @@ export const UPDATES = [
       "Masked details stay masked; attachments aren't shared",
       "Expires when you choose, or revoke it any time",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "palette",

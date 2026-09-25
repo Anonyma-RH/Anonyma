@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Icon } from "./ui.jsx";
-import { isReleased } from "./lib.js";
+import { installHintFor, isReleased } from "./lib.js";
 import "./install-app.css";
 
 // Adds the installable-app shell — the manifest link, the apple-mobile-web-app
@@ -28,7 +28,9 @@ export function useInstallAppGate(config) {
     for (const [name, content] of [
       ["apple-mobile-web-app-capable", "yes"],
       ["mobile-web-app-capable", "yes"],
-      ["apple-mobile-web-app-status-bar-style", "black-translucent"],
+      // "default" keeps the page below the clock and notch. The translucent
+      // style draws it underneath them, and nothing on the site pads for that.
+      ["apple-mobile-web-app-status-bar-style", "default"],
       ["apple-mobile-web-app-title", "ANONYMA"],
     ]) {
       if (document.querySelector(`meta[name="${name}"]`)) continue;
@@ -75,20 +77,23 @@ function isStandalone() {
   );
 }
 
-function isIOSSafari() {
-  const ua = navigator.userAgent || "";
-  const iOS =
-    /iPad|iPhone|iPod/.test(ua) ||
-    // iPadOS 13+ requests desktop sites and reports as a Mac; multi-touch
-    // is the tell.
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const otherBrowserOnIOS = /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
-  return iOS && !otherBrowserOnIOS;
+const HINTS = {
+  ios: "Share → Add to Home Screen",
+  mac: "File → Add to Dock",
+};
+
+function currentInstallHint() {
+  if (typeof navigator === "undefined") return null;
+  return installHintFor(
+    navigator.userAgent || "",
+    navigator.platform || "",
+    navigator.maxTouchPoints || 0,
+  );
 }
 
 // Surfaces the browser's install prompt when it offers one
-// (beforeinstallprompt, Chromium/Edge/Android), or a one-line manual hint on
-// iOS Safari, which never fires that event.
+// (beforeinstallprompt, Chromium/Edge/Android), or a one-line manual hint where
+// the browser never fires that event (iPhone, iPad, Safari on a Mac).
 export function useInstallPrompt() {
   const [deferred, setDeferred] = useState(null);
   const [installed, setInstalled] = useState(false);
@@ -119,17 +124,18 @@ export function useInstallPrompt() {
     }
     setDeferred(null);
   }
+  const hint = !installed && !deferred ? currentInstallHint() : null;
   return {
     canInstall: !installed && !!deferred,
-    showIOSHint: !installed && !deferred && isIOSSafari(),
+    hint: hint ? HINTS[hint] : null,
     promptInstall,
   };
 }
 
 // Unobtrusive sidebar entry: a real button when the browser can install the
-// app, a one-line hint on iOS Safari, and nothing otherwise.
+// app, a one-line hint where installing is manual, and nothing otherwise.
 export function InstallAppEntry() {
-  const { canInstall, showIOSHint, promptInstall } = useInstallPrompt();
+  const { canInstall, hint, promptInstall } = useInstallPrompt();
   if (canInstall)
     return (
       <button className="install-app-entry" onClick={promptInstall}>
@@ -137,9 +143,26 @@ export function InstallAppEntry() {
         Install app
       </button>
     );
-  if (showIOSHint)
+  if (hint) return <p className="install-app-hint">{hint}</p>;
+  return null;
+}
+
+// The same entry for the site footer, so visitors who aren't signed in can
+// install the app too. Rendered only once the app update is released.
+export function InstallAppFooterLink() {
+  const { canInstall, hint, promptInstall } = useInstallPrompt();
+  if (canInstall)
     return (
-      <p className="install-app-hint">Share → Add to Home Screen</p>
+      <button type="button" className="install-app-footer" onClick={promptInstall}>
+        Install app
+      </button>
+    );
+  if (hint)
+    return (
+      <span className="install-app-footer-hint">
+        <span>Install app</span>
+        <small>{hint}</small>
+      </span>
     );
   return null;
 }

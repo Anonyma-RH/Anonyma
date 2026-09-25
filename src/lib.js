@@ -382,3 +382,23 @@ export function modeReleased(config, mode) {
     return ["images", "video", "audio"].some((id) => isReleased(config, id));
   return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
 }
+
+// Which manual install hint this browser needs, when it has no install prompt:
+// "ios" for Safari on iPhone and iPad, and for Chrome, Edge and Firefox there
+// from iOS 16.4 (they can add to the Home Screen from their share menu too);
+// "mac" for Safari 17+ on a Mac (File → Add to Dock); null otherwise.
+export function installHintFor(ua = "", platform = "", maxTouchPoints = 0) {
+  const iPadAsMac = platform === "MacIntel" && maxTouchPoints > 1;
+  if (/iPad|iPhone|iPod/.test(ua) || iPadAsMac) {
+    if (!/CriOS|FxiOS|EdgiOS|OPiOS/.test(ua)) return "ios";
+    const v = ua.match(/OS (\d+)_(\d+)/);
+    const [major, minor] = v ? [Number(v[1]), Number(v[2])] : [0, 0];
+    return major > 16 || (major === 16 && minor >= 4) ? "ios" : null;
+  }
+  const macSafari =
+    /Macintosh/.test(ua) &&
+    /Safari\//.test(ua) &&
+    !/Chrome|Chromium|Edg\/|Firefox|OPR\//.test(ua);
+  const version = Number((ua.match(/Version\/(\d+)/) || [])[1] || 0);
+  return macSafari && version >= 17 ? "mac" : null;
+}

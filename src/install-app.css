@@ -25,3 +25,25 @@
   line-height: 1.5;
   color: #b7c9ff;
 }
+
+/* Footer entry: reads like the footer's other links. */
+.install-app-footer {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.install-app-footer:hover {
+  text-decoration: underline;
+}
+.install-app-footer-hint {
+  display: grid;
+  gap: 2px;
+}
+.install-app-footer-hint small {
+  font-size: 0.85em;
+  opacity: 0.75;
+}

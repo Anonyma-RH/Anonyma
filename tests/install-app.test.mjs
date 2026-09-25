@@ -23,6 +23,7 @@ import { siteRoutes } from "../server/routes/site.js";
 import { applyMiddleware } from "../server/middleware.js";
 import { createApp } from "../server/app.js";
 import { UPDATES } from "../server/releases.js";
+import { installHintFor } from "../src/lib.js";
 
 // Release commits flip `released` on UPDATES entries. These tests cover the
 // gate itself, so they pin every update to unreleased for this file and keep
@@ -147,6 +148,46 @@ test("the install entry and share-target prefill are gated behind the app releas
   assert.match(shareTarget, /if \(!enabled \|\| mode !== "chat"\) return;/);
 });
 
+test("installed on iPhone, the page stays below the status bar", () => {
+  const gate = readFileSync("src/InstallApp.jsx", "utf8");
+  // black-translucent draws the page under the clock and notch, and nothing
+  // on the site pads for the safe area.
+  assert.match(gate, /\["apple-mobile-web-app-status-bar-style", "default"\]/);
+  assert.doesNotMatch(gate, /black-translucent/);
+});
+
+test("installHintFor: manual install hints for iPhone, iPad and Safari on a Mac", () => {
+  const safariIPhone =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1";
+  const chromeIPhone =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0 Mobile/15E148 Safari/604.1";
+  const oldChromeIPhone =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 16_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/110.0 Mobile/15E148 Safari/604.1";
+  const iPadDesktop =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15";
+  const macSafari17 = iPadDesktop.replace("Version/18.0", "Version/17.4");
+  const macSafari16 = iPadDesktop.replace("Version/18.0", "Version/16.6");
+  const macChrome =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36";
+  const android =
+    "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36";
+  assert.equal(installHintFor(safariIPhone, "iPhone", 5), "ios");
+  assert.equal(installHintFor(chromeIPhone, "iPhone", 5), "ios", "iOS 16.4+ browsers can add to the Home Screen");
+  assert.equal(installHintFor(oldChromeIPhone, "iPhone", 5), null, "before 16.4 only Safari can");
+  assert.equal(installHintFor(iPadDesktop, "MacIntel", 5), "ios", "an iPad asking for desktop sites");
+  assert.equal(installHintFor(macSafari17, "MacIntel", 0), "mac");
+  assert.equal(installHintFor(macSafari16, "MacIntel", 0), null, "Add to Dock needs Safari 17");
+  assert.equal(installHintFor(macChrome, "MacIntel", 0), null, "Chrome offers its own prompt");
+  assert.equal(installHintFor(android, "Linux armv8l", 5), null);
+});
+
+test("the footer offers the install entry to visitors, only once the app is released", () => {
+  const app = readFileSync("src/App.jsx", "utf8");
+  assert.match(app, /g\.title === "Connect" && isReleased\(config, "app"\) && <InstallAppFooterLink \/>/);
+  const gate = readFileSync("src/InstallApp.jsx", "utf8");
+  assert.match(gate, /export function InstallAppFooterLink\(\)/);
+});
+
 test("the UPDATES entry for the app exists and is off by default", () => {
   const entry = UPDATES.find((u) => u.id === "app");
   assert.ok(entry, 'UPDATES should include an "app" entry');
@@ -155,7 +196,7 @@ test("the UPDATES entry for the app exists and is off by default", () => {
   assert.deepEqual(entry.points, [
     "Install on phone or desktop",
     "Opens straight into your workspace",
-    "Share links and text into a chat",
+    "Share links and text into a chat on Android",
   ]);
   // Committed as false until its "Release …" commit flips it to true.
   assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");

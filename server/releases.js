@@ -219,7 +219,7 @@ export const UPDATES = [
     points: [
       "Install on phone or desktop",
       "Opens straight into your workspace",
-      "Share links and text into a chat",
+      "Share links and text into a chat on Android",
     ],
     released: true,
   },

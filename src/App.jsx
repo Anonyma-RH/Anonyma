@@ -3,7 +3,7 @@ import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { AppProvider, useApp, useStartPath } from "./context.jsx";
 import { reducedMotion } from "./motion.js";
 import { Logo, Icon, Button, Mark, SoonTag } from "./ui.jsx";
-import { modeReleased } from "./lib.js";
+import { isReleased, modeReleased } from "./lib.js";
 import { featureEnabled } from "./release-copy.js";
 import Home from "./Home.jsx";
 import { Reveal, useClosingMotion } from "./ReferenceMotion.jsx";
@@ -23,6 +23,7 @@ import Whitepaper from "./Whitepaper.jsx";
 import Token from "./Token.jsx";
 import { LanguageSwitch, Translation } from "./LanguageSwitch.jsx";
 import Verify from "./Verify.jsx";
+import { InstallAppFooterLink } from "./InstallApp.jsx";
 const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 const Connect = lazy(() => import("./Connect.jsx"));
@@ -288,6 +289,7 @@ function Footer() {
                     </Link>
                   ),
                 )}
+                {g.title === "Connect" && isReleased(config, "app") && <InstallAppFooterLink />}
               </div>
             ))}
           </div>

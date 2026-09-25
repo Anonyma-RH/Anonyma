@@ -52,8 +52,12 @@ export function chatRoutes(ctx) {
         "unsupported_model",
       );
     // Private Mode is released and dependency-gated in releases.js; here
-    // only the chosen model itself is checked.
-    const isPrivate = !api && req.body.private === true;
+    // only the chosen model itself is checked. Over the API only a
+    // private-only connected app routes this way (set by the MCP server,
+    // never by the request body).
+    const isPrivate = api
+      ? req.privateOnly === true
+      : req.body.private === true;
     if (isPrivate && !isPrivateModel(m, cfg))
       fail(
         400,
@@ -311,7 +315,8 @@ export function chatRoutes(ctx) {
         }
       }
       // Images are downloaded before returning durable/private references.
-      for (const img of images) {
+      // A caller that returns text only (the MCP server) keeps none of them.
+      for (const img of req.discardMedia === true ? [] : images) {
         const source = img.image_url?.url || img.url;
         if (source) {
           const media = await mediaStore.saveMedia(

@@ -11,6 +11,7 @@ import {
 import { pollVideo, payment } from "./provider.js";
 import { recordPayment, OPEN_PAYMENT_STATUSES, sqlList } from "./payments.js";
 import { refreshTokenHoldings } from "./auth.js";
+import { sweepOAuth } from "./oauth.js";
 
 // Background maintenance: video completion, payment status checks, expired
 // media and reservations, token holdings and table cleanup.
@@ -220,6 +221,7 @@ export function createWorker(ctx) {
         now() - 86400000,
       );
       db.prepare("DELETE FROM sessions WHERE expires<?").run(now());
+      sweepOAuth(db);
     } finally {
       working = false;
     }

@@ -1,0 +1,415 @@
+/* Connect an App: a focused consent page (cobalt band, white card, flat
+   controls) and Account → Connected apps. */
+.connect-page {
+  --work-ink: #142343;
+  --work-muted: #68748a;
+  --work-line: #e3e8f0;
+  --work-surface: #f7f9fc;
+  min-height: 100dvh;
+  background: #fff;
+  color: var(--work-ink);
+}
+.connect-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  min-height: 100dvh;
+}
+.connect-band {
+  background: var(--brand-blue, #0135df);
+  color: #fff;
+  padding: 36px 56px 56px;
+  display: flex;
+  flex-direction: column;
+}
+.connect-band-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 88px;
+}
+.connect-band .logo {
+  color: #fff;
+  font-family: var(--serif);
+  font-weight: 300;
+  letter-spacing: -0.7px;
+  font-size: 25px;
+}
+.connect-band .logo .brand-mark {
+  width: 35px;
+  height: 35px;
+}
+.connect-band .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #dfe7ff;
+  font-size: 11px;
+  letter-spacing: 1.3px;
+  font-weight: 600;
+  margin: 0 0 26px;
+}
+.connect-band .eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--brand-orange, #ffb21c);
+  flex: none;
+}
+.connect-app-name {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 1;
+  letter-spacing: -1.5px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.connect-self-reported {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: #c3d0ff;
+}
+.connect-band h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+  margin: 22px 0 40px;
+  color: #fff;
+}
+.connect-facts {
+  display: grid;
+  gap: 18px;
+  margin: 0 0 36px;
+  padding: 24px 0 0;
+  border-top: 1px solid #ffffff33;
+}
+.connect-facts dt {
+  font-size: 11px;
+  letter-spacing: 1.1px;
+  color: #c3d0ff;
+  margin-bottom: 8px;
+}
+.connect-facts dd {
+  margin: 0;
+  font-size: 15px;
+}
+.connect-facts code {
+  display: inline-block;
+  background: #fff;
+  color: var(--brand-deep, #061b69);
+  font-size: 17px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 2px;
+  overflow-wrap: anywhere;
+}
+.connect-facts small {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #dfe7ff;
+  max-width: 420px;
+}
+.connect-gets {
+  list-style: none;
+  padding: 0;
+  margin: auto 0 0;
+  display: grid;
+  gap: 12px;
+  font-size: 13px;
+  color: #eef2ff;
+}
+.connect-gets li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.connect-gets svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--brand-orange, #ffb21c);
+}
+.connect-card {
+  padding: 124px 64px 56px;
+  max-width: 640px;
+  width: 100%;
+}
+.connect-card h2 {
+  font-size: 30px;
+  letter-spacing: -0.5px;
+  margin: 0 0 10px;
+}
+.connect-muted {
+  color: var(--work-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 28px;
+}
+.connect-card form label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 12px;
+  color: #4d5d78;
+  margin-bottom: 22px;
+}
+.connect-card input:not([type="checkbox"]) {
+  border: 1px solid #d7dfea;
+  background: #fff;
+  color: var(--work-ink);
+  border-radius: 2px;
+  font-size: 14px;
+  min-height: 44px;
+  padding: 0 12px;
+}
+.connect-card input:not([type="checkbox"]):focus {
+  border-color: var(--brand-blue, #0135df);
+  outline: none;
+}
+.connect-card .amount-shortcuts {
+  margin: -10px 0 10px;
+}
+.connect-card .amount-shortcuts button {
+  font-size: 12px;
+  border: 1px solid var(--work-line);
+  border-radius: 2px;
+  padding: 9px;
+  background: #fff;
+}
+.connect-card .amount-shortcuts button.active {
+  background: #edf2ff;
+  border-color: #89a4ee;
+  color: var(--brand-blue, #0135df);
+}
+.connect-card .fine-print {
+  color: var(--work-muted);
+  font-size: 12px;
+  margin: 0 0 22px;
+}
+.connect-expiry {
+  border: 0;
+  padding: 0;
+  margin: 0 0 18px;
+}
+.connect-expiry legend {
+  font-size: 12px;
+  color: #4d5d78;
+  padding: 0;
+  margin-bottom: 9px;
+}
+.connect-expiry .filter-tabs {
+  margin: 0;
+}
+.connect-expiry .filter-tabs button {
+  flex: 1;
+  font-size: 12px;
+  color: var(--work-muted);
+  border-color: var(--work-line);
+  border-radius: 2px;
+  background: #fff;
+}
+.connect-expiry .filter-tabs button.active {
+  background: var(--brand-blue, #0135df);
+  border-color: var(--brand-blue, #0135df);
+  color: #fff;
+}
+/* The private-models switch: flat, cobalt when on. */
+.connect-card label.connect-switch {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 14px;
+  cursor: pointer;
+  padding: 16px;
+  border: 1px solid var(--work-line);
+  background: var(--work-surface);
+  margin-bottom: 16px;
+}
+.connect-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.connect-switch-track {
+  flex: none;
+  position: relative;
+  width: 40px;
+  height: 22px;
+  margin-top: 1px;
+  background: #c9d2e1;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+.connect-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 1px;
+  transition: transform 0.2s;
+}
+.connect-switch input:checked + .connect-switch-track {
+  background: var(--brand-blue, #0135df);
+}
+.connect-switch input:checked + .connect-switch-track::after {
+  transform: translateX(18px);
+}
+.connect-switch input:focus-visible + .connect-switch-track {
+  outline: 2px solid var(--brand-blue, #0135df);
+  outline-offset: 2px;
+}
+.connect-switch b {
+  display: block;
+  font-size: 13px;
+  color: var(--work-ink);
+  font-weight: 600;
+}
+.connect-switch small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--work-muted);
+}
+.connect-disclosure {
+  border-left: 3px solid var(--brand-blue, #0135df);
+  background: #f3f6ff;
+  padding: 16px 18px;
+  margin: 22px 0 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--work-ink);
+}
+.connect-disclosure p {
+  margin: 0;
+}
+.connect-disclosure p + p {
+  margin-top: 8px;
+}
+.connect-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.connect-actions .button {
+  min-width: 150px;
+}
+/* Notices as in the workspace: quiet surface, cobalt icon. */
+.connect-card .notice {
+  font-size: 12px;
+  background: var(--work-surface);
+  border-color: var(--work-line);
+  color: #3e5070;
+  border-radius: 2px;
+}
+.connect-card .notice svg {
+  color: var(--brand-blue, #0135df);
+}
+.connect-card .notice.error {
+  background: #fff3ee;
+  border-color: #f3d4c6;
+  color: #9c3d2a;
+}
+.connect-card .notice.error svg {
+  color: currentColor;
+}
+.connect-done {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
+.connect-done > svg {
+  color: #fff;
+  background: var(--brand-blue, #0135df);
+  padding: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 2px;
+}
+.connect-done h2 {
+  margin: 0;
+}
+@media (max-width: 860px) {
+  .connect-shell {
+    grid-template-columns: 1fr;
+  }
+  .connect-band {
+    padding: 24px 16px 32px;
+  }
+  .connect-band-top {
+    margin-bottom: 40px;
+  }
+  .connect-gets {
+    margin-top: 0;
+  }
+  .connect-card {
+    padding: 32px 16px 48px;
+  }
+}
+
+/* Account → Connected apps */
+.connected-apps {
+  margin-top: 35px;
+  padding-top: 5px;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+}
+.connected-apps code {
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.connected-dates small {
+  display: block;
+  color: var(--work-muted, #68748a);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.allowance-tag.on {
+  color: #0135df;
+  border-color: #c8d5fb;
+  background: #edf2ff;
+}
+.connected-activity > td {
+  background: var(--work-surface, #f7f9fc);
+}
+.connected-activity table {
+  background: #fff;
+  border: 1px solid var(--work-line, #e3e8f0);
+  margin-bottom: 10px;
+}
+.connected-activity td,
+.connected-activity th {
+  padding: 10px 12px;
+}
+.connected-activity .fine-print {
+  margin: 0;
+}
+.connected-signed {
+  color: #0135df;
+}
+.mcp-oauth-note {
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+  margin: 18px 0 0;
+  max-width: 620px;
+  line-height: 1.6;
+}
+.connect-return {
+  margin-top: 12px !important;
+}
+.connect-return code {
+  color: var(--work-ink, #142343);
+}
+.connect-facts small.connect-full-uri {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #fff;
+  overflow-wrap: anywhere;
+  margin-top: 4px;
+}

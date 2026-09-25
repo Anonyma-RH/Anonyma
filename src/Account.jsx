@@ -33,6 +33,7 @@ import {
 import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
 import McpConnect from "./McpConnect.jsx";
 import { KeyAllowance } from "./Allowances.jsx";
+import { ConnectedApps, connectReleased } from "./Connect.jsx";
 // Ledger entry kinds as readable labels; an unknown kind reads as words.
 const LEDGER_KINDS = {
   chat: "Chat",
@@ -412,7 +413,14 @@ export default function Account() {
                             <br />
                             <small>
                               {ledgerKind(r.kind)}
-                              {r.key_name ? " · API key " + r.key_name : ""}
+                              {r.key_name && (
+                                <>
+                                  {r.connected_app
+                                    ? " · Connected app "
+                                    : " · API key "}
+                                  <span data-i18n="off">{r.key_name}</span>
+                                </>
+                              )}
                             </small>
                           </td>
                           <td className={Number(r.amount) > 0 ? "amount-in" : ""}>
@@ -739,6 +747,9 @@ export default function Account() {
                 Read the API guide <Icon name="arrow" size={16} />
               </Link>
               {isReleased(config, "mcp") && <McpConnect config={config} />}
+              {connectReleased(config) && (
+                <ConnectedApps demo={demo} onError={setError} />
+              )}
             </>
           )}
           {section === "settings" && (

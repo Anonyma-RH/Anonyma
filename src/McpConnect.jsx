@@ -1,5 +1,6 @@
 import React from "react";
 import { Icon, CopyButton, Notice } from "./ui.jsx";
+import { isReleased } from "./lib.js";
 import "./mcp.css";
 
 const claudeCodeCommand = (origin) =>
@@ -63,6 +64,16 @@ export default function McpConnect({ config }) {
         Replace YOUR_API_KEY with a real key from above. Keep it private;
         anyone holding it can spend from this balance.
       </Notice>
+      {["api", "mcp", "allowances", "connect"].every((id) =>
+        isReleased(config, id),
+      ) && (
+        <p className="mcp-oauth-note">
+          Apps that support one-click connect need no key. Give the app{" "}
+          <code data-i18n="off">{origin}/mcp</code> and approve it when it
+          asks. It gets its own budget, expiry and off switch, listed under
+          Connected apps.
+        </p>
+      )}
     </div>
   );
 }

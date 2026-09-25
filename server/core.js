@@ -372,6 +372,22 @@ export const MIGRATIONS = [
     addColumn(db, "api_keys", "paused_at", "INTEGER");
     addColumn(db, "api_keys", "agent_label", "TEXT");
   },
+  // Connect an App: OAuth for the MCP server. Apps register as public
+  // clients; each approval is a connection backed by an allowance-carrying
+  // api_keys row that has no usable secret. Codes and tokens are stored only
+  // as SHA-256 hashes.
+  (db) => {
+    addColumn(db, "api_keys", "connection_id", "TEXT");
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS oauth_clients(id TEXT PRIMARY KEY,name TEXT NOT NULL,redirect_uris TEXT NOT NULL,created INTEGER NOT NULL,authorized INTEGER);
+      CREATE TABLE IF NOT EXISTS oauth_connections(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),client_id TEXT NOT NULL,key_id TEXT NOT NULL REFERENCES api_keys(id),name TEXT NOT NULL,client_name TEXT NOT NULL,redirect_uri TEXT NOT NULL,private_only INTEGER NOT NULL DEFAULT 1,created INTEGER NOT NULL,activated INTEGER,expires INTEGER NOT NULL,revoked INTEGER);
+      CREATE INDEX IF NOT EXISTS oauth_connections_user ON oauth_connections(user_id,created);
+      CREATE TABLE IF NOT EXISTS oauth_codes(hash TEXT PRIMARY KEY,connection_id TEXT NOT NULL,client_id TEXT NOT NULL,redirect_uri TEXT NOT NULL,code_challenge TEXT NOT NULL,resource TEXT,expires INTEGER NOT NULL,used INTEGER);
+      CREATE TABLE IF NOT EXISTS oauth_tokens(hash TEXT PRIMARY KEY,connection_id TEXT NOT NULL,kind TEXT NOT NULL,created INTEGER NOT NULL,expires INTEGER NOT NULL,rotated INTEGER);
+      CREATE INDEX IF NOT EXISTS oauth_tokens_connection ON oauth_tokens(connection_id,kind);
+      CREATE INDEX IF NOT EXISTS oauth_tokens_expiry ON oauth_tokens(expires);
+    `);
+  },
 ];
 export function migrate(db) {
   const version = () => db.prepare("PRAGMA user_version").get().user_version;

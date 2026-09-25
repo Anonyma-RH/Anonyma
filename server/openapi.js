@@ -1054,7 +1054,7 @@ route(
     body: ref("McpRequest"),
     response: ref("McpResponse"),
     description:
-      "Stateless: no Mcp-Session-Id, no SSE stream. Methods: initialize, ping, tools/list, tools/call (list_models, ask, balance). A notification (no id) is acknowledged with 202 and no body. Unknown methods return -32601; malformed input returns -32700/-32600. Same key authorization, rate limits and caps as /v1. Requires the api update released as well as mcp.",
+      "Stateless: no Mcp-Session-Id, no SSE stream. Methods: initialize, ping, tools/list, tools/call (list_models, ask, balance). A notification (no id) is acknowledged with 202 and no body. Unknown methods return -32601; malformed input returns -32700/-32600. Same key authorization, rate limits and caps as /v1. Requires the api update released as well as mcp. Once Connect an App is live, an OAuth access token also works here (and only here): its tools report that connection's own budget, and a private-only connection lists and runs zero-data-retention models only. A 401 then carries WWW-Authenticate resource_metadata for OAuth discovery.",
   },
 );
 for (const method of ["get", "delete"])
@@ -1068,6 +1068,199 @@ for (const method of ["get", "delete"]) paths["/mcp"][method].responses = {
     content: { "application/json": { schema: ref("Error") } },
   },
 };
+// Connect an App: OAuth 2.1 for the MCP server (public clients, PKCE S256,
+// no identity). Error bodies on /oauth/* follow RFC 6749:
+// {error, error_description}.
+const oauthError = object({ error: string, error_description: string });
+const connection = object({
+  id: string,
+  name: string,
+  app_name: { ...string, description: "The name the app registered with (self-reported)." },
+  redirect_host: string,
+  redirect_kind: { enum: ["web", "loopback", "app"] },
+  created: integer,
+  activated: { type: ["integer", "null"] },
+  last_used: { type: ["integer", "null"] },
+  private_only: bool,
+  expired: bool,
+  signed_in: { ...bool, description: "The app holds a current refresh token." },
+  budget: number,
+  spent: number,
+  in_flight: number,
+  remaining: number,
+  expires_at: integer,
+  paused: bool,
+});
+const authorizationRequest = object(
+  {
+    response_type: { const: "code" },
+    client_id: string,
+    redirect_uri: string,
+    code_challenge: string,
+    code_challenge_method: { const: "S256" },
+    state: string,
+    scope: string,
+    resource: string,
+  },
+  ["response_type", "client_id", "redirect_uri", "code_challenge", "code_challenge_method"],
+);
+for (const path of [
+  "/.well-known/oauth-protected-resource",
+  "/.well-known/oauth-protected-resource/mcp",
+])
+  route("get", path, "OAuth protected resource metadata for /mcp (RFC 9728)", {
+    auth: null,
+    response: object({
+      resource: string,
+      authorization_servers: array(string),
+      scopes_supported: array(string),
+      bearer_methods_supported: array(string),
+      resource_name: string,
+    }),
+    description: "CORS: any origin, no credentials.",
+  });
+route("get", "/.well-known/oauth-authorization-server", "OAuth authorization server metadata (RFC 8414)", {
+  auth: null,
+  description:
+    "Authorization code with PKCE S256 and refresh tokens only; public clients (token_endpoint_auth_method none); scope mcp; iss in authorization responses. No OpenID Connect and no client ID metadata documents. CORS: any origin, no credentials.",
+});
+route("post", "/oauth/register", "Register a public OAuth client (RFC 7591)", {
+  auth: null,
+  body: object(
+    {
+      redirect_uris: {
+        ...array(string),
+        minItems: 1,
+        maxItems: 5,
+        description:
+          "https, http on localhost/127.0.0.1/[::1] (any port), or a private-use app scheme. No fragments; javascript, data, file, vbscript and blob are refused.",
+      },
+      client_name: { ...string, maxLength: 80 },
+      token_endpoint_auth_method: { const: "none" },
+      grant_types: array({ enum: ["authorization_code", "refresh_token"] }),
+      response_types: array({ const: "code" }),
+    },
+    ["redirect_uris"],
+  ),
+  status: 201,
+  response: object({
+    client_id: string,
+    client_id_issued_at: integer,
+    client_name: string,
+    redirect_uris: array(string),
+    grant_types: array(string),
+    response_types: array(string),
+    token_endpoint_auth_method: string,
+    scope: string,
+  }),
+  description:
+    "20 registrations per hour per IP. A client that never completes an authorization is removed after 24 hours. Errors: 400 invalid_redirect_uri or invalid_client_metadata. CORS: any origin, no credentials.",
+});
+route("get", "/oauth/authorize", "OAuth authorization endpoint", {
+  auth: null,
+  query: ["response_type", "client_id", "redirect_uri", "code_challenge", "code_challenge_method", "state", "scope", "resource"].map((name) => ({
+    name,
+    in: "query",
+    required: !["state", "scope", "resource"].includes(name),
+    schema: string,
+  })),
+  description:
+    "An unknown client_id or a redirect_uri that isn't exactly registered gets a 400 HTML page and is never redirected. Everything else redirects to the /connect consent page, which needs a signed-in user. Other errors are shown there, and the user can send them back to the app (error, error_description, state and iss on the redirect_uri); there is no automatic error redirect, so the endpoint can't serve as an open redirector for dynamically registered clients. resource, when sent, must be this server's /mcp URL.",
+});
+paths["/oauth/authorize"].get.responses = {
+  302: { description: "To the consent page" },
+  400: { description: "Error page (client or redirect URI can't be trusted)", content: { "text/html": { schema: string } } },
+};
+route("post", "/oauth/token", "OAuth token endpoint", {
+  auth: null,
+  body: object(
+    {
+      grant_type: { enum: ["authorization_code", "refresh_token"] },
+      client_id: string,
+      code: string,
+      redirect_uri: string,
+      code_verifier: string,
+      refresh_token: string,
+      resource: string,
+    },
+    ["grant_type", "client_id"],
+  ),
+  response: object({
+    access_token: string,
+    token_type: { const: "Bearer" },
+    expires_in: integer,
+    refresh_token: string,
+    scope: string,
+  }),
+  description:
+    "application/x-www-form-urlencoded or JSON. Codes are single use and expire after 60 seconds; reusing one revokes the tokens issued from it. Access tokens last an hour and work only on /mcp. Refresh tokens rotate on every use, never outlive the connection, and reusing a rotated one revokes the connection's tokens. Responses are no-store. Errors are RFC 6749 bodies. CORS: any origin, no credentials.",
+});
+paths["/oauth/token"].post.responses.default.content["application/json"].schema = oauthError;
+route("post", "/oauth/revoke", "Revoke an OAuth token (RFC 7009)", {
+  auth: null,
+  body: object({ token: string, token_type_hint: string, client_id: string }, ["token"]),
+  description:
+    "Always 200 with an empty body. Revoking a refresh token ends the connection; an access token is revoked on its own. CORS: any origin, no credentials.",
+});
+route("get", "/api/connections/authorize", "Describe a pending app authorization for the consent page", {
+  query: ["response_type", "client_id", "redirect_uri", "code_challenge", "code_challenge_method", "state", "scope", "resource"].map((name) => ({
+    name,
+    in: "query",
+    required: false,
+    schema: string,
+  })),
+  response: object({
+    app: object({ name: string, redirect_uri: string, redirect_host: string, redirect_kind: string }),
+    defaults: object({ name: string, budget: number, expiry_days: integer, private_only: bool }),
+    expiry_days: array(integer),
+    max_budget: number,
+    private_models: integer,
+  }),
+  description: "Signed in. The same checks as /oauth/authorize; any failure is a 400 and nothing is redirected. For a known client and redirect URI with another error, the 400 body also has app and return_to (the error redirect the user may follow).",
+});
+route("post", "/api/connections/approve", "Approve an app: create the connection and its single-use code", {
+  body: object(
+    {
+      request: authorizationRequest,
+      name: { ...string, maxLength: 60 },
+      budget: { ...number, minimum: 1, maximum: 1000000, description: "Credits the app may spend." },
+      expiry_days: { enum: [1, 7, 30, 90] },
+      private_only: { ...bool, description: "Zero-data-retention models only. Anything but false keeps it on." },
+    },
+    ["request", "budget", "expiry_days"],
+  ),
+  response: object({ redirect: { ...string, description: "redirect_uri with code, state and iss; navigate the browser to it." } }),
+  description: "Signed in, same origin. Up to 20 active connections and 30 approvals per hour.",
+});
+route("post", "/api/connections/deny", "Decline an app authorization", {
+  body: object({ request: authorizationRequest }, ["request"]),
+  response: object({ redirect: string }),
+  description: "Returns redirect_uri with error=access_denied, state and iss.",
+});
+route("get", "/api/connections", "List connected apps", {
+  response: object({ data: array(connection) }),
+});
+route("post", "/api/connections/{id}/pause", "Pause a connected app's spending", { response: connection });
+route("post", "/api/connections/{id}/resume", "Resume a connected app", { response: connection });
+route("delete", "/api/connections/{id}", "Revoke a connected app now", {
+  response: ref("Ok"),
+  description: "Revokes its key and deletes its access and refresh tokens at once.",
+});
+route("get", "/api/connections/{id}/activity", "A connected app's ledger rows (metadata only)", {
+  response: object({
+    data: array(
+      object({
+        id: string,
+        created: integer,
+        model: string,
+        credits: number,
+        receipt_id: string,
+        signed: bool,
+      }),
+    ),
+  }),
+  description: "The latest 100 charges: time, model, credits and the request/receipt id. No prompts or answers are stored for a connection.",
+});
 for (const [path, summary] of [
   ["/install.sh", "POSIX CLI installer"],
   ["/install.ps1", "PowerShell CLI installer"],

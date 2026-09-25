@@ -18,7 +18,14 @@ import {
   CopyButton,
   Modal,
 } from "./ui.jsx";
-import { api, download, savings, walletSign, walletAvailable } from "./lib.js";
+import {
+  api,
+  download,
+  savings,
+  walletSign,
+  walletAvailable,
+  safeNext,
+} from "./lib.js";
 import { articles } from "./data.js";
 import ReleaseStatus from "./ReleaseStatus.jsx";
 import BillingRules from "./BillingRules.jsx";
@@ -664,6 +671,9 @@ export function Developers() {
     </main>
   );
   const mcpLive = featureEnabled(config, "mcp");
+  const connectLive = ["api", "mcp", "allowances", "connect"].every((id) =>
+    featureEnabled(config, id),
+  );
   return (
     <main id="main">
       <PageIntro
@@ -729,7 +739,9 @@ export function Developers() {
                   [
                     "command",
                     "An MCP server, too",
-                    "Connect Claude Code, Cursor and other MCP clients to your balance at /mcp.",
+                    connectLive
+                      ? "Point any MCP client at /mcp with a key, or approve an app in one click with its own budget."
+                      : "Connect Claude Code, Cursor and other MCP clients to your balance at /mcp.",
                   ],
                 ]
               : []),
@@ -806,6 +818,7 @@ const featureIcons = {
   app: "download",
   mcp: "command",
   allowances: "coins",
+  connect: "plug",
 };
 const launch = {
   id: "mvp",
@@ -1063,6 +1076,12 @@ export function Legal({ type }) {
 export function Auth({ register = false }) {
   const { config, connected, refresh } = useApp();
   const navigate = useNavigate();
+  // An app's connection request waiting for sign-in: go back to it after,
+  // with a full page load so its own headers (no referrer) apply.
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next"));
+  const done = () =>
+    next ? window.location.assign(next) : navigate("/workspace");
   const [method, setMethod] = useState("password"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -1074,7 +1093,7 @@ export function Auth({ register = false }) {
     try {
       await walletSign(config);
       await refresh();
-      navigate("/workspace");
+      done();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -1114,7 +1133,7 @@ export function Auth({ register = false }) {
         },
       );
       await refresh();
-      navigate("/workspace");
+      done();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -1146,6 +1165,12 @@ export function Auth({ register = false }) {
             ? "Start with a username and password."
             : "Pick up where your last idea left off."}
         </p>
+        {next && (
+          <Notice>
+            An app is asking to connect. Sign in to review it: nothing is
+            shared until you approve.
+          </Notice>
+        )}
         <div className="filter-tabs">
           {["password", "email", "wallet"].map((m) => (
             <button
@@ -1306,7 +1331,12 @@ export function Auth({ register = false }) {
           )}
           <p>
             {register ? "Already have an account?" : "New here?"}{" "}
-            <Link to={register ? "/login" : "/register"}>
+            <Link
+              to={
+                (register ? "/login" : "/register") +
+                (next ? "?next=" + encodeURIComponent(next) : "")
+              }
+            >
               {register ? "Log in" : "Create an account"}
             </Link>
           </p>

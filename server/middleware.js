@@ -5,6 +5,17 @@ import { uid, fail } from "./core.js";
 import { securityHeaders } from "../src/security-headers.js";
 export { createLimiter } from "./rate-limit.js";
 
+// The Connect an App endpoints that apps call from anywhere: discovery,
+// registration, token and revocation. They take no cookies and read no
+// session, so they allow any origin without credentials.
+export const PUBLIC_OAUTH_PATHS = [
+  "/.well-known/oauth-protected-resource",
+  "/.well-known/oauth-protected-resource/mcp",
+  "/.well-known/oauth-authorization-server",
+  "/oauth/register",
+  "/oauth/token",
+  "/oauth/revoke",
+];
 // Security headers, body parsing and same-origin checks for mutations.
 export function applyMiddleware(app, cfg) {
   app.disable("x-powered-by");
@@ -13,12 +24,27 @@ export function applyMiddleware(app, cfg) {
   app.set("trust proxy", cfg.trustProxy);
   app.use((req, res, next) => {
     res.set(securityHeaders());
+    // Routing ignores case, so these checks do too.
+    const path = req.path.toLowerCase();
     if (
       req.path.startsWith("/api") ||
       req.path.startsWith("/v1") ||
-      req.path === "/mcp"
+      req.path === "/mcp" ||
+      path.startsWith("/oauth/")
     )
       res.set("Cache-Control", "no-store");
+    // The consent page and the authorization endpoint carry the request
+    // (and, on the way back, the code) in their URLs: never send them on.
+    if (path === "/connect" || path.startsWith("/oauth/"))
+      res.set("Referrer-Policy", "no-referrer");
+    if (PUBLIC_OAUTH_PATHS.includes(path))
+      res.set({
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, Authorization, MCP-Protocol-Version",
+        "Access-Control-Max-Age": "600",
+      });
     next();
   });
   app.use((req, res, next) => {
@@ -44,6 +70,12 @@ export function applyMiddleware(app, cfg) {
   app.use("/v1", express.json({ limit: "256kb" }));
   // The MCP server runs the same requests as /v1, under the same body limit.
   app.use("/mcp", express.json({ limit: "256kb" }));
+  // OAuth token and revocation requests are form-encoded (JSON also works).
+  app.use(
+    ["/oauth/token", "/oauth/revoke"],
+    express.urlencoded({ extended: false, limit: "16kb", parameterLimit: 20 }),
+  );
+  app.use("/oauth", express.json({ limit: "16kb" }));
   app.use(express.json({ limit: "18mb" }));
   app.use((req, res, next) => {
     if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {
@@ -66,6 +98,7 @@ export function applyMiddleware(app, cfg) {
       ["POST", "PUT", "PATCH", "DELETE"].includes(req.method) &&
       !req.path.startsWith("/v1") &&
       req.path !== "/mcp" &&
+      !PUBLIC_OAUTH_PATHS.includes(req.path.toLowerCase()) &&
       req.path !== "/api/payments/ipn"
     ) {
       if (req.headers.origin && req.headers.origin !== cfg.origin)

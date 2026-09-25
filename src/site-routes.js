@@ -43,10 +43,13 @@ const MODES = [
   "library",
   "veil",
 ];
-export function knownPage(path) {
+// `served` names gated pages the server is currently serving: the consent
+// page for Connect an App exists only once that update is live.
+export function knownPage(path, served = {}) {
   if (path.length > 1) path = path.replace(/\/$/, "");
   return (
     PUBLIC_PAGES.includes(path) ||
+    (served.connect === true && path === "/connect") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

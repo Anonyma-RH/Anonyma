@@ -29,11 +29,13 @@ export function accountRoutes(ctx) {
     res.json({
       data: db
         .prepare(
-          "SELECT l.*,k.name key_name,h.result receipt_json FROM ledger l LEFT JOIN api_keys k ON k.id=l.key_id LEFT JOIN holds h ON h.id=l.ref WHERE l.user_id=? ORDER BY l.created DESC LIMIT 50",
+          "SELECT l.*,k.name key_name,k.connection_id,h.result receipt_json FROM ledger l LEFT JOIN api_keys k ON k.id=l.key_id LEFT JOIN holds h ON h.id=l.ref WHERE l.user_id=? ORDER BY l.created DESC LIMIT 50",
         )
         .all(req.user.id)
-        .map(({ receipt_json, ...v }) => ({
+        .map(({ receipt_json, connection_id, ...v }) => ({
           ...v,
+          // Spent by a connected app rather than an API key.
+          ...(connection_id ? { connected_app: true } : {}),
           amount: credits(v.amount),
           receipt: receipt_json ? JSON.parse(receipt_json) : null,
         })),
@@ -98,7 +100,7 @@ export function accountRoutes(ctx) {
     res.json({
       data: db
         .prepare(
-          "SELECT id,name,prefix,cap,created,revoked,last_used,allowance_total,allowance_expires,paused_at,agent_label FROM api_keys WHERE user_id=? ORDER BY created DESC",
+          "SELECT id,name,prefix,cap,created,revoked,last_used,allowance_total,allowance_expires,paused_at,agent_label FROM api_keys WHERE user_id=? AND connection_id IS NULL ORDER BY created DESC",
         )
         .all(req.user.id)
         .map(
@@ -138,7 +140,7 @@ export function accountRoutes(ctx) {
     if (
       db
         .prepare(
-          "SELECT COUNT(*) n FROM api_keys WHERE user_id=? AND revoked IS NULL",
+          "SELECT COUNT(*) n FROM api_keys WHERE user_id=? AND revoked IS NULL AND connection_id IS NULL",
         )
         .get(req.user.id).n >= 20
     )
@@ -146,7 +148,7 @@ export function accountRoutes(ctx) {
     if (
       db
         .prepare(
-          "SELECT COUNT(*) n FROM api_keys WHERE user_id=? AND created>?",
+          "SELECT COUNT(*) n FROM api_keys WHERE user_id=? AND created>? AND connection_id IS NULL",
         )
         .get(req.user.id, now() - 3600000).n >= 10
     )
@@ -181,7 +183,7 @@ export function accountRoutes(ctx) {
   app.delete("/api/keys/:id", requireUser, (req, res) => {
     const r = db
       .prepare(
-        "UPDATE api_keys SET revoked=? WHERE id=? AND user_id=? AND revoked IS NULL",
+        "UPDATE api_keys SET revoked=? WHERE id=? AND user_id=? AND revoked IS NULL AND connection_id IS NULL",
       )
       .run(now(), req.params.id, req.user.id);
     if (!r.changes) fail(404, "Key not found.");
@@ -249,7 +251,7 @@ export function accountRoutes(ctx) {
         })),
       keys: db
         .prepare(
-          "SELECT id,name,prefix,cap,created,revoked,last_used,agent_label,allowance_total,allowance_expires,paused_at FROM api_keys WHERE user_id=?",
+          "SELECT id,name,prefix,cap,created,revoked,last_used,agent_label,allowance_total,allowance_expires,paused_at,connection_id FROM api_keys WHERE user_id=?",
         )
         .all(req.user.id)
         .map((k) => ({
@@ -263,6 +265,11 @@ export function accountRoutes(ctx) {
           "SELECT created,expires FROM sessions WHERE user_id=? AND expires>?",
         )
         .all(req.user.id, now()),
+      connectedApps: db
+        .prepare(
+          "SELECT id,key_id,name,client_name,redirect_uri,private_only,created,activated,expires,revoked FROM oauth_connections WHERE user_id=?",
+        )
+        .all(req.user.id),
       supportRequests: db
         .prepare(
           "SELECT id,subject,body,email,created,delivery,delivered_at FROM tickets WHERE user_id=?",
@@ -344,7 +351,17 @@ export function accountRoutes(ctx) {
       ).run(req.user.id);
       db.prepare("DELETE FROM sessions WHERE user_id=?").run(req.user.id);
       db.prepare(
-        "UPDATE api_keys SET revoked=?,hash=NULL,name='Deleted account',prefix=NULL WHERE user_id=?",
+        "UPDATE api_keys SET revoked=?,hash=NULL,name='Deleted account',prefix=NULL,agent_label=NULL WHERE user_id=?",
+      ).run(now(), req.user.id);
+      // Connected apps lose their tokens and pending codes with the account.
+      db.prepare(
+        "DELETE FROM oauth_tokens WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
+      ).run(req.user.id);
+      db.prepare(
+        "DELETE FROM oauth_codes WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
+      ).run(req.user.id);
+      db.prepare(
+        "UPDATE oauth_connections SET revoked=COALESCE(revoked,?),name='Deleted account',client_name='',redirect_uri='' WHERE user_id=?",
       ).run(now(), req.user.id);
       db.prepare(
         "DELETE FROM challenges WHERE target IN (?,?) OR payload=?",

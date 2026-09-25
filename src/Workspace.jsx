@@ -944,9 +944,12 @@ export default function Workspace() {
         ? scanSecrets(redo.edited ?? redo.content, instructionsActive ? instructions.body : "")
         : seedHit;
     if (seedFound && !allowSeed && (!redo || redo.edited != null)) return;
-    // The server checks the same text; anything found here was confirmed
-    // above or already sent (an edited turn keeps its original attachments).
-    const allowSeedPhrase = !!(seedFound || (seedLive && redo && scanSecrets(redo.content)));
+    // The server checks the same text for seed phrases only; one found here
+    // was confirmed above or already sent (an edited turn keeps its original
+    // attachments). Keys and 64-hex never reach the server's check.
+    const allowSeedPhrase =
+      seedFound?.kind === "seed" ||
+      (seedLive && !!redo && scanSecrets(redo.content)?.kind === "seed");
     const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
     const effectiveModel = redo ? redoModel || selected : target;
     const requestVision = redo

@@ -134,7 +134,7 @@ export default function DoubleCheck({
           },
           ...(unsaved ? { ephemeral: true } : {}),
           ...(privateMode ? { private: true } : {}),
-          ...(seedHit ? { allow_seed_phrase: true } : {}),
+          ...(seedHit?.kind === "seed" ? { allow_seed_phrase: true } : {}),
         },
         (event) => {
           if (event.error)

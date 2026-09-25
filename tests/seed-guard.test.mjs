@@ -17,10 +17,13 @@ import { BIP39_ENGLISH } from "../src/bip39-english.js";
 import {
   findSeedPhrase,
   findPrivateKey,
+  findHexKey,
   scanSecrets,
   sha256,
+  isSoft,
   SEED_MESSAGE,
   KEY_MESSAGE,
+  HEX_MESSAGE,
 } from "../src/seed-guard.js";
 import { buildChatRequest } from "../src/estimate.js";
 
@@ -137,37 +140,52 @@ test("ordinary English prose with a few BIP39 words is not caught", () => {
   assert.equal(scanSecrets(prose.join("\n\n").repeat(200)), null);
 });
 
-test("private keys are caught with Veil off: 64-hex, WIF and xprv", () => {
+test("WIF and xprv keys are hard blocks with Veil off; seed phrases outrank them", () => {
   // What Send posts with Veil off still carries the raw key: Seed Guard reads it.
-  const { request: sent } = buildChatRequest({ text: "Import 0x" + HEX_KEY, veilWith: null });
-  assert.ok(sent.at(-1).content.includes(HEX_KEY));
+  const { request: sent } = buildChatRequest({ text: "Import " + WIF_COMPRESSED, veilWith: null });
+  assert.ok(sent.at(-1).content.includes(WIF_COMPRESSED));
   assert.deepEqual(scanSecrets(sent.map((m) => m.content)), { kind: "key" });
+  for (const text of [WIF_COMPRESSED, WIF_UNCOMPRESSED, "import this: " + XPRV])
+    assert.deepEqual(findPrivateKey(text), { kind: "key" }, text);
+  assert.equal(isSoft({ kind: "key" }), false);
+  assert.equal(isSoft(findSeedPhrase(ABANDON_12)), false);
+  // The most serious find is named: seed phrase, then WIF/xprv, then 64-hex.
+  assert.deepEqual(scanSecrets("0x" + HEX_KEY, WIF_COMPRESSED, ABANDON_12), { kind: "seed", words: 12 });
+  assert.deepEqual(scanSecrets("0x" + HEX_KEY, XPRV), { kind: "key" });
+  // A broken checksum is not a key.
+  assert.equal(
+    findPrivateKey(WIF_COMPRESSED.slice(0, -1) + (WIF_COMPRESSED.endsWith("2") ? "3" : "2")),
+    null,
+  );
+  assert.equal(findPrivateKey("0x" + HEX_KEY), null, "64-hex is never a hard block");
+  assert.equal(SEED_MESSAGE, "This looks like a wallet seed phrase. ANONYMA won't send it. Remove it to continue.");
+  assert.equal(KEY_MESSAGE, "This looks like a wallet private key. ANONYMA won't send it. Remove it to continue.");
+});
+
+test("bare 64-hex, with or without 0x, is a soft notice: a key or a transaction hash", () => {
+  const { request: sent } = buildChatRequest({ text: "Can you look up 0x" + HEX_KEY + "?", veilWith: null });
+  assert.deepEqual(scanSecrets(sent.map((m) => m.content)), { kind: "hex" });
   for (const text of [
     HEX_KEY,
     "0x" + HEX_KEY,
     "My private key is 0x" + HEX_KEY + ", keep it.",
     `accounts: ["0x${HEX_KEY}"]`,
-    WIF_COMPRESSED,
-    WIF_UNCOMPRESSED,
-    "import this: " + XPRV,
+    "Why did 0x" + HEX_KEY + " revert?",
   ])
-    assert.deepEqual(findPrivateKey(text), { kind: "key" }, text);
-  assert.deepEqual(scanSecrets("key " + HEX_KEY), { kind: "key" });
-  // A seed phrase is named before a key.
-  assert.deepEqual(scanSecrets(HEX_KEY, ABANDON_12), { kind: "seed", words: 12 });
-  // Hashes and links are not keys; nor is a broken WIF or an out-of-range value.
+    assert.deepEqual(findHexKey(text), { kind: "hex" }, text);
+  assert.equal(isSoft({ kind: "hex" }), true);
+  assert.equal(HEX_MESSAGE, "This looks like a private key or a transaction hash. If it's a private key, remove it.");
+  // Labelled hashes, links and impossible keys aren't flagged at all.
   for (const text of [
     "https://etherscan.io/tx/0x" + HEX_KEY,
     "txHash: 0x" + HEX_KEY,
+    "What happened in tx 0x" + HEX_KEY + "?",
     "sha256:" + HEX_KEY,
     "0x" + "0".repeat(63) + "1",
     "f".repeat(64),
-    WIF_COMPRESSED.slice(0, -1) + (WIF_COMPRESSED.endsWith("2") ? "3" : "2"),
     HEX_KEY + "ab",
   ])
-    assert.equal(findPrivateKey(text), null, text);
-  assert.equal(SEED_MESSAGE, "This looks like a wallet seed phrase. ANONYMA won't send it. Remove it to continue.");
-  assert.equal(KEY_MESSAGE, "This looks like a wallet private key. ANONYMA won't send it. Remove it to continue.");
+    assert.equal(scanSecrets(text), null, text);
 });
 
 test("the server reads the newest user message and the instructions, not earlier turns", () => {
@@ -261,8 +279,10 @@ test("the server refuses a seed phrase with seed_phrase_blocked and accepts the 
       ],
     })
     .expect(200);
-  // A private key isn't refused by the server (the browser asks first).
-  await agent.post("/api/chat").send(chat("0x" + HEX_KEY)).expect(200);
+  // The server refuses seed phrases only: a transaction hash (64-hex) and
+  // keys go through without any flag (the browser asks first).
+  await agent.post("/api/chat").send(chat("What happened in tx 0x" + HEX_KEY + "?")).expect(200);
+  await agent.post("/api/chat").send(chat(WIF_COMPRESSED)).expect(200);
   // "Send anyway", confirmed in the workspace.
   const ok = await agent
     .post("/api/chat")
@@ -287,6 +307,7 @@ test("/v1 and MCP refuse a seed phrase unless the header opts out", async (t) =>
   await v1().send(chat(ABANDON_24, { allow_seed_phrase: true })).expect(400);
   await v1().set("X-Anonyma-Seed-Guard", "off").send(chat(ABANDON_24)).expect(200);
   await v1().send(chat("What is a seed phrase?")).expect(200);
+  await v1().send(chat("Explain tx 0x" + HEX_KEY)).expect(200);
   // Media endpoints read their prompt.
   const image = await request(svc.app)
     .post("/v1/images/generations")
@@ -377,7 +398,7 @@ test("while unreleased Seed Guard stays out of the way, and its override is refu
   assert.equal(r.body.error.message, "Seed Guard is coming soon.");
 
   // Nor in the browser: nothing is scanned and no notice shows.
-  const { seedGuardLive, useSeedScan, SeedGuardNotice } = await seedGuardModule();
+  const { seedGuardLive, useSeedScan, SeedGuardNotice, SeedGuardSoftNotice } = await seedGuardModule();
   assert.equal(seedGuardLive(config), false);
   const Probe = ({ config: c }) => {
     const hit = useSeedScan(seedGuardLive(c), ABANDON_12);
@@ -399,4 +420,38 @@ test("while unreleased Seed Guard stays out of the way, and its override is refu
   const memory = renderToStaticMarkup(createElement(SeedGuardNotice, { hit: { kind: "key" } }));
   assert.match(memory, /wallet private key/);
   assert.doesNotMatch(memory, /anyway/);
+  // Support: no override for a hard find, even with onProceed.
+  const support = renderToStaticMarkup(
+    createElement(SeedGuardNotice, { hit, onProceed: () => {}, hardOverride: false }),
+  );
+  assert.doesNotMatch(support, /<button/);
+
+  // The soft notice for 64-hex: its own message and one button that goes
+  // straight on, with no second confirm.
+  const hex = { kind: "hex" };
+  const soft = renderToStaticMarkup(createElement(SeedGuardNotice, { hit: hex, onProceed: () => {} }));
+  assert.ok(soft.includes("This looks like a private key or a transaction hash. If it&#x27;s a private key, remove it."));
+  assert.equal(soft.match(/<button/g).length, 1);
+  assert.ok(soft.includes(">It&#x27;s not a key, send</button>"));
+  assert.doesNotMatch(soft, /anyway|Yes, send it|role="alert"/);
+  assert.ok(
+    renderToStaticMarkup(createElement(SeedGuardNotice, { hit: hex, onProceed: () => {}, verb: "save" }))
+      .includes(">It&#x27;s not a key, save</button>"),
+  );
+  // Clicking it runs the send once, immediately.
+  let sent = 0;
+  const tree = SeedGuardSoftNotice({ hit: hex, onProceed: () => sent++ });
+  const buttons = [];
+  const walk = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) return node.forEach(walk);
+    if (node.type === "button") buttons.push(node);
+    walk(node.props?.children);
+  };
+  walk(tree);
+  assert.equal(buttons.length, 1);
+  buttons[0].props.onClick();
+  assert.equal(sent, 1);
+  // Memory has no override: the soft notice shows without a button.
+  assert.doesNotMatch(renderToStaticMarkup(createElement(SeedGuardNotice, { hit: hex })), /<button/);
 });

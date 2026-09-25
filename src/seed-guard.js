@@ -8,18 +8,26 @@
 //   ("1. word", "2) word"), whose BIP39 checksum is valid. The checksum turns
 //   away 15 of 16 random 12-word runs (255 of 256 at 24 words), so ordinary
 //   prose that happens to use list words is left alone.
-// - Private keys: 64 hex characters (with or without 0x) in the secp256k1 key
-//   range, a WIF key or an extended private key (xprv and friends), both
-//   Base58Check-verified. A 64-hex value in a URL, or labelled as a hash,
-//   transaction, digest or storage slot, is treated as a hash, not a key.
+// - Private keys: a WIF key or an extended private key (xprv and friends),
+//   both Base58Check-verified. Unambiguous, so like a seed phrase they are
+//   blocked until the user confirms twice ("hard").
+// - 64 hex characters (with or without 0x) in the secp256k1 key range: a
+//   private key has the same shape as a transaction hash, so this is only a
+//   soft notice with a one-click "It's not a key, send". A value in a URL, or
+//   labelled as a hash, transaction, digest or storage slot, isn't flagged.
 import { BIP39_ENGLISH } from "./bip39-english.js";
 
 export const SEED_MESSAGE =
   "This looks like a wallet seed phrase. ANONYMA won't send it. Remove it to continue.";
 export const KEY_MESSAGE =
   "This looks like a wallet private key. ANONYMA won't send it. Remove it to continue.";
+export const HEX_MESSAGE =
+  "This looks like a private key or a transaction hash. If it's a private key, remove it.";
 export const seedGuardMessage = (hit) =>
-  hit?.kind === "key" ? KEY_MESSAGE : SEED_MESSAGE;
+  hit?.kind === "hex" ? HEX_MESSAGE : hit?.kind === "key" ? KEY_MESSAGE : SEED_MESSAGE;
+// A soft finding asks once; a hard one (seed phrase, WIF, xprv) blocks until
+// the user confirms twice.
+export const isSoft = (hit) => hit?.kind === "hex";
 
 // --- SHA-256 (FIPS 180-4), synchronous so detection needs no await -------
 const K = new Uint32Array([
@@ -246,27 +254,29 @@ function hexKeyLike(text, m) {
   return !HASH_LABEL.test(before);
 }
 
+// WIF or xprv: { kind: "key" }, a hard block.
 export function findPrivateKey(text) {
   if (typeof text !== "string" || text.length < 51) return null;
-  for (const m of text.matchAll(HEX64))
-    if (hexKeyLike(text, m)) return { kind: "key" };
   for (const m of text.matchAll(WIF)) if (wifValid(m[0])) return { kind: "key" };
   for (const m of text.matchAll(XPRV)) if (xprvValid(m[0])) return { kind: "key" };
   return null;
 }
+// Bare 64-hex: { kind: "hex" }, a soft notice (a key or a transaction hash).
+export function findHexKey(text) {
+  if (typeof text !== "string" || text.length < 64) return null;
+  for (const m of text.matchAll(HEX64)) if (hexKeyLike(text, m)) return { kind: "hex" };
+  return null;
+}
 
 // Everything a surface is about to send: strings, or arrays of them (nested
-// arrays are flattened; anything else is ignored). A seed phrase wins over a
-// key, so the notice names the more serious find.
+// arrays are flattened; anything else is ignored). The most serious find is
+// named: a seed phrase, then a WIF or xprv key, then 64-hex.
 export function scanSecrets(...parts) {
   const texts = parts.flat(Infinity).filter((t) => typeof t === "string" && t);
-  for (const t of texts) {
-    const hit = findSeedPhrase(t);
-    if (hit) return hit;
-  }
-  for (const t of texts) {
-    const hit = findPrivateKey(t);
-    if (hit) return hit;
-  }
+  for (const find of [findSeedPhrase, findPrivateKey, findHexKey])
+    for (const t of texts) {
+      const hit = find(t);
+      if (hit) return hit;
+    }
   return null;
 }

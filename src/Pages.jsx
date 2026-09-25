@@ -916,11 +916,12 @@ export function Support() {
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   // Seed Guard: a support request never carries a seed phrase or key, and
-  // there is no "Send anyway": support never needs one.
+  // there is no "Send anyway": support never needs one. A transaction hash
+  // (64-hex) is often exactly what support needs, so that asks once.
   const seedHit = useSeedScan(seedGuardLive(config), subject + "\n" + body);
-  async function submit(e) {
-    e.preventDefault();
-    if (seedHit) return;
+  async function submit(e, { notKey = false } = {}) {
+    e?.preventDefault();
+    if (seedHit && !(notKey && seedHit.kind === "hex")) return;
     setMessage("");
     setBusy(true);
     try {
@@ -1005,7 +1006,12 @@ export function Support() {
             />
           </label>
           {canSend && (
-            <SeedGuardNotice hit={seedHit}>
+            <SeedGuardNotice
+              hit={seedHit}
+              busy={busy}
+              hardOverride={false}
+              onProceed={() => submit(null, { notKey: true })}
+            >
               <p className="seed-guard-note">
                 ANONYMA support will never ask for your seed phrase or private key.
               </p>

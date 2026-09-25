@@ -123,7 +123,7 @@ export default function TaskTools({
     let setup;
     try {
       if (!model) throw Error("No callable chat model is available.");
-      setup = requestBody(!!seedHit);
+      setup = requestBody(seedHit?.kind === "seed");
       if (results.length >= ALTERNATIVE_LIMIT)
         throw Error(
           "Keep up to eight results. Download or remove one before adding another.",

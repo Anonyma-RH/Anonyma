@@ -229,7 +229,7 @@ export default function Symposium({
     setPrompt("");
     setQuotes({});
     await Promise.allSettled(
-      selected.map((id) => runOne(id, masked.text, !!seedHit)),
+      selected.map((id) => runOne(id, masked.text, seedHit?.kind === "seed")),
     );
     if (!demo) refresh();
   }
@@ -252,7 +252,8 @@ export default function Symposium({
     // Fusing resends the question every column already received (confirmed
     // then if Seed Guard stopped it) with the models' answers.
     const messages = buildFusionMessages({ question: askedQuestion, answers });
-    const resent = seedLive && scanSecrets(messages.map((m) => m.content));
+    const resent =
+      seedLive && scanSecrets(messages.map((m) => m.content))?.kind === "seed";
     try {
       await streamChat(
         {

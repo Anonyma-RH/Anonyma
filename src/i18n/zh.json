@@ -2314,7 +2314,10 @@
     "Yes, send it": "是的，发送",
     "Save anyway": "仍然保存",
     "Yes, save it": "是的，保存",
-    "ANONYMA support will never ask for your seed phrase or private key.": "ANONYMA 支持人员绝不会索要你的助记词或私钥。"
+    "ANONYMA support will never ask for your seed phrase or private key.": "ANONYMA 支持人员绝不会索要你的助记词或私钥。",
+    "This looks like a private key or a transaction hash. If it's a private key, remove it.": "这看起来像私钥或交易哈希。如果是私钥，请删除。",
+    "It's not a key, send": "这不是私钥，发送",
+    "It's not a key, save": "这不是私钥，保存"
   },
   "patterns": [
     {

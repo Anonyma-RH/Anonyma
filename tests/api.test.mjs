@@ -2379,6 +2379,94 @@ test("image sizes price case-insensitively and unpublished sizes are refused bef
   assert.equal(sent.resolution, "2K");
   assert.equal(before - balance(s.db, user.id).total, usdUnits(0.138));
 });
+test("video outputs mislabeled as images are unavailable before any reservation or provider call", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-video-image-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const catalogPath = join(dir, "models.json");
+  const image = (id, category, extra = {}) => ({
+    id,
+    name: id,
+    type: "image",
+    status: "live",
+    category,
+    capabilities: { accepts_prompt: true, accepts_image_url: true },
+    pricing: { type: "per_generation", base_price: 0.0322 },
+    ...extra,
+  });
+  const legitimate = [
+    image("kling-v3-image", "text-to-image"),
+    image("kling-v3-image-edit", "image-to-image", {
+      architecture: { output_modalities: ["image"] },
+    }),
+  ];
+  const mislabeled = [
+    image("kling-v3-standard-i2v", "image-to-video"),
+    image("fixture/t2v", "text-to-video"),
+    image("fixture/v2v", "video-to-video"),
+    image("fixture/video-output", "text-to-image", {
+      architecture: { output_modalities: ["video"] },
+    }),
+    // Explicit video output must also override a known legacy image price.
+    image(imageModel, "text-to-image", {
+      architecture: { output_modalities: ["image", "video"] },
+    }),
+  ];
+  writeFileSync(
+    catalogPath,
+    JSON.stringify({
+      updatedAt: new Date().toISOString(),
+      data: [...legitimate, ...mislabeled],
+    }),
+  );
+  let providerCalls = 0;
+  const gateway = await mockServer(t, async (req, res) => {
+    providerCalls++;
+    res.writeHead(500).end();
+  });
+  const s = fixture(t, {
+    testMode: false,
+    gateway,
+    gatewayKey: "fixture",
+    catalogPath,
+    syncModels: false,
+  });
+  const { agent, user } = await register(s.app);
+  addCredit(s.db, user.id, 100000000, "video-image-fund", "test_credit");
+  const key = await keyFor(agent);
+  const catalog = (await agent.get("/api/models").expect(200)).body.data;
+  assert.deepEqual(
+    catalog.filter((m) => m.imageCapable && m.callable).map((m) => m.id),
+    legitimate.map((m) => m.id),
+    "the live Image Studio selector offers genuine image models only",
+  );
+  const apiModels = (
+    await request(s.app)
+      .get("/v1/models")
+      .set("Authorization", "Bearer " + key.key)
+      .expect(200)
+  ).body.data;
+  const before = balance(s.db, user.id);
+  const ledgerBefore = s.db.prepare("SELECT * FROM ledger ORDER BY rowid").all();
+  for (const model of mislabeled) {
+    const listed = catalog.find((m) => m.id === model.id);
+    assert.equal(listed.callable, false, model.id);
+    assert.equal(listed.imageCapable, false, model.id);
+    assert.equal(listed.type, "image", "no unverified video-route remapping");
+    assert.ok(!apiModels.some((m) => m.id === model.id));
+    const denied = await agent
+      .post("/api/images")
+      .send({ model: model.id, prompt: "A landscape" })
+      .expect(503);
+    assert.equal(denied.body.error.code, "model_unavailable");
+  }
+  assert.equal(providerCalls, 0);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds").get().n, 0);
+  assert.deepEqual(balance(s.db, user.id), before);
+  assert.deepEqual(
+    s.db.prepare("SELECT * FROM ledger ORDER BY rowid").all(),
+    ledgerBefore,
+  );
+});
 test("dedicated image models are refused by chat endpoints before reserving", async (t) => {
   const { path: catalogPath, model } = dedicatedImageCatalog(t);
   const s = fixture(t, {

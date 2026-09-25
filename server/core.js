@@ -557,6 +557,13 @@ export const imagePrices = {
   "google/gemini-3-pro-image": 0.163,
 };
 export function imageCallable(m) {
+  // Some gateway rows say type=image while their declared output is video.
+  // Their positive generation price does not make them image generators.
+  if (
+    String(m.category || "").endsWith("-to-video") ||
+    (m.architecture?.output_modalities || []).includes("video")
+  )
+    return false;
   if (Object.hasOwn(imagePrices, m.id)) return true;
   if (m.type !== "image" || m.capabilities?.accepts_prompt !== true)
     return false;

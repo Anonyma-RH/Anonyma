@@ -820,6 +820,14 @@ export function callable(m, cfg) {
     m.status === "live" &&
     !m.id.startsWith("private/") &&
     (["chat", "video"].includes(m.type) || imageCallable(m)) &&
+    // A gateway's chat label/token rates do not establish an output contract.
+    // Our chat path handles text and vetted images, not generated audio/video.
+    // Keep unsupported rows catalog-only until routing, decoding and billing
+    // support them. Zero-priced text models remain eligible.
+    (m.type !== "chat" ||
+      (m.architecture?.output_modalities || []).every((kind) =>
+        ["text", "image"].includes(kind),
+      )) &&
     (m.type !== "chat" || imageCallable(m) || hasPublishedTokenRates(m)) &&
     (m.type !== "video" || videoPresets(m).length > 0) &&
     (cfg.testMode || m.type !== "chat" || !imageCallable(m)) &&

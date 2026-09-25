@@ -18,6 +18,13 @@ export default function DataControls() {
           type. These are count limits, not day limits.
         </li>
         <li>
+          Connected apps: the name you gave each one, the name it gave itself,
+          its return address, budget and expiry. Its charges are in the ledger
+          like any other; prompts and answers sent through it aren't stored.
+          Its sign-in tokens are kept only as hashes and deleted when they
+          expire or you revoke the app.
+        </li>
+        <li>
           Temporary API-generated media expires after 24 hours when created with
           an expiry. Access stops at expiry; background maintenance removes the
           file. This does not make unreleased API features available.
@@ -77,7 +84,8 @@ export default function DataControls() {
       </p>
       <p>
         Closure clears your username, password hash, email and linked wallet,
-        and revokes API keys while clearing their hashes, prefixes and names.
+        and revokes API keys and connected apps while clearing their hashes,
+        prefixes and names.
         Unused credits are forfeited. Successful deletion removes active records
         and files; a file-removal failure is reported instead of claiming
         success, so you can retry.

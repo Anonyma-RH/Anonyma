@@ -296,7 +296,7 @@
     "Close your account?": "关闭账户？",
     "Close your account.": "关闭你的账户。",
     "closure": "关闭",
-    "Closure clears your username, password hash, email and linked wallet, and revokes API keys while clearing their hashes, prefixes and names. Unused credits are forfeited. Successful deletion removes active records and files; a file-removal failure is reported instead of claiming success, so you can retry.": "关闭账户会清除你的用户名、密码哈希、邮箱和关联钱包，并撤销 API 密钥，同时清除其哈希值、前缀和名称。未使用的积分将被放弃。删除成功后，活跃记录和文件都会被移除；如果文件移除失败，系统会报告失败，而不是声称删除成功，以便你重试。",
+    "Closure clears your username, password hash, email and linked wallet, and revokes API keys and connected apps while clearing their hashes, prefixes and names. Unused credits are forfeited. Successful deletion removes active records and files; a file-removal failure is reported instead of claiming success, so you can retry.": "关闭账户会清除你的用户名、密码哈希、邮箱和关联钱包，并撤销 API 密钥和已连接的应用，同时清除其哈希值、前缀和名称。未使用的积分将被放弃。删除成功后，活跃记录和文件都会被移除；如果文件移除失败，系统会报告失败，而不是声称删除成功，以便你重试。",
     "Code": "代码",
     "code — ANONYMA": "代码 — ANONYMA",
     "Code & build": "代码与构建",
@@ -1666,7 +1666,7 @@
     "Symposium runs are saved to your account, even with Private Mode on.": "即使开启隐私模式，模型圆桌的运行记录也会保存到你的账户。",
     "symposium": "模型圆桌",
     "Personal conversations: the 300 most recently updated conversations. Creating another conversation removes the oldest personal conversation and its messages. Symposium runs are kept separately: the newest 150, removed the same way. Shared conversations have no automatic count or time limit.": "个人会话：最近更新的 300 个会话。创建新会话会移除最早的个人会话及其消息。模型圆桌的运行记录单独保留：最新的 150 个，按同样方式移除。共享会话没有自动数量或时间限制。",
-    "The server keeps your 300 most recently updated personal conversations and deletes older ones; Symposium runs are kept separately, the newest 150. Sign-in codes and wallet challenges are deleted an hour after they expire, rate-limit records after a day, and expired sessions are removed.": "服务器会保留你最近更新的 300 个个人会话，并删除更早的会话；模型圆桌的运行记录单独保留最新的 150 个。登录验证码和钱包挑战会在过期 1 小时后删除，限流记录会在 1 天后删除，过期会话也会被移除。",
+    "The server keeps your 300 most recently updated personal conversations and deletes older ones; Symposium runs are kept separately, the newest 150. Sign-in codes and wallet challenges are deleted an hour after they expire, rate-limit records after a day, and expired sessions are removed. Prompts and answers sent through a connected app aren't stored; only their charges are, in the ledger.": "服务器会保留你最近更新的 300 个个人会话，并删除更早的会话；模型圆桌的运行记录单独保留最新的 150 个。登录验证码和钱包挑战会在过期 1 小时后删除，限流记录会在 1 天后删除，过期会话也会被移除。通过已连接的应用发送的提示词和收到的回答不会被保存，只有其扣费记入账本。",
     "Signed Receipts": "签名收据",
     "Proof of what ran, and what it cost.": "运行了什么、花了多少，都有据可查。",
     "Every settled reply gets an Ed25519-signed receipt": "每条已结算的回复都会生成一份 Ed25519 签名收据",
@@ -1870,7 +1870,9 @@
     "An app installed on this device, at this address:": "此设备上安装的应用，地址如下：",
     "This budget is more than your available balance. The app can't spend until your balance covers what's left of its budget, so it can never work out your balance.": "此预算超过了你的可用余额。在你的余额足以覆盖其剩余预算之前，该应用无法消费，因此它永远无法推断出你的余额。",
     "Balance below budget": "余额低于预算",
-    "Your balance is below what's left of this budget, so the app can't spend until you add credits.": "你的余额低于此连接的剩余预算，因此在你充值之前，该应用无法消费。"
+    "Your balance is below what's left of this budget, so the app can't spend until you add credits.": "你的余额低于此连接的剩余预算，因此在你充值之前，该应用无法消费。",
+    "Connected apps: the name you gave each one, the name it gave itself, its return address, budget and expiry. Its charges are in the ledger like any other; prompts and answers sent through it aren't stored. Its sign-in tokens are kept only as hashes and deleted when they expire or you revoke the app.": "已连接的应用：你为它设定的名称、它自报的名称、返回地址、预算和有效期。它的扣费与其他扣费一样记入账本；通过它发送的提示词和收到的回答不会被保存。它的登录令牌仅以哈希形式保存，并会在过期或你撤销该应用时删除。",
+    "An app you connect in one click signs in with OAuth and PKCE and gets tokens only: no email, username, chats or balance. Tokens are stored only as SHA-256 hashes. Each app has its own budget, expiry and pause switch, uses private models only unless you turn that off, and loses access the moment you revoke it.": "你一键连接的应用通过 OAuth 和 PKCE 登录，只会获得令牌，无法获取你的邮箱、用户名、会话或余额。令牌仅以 SHA-256 哈希形式保存。每个应用都有独立的预算、有效期和暂停开关，除非你关闭该选项，否则只能使用私密模型；你一撤销，它就会立即失去访问权限。"
   },
   "patterns": [
     {

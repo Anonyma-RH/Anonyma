@@ -454,7 +454,9 @@ export default function Whitepaper() {
               deletes older ones; Symposium runs are kept separately, the newest
               150. Sign-in codes and wallet challenges are
               deleted an hour after they expire, rate-limit records after a
-              day, and expired sessions are removed.
+              day, and expired sessions are removed. Prompts and answers sent
+              through a connected app aren't stored; only their charges are, in
+              the ledger.
             </p>
             <h3>Export and deletion</h3>
             <p>
@@ -502,6 +504,20 @@ export default function Whitepaper() {
                   <>
                     {" "}
                     <Soon config={config} id="api" />
+                  </>
+                )}
+              </li>
+              <li>
+                <b>Connected apps.</b> An app you connect in one click signs in
+                with OAuth and PKCE and gets tokens only: no email, username,
+                chats or balance. Tokens are stored only as SHA-256 hashes. Each
+                app has its own budget, expiry and pause switch, uses private
+                models only unless you turn that off, and loses access the
+                moment you revoke it.
+                {!live("connect") && (
+                  <>
+                    {" "}
+                    <Soon config={config} id="connect" />
                   </>
                 )}
               </li>

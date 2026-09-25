@@ -1,6 +1,6 @@
 :root {
-  --font: "GFS Neohellenic", sans-serif;
-  --serif: "GFS Didot", serif;
+  --font: "GFS Neohellenic", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif;
+  --serif: "GFS Didot", "Songti SC", "Noto Serif SC", "Source Han Serif SC", STSong, SimSun, serif;
   --ink: #151414;
   --muted: #5a5a5a;
   --line: #e0eadd;

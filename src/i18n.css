@@ -1,0 +1,82 @@
+/* EN / 中文 switch. Flat two-part control; on cobalt by default (header,
+   mobile menu, workspace sidebar), .on-light on white (account settings).
+   Both parts keep a fixed width so switching never shifts the layout. */
+.language-switch {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-self: center;
+  border: 1px solid #ffffff55;
+  border-radius: 3px;
+  overflow: hidden;
+  font: 600 12px/1 var(--font);
+  letter-spacing: 0;
+}
+.language-switch button {
+  width: 46px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.language-switch button + button {
+  border-left: 1px solid #ffffff55;
+}
+.language-switch button:not([aria-pressed="true"]):hover {
+  background: #ffffff16;
+}
+.language-switch button[aria-pressed="true"] {
+  background: #fff;
+  color: var(--brand-blue, #0135df);
+}
+.language-switch button:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: -2px;
+}
+.language-switch.on-light {
+  justify-self: start;
+  border-color: var(--work-line, #e3e8f0);
+}
+.language-switch.on-light button {
+  height: 36px;
+  width: 56px;
+  color: var(--work-ink, #142343);
+}
+.language-switch.on-light button + button {
+  border-left-color: var(--work-line, #e3e8f0);
+}
+.language-switch.on-light button:not([aria-pressed="true"]):hover {
+  background: var(--work-surface, #f7f9fc);
+}
+.language-switch.on-light button[aria-pressed="true"] {
+  background: #0135df;
+  color: #fff;
+}
+/* The desktop header only has room from 1280px; narrower desktops use the
+   footer's switch, phones the menu's. */
+.header-actions > .language-switch {
+  display: none;
+  margin: 0 16px;
+}
+@media (min-width: 1280px) {
+  .header-actions > .language-switch {
+    display: inline-flex;
+  }
+}
+.footer-bottom > .language-switch button {
+  height: 32px;
+}
+.header .mobile-actions > .language-switch {
+  margin-left: auto;
+}
+.header .mobile-actions > .language-switch button {
+  height: 36px;
+}
+.app-sidebar .sidebar-bottom > .language-switch {
+  align-self: flex-start;
+  margin: 6px 12px 0;
+}

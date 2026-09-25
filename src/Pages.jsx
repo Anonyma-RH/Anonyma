@@ -785,6 +785,7 @@ const featureIcons = {
   uncensored: "chat",
   ephemeral: "shield",
   private: "shield",
+  zh: "globe",
 };
 const launch = {
   id: "mvp",

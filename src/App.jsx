@@ -20,6 +20,7 @@ import {
   NotFound,
 } from "./Pages.jsx";
 import Whitepaper from "./Whitepaper.jsx";
+import { LanguageSwitch, Translation } from "./LanguageSwitch.jsx";
 const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 // Links into updates that aren't released yet lead to the roadmap, tagged "Soon".
@@ -153,9 +154,11 @@ function Navigation() {
         <div className="mobile-actions">
           <Link to="/login">Log in</Link>
           <Link to={start()}>Explore workspace →</Link>
+          <LanguageSwitch config={config} />
         </div>
       </nav>
       <div className="header-actions">
+        <LanguageSwitch config={config} />
         <Link to="/login">Log in</Link>
         <Link to={start()} className="header-cta">
           Get started <Icon name="diagonal" size={15} />
@@ -283,6 +286,7 @@ function Footer() {
           <Link to="/privacy">Privacy</Link>
           <Link to="/terms">Terms</Link>
           <span className="footer-note">Built for your next idea.</span>
+          <LanguageSwitch config={config} className="on-light" />
         </div>
       </footer>
     </>
@@ -313,6 +317,7 @@ function ScrollManager() {
 }
 function Shell() {
   const location = useLocation();
+  const { config } = useApp();
   const app =
     location.pathname.startsWith("/workspace") ||
     location.pathname.startsWith("/account");
@@ -322,6 +327,7 @@ function Shell() {
         Skip to content
       </a>
       <ScrollManager />
+      <Translation config={config} />
       {!app && <Navigation />}
       <Suspense
         fallback={

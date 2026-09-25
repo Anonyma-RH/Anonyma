@@ -8,8 +8,8 @@
   --yellow: #e9df88;
   --pink: #f0a9b0;
   --sage: #e0e9dd;
-  --font: "GFS Neohellenic", sans-serif;
-  --serif: "GFS Didot", Georgia, serif;
+  --font: "GFS Neohellenic", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Source Han Sans SC", sans-serif;
+  --serif: "GFS Didot", Georgia, "Songti SC", "Noto Serif SC", "Source Han Serif SC", STSong, SimSun, serif;
   color: var(--ink);
   background: var(--paper);
   font-family: var(--font);

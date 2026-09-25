@@ -1742,7 +1742,15 @@
     "Your workspace, one tap away.": "轻点一下，直达你的工作台。",
     "Install on phone or desktop": "可安装到手机或电脑",
     "Opens straight into your workspace": "打开即进入你的工作台",
-    "Share links and text into a chat": "将链接和文字分享到对话中"
+    "Share links and text into a chat": "将链接和文字分享到对话中",
+    "Training Labels": "训练标识",
+    "Know when a provider learns from your prompts.": "哪些提供商会用你的提示词训练，一目了然。",
+    "A clear label on models whose provider trains on what you send": "清楚标出会用你发送的内容训练的模型",
+    "One tap to the version that doesn't": "一键切换到不用于训练的版本",
+    "Flagged in the API too": "API 中同样会标出",
+    "Trains on prompts": "会用提示词训练",
+    "are used to improve its products.": "的提示词会被用于改进其产品。",
+    "Dismiss": "关闭"
   },
   "patterns": [
     {
@@ -2568,6 +2576,18 @@
     {
       "en": "by {0} · {1}",
       "zh": "{0} 发起 · {1}"
+    },
+    {
+      "en": "{0} says prompts sent to",
+      "zh": "{0} 表示，发送给"
+    },
+    {
+      "en": "{0} says it uses what you send to this tier to improve its products.",
+      "zh": "{0} 表示，会使用你发送给此版本的内容来改进其产品。"
+    },
+    {
+      "en": "{0} says it uses what you send to this tier to improve its products. {1} isn't used that way.",
+      "zh": "{0} 表示，会使用你发送给此版本的内容来改进其产品；{1} 则不会。"
     }
   ]
 }

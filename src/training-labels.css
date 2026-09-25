@@ -1,0 +1,107 @@
+/* Training Labels: the "Trains on prompts" tag (pickers and /models) and the
+   notice at the foot of the composer. A caution in the workspace's own flat
+   cobalt/white: outlined with a small brand-yellow square, where the Private
+   tag is a filled cobalt badge. */
+.training-tag {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  flex: none;
+  gap: 5px;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #3e5070;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+  padding: 2px 6px;
+  cursor: help;
+}
+.training-tag::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: #ffb21c;
+}
+
+.training-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 14px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid #e3e8f0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #3e5070;
+}
+.training-notice .training-mark {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  background: #ffb21c;
+}
+.training-notice p {
+  flex: 1 1 260px;
+  min-width: 0;
+  margin: 0;
+}
+.training-notice b {
+  font-weight: 600;
+  color: #142343;
+}
+.training-notice button {
+  font: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.training-notice .training-switch {
+  padding: 5px 8px;
+  color: #0135df;
+  white-space: nowrap;
+}
+.training-notice .training-switch:hover {
+  background: #edf2ff;
+}
+.training-notice .training-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0;
+  color: #68748a;
+}
+.training-notice .training-dismiss:hover {
+  background: #f7f9fc;
+  color: #142343;
+}
+.training-notice button:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 1px;
+}
+
+/* The @mention menu sizes its spans for model ids; keep the tag small. */
+.app-shell .mention-menu .training-tag {
+  font-size: 10px;
+  color: #3e5070;
+}
+
+/* /models: one more chip in the card's property row, outlined instead of
+   filled like its neighbours. */
+.model-properties .training-tag {
+  margin-left: 0;
+  font-size: 9px;
+  padding: 4px 7px;
+  background: #fff;
+}

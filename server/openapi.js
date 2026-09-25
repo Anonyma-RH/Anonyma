@@ -403,7 +403,7 @@ for (const [path, summary] of [
   ],
   [
     "/api/models",
-    "Model catalog including capability, pricing and private-mode metadata",
+    "Model catalog including capability, pricing, private-mode and training metadata",
   ],
   ["/api/market", "Public cryptocurrency market feed"],
   ["/api/rates", "Crypto units per USD; validated rates cached for 60 seconds"],
@@ -954,7 +954,7 @@ route("get", "/v1", "Free API connection check", {
 route("get", "/v1/models", "List API-callable models", {
   auth: "bearer",
   description:
-    "Returns {object: list, data: [{id, object: model, owned_by, created}]}. Includes callable chat and image entries; chat completions accepts chat models only. Use /api/models type metadata to choose a chat model.",
+    "Returns {object: list, data: [{id, object: model, owned_by, created}]}. Includes callable chat and image entries; chat completions accepts chat models only. Use /api/models type metadata to choose a chat model. Once the Training Labels update is released, a model whose provider says it uses what you send to improve its products carries trains_on_prompts: true, plus untrained_alternative (the id of the listed version that isn't used that way) when there is one; /api/models carries the same as trainsOnPrompts and untrainedAlternative.",
 });
 route("get", "/v1/balance", "API key balance", {
   auth: "bearer",

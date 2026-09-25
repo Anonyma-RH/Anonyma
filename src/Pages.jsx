@@ -23,6 +23,7 @@ import { articles } from "./data.js";
 import ReleaseStatus from "./ReleaseStatus.jsx";
 import BillingRules from "./BillingRules.jsx";
 import { featureEnabled, featureLabel, guideReleaseLabel, releaseCopy, modelAvailability } from "./release-copy.js";
+import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -34,6 +35,7 @@ export function PageIntro({ eyebrow, title, children }) {
 }
 export function Catalog() {
   const { models, catalogMeta, config } = useApp();
+  const trainingLive = trainingLabelsReleased(config);
   const [params] = useSearchParams();
   const [query, setQuery] = useState(""),
     [type, setType] = useState("all"),
@@ -176,6 +178,9 @@ export function Catalog() {
                     </span>
                   )}
                   {m.vision && <span>Vision</span>}
+                  {trainingLive && m.trainsOnPrompts && (
+                    <TrainingTag model={m} models={models} />
+                  )}
                 </div>
                 <div className="catalog-card-bottom">
                   <Link
@@ -791,6 +796,7 @@ const featureIcons = {
   receipts: "shield",
   scrolls: "book",
   app: "download",
+  training: "eye",
 };
 const launch = {
   id: "mvp",

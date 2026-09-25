@@ -21,14 +21,16 @@ import {
 } from "./Pages.jsx";
 import Whitepaper from "./Whitepaper.jsx";
 import { LanguageSwitch, Translation } from "./LanguageSwitch.jsx";
+import Verify from "./Verify.jsx";
 const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 // Links into updates that aren't released yet lead to the roadmap, tagged "Soon".
 function locked(config, to) {
   if (to.startsWith("/workspace/")) return !config?.releases ? to !== "/workspace/chat" : !modeReleased(config, to.slice(11));
   return (
-    ["/developers", "/docs/api", "/account/keys", "/guides/one-api"].includes(to) &&
-    !featureEnabled(config, "api")
+    (["/developers", "/docs/api", "/account/keys", "/guides/one-api"].includes(to) &&
+      !featureEnabled(config, "api")) ||
+    (to === "/verify" && !featureEnabled(config, "receipts"))
   );
 }
 function Navigation() {
@@ -104,6 +106,7 @@ function Navigation() {
             links: [
               ["/docs", "Documentation"],
               ["/whitepaper", "Whitepaper"],
+              ["/verify", "Verify a receipt"],
               ["/guides/choose-a-model", "Model guide"],
               ["/guides/understanding-credits", "Understanding credits"],
               ["/guides/one-api", "Developer guide"],
@@ -249,6 +252,7 @@ function Footer() {
                 links: [
                   ["Documentation", "/docs"],
                   ["Whitepaper", "/whitepaper"],
+                  ["Verify a receipt", "/verify"],
                   ["Model guide", "/guides/choose-a-model"],
                   ["Understanding credits", "/guides/understanding-credits"],
                   ["Developer guide", "/guides/one-api"],
@@ -342,6 +346,7 @@ function Shell() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/docs/*" element={<Docs />} />
           <Route path="/whitepaper" element={<Whitepaper />} />
+          <Route path="/verify" element={<Verify />} />
           <Route path="/developers" element={<Developers />} />
           <Route path="/guides/:slug" element={<Article />} />
           <Route path="/roadmap" element={<Roadmap />} />

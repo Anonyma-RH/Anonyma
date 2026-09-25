@@ -25,6 +25,7 @@ import {
   SoonTag,
 } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
+import SignedReceipt from "./SignedReceipt.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
 import WorkspaceHome from "./WorkspaceHome.jsx";
 import AudioStudio, { MicButton } from "./AudioStudio.jsx";
@@ -1467,6 +1468,9 @@ export default function Workspace() {
                       <span className="receipt-part">
                         Request {String(receipt.request_id).slice(0, 12)}
                       </span>
+                    )}
+                    {isReleased(config, "receipts") && receipt.signed_receipt && (
+                      <SignedReceipt signedReceipt={receipt.signed_receipt} />
                     )}
                   </div>
                 )}

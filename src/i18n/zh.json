@@ -1666,7 +1666,41 @@
     "Symposium runs are saved to your account, even with Private Mode on.": "即使开启隐私模式，模型圆桌的运行记录也会保存到你的账户。",
     "symposium": "模型圆桌",
     "Personal conversations: the 300 most recently updated conversations. Creating another conversation removes the oldest personal conversation and its messages. Symposium runs are kept separately: the newest 150, removed the same way. Shared conversations have no automatic count or time limit.": "个人会话：最近更新的 300 个会话。创建新会话会移除最早的个人会话及其消息。模型圆桌的运行记录单独保留：最新的 150 个，按同样方式移除。共享会话没有自动数量或时间限制。",
-    "The server keeps your 300 most recently updated personal conversations and deletes older ones; Symposium runs are kept separately, the newest 150. Sign-in codes and wallet challenges are deleted an hour after they expire, rate-limit records after a day, and expired sessions are removed.": "服务器会保留你最近更新的 300 个个人会话，并删除更早的会话；模型圆桌的运行记录单独保留最新的 150 个。登录验证码和钱包挑战会在过期 1 小时后删除，限流记录会在 1 天后删除，过期会话也会被移除。"
+    "The server keeps your 300 most recently updated personal conversations and deletes older ones; Symposium runs are kept separately, the newest 150. Sign-in codes and wallet challenges are deleted an hour after they expire, rate-limit records after a day, and expired sessions are removed.": "服务器会保留你最近更新的 300 个个人会话，并删除更早的会话；模型圆桌的运行记录单独保留最新的 150 个。登录验证码和钱包挑战会在过期 1 小时后删除，限流记录会在 1 天后删除，过期会话也会被移除。",
+    "Signed Receipts": "签名收据",
+    "Proof of what ran, and what it cost.": "运行了什么、花了多少，都有据可查。",
+    "Every settled reply gets an Ed25519-signed receipt": "每条已结算的回复都会生成一份 Ed25519 签名收据",
+    "Anyone can verify it, including the answer text": "任何人都可以验证，包括回答内容",
+    "The public key is published for independent checks": "公钥已公开，可供独立核验",
+    "Verify a receipt": "验证收据",
+    "VERIFY A RECEIPT": "验证收据",
+    "Signed receipts": "签名收据",
+    "Check that a reply's signed receipt is genuine.": "确认回复的签名收据是否真实有效。",
+    "Check what ran, and what it cost.": "核实实际运行的内容及其费用。",
+    "Every settled reply gets a receipt signed with ANONYMA's Ed25519 key. Paste one below to confirm it's genuine, unaltered, and — if you have it — that a specific answer is the one it charged for.": "每条已结算的回复都会生成一份由 ANONYMA 的 Ed25519 密钥签名的收据。将其粘贴到下方，即可确认它是真实、未被篡改的——如果你有具体的回答内容，还能确认这正是被收费的那一条。",
+    "Signed receipt (JSON)": "签名收据（JSON）",
+    "Answer text (optional)": "回答内容（可选）",
+    "Verifying…": "验证中……",
+    "Verify": "验证",
+    "This receipt's key isn't recognized by this service.": "此服务无法识别该收据的密钥。",
+    "The signature does not match this receipt. Something was changed.": "签名与该收据不匹配：收据内容已被更改。",
+    "Valid signature": "签名有效",
+    "Not valid": "无效",
+    "This receipt was signed by ANONYMA and has not been altered.": "该收据由 ANONYMA 签名，且未被更改。",
+    "This receipt could not be verified.": "无法验证该收据。",
+    "The answer text matches what was charged for.": "回答内容与被收费的内容一致。",
+    "The answer text does not match what was charged for.": "回答内容与被收费的内容不一致。",
+    "Model": "模型",
+    "Tokens": "Token 数",
+    "Issued": "签发时间",
+    "Key ID": "密钥 ID",
+    "Verify it yourself": "自行验证",
+    "No account or network call is required: verify offline with the public key below.": "无需账户或联网请求：使用下方公钥即可离线验证。",
+    "Copy public key": "复制公钥",
+    "Also published at /api/receipts/key and /.well-known/anonyma-receipts.json.": "此外还发布在 /api/receipts/key 和 /.well-known/anonyma-receipts.json。",
+    "Signed": "已签名",
+    "Copy signed receipt": "复制签名收据",
+    "verify": "验证收据"
   },
   "patterns": [
     {
@@ -2468,6 +2502,18 @@
     {
       "en": "Veiled {0} details before sending. The real values show only in this browser.",
       "zh": "Veil 已在发送前遮盖 {0} 条详情。真实内容仅在此浏览器中显示。"
+    },
+    {
+      "en": "{0} in / {1} out",
+      "zh": "输入 {0} / 输出 {1}"
+    },
+    {
+      "en": "{0} charged",
+      "zh": "已扣除 {0}"
+    },
+    {
+      "en": "{0} charged · {1} released",
+      "zh": "已扣除 {0} · 已释放 {1}"
     }
   ]
 }

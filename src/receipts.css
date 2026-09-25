@@ -1,0 +1,91 @@
+/* Signed Receipts: the inline workspace mark and the /verify page. */
+.signed-receipt {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.signed-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  color: #2f8f5b;
+}
+.app-shell .signed-tag {
+  color: #0135df;
+}
+
+.verify-layout {
+  display: grid;
+  gap: 30px;
+  max-width: 640px;
+}
+.verify-result {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 22px 25px;
+}
+.verify-result.valid {
+  border-color: #8fd6ad;
+  background: #f1fbf5;
+}
+.verify-result.invalid {
+  border-color: #eab3ae;
+  background: #fdf3f2;
+}
+.verify-result h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  margin: 0 0 8px;
+}
+.verify-result.valid h2 {
+  color: #1c7a45;
+}
+.verify-result.invalid h2 {
+  color: #b3392f;
+}
+.verify-result .match {
+  color: #1c7a45;
+}
+.verify-result .mismatch {
+  color: #b3392f;
+}
+.verify-result p {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+.verify-result table {
+  background: #fff;
+}
+.verify-key h2 {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+.verify-key > p {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+.verify-key .key-secret {
+  display: block;
+  background: #f1f6e9;
+  border: 1px solid var(--line);
+  padding: 13px;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  margin-bottom: 10px;
+}
+.verify-key .code-example {
+  margin-top: 18px;
+}

@@ -17,6 +17,8 @@ import { chatStream, reportedProviderCost } from "../provider.js";
 import { FAILOVER_CODES } from "../fallback.js";
 import { requestIdentifier } from "../middleware.js";
 import { isPrivateModel, ZDR_ROUTING } from "../private-mode.js";
+import { isReleased } from "../releases.js";
+import { buildReceiptPayload } from "../receipts.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -29,7 +31,8 @@ function chatTitle(content) {
 
 // Streamed chat for the workspace and the compatible /v1 API.
 export function chatRoutes(ctx) {
-  const { app, db, cfg, limit, requireUser, apiAuth, inflight, fallback } = ctx;
+  const { app, db, cfg, limit, requireUser, apiAuth, inflight, fallback, receipts } =
+    ctx;
   const mediaStore = ctx.media;
   const { getModel, validateMessages, maxTokens } = ctx.models;
   const { accessConversation, newConversation } = ctx.conversations;
@@ -354,6 +357,34 @@ export function chatRoutes(ctx) {
         usage,
       });
       attributeMediaCost(receipt);
+      // An Ed25519-signed, independently verifiable copy of this receipt.
+      // The signed id is the requestId alone, never the user-prefixed hold.
+      let signedReceipt = null;
+      if (isReleased(cfg, "receipts")) {
+        // Best effort: the request is already settled, so a signing failure
+        // must never cost the user the answer they paid for.
+        try {
+          const payload = buildReceiptPayload({
+            id: requestId,
+            service: cfg.publicUrl || cfg.origin,
+            model: receipt.model,
+            inputTokens: receipt.usage?.prompt_tokens,
+            outputTokens: receipt.usage?.completion_tokens,
+            creditsCharged: receipt.credits_charged,
+            creditsReleased: receipt.released,
+            keyId: receipts.keyId,
+            requestMessages: messages,
+            answerText: output,
+          });
+          const signature = receipts.sign(payload);
+          db.prepare(
+            "INSERT OR IGNORE INTO receipt_signatures(receipt_id,user_id,key_id,payload,signature,created) VALUES(?,?,?,?,?,?)",
+          ).run(hold, req.user.id, receipts.keyId, JSON.stringify(payload), signature, now());
+          signedReceipt = { receipt: payload, signature, key_id: receipts.keyId };
+        } catch (e) {
+          console.error("Receipt signing failed:", e.message);
+        }
+      }
       const extension = {
         credits_charged: receipt.credits_charged,
         request_id: requestId,
@@ -363,6 +394,7 @@ export function chatRoutes(ctx) {
         ...(isPrivate
           ? { private: { privacy: "zdr", stored: false } }
           : {}),
+        ...(signedReceipt ? { signed_receipt: signedReceipt } : {}),
       };
       if (
         conversation &&

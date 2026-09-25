@@ -43,12 +43,21 @@ export function stripShareParams(search) {
 // Prefills the composer from a share_target request the first time the chat
 // route loads with share params, then removes them from the URL so a
 // refresh or re-send doesn't repeat the same share. Never auto-sends.
-export function useShareTargetPrefill({ mode, search, setPrompt, onConsumed }) {
+// `enabled` gates the whole feature (see server/releases.js "app" update):
+// while it's false, shared params are left untouched in the URL and the
+// composer is never prefilled.
+export function useShareTargetPrefill({
+  mode,
+  search,
+  setPrompt,
+  onConsumed,
+  enabled = true,
+}) {
   useEffect(() => {
-    if (mode !== "chat") return;
+    if (!enabled || mode !== "chat") return;
     const shared = readShareTarget(search);
     if (!shared) return;
     setPrompt(combineShareFields(shared));
     onConsumed?.(stripShareParams(search));
-  }, [mode, search]);
+  }, [mode, search, enabled]);
 }

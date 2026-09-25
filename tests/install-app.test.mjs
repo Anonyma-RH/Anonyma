@@ -19,9 +19,27 @@ import {
   stripShareParams,
 } from "../src/share-target.js";
 import { siteRoutes } from "../server/routes/site.js";
+import { createApp } from "../server/app.js";
+import { UPDATES } from "../server/releases.js";
 
 const manifestPath = "public/manifest.webmanifest";
 const swPath = "public/sw.js";
+
+function fixture(t, released) {
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-install-app-"));
+  const svc = createApp({
+    testMode: true,
+    dbPath: join(dir, "test.sqlite"),
+    mediaPath: join(dir, "media"),
+    origin: "http://localhost:5175",
+    released,
+  });
+  t.after(() => {
+    svc.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+  return svc;
+}
 
 function readManifest() {
   return JSON.parse(readFileSync(manifestPath, "utf8"));
@@ -81,8 +99,62 @@ test("apple touch icon referenced from index.html exists at its declared size", 
   const path = "public" + match[1];
   assert.ok(existsSync(path));
   assert.deepEqual(pngSize(path), { width: 180, height: 180 });
-  assert.match(html, /rel="manifest" href="\/manifest\.webmanifest"/);
-  assert.match(html, /name="apple-mobile-web-app-capable" content="yes"/);
+});
+
+// The app isn't installable until the "app" update is released: index.html
+// must not statically declare it, and the client must add it itself only
+// once config says so.
+test("index.html does not statically link the manifest or declare standalone-app meta tags", () => {
+  const html = readFileSync("index.html", "utf8");
+  assert.doesNotMatch(html, /rel="manifest"/);
+  assert.doesNotMatch(html, /apple-mobile-web-app/);
+});
+
+test("the client adds the manifest link, standalone meta tags and service worker only once released", () => {
+  const gate = readFileSync("src/InstallApp.jsx", "utf8");
+  assert.match(gate, /isReleased\(config, "app"\)/);
+  assert.match(gate, /link\.href = "\/manifest\.webmanifest"/);
+  assert.match(gate, /apple-mobile-web-app-capable/);
+  assert.match(gate, /navigator\.serviceWorker\.register\("\/sw\.js"\)/);
+  // main.jsx no longer registers the worker unconditionally.
+  const main = readFileSync("src/main.jsx", "utf8");
+  assert.doesNotMatch(main, /serviceWorker\.register/);
+  // context.jsx wires the gate up with the loaded config.
+  const context = readFileSync("src/context.jsx", "utf8");
+  assert.match(context, /useInstallAppGate\(config\)/);
+});
+
+test("the install entry and share-target prefill are gated behind the app release", () => {
+  const workspace = readFileSync("src/Workspace.jsx", "utf8");
+  assert.match(workspace, /isReleased\(config, "app"\) && <InstallAppEntry \/>/);
+  assert.match(workspace, /enabled: isReleased\(config, "app"\)/);
+  const shareTarget = readFileSync("src/share-target.js", "utf8");
+  assert.match(shareTarget, /if \(!enabled \|\| mode !== "chat"\) return;/);
+});
+
+test("the UPDATES entry for the app exists and is off by default", () => {
+  const entry = UPDATES.find((u) => u.id === "app");
+  assert.ok(entry, 'UPDATES should include an "app" entry');
+  assert.equal(entry.title, "Install the App");
+  assert.equal(entry.tagline, "Your workspace, one tap away.");
+  assert.deepEqual(entry.points, [
+    "Install on phone or desktop",
+    "Opens straight into your workspace",
+    "Share links and text into a chat",
+  ]);
+  assert.equal(entry.released, false);
+});
+
+test("server: the app update is off under the MVP and on once released", async (t) => {
+  const off = fixture(t, "mvp");
+  const infoOff = (await request(off.app).get("/api/config").expect(200)).body.releases;
+  assert.equal(infoOff.features.app, false);
+  assert.equal(infoOff.updates.find((u) => u.id === "app").released, false);
+
+  const on = fixture(t, "mvp,app");
+  const infoOn = (await request(on.app).get("/api/config").expect(200)).body.releases;
+  assert.equal(infoOn.features.app, true);
+  assert.equal(infoOn.updates.find((u) => u.id === "app").released, true);
 });
 
 test("service worker source never touches /api, /v1, /health or non-GET requests", () => {

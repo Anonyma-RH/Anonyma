@@ -166,7 +166,7 @@ export function AppSidebar({
           <PixelTile name="credits" />
           Credits
         </Link>
-        <InstallAppEntry />
+        {isReleased(config, "app") && <InstallAppEntry />}
         <LanguageSwitch config={config} />
         <Link to={"/account" + q}>
           <span className="avatar">
@@ -345,6 +345,7 @@ export default function Workspace() {
     search: location.search,
     setPrompt,
     onConsumed: (search) => navigate(location.pathname + search, { replace: true }),
+    enabled: isReleased(config, "app"),
   });
   useEffect(() => {
     if (demo && !saveStore("conversations", all))

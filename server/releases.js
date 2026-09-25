@@ -161,6 +161,17 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "app",
+    title: "Install the App",
+    tagline: "Your workspace, one tap away.",
+    points: [
+      "Install on phone or desktop",
+      "Opens straight into your workspace",
+      "Share links and text into a chat",
+    ],
+    released: false,
+  },
 ];
 const IDS = UPDATES.map((u) => u.id);
 

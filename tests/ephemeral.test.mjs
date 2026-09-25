@@ -23,7 +23,9 @@ function fixture(t, released) {
     dbPath: join(dir, "test.sqlite"),
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
-    released,
+    // The server now defaults to the MVP, so the default fixture opens
+    // every update explicitly, as the other suites do.
+    released: released ?? "all",
     // The MVP's default model list doesn't include the fixture's test
     // model, so gating tests that release only "mvp,ephemeral" need it
     // added explicitly to keep chat requests reaching the release gate

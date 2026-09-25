@@ -170,7 +170,7 @@ export const UPDATES = [
       "Text extracted in your browser",
       "Tidy document chips in every chat",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

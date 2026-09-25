@@ -76,7 +76,7 @@ test("images: generates 1-4 images, charges once per request, both response form
   assert.ok(url.body.data[0].url.startsWith("http"));
   assert.ok(url.body.created > 0);
   assert.ok(url.body.anonyma.credits_charged > 0);
-  assert.equal(url.body.askr.credits_charged, url.body.anonyma.credits_charged);
+  assert.equal(url.body.askr, undefined);
   assert.ok(before - balance(s.db, user.id).total > 0);
   assert.equal(ledgerCount(s.db, user.id), baseline + 1);
 

@@ -178,7 +178,6 @@ export function v1MediaRoutes(ctx) {
               : { url: item.url },
           ),
           anonyma: { credits_charged: receipt.credits_charged },
-          askr: { credits_charged: receipt.credits_charged },
           testMode: cfg.testMode,
           ...extra,
         });
@@ -361,7 +360,6 @@ export function v1MediaRoutes(ctx) {
         res.json({
           text,
           anonyma: { credits_charged: receipt.credits_charged },
-          askr: { credits_charged: receipt.credits_charged },
         });
       } catch (e) {
         release(db, hold);

@@ -3,19 +3,20 @@ import { CopyButton } from "./ui.jsx";
 
 // Copyable curl examples for the /v1 media endpoints, shown on the
 // Developers page once the v1media update is released. Placeholder model
-// ids match the style of the existing chat-completions example.
-const examples = [
+// ids match the style of the existing chat-completions example; the host is
+// the site's own origin.
+const examples = (origin) => [
   {
     label: "IMAGES",
-    text: `curl https://YOUR_ANONYMA_DOMAIN/v1/images/generations \\\n  -H "Authorization: Bearer $ANONYMA_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"model":"YOUR_IMAGE_MODEL_ID","prompt":"A cobalt blue paper airplane","n":1}'`,
+    text: `curl ${origin}/v1/images/generations \\\n  -H "Authorization: Bearer $ANONYMA_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"model":"YOUR_IMAGE_MODEL_ID","prompt":"A cobalt blue paper airplane","n":1}'`,
   },
   {
     label: "TEXT TO SPEECH",
-    text: `curl https://YOUR_ANONYMA_DOMAIN/v1/audio/speech \\\n  -H "Authorization: Bearer $ANONYMA_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"model":"YOUR_VOICE_MODEL_ID","input":"Hello from Anonyma."}' \\\n  --output speech.mp3`,
+    text: `curl ${origin}/v1/audio/speech \\\n  -H "Authorization: Bearer $ANONYMA_API_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"model":"YOUR_VOICE_MODEL_ID","input":"Hello from Anonyma."}' \\\n  --output speech.mp3`,
   },
   {
     label: "TRANSCRIPTION",
-    text: `curl https://YOUR_ANONYMA_DOMAIN/v1/audio/transcriptions \\\n  -H "Authorization: Bearer $ANONYMA_API_KEY" \\\n  -F "file=@speech.mp3;type=audio/mpeg" \\\n  -F "model=YOUR_TRANSCRIPTION_MODEL_ID"`,
+    text: `curl ${origin}/v1/audio/transcriptions \\\n  -H "Authorization: Bearer $ANONYMA_API_KEY" \\\n  -F "file=@speech.mp3;type=audio/mpeg" \\\n  -F "model=YOUR_TRANSCRIPTION_MODEL_ID"`,
   },
 ];
 export default function V1Media() {
@@ -27,7 +28,7 @@ export default function V1Media() {
         image generation, text-to-speech, transcription and video.
       </p>
       <div className="v1-media-examples">
-        {examples.map((e) => (
+        {examples(window.location.origin).map((e) => (
           <div className="code-example" key={e.label}>
             <div>
               <span>{e.label}</span>

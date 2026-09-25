@@ -5,7 +5,12 @@ import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createApp } from "../server/app.js";
-import { PUBLIC_PAGES, DOC_TOPICS, GUIDE_SLUGS } from "../src/site-routes.js";
+import {
+  PUBLIC_PAGES,
+  GATED_PUBLIC_PAGES,
+  DOC_TOPICS,
+  GUIDE_SLUGS,
+} from "../src/site-routes.js";
 import { articles } from "../src/data.js";
 function fixture(t) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-site-"));
@@ -89,9 +94,13 @@ test("sitemap and robots publish canonical public routes without private account
   );
   const urls = [...map.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   assert.equal(urls.length, new Set(urls).size);
+  // Gated public pages join once their update is live: /token with the
+  // NYMA Holder Program.
+  const features = (await get("/api/config").expect(200)).body.releases.features;
+  const served = features.holders ? [GATED_PUBLIC_PAGES.token] : [];
   assert.deepEqual(
     urls,
-    PUBLIC_PAGES.map((path) => "https://example.test" + path),
+    [...PUBLIC_PAGES, ...served].map((path) => "https://example.test" + path),
   );
   assert.doesNotMatch(map.text, /\/account|\/workspace|\/login|\/register/);
   const robots = await get("/robots.txt").expect(200);

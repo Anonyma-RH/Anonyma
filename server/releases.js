@@ -298,7 +298,7 @@ export const UPDATES = [
       "A bigger library, early access and a roadmap vote",
       "No staking or locking: your NYMA stays in your wallet",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "v1media",

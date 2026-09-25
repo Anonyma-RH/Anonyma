@@ -38,6 +38,9 @@ import { ConnectedApps, connectReleased } from "./Connect.jsx";
 import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
 import { ShareLinksManager } from "./ShareLinks.jsx";
 import { holdersReleased } from "./holders.js";
+import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
+import { paletteReleased, paletteActions, recentStoreKey } from "./command-palette.js";
+import { useLanguage, setLanguage } from "./i18n.js";
 // Ledger entry kinds as readable labels; an unknown kind reads as words.
 const LEDGER_KINDS = {
   chat: "Chat",
@@ -83,6 +86,15 @@ export default function Account() {
     [retentionDefault, setRetentionDefault] = useState(null),
     [transfer, setTransfer] = useState({ to: "", amount: "", confirm: false, id: uid() });
   useEffect(() => setInvoiceIntent(uid()), [amount, currency]);
+  // Command Palette: on account pages it offers actions and places only
+  // (chats and models live in the workspace), and fetches nothing.
+  const paletteLive = paletteReleased(config);
+  const palette = usePalette(paletteLive);
+  const language = useLanguage();
+  function runPaletteItem(item) {
+    if (item.id === "language") return setLanguage(language === "zh" ? "en" : "zh");
+    if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
+  }
   const q = demo ? "?demo=1" : "";
   const bandRef = useRef();
   const balance = demo
@@ -297,6 +309,9 @@ export default function Account() {
             Your account <span className="workspace-slash">/</span>
             <small>{demo ? "Demo workspace" : "Personal workspace"}</small>
           </span>
+          {paletteLive && (
+            <PaletteButton onOpen={() => palette.setOpen(true)} apple={palette.apple} />
+          )}
           <Link to={"/workspace" + q} className="small-button">
             Back to workspace <Icon name="arrow" size={15} />
           </Link>
@@ -1099,6 +1114,19 @@ export default function Account() {
             </form>
           )}
         </Modal>
+      )}
+      {palette.open && (
+        <CommandPalette
+          items={() =>
+            paletteActions({ config, page: "account", section, demo, signedIn: !!user, language })
+          }
+          onRun={runPaletteItem}
+          onClose={() => palette.setOpen(false)}
+          config={config}
+          apple={palette.apple}
+          recentKey={recentStoreKey({ demo, userId: user?.id })}
+          placeholder="Search actions and places…"
+        />
       )}
     </main>
   );

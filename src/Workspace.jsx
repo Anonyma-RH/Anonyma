@@ -107,6 +107,19 @@ import { useShareTargetPrefill } from "./share-target.js";
 import { InstallAppEntry } from "./InstallApp.jsx";
 import { EarlyTag } from "./Holders.jsx";
 import { isEarlyAccess } from "./holders.js";
+import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
+import {
+  paletteReleased,
+  paletteActions,
+  chatItems,
+  modelItems,
+  scrollItems,
+  historySearchItem,
+  insertIntoPrompt,
+  recentStoreKey,
+  MODEL_MODES,
+} from "./command-palette.js";
+import { useLanguage, setLanguage } from "./i18n.js";
 const initial = [
   {
     id: "welcome",
@@ -300,6 +313,8 @@ export default function Workspace() {
     [scrollFill, setScrollFill] = useState(null),
     [slashDismissedFor, setSlashDismissedFor] = useState(null),
     [slashIndex, setSlashIndex] = useState(0),
+    // Command Palette: a request to open the composer's Saved files panel.
+    [filesRequest, setFilesRequest] = useState(0),
     // null = not chosen yet, so the first published option wins over the "default" preset.
     [video, setVideo] = useState({
       quality: null,
@@ -865,7 +880,9 @@ export default function Workspace() {
     }
   }
   function insertScroll(text) {
-    setPrompt(text);
+    // A scroll chosen from the Command Palette joins what's already typed.
+    const fromPalette = !!scrollFill?.fromPalette;
+    setPrompt((p) => (fromPalette ? insertIntoPrompt(p, text) : text));
     setScrollFill(null);
     promptBox.current?.focus();
   }
@@ -1437,6 +1454,92 @@ export default function Workspace() {
       setError(e.message);
     }
   }
+  // Command Palette (⌘K / Ctrl+K, or the header button): this page's chats,
+  // the model picker's own list, scrolls and actions, ranked in the browser.
+  // Opening or searching it fetches, sends and charges nothing; choosing an
+  // item runs the same code as the control it stands for.
+  const paletteLive = paletteReleased(config);
+  const palette = usePalette(paletteLive);
+  const language = useLanguage();
+  const paletteModels =
+    MODEL_MODES.includes(mode) && modeReleased(config, mode)
+      ? finderLive
+        ? finderModels
+        : visibleModels
+      : [];
+  function paletteItems(query) {
+    const ctx = {
+      config,
+      page: "workspace",
+      mode,
+      demo,
+      signedIn: !!user,
+      webSearch,
+      veilOn,
+      privateMode,
+      ephemeral,
+      shared: !!shared,
+      busy,
+      language,
+    };
+    return [
+      ...chatItems(demo || user ? all : [], { current }),
+      ...modelItems(paletteModels, { current: model, demo, trainingLive }),
+      ...(textMode && scrollsLive ? scrollItems(scrolls) : []),
+      ...paletteActions(ctx),
+      ...[historySearchItem(query, ctx)].filter(Boolean),
+    ];
+  }
+  function runPaletteItem(item) {
+    const focusComposer = () => setTimeout(() => promptBox.current?.focus(), 0);
+    if (item.group === "chats" && item.value) return openChat(item.value);
+    if (item.group === "models" && item.value) {
+      // Exactly what choosing it in the model picker does.
+      if (finderLive) chooseModel({ model: item.value.id });
+      else {
+        setModel(item.value.id);
+        setQuote(null);
+      }
+      return;
+    }
+    if (item.group === "scrolls" && item.value) {
+      const scroll = item.value;
+      if (extractVariables(scroll.body).length)
+        setScrollFill({ ...scroll, fromPalette: true });
+      else {
+        setPrompt((p) => insertIntoPrompt(p, scroll.body));
+        focusComposer();
+      }
+      return;
+    }
+    switch (item.id) {
+      case "new-chat":
+        if (item.to) navigate(item.to);
+        else {
+          newChat();
+          focusComposer();
+        }
+        return;
+      case "web-search":
+        return setWebSearch((v) => !v);
+      case "veil":
+        return setVeilOn((v) => !v);
+      case "private-mode":
+        return togglePrivateMode();
+      case "off-record":
+        return toggleEphemeral();
+      case "scrolls":
+        return setScrollsPanel(true);
+      case "memory":
+        return setMemoryPanel({});
+      case "files":
+        return setFilesRequest((n) => n + 1);
+      case "language":
+        return setLanguage(language === "zh" ? "en" : "zh");
+      default:
+        if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
+    }
+  }
   const files = messages
     .filter((m) => m.role === "assistant")
     .flatMap((m) =>
@@ -1559,6 +1662,9 @@ export default function Workspace() {
                 <span>Share</span>
               </button>
             )}
+            {paletteLive && (
+              <PaletteButton onOpen={() => palette.setOpen(true)} apple={palette.apple} />
+            )}
             <Link
               to={"/account/credits" + (demo ? "?demo=1" : "")}
               className="balance-chip"
@@ -1625,7 +1731,7 @@ export default function Workspace() {
               onOpen={openChat}
             />
           ) : mode === "library" && isReleased(config, "historylibrary") ? (
-            <HistoryLibrary key={`${user?.id || "guest"}:${demo}`} user={user} demo={demo} config={config} media={media} Grid={MediaGrid} onOpen={openChat} onDelete={(item) => setDialog({ type: "media", item })} refreshMedia={async () => { const r = await api("/api/media"); setMedia(r.data); refresh(); }} />
+            <HistoryLibrary key={`${user?.id || "guest"}:${demo}`} user={user} demo={demo} config={config} media={media} Grid={MediaGrid} request={paletteLive && location.state?.libraryTab ? { tab: location.state.libraryTab, query: location.state.historyQuery, key: location.key } : null} onOpen={openChat} onDelete={(item) => setDialog({ type: "media", item })} refreshMedia={async () => { const r = await api("/api/media"); setMedia(r.data); refresh(); }} />
           ) : mode === "library" ? (
             <div className="library-page">
               <div className="page-heading-inline">
@@ -2363,6 +2469,7 @@ export default function Workspace() {
                           privateContext={privateMode || ephemeral || veilOn}
                           audioEnabled={isReleased(config, "audio")}
                           onRefresh={refresh}
+                          openRequest={filesRequest}
                         />
                       )}
                       {["chat", "code"].includes(mode) &&
@@ -2868,6 +2975,25 @@ export default function Workspace() {
           conversation={share.conversation}
           blocked={share.blocked}
           onClose={() => setShare(null)}
+        />
+      )}
+      {palette.open && (
+        <CommandPalette
+          items={paletteItems}
+          onRun={runPaletteItem}
+          onClose={() => palette.setOpen(false)}
+          config={config}
+          apple={palette.apple}
+          recentKey={recentStoreKey({ demo, userId: user?.id })}
+          // Private Mode and off-the-record chats leave no palette history either.
+          record={!privateMode && !ephemeral}
+          placeholder={
+            textMode
+              ? "Search chats, models, scrolls and actions…"
+              : MODEL_MODES.includes(mode)
+                ? "Search chats, models and actions…"
+                : "Search chats and actions…"
+          }
         />
       )}
     </main>

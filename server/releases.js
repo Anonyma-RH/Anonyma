@@ -425,6 +425,18 @@ export const UPDATES = [
     ],
     released: false,
   },
+  {
+    id: "palette",
+    title: "Command Palette",
+    tagline: "Everything, one keystroke away.",
+    points: [
+      "Press ⌘K or Ctrl+K from anywhere in the workspace",
+      "Find chats, models, scrolls and actions",
+      "Search runs in your browser and is never charged",
+    ],
+    // Browser only: no server routes, so nothing to gate in featuresFor.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

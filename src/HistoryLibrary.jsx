@@ -14,6 +14,9 @@ export default function HistoryLibrary({
   Grid,
   onOpen,
   refreshMedia,
+  // From the Command Palette: { tab: "history", query, key }. Opens the
+  // search tab with the words typed there; searching stays a press of Search.
+  request = null,
 }) {
   const [tab, setTab] = useState("media"),
     [filter, setFilter] = useState("all"),
@@ -27,13 +30,15 @@ export default function HistoryLibrary({
     [quoted, setQuoted] = useState(null),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(""),
-    [savedPreview, setSavedPreview] = useState(null);
+    [savedPreview, setSavedPreview] = useState(null),
+    [focusQuery, setFocusQuery] = useState(0);
   const searchCtl = useRef(null),
     detailCtl = useRef(null),
     generation = useRef(null),
     lock = useRef(false),
     mounted = useRef(true),
-    epoch = useRef(0);
+    epoch = useRef(0),
+    queryBox = useRef(null);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -43,6 +48,16 @@ export default function HistoryLibrary({
       generation.current?.abort();
     };
   }, []);
+  useEffect(() => {
+    if (request?.tab !== "history") return;
+    setTab("history");
+    if (typeof request.query === "string") setQuery(request.query.slice(0, 160));
+    setFocusQuery((n) => n + 1);
+  }, [request?.key]);
+  // Once the search tab has rendered its box.
+  useEffect(() => {
+    if (focusQuery && tab === "history") queryBox.current?.focus();
+  }, [focusQuery, tab]);
   useEffect(() => {
     searchCtl.current?.abort();
     setHits([]);
@@ -275,6 +290,7 @@ export default function HistoryLibrary({
             <label htmlFor="history-query">Find a conversation</label>
             <div>
               <input
+                ref={queryBox}
                 id="history-query"
                 value={query}
                 maxLength={160}

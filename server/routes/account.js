@@ -263,6 +263,13 @@ export function accountRoutes(ctx) {
         .prepare("SELECT * FROM media WHERE user_id=?")
         .all(req.user.id)
         .map(mediaJSON),
+      scrolls: db
+        .prepare("SELECT * FROM scrolls WHERE user_id=?")
+        .all(req.user.id),
+      instructions:
+        db
+          .prepare("SELECT * FROM user_instructions WHERE user_id=?")
+          .get(req.user.id) || null,
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {
@@ -312,6 +319,10 @@ export function accountRoutes(ctx) {
       ).run(req.user.email || "", req.user.wallet || "", req.user.id);
       db.prepare("DELETE FROM tickets WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM videos WHERE user_id=?").run(req.user.id);
+      db.prepare("DELETE FROM scrolls WHERE user_id=?").run(req.user.id);
+      db.prepare("DELETE FROM user_instructions WHERE user_id=?").run(
+        req.user.id,
+      );
       db.prepare(
         "UPDATE users SET username=NULL,password=NULL,email=NULL,wallet=NULL,token_balance='0',token_since=NULL,deleted=? WHERE id=?",
       ).run(now(), req.user.id);

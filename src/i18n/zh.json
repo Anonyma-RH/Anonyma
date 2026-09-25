@@ -1700,7 +1700,42 @@
     "Also published at /api/receipts/key and /.well-known/anonyma-receipts.json.": "此外还发布在 /api/receipts/key 和 /.well-known/anonyma-receipts.json。",
     "Signed": "已签名",
     "Copy signed receipt": "复制签名收据",
-    "verify": "验证收据"
+    "verify": "验证收据",
+    "Scrolls": "卷轴",
+    "Save the prompt. Skip the retyping.": "保存提示词，不再重复输入。",
+    "Saved prompts with fill-in blanks": "保存带填空项的提示词",
+    "Type / to insert one": "输入 / 即可插入",
+    "Standing instructions for every chat": "每次对话都附带常驻指令",
+    "Scrolls · standing instructions active": "卷轴 · 常驻指令已开启",
+    "Scrolls: saved prompts and standing instructions": "卷轴：已保存的提示词与常驻指令",
+    "Insert a scroll": "插入卷轴",
+    "Insert": "插入",
+    "Standing instructions": "常驻指令",
+    "Sent with every chat, code and Uncensored message while enabled. Veil masks them like the rest of your message.": "开启后，每条对话、代码和无审查消息都会附带发送。Veil 会像处理消息其他内容一样遮盖其中的敏感信息。",
+    "e.g. Answer concisely. Prefer plain language. Always include a short summary first.": "例如：回答简洁，尽量使用通俗的语言，并始终先给出简短总结。",
+    "Send with every request": "每次请求都附带发送",
+    "Save instructions": "保存指令",
+    "Saved": "已保存",
+    "Your scrolls": "你的卷轴",
+    "New scroll": "新建卷轴",
+    "Save current prompt as a scroll": "将当前提示词保存为卷轴",
+    "No scrolls yet. Save a prompt to reuse it later. Use {{variables}} for anything you want to fill in each time.": "还没有卷轴。保存一条提示词，之后即可重复使用。每次需要填写的内容，用 {{variables}} 标记。",
+    "Edit": "编辑",
+    "Title": "标题",
+    "Prompt": "提示词",
+    "Use {{variable}} for anything you want to fill in each time.": "每次需要填写的内容，用 {{variable}} 标记。",
+    "Save scroll": "保存卷轴",
+    "Save changes": "保存更改",
+    "Fill in the blanks": "填写空白项",
+    "Give the scroll a title.": "请为卷轴添加标题。",
+    "The scroll needs a prompt.": "卷轴需要包含提示词。",
+    "Title cannot exceed 80 characters.": "标题不能超过 80 个字符。",
+    "Body cannot exceed 8000 characters.": "提示词不能超过 8000 个字符。",
+    "Instructions cannot exceed 4000 characters.": "常驻指令不能超过 4000 个字符。",
+    "Title must be 1–80 characters.": "标题长度需为 1–80 个字符。",
+    "Body must be 1–8000 characters.": "提示词长度需为 1–8000 个字符。",
+    "You can save up to 200 scrolls.": "最多可保存 200 个卷轴。",
+    "Scroll not found.": "未找到该卷轴。"
   },
   "patterns": [
     {
@@ -2514,6 +2549,14 @@
     {
       "en": "{0} charged · {1} released",
       "zh": "已扣除 {0} · 已释放 {1}"
+    },
+    {
+      "en": "{0} variable",
+      "zh": "{0} 个变量"
+    },
+    {
+      "en": "{0} variables",
+      "zh": "{0} 个变量"
     }
   ]
 }

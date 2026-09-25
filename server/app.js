@@ -23,6 +23,7 @@ import { audioRoutes } from "./routes/audio.js";
 import { creditRoutes } from "./routes/credits.js";
 import { collabRoutes } from "./routes/collabs.js";
 import { retentionRoutes } from "./routes/retention.js";
+import { scrollsRoutes } from "./routes/scrolls.js";
 import { accountRoutes } from "./routes/account.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { siteRoutes } from "./routes/site.js";
@@ -77,6 +78,7 @@ export function createApp(overrides = {}) {
   creditRoutes(ctx);
   collabRoutes(ctx);
   retentionRoutes(ctx);
+  scrollsRoutes(ctx);
   const worker = createWorker(ctx);
   accountRoutes(ctx);
   paymentRoutes(ctx);

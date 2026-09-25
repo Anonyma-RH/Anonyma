@@ -789,6 +789,7 @@ const featureIcons = {
   documents: "file",
   symposium: "panel",
   receipts: "shield",
+  scrolls: "book",
 };
 const launch = {
   id: "mvp",

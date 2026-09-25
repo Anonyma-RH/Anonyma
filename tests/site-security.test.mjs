@@ -27,7 +27,8 @@ function fixture(t) {
 }
 test("known website routes work; unknown pages, docs, guides and assets return HTTP 404", async (t) => {
   const get = fixture(t);
-  for (const path of PUBLIC_PAGES) await get(path).expect(200);
+  for (const path of [...PUBLIC_PAGES, "/workspace/uncensored"])
+    await get(path).expect(200);
   for (const path of [
     "/missing",
     "/docs/missing",

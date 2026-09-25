@@ -54,7 +54,7 @@ export function siteRoutes({ app, db, cfg }) {
     app.get("/{*path}", (req, res) =>
       res
         .status(knownPage(req.path) ? 200 : 404)
-        .sendFile(resolve("dist/client/index.html")),
+        .sendFile("index.html", { root: resolve("dist/client") }),
     );
   }
 }

@@ -32,6 +32,7 @@ const ACCOUNT = ["overview", "credits", "keys", "settings"];
 const MODES = [
   "home",
   "chat",
+  "uncensored",
   "code",
   "image",
   "video",

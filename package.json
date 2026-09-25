@@ -5,14 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n server,web \"node --watch --env-file-if-exists=.env server/index.js\" \"vite\"",
-    "build": "vite build",
+    "build": "vite build && node scripts/build-version.mjs",
     "preview": "vite preview",
     "start": "node --env-file-if-exists=.env server/index.js",
     "test": "node --test tests/*.test.mjs",
-    "verify": "npm run build && npm test",
+    "verify": "npm run identity:check && npm run check:static && npm run check:dependencies && npm run check:secrets && npm run build && npm test",
     "identity:setup": "node scripts/setup-identity.mjs",
     "identity:check": "node scripts/check-identity.mjs",
-    "prepare": "node scripts/setup-identity.mjs"
+    "prepare": "node scripts/setup-identity.mjs",
+    "check:static": "node scripts/static-check.mjs",
+    "check:dependencies": "npm audit --audit-level=moderate",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "release:check": "node scripts/release-check.mjs"
   },
   "dependencies": {
     "@fontsource/gfs-didot": "5.3.0",

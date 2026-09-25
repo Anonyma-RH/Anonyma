@@ -98,3 +98,7 @@ in this repository.
 Original code: **PolyForm Noncommercial 1.0.0**. Original docs and art:
 **CC BY-NC 4.0**. This is noncommercial source-available software. Third-party
 components retain their own licenses. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+## Release checks and recovery
+
+Run `npm run release:check` from a clean checkout before release. Install Gitleaks 8.30.1, Redis and redis-cli first; missing required checks fail. The check verifies contributor identity, static code, dependencies, secrets, the production build and tests. See [deployment and recovery](docs/operations/deployment.md) and [private security reporting](SECURITY.md).

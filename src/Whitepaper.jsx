@@ -451,7 +451,8 @@ export default function Whitepaper() {
             <h3>Retention</h3>
             <p>
               The server keeps your 300 most recently updated personal conversations and
-              deletes older ones. Sign-in codes and wallet challenges are
+              deletes older ones; Symposium runs are kept separately, the newest
+              150. Sign-in codes and wallet challenges are
               deleted an hour after they expire, rate-limit records after a
               day, and expired sessions are removed.
             </p>

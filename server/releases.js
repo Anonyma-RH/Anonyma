@@ -181,7 +181,7 @@ export const UPDATES = [
       "A receipt for every answer",
       "Fuse the answers into one",
     ],
-    released: false,
+    released: true,
   },
 ];
 const IDS = UPDATES.map((u) => u.id);

@@ -871,7 +871,6 @@
     "PDFs, text, CSV and code files": "PDF、文本、CSV 和代码文件",
     "Pending or unconfirmed transfers are not yet spendable. If the payment check is unavailable, recheck the same transaction hash rather than sending again.": "待处理或未确认的转账尚不可用。如果付款检查不可用，请重新检查同一交易哈希，而不要再次发送。",
     "Per-key spending caps": "按密钥设置消费上限",
-    "Personal conversations: the 300 most recently updated conversations. Creating another conversation removes the oldest personal conversation and its messages. Shared conversations have no automatic count or time limit.": "个人会话：最近更新的 300 个会话。创建新会话会移除最早的个人会话及其消息。共享会话没有自动数量或时间限制。",
     "Personal workspace": "个人工作台",
     "Pick up where your last idea left off.": "接着上次的想法继续。",
     "Plan a product launch": "规划产品发布",
@@ -1164,7 +1163,6 @@
     "The server adds up the USDG transfers in that transaction from your linked wallet to the payment address, and credits that amount. The chain and transaction hash form a unique key, so a transaction is credited once, to one account.": "服务器会汇总该笔交易中从你已关联的钱包转入付款地址的 USDG，并将相应金额计入账户。区块链和交易哈希构成唯一密钥，因此一笔交易只会入账一次，且只能计入一个账户。",
     "The server forwards each request to an OpenAI-compatible model gateway under the operator's key. The code supports an optional backup gateway. It's used only when the primary refuses a request before accepting it (unfunded, throttling or unreachable) and the backup offers the same model. Either way, you're charged once.": "服务器会使用运营方的密钥，将每个请求转发到兼容 OpenAI 的模型网关。代码支持可选的备用网关。只有当主网关在接受请求前拒绝请求（余额不足、限流或无法连接），且备用网关提供相同模型时，才会使用备用网关。无论使用哪个网关，你都只会被收费一次。",
     "The server keeps its data in SQLite and runs as a single backend process. Most rate limits live in that process's memory and reset on restart.": "服务器使用 SQLite 存储数据，并作为单个后端进程运行。大多数限流信息保存在该进程的内存中，重启后会重置。",
-    "The server keeps your 300 most recently updated personal conversations and deletes older ones. Sign-in codes and wallet challenges are deleted an hour after they expire, rate-limit records after a day, and expired sessions are removed.": "服务器会保留你最近更新的 300 个个人会话，并删除更早的会话。登录验证码和钱包挑战会在过期 1 小时后删除，限流记录会在 1 天后删除，过期会话也会被移除。",
     "The service could not be reached. Please try again.": "无法连接到服务。请重试。",
     "The service returned an empty stream.": "服务返回了空数据流。",
     "The stream ended with an error.": "流式传输因错误而结束。",
@@ -1666,7 +1664,9 @@
     "Filter models": "筛选模型",
     "Each model is billed separately at its own rate. AI can make mistakes.": "每个模型按各自的价格单独计费。AI 可能会出错。",
     "Symposium runs are saved to your account, even with Private Mode on.": "即使开启隐私模式，模型圆桌的运行记录也会保存到你的账户。",
-    "symposium": "模型圆桌"
+    "symposium": "模型圆桌",
+    "Personal conversations: the 300 most recently updated conversations. Creating another conversation removes the oldest personal conversation and its messages. Symposium runs are kept separately: the newest 150, removed the same way. Shared conversations have no automatic count or time limit.": "个人会话：最近更新的 300 个会话。创建新会话会移除最早的个人会话及其消息。模型圆桌的运行记录单独保留：最新的 150 个，按同样方式移除。共享会话没有自动数量或时间限制。",
+    "The server keeps your 300 most recently updated personal conversations and deletes older ones; Symposium runs are kept separately, the newest 150. Sign-in codes and wallet challenges are deleted an hour after they expire, rate-limit records after a day, and expired sessions are removed.": "服务器会保留你最近更新的 300 个个人会话，并删除更早的会话；模型圆桌的运行记录单独保留最新的 150 个。登录验证码和钱包挑战会在过期 1 小时后删除，限流记录会在 1 天后删除，过期会话也会被移除。"
   },
   "patterns": [
     {

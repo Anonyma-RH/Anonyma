@@ -8,8 +8,9 @@ export default function DataControls() {
         <li>
           Personal conversations: the 300 most recently updated conversations.
           Creating another conversation removes the oldest personal conversation
-          and its messages. Shared conversations have no automatic count or time
-          limit.
+          and its messages. Symposium runs are kept separately: the newest 150,
+          removed the same way. Shared conversations have no automatic count or
+          time limit.
         </li>
         <li>
           Saved media: the latest 100 images, 60 videos and 60 audio files per

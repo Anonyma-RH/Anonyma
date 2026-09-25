@@ -128,8 +128,14 @@ export function parseReleased(value) {
   return new Set(parts.filter((p) => p !== "mvp"));
 }
 
+// An update is live when RELEASED_FEATURES includes it, or when its entry in
+// UPDATES says `released: true`. The second way makes turning a feature on a
+// public commit ("Release Veil") rather than a hosting setting.
 export const isReleased = (cfg, id) =>
-  !cfg.released || cfg.released === "all" || cfg.released.has(id);
+  !cfg.released ||
+  cfg.released === "all" ||
+  cfg.released.has(id) ||
+  UPDATES.some((u) => u.id === id && u.released === true);
 
 // Whether a model is part of what's released: chat models need the full
 // catalog or a place on the MVP list; generators need their studio.

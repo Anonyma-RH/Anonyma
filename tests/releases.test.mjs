@@ -1,4 +1,4 @@
-import test from "node:test";
+import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -7,6 +7,13 @@ import { join } from "node:path";
 import { createApp } from "../server/app.js";
 import { config } from "../server/core.js";
 import { UPDATES, parseReleased } from "../server/releases.js";
+
+// Release commits flip `released` on UPDATES entries. These tests cover the
+// gate itself, so they pin every update to unreleased for this file and keep
+// passing whichever updates have shipped.
+const committed = UPDATES.map((u) => u.released);
+before(() => UPDATES.forEach((u) => (u.released = false)));
+after(() => UPDATES.forEach((u, i) => (u.released = committed[i])));
 
 const MVP_MODEL = "google/gemini-2.5-flash";
 function fixture(t, released) {
@@ -125,6 +132,11 @@ test("release settings are validated", () => {
   assert.throws(() => parseReleased("mvp,vidoe"), /Unknown RELEASED_FEATURES: vidoe/);
   assert.equal(config({}).released, "all");
   assert.equal(config({}).mvpModels.length, 10);
-  assert.equal(UPDATES.length, 9);
+  // The launch updates stay first and in order; later updates append.
+  assert.deepEqual(
+    UPDATES.slice(0, 9).map((u) => u.id),
+    ["code", "search", "images", "catalog", "audio", "video", "collab", "api", "social"],
+  );
+  assert.equal(new Set(UPDATES.map((u) => u.id)).size, UPDATES.length);
   for (const u of UPDATES) assert.equal(u.points.length, 3);
 });

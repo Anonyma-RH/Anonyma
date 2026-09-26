@@ -637,6 +637,46 @@ export const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS routine_runs_routine ON routine_runs(routine_id,started);
       CREATE INDEX IF NOT EXISTS routine_runs_user ON routine_runs(user_id,started);
   `),
+  // Sealed Share (routes/shares.js): a share link whose snapshot the browser
+  // encrypted before uploading it. Only the ciphertext is stored; the key is
+  // in the link's #fragment, which never reaches the server. A sealed copy of
+  // a saved conversation follows the same rules as share_links: it goes with
+  // its conversation and never outlives its auto-delete. A Device-only chat
+  // has no conversation here (conversation_id NULL); its link lasts until it
+  // expires, is revoked or the account's content is erased.
+  additive(`
+      CREATE TABLE IF NOT EXISTS sealed_shares(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),
+        conversation_id TEXT REFERENCES conversations(id) ON DELETE CASCADE,
+        token TEXT UNIQUE NOT NULL,ciphertext BLOB NOT NULL,created INTEGER NOT NULL,expires INTEGER);
+      CREATE INDEX IF NOT EXISTS sealed_shares_user ON sealed_shares(user_id,created);
+      CREATE INDEX IF NOT EXISTS sealed_shares_conversation ON sealed_shares(conversation_id) WHERE conversation_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS sealed_shares_expiry ON sealed_shares(expires) WHERE expires IS NOT NULL;
+      CREATE TRIGGER IF NOT EXISTS sealed_shares_personal_only BEFORE INSERT ON sealed_shares
+        WHEN NEW.conversation_id IS NOT NULL AND (
+          (SELECT collab_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NULL
+          OR (SELECT user_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NEW.user_id)
+        BEGIN SELECT RAISE(ABORT,'share_personal_only'); END;
+      CREATE TRIGGER IF NOT EXISTS sealed_shares_bounded AFTER INSERT ON sealed_shares
+        WHEN NEW.conversation_id IS NOT NULL
+          AND (SELECT expires FROM conversations WHERE id=NEW.conversation_id) IS NOT NULL
+          AND (NEW.expires IS NULL OR NEW.expires>(SELECT expires FROM conversations WHERE id=NEW.conversation_id))
+        BEGIN
+          UPDATE sealed_shares SET expires=(SELECT expires FROM conversations WHERE id=NEW.conversation_id) WHERE id=NEW.id;
+        END;
+      CREATE TRIGGER IF NOT EXISTS sealed_shares_bounded_update AFTER UPDATE OF expires ON sealed_shares
+        WHEN NEW.conversation_id IS NOT NULL
+          AND (SELECT expires FROM conversations WHERE id=NEW.conversation_id) IS NOT NULL
+          AND (NEW.expires IS NULL OR NEW.expires>(SELECT expires FROM conversations WHERE id=NEW.conversation_id))
+        BEGIN
+          UPDATE sealed_shares SET expires=(SELECT expires FROM conversations WHERE id=NEW.conversation_id) WHERE id=NEW.id;
+        END;
+      CREATE TRIGGER IF NOT EXISTS sealed_shares_follow_retention AFTER UPDATE OF expires ON conversations
+        WHEN NEW.expires IS NOT NULL
+        BEGIN
+          UPDATE sealed_shares SET expires=NEW.expires
+            WHERE conversation_id=NEW.id AND (expires IS NULL OR expires>NEW.expires);
+        END;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

@@ -3,11 +3,12 @@ import { useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useApp } from "./context.jsx";
-import { Logo, Mark, Icon, Button } from "./ui.jsx";
+import { Logo, Mark, Icon, Button, CopyButton } from "./ui.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import { NotFound } from "./Pages.jsx";
 import { api, isReleased } from "./lib.js";
-import { SHARE_TOKEN } from "./share-links.js";
+import { SHARE_TOKEN, SEALED_FACTS, sealedLink } from "./share-links.js";
+import { openSnapshot, shareKeyFor, SEALED_ERRORS, SEALED_KEY_EVENT } from "./sealed-share.js";
 import "./share-links.css";
 
 // Share a Chat, the public side: /s/<token> shows a read-only snapshot to
@@ -16,6 +17,11 @@ import "./share-links.css";
 // rendered as Markdown the way the workspace renders it (raw HTML shows as
 // text, never as markup; unsafe link protocols are dropped), except that
 // remote images are never loaded and Veil tags show as the tags they are.
+//
+// A sealed link (Sealed Share) arrives as ciphertext only. It's opened here
+// with the key from the link's #k= fragment, which src/sealed-boot.js took
+// out of the address bar before the app started. The key is never sent,
+// logged or stored by this page; Copy link rebuilds the full link.
 
 // [EMAIL_1]-style tags as <mark> nodes, left as written: the real values
 // were never on the server, so there's nothing to restore.
@@ -125,6 +131,13 @@ export default function SharedChat() {
   const { token } = useParams();
   const { config, loading } = useApp();
   const [state, setState] = useState({ status: "loading" });
+  // A link pasted over this page (only its #k= differs) opens with its key.
+  const [keyArrived, setKeyArrived] = useState(0);
+  useEffect(() => {
+    const again = () => setKeyArrived((n) => n + 1);
+    window.addEventListener(SEALED_KEY_EVENT, again);
+    return () => window.removeEventListener(SEALED_KEY_EVENT, again);
+  }, []);
   // Keep this page out of search results, and its address out of any
   // Referer header (the server sends the same as HTTP headers).
   useEffect(() => {
@@ -146,20 +159,36 @@ export default function SharedChat() {
       return;
     }
     let live = true;
-    api("/api/s/" + token).then(
-      (data) => live && setState({ status: "ready", data }),
-      (e) =>
-        live &&
-        setState(
-          e.status === 404 || e.status === 403
-            ? { status: "missing" }
-            : { status: "error", message: e.message },
-        ),
-    );
+    api("/api/s/" + token)
+      .then(async (data) => {
+        if (!data.sealed) return live && setState({ status: "ready", data });
+        const key = shareKeyFor(token);
+        if (!key) return live && setState({ status: "sealed_error", code: "no_key" });
+        try {
+          const opened = await openSnapshot(data.ciphertext, key);
+          if (live)
+            setState({
+              status: "ready",
+              data: { ...opened, created: data.created, sealed: true },
+              key,
+            });
+        } catch (e) {
+          if (live) setState({ status: "sealed_error", code: e?.code in SEALED_ERRORS ? e.code : "damaged" });
+        }
+      })
+      .catch(
+        (e) =>
+          live &&
+          setState(
+            e.status === 404 || e.status === 403
+              ? { status: "missing" }
+              : { status: "error", message: e.message },
+          ),
+      );
     return () => {
       live = false;
     };
-  }, [token]);
+  }, [token, keyArrived]);
   if (loading)
     return (
       <main id="main" className="loading-page">
@@ -175,8 +204,8 @@ export default function SharedChat() {
         <Logo />
         {state.status === "ready" && (
           <span className="shared-top-tag">
-            <Icon name="eye" size={14} />
-            Read-only snapshot
+            <Icon name={data.sealed ? "lock" : "eye"} size={14} />
+            {data.sealed ? "Sealed snapshot" : "Read-only snapshot"}
           </span>
         )}
         <LanguageSwitch config={config} className="on-light" />
@@ -190,6 +219,23 @@ export default function SharedChat() {
               Shared from ANONYMA · snapshot from {when}
             </p>
           </section>
+          {data.sealed && (
+            <div className="shared-banner shared-sealed" role="note">
+              <Icon name="lock" size={16} />
+              <div>
+                <p>
+                  <b>Sealed.</b> Opened in your browser with the key in your
+                  link. ANONYMA stores only the encrypted copy.
+                </p>
+                <p>{SEALED_FACTS.who}</p>
+                <p>{SEALED_FACTS.lost}</p>
+                <CopyButton
+                  text={sealedLink(location.origin + "/s/" + token, state.key)}
+                  label="Copy link"
+                />
+              </div>
+            </div>
+          )}
           <div className="shared-banner" role="note">
             <Icon name="history" size={16} />
             <span>
@@ -221,6 +267,19 @@ export default function SharedChat() {
         <section className="shared-missing" aria-live="polite">
           {state.status === "loading" ? (
             <h1>Opening the shared conversation…</h1>
+          ) : state.status === "sealed_error" ? (
+            <>
+              <p className="eyebrow">SEALED CONVERSATION</p>
+              <h1>
+                {state.code === "no_key"
+                  ? "This link is missing its key."
+                  : "This sealed conversation can't be opened."}
+              </h1>
+              <p>{SEALED_ERRORS[state.code]}</p>
+              <Button to="/">
+                Back to ANONYMA <Icon name="arrow" />
+              </Button>
+            </>
           ) : state.status === "missing" ? (
             <>
               <p className="eyebrow">SHARED CONVERSATION</p>

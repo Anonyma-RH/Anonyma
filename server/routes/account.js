@@ -30,8 +30,9 @@ import {
 // - collabs the account owns, with their shared conversations (the caller
 //   checks their Team Treasuries are empty first);
 // - its membership of other collabs, whose shared messages stay;
-// - share links, then personal conversations and their messages (Symposium
-//   runs, branches and Double-checks are conversations too);
+// - share links, sealed ones too (Device-only ones included), then personal
+//   conversations and their messages (Symposium runs, branches and
+//   Double-checks are conversations too);
 // - every session and pending sign-in code;
 // - connected apps' tokens and pending codes;
 // - support requests, video jobs, saved uploads, Scrolls, standing
@@ -45,6 +46,7 @@ export function eraseAccountContent(db, user) {
   db.prepare("DELETE FROM collabs WHERE owner_id=?").run(id);
   db.prepare("DELETE FROM collab_members WHERE user_id=?").run(id);
   db.prepare("DELETE FROM share_links WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM sealed_shares WHERE user_id=?").run(id);
   db.prepare(
     "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
   ).run(id);
@@ -94,8 +96,29 @@ export function accountRoutes(ctx) {
         url: String(cfg.publicUrl || cfg.origin).replace(/\/+$/, "") + "/s/" + token,
         messages: message_count,
       }));
-    return links.length || isReleased(cfg, "sharelinks")
-      ? { shareLinks: links }
+    return {
+      ...(links.length || isReleased(cfg, "sharelinks") ? { shareLinks: links } : {}),
+      ...sealedSharesExport(user, t),
+    };
+  }
+  // Sealed Share: each live sealed link's address (without its key, which
+  // only the link itself holds), dates and the ciphertext exactly as stored.
+  function sealedSharesExport(user, t) {
+    const links = db
+      .prepare(
+        `SELECT s.id,s.conversation_id,s.token,s.ciphertext,s.created,s.expires FROM sealed_shares s LEFT JOIN conversations c ON c.id=s.conversation_id
+         WHERE s.user_id=? AND (s.expires IS NULL OR s.expires>?) AND (s.conversation_id IS NULL OR (c.id IS NOT NULL AND (c.expires IS NULL OR c.expires>=?)))
+         ORDER BY s.created,s.rowid`,
+      )
+      .all(user, t, t)
+      .map(({ token, ciphertext, ...s }) => ({
+        ...s,
+        device_only: s.conversation_id == null,
+        url: String(cfg.publicUrl || cfg.origin).replace(/\/+$/, "") + "/s/" + token,
+        ciphertext: Buffer.from(ciphertext).toString("base64url"),
+      }));
+    return links.length || isReleased(cfg, "sealedshare")
+      ? { sealedShares: links }
       : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>

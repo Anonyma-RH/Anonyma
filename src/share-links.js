@@ -32,8 +32,18 @@ export const VEIL_TAG = /\[[A-Z]+_\d+\]/g;
 
 // Why a chat can't be shared, or null when it can. The server refuses the
 // same cases (routes/shares.js); this only lets the UI say why up front.
-export function shareBlocked({ saved, ephemeral, privateMode, deviceOnly, collab, mode }) {
-  if (deviceOnly) return "device";
+// `sealed` says Sealed Share is live: a Device-only chat can then be shared,
+// but only sealed (the server never had it, and never gets it readable), and
+// never one that ran in Private Mode, which promises nothing is stored on our
+// servers. For a Device-only chat `saved` means Device Vault has saved it.
+export function shareBlocked({ saved, ephemeral, privateMode, deviceOnly, collab, mode, sealed = false }) {
+  if (deviceOnly) {
+    if (!sealed) return "device";
+    if (privateMode) return "device_private";
+    if (!SHAREABLE_MODES.includes(mode || "chat")) return "mode";
+    if (!saved) return "unsaved";
+    return null;
+  }
   if (privateMode) return "private";
   if (ephemeral) return "off_record";
   if (collab) return "collab";
@@ -51,6 +61,9 @@ export const SHARE_BLOCK_MESSAGES = {
   unsaved: "Send a message first: only saved conversations can be shared.",
   device:
     "Device-only chats are kept only in this browser, so they can't be shared by link.",
+  device_private:
+    "Private Mode chats are never stored on our servers, so they can't be shared by link, even from Device Vault.",
+  device_unsealed: "A Device-only chat can only be shared as a sealed link.",
 };
 
 // When a new link expires: the chosen lifetime, but never later than the
@@ -81,6 +94,17 @@ export function shareTitle(value, fallback) {
       .slice(0, MAX_SHARE_TITLE)
       .trim();
   return clean(value) || clean(fallback) || "Shared conversation";
+}
+// The title a snapshot is published under: the one asked for, else the
+// conversation's. Never an attachment's name (a chat that began with only a
+// document is titled after it), since attachments aren't published.
+export function publishedTitle(asked, fallback, rows) {
+  const chosen = shareTitle(asked, fallback);
+  // A conversation title keeps only its first 70 characters.
+  const named = [...attachmentNames(rows)].some(
+    (n) => n === chosen || n.slice(0, MAX_SHARE_TITLE).trim() === chosen,
+  );
+  return named ? "Shared conversation" : chosen;
 }
 
 // Source links a reply cited, when they're plain web addresses.
@@ -193,4 +217,132 @@ export function snapshotSummary(messages) {
     masked += (m.text.match(VEIL_TAG) || []).length;
   }
   return { messages: messages.length, withheld, masked };
+}
+
+// ---- Sealed Share (update "sealedshare") ----
+// The browser seals a snapshot with a random 256-bit AES-GCM key
+// (src/sealed-share.js) and uploads only the ciphertext. The key travels in
+// the link's #k= fragment, which browsers never send to a server, so the
+// server stores and serves bytes it can't read. The same snapshot rules
+// apply: Veil tags stay tags, attachments become placeholders.
+export const SEALED_KEY_BYTES = 32;
+export const SEALED_IV_BYTES = 12;
+export const SEALED_TAG_BYTES = 16;
+// A key as it appears in a link: 32 bytes as base64url, 43 characters.
+export const SEALED_KEY = /^[A-Za-z0-9_-]{43}$/;
+// The most one sealed link may hold (IV, ciphertext and tag), and the most
+// an account's live sealed links may hold together.
+export const MAX_SEALED_BYTES = 3 * 1024 * 1024;
+export const MAX_SEALED_TOTAL_BYTES = 32 * 1024 * 1024;
+export const SEALED_FORMAT = "anonyma-sealed-share";
+export const SEALED_VERSION = 1;
+export const sealedLink = (url, key) => url + "#k=" + key;
+// The honest limits, shown wherever a sealed link is made or viewed.
+export const SEALED_FACTS = {
+  who: "Anyone with the full link can read it. ANONYMA can't: the key never reaches our servers.",
+  lost: "Lose the link and it can't be recovered.",
+  preview: "No link preview: apps you paste it into can't show what's inside.",
+};
+
+// A Device-only chat as the workspace holds it (src/Workspace.jsx): the text
+// as it was sent (Veil tags, not the values), images as URLs, and each reply's
+// model id. As the saved-message rows snapshotMessage reads, so both kinds of
+// chat are snapshotted by the same rules. Image URLs are never copied: only
+// how many there were.
+export function deviceRows(messages = []) {
+  const rows = [];
+  for (const m of messages) {
+    if (!m || m.sample) continue;
+    const text = typeof m.content === "string" ? m.content : "";
+    const images = Array.isArray(m.images) ? m.images.length : 0;
+    if (m.role === "user")
+      rows.push({
+        role: "user",
+        content: JSON.stringify(
+          images
+            ? [{ type: "text", text }, ...Array.from({ length: images }, () => ({ type: "image_url" }))]
+            : text,
+        ),
+      });
+    else if (m.role === "assistant")
+      rows.push({
+        role: "assistant",
+        model: typeof m.model === "string" ? m.model : null,
+        content: JSON.stringify({
+          text,
+          images: Array.from({ length: images }, () => ({})),
+          citations: Array.isArray(m.citations) ? m.citations : [],
+          ...(m.interrupted === true ? { interrupted: true } : {}),
+        }),
+      });
+  }
+  return rows;
+}
+// A Device-only chat's snapshot and title, before sealing. The fallback title
+// is the first thing typed as it was sent, so Veil tags stay tags.
+export function deviceSnapshot(messages, askedTitle, modelName) {
+  const rows = deviceRows(messages);
+  const snapshot = buildSnapshot(rows, modelName);
+  const first = snapshot.find((m) => m.role === "user" && m.text);
+  return {
+    title: publishedTitle(askedTitle, first?.text.slice(0, 80) || "", rows),
+    messages: snapshot,
+  };
+}
+// Why a snapshot can't be shared as one link, or null.
+export function snapshotProblem(messages) {
+  if (!messages.length) return "share_empty";
+  if (messages.length > MAX_SHARE_MESSAGES || JSON.stringify(messages).length > MAX_SHARE_CHARS)
+    return "share_too_large";
+  return null;
+}
+export const SNAPSHOT_PROBLEMS = {
+  share_empty: "There's nothing to share in this conversation yet.",
+  share_too_large: "This conversation is too long to share as one link.",
+};
+
+// What is sealed: the page's title and the messages, nothing else.
+export const sealedPayload = ({ title, messages }) => ({
+  format: SEALED_FORMAT,
+  version: SEALED_VERSION,
+  title: shareTitle(title),
+  messages,
+});
+// A decrypted payload, checked field by field before anything renders: only
+// what a snapshot may hold, in the shapes snapshotMessage makes. null when it
+// isn't one.
+export function readSealedPayload(value) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    value.format !== SEALED_FORMAT ||
+    value.version !== SEALED_VERSION ||
+    typeof value.title !== "string" ||
+    !Array.isArray(value.messages) ||
+    !value.messages.length ||
+    value.messages.length > MAX_SHARE_MESSAGES
+  )
+    return null;
+  const messages = [];
+  for (const m of value.messages) {
+    if (!m || (m.role !== "user" && m.role !== "assistant")) return null;
+    if (typeof m.text !== "string" || m.text.length > MAX_SHARE_CHARS) return null;
+    const out = { role: m.role, text: m.text };
+    if (m.withheld !== undefined) {
+      if (!Number.isSafeInteger(m.withheld) || m.withheld < 1 || m.withheld > 10000) return null;
+      out.withheld = m.withheld;
+    }
+    if (!out.text && !out.withheld) return null;
+    if (m.role === "assistant") {
+      if (m.model !== undefined) {
+        if (typeof m.model !== "string" || !m.model || m.model.length > 200) return null;
+        out.model = m.model;
+      }
+      if (m.interrupted === true) out.interrupted = true;
+      const citations = citationsOf(m.citations);
+      if (citations.length) out.citations = citations;
+    }
+    messages.push(out);
+  }
+  return { title: shareTitle(value.title), messages };
 }

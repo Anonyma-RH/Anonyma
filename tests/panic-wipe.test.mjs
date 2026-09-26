@@ -74,6 +74,9 @@ const GONE = {
   conversations: "SELECT COUNT(*) n FROM conversations WHERE user_id=? AND collab_id IS NULL",
   messages: "SELECT COUNT(*) n FROM messages WHERE conversation_id IN ('chat','sym','branch','check')",
   share_links: "SELECT COUNT(*) n FROM share_links WHERE user_id=?",
+  // Sealed Share: a sealed copy of a saved chat, and of a Device-only chat.
+  sealed_shares: "SELECT COUNT(*) n FROM sealed_shares WHERE user_id=?",
+  device_sealed_shares: "SELECT COUNT(*) n FROM sealed_shares WHERE user_id=? AND conversation_id IS NULL",
   media: "SELECT COUNT(*) n FROM media WHERE user_id=?",
   library_items: "SELECT COUNT(*) n FROM library_items WHERE media_id IN ('asset_a','asset_b')",
   uploads: "SELECT COUNT(*) n FROM uploads WHERE user_id=?",
@@ -155,6 +158,10 @@ async function seed(s) {
   run(
     "INSERT INTO share_links(id,user_id,conversation_id,token,title,snapshot,message_count,created) VALUES('share_1',?,'chat','tok_share_1','Secret chat','[]',1,?)",
     alice.id, t,
+  );
+  run(
+    "INSERT INTO sealed_shares(id,user_id,conversation_id,token,ciphertext,created) VALUES('share_2',?,'chat','tok_share_2',randomblob(64),?),('share_3',?,NULL,'tok_share_3',randomblob(64),?)",
+    alice.id, t, alice.id, t,
   );
   // Saved media with its files on disk, one in the library with a recipe.
   const files = [];

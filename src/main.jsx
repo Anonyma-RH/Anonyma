@@ -1,3 +1,6 @@
+// First, before any other module runs: Sealed Share takes a sealed link's
+// key (#k=…) out of the address bar, so no other code ever reads it.
+import "./sealed-boot.js";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";

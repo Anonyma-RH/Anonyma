@@ -19,9 +19,15 @@ import {
   createSealedReconciler,
 } from "../sealed.js";
 
+// How long an enclave model PPQ answered 404 for stays hidden.
+const UNAVAILABLE_MS = 30 * 60 * 1000;
+
 // Sealed Mode's routes (see server/sealed.js). All three need the "sealed"
 // update (releases.js) and a configured billing mode.
 export function sealedRoutes(ctx) {
+  // Enclave models PPQ answered 404 for, hidden from Sealed Mode until the
+  // time stored here (per server); the enclave's model set changes without notice.
+  const unavailable = new Map();
   const { app, db, cfg, limit, requireUser, inflight } = ctx;
   const attestation = createAttestationCache(cfg);
   const available = () => {
@@ -160,6 +166,17 @@ export function sealedRoutes(ctx) {
       if (status !== 200) {
         const problem = await readSmall(upstream);
         cleanup();
+        // The enclave doesn't serve this model right now (404 model not
+        // found): stop offering it for a while, and say so plainly.
+        if (status === 404) {
+          unavailable.set(m.id, Date.now() + UNAVAILABLE_MS);
+          releaseFor("refused_404");
+          fail(
+            400,
+            "This enclave model isn't available right now, so nothing was sent or charged. Pick another sealed model.",
+            "sealed_model_unavailable",
+          );
+        }
         releaseFor(isKeyConfigProblem(status, contentType) ? "key_config" : "refused_" + status);
         // The enclave rotated its key: the browser re-verifies and resends.
         if (isKeyConfigProblem(status, contentType))
@@ -256,7 +273,8 @@ export function sealedRoutes(ctx) {
     sealed: createSealedReconciler({ db, cfg, models: ctx.models }),
     // For the model list: which models Sealed Mode offers, and their cap.
     sealedFields: (m) =>
-      sealedLive(cfg) && m.status === "live" && isSealedModel(m)
+      sealedLive(cfg) && m.status === "live" && isSealedModel(m) &&
+      !((unavailable.get(m.id) || 0) > Date.now())
         ? { sealed: true, sealedOutputCap: sealedOutputCap(m, cfg) }
         : {},
   };

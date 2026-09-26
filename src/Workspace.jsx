@@ -419,7 +419,11 @@ export default function Workspace() {
     [models],
   );
   const sealedTarget =
-    sealedModels.find((m) => m.id === sealedModelId) || sealedModels[0] || null;
+    sealedModels.find((m) => m.id === sealedModelId) ||
+    // A fast, inexpensive enclave model first when it's offered.
+    sealedModels.find((m) => m.id === "private/glm-5-3-flash") ||
+    sealedModels[0] ||
+    null;
   const enclave = useSealedEnclave(sealedOn);
   // A thread written in Sealed Mode (a Device Vault chat) only ever goes on
   // sealed, and nothing in it is sent anywhere unsealed.

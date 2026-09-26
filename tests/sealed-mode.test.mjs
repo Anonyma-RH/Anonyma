@@ -131,6 +131,10 @@ async function mockPPQ() {
       res.writeHead(422, { "content-type": "application/problem+json" });
       return res.end(JSON.stringify({ type: "urn:ietf:params:ehbp:error:key-config", title: "key configuration mismatch" }));
     }
+    if (state.mode === "notfound") {
+      res.writeHead(404, { "content-type": "application/json" });
+      return res.end('{"error":{"code":"model_not_found","message":"The model does not exist or you do not have access to it."}}');
+    }
     if (state.mode === "refuse") {
       res.writeHead(500, { "content-type": "application/json" });
       return res.end('{"error":"upstream trouble"}');
@@ -716,6 +720,13 @@ test("a key rotation or refusal releases the hold with nothing charged; an unsea
   assert.equal(protocol.status, "reconcile_pending");
   assert.equal(svc.db.prepare("SELECT status FROM holds WHERE id=?").get(protocol.hold_id).status, "held");
   assert.ok(!log.lines.join("\n").includes("enclave."));
+
+  // A model the enclave doesn't serve (404): nothing sent or charged, and
+  // Sealed Mode stops offering it for a while.
+  ppq.state.mode = "notfound";
+  await assert.rejects(runSealed({ origin, ppq, cookie }), (e) => e.status === 400 && e.code === "sealed_model_unavailable");
+  const offered = (await (await fetch(origin + "/api/models")).json()).data;
+  assert.ok(!offered.some((m) => m.id === "private/kimi-k3" && m.sealed), "hidden after a 404");
 });
 
 test("a Stop after the provider accepted is held for its charge, then charged from the history", async (t) => {

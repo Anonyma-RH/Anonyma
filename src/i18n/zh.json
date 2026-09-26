@@ -3152,7 +3152,8 @@
     "Sealed Mode works only with open-weight private models, which run inside the enclave.": "密封模式仅适用于在安全飞地中运行的开放权重私密模型。",
     "This isn't a sealed request.": "这不是密封请求。",
     "The private endpoint couldn't be reached. Nothing was charged.": "无法连接私有端点。未扣费。",
-    "The private endpoint's reply wasn't sealed, so it wasn't passed on. Your hold waits for reconciliation.": "私有端点的回复未经密封，因此没有转发。你的冻结积分将等待对账。"
+    "The private endpoint's reply wasn't sealed, so it wasn't passed on. Your hold waits for reconciliation.": "私有端点的回复未经密封，因此没有转发。你的冻结积分将等待对账。",
+    "This enclave model isn't available right now, so nothing was sent or charged. Pick another sealed model.": "此安全飞地模型目前不可用，因此未发送任何内容，也未扣费。请选择其他密封模型。"
   },
   "patterns": [
     {

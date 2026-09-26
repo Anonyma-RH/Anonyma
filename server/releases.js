@@ -603,7 +603,7 @@ export const UPDATES = [
     // Browser only: the file is built from the conversation the account can
     // already open (GET /api/conversations/:id, the same access check) or
     // from what's on screen, so there's no route to gate in featuresFor.
-    released: false,
+    released: true,
   },
   {
     id: "bookmarks",

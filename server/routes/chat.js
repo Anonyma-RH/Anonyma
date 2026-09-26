@@ -36,7 +36,7 @@ import { prepareSheetsRequest, sheetsBudget } from "../sheets.js";
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
 // when only documents were sent.
-function chatTitle(content) {
+export function chatTitle(content) {
   const typed = content.split("\n\n<document ")[0];
   if (!typed.startsWith("<document")) return typed;
   return /\bname="([^"]*)"/.exec(typed)?.[1] || "Documents";
@@ -178,7 +178,9 @@ export function chatRoutes(ctx) {
     // the user's message. Billing is unaffected — only persistence changes.
     // Private Mode always takes this path too, so nothing it sends is saved.
     const ephemeral = !api && (req.body.ephemeral === true || isPrivate);
-    const storage = storageFor({ api, isPrivate, ephemeral });
+    // Blind Compare (routes/blind.js) runs each side as an unsaved chat and
+    // saves the round itself, so the trail reports where the round is kept.
+    const storage = req.blind?.storage || storageFor({ api, isPrivate, ephemeral });
     if (ephemeral && req.body.conversationId)
       fail(
         400,
@@ -255,7 +257,7 @@ export function chatRoutes(ctx) {
     }
     // Usage Insights: what this spend is filed under, without content.
     tagUsage(db, cfg, hold, {
-      feature: chatFeature({ api, ephemeral, body: req.body, webSearch }),
+      feature: req.blind?.feature || chatFeature({ api, ephemeral, body: req.body, webSearch }),
       model: m.id,
     });
     // Nothing can be sent upstream yet, so a failure here releases the hold
@@ -380,7 +382,7 @@ export function chatRoutes(ctx) {
       if (streaming && !res.destroyed)
         res.write(`data: ${JSON.stringify(v)}\n\n`);
     };
-    const showBilling = !api && isReleased(cfg, "chatcontrol");
+    const showBilling = !api && !req.blind && isReleased(cfg, "chatcontrol");
     if (showBilling) send({ billing: billingFor(req.user.id, requestId), conversationId: conversation });
     // Serve from the primary gateway, or from the backup when the primary
     // refuses before accepting; never after, so nothing is paid twice.
@@ -446,6 +448,10 @@ export function chatRoutes(ctx) {
     const feePercent = () =>
       servedBy === "backup" ? cfg.gateway2FeePercent : cfg.gatewayFeePercent;
     try {
+      // Blind Compare holds both sides here until both are reserved, so a
+      // refused side releases the other before anything is sent (set in
+      // code by routes/blind.js, never from the request body).
+      if (req.beforeSend) await req.beforeSend();
       for await (const part of stream()) {
         if (part.error)
           fail(

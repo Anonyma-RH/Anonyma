@@ -37,6 +37,7 @@ import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
 import { linkReaderRoutes } from "./routes/link-reader.js";
+import { blindRoutes } from "./routes/blind.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { sealedRoutes } from "./routes/sealed.js";
@@ -138,6 +139,9 @@ export function createApp(overrides = {}) {
   bookmarkRoutes(ctx);
   // Link Reader: fetches one public page for a message (reads only).
   linkReaderRoutes(ctx);
+  // Blind Compare: two chat replies through runChat, and the account's
+  // votes (after projects, which a saved round can be filed in).
+  blindRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

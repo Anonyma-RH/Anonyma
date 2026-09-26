@@ -25,6 +25,8 @@ export default function DataControls() {
   // And Link Reader, which needs Documents.
   const linkReader =
     !!config && isReleased(config, "linkreader") && isReleased(config, "documents");
+  // And Blind Compare.
+  const blind = !!config && isReleased(config, "blind");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -156,6 +158,14 @@ export default function DataControls() {
             wipe or close your account.
           </li>
         )}
+        {blind && (
+          <li>
+            Blind Compare votes: the two models compared, your vote and its
+            date, for Your rankings. Never the prompt or the replies, and
+            nothing about a comparison before you vote. Reset them from Your
+            rankings; Panic Wipe and closing your account delete them.
+          </li>
+        )}
         {nyma && (
           <li>
             Pay with NYMA quotes: each quote’s NYMA amount, rate, bonus and
@@ -229,6 +239,9 @@ export default function DataControls() {
         </p>
       )}
       {nyma && <p>The export also includes your Pay with NYMA quotes.</p>}
+      {blind && (
+        <p>The export also lists your Blind Compare votes: the two models, the outcome and the date.</p>
+      )}
       {shares && (
         <p>
           The export also lists your live share links with their addresses,

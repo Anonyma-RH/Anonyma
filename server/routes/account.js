@@ -6,6 +6,7 @@ import { exportRoutines, forgetRoutines } from "../routines.js";
 import { exportProjects } from "./projects.js";
 import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
+import { exportBlindVotes, forgetBlindVotes } from "./blind.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -43,8 +44,8 @@ import {
 // - projects, with their filed chats and pinned files (the chats go with
 //   the conversations above);
 // - support requests, video jobs, saved uploads, Scrolls, standing
-//   instructions, memory facts, routines, bookmarks and NYMA top-up quotes
-//   (a credited top-up stays as its deposit);
+//   instructions, memory facts, routines, bookmarks, Blind Compare votes and
+//   NYMA top-up quotes (a credited top-up stays as its deposit);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -91,6 +92,8 @@ export function eraseAccountContent(db, user) {
   forgetRoutines(db, id);
   // Bookmarks and their notes, including those in other people's collabs.
   forgetBookmarks(db, id);
+  // Blind Compare: the votes behind "Your rankings".
+  forgetBlindVotes(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -167,6 +170,13 @@ export function accountRoutes(ctx) {
   function bookmarksExport(user) {
     const list = exportBookmarks(db, user);
     return list.length || isReleased(cfg, "bookmarks") ? { bookmarks: list } : {};
+  }
+  // Blind Compare: each vote (model ids, outcome, date), once the update is
+  // live or while any exist. Compared replies of saved chats are already in
+  // their conversations above.
+  function blindExport(user) {
+    const list = exportBlindVotes(db, user);
+    return list.length || isReleased(cfg, "blind") ? { blindVotes: list } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -493,6 +503,8 @@ export function accountRoutes(ctx) {
       // any exist). The messages are already exported with their
       // conversations above, so their text isn't repeated here.
       ...bookmarksExport(req.user.id),
+      // Blind Compare: the votes behind "Your rankings".
+      ...blindExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

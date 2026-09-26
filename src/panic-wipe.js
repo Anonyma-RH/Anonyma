@@ -23,6 +23,8 @@ export const WIPE_GOES = [
 export const WIPE_GOES_PROJECTS = "Projects, with their instructions and pinned files";
 // Listed only once Bookmarks is released (PanicWipe.jsx).
 export const WIPE_BOOKMARKS = "Your bookmarks and their notes, in every chat";
+// Listed only once Blind Compare is released (PanicWipe.jsx).
+export const WIPE_BLIND = "Your Blind Compare votes and rankings";
 export const WIPE_STAYS = [
   "Your account and every credit in it",
   "Your ledger, deposits and receipts",

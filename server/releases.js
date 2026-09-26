@@ -788,6 +788,19 @@ export const UPDATES = [
     // them is stored, so there's nothing to erase or export.
     released: false,
   },
+  {
+    id: "blind",
+    title: "Blind Compare",
+    tagline: "Two models answer. You pick the better one.",
+    points: [
+      "Two replies side by side, names and costs hidden",
+      "Vote A, B, tie or both bad, then see who's who, the cost and the speed",
+      "Your own rankings from your votes; no prompts kept",
+    ],
+    // Each side is a chat request on runChat's hold/settle path; a vote
+    // stores only model ids, the outcome and the date (routes/blind.js).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -920,6 +933,22 @@ export function featuresFor(req) {
   // Link Reader: the server-side fetch of one public page. The page rides
   // with the message as a Documents block, so it needs Documents too.
   if (p === "/api/read" || p.startsWith("/api/read/")) return ["linkreader", "documents"];
+  // Blind Compare: a round, votes and rankings. A round needs whatever the
+  // same chat would: code or Uncensored, off the record, Private Mode, a
+  // project, Privacy Trail's Veil count and Seed Guard's override.
+  if (p === "/api/blind" || p.startsWith("/api/blind/")) {
+    const needed = ["blind"];
+    if (post && /^\/api\/blind\/?$/.test(p)) {
+      if (body.mode === "code") needed.push("code");
+      if (body.mode === "uncensored") needed.push("uncensored");
+      if (body.ephemeral === true || body.private === true) needed.push("ephemeral");
+      if (body.private === true) needed.push("private");
+      if (body.project !== undefined) needed.push("projects");
+      if (body.veil_masked !== undefined) needed.push("trail");
+      if (body.allow_seed_phrase !== undefined) needed.push("seedguard");
+    }
+    return needed;
+  }
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.

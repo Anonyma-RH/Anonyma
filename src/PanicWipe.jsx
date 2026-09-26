@@ -8,6 +8,7 @@ import {
   WIPE_GOES,
   WIPE_GOES_PROJECTS,
   WIPE_BOOKMARKS,
+  WIPE_BLIND,
   WIPE_STAYS,
   WIPED_PATH,
   clearBrowserData,
@@ -25,6 +26,8 @@ export function PanicWipe({ user }) {
   const projectsLive = !!config && isReleased(config, "projects");
   // Bookmarks are listed once that update is live.
   const bookmarksLive = isReleased(useApp()?.config, "bookmarks");
+  // And Blind Compare's votes.
+  const blindLive = isReleased(useApp()?.config, "blind");
   const [open, setOpen] = useState(false),
     [typed, setTyped] = useState(""),
     [busy, setBusy] = useState(false),
@@ -91,6 +94,7 @@ export function PanicWipe({ user }) {
                   ))}
                   {projectsLive && <li>{WIPE_GOES_PROJECTS}</li>}
                   {bookmarksLive && <li>{WIPE_BOOKMARKS}</li>}
+                  {blindLive && <li>{WIPE_BLIND}</li>}
                 </ul>
               </div>
               <div>

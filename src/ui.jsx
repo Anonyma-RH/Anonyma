@@ -67,6 +67,9 @@ import {
   ScanText,
   Link2,
   Sheet,
+  Scale,
+  Shuffle,
+  Trophy,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -134,6 +137,9 @@ const icons = {
   link: Link2,
   chain: Link2,
   sheet: Sheet,
+  scale: Scale,
+  shuffle: Shuffle,
+  trophy: Trophy,
 };
 export function Icon({ name, size = 18, ...rest }) {
   if(name === "arrow") return <svg width={size} height={size} viewBox="0 0 15 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="reference-arrow" {...rest}><path className="arrow-shaft" d="M0 5.707H9"/><path className="arrow-head" d="M4 .707L9 5.707L4 10.707"/></svg>;

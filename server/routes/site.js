@@ -65,9 +65,13 @@ export function siteRoutes({ app, db, cfg }) {
         redirect: false,
         // The service worker file itself should always be revalidated, so a
         // new deploy's worker is never served stale from an intermediate
-        // cache. Every other static file keeps express.static's defaults.
+        // cache. Vite fingerprints every /assets file name, so a changed file
+        // always gets a new URL and browsers can keep the old one. Every other
+        // static file keeps express.static's defaults.
         setHeaders(res, path) {
           if (path.endsWith("/sw.js")) res.set("Cache-Control", "no-cache");
+          else if (path.includes("/dist/client/assets/"))
+            res.set("Cache-Control", "public, max-age=31536000, immutable");
         },
       }),
     );

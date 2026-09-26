@@ -477,6 +477,8 @@ test("server: the app's files are served with correct types and headers once a b
   copyFileSync("public/offline.html", join(dir, "dist/client/offline.html"));
   copyFileSync("public/offline.js", join(dir, "dist/client/offline.js"));
   copyFileSync("index.html", join(dir, "dist/client/index.html"));
+  mkdirSync(join(dir, "dist/client/assets"));
+  copyFileSync("public/offline.js", join(dir, "dist/client/assets/index-Ab12Cd34.js"));
   const prevCwd = process.cwd();
   process.chdir(dir);
   t.after(() => {
@@ -504,6 +506,10 @@ test("server: the app's files are served with correct types and headers once a b
   assert.match(offlineJs.headers["content-type"], /javascript/);
   // Other static files keep express.static's defaults.
   assert.notEqual(offlineJs.headers["cache-control"], "no-cache");
+  assert.doesNotMatch(offlineJs.headers["cache-control"], /immutable/);
+  // Fingerprinted build files are cached for a year.
+  const asset = await request(app).get("/assets/index-Ab12Cd34.js").expect(200);
+  assert.equal(asset.headers["cache-control"], "public, max-age=31536000, immutable");
   // The SPA fallback still serves index.html for an unrelated app route,
   // proving the static file routes above did not swallow it.
   const fallback = await request(app).get("/workspace/chat").expect(200);

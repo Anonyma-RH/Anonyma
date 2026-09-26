@@ -95,6 +95,8 @@ import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
 import { MemoryPanel, MemoryUsedNote, useMemory } from "./Memory.jsx";
 import { ShareDialog, sealedShareLive } from "./ShareLinks.jsx";
 import { shareBlocked } from "./share-links.js";
+import { ExportDialog, chatExportReleased } from "./ChatExport.jsx";
+import { exportPlan } from "./chat-export.js";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import { MEMORY_MODES, MAX_FACT_LENGTH } from "./memory.js";
 import { extractVariables } from "./scrolls.js";
@@ -353,6 +355,8 @@ export default function Workspace() {
     [memoryPanel, setMemoryPanel] = useState(null),
     // Share a Chat: null, or { conversation, blocked } for the Share dialog.
     [share, setShare] = useState(null),
+    // Chat Export: null, or what the Export dialog exports (see openExport).
+    [exporting, setExporting] = useState(null),
     [scrollFill, setScrollFill] = useState(null),
     [slashDismissedFor, setSlashDismissedFor] = useState(null),
     [slashIndex, setSlashIndex] = useState(0),
@@ -501,6 +505,33 @@ export default function Workspace() {
       blocked,
     });
   }
+  // Chat Export: download one chat as Markdown, JSON or a printable page,
+  // built in this browser (src/ChatExport.jsx). A saved chat is read back
+  // from the server; off the record, Private Mode, device-only and unsaved
+  // chats are exported as they are on screen, with no request.
+  const exportLive = !demo && !!user && chatExportReleased(config);
+  const modelName = (id) => models.find((x) => x.id === id)?.name || id;
+  function openExport() {
+    const plan = exportPlan({ id: current, ephemeral, privateMode, deviceOnly });
+    setExporting({
+      ...plan,
+      id: plan.source === "server" ? current : null,
+      mode,
+      messages: plan.source === "screen" ? messages : undefined,
+      collab: shared ? { name: shared.name } : null,
+      // A copy of this chat's Veil map, used only if restoring is chosen.
+      veilMap: { ...veilStateRef.current.map },
+    });
+  }
+  // From History & library or a conversation's details: always a saved chat.
+  const exportSaved = (c) =>
+    setExporting({
+      source: "server",
+      reason: null,
+      id: c.id,
+      mode: c.mode || "chat",
+      veilMap: loadVeilState(c.id).map,
+    });
   const memoryExcluded = !memoryLive
     ? ""
     : privateMode
@@ -1616,7 +1647,10 @@ export default function Workspace() {
       // The final event's anonyma.privacy (Privacy Trail), once released.
       trailInfo = null,
       // The memory facts the server says it sent with this request.
-      memoryUsed = null;
+      memoryUsed = null,
+      // The final event's credits_charged: kept on the reply on screen, so a
+      // chat that isn't saved can still export its receipts (Chat Export).
+      charged = null;
     const sendingPrivate = privateMode && !demo;
     try {
       await streamChat(
@@ -1646,6 +1680,7 @@ export default function Workspace() {
           if (event.anonyma) setReceipt(event.anonyma);
           finishReason = event.anonyma?.finish_reason || event.choices?.[0]?.finish_reason || finishReason;
           if (event.anonyma?.memory) memoryUsed = event.anonyma.memory;
+          if (event.anonyma?.credits_charged != null) charged = event.anonyma.credits_charged;
           if (event.error)
             throw new ApiError(
               event.error.message || "The stream ended with an error.",
@@ -1681,6 +1716,7 @@ export default function Workspace() {
                 : {}),
               ...(trailInfo ? { privacy: trailInfo } : {}),
               ...(memoryUsed ? { memoryUsed } : {}),
+              ...(charged != null ? { credits: charged } : {}),
             },
           ]);
         },
@@ -1694,6 +1730,7 @@ export default function Workspace() {
       if (err.data?.anonyma) setReceipt(err.data.anonyma);
       if (err.data?.anonyma?.memory) memoryUsed = err.data.anonyma.memory;
       if (err.data?.anonyma?.privacy) trailInfo = err.data.anonyma.privacy;
+      if (err.data?.anonyma?.credits_charged != null) charged = err.data.anonyma.credits_charged;
       setCurrent(liveId);
       // Refused before anything was reserved (out of credits, a spending
       // limit, Seed Guard, a rate limit): nothing started and nothing was
@@ -1717,6 +1754,7 @@ export default function Workspace() {
         ...(memoryUsed ? { memoryUsed } : {}),
         ...(trailInfo ? { privacy: trailInfo } : {}),
         ...(sendingPrivate ? { private: { privacy: "zdr", stored: false }, masked: requestMasked } : {}),
+        ...(charged != null ? { credits: charged } : {}),
       }]);
       if (chatControlLive && !refused) charge.recover(requestId);
       setError(chatControlLive ? chatFailureMessage(err) : err.name === "AbortError"
@@ -2199,6 +2237,19 @@ export default function Workspace() {
                 <span>Share</span>
               </button>
             )}
+            {exportLive && textMode && messages.length > 0 && (
+              <button
+                type="button"
+                className="chat-export-open"
+                aria-label="Export this chat"
+                title={busy ? "Wait for the reply to finish" : undefined}
+                disabled={busy}
+                onClick={openExport}
+              >
+                <Icon name="download" size={15} />
+                <span>Export</span>
+              </button>
+            )}
             {paletteLive && (
               <PaletteButton onOpen={() => palette.setOpen(true)} apple={palette.apple} />
             )}
@@ -2271,7 +2322,7 @@ export default function Workspace() {
               onOpen={openChat}
             />
           ) : mode === "library" && isReleased(config, "historylibrary") ? (
-            <HistoryLibrary key={`${user?.id || "guest"}:${demo}`} user={user} demo={demo} config={config} projects={projectsLive ? projects.list : []} media={media} Grid={MediaGrid} request={paletteLive && location.state?.libraryTab ? { tab: location.state.libraryTab, query: location.state.historyQuery, key: location.key } : null} onOpen={openChat} onDelete={(item) => setDialog({ type: "media", item })} refreshMedia={async () => { const r = await api("/api/media"); setMedia(r.data); refresh(); }} />
+            <HistoryLibrary key={`${user?.id || "guest"}:${demo}`} user={user} demo={demo} config={config} projects={projectsLive ? projects.list : []} media={media} Grid={MediaGrid} request={paletteLive && location.state?.libraryTab ? { tab: location.state.libraryTab, query: location.state.historyQuery, key: location.key } : null} onOpen={openChat} onExport={exportLive ? exportSaved : null} onDelete={(item) => setDialog({ type: "media", item })} refreshMedia={async () => { const r = await api("/api/media"); setMedia(r.data); refresh(); }} />
           ) : mode === "library" ? (
             <div className="library-page">
               <div className="page-heading-inline">
@@ -3560,12 +3611,16 @@ export default function Workspace() {
                 </Button>
                 <button
                   className="small-button"
-                  onClick={() =>
-                    download(
-                      "conversation.json",
-                      JSON.stringify(dialog.item, null, 2),
-                    )
-                  }
+                  onClick={() => {
+                    if (!exportLive)
+                      return download(
+                        "conversation.json",
+                        JSON.stringify(dialog.item, null, 2),
+                      );
+                    const c = dialog.item;
+                    setDialog(null);
+                    exportSaved(c);
+                  }}
                 >
                   <Icon name="download" size={14} />
                   Export
@@ -3669,6 +3724,17 @@ export default function Workspace() {
             setVaultDialog(null);
             if (d.then === "deviceOnly") startDeviceOnly();
           }}
+        />
+      )}
+      {exporting && exportLive && (
+        <ExportDialog
+          key={exporting.id || exporting.reason}
+          target={exporting}
+          user={user}
+          modelName={modelName}
+          veilMap={exporting.veilMap}
+          testMode={!!config?.testMode}
+          onClose={() => setExporting(null)}
         />
       )}
       {share && sharesLive && (

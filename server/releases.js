@@ -591,6 +591,20 @@ export const UPDATES = [
     ],
     released: false,
   },
+  {
+    id: "chatexport",
+    title: "Chat Export",
+    tagline: "Your chat, your file.",
+    points: [
+      "Markdown, JSON, or a clean page to print or save as PDF",
+      "Model names and dates; receipts and sources if you choose",
+      "Made in your browser; masked details stay masked unless you restore them",
+    ],
+    // Browser only: the file is built from the conversation the account can
+    // already open (GET /api/conversations/:id, the same access check) or
+    // from what's on screen, so there's no route to gate in featuresFor.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

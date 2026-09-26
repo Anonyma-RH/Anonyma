@@ -2,7 +2,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import React, { useEffect, useRef, useState } from "react";
 import { api, isReleased, messageFromServer } from "./lib.js";
-import { Notice } from "./ui.jsx";
+import { Icon, Notice } from "./ui.jsx";
 import { ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import "./history-library.css";
 
@@ -14,6 +14,8 @@ export default function HistoryLibrary({
   onDelete,
   Grid,
   onOpen,
+  // Chat Export, once released: exports a saved conversation ({ id, mode }).
+  onExport = null,
   refreshMedia,
   // From the Command Palette: { tab: "history", query, key }. Opens the
   // search tab with the words typed there; searching stays a press of Search.
@@ -246,6 +248,15 @@ export default function HistoryLibrary({
         >
           <div className="library-review-heading">
             <h2>{savedPreview.title || "Saved result"}</h2>
+            {onExport && (
+              <button
+                className="small-button history-export"
+                onClick={() => onExport({ id: savedPreview.id, mode: savedPreview.mode })}
+              >
+                <Icon name="download" size={13} />
+                Export
+              </button>
+            )}
             <button onClick={() => setSavedPreview(null)}>
               Close saved result
             </button>
@@ -324,26 +335,43 @@ export default function HistoryLibrary({
             )}
           </form>
           <div className="history-results" aria-live="polite">
-            {hits.map((h) => (
-              <button
-                key={h.id}
-                className="history-hit"
-                onClick={() => openSaved(h)}
-              >
-                <strong data-i18n={h.title ? "off" : undefined}>{h.title || "Untitled"}</strong>
-                <span>
-                  {h.collab_id ? "Shared workspace" : "Personal chat"} ·{" "}
-                  {new Date(h.updated).toLocaleDateString()}
-                  {projects.some((p) => p.id === h.project_id) && (
-                    <b className="history-hit-project">
-                      <ProjectSwatch color={projects.find((p) => p.id === h.project_id).color} />
-                      <i data-i18n="off">{projects.find((p) => p.id === h.project_id).name}</i>
-                    </b>
-                  )}
-                </span>
-                <p data-i18n={h.snippet ? "off" : undefined}>{h.snippet || "Title match"}</p>
-              </button>
-            ))}
+            {hits.map((h) => {
+              const hit = (
+                <button
+                  key={h.id}
+                  className="history-hit"
+                  onClick={() => openSaved(h)}
+                >
+                  <strong data-i18n={h.title ? "off" : undefined}>{h.title || "Untitled"}</strong>
+                  <span>
+                    {h.collab_id ? "Shared workspace" : "Personal chat"} ·{" "}
+                    {new Date(h.updated).toLocaleDateString()}
+                    {projects.some((p) => p.id === h.project_id) && (
+                      <b className="history-hit-project">
+                        <ProjectSwatch color={projects.find((p) => p.id === h.project_id).color} />
+                        <i data-i18n="off">{projects.find((p) => p.id === h.project_id).name}</i>
+                      </b>
+                    )}
+                  </span>
+                  <p data-i18n={h.snippet ? "off" : undefined}>{h.snippet || "Title match"}</p>
+                </button>
+              );
+              return onExport ? (
+                <div className="history-hit-row" key={h.id}>
+                  {hit}
+                  <button
+                    className="small-button history-export"
+                    aria-label="Export this conversation"
+                    onClick={() => onExport({ id: h.id, mode: h.mode })}
+                  >
+                    <Icon name="download" size={13} />
+                    Export
+                  </button>
+                </div>
+              ) : (
+                hit
+              );
+            })}
             {!searching && !hits.length && query.trim().length >= 2 && (
               <p>
                 No results shown. Search a phrase to find saved conversations.

@@ -847,6 +847,7 @@ const featureIcons = {
   sealedshare: "lock",
   projects: "folder",
   costcompare: "coins",
+  chatexport: "download",
 };
 const launch = {
   id: "mvp",

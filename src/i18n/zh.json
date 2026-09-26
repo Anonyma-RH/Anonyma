@@ -3378,7 +3378,67 @@
     "Set an alert level to turn the alert on.": "请先设置提醒阈值，再开启提醒。",
     "Change": "更改",
     "Low-balance alerts: your alert level and whether you asked for browser notifications. Whether you dismissed the banner is kept only in this browser. Closing your account deletes the setting; Panic Wipe keeps it with your other settings.": "低余额提醒：你设定的提醒阈值，以及你是否选择了浏览器通知。你是否关闭过提醒横幅只保存在此浏览器中。关闭账户会删除该设置；紧急清除会将其与你的其他设置一起保留。",
-    "The export also includes your low-balance alert setting.": "导出内容还包括你的低余额提醒设置。"
+    "The export also includes your low-balance alert setting.": "导出内容还包括你的低余额提醒设置。",
+    "Chat Export": "对话导出",
+    "Your chat, your file.": "你的对话，你的文件。",
+    "Markdown, JSON, or a clean page to print or save as PDF": "Markdown、JSON，或可打印、可另存为 PDF 的简洁页面",
+    "Model names and dates; receipts and sources if you choose": "包含模型名称和日期；可选附上收据和来源",
+    "Made in your browser; masked details stay masked unless you restore them": "在你的浏览器中生成；除非你选择恢复，已遮盖的信息保持遮盖",
+    "Export this chat": "导出此对话",
+    "Export this conversation": "导出此会话",
+    "Wait for the reply to finish": "请等待回复完成",
+    "Loading the conversation…": "正在加载会话……",
+    "There's nothing to export in this chat yet.": "此对话中还没有可导出的内容。",
+    "Untitled conversation": "未命名会话",
+    "Made in this browser from what's on screen. Nothing is sent anywhere.": "在此浏览器中根据屏幕上的内容生成，不会发送到任何地方。",
+    "Made in this browser from the saved conversation. Nothing is sent back.": "在此浏览器中根据已保存的会话生成，不会回传任何内容。",
+    ".md file": ".md 文件",
+    ".json file": ".json 文件",
+    "Print or PDF": "打印或 PDF",
+    "Clean page": "简洁页面",
+    "Include": "包含",
+    "Receipts: credits charged and receipt ID for each of your replies": "收据：你的每条回复扣除的积分和收据 ID",
+    "None in this chat": "此对话中没有",
+    "Web sources cited in replies": "回复中引用的网页来源",
+    "Restore masked details in this download": "在此下载中恢复已遮盖的信息",
+    "1 masked detail can be restored from what Veil keeps in this browser.": "1 处已遮盖的信息可以用 Veil 保存在此浏览器中的记录恢复。",
+    "The restored values go only into the file, never to our servers.": "恢复后的内容只写入文件，绝不会发送到我们的服务器。",
+    "1 message, with the model name on every reply.": "1 条消息，每条回复都标明模型名称。",
+    "Device-only chat: it's kept only in this browser, so the download holds what's on screen now.": "仅限设备的对话：它只保存在此浏览器中，因此下载内容为当前屏幕上的内容。",
+    "Private Mode: nothing was saved, so the download holds only what's on screen now.": "隐私模式：没有保存任何内容，因此下载内容仅为当前屏幕上的内容。",
+    "Off the record: nothing was saved, so the download holds only what's on screen now.": "不留记录：没有保存任何内容，因此下载内容仅为当前屏幕上的内容。",
+    "This chat isn't saved yet, so the download holds what's on screen now.": "此对话尚未保存，因此下载内容为当前屏幕上的内容。",
+    "Shared conversation: every message you can see now, with members' names as shown here. Only your own replies have receipts.": "共享会话：包含你现在能看到的每条消息，成员名称与此处显示一致。只有你自己的回复附有收据。",
+    "1 masked detail stays masked, as a tag like [EMAIL_1].": "1 处已遮盖的信息保持遮盖，显示为 [EMAIL_1] 这样的标签。",
+    "1 attachment appears as a placeholder with its name; its contents aren't included.": "1 个附件显示为带名称的占位符；其内容不包含在内。",
+    "Downloaded": "已下载",
+    "Download Markdown": "下载 Markdown",
+    "Download JSON": "下载 JSON",
+    "Open print view": "打开打印视图",
+    "Device-only chat": "仅限设备的对话",
+    "Private Mode chat": "隐私模式对话",
+    "Off-the-record chat": "不留记录的对话",
+    "Print view": "打印视图",
+    "Back": "返回",
+    "In the print dialog, choose Save as PDF to keep a PDF copy.": "在打印对话框中选择“另存为 PDF”，即可保留一份 PDF 副本。",
+    "Close print view": "关闭打印视图",
+    "Exported": "导出时间",
+    "Messages": "消息",
+    "Masked details were restored in this browser for this page.": "已遮盖的信息已在此浏览器中为本页面恢复。",
+    "Masked details were restored in this browser for this file.": "已遮盖的信息已在此浏览器中为此文件恢复。",
+    "Masked details stay masked, shown as tags like [EMAIL_1].": "已遮盖的信息保持遮盖，显示为 [EMAIL_1] 这样的标签。",
+    "Attachments and images appear as placeholders; their contents aren't included.": "附件和图像显示为占位符；其内容不包含在内。",
+    "Local test mode: receipts show fixture credits.": "本地测试模式：收据显示的是测试积分。",
+    "Former member": "前成员",
+    "Attached document": "附加的文档",
+    "Its text isn't included.": "其文本不包含在内。",
+    "Not included.": "不包含在内。",
+    "Receipt ID": "收据 ID",
+    "Exported from ANONYMA": "导出自 ANONYMA",
+    "Times are local": "时间为本地时间",
+    "its text isn't included in this export": "其文本不包含在此导出中",
+    "not included in this export": "不包含在此导出中",
+    "Receipt · copied from the original conversation, charged there": "收据 · 复制自原会话，已在原会话中扣费"
   },
   "patterns": [
     {
@@ -5256,6 +5316,22 @@
     {
       "en": "Low-balance alert below {0} credits",
       "zh": "低余额提醒：低于 {0} 积分"
+    },
+    {
+      "en": "{0} masked details can be restored from what Veil keeps in this browser.",
+      "zh": "{0} 处已遮盖的信息可以用 Veil 保存在此浏览器中的记录恢复。"
+    },
+    {
+      "en": "{0} messages, with the model name on every reply.",
+      "zh": "{0} 条消息，每条回复都标明模型名称。"
+    },
+    {
+      "en": "{0} masked details stay masked, as tags like [EMAIL_1].",
+      "zh": "{0} 处已遮盖的信息保持遮盖，显示为 [EMAIL_1] 这样的标签。"
+    },
+    {
+      "en": "{0} attachments appear as placeholders with their names; their contents aren't included.",
+      "zh": "{0} 个附件显示为带名称的占位符；其内容不包含在内。"
     }
   ]
 }

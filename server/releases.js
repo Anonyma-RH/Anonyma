@@ -717,7 +717,7 @@ export const UPDATES = [
     // RichMarkdown.jsx), so there's no route to gate in featuresFor. The one
     // server change is the Bookmarks excerpt, which leaves a reply's diagram
     // source out once this is released (routes/bookmarks.js).
-    released: false,
+    released: true,
   },
   {
     id: "shield",

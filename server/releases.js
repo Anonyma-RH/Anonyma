@@ -646,6 +646,20 @@ export const UPDATES = [
     // Needs WALLET_PAYMENT_ADDRESS on chain 4663 (server/routes/nyma.js).
     released: true,
   },
+  {
+    id: "deepresearch",
+    title: "Deep Research",
+    tagline: "Ask a hard question. Get a sourced report.",
+    points: [
+      "Plans the question, runs 3 or 6 web searches, then writes a report",
+      "Numbered citations that point only to pages the searches found",
+      "See the most it can cost first; pay only for the steps that finish",
+    ],
+    // Runs Live Web Search's plugin for each search, so it needs "search"
+    // released too (featuresFor). Workspace only; nothing new is stored: a
+    // saved run is an ordinary conversation turn (server/routes/research.js).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -775,6 +789,22 @@ export function featuresFor(req) {
   }
   // Bookmarks: stars on saved messages, with private notes.
   if (p === "/api/bookmarks" || p.startsWith("/api/bookmarks/")) return ["bookmarks"];
+  // Deep Research: a plan, one web search per sub-question and a report, so
+  // it needs Live Web Search too. What a run turns on needs its own update,
+  // as the same chat would: Private Mode, off the record, a project, Memory,
+  // Privacy Trail's Veil count, and code mode.
+  if (p === "/api/research" || p.startsWith("/api/research/")) {
+    const needed = ["deepresearch", "search"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      else if (body.ephemeral === true) needed.push("ephemeral");
+      if (body.project !== undefined) needed.push("projects");
+      if (body.memory != null) needed.push("memory");
+      if (body.veil_masked !== undefined) needed.push("trail");
+      if (body.mode === "code") needed.push("code");
+    }
+    return needed;
+  }
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.

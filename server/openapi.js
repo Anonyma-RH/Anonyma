@@ -1677,6 +1677,46 @@ route("delete", "/api/bookmarks/{id}", "Remove a bookmark", {
   response: ref("Ok"),
   description: "The message itself is unchanged.",
 });
+// Deep Research (update "deepresearch", which also needs "search").
+const researchRequest = object(
+  {
+    model: { ...string, description: "A callable text model; it plans, searches and writes" },
+    question: { ...string, minLength: 1, maxLength: 2000 },
+    depth: { enum: ["quick", "thorough"], description: "quick runs at most 3 web searches, thorough at most 6" },
+    mode: { enum: ["chat", "code"], default: "chat" },
+    requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+    conversationId: { ...string, description: "Add the run to this saved conversation" },
+    ephemeral: { ...bool, description: "Off the record: nothing is saved (needs ephemeral)" },
+    private: { ...bool, description: "Private Mode: a zero-data-retention model, ZDR routing on every step, nothing saved (needs private and ephemeral)" },
+    project: { ...string, description: "File a new saved run in this project (needs projects)" },
+    memory: { ...array(object({ id: string, text: string, updated: integer })), description: "As on /api/chat; used for the plan and the report, never sent as a search (needs memory)" },
+    veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for the question (needs trail); anything above 0 is refused with 400 research_veiled" },
+  },
+  ["model", "question", "depth"],
+);
+route("post", "/api/research/quote", "The most a Deep research run can cost", {
+  body: researchRequest,
+  response: object({
+    credits: { ...number, description: "The maximum: the plan, every search with its web search fee, and the report" },
+    usd: number,
+    available: number,
+    spending_limit: object({ remaining: number }),
+    model: string,
+    depth: string,
+    searches: integer,
+    steps: object({ plan: number, search: { ...number, description: "Each search" }, write: number }),
+    web_search_fee: number,
+    estimate: bool,
+  }),
+  description:
+    "Reserves and charges nothing. The same checks as a run (Seed Guard with no override, Veil, Private Mode, context allowance), so a quote that succeeds describes exactly what a run would hold.",
+});
+route("post", "/api/research", "Run Deep research", {
+  body: researchRequest,
+  stream: true,
+  description:
+    "Workspace only (session). Plans up to 3 or 6 sub-questions (strict JSON; invalid output falls back to the question itself), runs one web search per sub-question and writes a Markdown report whose [n] citations map only to the pages those searches returned; other URLs and out-of-range numbers are removed. Before anything runs, every step is held at its maximum (402 insufficient_credits or spending_limit, 409 research_running for a second run, with nothing charged). Each step settles on its own usage as it finishes; a step that fails, is stopped (closing the stream) or never starts is released, so only finished steps are charged. SSE events: research.stage planning, planned (questions), searching / searched (index, status, sources, credits), writing, then done with message { text, citations, research } and anonyma { credits_charged, request_id, private?, privacy?, memory? }, or error with whatever finished. A saved run adds the question and the report to the conversation as ordinary messages.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(
@@ -1914,7 +1954,7 @@ route("get", "/api/account/usage", "Where your credits went, from your own ledge
     ),
   }),
   description:
-    "Needs the insights update released (403 feature_unreleased otherwise); only the signed-in account's own ledger; 60 requests a minute. Days are UTC days, and the range is at most 366 of them (400 invalid_range or range_too_long). All sums are integer subcredits written as exact decimal strings, so net equals the ledger's own sum for the range and equals topups + received + rewards + team_transfers + other - spent - sent. spent is settled requests only (a released hold adds nothing), and daily, by_model, by_feature and by_source each add up to it. by_feature is chat, web_search, symposium, double_check (chat requests labelled from this release on; off the record and Private only chat or web_search), image, video, speech, transcription. held is what is reserved right now, not a range figure. team_paid is what this account's Team pays requests cost Team Treasuries in the range: not this account's balance, so it is in no other figure and not exported. No prompts, replies or media are read.",
+    "Needs the insights update released (403 feature_unreleased otherwise); only the signed-in account's own ledger; 60 requests a minute. Days are UTC days, and the range is at most 366 of them (400 invalid_range or range_too_long). All sums are integer subcredits written as exact decimal strings, so net equals the ledger's own sum for the range and equals topups + received + rewards + team_transfers + other - spent - sent. spent is settled requests only (a released hold adds nothing), and daily, by_model, by_feature and by_source each add up to it. by_feature is chat, web_search, symposium, double_check, deep_research (chat requests labelled from this release on; off the record and Private only chat or web_search), image, video, speech, transcription. held is what is reserved right now, not a range figure. team_paid is what this account's Team pays requests cost Team Treasuries in the range: not this account's balance, so it is in no other figure and not exported. No prompts, replies or media are read.",
 });
 route("get", "/api/account/usage/export", "Download your ledger rows as CSV or JSON", {
   query: [

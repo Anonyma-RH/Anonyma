@@ -35,6 +35,7 @@ import { projectRoutes } from "./routes/projects.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
+import { researchRoutes } from "./routes/research.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { sealedRoutes } from "./routes/sealed.js";
@@ -121,6 +122,10 @@ export function createApp(overrides = {}) {
   // Bookmarks: stars on saved messages (after conversations, whose access
   // rules it uses).
   bookmarkRoutes(ctx);
+  // Deep Research: plan, web searches and a sourced report, each step held
+  // and settled on the ordinary billing path (after Memory and Projects,
+  // whose checks it uses).
+  researchRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

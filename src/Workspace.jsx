@@ -138,7 +138,7 @@ import {
   createVeilState,
   forgetVeilState,
 } from "./veil.js";
-import { buildChatRequest, cloneVeilState, quoteBody, REPLY_BUDGET } from "./estimate.js";
+import { buildChatRequest, cloneVeilState, formatCredits, quoteBody, REPLY_BUDGET } from "./estimate.js";
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
 import CostCompare from "./CostCompare.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
@@ -164,6 +164,18 @@ import {
   MODEL_MODES,
 } from "./command-palette.js";
 import { useLanguage, setLanguage } from "./i18n.js";
+import {
+  ResearchDetails,
+  ResearchEstimate,
+  ResearchPanel,
+  ResearchProgress,
+  ResearchToggle,
+  researchBlock,
+  researchLive as researchReleased,
+  runResearch,
+  stoppedReply,
+  useResearchEstimate,
+} from "./DeepResearch.jsx";
 const initial = [
   {
     id: "welcome",
@@ -334,6 +346,8 @@ export default function Workspace() {
     // only reflects a choice made in this session rather than a stored one.
     [retentionDays, setRetentionDays] = useState(null),
     [webSearch, setWebSearch] = useState(false),
+    // Deep Research: null (off), "quick" or "thorough".
+    [researchDepth, setResearchDepth] = useState(null),
     [replyBudget, setReplyBudget] = useState(8192),
     [veilOn, setVeilOn] = useState(() => loadVeilOn()),
     [veilWords, setVeilWords] = useState(() => loadVeilWords()),
@@ -700,6 +714,7 @@ export default function Workspace() {
     setQuote(null);
     setPrompt(location.state?.prompt || "");
     setWebSearch(!!location.state?.web);
+    setResearchDepth(null);
     setAttachments([]);
     setDocuments([]);
     setCurrent(null);
@@ -1147,6 +1162,7 @@ export default function Workspace() {
     if (next) {
       setPrivateMode(false);
       setWebSearch(false);
+      setResearchDepth(null);
       setVoiceOpen(false);
       setAttachments([]);
       setDeviceOnly(vaultLive && vault.unlocked);
@@ -1441,6 +1457,11 @@ export default function Workspace() {
   );
   const seedHit = promptSeed || documentSeed || instructionsSeed;
   const editSeed = useSeedScan(seedLive, editing?.text || "");
+  // Deep Research (src/DeepResearch.jsx): offered where Web is (chat and
+  // code, signed in, never the demo or Sealed Mode).
+  const researchAvailable =
+    !demo && !!user && researchReleased(config) && ["chat", "code"].includes(mode);
+  const researchOn = researchAvailable && !!researchDepth && !sealedOn;
   // Credit Estimates: a live estimate beside Send in chat, code and
   // Uncensored, whenever Send would go through. Image, video and Symposium
   // keep their own explicit pricing.
@@ -1458,6 +1479,8 @@ export default function Workspace() {
     !!target?.callable &&
     !!config?.services?.generation &&
     !(privateMode && !target?.private) &&
+    // Deep research shows its own maximum instead.
+    !researchOn &&
     // Sealed Mode never posts a prompt for an estimate (it would go unsealed).
     !sealedOn;
   const estimateBody = useMemo(
@@ -1473,6 +1496,56 @@ export default function Workspace() {
   const costCompareLive =
     estimatesLive && isReleased(config, "costcompare") && textMode && !demo && !!user;
   const compareBase = costCompareLive && !mentioned ? estimateBody : null;
+  // Deep Research: only the typed question is sent. Veil is checked on it
+  // with a copy of this chat's map, and anything masked stops the run (the
+  // server refuses it too).
+  const researchVeiling = veilOn && isReleased(config, "veil");
+  const researchVeiled = useMemo(
+    () =>
+      researchOn && researchVeiling && sendText
+        ? veil(sendText, cloneVeilState(veilStateRef.current), veilWords).count
+        : 0,
+    [researchOn, researchVeiling, sendText, veilWords, current],
+  );
+  const researchBlocked = researchOn
+    ? researchBlock({ sealed: sealedOn, sealedThread, teamPays: teamPays.on, veiled: researchVeiled })
+    : null;
+  // The /api/research body (and its quote's): Memory as a chat would send
+  // it, masked by Veil with the live map on Send and a copy for a quote.
+  function researchRequest(live = false) {
+    const { memory } = buildChatRequest({
+      text: sendText,
+      veilWith: researchVeiling
+        ? { state: live ? veilStateRef.current : cloneVeilState(veilStateRef.current), words: veilWords }
+        : null,
+      memoryFacts,
+    });
+    return {
+      model: sendModel,
+      question: sendText,
+      depth: researchDepth,
+      mode,
+      ...(ephemeral ? { ephemeral: true } : current ? { conversationId: current } : {}),
+      ...(privateMode ? { private: true } : {}),
+      ...(memory ? { memory } : {}),
+      ...(trailLive ? { veil_masked: researchVeiling ? 0 : null } : {}),
+      ...(projectsLive ? projectRequestFields(project, { ephemeral, conversationId: current }) : {}),
+    };
+  }
+  const researchQuote =
+    researchOn &&
+    !researchBlocked &&
+    !seedHit &&
+    !busy &&
+    !!sendText &&
+    !!target?.callable &&
+    !!config?.services?.generation &&
+    !(privateMode && !target?.private);
+  const researchQuoteBody = useMemo(
+    () => (researchQuote ? researchRequest() : null),
+    [researchQuote, sendText, sendModel, researchDepth, mode, ephemeral, privateMode, current, memoryFacts, veilWords, trailLive, project?.id],
+  );
+  const researchEstimate = useResearchEstimate(researchQuoteBody);
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
   // history before it and the conversation to add to, instead of the composer.
   // `allowSeed` is Seed Guard's confirmed "Send anyway".
@@ -1504,6 +1577,8 @@ export default function Workspace() {
       setError("This chat was sealed. Turn on Sealed Mode to continue it, or start a new chat.");
       return;
     }
+    // Deep research runs a new question; an edit or regenerate is a chat.
+    if (researchOn && !redo) return sendResearch();
     const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
     const effectiveModel = redo ? redoModel || selected : target;
     const requestVision = redo
@@ -1902,6 +1977,119 @@ export default function Workspace() {
         // A chat just filed in a project changes its counts.
         if (project && !ephemeral) projects.reload();
       }
+    }
+  }
+  // Deep research's send: the question alone, run by /api/research, with a
+  // live progress panel in the reply until the report arrives. A refusal
+  // before anything ran puts the question back; Stop keeps what finished.
+  async function sendResearch() {
+    if (!user) {
+      setError("Sign in to start generating, or open the demo.");
+      return;
+    }
+    if (!target?.callable || !config?.services?.generation) {
+      setError("This model is not currently available for generation.");
+      return;
+    }
+    if (privateMode && !target?.private) {
+      setError("Choose a private model, or turn off Private mode.");
+      return;
+    }
+    if (deviceOnly && !vault.unlocked) {
+      setError("Unlock Device Vault to keep chatting on this device only.");
+      return;
+    }
+    if (researchBlocked) {
+      setError(researchBlocked);
+      return;
+    }
+    setError("");
+    setInfo("");
+    setReceipt(null);
+    setVeilNote(null);
+    // Chat Control's charge panel follows chat requests; a run shows its own.
+    if (chatControlLive) charge.reset();
+    setBusy(true);
+    controller.current = new AbortController();
+    const requestId = uid();
+    const body = { ...researchRequest(true), requestId };
+    if (researchVeiling && !deviceOnly) saveVeilState(veilKeyRef.current, veilStateRef.current);
+    const question = sendText;
+    const requestModel = target.id;
+    const before = { messages, prompt };
+    setPrompt("");
+    const next = [...messages, { role: "user", content: question }];
+    const reply = (extra) => ({ role: "assistant", model: requestModel, requestId, ...extra });
+    setMessages([...next, reply({ content: "", research: { live: true, stage: "planning", depth: body.depth, questions: [], results: [] } })]);
+    let liveId = ephemeral ? null : current;
+    const sendingPrivate = privateMode;
+    try {
+      const done = await runResearch(
+        body,
+        (state) => {
+          if (state.conversationId) liveId = state.conversationId;
+          setMessages([...next, reply({ content: "", research: state })]);
+        },
+        controller.current.signal,
+      );
+      if (done.conversationId) liveId = done.conversationId;
+      const a = done.anonyma || {};
+      setMessages([
+        ...next,
+        reply({
+          content: done.message?.text || "",
+          citations: done.message?.citations || [],
+          research: done.message?.research,
+          finishReason: a.finish_reason || "stop",
+          credits: a.credits_charged,
+          ...(a.private ? { private: a.private, masked: 0 } : {}),
+          ...(a.privacy ? { privacy: a.privacy } : {}),
+          ...(a.memory ? { memoryUsed: a.memory } : {}),
+        }),
+      ]);
+      // The run's total is under the report; the plain receipt line shows it
+      // too where Chat Control's charge panel isn't live.
+      if (!chatControlLive) setReceipt(a);
+      setCurrent(liveId);
+    } catch (err) {
+      const state = err.state || err.data?.state;
+      if (err.data?.conversationId) liveId = err.data.conversationId;
+      if (err.name === "AbortError") {
+        // Stopped: the finished steps stay charged; show what they found.
+        const kept = stoppedReply(state || { depth: body.depth });
+        setMessages(kept.content ? [...next, reply({ ...kept, finishReason: "interrupted" })] : next);
+        if (!chatControlLive) setReceipt({ credits_charged: kept.research.credits_charged, request_id: requestId });
+        setInfo(`Stopped. Only finished steps were charged: ${formatCredits(kept.research.credits_charged) || "0"} credits.`);
+        setCurrent(liveId);
+      } else if (err.data?.refused) {
+        // Refused before anything ran (balance, a limit, Veil, Seed Guard, a
+        // rate limit): nothing was charged, so the question comes back.
+        setMessages(before.messages);
+        setPrompt(before.prompt);
+        setError(err.message);
+      } else {
+        const m = err.data?.message;
+        const a = err.data?.anonyma || {};
+        setMessages(
+          m?.text
+            ? [...next, reply({ content: m.text, citations: m.citations || [], research: m.research, finishReason: "interrupted", credits: a.credits_charged, ...(a.privacy ? { privacy: a.privacy } : {}), ...(sendingPrivate ? { private: { privacy: "zdr", stored: false }, masked: 0 } : {}) })]
+            : next,
+        );
+        if (a.credits_charged != null && !chatControlLive) setReceipt(a);
+        setError(err.message);
+        setCurrent(liveId);
+      }
+    } finally {
+      if (researchVeiling && liveId && liveId !== veilKeyRef.current && !deviceOnly) {
+        moveVeilState(veilKeyRef.current, liveId);
+        veilKeyRef.current = liveId;
+      }
+      setBusy(false);
+      refresh();
+      api("/api/conversations")
+        .then((r) => setAll(recentConversations(r.data)))
+        .catch(() => {});
+      if (project && !ephemeral) projects.reload();
     }
   }
   // Sealed Mode's send. The request is built as any chat's is (documents read
@@ -2722,7 +2910,8 @@ export default function Workspace() {
                           m.role === "assistant"
                             ? " streaming"
                             : "") +
-                          (highlight && m.id === highlight ? " bookmark-target" : "")
+                          (highlight && m.id === highlight ? " bookmark-target" : "") +
+                          (m.research && researchAvailable ? " research-report" : "")
                         }
                       >
                         <div className="message-avatar">
@@ -2758,7 +2947,9 @@ export default function Workspace() {
                             className="markdown"
                             data-i18n={m.content && !hasDocuments ? "off" : undefined}
                           >
-                            {hasDocuments ? (
+                            {m.research?.live ? (
+                              <ResearchProgress research={m.research} />
+                            ) : hasDocuments ? (
                               <div className="document-prompt" data-i18n="off">
                                 {body}
                               </div>
@@ -2784,7 +2975,14 @@ export default function Workspace() {
                               />
                             ))}
                           </div>
-                          {m.citations?.length > 0 && (
+                          {researchAvailable && m.role === "assistant" && m.research && !m.research.live && (
+                            <ResearchDetails
+                              research={m.research}
+                              citations={m.citations}
+                              trail={trailLive}
+                            />
+                          )}
+                          {m.citations?.length > 0 && !(researchAvailable && m.research) && (
                             <div className="citations">
                               <span>Sources</span>
                               {m.citations.map((c) => (
@@ -2908,7 +3106,7 @@ export default function Workspace() {
                                 </button>
                               )}
                               {rememberButton(m)}
-                              {m.role === "assistant" && m.content && (
+                              {m.role === "assistant" && m.content && !m.research && (
                                 <button type="button" onClick={() => rewind(i, "regenerate")}>
                                   Regenerate
                                 </button>
@@ -3093,6 +3291,16 @@ export default function Workspace() {
                     onLeave={leaveProject}
                   />
                 )}
+                {researchOn && !busy && (
+                  <ResearchPanel
+                    depth={researchDepth}
+                    onDepth={setResearchDepth}
+                    estimate={researchEstimate}
+                    block={researchBlocked}
+                    attached={imageItems.length + documents.length}
+                    compact={messages.length > 0}
+                  />
+                )}
                 {sealedOn && (
                   <SealedPanel
                     state={enclave.state}
@@ -3149,7 +3357,14 @@ export default function Workspace() {
                   hit={seedHit}
                   busy={busy}
                   onProceed={() => send(null, null, { allowSeed: true })}
-                />
+                  hardOverride={!researchOn}
+                >
+                  {researchOn && (
+                    <p className="seed-guard-note">
+                      Deep research turns your question into web searches, so it never sends this.
+                    </p>
+                  )}
+                </SeedGuardNotice>
                 <form className="composer" onSubmit={send}>
                   {imageItems.length > 0 && (
                     <div className="attachment-list">
@@ -3441,11 +3656,25 @@ export default function Workspace() {
                           }
                           aria-pressed={webSearch}
                           title="Search the web before answering (about 21 credits per search)"
-                          onClick={() => setWebSearch((v) => !v)}
+                          onClick={() => {
+                            // Deep research always searches; the two are one or the other.
+                            if (!webSearch) setResearchDepth(null);
+                            setWebSearch((v) => !v);
+                          }}
                         >
                           <Icon name="globe" size={17} />
                           <span>Web</span>
                         </button>
+                      )}
+                      {researchAvailable && !sealedOn && (
+                        <ResearchToggle
+                          on={researchOn}
+                          disabled={busy}
+                          onToggle={() => {
+                            if (!researchDepth) setWebSearch(false);
+                            setResearchDepth((d) => (d ? null : "quick"));
+                          }}
+                        />
                       )}
                       {["chat", "code"].includes(mode) && !sealedOn && teamPays.toggle}
                       {!demo &&
@@ -3525,7 +3754,7 @@ export default function Workspace() {
                           )}
                         </button>
                       )}
-                      {longAnswersLive && textMode && !demo && !sealedOn && (
+                      {longAnswersLive && textMode && !demo && !sealedOn && !researchOn && (
                         <label className="fine-print">
                           Reply budget
                           <select aria-label="Reply token budget" value={selectedReplyBudget} disabled={busy}
@@ -3628,8 +3857,12 @@ export default function Workspace() {
                       <span role="status">The mentioned model cannot read this conversation’s images. Choose a vision model.</span>
                     )}
                     <span className="send-cluster">
-                    {estimatesLive && textMode && <CreditEstimate state={estimate} />}
-                    {costCompareLive && (
+                    {researchOn ? (
+                      <ResearchEstimate state={researchEstimate} />
+                    ) : (
+                      estimatesLive && textMode && <CreditEstimate state={estimate} />
+                    )}
+                    {costCompareLive && !researchOn && (
                       <CostCompare
                         base={compareBase}
                         mode={mode}
@@ -3670,6 +3903,7 @@ export default function Workspace() {
                         disabled={
                           !prompt.trim() ||
                           !!seedHit ||
+                          !!researchBlocked ||
                           (finderLive && !selected && !sealedOn) ||
                           incompatibleMention ||
                           (privateMode && !privateModelsCallable.length) ||

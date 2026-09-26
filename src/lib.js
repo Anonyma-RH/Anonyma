@@ -194,6 +194,11 @@ export function messageFromServer(m) {
     citations: Array.isArray(c?.citations) ? c.citations : [],
     // Privacy Trail metadata kept with a saved reply (never prompt text).
     ...(c?.privacy && typeof c.privacy === "object" ? { privacy: c.privacy } : {}),
+    // Deep Research: the plan, each step's outcome and charge, and the
+    // run's total (src/DeepResearch.jsx shows it under the report).
+    ...(c?.research && typeof c.research === "object" && !Array.isArray(c.research)
+      ? { research: { ...c.research, live: false } }
+      : {}),
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.

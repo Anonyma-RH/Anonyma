@@ -731,7 +731,7 @@ export const UPDATES = [
     // Browser only: every check runs in the page (src/shield.js) and nothing
     // about a finding reaches the server, so there's no route to gate in
     // featuresFor. The data notice rides inside the message as text.
-    released: false,
+    released: true,
   },
   {
     id: "redact",

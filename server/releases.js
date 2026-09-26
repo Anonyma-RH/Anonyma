@@ -540,7 +540,7 @@ export const UPDATES = [
     ],
     // Builds on Share a Chat: every Sealed Share route needs both released
     // (featuresFor). Encryption and decryption happen only in the browser.
-    released: false,
+    released: true,
   },
   {
     id: "projects",

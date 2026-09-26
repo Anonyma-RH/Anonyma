@@ -859,6 +859,7 @@ const featureIcons = {
   earlymodels: "models",
   diagrams: "sigma",
   shield: "shield",
+  redact: "redact",
 };
 const launch = {
   id: "mvp",

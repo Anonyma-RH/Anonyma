@@ -98,6 +98,7 @@ import {
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
 import { CleanImageChip } from "./CleanUploads.jsx";
+import { RedactChipTools, RedactEditor, redactReleased } from "./Redact.jsx";
 import { IMAGE_TYPES, IMAGE_LIMIT, HEIC_LIMIT, isHeicFile, withKeep } from "./clean-notes.js";
 import { parseDocumentBlocks, MAX_DOCUMENTS } from "./documents.js";
 import { useShieldLive, shieldReleased, ShieldPanel, ShieldPasteNotice, shieldMarkdown } from "./Shield.jsx";
@@ -310,6 +311,9 @@ export default function Workspace() {
   const demo = params.get("demo") === "1";
   const { models, user, connected, config, refresh } = useApp();
   const cleanLive = isReleased(config, "cleanuploads");
+  // Redact Before You Send: black out parts of a composer image in this
+  // browser; only the redacted copy replaces it (src/Redact.jsx).
+  const redactLive = redactReleased(config);
   const [all, setAll] = useState(() =>
       demo ? readStore("conversations", initial) : [],
     ),
@@ -324,6 +328,8 @@ export default function Workspace() {
     // Every chosen reference image. Clean Uploads can hold one back (no url)
     // until the user keeps its original; `attachments` are the ones Send uses.
     [imageItems, setAttachments] = useState([]),
+    // The composer image open in the redaction editor, if any.
+    [redacting, setRedacting] = useState(null),
     [documents, setDocuments] = useState([]),
     [media, setMedia] = useState(() => (demo ? readStore("media", []) : [])),
     [dialog, setDialog] = useState(null),
@@ -1604,7 +1610,11 @@ export default function Workspace() {
       seedFound?.kind === "seed" ||
       (seedLive && !!redo && scanSecrets(redo.content)?.kind === "seed");
     if (!redo && attachments.length !== imageItems.length) {
-      setError("Metadata couldn't be removed from an image. Tick Keep original to send it as it is, or remove it.");
+      setError(
+        redactLive
+          ? "Metadata couldn't be removed from an image. Redact it to send a redrawn copy, tick Keep original to send it as it is, or remove it."
+          : "Metadata couldn't be removed from an image. Tick Keep original to send it as it is, or remove it.",
+      );
       return;
     }
     // Sealed Mode has its own send; a sealed thread never goes on unsealed.
@@ -3295,7 +3305,7 @@ export default function Workspace() {
                 <form className="composer" onSubmit={send}>
                   {imageItems.length > 0 && (
                     <div className="attachment-list">
-                      {imageItems.map((a, i) => a.clean ? (
+                      {imageItems.map((a, i) => a.clean || redactLive ? (
                         <CleanImageChip
                           key={i}
                           item={a}
@@ -3303,7 +3313,15 @@ export default function Workspace() {
                             setAttachments((p) => p.map((x, j) => (j === i ? withKeep(x, keep) : x)))
                           }
                           onRemove={() => setAttachments((p) => p.filter((_, j) => j !== i))}
-                        />
+                        >
+                          {redactLive && (
+                            <RedactChipTools
+                              item={a}
+                              disabled={busy}
+                              onOpen={() => setRedacting(a)}
+                            />
+                          )}
+                        </CleanImageChip>
                       ) : (
                         <span key={i}>
                           <img src={a.url} alt={a.name} />
@@ -4204,6 +4222,18 @@ export default function Workspace() {
           blocked={share.blocked}
           modelName={shareModelName}
           onClose={() => setShare(null)}
+        />
+      )}
+      {redactLive && redacting && imageItems.includes(redacting) && (
+        <RedactEditor
+          item={redacting}
+          onCancel={() => setRedacting(null)}
+          onApply={(next) => {
+            // The redacted copy takes the original's place; nothing keeps
+            // the original after this.
+            setAttachments((p) => p.map((x) => (x === redacting ? next : x)));
+            setRedacting(null);
+          }}
         />
       )}
       {palette.open && (

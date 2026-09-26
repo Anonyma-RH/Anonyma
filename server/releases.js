@@ -673,7 +673,7 @@ export const UPDATES = [
     // rate of the reward Referrals & Credits already pays
     // (server/referral-boost.js), from the NYMA Holder Program's tiers, and
     // does nothing unless that program is released too.
-    released: false,
+    released: true,
   },
   {
     id: "earlymodels",

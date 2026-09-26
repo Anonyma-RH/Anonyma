@@ -3566,7 +3566,38 @@
     "The export also includes your Pay with NYMA quotes.": "导出内容还包括你的“使用 NYMA 付款”报价。",
     "Reading the NYMA rate on Robinhood Chain…": "正在读取 Robinhood Chain 上的 NYMA 兑换率……",
     "A quote holds the rate for 10 minutes": "报价锁定兑换率 10 分钟",
-    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。"
+    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。",
+    "Link Reader": "链接阅读器",
+    "Paste a link and ask about the page. The site sees our server, not you.": "粘贴链接，就网页内容提问。网站看到的是我们的服务器，而不是你。",
+    "Read this page on any link in your message": "消息里的任何链接，都能一键“读取此页”",
+    "Fetched by our server: no cookies, no referrer, never your IP": "由我们的服务器抓取：不带 Cookie，不带来源页，绝不暴露你的 IP",
+    "The page goes with your question; reading it is free": "网页内容随你的问题一起发送；读取本身免费",
+    "Read this page": "读取此页",
+    "Reading…": "读取中……",
+    "Link Reader is off in Sealed Mode": "密封模式下不可使用链接阅读器",
+    "Link Reader fetches pages through our server, which would see the link, so it's off in Sealed Mode.": "链接阅读器通过我们的服务器抓取网页，服务器会看到链接，因此在密封模式下关闭。",
+    "ANONYMA's server fetches the page, so the site sees our server, not you. Free.": "由 ANONYMA 的服务器抓取网页，网站看到的是我们的服务器，而不是你。免费。",
+    "Fetched by ANONYMA, not your browser": "由 ANONYMA 抓取，而非你的浏览器",
+    "Only a little text came back. Pages that need JavaScript to show their text can't be read.": "只取回了很少的文字。需要 JavaScript 才能显示内容的网页无法读取。",
+    "View text": "查看文字",
+    "Hide text": "隐藏文字",
+    "Remove this page": "移除此网页",
+    "Paste a full link that starts with http or https.": "请粘贴以 http 或 https 开头的完整链接。",
+    "Links with a username or password in them can't be read.": "含有用户名或密码的链接无法读取。",
+    "Only links on the standard web ports (80 and 443) can be read.": "只能读取使用标准网页端口（80 和 443）的链接。",
+    "That link points to a private or local address, so ANONYMA won't read it.": "该链接指向私有或本地地址，ANONYMA 不会读取。",
+    "Couldn't reach that page. Check the link and try again.": "无法访问该网页。请检查链接后重试。",
+    "That page took longer than 10 seconds to load.": "该网页加载超过了 10 秒。",
+    "That page is larger than 5 MB.": "该网页超过 5 MB。",
+    "Only web pages, plain text and PDFs can be read.": "只能读取网页、纯文本和 PDF。",
+    "That link redirected more than 3 times.": "该链接重定向超过了 3 次。",
+    "The site didn't return the page.": "网站没有返回该网页。",
+    "That page took too long to read.": "读取该网页耗时过长。",
+    "Couldn't find readable text on that page.": "在该网页上找不到可读的文字。",
+    "Another page is still being read. Try again in a moment.": "另一个网页仍在读取中，请稍后再试。",
+    "Couldn't read that page.": "无法读取该网页。",
+    "No readable text was found in that PDF. It may be a scanned image.": "该 PDF 中没有可读的文字，可能是扫描图像。",
+    "Link Reader: a page you ask it to read is fetched by ANONYMA’s server with no cookies and no referrer, so the site sees our server, not you. The link and the page are never logged or stored on their own; the page’s text is kept only inside your message, like an attached document, when the chat is saved.": "链接阅读器：你让它读取的网页由 ANONYMA 的服务器抓取，不带 Cookie，也不带来源页，因此网站看到的是我们的服务器，而不是你。链接和网页本身从不单独记录或存储；只有在会话被保存时，网页文字才会像附加文档一样，作为你消息的一部分保存。"
   },
   "patterns": [
     {
@@ -5560,6 +5591,22 @@
     {
       "en": "Pay with NYMA: ask for a quote on Credits & funding, then send the quoted NYMA on Robinhood Chain from your linked wallet to the same payment address within {0} minutes. The quote's rate is the lower of the current rate and its {1}-minute average on Robinhood Chain, plus a {2}% bonus in credits, recorded as a separate NYMA top-up bonus.",
       "zh": "使用 NYMA 付款：先在“积分与充值”页获取报价，然后在 {0} 分钟内，从你关联的钱包在 Robinhood Chain 上将报价中的 NYMA 发送到同一付款地址。报价兑换率取当前兑换率与其在 Robinhood Chain 上 {1} 分钟均值中的较低者，另加 {2}% 的奖励积分，作为单独的 NYMA 充值奖励记录。"
+    },
+    {
+      "en": "{0} word",
+      "zh": "{0} 个词"
+    },
+    {
+      "en": "{0} words",
+      "zh": "{0} 个词"
+    },
+    {
+      "en": "A long page: only the first {0} words are attached.",
+      "zh": "网页较长：只附上前 {0} 个词。"
+    },
+    {
+      "en": "The site answered {0} instead of the page.",
+      "zh": "网站返回了 {0}，而不是该网页。"
     }
   ]
 }

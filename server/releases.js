@@ -646,6 +646,20 @@ export const UPDATES = [
     // Needs WALLET_PAYMENT_ADDRESS on chain 4663 (server/routes/nyma.js).
     released: true,
   },
+  {
+    id: "linkreader",
+    title: "Link Reader",
+    tagline: "Paste a link and ask about the page. The site sees our server, not you.",
+    points: [
+      "Read this page on any link in your message",
+      "Fetched by our server: no cookies, no referrer, never your IP",
+      "The page goes with your question; reading it is free",
+    ],
+    // POST /api/read (server/routes/link-reader.js, SSRF rules in
+    // server/link-reader.js). The page is attached as a Documents block, so
+    // it needs "documents" released too (featuresFor).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -775,6 +789,9 @@ export function featuresFor(req) {
   }
   // Bookmarks: stars on saved messages, with private notes.
   if (p === "/api/bookmarks" || p.startsWith("/api/bookmarks/")) return ["bookmarks"];
+  // Link Reader: the server-side fetch of one public page. The page rides
+  // with the message as a Documents block, so it needs Documents too.
+  if (p === "/api/read" || p.startsWith("/api/read/")) return ["linkreader", "documents"];
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.

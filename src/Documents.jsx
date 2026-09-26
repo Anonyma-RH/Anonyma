@@ -5,6 +5,8 @@ import ReusableUploads from "./ReusableUploads.jsx";
 import { extractOffice, browserInflate, textBytes } from "./file-formats.js";
 import { unveil } from "./veil.js";
 import { CleanNote } from "./CleanUploads.jsx";
+import { pdfText } from "./pdf-text.js";
+import { LinkCard } from "./LinkReader.jsx";
 import {
   MAX_DOCUMENTS,
   MAX_FILE_BYTES,
@@ -17,44 +19,10 @@ import {
 } from "./documents.js";
 import "./documents.css";
 
-// pdfjs-dist is only fetched once someone actually attaches a PDF, so it
-// never lands in the main bundle. The worker URL is resolved the Vite way:
-// a `?url` import hands back the hashed asset path to assign as workerSrc.
-async function loadPdfjs() {
-  const [pdfjs, workerUrl] = await Promise.all([
-    import("pdfjs-dist"),
-    import("pdfjs-dist/build/pdf.worker.min.mjs?url"),
-  ]);
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl.default;
-  return pdfjs;
-}
+// PDF text extraction lives in pdf-text.js (shared with Link Reader), which
+// fetches pdfjs-dist only once a PDF is actually attached.
 async function extractPdfText(file, withDetails = false) {
-  const pdfjs = await loadPdfjs();
-  const data = await file.arrayBuffer();
-  const doc = await pdfjs.getDocument({ data }).promise;
-  // Clean Uploads: only the text below is sent, so the PDF's author,
-  // software and dates never leave; the chip says which were there.
-  let hidden = null;
-  if (withDetails) {
-    try {
-      const { pdfDetails } = await import("./clean-uploads.js");
-      hidden = pdfDetails(await doc.getMetadata());
-    } catch {
-      hidden = null;
-    }
-  }
-  const pages = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    pages.push(
-      content.items
-        .map((item) => item.str || "")
-        .join(" ")
-        .trim(),
-    );
-  }
-  return { text: pages.join("\n\n").trim(), pages: doc.numPages, hidden };
+  return pdfText(await file.arrayBuffer(), withDetails);
 }
 
 // One document, attached in the composer or recovered from a saved message.
@@ -248,15 +216,15 @@ export function DocumentChips({ documents, setDocuments, prompt = "" }) {
   const budget = fitDocuments(prompt, documents);
   return (
     <div className="document-list">
-      {documents.map((doc, i) => (
-        <DocumentChip
-          key={doc.id}
-          doc={doc}
-          onRemove={() =>
-            setDocuments((prev) => prev.filter((_, j) => j !== i))
-          }
-        />
-      ))}
+      {documents.map((doc, i) => {
+        const remove = () => setDocuments((prev) => prev.filter((_, j) => j !== i));
+        // A page read by Link Reader (src/LinkReader.jsx) shows as its card.
+        return doc.source === "link" ? (
+          <LinkCard key={doc.id} doc={doc} onRemove={remove} />
+        ) : (
+          <DocumentChip key={doc.id} doc={doc} onRemove={remove} />
+        );
+      })}
       {budget.truncated && (
         <Notice>
           Attached documents total {formatChars(budget.totalChars)}; only the
@@ -271,19 +239,27 @@ export function DocumentChips({ documents, setDocuments, prompt = "" }) {
 // (see documents.js parseDocumentBlocks), used in conversation history.
 // With Veil on, the saved text holds [TAG_n] placeholders; veilMap (this
 // browser's tag -> value map) restores the real values on screen only.
-export function MessageDocuments({ documents, veilMap }) {
+// A page read by Link Reader shows as its card when `linkCards` is on (the
+// update is released); Veil never masked its text, so there's nothing to
+// restore in it.
+export function MessageDocuments({ documents, veilMap, linkCards = false }) {
   if (!documents?.length) return null;
   const shown = veilMap
     ? documents.map((doc) => {
+        if (linkCards && doc.source === "link") return doc;
         const text = unveil(doc.text, veilMap);
         return { ...doc, name: unveil(doc.name, veilMap), text, chars: text.length };
       })
     : documents;
   return (
     <div className="document-list document-list-history">
-      {shown.map((doc, i) => (
-        <DocumentChip key={i} doc={doc} />
-      ))}
+      {shown.map((doc, i) =>
+        linkCards && doc.source === "link" ? (
+          <LinkCard key={i} doc={doc} />
+        ) : (
+          <DocumentChip key={i} doc={doc} />
+        ),
+      )}
     </div>
   );
 }

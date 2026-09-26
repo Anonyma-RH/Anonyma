@@ -41,6 +41,7 @@ import { sealedRoutes } from "./routes/sealed.js";
 import { accountRoutes } from "./routes/account.js";
 import { wipeRoutes } from "./routes/wipe.js";
 import { twoStepRoutes } from "./routes/two-step.js";
+import { unlockRoutes } from "./routes/unlock.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
 import { balanceAlertRoutes } from "./routes/balance-alerts.js";
@@ -131,6 +132,8 @@ export function createApp(overrides = {}) {
   wipeRoutes(ctx);
   // Two-Step Sign-in's settings (its sign-in step is in authRoutes).
   twoStepRoutes(ctx);
+  // Privacy Screen: the idle lock's unlock check (never touches the session).
+  unlockRoutes(ctx);
   allowanceRoutes(ctx);
   // Also registers the Spending Limits check every reservation runs.
   spendingLimitRoutes(ctx);

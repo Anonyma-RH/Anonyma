@@ -25,6 +25,7 @@ import {
   walletSign,
   walletAvailable,
   safeNext,
+  isReleased,
 } from "./lib.js";
 import { articles } from "./data.js";
 import ReleaseStatus from "./ReleaseStatus.jsx";
@@ -851,6 +852,7 @@ const featureIcons = {
   bookmarks: "star",
   sealed: "lock",
   paynyma: "coins",
+  privacyscreen: "eyeoff",
 };
 const launch = {
   id: "mvp",
@@ -1131,8 +1133,15 @@ export function Auth({ register = false }) {
   // with a full page load so its own headers (no referrer) apply.
   const [params] = useSearchParams();
   const next = safeNext(params.get("next"));
-  const done = () =>
-    next ? window.location.assign(next) : navigate("/workspace");
+  const done = () => {
+    // Privacy Screen: signing in proves who's there, so a screen lock kept
+    // in this browser (src/privacy-screen.js) no longer applies.
+    if (isReleased(config, "privacyscreen"))
+      try {
+        localStorage.removeItem("anonyma:privacy-screen-lock");
+      } catch {}
+    return next ? window.location.assign(next) : navigate("/workspace");
+  };
   const [method, setMethod] = useState("password"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),

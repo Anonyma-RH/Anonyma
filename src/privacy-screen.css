@@ -1,0 +1,313 @@
+/* Privacy Screen: the cover (hidden), the lock screen, the header's Hide
+   button and the Account setting. The cover is the workspace's cobalt band
+   (dotted field, yellow mark); the lock card is flat white with the
+   workspace's 2px corners. The layer sits alone in <body> while the app is
+   out of the document, so it needs no stacking fight with the app. */
+.privacy-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  font-family: var(--font);
+}
+.privacy-cover {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 26px;
+  width: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 24px 16px;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  color: #fff;
+  text-align: center;
+  background-color: #0135df;
+  background-image: radial-gradient(#ffffff26 1px, transparent 1.3px);
+  background-size: 14px 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* The whole cover is the control and any key works, so no focus ring: the
+   screen stays plain. */
+.privacy-cover:focus,
+.privacy-cover:focus-visible {
+  outline: none;
+}
+.privacy-cover-mark,
+.privacy-lock-mark {
+  display: block;
+  line-height: 0;
+}
+.privacy-cover-mark .official-mark {
+  width: 132px;
+  height: 76px;
+}
+.privacy-cover-text {
+  max-width: 34ch;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: #dfe7ff;
+}
+
+/* ---- Lock screen ---- */
+.privacy-lock {
+  cursor: default;
+  overflow-y: auto;
+  -webkit-user-select: auto;
+  user-select: auto;
+}
+.privacy-lock-card {
+  width: min(420px, 100%);
+  padding: 34px 34px 26px;
+  text-align: left;
+  color: #142343;
+  background: #fff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  box-shadow: 0 30px 60px -34px #061b6999;
+}
+.privacy-lock-mark .official-mark {
+  width: 62px;
+  height: 36px;
+}
+.privacy-lock-card .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 22px 0 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.3px;
+  color: #68748a;
+}
+.privacy-lock-card .eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: none;
+  background: #ffb21c;
+}
+.privacy-lock-card h1 {
+  margin: 10px 0 8px;
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 40px;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+.privacy-lock-card > p {
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #68748a;
+}
+.privacy-lock-card .notice {
+  margin: 0 0 16px;
+}
+.privacy-lock-field {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #142343;
+}
+.privacy-lock-field input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 15px;
+  color: #142343;
+  background: #fff;
+  border: 1px solid #ccd5e5;
+  border-radius: 2px;
+}
+.privacy-lock-field input:focus {
+  outline: none;
+  border-color: #0135df;
+  box-shadow: 0 0 0 3px #0135df1a;
+}
+.privacy-lock-field input[name="code"] {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 4px;
+}
+.privacy-lock-wide {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+}
+.privacy-lock-choices {
+  display: grid;
+  gap: 10px;
+}
+.privacy-lock-quiet {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #68748a;
+}
+.privacy-lock-choices .privacy-lock-quiet {
+  margin: 2px 0 0;
+}
+.privacy-lock-signout {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  padding: 16px 0 0;
+  width: 100%;
+  font: inherit;
+  font-size: 12px;
+  color: #68748a;
+  background: none;
+  border: 0;
+  border-top: 1px solid #e3e8f0;
+  cursor: pointer;
+}
+.privacy-lock-signout:hover:not(:disabled) {
+  color: #0135df;
+}
+
+/* ---- Header button (next to the Command Palette's) ---- */
+.privacy-hide-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 12px;
+  color: #0135df;
+  background: #fff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.privacy-hide-button:hover {
+  background: #f0f4fc;
+}
+.privacy-hide-button:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 2px;
+}
+
+/* ---- Account → Account settings ---- */
+.privacy-screen-options {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.privacy-screen-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  color: #142343;
+}
+.privacy-screen-row input[type="checkbox"] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #0135df;
+}
+.privacy-screen-row > span {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+/* Lined up with the checkbox row's text. */
+.privacy-screen-idle {
+  padding-left: 28px;
+}
+.privacy-screen-row b {
+  font-weight: 600;
+}
+.privacy-screen-row small {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #68748a;
+}
+.privacy-screen-row select {
+  flex: none;
+  min-height: 38px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12px;
+  color: #142343;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+}
+.settings-stack .privacy-screen-honest {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #142343;
+  background: #edf2ff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+}
+.privacy-screen-honest svg {
+  flex: none;
+  margin-top: 2px;
+  color: #0135df;
+}
+
+@media (max-width: 700px) {
+  /* An icon beside the Command Palette's, as small as it is. */
+  .privacy-hide-button {
+    justify-content: center;
+    width: 30px;
+    min-height: 30px;
+    padding: 0;
+    border-color: transparent;
+    background: transparent;
+  }
+  .privacy-hide-button span {
+    display: none;
+  }
+  .workspace-header > .privacy-hide-button {
+    margin-right: 4px;
+  }
+}
+/* A phone's header is already full once a chat has Share and Export: the
+   Hide icon takes its room from the spacing, not from the other controls. */
+@media (max-width: 440px) {
+  .app-shell .workspace-header:has(.privacy-hide-button) {
+    gap: 6px;
+  }
+  .app-shell .workspace-header > div:has(> .privacy-hide-button) {
+    gap: 3px;
+  }
+  .privacy-lock-card {
+    padding: 28px 22px 22px;
+  }
+  .privacy-lock-card h1 {
+    font-size: 34px;
+  }
+  .privacy-cover-mark .official-mark {
+    width: 108px;
+    height: 62px;
+  }
+  .privacy-screen-row {
+    flex-wrap: wrap;
+  }
+}

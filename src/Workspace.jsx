@@ -152,6 +152,7 @@ import { projectFiles, previewPages, PREVIEW_DEMO_REPLY } from "./live-preview.j
 import { EarlyTag } from "./Holders.jsx";
 import { isEarlyAccess } from "./holders.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
+import { PrivacyScreen, HideScreenButton, hideScreen } from "./PrivacyScreen.jsx";
 import {
   paletteReleased,
   paletteActions,
@@ -2256,6 +2257,8 @@ export default function Workspace() {
         return setFilesRequest((n) => n + 1);
       case "language":
         return setLanguage(language === "zh" ? "en" : "zh");
+      case "privacy-screen":
+        return hideScreen();
       default:
         if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
     }
@@ -2318,6 +2321,8 @@ export default function Workspace() {
     );
   return (
     <main id="main" className="app-shell">
+      {/* Privacy Screen: Esc twice or Hide covers the page (and idle locks it). */}
+      <PrivacyScreen config={config} user={user} />
       <AppSidebar
         active={mode}
         demo={demo}
@@ -2494,6 +2499,7 @@ export default function Workspace() {
             {paletteLive && (
               <PaletteButton onOpen={() => palette.setOpen(true)} apple={palette.apple} />
             )}
+            <HideScreenButton config={config} user={user} />
             <Link
               to={"/account/credits" + (demo ? "?demo=1" : "")}
               className="balance-chip"

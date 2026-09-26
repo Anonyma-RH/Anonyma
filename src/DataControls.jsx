@@ -20,6 +20,8 @@ export default function DataControls() {
   const bookmarks = !!config && isReleased(config, "bookmarks");
   // And Pay with NYMA.
   const nyma = !!config && isReleased(config, "paynyma");
+  // And the Privacy Screen.
+  const privacyScreen = !!config && isReleased(config, "privacyscreen");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -144,6 +146,16 @@ export default function DataControls() {
             the message: it goes when you remove it, when its chat is deleted or
             auto-deleted, when you leave the collab it belongs to, and when you
             wipe or close your account.
+          </li>
+        )}
+        {privacyScreen && (
+          <li>
+            Privacy Screen: its choices and whether the screen is locked are
+            kept only in this browser. Unlocking checks your password (or an
+            email code or wallet signature) on the server, which keeps nothing
+            but a count of wrong attempts, under a one-way key, for up to 15
+            minutes. Hiding takes your chats off the screen, not out of this
+            browser’s memory.
           </li>
         )}
         {nyma && (

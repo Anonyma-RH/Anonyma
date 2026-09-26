@@ -649,6 +649,41 @@ route("post", "/api/account/two-step/disable", "Turn off two-step sign-in", {
   description:
     "Needs a current authenticator code or an unused recovery code. Deletes the secret and recovery codes and signs out every other session. Wrong codes count towards the account's lock (429 two_step_locked).",
 });
+// Privacy Screen (update "privacyscreen"): the idle lock is a screen in the
+// browser; these routes only re-check it's the account's owner.
+const unlockNote =
+  " Never creates, rotates or ends a session. Five wrong attempts for one account within 15 minutes refuse unlocking for 15 minutes (429 unlock_locked with Retry-After); signing out always works. Only wrong attempts are counted, under a hashed key that expires on its own.";
+route("get", "/api/auth/unlock", "How this account unlocks the Privacy Screen", {
+  response: object({
+    methods: {
+      ...array({ enum: ["password", "email", "wallet"] }),
+      description: "The account's password when it has one, otherwise an email code and/or a wallet signature",
+    },
+    retryAfter: { type: ["integer", "null"], description: "Seconds until unlocking is allowed again after too many wrong attempts; null when it is" },
+  }),
+});
+route("post", "/api/auth/unlock/start", "Start unlocking with an email code or a wallet signature", {
+  body: object({ method: { enum: ["email", "wallet"] } }, ["method"]),
+  response: object({
+    id: string,
+    message: { ...string, description: "wallet: the one-time message to sign (it authorizes no transaction and can't be used to sign in); email: a notice" },
+    testCode: { ...string, description: "Local test mode only" },
+  }),
+  description:
+    "Only for accounts without a password (400 unlock_method otherwise). email sends a 6-digit code to the account's own address (five per address per hour, 10-minute expiry); wallet returns a message for the linked wallet. Either is bound to this session. 10 an hour." + unlockNote,
+});
+route("post", "/api/auth/unlock", "Unlock the Privacy Screen", {
+  body: object({
+    method: { enum: ["password", "email", "wallet"] },
+    password: { ...string, description: "method password" },
+    id: { ...string, description: "method email or wallet: from /api/auth/unlock/start" },
+    code: { ...string, description: "method email" },
+    signature: { ...string, description: "method wallet: the linked wallet's signature of the message" },
+  }, ["method"]),
+  response: object({ ok: bool, unlocked: integer }),
+  description:
+    "The account's password when it has one; otherwise a fresh email code or wallet signature started by this session (400 unlock_method for another method). 401 unlock_failed for a wrong password, code or signature; 400 unlock_expired for an unknown, expired, used or other session's code or message. 30 requests per 15 minutes." + unlockNote,
+});
 for (const path of ["/api/auth/logout", "/api/auth/logout-all"])
   route(
     "post",

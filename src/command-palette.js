@@ -497,6 +497,15 @@ export function paletteActions(ctx = {}) {
       keywords: ["files", "uploads", "reusable uploads", "documents"],
       detail: "Owner-only files you saved for reuse",
     });
+  // Privacy Screen: the palette is where its shortcut, Esc twice, is shown.
+  if (live && signedIn && on("privacyscreen"))
+    add("actions", {
+      id: "privacy-screen",
+      label: "Hide the screen",
+      icon: "eyeoff",
+      keywords: ["privacy screen", "hide", "blank", "cover", "boss key", "esc esc", "隐私屏", "隐藏"],
+      detail: "Shortcut: press Esc twice",
+    });
   if (on("zh"))
     add("actions", {
       id: "language",

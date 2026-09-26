@@ -490,7 +490,7 @@ export const UPDATES = [
       "Photos keep their quality and stay the right way up",
       "See what was removed, or keep the original",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "wipe",

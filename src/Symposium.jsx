@@ -61,6 +61,8 @@ export default function Symposium({
   // once a run is filed in one.
   projects = [],
   onFiled,
+  // Find in Chat: told whether answers are on screen to search.
+  onResults,
 }) {
   const welcome = useRef();
   // This run's tag -> value map. It lives only in this browser tab: runs have
@@ -114,6 +116,12 @@ export default function Symposium({
   useEffect(() => {
     if (fusionStarted) fusionCard.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [fusionStarted]);
+  // Find in Chat searches the question and the answers once a run is shown.
+  const findable = !demo && !!user && runModels.length > 0;
+  useEffect(() => {
+    onResults?.(findable);
+  }, [findable]);
+  useEffect(() => () => onResults?.(false), []);
   // Keep the picker valid as the catalog loads or callability changes,
   // without discarding a selection that is still good.
   useEffect(() => {

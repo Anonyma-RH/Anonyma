@@ -3566,7 +3566,25 @@
     "The export also includes your Pay with NYMA quotes.": "导出内容还包括你的“使用 NYMA 付款”报价。",
     "Reading the NYMA rate on Robinhood Chain…": "正在读取 Robinhood Chain 上的 NYMA 兑换率……",
     "A quote holds the rate for 10 minutes": "报价锁定兑换率 10 分钟",
-    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。"
+    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。",
+    "Find in Chat": "对话内查找",
+    "Find any word in a long chat.": "在长对话里找到任何一个词。",
+    "⌘F or Ctrl+F in the chat you have open": "在打开的对话中按 ⌘F 或 Ctrl+F",
+    "Every match highlighted; step through them one by one": "每个匹配都会高亮，可逐个跳转",
+    "Searched in your browser; nothing is sent or charged": "在你的浏览器中搜索，不发送任何内容，也不扣费",
+    "Find in this chat": "在此对话中查找",
+    "Find": "查找",
+    "Find in this chat (⌘F)": "在此对话中查找（⌘F）",
+    "Find in this chat (Ctrl F)": "在此对话中查找（Ctrl F）",
+    "Match case": "区分大小写",
+    "Whole word": "全字匹配",
+    "Previous match": "上一个匹配",
+    "Next match": "下一个匹配",
+    "Previous match (Shift+Enter)": "上一个匹配（Shift+Enter）",
+    "Next match (Enter)": "下一个匹配（Enter）",
+    "Close find": "关闭查找",
+    "Close (Esc)": "关闭（Esc）",
+    "Searched in your browser": "在你的浏览器中搜索"
   },
   "patterns": [
     {

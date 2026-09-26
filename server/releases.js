@@ -646,6 +646,19 @@ export const UPDATES = [
     // Needs WALLET_PAYMENT_ADDRESS on chain 4663 (server/routes/nyma.js).
     released: true,
   },
+  {
+    id: "findinchat",
+    title: "Find in Chat",
+    tagline: "Find any word in a long chat.",
+    points: [
+      "⌘F or Ctrl+F in the chat you have open",
+      "Every match highlighted; step through them one by one",
+      "Searched in your browser; nothing is sent or charged",
+    ],
+    // Browser only: it searches the conversation already on screen, so
+    // there's no route to gate in featuresFor and no API contract.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

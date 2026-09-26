@@ -3,6 +3,7 @@ import { chatFailureMessage } from "./chat-control.js";
 import { useReadingPosition, useRequestCharge, ChargeStatus } from "./ChatControl.jsx";
 import HistoryLibrary from "./HistoryLibrary.jsx";
 import { useBookmarks, bookmarksReleased } from "./Bookmarks.jsx";
+import { useFindInChat, findInChatReleased } from "./FindInChat.jsx";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { VoiceAssist, ReadAloud } from "./VoiceAssist.jsx";
 import {
@@ -1334,6 +1335,19 @@ export default function Workspace() {
   // Bookmarks (src/Bookmarks.jsx): a star under each saved message of the
   // open chat, and links (?c=…&m=…) that open a chat at one message. Never
   // for a chat that isn't saved on the server.
+  // Find in Chat (src/FindInChat.jsx): ⌘F / Ctrl+F or the header's Find
+  // button searches the conversation on screen, in this browser only. Any
+  // open chat (saved, Collab, off the record, Private, Device Vault, demo)
+  // and a Symposium run; nothing is fetched, sent or charged.
+  const [symposiumShown, setSymposiumShown] = useState(false);
+  const find = useFindInChat({
+    enabled: findInChatReleased(config),
+    findable:
+      modeReleased(config, mode) &&
+      ((textMode && messages.length > 0) || (mode === "symposium" && symposiumShown)),
+    config,
+    resetKey: mode,
+  });
   const bookmarksLive = !demo && !!user && bookmarksReleased(config);
   const bookmarks = useBookmarks({
     enabled: bookmarksLive && textMode && !ephemeral && !privateMode && !deviceOnly,
@@ -2192,6 +2206,7 @@ export default function Workspace() {
       shared: !!shared,
       busy,
       language,
+      findable: find.live,
     };
     return [
       ...chatItems(demo || user ? all : [], { current }),
@@ -2256,6 +2271,8 @@ export default function Workspace() {
         return setFilesRequest((n) => n + 1);
       case "language":
         return setLanguage(language === "zh" ? "en" : "zh");
+      case "find-in-chat":
+        return find.show();
       default:
         if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
     }
@@ -2467,6 +2484,7 @@ export default function Workspace() {
             <small>{demo ? "Demo workspace" : "Personal workspace"}</small>
           </span>
           <div>
+            {find.button}
             {sharesLive && textMode && messages.length > 0 && (
               <button
                 type="button"
@@ -2540,6 +2558,8 @@ export default function Workspace() {
         </div>
         {/* Low-Balance Alerts: below the account's alert level, with Top up. */}
         <LowBalanceBanner config={config} user={user} demo={demo} />
+        {/* Find in Chat: sticks to the top of the chat while it's open. */}
+        {find.bar}
         <div
           key={mode}
           className={
@@ -2644,6 +2664,7 @@ export default function Workspace() {
               setVeilWords={setVeilWords}
               projects={projectsLive ? projects.list : []}
               onFiled={projects.reload}
+              onResults={setSymposiumShown}
             />
           ) : mode === "audio" ? (
             <AudioStudio

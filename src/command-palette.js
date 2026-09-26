@@ -405,6 +405,8 @@ export function paletteActions(ctx = {}) {
     shared = false,
     busy = false,
     language = "en",
+    // Find in Chat: true while a conversation is on screen to search.
+    findable = false,
   } = ctx;
   const on = (id) => isReleased(config, id);
   const q = demo ? "?demo=1" : "";
@@ -424,6 +426,15 @@ export function paletteActions(ctx = {}) {
     detail: MODE_LABELS[text ? mode : "chat"],
     ...(text ? {} : { to: "/workspace/chat" + q }),
   });
+  // Find in Chat opens its bar over the chat on screen (src/FindInChat.jsx).
+  if (ws && findable && on("findinchat"))
+    add("actions", {
+      id: "find-in-chat",
+      label: "Find in this chat",
+      icon: "search",
+      keywords: ["find", "search this chat", "find in conversation", "find on page", "ctrl f", "cmd f"],
+      detail: "Searched in your browser",
+    });
   if (ws && ["chat", "code"].includes(mode) && modeReleased(config, mode) && on("search"))
     add("actions", {
       id: "web-search",

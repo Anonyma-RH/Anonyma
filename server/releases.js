@@ -526,7 +526,7 @@ export const UPDATES = [
       "A per-run maximum and a monthly budget, refused rather than exceeded",
       "Every answer in a Routines inbox, with its charge and signed receipt",
     ],
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

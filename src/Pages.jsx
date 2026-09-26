@@ -841,6 +841,7 @@ const featureIcons = {
   seedguard: "lock",
   cleanuploads: "eraser",
   wipe: "delete",
+  vault: "lock",
 };
 const launch = {
   id: "mvp",

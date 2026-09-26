@@ -1,0 +1,195 @@
+/* Device Vault: the sidebar section, the composer notice and the vault
+   dialogs. The composer toggle reuses .attachment-control/.web-toggle, and
+   the dialogs reuse .modal/.small-button/.inline-actions from styles.css. */
+
+/* ---- Sidebar (cobalt) ---- */
+.app-sidebar .vault-section {
+  margin-top: 6px;
+  border-top: 1px solid #ffffff1f;
+}
+.app-sidebar .vault-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.app-sidebar .vault-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #fff;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  border: 1px solid #ffffff40;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+.app-sidebar .vault-lock:hover {
+  background: #ffffff16;
+}
+.app-sidebar .vault-hint {
+  color: #c3d0ff;
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 0 13px;
+  margin: 0 0 10px;
+}
+.app-sidebar .vault-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 4px);
+  margin: 4px 2px 0;
+  padding: 11px 12px;
+  font-size: 12px;
+  color: #fff;
+  background: none;
+  border: 1px solid #ffffff40;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.app-sidebar .vault-action:hover {
+  background: #ffffff16;
+}
+.app-sidebar .vault-list {
+  margin-bottom: 8px;
+}
+.app-sidebar .vault-list .conversation-options {
+  opacity: 0.7;
+}
+.app-sidebar .vault-list .conversation-options:hover {
+  opacity: 1;
+}
+
+/* ---- Composer ---- */
+.app-shell .device-only-notice {
+  align-items: center;
+}
+.app-shell .device-only-notice span {
+  flex: 1;
+}
+.app-shell .device-only-notice .small-button {
+  flex-shrink: 0;
+}
+
+/* ---- Dialogs ---- */
+.vault-dialog {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  max-width: 560px;
+}
+.vault-dialog form {
+  display: grid;
+  min-width: 0;
+}
+.vault-dialog > p,
+.vault-dialog form > p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #142343;
+  margin: 0 0 20px;
+}
+.vault-dialog select {
+  width: 100%;
+}
+.vault-limits {
+  list-style: none;
+  margin: 6px 0 20px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 9px;
+  background: #fff8e6;
+  border: 1px solid #f3dfa6;
+  border-radius: 2px;
+}
+.vault-limits li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #3d2f07;
+}
+.vault-limits svg {
+  color: #a86b00;
+  margin-top: 2px;
+}
+.modal .vault-check {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #142343;
+}
+.modal .vault-check input {
+  width: auto;
+  margin-top: 3px;
+}
+.vault-field-error {
+  color: #9c3d2a;
+  font-size: 12px;
+  margin: -14px 0 16px;
+}
+.vault-forgot {
+  font-size: 12px !important;
+  color: #68748a !important;
+  margin: 0 !important;
+}
+.vault-dialog .link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #9c3d2a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font: inherit;
+  cursor: pointer;
+}
+.vault-chat-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.vault-block {
+  border-top: 1px solid #e3e8f0;
+  padding: 16px 0 6px;
+}
+.vault-block h3 {
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #68748a;
+  margin: 0 0 6px;
+}
+.vault-block p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #142343;
+  margin: 0 0 12px;
+}
+.vault-import {
+  margin-bottom: 10px;
+}
+.vault-import label {
+  margin-bottom: 14px;
+}
+.vault-file-name {
+  font-size: 12px;
+  color: #68748a;
+  overflow-wrap: anywhere;
+}
+.vault-dialog .inline-actions {
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.modal:has(.vault-dialog) {
+  max-width: 640px;
+}

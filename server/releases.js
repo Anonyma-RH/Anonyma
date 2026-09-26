@@ -503,6 +503,20 @@ export const UPDATES = [
     ],
     released: false,
   },
+  {
+    id: "vault",
+    title: "Device Vault",
+    tagline: "Keep your chats, but only on your device.",
+    points: [
+      "Save a chat on this device only, never on our servers",
+      "Encrypted in your browser with a passphrase only you know",
+      "Export the encrypted vault to move it to another device",
+    ],
+    // Browser only: a device-only chat is sent as an off-the-record request,
+    // so the server gates it as "ephemeral" and never learns a vault exists.
+    // The app needs both released (vaultReleased in src/DeviceVault.jsx).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

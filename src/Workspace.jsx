@@ -45,6 +45,15 @@ import {
   RetentionIndicator,
 } from "./Ephemeral.jsx";
 import { retentionChoiceFor } from "./ephemeral.js";
+import {
+  DeviceOnlyToggle,
+  DeviceOnlyNotice,
+  VaultSection,
+  VaultDialog,
+  useDeviceVault,
+  vaultReleased,
+} from "./DeviceVault.jsx";
+import { vaultChat } from "./device-vault.js";
 import { rewindPlan, resendContent, promptParts, branchesAt, singleFlight } from "./branches.js";
 import "./branches.css";
 import {
@@ -101,6 +110,8 @@ import {
   saveVeilWords,
   loadVeilOn,
   saveVeilOn,
+  createVeilState,
+  forgetVeilState,
 } from "./veil.js";
 import { buildChatRequest, cloneVeilState, quoteBody, REPLY_BUDGET } from "./estimate.js";
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
@@ -300,6 +311,11 @@ export default function Workspace() {
     [veilWords, setVeilWords] = useState(() => loadVeilWords()),
     [veilNote, setVeilNote] = useState(null),
     [ephemeral, setEphemeral] = useState(false),
+    // Device Vault: "Save on this device only". Sent off the record (so
+    // `ephemeral` is on too) and kept encrypted in this browser instead.
+    [deviceOnly, setDeviceOnly] = useState(false),
+    [vaultChatId, setVaultChatId] = useState(null),
+    [vaultDialog, setVaultDialog] = useState(null),
     // Edit, Regenerate & Branch Chats: where this conversation came from, the
     // branches cut from it, and the user message being edited in place.
     [lineage, setLineage] = useState({ parent: null, branches: [] }),
@@ -343,8 +359,17 @@ export default function Workspace() {
     // id until the server assigns a real conversationId (see send/openChat),
     // and never sent anywhere: see src/veil.js's local-only storage helpers.
     veilKeyRef = useRef("tmp-" + uid()),
-    veilStateRef = useRef(loadVeilState(veilKeyRef.current));
+    veilStateRef = useRef(loadVeilState(veilKeyRef.current)),
+    // The open device-only chat's vault id and creation time, and the last
+    // messages written to the vault (so reopening a chat doesn't rewrite it).
+    vaultChatRef = useRef(null),
+    vaultSavedRef = useRef("");
   const teamPays = useTeamPays(config, shared, demo, current);
+  // Device Vault (src/DeviceVault.jsx): for signed-in accounts once it and
+  // Ephemeral Chats are released; never in the demo. Locking it (Lock, the
+  // idle timer, closing the tab) closes any vault chat on screen.
+  const vaultLive = !demo && !!user && vaultReleased(config);
+  const vault = useDeviceVault({ enabled: vaultLive, account: user?.id, onLock: vaultLocked });
   const validMode = [
     "home",
     "chat",
@@ -420,6 +445,7 @@ export default function Workspace() {
         saved: !!current,
         ephemeral,
         privateMode,
+        deviceOnly,
         collab: !!shared,
         mode,
       }),
@@ -564,6 +590,9 @@ export default function Workspace() {
     veilKeyRef.current = "tmp-" + uid();
     veilStateRef.current = loadVeilState(veilKeyRef.current);
     setVeilNote(null);
+    vaultChatRef.current = null;
+    vaultSavedRef.current = "";
+    setVaultChatId(null);
   }, [mode, demo]);
   // Share-to-ANONYMA: prefill the composer from a share_target request
   // (public/manifest.webmanifest) and drop the params from the URL. Runs
@@ -676,6 +705,45 @@ export default function Workspace() {
       if (saved) openChat(saved);
     } else if (user) openChat({ id: linked, mode });
   }, [linked, user?.id, mode, demo]);
+  // A vault chat opened from another section arrives here after the section
+  // reset above. Its id travels in navigation state, never in the URL.
+  const vaultRequest = location.state?.vaultChat;
+  useEffect(() => {
+    if (!vaultRequest) return;
+    const chat = vault.unlocked && textMode && vault.chats.find((c) => c.id === vaultRequest);
+    if (chat && chat.mode === mode) openVaultChat(chat);
+    navigate(location.pathname + location.search, { replace: true, state: null });
+  }, [vaultRequest, mode, vault.unlocked]);
+  // Device only: once a reply settles (or fails), the chat as shown is sealed
+  // into the vault with its Veil map. Veil's plain-text copy of that map is
+  // then dropped from this browser's storage.
+  useEffect(() => {
+    if (!deviceOnly || busy || !vault.unlocked || !textMode) return;
+    const kept = messages.filter((m) => !m.sample);
+    if (!kept.length) return;
+    const snapshot = JSON.stringify(kept);
+    if (snapshot === vaultSavedRef.current) return;
+    vaultSavedRef.current = snapshot;
+    const ref = (vaultChatRef.current ||= { id: uid(), created: Date.now() });
+    setVaultChatId(ref.id);
+    const veilKey = veilKeyRef.current;
+    vault
+      .save(
+        vaultChat({
+          id: ref.id,
+          created: ref.created,
+          mode,
+          privateMode,
+          messages: kept,
+          veil: veilStateRef.current,
+        }),
+      )
+      .then(() => forgetVeilState(veilKey))
+      .catch((e) => {
+        vaultSavedRef.current = "";
+        setError(e?.message || "This chat couldn't be saved to Device Vault.");
+      });
+  }, [deviceOnly, busy, vault.unlocked, messages]);
   // Shared conversations refresh while open so members see each other.
   useEffect(() => {
     if (!shared || !current || busy) return;
@@ -734,12 +802,71 @@ export default function Workspace() {
     veilKeyRef.current = "tmp-" + uid();
     veilStateRef.current = loadVeilState(veilKeyRef.current);
     setVeilNote(null);
+    vaultChatRef.current = null;
+    vaultSavedRef.current = "";
+    setVaultChatId(null);
   }
   // Off the record only ever applies to a fresh, unsaved thread: switching
   // it either way starts a new chat rather than mixing saved and unsaved turns.
+  // From Device only it switches to plain off the record.
   function toggleEphemeral() {
     newChat();
+    if (deviceOnly) {
+      setDeviceOnly(false);
+      setEphemeral(true);
+      return;
+    }
     setEphemeral((v) => !v);
+  }
+  // Device only: a fresh thread, sent off the record and kept in the vault.
+  // Turning it on first sets up or unlocks the vault; turning it off goes
+  // back to a saved chat (or stays off the record in Private Mode).
+  function startDeviceOnly() {
+    newChat();
+    setDeviceOnly(true);
+    setEphemeral(true);
+  }
+  function stopDeviceOnly() {
+    newChat();
+    setDeviceOnly(false);
+    setEphemeral(privateMode);
+  }
+  function toggleDeviceOnly() {
+    if (deviceOnly) return stopDeviceOnly();
+    if (!vault.unlocked)
+      return setVaultDialog({
+        kind: vault.status === "none" ? "setup" : "unlock",
+        then: "deviceOnly",
+      });
+    startDeviceOnly();
+  }
+  // Opens a vault chat where it was written (chat, code or Uncensored), with
+  // its own Veil map and Private Mode setting.
+  function openVaultChat(chat) {
+    if (mode !== chat.mode) {
+      navigate("/workspace/" + chat.mode, { state: { vaultChat: chat.id } });
+      return;
+    }
+    newChat();
+    veilKeyRef.current = "vault-" + chat.id;
+    veilStateRef.current = chat.veil ? cloneVeilState(chat.veil) : createVeilState();
+    vaultChatRef.current = { id: chat.id, created: chat.created };
+    vaultSavedRef.current = JSON.stringify(chat.messages);
+    setVaultChatId(chat.id);
+    setDeviceOnly(true);
+    setEphemeral(true);
+    const wasPrivate = !!chat.private && privateModeReleased(config);
+    setPrivateMode(wasPrivate);
+    if (wasPrivate) setVeilOn(true);
+    setMessages(chat.messages);
+    setMenu(false);
+  }
+  function vaultLocked(reason) {
+    if (!deviceOnly) return;
+    // A deleted vault can't keep this chat: back to a saved chat.
+    if (reason === "deleted") return stopDeviceOnly();
+    newChat();
+    if (reason === "idle") setInfo("Device Vault locked after being idle. Unlock it to continue.");
   }
   // Private mode forces off the record on (private chats are never saved)
   // and Veil on, and narrows the model choice to private models — like Off
@@ -748,7 +875,8 @@ export default function Workspace() {
     newChat();
     setPrivateMode((v) => {
       const next = !v;
-      setEphemeral(next);
+      // Device only stays off the record when Private Mode goes off.
+      setEphemeral(next || deviceOnly);
       if (next) {
         setVeilOn(true);
         setModel(privateModelsCallable[0]?.id || "");
@@ -776,6 +904,10 @@ export default function Workspace() {
     veilStateRef.current = loadVeilState(c.id);
     setVeilNote(null);
     setEphemeral(false);
+    setDeviceOnly(false);
+    vaultChatRef.current = null;
+    vaultSavedRef.current = "";
+    setVaultChatId(null);
     setChecking(null);
     setCurrent(c.id);
     setMessages(c.messages || []);
@@ -892,7 +1024,7 @@ export default function Workspace() {
   const doubleCheckVeil = (veilOn || privateMode) && isReleased(config, "veil");
   const veilForCheck = (text) => {
     const r = veil(text, veilStateRef.current, veilWords);
-    if (r.count) saveVeilState(veilKeyRef.current, veilStateRef.current);
+    if (r.count && !deviceOnly) saveVeilState(veilKeyRef.current, veilStateRef.current);
     return r;
   };
   // Typing "/" at the start of an empty prompt opens a scroll picker, filtered
@@ -1062,6 +1194,10 @@ export default function Workspace() {
       }
       if (privateMode && !effectiveModel?.private) {
         setError("Choose a private model, or turn off Private mode.");
+        return;
+      }
+      if (deviceOnly && textMode && !vault.unlocked) {
+        setError("Unlock Device Vault to keep chatting on this device only.");
         return;
       }
     }
@@ -1250,7 +1386,8 @@ export default function Workspace() {
       // PrivateReplyNote); stays 0 when Veil is off or finds nothing.
       requestMasked = built.masked;
     if (veiling) {
-      saveVeilState(veilKeyRef.current, veilStateRef.current);
+      // A device-only chat keeps its map encrypted in the vault instead.
+      if (!deviceOnly) saveVeilState(veilKeyRef.current, veilStateRef.current);
       if (built.masked)
         setVeilNote({
           count: built.masked,
@@ -1585,7 +1722,9 @@ export default function Workspace() {
       webSearch,
       veilOn,
       privateMode,
-      ephemeral,
+      // Device only reads as not off the record: the palette's toggle
+      // switches it to plain off the record, as the composer's does.
+      ephemeral: ephemeral && !deviceOnly,
       shared: !!shared,
       busy,
       language,
@@ -1729,6 +1868,17 @@ export default function Workspace() {
             </div>
           ))}
         </div>
+        {vaultLive && (
+          <VaultSection
+            vault={vault}
+            currentId={deviceOnly ? vaultChatId : null}
+            onOpen={(c) => {
+              setMenu(false);
+              openVaultChat(c);
+            }}
+            onDialog={setVaultDialog}
+          />
+        )}
       </AppSidebar>
       {menu && (
         <button
@@ -2128,7 +2278,9 @@ export default function Workspace() {
                                 }
                               />
                               <p className="fine-print">
-                                {ephemeral || demo || !current
+                                {deviceOnly
+                                  ? "Sends from this point again. Device Vault keeps the new version."
+                                  : ephemeral || demo || !current
                                   ? "Sends from this point again. Nothing here is saved."
                                   : "Sends from this point in a new branch. The original conversation stays as it is."}
                               </p>
@@ -2306,7 +2458,16 @@ export default function Workspace() {
                 {isReleased(config, "ephemeral") &&
                   ephemeral &&
                   !privateMode &&
+                  !deviceOnly &&
                   textMode && <EphemeralNotice />}
+                {vaultLive && deviceOnly && textMode && (
+                  <DeviceOnlyNotice
+                    locked={!vault.unlocked}
+                    onUnlock={() =>
+                      setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })
+                    }
+                  />
+                )}
                 {!demo &&
                   privateModeReleased(config) &&
                   privateMode &&
@@ -2645,9 +2806,16 @@ export default function Workspace() {
                         isReleased(config, "ephemeral") &&
                         textMode && (
                         <EphemeralToggle
-                          active={ephemeral}
+                          active={ephemeral && !deviceOnly}
                           onToggle={toggleEphemeral}
                           disabled={privateMode}
+                        />
+                      )}
+                      {vaultLive && textMode && (
+                        <DeviceOnlyToggle
+                          active={deviceOnly}
+                          onToggle={toggleDeviceOnly}
+                          disabled={busy}
                         />
                       )}
                       {!demo &&
@@ -3135,6 +3303,26 @@ export default function Workspace() {
       )}
       {readAloud != null && (
         <ReadAloud text={readAloud} onClose={() => setReadAloud(null)} />
+      )}
+      {vaultDialog && vaultLive && (
+        <VaultDialog
+          key={vaultDialog.kind + ":" + (vaultDialog.chat?.id || "")}
+          vault={vault}
+          dialog={vaultDialog}
+          onClose={(why) => {
+            const d = vaultDialog;
+            setVaultDialog(null);
+            if (why !== "deleted") return;
+            if (d.kind === "delete") {
+              if (deviceOnly && d.chat.id === vaultChatRef.current?.id) newChat();
+            } else if (deviceOnly) stopDeviceOnly();
+          }}
+          onUnlocked={() => {
+            const d = vaultDialog;
+            setVaultDialog(null);
+            if (d.then === "deviceOnly") startDeviceOnly();
+          }}
+        />
       )}
       {share && sharesLive && (
         <ShareDialog

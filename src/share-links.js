@@ -32,7 +32,8 @@ export const VEIL_TAG = /\[[A-Z]+_\d+\]/g;
 
 // Why a chat can't be shared, or null when it can. The server refuses the
 // same cases (routes/shares.js); this only lets the UI say why up front.
-export function shareBlocked({ saved, ephemeral, privateMode, collab, mode }) {
+export function shareBlocked({ saved, ephemeral, privateMode, deviceOnly, collab, mode }) {
+  if (deviceOnly) return "device";
   if (privateMode) return "private";
   if (ephemeral) return "off_record";
   if (collab) return "collab";
@@ -48,6 +49,8 @@ export const SHARE_BLOCK_MESSAGES = {
     "Collab conversations include other members' messages, so they can't be shared by link yet.",
   mode: "Only chat, code and uncensored conversations can be shared.",
   unsaved: "Send a message first: only saved conversations can be shared.",
+  device:
+    "Device-only chats are kept only in this browser, so they can't be shared by link.",
 };
 
 // When a new link expires: the chosen lifetime, but never later than the

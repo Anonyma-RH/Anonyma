@@ -34,6 +34,7 @@ import { scrollsRoutes } from "./routes/scrolls.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
+import { sealedRoutes } from "./routes/sealed.js";
 import { accountRoutes } from "./routes/account.js";
 import { wipeRoutes } from "./routes/wipe.js";
 import { allowanceRoutes } from "./routes/allowances.js";
@@ -94,6 +95,8 @@ export function createApp(overrides = {}) {
   // Registered before chatRoutes: its /v1/*rest fallback must come last.
   v1MediaRoutes(ctx);
   Object.assign(ctx, chatRoutes(ctx));
+  // Sealed Mode: the ciphertext relay, and its reconciler for the worker.
+  Object.assign(ctx, sealedRoutes(ctx));
   receiptRoutes(ctx);
   mcpRoutes(ctx);
   mediaRoutes(ctx);
@@ -129,6 +132,8 @@ export function createApp(overrides = {}) {
     tick: worker.tick,
     // The Routines runner (server/routines.js), for tests and tooling.
     routines: ctx.routines,
+    // Sealed Mode's reconciler (server/sealed.js), for tests and tooling.
+    sealed: ctx.sealed,
     stopWork: async () => {
       for (const c of ctx.inflight.controllers)
         c.abort(new Error("Service restarting"));

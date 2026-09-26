@@ -1,0 +1,142 @@
+/* Sealed Mode: the composer switch reuses .attachment-control/.web-toggle
+   (like Private and Off the record); this covers the verification panel above
+   the composer and the note under a sealed reply. Flat cobalt and white, with
+   the workspace's 2px corners and hairlines, like the Privacy Trail panel. */
+.app-shell .sealed-toggle.on {
+  color: #fff;
+  background: #0135df;
+  border-color: #0135df;
+}
+.app-shell .sealed-panel {
+  margin: 0 0 10px;
+  background: #fff;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-top: 2px solid #0135df;
+  border-radius: 2px;
+  padding: 10px 14px 8px;
+  color: var(--work-ink, #142343);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.app-shell .sealed-panel.failed {
+  border-top-color: #c2410c;
+}
+.app-shell .sealed-panel header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.app-shell .sealed-panel header svg {
+  color: #0135df;
+}
+.app-shell .sealed-panel header b {
+  font-size: 13px;
+}
+.app-shell .sealed-status {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0135df;
+  background: #edf2ff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+  padding: 2px 7px;
+}
+.app-shell .sealed-panel.failed .sealed-status {
+  color: #9c3d2a;
+  background: #fff3ee;
+  border-color: #f3d4c6;
+}
+.app-shell .sealed-copy {
+  margin: 0 0 6px;
+  padding-left: 16px;
+  color: #3e5070;
+}
+.app-shell .sealed-copy li + li {
+  margin-top: 2px;
+}
+.app-shell .sealed-error {
+  margin: 6px 0;
+  color: #9c3d2a;
+}
+.app-shell .sealed-link {
+  font: inherit;
+  color: #0135df;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.app-shell .sealed-facts {
+  margin: 6px 0 0;
+}
+.app-shell .sealed-facts > div {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+}
+.app-shell .sealed-facts dt {
+  color: var(--work-muted, #68748a);
+  font-size: 11px;
+}
+.app-shell .sealed-facts dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.app-shell .sealed-facts code {
+  font-size: 11px;
+  color: var(--work-ink, #142343);
+}
+.app-shell .sealed-facts a {
+  color: #0135df;
+}
+.app-shell .sealed-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .sealed-hold {
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+  color: #3e5070;
+}
+.app-shell .sealed-off {
+  margin-top: 6px;
+  color: #3e5070;
+}
+.app-shell .sealed-off summary {
+  cursor: pointer;
+  color: #0135df;
+  font-size: 11px;
+}
+.app-shell .sealed-off ul {
+  margin: 6px 0 0;
+  padding-left: 16px;
+}
+.app-shell .sealed-model {
+  max-width: 320px;
+}
+.app-shell .sealed-reply-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .sealed-reply-note svg {
+  color: #0135df;
+}
+@media (max-width: 640px) {
+  .app-shell .sealed-facts > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}

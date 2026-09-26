@@ -11,6 +11,7 @@ import {
 } from "../wallet-payments.js";
 import { modelReleased, releaseInfo, isReleased } from "../releases.js";
 import { isPrivateModel } from "../private-mode.js";
+import { sealedLive } from "../sealed.js";
 import { withMemory } from "../../src/memory.js";
 import { trainingFields, liveIds } from "../training.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
@@ -56,6 +57,8 @@ export function catalogRoutes(ctx) {
         walletConnect: !!cfg.walletProject,
         token: !!cfg.rpc && !!cfg.token,
         walletPayments: walletPaymentsEnabled(cfg),
+        // Sealed Mode: released, with its billing mode configured.
+        sealed: sealedLive(cfg),
       },
       walletPayments: walletPaymentInfo(cfg),
       walletProject: cfg.walletProject,
@@ -103,6 +106,8 @@ export function catalogRoutes(ctx) {
         ...(m.type === "chat" && isReleased(cfg, "longanswers") ? { chatLimits: chatLimits(m) } : {}),
         ...(privateFlagged && isPrivateModel(m, cfg) ? { private: true } : {}),
         ...(trainingFlagged ? trainingFields(m, offered) : {}),
+        // Sealed Mode's open-weight enclave models (routes/sealed.js).
+        ...(ctx.sealedFields?.(m) || {}),
       })),
     });
   });

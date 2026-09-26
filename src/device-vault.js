@@ -198,12 +198,14 @@ export function vaultTitle(messages = [], veilMap = {}) {
 }
 // What a saved vault chat holds: the conversation as shown, the Veil map that
 // unveils it, and whether it ran in Private Mode.
-export function vaultChat({ id, mode, privateMode, messages, veil, created, now = Date.now() }) {
+export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, now = Date.now() }) {
   return {
     id,
     title: vaultTitle(messages, veil?.map),
     mode: ["chat", "code", "uncensored"].includes(mode) ? mode : "chat",
     private: !!privateMode,
+    // Sealed Mode: it reopens sealed and only ever goes on sealed.
+    ...(sealed ? { sealed: true } : {}),
     messages: messages.filter((m) => !m.sample),
     veil: veil
       ? { map: { ...veil.map }, counters: { ...veil.counters }, valueToTag: { ...veil.valueToTag } }

@@ -25,6 +25,7 @@
     "@walletconnect/ethereum-provider": "2.25.0",
     "animejs": "4.3.6",
     "cookie-parser": "1.4.7",
+    "ehbp": "0.3.2",
     "ethers": "6.17.0",
     "express": "5.2.1",
     "jszip": "3.10.2",
@@ -36,7 +37,8 @@
     "react-markdown": "10.1.0",
     "react-router-dom": "7.18.4",
     "remark-gfm": "4.0.1",
-    "three": "0.184.0"
+    "three": "0.184.0",
+    "tinfoil": "1.2.1"
   },
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "1.1.0",
@@ -48,5 +50,10 @@
   },
   "engines": {
     "node": ">=22.13.0"
+  },
+  "overrides": {
+    "@freedomofpress/crypto-browser": {
+      "@noble/curves": "1.9.7"
+    }
   }
 }

@@ -177,6 +177,7 @@ const PREFIXES = [
   "Interrupted: ",
   "Stopped before output: ",
   "Recovered image batch: ",
+  "Reconciled: ",
   "Speech: ",
   "Transcription: ",
 ];

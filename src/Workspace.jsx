@@ -55,6 +55,14 @@ import {
   vaultReleased,
 } from "./DeviceVault.jsx";
 import { vaultChat } from "./device-vault.js";
+import {
+  SealedToggle,
+  SealedPanel,
+  SealedReplyNote,
+  sealedLiveFor,
+  useSealedEnclave,
+} from "./SealedMode.jsx";
+import { sealedHoldUsd, sealedBody, ciphertextLength, utf8Length } from "./sealed.js";
 import { rewindPlan, resendContent, promptParts, branchesAt, singleFlight } from "./branches.js";
 import "./branches.css";
 import {
@@ -325,6 +333,10 @@ export default function Workspace() {
     // True while a branch is being made and its resend runs (see branchFlight).
     [branching, setBranching] = useState(false),
     [privateMode, setPrivateMode] = useState(false),
+    // Sealed Mode: encrypted in this browser to a verified enclave, relayed
+    // as ciphertext, never saved on the server (see src/SealedMode.jsx).
+    [sealed, setSealed] = useState(false),
+    [sealedModelId, setSealedModelId] = useState(""),
     [voiceOpen, setVoiceOpen] = useState(false),
     [readAloud, setReadAloud] = useState(null),
     // Double-check This: the index of the answer whose second-opinion panel is open.
@@ -395,6 +407,23 @@ export default function Workspace() {
   const reading = useReadingPosition({ enabled: chatControlLive, end: streamEnd, composer: composerZone, messages, busy });
   const charge = useRequestCharge(chatControlLive);
   const scrollsLive = !demo && isReleased(config, "scrolls");
+  // Sealed Mode (src/SealedMode.jsx): chat and code, signed in, once it's
+  // released with its billing configured. It offers only the open-weight
+  // enclave models the server marks sealed, and verifies the enclave in this
+  // browser before anything is sent.
+  const sealedAvailable =
+    !demo && !!user && sealedLiveFor(config) && ["chat", "code"].includes(mode);
+  const sealedOn = sealedAvailable && sealed;
+  const sealedModels = useMemo(
+    () => models.filter((m) => m.type === "chat" && m.sealed),
+    [models],
+  );
+  const sealedTarget =
+    sealedModels.find((m) => m.id === sealedModelId) || sealedModels[0] || null;
+  const enclave = useSealedEnclave(sealedOn);
+  // A thread written in Sealed Mode (a Device Vault chat) only ever goes on
+  // sealed, and nothing in it is sent anywhere unsealed.
+  const sealedThread = messages.some((x) => x.sealed);
   const uncensoredIds = config?.releases?.uncensoredModels || [];
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
   // Private mode narrows the text modes further, to private, callable models
@@ -456,7 +485,9 @@ export default function Workspace() {
   }
   const memoryExcluded = !memoryLive
     ? ""
-    : privateMode
+    : sealedOn || sealedThread
+      ? "Sealed Mode: memory isn't used or saved in this chat."
+      : privateMode
       ? "Private Mode: memory isn't used or saved in this chat."
       : ephemeral
         ? "Off the record: memory isn't used or saved in this chat."
@@ -483,6 +514,7 @@ export default function Workspace() {
     !shared &&
     !ephemeral &&
     !privateMode &&
+    !sealedOn &&
     !memoryExcluded &&
     !busy ? (
       <button
@@ -737,6 +769,7 @@ export default function Workspace() {
           created: ref.created,
           mode,
           privateMode,
+          sealed: sealedOn || sealedThread,
           messages: kept,
           veil: veilStateRef.current,
         }),
@@ -832,7 +865,7 @@ export default function Workspace() {
   function stopDeviceOnly() {
     newChat();
     setDeviceOnly(false);
-    setEphemeral(privateMode);
+    setEphemeral(privateMode || sealedOn);
   }
   function toggleDeviceOnly() {
     if (deviceOnly) return stopDeviceOnly();
@@ -861,6 +894,8 @@ export default function Workspace() {
     const wasPrivate = !!chat.private && privateModeReleased(config);
     setPrivateMode(wasPrivate);
     if (wasPrivate) setVeilOn(true);
+    // A sealed chat reopens sealed (and can only go on sealed; see send).
+    setSealed(!!chat.sealed);
     setMessages(chat.messages);
     setMenu(false);
   }
@@ -871,10 +906,28 @@ export default function Workspace() {
     newChat();
     if (reason === "idle") setInfo("Device Vault locked after being idle. Unlock it to continue.");
   }
+  // Sealed Mode starts a fresh thread that's never saved on the server: kept
+  // in Device Vault while it's unlocked, otherwise nowhere. It replaces
+  // Private mode and turns off what would send anything unsealed.
+  function toggleSealed() {
+    newChat();
+    const next = !sealed;
+    setSealed(next);
+    if (next) {
+      setPrivateMode(false);
+      setWebSearch(false);
+      setVoiceOpen(false);
+      setAttachments([]);
+      setDeviceOnly(vaultLive && vault.unlocked);
+      setEphemeral(true);
+    } else setEphemeral(deviceOnly);
+  }
   // Private mode forces off the record on (private chats are never saved)
   // and Veil on, and narrows the model choice to private models — like Off
   // the record, switching it starts a fresh thread.
   function togglePrivateMode() {
+    // Sealed Mode replaces Private mode while it's on.
+    if (sealedOn) return;
     newChat();
     setPrivateMode((v) => {
       const next = !v;
@@ -908,6 +961,8 @@ export default function Workspace() {
     setVeilNote(null);
     setEphemeral(false);
     setDeviceOnly(false);
+    // A saved conversation is never sealed.
+    setSealed(false);
     vaultChatRef.current = null;
     vaultSavedRef.current = "";
     setVaultChatId(null);
@@ -984,7 +1039,7 @@ export default function Workspace() {
     setAttachments((prev) => [...prev, ...prepared.filter((p) => !p.error)]);
   }
   // "@model-id your message" sends that one message to another chat model.
-  const mentionQuery = textMode
+  const mentionQuery = textMode && !sealedOn
     ? prompt.match(/^@([^\s]*)$/)?.[1]
     : undefined;
   const mentionMatches =
@@ -995,7 +1050,7 @@ export default function Workspace() {
             (m.id + " " + m.name).toLowerCase().includes(mentionQuery.toLowerCase()),
           )
           .slice(0, 6);
-  const mention = textMode
+  const mention = textMode && !sealedOn
     ? prompt.trim().match(/^@(\S+)\s+([\s\S]+)$/)
     : null;
   const mentioned = mention
@@ -1007,6 +1062,28 @@ export default function Workspace() {
   // What a chat Send posts, shared with the credit estimate beside it.
   const sendText = mentioned ? mention[2].trim() : prompt.trim();
   const sendModel = target?.id || model;
+  // Sealed Mode: the most this message can hold, worked out here from the
+  // sealed body's size exactly as the server bounds it. Never a server quote,
+  // which would carry the prompt unsealed.
+  const sealedHoldCredits = useMemo(() => {
+    if (!sealedOn || !sealedTarget) return null;
+    const { request } = buildChatRequest({
+      messages,
+      text: sendText,
+      documents,
+      instructions: instructionsActive ? instructions.body.trim() : "",
+      preserveHistory: longAnswersLive,
+    });
+    const cap = sealedTarget.sealedOutputCap || 8192;
+    const body = sealedBody({
+      model: sealedTarget.id,
+      messages: request,
+      maxTokens: cap,
+      cacheSecret: "0".repeat(64),
+    });
+    const bytes = ciphertextLength(utf8Length(JSON.stringify(body)));
+    return sealedHoldUsd(sealedTarget, bytes, cap) * 1000 * (1 + (Number(config?.markup) || 0) / 100);
+  }, [sealedOn, sealedTarget, messages, sendText, documents, instructionsActive, instructions.body, longAnswersLive, config?.markup]);
   const branchesLive = isReleased(config, "branches");
   // Live Preview (src/LivePreview.jsx): Code & Build's Preview tab and a
   // Preview button on HTML blocks in replies. Browser-only and sandboxed.
@@ -1016,7 +1093,8 @@ export default function Workspace() {
   if (!branchFlight.current) branchFlight.current = singleFlight();
   // Uses Symposium's orchestration, so both updates must be live; never in the demo.
   const doubleCheckLive =
-    !demo && !!user && isReleased(config, "doublecheck") && isReleased(config, "symposium");
+    !demo && !!user && isReleased(config, "doublecheck") && isReleased(config, "symposium") &&
+    !sealedOn && !sealedThread;
   // Privacy Trail: the chip under a reply, from the server's anonyma.privacy
   // (never in the demo, which sends nothing anywhere).
   const trailLive = !demo && privacyTrailReleased(config);
@@ -1135,7 +1213,9 @@ export default function Workspace() {
     !incompatibleMention &&
     !!target?.callable &&
     !!config?.services?.generation &&
-    !(privateMode && !target?.private);
+    !(privateMode && !target?.private) &&
+    // Sealed Mode never posts a prompt for an estimate (it would go unsealed).
+    !sealedOn;
   const estimateBody = useMemo(
     () => (autoEstimate ? estimateRequest() : null),
     // Everything estimateRequest reads that can change between renders.
@@ -1166,6 +1246,12 @@ export default function Workspace() {
       (seedLive && !!redo && scanSecrets(redo.content)?.kind === "seed");
     if (!redo && attachments.length !== imageItems.length) {
       setError("Metadata couldn't be removed from an image. Tick Keep original to send it as it is, or remove it.");
+      return;
+    }
+    // Sealed Mode has its own send; a sealed thread never goes on unsealed.
+    if (sealedOn && textMode) return sendSealed(redo);
+    if (sealedThread && !demo) {
+      setError("This chat was sealed. Turn on Sealed Mode to continue it, or start a new chat.");
       return;
     }
     const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
@@ -1554,6 +1640,119 @@ export default function Workspace() {
           .then((r) => setAll(recentConversations(r.data)))
           .catch(() => {});
       }
+    }
+  }
+  // Sealed Mode's send. The request is built as any chat's is (documents read
+  // in this browser, standing instructions, Veil), then sealed here to the
+  // verified enclave and relayed as ciphertext. The enclave is verified again
+  // first if its last check is too old; if that fails nothing is sent. The
+  // server keeps no copy: Device Vault keeps the chat while it's unlocked.
+  async function sendSealed(redo) {
+    const model =
+      (redo?.model && sealedModels.find((m) => m.id === redo.model)) || sealedTarget;
+    if (!model) {
+      setError("No sealed models are available right now.");
+      return;
+    }
+    if (!redo && attachments.length) {
+      setError("Sealed models can't read images. Remove them to send.");
+      return;
+    }
+    if (deviceOnly && !vault.unlocked) {
+      setError("Unlock Device Vault to keep chatting on this device only.");
+      return;
+    }
+    setError("");
+    setInfo("");
+    setReceipt(null);
+    setVeilNote(null);
+    setBusy(true);
+    controller.current = new AbortController();
+    const text = redo ? redo.content : sendText;
+    const veiling = veilOn && isReleased(config, "veil");
+    const built = buildChatRequest({
+      messages: redo ? redo.base : messages,
+      text,
+      documents: redo ? [] : documents,
+      instructions: instructionsActive ? instructions.body.trim() : "",
+      preserveHistory: longAnswersLive,
+      veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
+    });
+    const next = built.next;
+    if (veiling) {
+      if (!deviceOnly) saveVeilState(veilKeyRef.current, veilStateRef.current);
+      if (built.masked)
+        setVeilNote({
+          count: built.masked,
+          entries: built.tags.map((tag) => ({ tag, value: veilStateRef.current.map[tag] })),
+        });
+    }
+    const before = { messages, prompt, documents };
+    if (!redo) {
+      setPrompt("");
+      setDocuments([]);
+    }
+    let output = "",
+      reasoning = "",
+      finishReason = null;
+    const reply = (sealedInfo, extra = {}) => ({
+      role: "assistant",
+      content: output,
+      reasoning,
+      model: model.id,
+      finishReason,
+      sealed: sealedInfo,
+      ...extra,
+    });
+    setMessages([...next, reply({ pending: true })]);
+    try {
+      const { requestId } = await enclave.chat({
+        model: model.id,
+        messages: built.request,
+        maxTokens: model.sealedOutputCap || 8192,
+        signal: controller.current.signal,
+        onEvent: (event) => {
+          if (event.error)
+            throw new ApiError(event.error.message || "The stream ended with an error.", 200, event.error.code);
+          output += event.choices?.[0]?.delta?.content || "";
+          reasoning +=
+            event.choices?.[0]?.delta?.reasoning_content ||
+            event.choices?.[0]?.delta?.reasoning ||
+            "";
+          finishReason = event.choices?.[0]?.finish_reason || finishReason;
+          setMessages([...next, reply({ pending: true })]);
+        },
+      });
+      setMessages([...next, reply({ pending: true, requestId })]);
+      const billing = await enclave.billing(requestId);
+      setMessages([...next, reply({ billing, requestId })]);
+    } catch (err) {
+      // Refused before any reply (verification failed, out of credits, a
+      // provider refusal): nothing started, so the composer comes back.
+      if (!output && !reasoning && (err.status >= 400 || /^attestation_/.test(err.code || ""))) {
+        setMessages(before.messages);
+        if (!redo) {
+          setPrompt(before.prompt);
+          setDocuments(before.documents);
+        }
+      } else {
+        const billing = err.requestId ? await enclave.billing(err.requestId) : null;
+        setMessages([
+          ...next,
+          reply(
+            { billing, requestId: err.requestId || null },
+            { finishReason: finishReason || "interrupted", interrupted: true },
+          ),
+        ]);
+      }
+      setError(
+        err.name === "AbortError"
+          ? "Stopped. A sealed request the provider accepted is charged for what it used."
+          : err.message,
+      );
+    } finally {
+      setBusy(false);
+      refresh();
     }
   }
   // Edit a user turn or regenerate an answer. A saved conversation is first
@@ -2231,6 +2430,9 @@ export default function Workspace() {
                           {m.role === "assistant" && m.private && (
                             <PrivateReplyNote info={m.private} masked={m.masked} />
                           )}
+                          {m.role === "assistant" && m.sealed && (
+                            <SealedReplyNote info={m.sealed} />
+                          )}
                           {m.role === "assistant" && m.memoryUsed && (
                             <MemoryUsedNote memory={m.memoryUsed} />
                           )}
@@ -2257,7 +2459,7 @@ export default function Workspace() {
                               )}
                             </div>
                           )}
-                          {!demo && isReleased(config, "voice") &&
+                          {!demo && isReleased(config, "voice") && !sealedOn && !sealedThread &&
                             m.role === "assistant" && m.content && !busy && (
                             <button type="button" className="small-button"
                               onClick={() => setReadAloud(m.content)}>
@@ -2450,7 +2652,7 @@ export default function Workspace() {
                 )}
               </div>
               <div className="composer-zone" ref={composerZone}>
-                {voiceOpen && !privateMode && textMode && !demo &&
+                {voiceOpen && !privateMode && !sealedOn && textMode && !demo &&
                   isReleased(config, "voice") && isReleased(config, "audio") && (
                   <VoiceAssist
                     ephemeral={ephemeral} disabled={busy} refresh={refresh}
@@ -2464,6 +2666,7 @@ export default function Workspace() {
                 {isReleased(config, "ephemeral") &&
                   ephemeral &&
                   !privateMode &&
+                  !sealedOn &&
                   !deviceOnly &&
                   textMode && <EphemeralNotice />}
                 {vaultLive && deviceOnly && textMode && (
@@ -2483,6 +2686,14 @@ export default function Workspace() {
                   ) : (
                     <NoPrivateModelsNotice />
                   ))}
+                {sealedOn && (
+                  <SealedPanel
+                    state={enclave.state}
+                    onRetry={enclave.retry}
+                    holdCredits={sealedHoldCredits}
+                    noModels={!sealedModels.length}
+                  />
+                )}
                 {info && <Notice>{info}</Notice>}
                 {error && (
                   <Notice type="error">
@@ -2689,6 +2900,23 @@ export default function Workspace() {
                     }
                   >
                     <div>
+                      {sealedOn ? (
+                        <select
+                          className="sealed-model"
+                          aria-label="Sealed model"
+                          data-i18n="off"
+                          value={sealedTarget?.id || ""}
+                          disabled={busy}
+                          onChange={(e) => setSealedModelId(e.target.value)}
+                        >
+                          {sealedModels.map((m) => (
+                            <option value={m.id} key={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                      <>
                       {finderLive ? (
                         <ModelFinder
                           models={finderModels}
@@ -2755,7 +2983,9 @@ export default function Workspace() {
                         })()}
                       </select>
                       )}
-                      {(mode === "image" || selected?.vision) && (
+                      </>
+                      )}
+                      {(mode === "image" || (selected?.vision && !sealedOn)) && (
                         <label
                           className="attachment-control"
                           title="Add reference image"
@@ -2782,7 +3012,7 @@ export default function Workspace() {
                           setDocuments={setDocuments}
                           disabled={busy}
                           onError={setError}
-                          filesEnabled={isReleased(config, "files")}
+                          filesEnabled={isReleased(config, "files") && !sealedOn}
                           cleanEnabled={cleanLive}
                           privateContext={privateMode || ephemeral || veilOn}
                           audioEnabled={isReleased(config, "audio")}
@@ -2792,6 +3022,7 @@ export default function Workspace() {
                         />
                       )}
                       {["chat", "code"].includes(mode) &&
+                        !sealedOn &&
                         isReleased(config, "search") && (
                         <button
                           type="button"
@@ -2807,14 +3038,15 @@ export default function Workspace() {
                           <span>Web</span>
                         </button>
                       )}
-                      {["chat", "code"].includes(mode) && teamPays.toggle}
+                      {["chat", "code"].includes(mode) && !sealedOn && teamPays.toggle}
                       {!demo &&
                         isReleased(config, "ephemeral") &&
                         textMode && (
                         <EphemeralToggle
                           active={ephemeral && !deviceOnly}
                           onToggle={toggleEphemeral}
-                          disabled={privateMode}
+                          disabled={privateMode || sealedOn}
+                          reason={sealedOn ? "Off the record is on for this chat because Sealed Mode is on" : undefined}
                         />
                       )}
                       {vaultLive && textMode && (
@@ -2830,6 +3062,14 @@ export default function Workspace() {
                         <PrivateModeToggle
                           active={privateMode}
                           onToggle={togglePrivateMode}
+                          disabled={sealedOn}
+                        />
+                      )}
+                      {sealedAvailable && (
+                        <SealedToggle
+                          active={sealedOn}
+                          onToggle={toggleSealed}
+                          disabled={busy}
                         />
                       )}
                       {textMode &&
@@ -2837,7 +3077,7 @@ export default function Workspace() {
                         isReleased(config, "veil") && (
                         <VeilToggle on={veilOn} onToggle={() => setVeilOn((v) => !v)} />
                       )}
-                      {textMode && !demo && !privateMode &&
+                      {textMode && !demo && !privateMode && !sealedOn &&
                         isReleased(config, "voice") && isReleased(config, "audio") && (
                         <button type="button" className="attachment-control"
                           disabled={busy} aria-pressed={voiceOpen}
@@ -2845,7 +3085,7 @@ export default function Workspace() {
                           Voice-assisted chat
                         </button>
                       )}
-                      {["chat", "code"].includes(mode) && !privateMode &&
+                      {["chat", "code"].includes(mode) && !privateMode && !sealedOn &&
                         !isReleased(config, "voice") && isReleased(config, "audio") && (
                         <MicButton
                           demo={demo}
@@ -2858,7 +3098,7 @@ export default function Workspace() {
                           onError={setError}
                         />
                       )}
-                      {textMode && scrollsLive && (
+                      {textMode && scrollsLive && !sealedOn && (
                         <button
                           type="button"
                           className="attachment-control scrolls-button"
@@ -2876,7 +3116,7 @@ export default function Workspace() {
                           )}
                         </button>
                       )}
-                      {longAnswersLive && textMode && !demo && (
+                      {longAnswersLive && textMode && !demo && !sealedOn && (
                         <label className="fine-print">
                           Reply budget
                           <select aria-label="Reply token budget" value={selectedReplyBudget} disabled={busy}
@@ -2996,9 +3236,11 @@ export default function Workspace() {
                         disabled={
                           !prompt.trim() ||
                           !!seedHit ||
-                          (finderLive && !selected) ||
+                          (finderLive && !selected && !sealedOn) ||
                           incompatibleMention ||
-                          (privateMode && !privateModelsCallable.length)
+                          (privateMode && !privateModelsCallable.length) ||
+                          // Sealed Mode sends only once the enclave is verified.
+                          (sealedOn && (!sealedTarget || enclave.state.status !== "verified"))
                         }
                         aria-label={demo ? "Run sample" : "Generate"}
                       >
@@ -3008,7 +3250,7 @@ export default function Workspace() {
                     </span>
                   </div>
                   {/* Training Labels: under the model picker, never blocking Send. */}
-                  {trainingSelected && (
+                  {trainingSelected && !sealedOn && (
                     <TrainingNotice
                       model={trainingSelected}
                       alternative={trainingAlternative}

@@ -843,6 +843,7 @@ const featureIcons = {
   wipe: "delete",
   vault: "lock",
   routines: "history",
+  sealed: "lock",
 };
 const launch = {
   id: "mvp",

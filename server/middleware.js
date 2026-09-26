@@ -7,6 +7,7 @@ import {
   PREVIEW_FRAME_PATH,
 } from "../src/security-headers.js";
 import { isReleased } from "./releases.js";
+import { SEALED_MAX_BODY_BYTES } from "../src/sealed.js";
 export { createLimiter } from "./rate-limit.js";
 
 // The Connect an App endpoints that apps call from anywhere: discovery,
@@ -88,6 +89,12 @@ export function applyMiddleware(app, cfg) {
     express.urlencoded({ extended: false, limit: "16kb", parameterLimit: 20 }),
   );
   app.use("/oauth", express.json({ limit: "16kb" }));
+  // Sealed Mode's relay takes EHBP ciphertext as it is: read raw (it still
+  // declares application/json, as EHBP keeps the original type), never parsed.
+  app.use(
+    "/api/sealed/chat",
+    express.raw({ type: () => true, limit: SEALED_MAX_BODY_BYTES }),
+  );
   app.use(express.json({ limit: "18mb" }));
   app.use((req, res, next) => {
     if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method)) {

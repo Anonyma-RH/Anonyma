@@ -3098,7 +3098,61 @@
     "Clean Uploads removes location, camera and author details from photos, saved Office files and saved audio in your browser before they leave your device; chat documents send only their text.": "净化上传会在文件离开你的设备之前，在浏览器中移除照片、已保存的 Office 文件和已保存音频里的位置、相机信息和作者信息；聊天中的文档只发送其文本。",
     "Device Vault keeps device-only chats encrypted in this browser with your passphrase; ANONYMA's servers store none of them, and they can't be recovered without the passphrase.": "本机保险库会用你的密码短语在此浏览器中加密保存仅存本机的会话；ANONYMA 的服务器不保存任何此类会话，没有密码短语就无法恢复。",
     "Routines: each routine's prompt and settings, and the newest 50 runs per routine (answer, charge and receipt), until you delete them.": "定时任务：每个定时任务的提示词和设置，以及每个定时任务最新 50 次运行（回答、扣费和收据），保留到你将其删除为止。",
-    "Panic Wipe (Account → Settings, type WIPE) erases your conversations, media files, uploads, memory, Scrolls, routines, collabs you own and support requests, revokes keys and connected apps, and signs out everywhere; your balance, ledger, deposits, receipts and settings remain, and backups are separate copies.": "紧急清除（账户 → 设置，输入 WIPE）会清除你的会话、媒体文件、上传内容、记忆、卷轴、定时任务、你拥有的协作空间和支持请求，撤销密钥和已连接的应用，并在所有设备上退出登录；你的余额、账本、充值记录、收据和设置会保留，备份是单独的副本。"
+    "Panic Wipe (Account → Settings, type WIPE) erases your conversations, media files, uploads, memory, Scrolls, routines, collabs you own and support requests, revokes keys and connected apps, and signs out everywhere; your balance, ledger, deposits, receipts and settings remain, and backups are separate copies.": "紧急清除（账户 → 设置，输入 WIPE）会清除你的会话、媒体文件、上传内容、记忆、卷轴、定时任务、你拥有的协作空间和支持请求，撤销密钥和已连接的应用，并在所有设备上退出登录；你的余额、账本、充值记录、收据和设置会保留，备份是单独的副本。",
+    "Sealed Mode": "密封模式",
+    "Encrypted in your browser. Readable only in the enclave.": "在你的浏览器中加密，只有安全飞地能读取。",
+    "Open-weight private models only, running inside a hardware-verified enclave": "仅限开放权重的私有模型，运行在经硬件验证的安全飞地中",
+    "We relay only ciphertext, but still see metadata: model, time, size and tokens": "我们只中转密文，但仍能看到元数据：模型、时间、大小和 Token 数",
+    "You trust the open-source page code we serve to do the encrypting": "你需要信任我们提供的开源页面代码来完成加密",
+    "Sealed Mode encrypts your message in your browser to a hardware-verified enclave. ANONYMA only relays ciphertext.": "密封模式会在你的浏览器中加密消息，只有经硬件验证的安全飞地能解密。ANONYMA 只中转密文。",
+    "On open-weight private models, which run inside that enclave, neither ANONYMA nor our providers can read your prompt or reply.": "开放权重的私有模型就运行在该安全飞地中；使用这些模型时，ANONYMA 和我们的提供商都无法读取你的提示词或回复。",
+    "We still see metadata (model, time, size, tokens), and you're trusting the open-source page code we serve.": "我们仍能看到元数据（模型、时间、大小、Token 数），并且你需要信任我们提供的开源页面代码。",
+    "Sealed Mode: encrypted in your browser, readable only in the enclave": "密封模式：在你的浏览器中加密，只有安全飞地能读取",
+    "Sealed": "密封",
+    "Enclave verified": "安全飞地已验证",
+    "Verification failed": "验证失败",
+    "Verifying the enclave…": "正在验证安全飞地……",
+    "No sealed models are available right now.": "目前没有可用的密封模型。",
+    "Verify again": "重新验证",
+    "Enclave measurement": "安全飞地度量值",
+    "Source": "来源",
+    "Signed release, checked with Sigstore": "已签名的发布版本，已通过 Sigstore 校验",
+    "Hardware": "硬件",
+    "Report checked against AMD's roots in this browser": "已在此浏览器中对照 AMD 根证书校验报告",
+    "Verified": "验证时间",
+    "Unknown hardware": "未知硬件",
+    "What Sealed Mode turns off": "密封模式会关闭哪些功能",
+    "Memory is off: saved facts are added on our server, which only sees ciphertext.": "记忆已关闭：保存的事实需要在我们的服务器上添加，而服务器只能看到密文。",
+    "Web search is off: the search would run outside the enclave.": "联网搜索已关闭：搜索会在安全飞地之外进行。",
+    "Saved files are off: they're read on our server. Documents you attach are read in your browser and stay sealed.": "已保存的文件已关闭：它们需要在我们的服务器上读取。你附加的文档会在浏览器中读取，并保持密封。",
+    "Saving scrolls is off: it stores text on our server. Inserting your scrolls still works.": "保存卷轴已关闭：它会把文本存到我们的服务器上。插入已有卷轴仍然可用。",
+    "Double-check and Symposium are off: they send the chat to models outside the enclave.": "再核对和模型圆桌已关闭：它们会把对话发送给安全飞地之外的模型。",
+    "Voice and read aloud are off: audio is processed outside the enclave.": "语音和朗读已关闭：音频会在安全飞地之外处理。",
+    "The live estimate is off: it would send your prompt unsealed. The most it can cost is shown instead.": "实时估算已关闭：它会以未密封的形式发送你的提示词。这里改为显示最高可能费用。",
+    "Checking the charge…": "正在确认费用……",
+    "Charge not confirmed yet": "费用尚未确认",
+    "Nothing charged": "未扣费",
+    "Sealed model": "密封模型",
+    "Off the record is on for this chat because Sealed Mode is on": "此聊天已开启密封模式，因此不留记录",
+    "Sealed Mode: memory isn't used or saved in this chat.": "密封模式：此对话中不使用也不保存记忆。",
+    "This chat was sealed. Turn on Sealed Mode to continue it, or start a new chat.": "此对话是密封的。请开启密封模式继续，或开始新对话。",
+    "Sealed models can't read images. Remove them to send.": "密封模型无法读取图片。请移除图片后再发送。",
+    "Stopped. A sealed request the provider accepted is charged for what it used.": "已停止。提供商已接受的密封请求将按实际用量扣费。",
+    "The enclave's attestation couldn't be fetched. Nothing was sent.": "无法获取安全飞地的远程证明。未发送任何内容。",
+    "The enclave failed verification. Nothing was sent.": "安全飞地未通过验证。未发送任何内容。",
+    "The enclave's code doesn't come from the expected repository. Nothing was sent.": "安全飞地的代码并非来自预期的代码仓库。未发送任何内容。",
+    "The enclave hasn't been verified recently. Nothing was sent.": "安全飞地最近未经验证。未发送任何内容。",
+    "The enclave couldn't be verified again. Nothing was sent.": "无法再次验证安全飞地。未发送任何内容。",
+    "The enclave's certificate couldn't be read. Nothing was sent.": "无法读取安全飞地的证书。未发送任何内容。",
+    "The enclave's certificate isn't valid yet. Nothing was sent.": "安全飞地的证书尚未生效。未发送任何内容。",
+    "The enclave's certificate has expired. Nothing was sent.": "安全飞地的证书已过期。未发送任何内容。",
+    "The enclave's attestation is older than the maximum age. Nothing was sent.": "安全飞地的远程证明已超过最长有效期。未发送任何内容。",
+    "Sealed Mode is unavailable right now.": "密封模式暂不可用。",
+    "Sealed Mode isn't available right now.": "密封模式目前不可用。",
+    "Sealed Mode works only with open-weight private models, which run inside the enclave.": "密封模式仅适用于在安全飞地中运行的开放权重私有模型。",
+    "This isn't a sealed request.": "这不是密封请求。",
+    "The private endpoint couldn't be reached. Nothing was charged.": "无法连接私有端点。未扣费。",
+    "The private endpoint's reply wasn't sealed, so it wasn't passed on. Your hold waits for reconciliation.": "私有端点的回复未经密封，因此没有转发。你的冻结积分将等待对账。"
   },
   "patterns": [
     {
@@ -4828,6 +4882,30 @@
     {
       "en": "Write a prompt of 1 to {0} characters.",
       "zh": "请输入 1 至 {0} 个字符的提示词。"
+    },
+    {
+      "en": "{0} credits held until the charge is confirmed",
+      "zh": "{0} 积分已冻结，待费用确认"
+    },
+    {
+      "en": "Sealed · decrypted only in the enclave · not saved on our servers · {0}",
+      "zh": "密封 · 仅在安全飞地中解密 · 不保存在我们的服务器上 · {0}"
+    },
+    {
+      "en": "This message holds up to {0} credits; you're charged for what it uses.",
+      "zh": "此消息最多冻结 {0} 积分；按实际用量扣费。"
+    },
+    {
+      "en": "This sealed request could cost up to {0} credits, more than the {1} a sealed request may hold. Start a new conversation or send less. Nothing was sent or charged.",
+      "zh": "此密封请求最多可能花费 {0} 积分，超过单个密封请求可冻结的 {1} 积分。请开始新对话或减少发送内容。未发送任何内容，也未扣费。"
+    },
+    {
+      "en": "The private endpoint is having trouble ({0}). Nothing was charged.",
+      "zh": "私有端点出现问题（{0}）。未扣费。"
+    },
+    {
+      "en": "The private endpoint rejected this sealed request ({0}). Nothing was charged.",
+      "zh": "私有端点拒绝了此密封请求（{0}）。未扣费。"
     }
   ]
 }

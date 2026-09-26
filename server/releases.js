@@ -813,7 +813,7 @@ export const UPDATES = [
     // Runs Live Web Search's plugin for each search, so it needs "search"
     // released too (featuresFor). Workspace only; nothing new is stored: a
     // saved run is an ordinary conversation turn (server/routes/research.js).
-    released: false,
+    released: true,
   },
   {
     id: "passkeys",

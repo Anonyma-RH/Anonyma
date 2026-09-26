@@ -86,10 +86,20 @@ function fill(template, values) {
 
 // Parts translated one by one; those without a translation (a name like
 // Veil) stay as they are. Undefined when none translate.
+// An en-US date or time, possibly followed by a separator ("9/25/2026 ·"),
+// in the zh-CN form with its surroundings kept; undefined when it isn't one.
+function dateIn(s) {
+  const [lead, inner, trail] = splitSpace(s);
+  const whole = translateDate(normalize(inner));
+  if (whole !== undefined) return lead + whole + trail;
+  const m = /^(.*?)(\s*[·•|,;—–]+)$/.exec(inner);
+  const date = m && translateDate(normalize(m[1]));
+  return date === undefined || date === null ? undefined : lead + date + m[2] + trail;
+}
 function parts(list, dict, depth) {
   let any = false;
   const out = list.map((s) => {
-    const t = hasLetters(s) ? translateString(s, dict, depth) : undefined;
+    const t = hasLetters(s) ? translateString(s, dict, depth) : dateIn(s);
     if (t !== undefined) any = true;
     return t ?? s;
   });
@@ -139,7 +149,7 @@ export function translateString(core, dict, depth = 0) {
       const t =
         hasLetters(inner) && !p.raw.has(slot) && !looksLikeHandle(inner)
           ? translateString(inner, dict, depth + 1)
-          : translateDate(inner);
+          : dateIn(inner);
       if (t === undefined && hasLetters(inner) && !p.raw.has(slot) && !looksLikeHandle(inner))
         complete = false;
       values[slot] = t === undefined ? v : lead + t + trail;

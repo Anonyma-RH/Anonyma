@@ -342,3 +342,15 @@ test("a lone full stop ends a Chinese sentence even after a Latin name", async (
   assert.equal(adjustSpacing(".", "o", "", true), "。");
   assert.equal(adjustSpacing(".", "o", "", false), ".");
 });
+
+test("dates inside middle-dot lines and before a separator take the zh-CN form", async () => {
+  const { translateText, compileDictionary } = await import("../src/i18n.js");
+  const dict = compileDictionary({
+    strings: { "Personal chat": "个人会话" },
+    patterns: [{ en: "Created {0}", zh: "创建于 {0}" }],
+  });
+  assert.equal(translateText("Personal chat · 9/25/2026", dict), "个人会话 · 2026/9/25");
+  assert.equal(translateText("Created 9/25/2026 ·", dict), "创建于 2026/9/25 ·");
+  assert.equal(translateText("Personal chat · 42", dict), "个人会话 · 42");
+});
+

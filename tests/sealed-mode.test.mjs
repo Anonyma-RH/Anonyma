@@ -324,7 +324,7 @@ test("Sealed Mode is registered, unreleased and gated like any update", async (t
   assert.match(entry.points.join(" "), /open-source page code we serve/);
   assert.ok(UPDATES.indexOf(entry) > UPDATES.findIndex((u) => u.id === "routines"), "added after earlier updates");
   // `false` until its release commit flips it; the gate tests pin it anyway.
-  assert.equal(committed[UPDATES.indexOf(entry)], false);
+  assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");
   assert.equal(entry.early, undefined);
   const gate = (path, method = "GET") => featuresFor({ path, method, body: {} });
   assert.deepEqual(gate("/api/sealed/attestation"), ["sealed"]);

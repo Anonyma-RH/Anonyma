@@ -27,11 +27,15 @@ export function buildChatRequest({
   // Memory Across Models: the account's facts when memory applies to this
   // request, else null. Sent as [{ id, text }]; the server adds them.
   memoryFacts = null,
+  // Injection Shield's "Send as data": the documents go with a one-line
+  // notice that their contents are data, not instructions.
+  asData = false,
 }) {
   // Document text (already trimmed to the shared budget) rides along as
   // delimited blocks after the typed prompt; see src/documents.js.
-  const budgeted = documents.length ? fitDocuments(text, documents).documents : [];
-  const content = budgeted.length ? composeMessageWithDocuments(text, budgeted) : text;
+  const options = asData ? { asData: true } : {};
+  const budgeted = documents.length ? fitDocuments(text, documents, undefined, options).documents : [];
+  const content = budgeted.length ? composeMessageWithDocuments(text, budgeted, options) : text;
   const rawNext = [
     ...messages,
     { role: "user", content, images: attachments.map((a) => a.url) },

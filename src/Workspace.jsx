@@ -98,7 +98,9 @@ import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
 import { CleanImageChip } from "./CleanUploads.jsx";
 import { IMAGE_TYPES, IMAGE_LIMIT, HEIC_LIMIT, isHeicFile, withKeep } from "./clean-notes.js";
-import { parseDocumentBlocks } from "./documents.js";
+import { parseDocumentBlocks, MAX_DOCUMENTS } from "./documents.js";
+import { useShieldLive, shieldReleased, ShieldPanel, ShieldPasteNotice, shieldMarkdown } from "./Shield.jsx";
+import { scanText, scanDocument, shieldDocument, cleanText, LARGE_PASTE } from "./shield.js";
 import Symposium from "./Symposium.jsx";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
 import { MemoryPanel, MemoryUsedNote, useMemory } from "./Memory.jsx";
@@ -422,6 +424,40 @@ export default function Workspace() {
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
+  // Injection Shield (src/Shield.jsx, src/shield.js): files attached to a
+  // text message are scanned in this browser. What's sent is each file's
+  // text as the user chose (invisible characters out by default, flagged
+  // lines out if asked) and, by default, a notice that the files are data.
+  // Nothing about a finding leaves the browser.
+  const shieldView = useShieldLive(config);
+  const shieldOn = shieldView && !demo && textMode;
+  const [shieldPrefs, setShieldPrefs] = useState({}),
+    [sendAsData, setSendAsData] = useState(true),
+    [shieldOpen, setShieldOpen] = useState(null),
+    [pasteShield, setPasteShield] = useState(null);
+  const shieldScans = useMemo(() => {
+    const scans = new Map();
+    if (shieldOn) for (const d of documents) scans.set(d.id, scanDocument(d));
+    return scans;
+  }, [shieldOn, documents]);
+  const sentDocuments = useMemo(
+    () =>
+      shieldOn
+        ? documents.map((d) => shieldDocument(d, shieldScans.get(d.id), shieldPrefs[d.id]))
+        : documents,
+    [shieldOn, documents, shieldScans, shieldPrefs],
+  );
+  const documentsAsData = shieldOn && sendAsData && documents.length > 0;
+  // Each message starts again with "Send as data" on. A file's own choices
+  // are kept by its id, so a send that's refused and put back keeps them.
+  useEffect(() => {
+    if (documents.length) return;
+    setSendAsData(true);
+    setShieldOpen((o) => (o?.doc ? null : o));
+  }, [documents.length]);
+  useEffect(() => {
+    if (!prompt) setPasteShield(null);
+  }, [prompt]);
   // Projects (src/Projects.jsx): the account's projects, and the one the open
   // chat is in (or a new chat was started in). Signed in only, never the demo.
   const projectsLive = !demo && !!user && projectsReleased(config);
@@ -1303,7 +1339,8 @@ export default function Workspace() {
     const { request } = buildChatRequest({
       messages,
       text: sendText,
-      documents,
+      documents: sentDocuments,
+      asData: documentsAsData,
       instructions: instructionsActive ? instructions.body.trim() : "",
       preserveHistory: longAnswersLive,
     });
@@ -1316,7 +1353,7 @@ export default function Workspace() {
     });
     const bytes = ciphertextLength(utf8Length(JSON.stringify(body)));
     return sealedHoldUsd(sealedTarget, bytes, cap) * 1000 * (1 + (Number(config?.markup) || 0) / 100);
-  }, [sealedOn, sealedTarget, messages, sendText, documents, instructionsActive, instructions.body, longAnswersLive, config?.markup]);
+  }, [sealedOn, sealedTarget, messages, sendText, sentDocuments, documentsAsData, instructionsActive, instructions.body, longAnswersLive, config?.markup]);
   const branchesLive = isReleased(config, "branches");
   // Live Preview (src/LivePreview.jsx): Code & Build's Preview tab and a
   // Preview button on HTML blocks in replies. Browser-only and sandboxed.
@@ -1408,7 +1445,8 @@ export default function Workspace() {
       messages,
       text: sendText,
       attachments,
-      documents,
+      documents: sentDocuments,
+      asData: documentsAsData,
       instructions: sentInstructions,
       preserveHistory: longAnswersLive,
       veilWith: veiling
@@ -1432,7 +1470,7 @@ export default function Workspace() {
   // browser. A find blocks Send, and the estimate too, since a quote posts
   // the same text, until the user removes it or confirms "Send anyway".
   const seedLive = seedGuardLive(config) && !demo;
-  const documentTexts = useMemo(() => documents.map((d) => d.text || ""), [documents]);
+  const documentTexts = useMemo(() => sentDocuments.map((d) => d.text || ""), [sentDocuments]);
   const promptSeed = useSeedScan(seedLive, sendText);
   const documentSeed = useSeedScan(seedLive && textMode, documentTexts);
   const instructionsSeed = useSeedScan(
@@ -1463,7 +1501,7 @@ export default function Workspace() {
   const estimateBody = useMemo(
     () => (autoEstimate ? estimateRequest() : null),
     // Everything estimateRequest reads that can change between renders.
-    [autoEstimate, sendText, sendModel, messages, attachments, documents,
+    [autoEstimate, sendText, sendModel, messages, attachments, sentDocuments, documentsAsData,
       sentInstructions, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive, memoryFacts, mode],
   );
   const estimate = useCreditEstimate(estimateBody);
@@ -1473,6 +1511,62 @@ export default function Workspace() {
   const costCompareLive =
     estimatesLive && isReleased(config, "costcompare") && textMode && !demo && !!user;
   const compareBase = costCompareLive && !mentioned ? estimateBody : null;
+  // Injection Shield on a paste: invisible characters come out of every
+  // paste, and a long one (LARGE_PASTE) is checked for instruction-like
+  // phrases. The paste is put in by hand so what lands is exactly what was
+  // scanned; the notice above the composer can undo or act on it while the
+  // pasted text is still there as it landed.
+  function shieldPaste(e) {
+    const raw = e.clipboardData?.getData("text/plain") || "";
+    if (!raw) return;
+    const pasted = raw.replace(/\r\n?/g, "\n");
+    const long = pasted.length >= LARGE_PASTE;
+    const result = scanText(pasted, { phrases: long });
+    if (!result.invisible.total && !result.instructionCount) return;
+    e.preventDefault();
+    const el = e.currentTarget;
+    const start = el.selectionStart ?? prompt.length,
+      end = el.selectionEnd ?? start;
+    const room = Math.max(0, (el.maxLength > 0 ? el.maxLength : Infinity) - (prompt.length - (end - start)));
+    const inserted = cleanText(pasted, result).slice(0, room);
+    setPrompt(prompt.slice(0, start) + inserted + prompt.slice(end));
+    requestAnimationFrame(() => {
+      el.selectionStart = el.selectionEnd = start + inserted.length;
+    });
+    setPasteShield({ result, original: pasted, removed: result.invisible.total, at: start, inserted, long });
+  }
+  // Replaces the pasted text, if it's still there as it landed.
+  function rewritePaste(next, changes = {}) {
+    const p = pasteShield;
+    if (!p) return;
+    if (prompt.slice(p.at, p.at + p.inserted.length) !== p.inserted) {
+      setError("The pasted text has changed since, so Shield left it as it is.");
+      return;
+    }
+    const text = next(p).slice(0, Math.max(0, 48000 - (prompt.length - p.inserted.length)));
+    setPrompt(prompt.slice(0, p.at) + text + prompt.slice(p.at + p.inserted.length));
+    const report = { ...p, inserted: text, ...changes };
+    if (changes.flagged === false) report.result = { ...p.result, instructionCount: 0, instructions: [] };
+    setPasteShield(report.removed || report.result.instructionCount ? report : null);
+  }
+  // A long paste becomes an attached file, so it's scanned like one and sent
+  // as data, and the prompt is left with only what the user typed.
+  function attachPaste() {
+    const p = pasteShield;
+    if (!p) return;
+    if (prompt.slice(p.at, p.at + p.inserted.length) !== p.inserted) {
+      setError("The pasted text has changed since, so Shield left it as it is.");
+      return;
+    }
+    const text = p.removed ? cleanText(p.original, p.result) : p.original;
+    setPrompt(prompt.slice(0, p.at) + prompt.slice(p.at + p.inserted.length));
+    setDocuments((d) =>
+      d.length >= MAX_DOCUMENTS
+        ? d
+        : [...d, { id: uid(), name: "pasted-text.txt", kind: "text", size: null, text, chars: text.length, warning: "" }],
+    );
+    setPasteShield(null);
+  }
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
   // history before it and the conversation to add to, instead of the composer.
   // `allowSeed` is Seed Guard's confirmed "Send anyway".
@@ -1713,7 +1807,8 @@ export default function Workspace() {
       messages: redo ? redo.base : messages,
       text,
       attachments: redo ? (redo.images || []).map((url) => ({ url })) : attachments,
-      documents: redo ? [] : documents,
+      documents: redo ? [] : sentDocuments,
+      asData: !redo && documentsAsData,
       instructions: sentInstructions,
       preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
@@ -1935,7 +2030,8 @@ export default function Workspace() {
     const built = buildChatRequest({
       messages: redo ? redo.base : messages,
       text,
-      documents: redo ? [] : documents,
+      documents: redo ? [] : sentDocuments,
+      asData: !redo && documentsAsData,
       instructions: instructionsActive ? instructions.body.trim() : "",
       preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
@@ -2626,7 +2722,7 @@ export default function Workspace() {
               }
             />
           ) : mode === "routines" ? (
-            <Routines key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} />
+            <Routines key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} markdown={shieldView ? shieldMarkdown() : undefined} />
           ) : mode === "tools" ? (
             <TaskTools key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
           ) : mode === "collab" ? (
@@ -2705,7 +2801,13 @@ export default function Workspace() {
                             // [TAG_n] split across chunks resolves once whole.
                             [veilRemarkPlugin, { map: veilStateRef.current.map }],
                           ]}
-                          components={m.role === "assistant" ? htmlPreview.components : undefined}
+                          components={
+                            shieldView
+                              ? shieldMarkdown(m.role === "assistant" ? htmlPreview.components : null)
+                              : m.role === "assistant"
+                                ? htmlPreview.components
+                                : undefined
+                          }
                         >
                           {shown}
                         </ReactMarkdown>
@@ -2769,6 +2871,7 @@ export default function Workspace() {
                               <MessageDocuments
                                 documents={parsed.documents}
                                 veilMap={veilStateRef.current.map}
+                                asData={shieldReleased(config) && parsed.asData}
                               />
                             )}
                             {m.images?.map((url, j) => (
@@ -2961,6 +3064,7 @@ export default function Workspace() {
                                 onClose={() => setChecking(null)}
                                 refresh={refresh}
                                 seedGuard={seedLive}
+                                shield={shieldView}
                               />
                             ) : (
                               <button
@@ -3150,6 +3254,20 @@ export default function Workspace() {
                   busy={busy}
                   onProceed={() => send(null, null, { allowSeed: true })}
                 />
+                {shieldOn && (
+                  <ShieldPasteNotice
+                    report={pasteShield}
+                    onReview={() => setShieldOpen({ paste: true })}
+                    onRemoveFlagged={() => rewritePaste((p) => cleanText(p.original, p.result, { stripInvisible: p.removed > 0, removeFlagged: true }), { flagged: false })}
+                    onAttach={
+                      pasteShield?.long && isReleased(config, "documents") && documents.length < MAX_DOCUMENTS
+                        ? attachPaste
+                        : null
+                    }
+                    onRestore={() => rewritePaste((p) => p.original, { removed: 0 })}
+                    onDismiss={() => setPasteShield(null)}
+                  />
+                )}
                 <form className="composer" onSubmit={send}>
                   {imageItems.length > 0 && (
                     <div className="attachment-list">
@@ -3182,9 +3300,14 @@ export default function Workspace() {
                     textMode &&
                     isReleased(config, "documents") && (
                     <DocumentChips
-                      documents={documents}
+                      documents={sentDocuments}
                       setDocuments={setDocuments}
                       prompt={prompt}
+                      shield={
+                        shieldOn
+                          ? { results: shieldScans, asData: sendAsData, onOpen: (id) => setShieldOpen({ doc: id }) }
+                          : null
+                      }
                     />
                   )}
                   <textarea
@@ -3203,6 +3326,7 @@ export default function Workspace() {
                       setPrompt(e.target.value);
                       setSlashIndex(0);
                     }}
+                    onPaste={shieldOn ? shieldPaste : undefined}
                     onKeyDown={(e) => {
                       if (scrollMatches.length) {
                         if (e.key === "Escape") {
@@ -3428,6 +3552,7 @@ export default function Workspace() {
                           onRefresh={refresh}
                           openRequest={filesRequest}
                           seedGuard={seedLive}
+                          shieldHidden={shieldOn}
                         />
                       )}
                       {["chat", "code"].includes(mode) &&
@@ -3855,6 +3980,20 @@ export default function Workspace() {
         </div>
       </div>
       {htmlPreview.dialog}
+      {shieldOn && shieldOpen?.doc && shieldScans.get(shieldOpen.doc) && (
+        <ShieldPanel
+          name={documents.find((d) => d.id === shieldOpen.doc)?.name || ""}
+          result={shieldScans.get(shieldOpen.doc)}
+          prefs={shieldPrefs[shieldOpen.doc] || {}}
+          onPrefs={(p) => setShieldPrefs((all) => ({ ...all, [shieldOpen.doc]: p }))}
+          asData={sendAsData}
+          onAsData={setSendAsData}
+          onClose={() => setShieldOpen(null)}
+        />
+      )}
+      {shieldOn && shieldOpen?.paste && pasteShield && (
+        <ShieldPanel paste result={pasteShield.result} onClose={() => setShieldOpen(null)} />
+      )}
       {dialog && (
         <Modal
           title={

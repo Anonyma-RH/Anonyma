@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import { Notice } from "./ui.jsx";
 import { api, streamChat, uid } from "./lib.js";
 import { veilRemarkPlugin } from "./Veil.jsx";
+import { shieldMarkdown } from "./Shield.jsx";
 import { SeedGuardNotice, useSeedScan } from "./SeedGuard.jsx";
 import {
   checkerCandidates,
@@ -39,6 +40,9 @@ export default function DoubleCheck({
   // Seed Guard is live: the question and answer are scanned before the
   // check's estimate or request can send them to another provider.
   seedGuard = false,
+  // Injection Shield is on: remote images in the second opinion wait for
+  // the user, and links show their host.
+  shield = false,
 }) {
   const source = models.find((m) => m.id === answer.model) || {
     id: answer.model,
@@ -265,6 +269,7 @@ export default function DoubleCheck({
                     remarkGfm,
                     [veilRemarkPlugin, { map: veilMap }],
                   ]}
+                  components={shield ? shieldMarkdown() : undefined}
                 >
                   {result.text || (running ? "Reviewing…" : "")}
                 </ReactMarkdown>

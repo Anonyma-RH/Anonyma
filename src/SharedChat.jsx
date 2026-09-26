@@ -9,6 +9,7 @@ import { NotFound } from "./Pages.jsx";
 import { api, isReleased } from "./lib.js";
 import { SHARE_TOKEN, SEALED_FACTS, sealedLink } from "./share-links.js";
 import { openSnapshot, shareKeyFor, SEALED_ERRORS, SEALED_KEY_EVENT } from "./sealed-share.js";
+import { shieldMarkdown, useShieldLive } from "./Shield.jsx";
 import "./share-links.css";
 
 // Share a Chat, the public side: /s/<token> shows a read-only snapshot to
@@ -77,7 +78,12 @@ function withheldLabel(n) {
   return n === 1 ? "[attachment not shared]" : `[${n} attachments not shared]`;
 }
 
-function SharedMessage({ m }) {
+// Injection Shield: the same rule (never loaded), but the placeholder says
+// where the image would come from and flags an address carrying data; links
+// show the host they go to.
+const shieldedParts = shieldMarkdown(markdownParts, { load: false, rel: "noopener noreferrer nofollow ugc" });
+
+function SharedMessage({ m, shield = false }) {
   return (
     <article className={"shared-message " + m.role}>
       <div className="shared-avatar" aria-hidden="true">
@@ -96,7 +102,7 @@ function SharedMessage({ m }) {
           <div className="markdown" data-i18n="off">
             <ReactMarkdown
               remarkPlugins={[remarkGfm, veilTags]}
-              components={markdownParts}
+              components={shield ? shieldedParts : markdownParts}
             >
               {m.text}
             </ReactMarkdown>
@@ -130,6 +136,7 @@ function SharedMessage({ m }) {
 export default function SharedChat() {
   const { token } = useParams();
   const { config, loading } = useApp();
+  const shield = useShieldLive(config);
   const [state, setState] = useState({ status: "loading" });
   // A link pasted over this page (only its #k= differs) opens with its key.
   const [keyArrived, setKeyArrived] = useState(0);
@@ -246,7 +253,7 @@ export default function SharedChat() {
           </div>
           <div className="shared-messages">
             {data.messages.map((m, i) => (
-              <SharedMessage m={m} key={i} />
+              <SharedMessage m={m} key={i} shield={shield} />
             ))}
           </div>
           <footer className="shared-foot">

@@ -851,6 +851,7 @@ const featureIcons = {
   bookmarks: "star",
   sealed: "lock",
   paynyma: "coins",
+  shield: "shield",
 };
 const launch = {
   id: "mvp",

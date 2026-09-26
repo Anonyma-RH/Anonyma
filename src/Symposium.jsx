@@ -8,6 +8,7 @@ import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
 import { createVeilState } from "./veil.js";
 import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
+import { shieldMarkdown, useShieldLive } from "./Shield.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { scanSecrets } from "./seed-guard.js";
 import { ProjectPicker } from "./Projects.jsx";
@@ -108,6 +109,8 @@ export default function Symposium({
   // Seed Guard: the question is scanned before it can go to any model.
   const seedLive = !demo && seedGuardLive(config);
   const seedHit = useSeedScan(seedLive, prompt);
+  // Injection Shield: remote images in answers wait for the user.
+  const shieldParts = useShieldLive(config) ? shieldMarkdown() : undefined;
   const fusionCard = useRef(null);
   // Bring the fused answer into view as it starts, above the pinned composer.
   const fusionStarted = fusion?.status === "pending";
@@ -423,7 +426,7 @@ export default function Symposium({
                       )}
                     </header>
                     <div className="markdown" data-i18n={col.text ? "off" : undefined}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm, veilMarks]}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm, veilMarks]} components={shieldParts}>
                         {col.text || (col.status === "pending" ? "Preparing…" : "")}
                       </ReactMarkdown>
                     </div>
@@ -497,7 +500,7 @@ export default function Symposium({
                       )}
                     </header>
                     <div className="markdown" data-i18n={fusion.text ? "off" : undefined}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm, veilMarks]}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm, veilMarks]} components={shieldParts}>
                         {fusion.text || (fusion.status === "pending" ? "Preparing…" : "")}
                       </ReactMarkdown>
                     </div>

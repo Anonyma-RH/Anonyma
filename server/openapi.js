@@ -1677,6 +1677,80 @@ route("delete", "/api/bookmarks/{id}", "Remove a bookmark", {
   response: ref("Ok"),
   description: "The message itself is unchanged.",
 });
+// Blind Compare (update "blind").
+const blindSide = object({
+  model: string,
+  name: string,
+  credits: { ...number, description: "What this reply was charged" },
+  ms: { type: ["integer", "null"], description: "Milliseconds from sending to the last word" },
+  request_id: { type: ["string", "null"], description: "This side's request id (its receipt, once Signed Receipts is released)" },
+  privacy: { type: "object", description: "This side's Privacy Trail, once released" },
+});
+const blindReveal = object({
+  outcome: { enum: ["a", "b", "tie", "bad", null], description: "null when a side failed, so the round was revealed without a vote" },
+  a: blindSide,
+  b: blindSide,
+});
+route("post", "/api/blind", "Compare two models' replies, names hidden", {
+  body: object(
+    {
+      models: { ...array(string), minItems: 2, maxItems: 2, description: "Two different chat models; the order shown (A, B) is random" },
+      messages: array(message),
+      max_tokens: { ...integer, minimum: 1, description: "Each side's reply budget, checked against both models" },
+      requestId: { ...requestId, maxLength: 190, description: "Each side runs as <requestId>:a and <requestId>:b" },
+      conversationId: string,
+      mode: { enum: ["chat", "code", "uncensored"] },
+      ephemeral: bool,
+      private: { ...bool, description: "Both models must be private (zero data retention)" },
+      project: string,
+      veil_masked: { type: ["integer", "null"] },
+      allow_seed_phrase: bool,
+    },
+    ["models", "messages"],
+  ),
+  stream: true,
+  description:
+    "Always SSE via fetch POST. Each side is a chat request on the same hold/settle path as /api/chat (balance, Spending Limits, failure billing and receipts apply per side), and neither is sent until both are reserved: a side that is refused (402 insufficient_credits, 402 spending_limit, a validation error) releases the other, and the whole request fails before any stream starts, charging nothing. Events: { blind: { conversationId } } first; { side, delta: { content?, reasoning? } } while replying; { side, status: done|failed|stopped, error? } as each side ends; then { blind: { done: true, conversationId, message_id, credits_charged (both sides together), round, reveal, sides } } and [DONE]. No event names a model or a side's own charge before the vote: round is a sealed token for POST /api/blind/votes. A side that fails is charged by the usual failure policies and only it; such a round is revealed at once (reveal) and can't be voted on. Web search (400 blind_unsupported), Memory, Team pays and shared collab conversations are not supported. A saved chat stores the question and one reply holding both answers (and the reveal once voted); off-the-record and Private rounds store nothing. 400 blind_same_model, 400 private_model_required.",
+});
+route("post", "/api/blind/votes", "Vote on a blind round, then reveal it", {
+  body: object(
+    {
+      round: { ...string, description: "The round token from the final /api/blind event (or a saved reply's blind.token)" },
+      outcome: { enum: ["a", "b", "tie", "bad"] },
+      message_id: { ...string, description: "The saved reply to update with the reveal (optional)" },
+    },
+    ["round", "outcome"],
+  ),
+  response: object({
+    reveal: blindReveal,
+    counted: { ...bool, description: "false when this round was already voted on; the first vote stands" },
+    message_id: { type: ["string", "null"] },
+  }),
+  description:
+    "Stores the two model ids, the outcome and the date for your rankings, and nothing else. Only the account that ran the round can vote (404 blind_round_not_found otherwise, or for a token that isn't valid). Rounds can be voted on for 30 days (410 blind_vote_closed).",
+});
+route("get", "/api/blind/rankings", "Your Blind Compare rankings", {
+  response: object({
+    votes: integer,
+    data: array(
+      object({
+        model: string,
+        name: string,
+        rounds: integer,
+        wins: integer,
+        ties: integer,
+        losses: { ...integer, description: "Includes both_bad" },
+        both_bad: integer,
+        win_rate: { ...number, description: "(wins + ties / 2) / rounds, 0 to 1" },
+      }),
+    ),
+  }),
+  description: "From this account's own votes only; best win rate first.",
+});
+route("delete", "/api/blind/rankings", "Reset your Blind Compare rankings", {
+  response: object({ deleted: integer }),
+  description: "Deletes every vote. Saved chats keep their reveals.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

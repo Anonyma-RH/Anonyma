@@ -1,0 +1,412 @@
+/* Blind Compare: the composer bar, a compared turn (A and B side by side,
+   stacked on a phone), the vote, the reveal and Your rankings. Cobalt and
+   white, flat, reusing the workspace's small-button and credit-estimate. */
+.app-shell .blind-bar {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--work-ink, #142343);
+  background: #f3f6ff;
+  border-left: 3px solid var(--brand-blue, #0135df);
+}
+.app-shell .blind-bar-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+.app-shell .blind-bar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 650;
+  color: var(--brand-blue, #0135df);
+}
+.app-shell .blind-bar-text {
+  color: var(--work-muted, #68748a);
+  font-size: 12px;
+}
+.app-shell .blind-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.app-shell .blind-bar-row select {
+  flex: 0 1 200px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--work-ink, #142343);
+  border: 1px solid #d2d9e5;
+  background: #fff;
+  padding: 7px 8px;
+  border-radius: 2px;
+  min-height: 34px;
+  max-width: 200px;
+  min-width: 0;
+}
+.app-shell .blind-bar.waiting {
+  padding: 8px 12px;
+}
+.app-shell .blind-vs {
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .blind-bar .small-button {
+  background: #fff;
+  border-color: #d2d9e5;
+  border-radius: 2px;
+  gap: 6px;
+}
+.app-shell .blind-bar .small-button:hover {
+  border-color: var(--brand-blue, #0135df);
+}
+.app-shell .blind-rankings-button {
+  margin-left: auto;
+}
+.app-shell .blind-surprise {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+}
+.app-shell .blind-bar-note {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .blind-bar-note.warn {
+  color: #9c3d2a;
+}
+.app-shell .blind-toggle.on svg {
+  color: #fff;
+}
+
+/* A compared turn. */
+.app-shell .blind-turn {
+  display: grid;
+  gap: 12px;
+}
+.app-shell .blind-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.app-shell .blind-reply {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+}
+.app-shell .blind-reply.picked {
+  border-color: var(--brand-blue, #0135df);
+  box-shadow: inset 0 3px 0 var(--brand-blue, #0135df);
+}
+.app-shell .blind-reply.failed {
+  background: #fbfbfd;
+}
+.app-shell .blind-reply header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+.app-shell .blind-letter {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--brand-blue, #0135df);
+  border-radius: 2px;
+}
+.app-shell .blind-reply:not(.picked) .blind-letter {
+  color: var(--brand-blue, #0135df);
+  background: #eaf0ff;
+}
+.app-shell .blind-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 650;
+}
+.app-shell .blind-pick {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--brand-blue, #0135df);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+.app-shell .blind-copy {
+  flex: none;
+  margin-left: auto;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--work-muted, #68748a);
+  background: #fff;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.app-shell .blind-copy:hover {
+  color: var(--brand-blue, #0135df);
+  border-color: var(--brand-blue, #0135df);
+}
+.app-shell .blind-status + .blind-copy {
+  margin-left: 0;
+}
+.app-shell .blind-status {
+  margin-left: auto;
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .blind-status.failed {
+  color: #9c3d2a;
+}
+.app-shell .blind-reply .markdown {
+  font-size: 13.5px;
+  line-height: 1.65;
+  min-height: 24px;
+}
+.app-shell .blind-reply .markdown > :first-child {
+  margin-top: 0;
+}
+.app-shell .blind-reply .markdown > :last-child {
+  margin-bottom: 0;
+}
+.app-shell .blind-waiting {
+  margin: 0;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .blind-error {
+  margin: 0;
+  font-size: 12px;
+  color: #9c3d2a;
+}
+.app-shell .blind-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #24498b;
+}
+.app-shell .blind-facts .privacy-trail {
+  margin: 0 0 0 auto;
+}
+.app-shell .blind-facts .privacy-trail.open {
+  flex-basis: 100%;
+  margin-left: 0;
+}
+.app-shell .blind-foot {
+  margin: 0;
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .blind-vote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f3f6ff;
+  border: 1px solid #dae5ff;
+  border-radius: 2px;
+}
+.app-shell .blind-vote-q {
+  font-size: 13px;
+  font-weight: 650;
+  margin-right: 4px;
+}
+.app-shell .blind-vote button {
+  font: inherit;
+  font-size: 12.5px;
+  padding: 8px 12px;
+  min-height: 36px;
+  color: var(--brand-blue, #0135df);
+  background: #fff;
+  border: 1px solid #b9c9f5;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.app-shell .blind-vote button:hover:not(:disabled) {
+  color: #fff;
+  background: var(--brand-blue, #0135df);
+  border-color: var(--brand-blue, #0135df);
+}
+.app-shell .blind-vote button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.app-shell .blind-vote-cost {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--work-muted, #68748a);
+  font-variant-numeric: tabular-nums;
+}
+.app-shell .blind-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 10px 12px;
+  background: #f3f6ff;
+  border-left: 3px solid var(--brand-blue, #0135df);
+}
+.app-shell .blind-result p {
+  margin: 0;
+  font-size: 13px;
+}
+.app-shell .blind-picked {
+  margin-left: 0.35em;
+}
+.app-shell .blind-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+.app-shell .blind-next .small-button,
+.app-shell .blind-rankings .small-button {
+  gap: 6px;
+  border-radius: 2px;
+  background: #fff;
+}
+.app-shell .blind-next .small-button.primary {
+  color: #fff;
+  background: var(--brand-blue, #0135df);
+  border-color: var(--brand-blue, #0135df);
+}
+
+/* Your rankings. */
+.blind-rankings {
+  display: grid;
+  gap: 12px;
+  min-width: min(520px, 80vw);
+  font-size: 13px;
+  color: #142343;
+}
+.blind-rankings-lead,
+.blind-rankings-note,
+.blind-rankings-empty {
+  margin: 0;
+  color: #68748a;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.blind-rank-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  border-top: 1px solid #e3e8f0;
+}
+.blind-rank-list li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e3e8f0;
+}
+.blind-rank-n {
+  font-size: 12px;
+  color: #68748a;
+  font-variant-numeric: tabular-nums;
+}
+.blind-rank-main {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.blind-rank-main b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.blind-rank-main small {
+  font-size: 11.5px;
+  color: #68748a;
+}
+.blind-rank-counts > span + span::before {
+  content: " · ";
+}
+.blind-rank-bar {
+  display: block;
+  height: 6px;
+  background: #eaf0ff;
+}
+.blind-rank-bar > span {
+  display: block;
+  height: 100%;
+  background: #0135df;
+}
+.blind-rank-rate {
+  font-size: 15px;
+  font-weight: 650;
+  color: #0135df;
+  font-variant-numeric: tabular-nums;
+}
+.blind-reset-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+.blind-reset-confirm .danger {
+  color: #fff;
+  background: #9c3d2a;
+  border-color: #9c3d2a;
+}
+.blind-rankings > .small-button {
+  justify-self: start;
+}
+
+@media (max-width: 700px) {
+  .app-shell .blind-columns {
+    grid-template-columns: 1fr;
+  }
+  .app-shell .blind-reply {
+    padding: 13px;
+  }
+  .app-shell .blind-bar-row select {
+    flex: 1 1 130px;
+    max-width: none;
+  }
+  .app-shell .blind-rankings-button {
+    margin-left: 0;
+  }
+  .app-shell .blind-vote-cost,
+  .app-shell .blind-next {
+    margin-left: 0;
+  }
+  .blind-rankings {
+    min-width: 0;
+  }
+}

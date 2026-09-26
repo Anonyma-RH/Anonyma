@@ -3566,7 +3566,84 @@
     "The export also includes your Pay with NYMA quotes.": "导出内容还包括你的“使用 NYMA 付款”报价。",
     "Reading the NYMA rate on Robinhood Chain…": "正在读取 Robinhood Chain 上的 NYMA 兑换率……",
     "A quote holds the rate for 10 minutes": "报价锁定兑换率 10 分钟",
-    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。"
+    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。",
+    "Blind Compare": "盲测对比",
+    "Blind": "盲测",
+    "Two models answer. You pick the better one.": "两个模型作答，由你选出更好的那个。",
+    "Two replies side by side, names and costs hidden": "两个回复并排呈现，隐藏模型名称和费用",
+    "Vote A, B, tie or both bad, then see who's who, the cost and the speed": "投票选 A、B、平局或都不好，再揭晓各是哪个模型、花费和速度",
+    "Your own rankings from your votes; no prompts kept": "根据你自己的投票生成排行；不保留任何提示词",
+    "Blind: two models answer, names hidden until you vote": "盲测：两个模型作答，投票前隐藏模型名称",
+    "Blind isn't available in Sealed Mode": "密封模式下无法使用盲测",
+    "First model": "第一个模型",
+    "Second model": "第二个模型",
+    "Blind compare": "盲测对比",
+    "Blind needs two models you can use here.": "盲测需要两个你在这里可用的模型。",
+    "Two surprise models, priced like": "两个随机模型，价格接近",
+    "Two surprise models": "两个随机模型",
+    "Pick again": "重新抽取",
+    "Choose models": "选择模型",
+    "Your rankings": "你的排行",
+    "vs": "对比",
+    "Surprise me": "随机抽取",
+    "Choose two different models.": "请选择两个不同的模型。",
+    "An estimate, not a final charge: this message and each reply budget at both models' published rates, added together. Each reply is charged for what it uses.": "这是估算，并非最终扣费：按两个模型公布的价格，分别计算这条消息和各自的回复预算后相加。每个回复按实际用量计费。",
+    "· over your balance": "· 超出你的余额",
+    "· over your spending limit": "· 超出你的消费上限",
+    "Reply A": "回复 A",
+    "Reply B": "回复 B",
+    "Your pick": "你的选择",
+    "Both models are answering. Names stay hidden until you vote.": "两个模型正在作答。投票前模型名称会保持隐藏。",
+    "Which reply is better?": "哪个回复更好？",
+    "Which is better?": "哪个更好？",
+    "A is better": "A 更好",
+    "B is better": "B 更好",
+    "Tie": "平局",
+    "Both bad": "都不好",
+    "Voting on this comparison has closed.": "这次对比的投票已关闭。",
+    "Stopped before both replies finished, so there's nothing to vote on.": "两个回复完成前已停止，因此无法投票。",
+    "You called it a tie.": "你判定为平局。",
+    "You marked both replies as bad.": "你将两个回复都标记为不好。",
+    "A reply failed, so this comparison isn't counted in your rankings.": "有一个回复失败，因此这次对比不计入你的排行。",
+    "Continue with": "继续使用",
+    "Keep comparing": "继续对比",
+    "Win rates from your own Blind votes. A tie counts as half a win; both bad counts as a loss for both.": "胜率仅来自你自己的盲测投票。平局记半场胜利；都不好则双方各记一负。",
+    "No votes yet. Compare two models and vote to start your rankings.": "还没有投票。对比两个模型并投票，即可开始生成你的排行。",
+    "1 win": "1 胜",
+    "1 tie": "1 平",
+    "1 loss": "1 负",
+    "Only the two model names, your vote and its date are kept for this. Never your prompts or the replies.": "为此只保留两个模型名称、你的投票及其日期，从不保留你的提示词或回复。",
+    "Delete your 1 vote? Saved chats keep their reveals.": "删除你的 1 票？已保存的会话会保留其揭晓结果。",
+    "Reset rankings": "重置排行",
+    "BLIND COMPARE": "盲测对比",
+    "Blind: memory isn't used when two models answer.": "盲测：两个模型同时作答时不使用记忆。",
+    "Vote on the replies above to continue.": "请先为上方的回复投票，再继续。",
+    "Choose two different models to compare.": "请选择两个不同的模型进行对比。",
+    "This comparison already had a vote. The first one stands.": "这次对比已经投过票，以第一次投票为准。",
+    "Stopped. A reply that had started may be charged for what it used; check your activity.": "已停止。已经开始的回复可能会按实际用量计费；请查看你的账户活动。",
+    "Choose two models to compare.": "请选择两个模型进行对比。",
+    "Web search is off in Blind.": "盲测中不使用联网搜索。",
+    "Memory isn't used in Blind.": "盲测中不使用记忆。",
+    "Blind isn't available with Team pays.": "开启团队付费时无法使用盲测。",
+    "Blind compares chat replies only.": "盲测只对比对话回复。",
+    "Blind works in chat, code and Uncensored.": "盲测适用于对话、代码和无审查模式。",
+    "Blind compares chat models.": "盲测只对比对话模型。",
+    "Private mode needs two models with zero data retention.": "隐私模式需要两个零数据保留模型。",
+    "The last message must be yours.": "最后一条消息必须是你发送的。",
+    "Request ID must contain 1–190 characters.": "请求 ID 必须包含 1–190 个字符。",
+    "Blind isn't available in shared chats.": "共享会话中无法使用盲测。",
+    "Blind works in chat, code and Uncensored conversations.": "盲测适用于对话、代码和无审查会话。",
+    "The other model couldn't start, so nothing was sent.": "另一个模型无法启动，因此没有发送任何内容。",
+    "The comparison couldn't start. Nothing was charged.": "对比无法开始，未产生任何费用。",
+    "Vote A, B, tie or both bad.": "请投票选择 A、B、平局或都不好。",
+    "This comparison wasn't found.": "未找到这次对比。",
+    "The model didn't answer.": "模型没有作答。",
+    "Names and costs stay hidden until you vote. Web search and Memory are off.": "投票前隐藏模型名称和费用。盲测中不使用联网搜索和记忆。",
+    "Copy reply A": "复制回复 A",
+    "Copy reply B": "复制回复 B",
+    "Blind Compare votes: the two models compared, your vote and its date, for Your rankings. Never the prompt or the replies, and nothing about a comparison before you vote. Reset them from Your rankings; Panic Wipe and closing your account delete them.": "盲测对比投票：被对比的两个模型、你的投票及其日期，用于“你的排行”。从不保存提示词或回复，你投票之前也不保存这次对比的任何信息。可在“你的排行”中重置；紧急清除和关闭账户会将其删除。",
+    "The export also lists your Blind Compare votes: the two models, the outcome and the date.": "导出内容还会列出你的盲测对比投票：两个模型、结果和日期。",
+    "Your Blind Compare votes and rankings": "你的盲测对比投票和排行"
   },
   "patterns": [
     {
@@ -5560,6 +5637,42 @@
     {
       "en": "Pay with NYMA: ask for a quote on Credits & funding, then send the quoted NYMA on Robinhood Chain from your linked wallet to the same payment address within {0} minutes. The quote's rate is the lower of the current rate and its {1}-minute average on Robinhood Chain, plus a {2}% bonus in credits, recorded as a separate NYMA top-up bonus.",
       "zh": "使用 NYMA 付款：先在“积分与充值”页获取报价，然后在 {0} 分钟内，从你关联的钱包在 Robinhood Chain 上将报价中的 NYMA 发送到同一付款地址。报价兑换率取当前兑换率与其在 Robinhood Chain 上 {1} 分钟均值中的较低者，另加 {2}% 的奖励积分，作为单独的 NYMA 充值奖励记录。"
+    },
+    {
+      "en": "Both replies ≈{0} credits",
+      "zh": "两个回复约 {0} 积分"
+    },
+    {
+      "en": "{0} credits for both",
+      "zh": "两个共 {0} 积分"
+    },
+    {
+      "en": "You picked {0}:",
+      "zh": "你选择了 {0}："
+    },
+    {
+      "en": "{0} wins",
+      "zh": "{0} 胜"
+    },
+    {
+      "en": "{0} ties",
+      "zh": "{0} 平"
+    },
+    {
+      "en": "{0} losses",
+      "zh": "{0} 负"
+    },
+    {
+      "en": "Delete all {0} votes? Saved chats keep their reveals.",
+      "zh": "删除全部 {0} 票？已保存的会话会保留其揭晓结果。"
+    },
+    {
+      "en": "Blind is off. Your next message goes to {0}.",
+      "zh": "盲测已关闭。你的下一条消息将发送给 {0}。"
+    },
+    {
+      "en": "Took {0}",
+      "zh": "用时 {0}"
     }
   ]
 }

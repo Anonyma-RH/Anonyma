@@ -7,6 +7,12 @@ import { historyLimit, withStanding } from "./scrolls.js";
 import { fitDocuments, composeMessageWithDocuments } from "./documents.js";
 import { veil } from "./veil.js";
 import { factsToSend } from "./memory.js";
+import { historyText } from "./blind.js";
+
+// A Blind Compare turn goes on as the reply the person picked (see
+// chosenSide in src/blind.js), never both answers or the reveal.
+const asHistory = (m) =>
+  m?.blind ? { role: "assistant", content: historyText(m.blind) } : m;
 
 // The reply budget Send asks for; the estimate quotes the same one.
 export const REPLY_BUDGET = 4096;
@@ -32,17 +38,15 @@ export function buildChatRequest({
   // delimited blocks after the typed prompt; see src/documents.js.
   const budgeted = documents.length ? fitDocuments(text, documents).documents : [];
   const content = budgeted.length ? composeMessageWithDocuments(text, budgeted) : text;
-  const rawNext = [
-    ...messages,
-    { role: "user", content, images: attachments.map((a) => a.url) },
-  ];
+  const asked = { role: "user", content, images: attachments.map((a) => a.url) };
+  const rawNext = [...messages.map(asHistory), asked];
   // Standing instructions (Scrolls) lead the request as a system message in
   // one of the context slots (see historyLimit).
   let standing = instructions || "";
   const history = preserveHistory ? rawNext.length : historyLimit(standing);
   if (!veilWith)
     return {
-      next: rawNext,
+      next: [...messages, asked],
       request: withStanding(standing, rawNext.slice(-history).map(toRequestMessage)),
       memory: memoryFacts ? factsToSend(memoryFacts) : null,
       masked: 0,

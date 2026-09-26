@@ -35,6 +35,7 @@ import { projectRoutes } from "./routes/projects.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
+import { blindRoutes } from "./routes/blind.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { sealedRoutes } from "./routes/sealed.js";
@@ -121,6 +122,9 @@ export function createApp(overrides = {}) {
   // Bookmarks: stars on saved messages (after conversations, whose access
   // rules it uses).
   bookmarkRoutes(ctx);
+  // Blind Compare: two chat replies through runChat, and the account's
+  // votes (after projects, which a saved round can be filed in).
+  blindRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

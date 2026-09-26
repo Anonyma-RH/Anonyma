@@ -904,6 +904,20 @@ export const MIGRATIONS = [
         log_index INTEGER NOT NULL,deposit_id TEXT NOT NULL REFERENCES deposits(id),
         PRIMARY KEY(chain,tx_hash,log_index));
   `),
+  // Blind Compare (server/routes/blind.js): one vote per compared round, for
+  // the account's own rankings. Only the two model ids (in the order shown,
+  // A then B), the outcome and the date: never a prompt, a reply or the chat
+  // it came from. The round's id makes a second vote on it a no-op. Erased
+  // with the account's content (closure, Panic Wipe); the newest 5,000 kept.
+  additive(`
+      CREATE TABLE IF NOT EXISTS blind_votes(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        model_a TEXT NOT NULL,model_b TEXT NOT NULL,
+        outcome TEXT NOT NULL CHECK(outcome IN ('a','b','tie','bad')),
+        created INTEGER NOT NULL,
+        CHECK(model_a<>model_b));
+      CREATE INDEX IF NOT EXISTS blind_votes_user ON blind_votes(user_id,created);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

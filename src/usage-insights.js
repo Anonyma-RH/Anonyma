@@ -13,6 +13,7 @@ export const FEATURE_LABELS = {
   web_search: "Web search",
   symposium: "Symposium",
   double_check: "Double-check",
+  blind: "Blind Compare",
   image: "Images",
   video: "Video",
   speech: "Text to speech",

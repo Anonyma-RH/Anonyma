@@ -100,6 +100,29 @@ import { CleanImageChip } from "./CleanUploads.jsx";
 import { IMAGE_TYPES, IMAGE_LIMIT, HEIC_LIMIT, isHeicFile, withKeep } from "./clean-notes.js";
 import { parseDocumentBlocks } from "./documents.js";
 import Symposium from "./Symposium.jsx";
+import {
+  BlindToggle,
+  BlindBar,
+  BlindTurn,
+  BlindRankings,
+  BlindEstimate,
+  useBlindEstimate,
+  blindReleased,
+} from "./Blind.jsx";
+import {
+  blindPool,
+  surprisePair,
+  defaultPair,
+  validPair,
+  pairInPool,
+  pendingBlind,
+  applyBlindEvent,
+  blindText,
+  canVote,
+  revealTurn,
+  closeTurn,
+  secureRandom,
+} from "./blind.js";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
 import { MemoryPanel, MemoryUsedNote, useMemory } from "./Memory.jsx";
 import { ShareDialog, sealedShareLive } from "./ShareLinks.jsx";
@@ -355,6 +378,13 @@ export default function Workspace() {
     // as ciphertext, never saved on the server (see src/SealedMode.jsx).
     [sealed, setSealed] = useState(false),
     [sealedModelId, setSealedModelId] = useState(""),
+    // Blind Compare: on or off, the two models (or a surprise pair), Your
+    // rankings, and the turn whose vote is being sent.
+    [blindOn, setBlindOn] = useState(false),
+    [blindPair, setBlindPair] = useState([]),
+    [blindSurprise, setBlindSurprise] = useState(false),
+    [blindRankings, setBlindRankings] = useState(false),
+    [blindVoting, setBlindVoting] = useState(null),
     [voiceOpen, setVoiceOpen] = useState(false),
     [readAloud, setReadAloud] = useState(null),
     // Double-check This: the index of the answer whose second-opinion panel is open.
@@ -462,6 +492,10 @@ export default function Workspace() {
   // sealed, and nothing in it is sent anywhere unsealed.
   const sealedThread = messages.some((x) => x.sealed);
   const uncensoredIds = config?.releases?.uncensoredModels || [];
+  // Blind Compare (src/Blind.jsx): chat, code and Uncensored, signed in,
+  // never in the demo, a shared chat or Sealed Mode.
+  const blindLive = !demo && !!user && blindReleased(config) && textMode;
+  const blindActive = blindLive && blindOn && !sealedOn && !sealedThread && !shared;
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
   // Private mode narrows the text modes further, to private, callable models
   // in the current section.
@@ -570,6 +604,8 @@ export default function Workspace() {
     ? ""
     : sealedOn || sealedThread
       ? "Sealed Mode: memory isn't used or saved in this chat."
+      : blindActive
+      ? "Blind: memory isn't used when two models answer."
       : privateMode
       ? "Private Mode: memory isn't used or saved in this chat."
       : ephemeral
@@ -622,6 +658,16 @@ export default function Workspace() {
     instructions: sentInstructions,
   }).request);
   const finderModels = needsVision ? visibleModels.filter((m) => m.vision) : visibleModels;
+  // Blind Compare's models here: this section's, private ones in Private
+  // Mode, and ones that read images when the chat has some.
+  const blindModels = blindPool(models, {
+    mode,
+    privateMode,
+    needsVision,
+    uncensored: uncensoredIds,
+  });
+  const blindPoolKey = blindModels.map((m) => m.id).join(" ");
+  const blindTargets = blindPair.map((id) => models.find((m) => m.id === id)).filter(Boolean);
   const finderOpts = useMemo(
     () => ({ mode, privateMode: textMode && privateMode, needsVision, avoidTraining: trainingLive && !privateMode, demo }),
     [mode, textMode, privateMode, needsVision, trainingLive, demo],
@@ -712,7 +758,15 @@ export default function Workspace() {
     vaultSavedRef.current = "";
     setVaultChatId(null);
     setProjectId(null);
+    setBlindOn(false);
   }, [mode, demo]);
+  // Blind Compare: keep the pair to models still offered here (Private Mode,
+  // images in the chat and the section all narrow it).
+  useEffect(() => {
+    if (!blindActive || pairInPool(blindPair, blindModels)) return;
+    setBlindPair(defaultPair(blindModels, selected));
+    setBlindSurprise(false);
+  }, [blindActive, blindPoolKey]);
   // Share-to-ANONYMA: prefill the composer from a share_target request
   // (public/manifest.webmanifest) and drop the params from the URL. Runs
   // after the reset above so a shared prompt survives it.
@@ -1147,6 +1201,7 @@ export default function Workspace() {
     if (next) {
       setPrivateMode(false);
       setWebSearch(false);
+      setBlindOn(false);
       setVoiceOpen(false);
       setAttachments([]);
       setDeviceOnly(vaultLive && vault.unlocked);
@@ -1272,7 +1327,7 @@ export default function Workspace() {
     setAttachments((prev) => [...prev, ...prepared.filter((p) => !p.error)]);
   }
   // "@model-id your message" sends that one message to another chat model.
-  const mentionQuery = textMode && !sealedOn
+  const mentionQuery = textMode && !sealedOn && !blindActive
     ? prompt.match(/^@([^\s]*)$/)?.[1]
     : undefined;
   const mentionMatches =
@@ -1283,7 +1338,7 @@ export default function Workspace() {
             (m.id + " " + m.name).toLowerCase().includes(mentionQuery.toLowerCase()),
           )
           .slice(0, 6);
-  const mention = textMode && !sealedOn
+  const mention = textMode && !sealedOn && !blindActive
     ? prompt.trim().match(/^@(\S+)\s+([\s\S]+)$/)
     : null;
   const mentioned = mention
@@ -1458,6 +1513,8 @@ export default function Workspace() {
     !!target?.callable &&
     !!config?.services?.generation &&
     !(privateMode && !target?.private) &&
+    // Blind quotes both of its models instead (below).
+    !blindActive &&
     // Sealed Mode never posts a prompt for an estimate (it would go unsealed).
     !sealedOn;
   const estimateBody = useMemo(
@@ -1467,6 +1524,35 @@ export default function Workspace() {
       sentInstructions, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive, memoryFacts, mode],
   );
   const estimate = useCreditEstimate(estimateBody);
+  // Blind Compare: each reply's budget fits both models, and the estimate
+  // beside Send is the same request quoted on both, added up.
+  const blindBudget =
+    longAnswersLive && blindTargets.length === 2
+      ? Math.min(...blindTargets.map((m) => replyBudgetFor(m, replyBudget)))
+      : REPLY_BUDGET;
+  const blindReady = blindActive && validPair(blindPair, blindModels);
+  const blindEstimateBody = useMemo(() => {
+    if (!blindReady || seedHit || busy || branching || !sendText || !config?.services?.generation)
+      return null;
+    const veiling = veilOn && isReleased(config, "veil");
+    const { request } = buildChatRequest({
+      messages,
+      text: sendText,
+      attachments,
+      documents,
+      instructions: sentInstructions,
+      preserveHistory: longAnswersLive,
+      veilWith: veiling
+        ? { state: cloneVeilState(veilStateRef.current), words: veilWords }
+        : null,
+    });
+    return { models: blindPair, messages: request, max_tokens: blindBudget };
+  }, [blindReady, seedHit, busy, branching, sendText, messages, attachments, documents,
+    sentInstructions, veilOn, veilWords, longAnswersLive, blindPair.join(" "), blindBudget, config]);
+  const blindEstimate = useBlindEstimate(blindEstimateBody);
+  // The last turn is a comparison still waiting for its vote: the thread
+  // goes on once the person has picked (or called it a tie or both bad).
+  const blindAwaiting = blindLive && canVote(messages.at(-1)?.blind);
   // Cost Compare: from the estimate chip, the same request priced on other
   // models from the picker's pool. Not for an @mention, whose model isn't
   // the chat's to switch.
@@ -1504,6 +1590,13 @@ export default function Workspace() {
       setError("This chat was sealed. Turn on Sealed Mode to continue it, or start a new chat.");
       return;
     }
+    // Blind Compare: the thread goes on once the last comparison is voted
+    // on, and a new message with Blind on goes to both models.
+    if (!redo && blindAwaiting) {
+      setError("Vote on the replies above to continue.");
+      return;
+    }
+    if (blindActive && !redo) return sendBlind(allowSeedPhrase);
     const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
     const effectiveModel = redo ? redoModel || selected : target;
     const requestVision = redo
@@ -1902,6 +1995,200 @@ export default function Workspace() {
         // A chat just filed in a project changes its counts.
         if (project && !ephemeral) projects.reload();
       }
+    }
+  }
+  // Blind Compare's send (server/routes/blind.js): the request is built as
+  // any chat's is (documents, standing and project instructions, Veil), then
+  // goes to both models at once. The server picks the order and keeps the
+  // names and each reply's cost to itself until the vote. Memory and web
+  // search aren't used; off the record, Private Mode and projects apply.
+  async function sendBlind(allowSeedPhrase) {
+    if (!config?.services?.generation) {
+      setError("This model is not currently available for generation.");
+      return;
+    }
+    if (!validPair(blindPair, blindModels)) {
+      setError("Choose two different models to compare.");
+      return;
+    }
+    if (deviceOnly && !vault.unlocked) {
+      setError("Unlock Device Vault to keep chatting on this device only.");
+      return;
+    }
+    setError("");
+    setInfo("");
+    setReceipt(null);
+    setVeilNote(null);
+    // Each side has its own charge record; the round shows its total.
+    if (chatControlLive) {
+      charge.reset();
+      reading.reset();
+    }
+    setBusy(true);
+    controller.current = new AbortController();
+    const veiling = veilOn && isReleased(config, "veil");
+    const built = buildChatRequest({
+      messages,
+      text: sendText,
+      attachments,
+      documents,
+      instructions: sentInstructions,
+      preserveHistory: longAnswersLive,
+      veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
+    });
+    if (veiling) {
+      if (!deviceOnly) saveVeilState(veilKeyRef.current, veilStateRef.current);
+      if (built.masked)
+        setVeilNote({
+          count: built.masked,
+          entries: built.tags.map((tag) => ({ tag, value: veilStateRef.current.map[tag] })),
+        });
+    }
+    const before = { messages, prompt, attachments, documents };
+    setPrompt("");
+    setAttachments([]);
+    setDocuments([]);
+    const conversationId = current;
+    let liveId = conversationId,
+      messageId = null,
+      heard = false,
+      blind = pendingBlind();
+    const place = () =>
+      setMessages([
+        ...built.next,
+        {
+          role: "assistant",
+          content: blindText(blind),
+          blind,
+          ...(messageId ? { id: messageId } : {}),
+          ...(blind.credits != null ? { credits: blind.credits } : {}),
+        },
+      ]);
+    place();
+    try {
+      await streamChat(
+        {
+          models: blindPair,
+          messages: built.request,
+          ...(ephemeral ? { ephemeral: true } : { conversationId }),
+          mode,
+          max_tokens: blindBudget,
+          requestId: uid(),
+          ...(privateMode ? { private: true } : {}),
+          ...(trailLive ? { veil_masked: veiling ? built.masked : null } : {}),
+          ...(allowSeedPhrase ? { allow_seed_phrase: true } : {}),
+          ...(projectsLive ? projectRequestFields(project, { ephemeral, conversationId }) : {}),
+        },
+        (event) => {
+          heard = true;
+          if (event.error)
+            throw new ApiError(
+              event.error.message || "The stream ended with an error.",
+              200,
+              event.error.code,
+              event,
+            );
+          if (event.blind?.conversationId) liveId = event.blind.conversationId;
+          if (event.blind?.message_id) messageId = event.blind.message_id;
+          blind = applyBlindEvent(blind, event);
+          place();
+        },
+        controller.current.signal,
+        "/api/blind",
+      );
+      setCurrent(liveId);
+    } catch (err) {
+      setCurrent(liveId);
+      // Refused before either model started (out of credits, a spending
+      // limit, Seed Guard, a model that can't take it): nothing was charged,
+      // so the composer comes back as it was.
+      if (!heard && err?.status >= 400) {
+        setMessages(before.messages);
+        setPrompt(before.prompt);
+        setAttachments(before.attachments);
+        setDocuments(before.documents);
+      } else {
+        // Stopped or cut off: what arrived stays, with nothing to vote on.
+        const cut = (x) => ({ ...x, status: x.status === "streaming" ? "stopped" : x.status });
+        blind = { ...blind, pending: false, a: cut(blind.a), b: cut(blind.b) };
+        place();
+      }
+      setError(
+        err.name === "AbortError"
+          ? "Stopped. A reply that had started may be charged for what it used; check your activity."
+          : err.message,
+      );
+    } finally {
+      if (veilOn && liveId && liveId !== veilKeyRef.current) {
+        moveVeilState(veilKeyRef.current, liveId);
+        veilKeyRef.current = liveId;
+      }
+      setBusy(false);
+      refresh();
+      api("/api/conversations")
+        .then((r) => setAll(recentConversations(r.data)))
+        .catch(() => {});
+      if (project && !ephemeral) projects.reload();
+    }
+  }
+  // Vote, then reveal: the names, what each reply cost and how fast it was.
+  async function voteBlind(index, outcome) {
+    const m = messages[index];
+    if (!m?.blind?.token || blindVoting != null) return;
+    setBlindVoting(index);
+    setError("");
+    try {
+      const r = await api("/api/blind/votes", {
+        method: "POST",
+        body: { round: m.blind.token, outcome, ...(m.id ? { message_id: m.id } : {}) },
+      });
+      setMessages((prev) =>
+        prev.map((x, j) => (j === index && x.blind ? revealTurn(x, r.reveal) : x)),
+      );
+      if (!r.counted) setInfo("This comparison already had a vote. The first one stands.");
+    } catch (e) {
+      if (["blind_vote_closed", "blind_round_not_found"].includes(e.code))
+        setMessages((prev) => prev.map((x, j) => (j === index && x.blind ? closeTurn(x) : x)));
+      setError(e.message);
+    } finally {
+      setBlindVoting(null);
+    }
+  }
+  // After the reveal: go on with one model (Blind off), or keep comparing
+  // the same two in a fresh random order.
+  function continueWith(id) {
+    setBlindOn(false);
+    if (finderLive) chooseModel({ model: id });
+    else {
+      setModel(id);
+      setQuote(null);
+    }
+    setInfo(`Blind is off. Your next message goes to ${modelName(id)}.`);
+    promptBox.current?.focus();
+  }
+  function keepComparing(reveal) {
+    setBlindOn(true);
+    setWebSearch(false);
+    if (reveal?.a?.model && reveal?.b?.model) {
+      setBlindPair([reveal.a.model, reveal.b.model]);
+      setBlindSurprise(false);
+    }
+    promptBox.current?.focus();
+  }
+  function toggleBlind() {
+    if (blindOn) return setBlindOn(false);
+    setBlindOn(true);
+    setWebSearch(false);
+    if (!pairInPool(blindPair, blindModels)) {
+      setBlindPair(defaultPair(blindModels, selected));
+      setBlindSurprise(false);
+    }
+  }
+  function surpriseBlind() {
+    const pick = surprisePair(blindModels, selected, secureRandom);
+    if (pick) {
+      setBlindPair(pick);
+      setBlindSurprise(true);
     }
   }
   // Sealed Mode's send. The request is built as any chat's is (documents read
@@ -2744,12 +3031,29 @@ export default function Workspace() {
                                 : "You"
                               : "ANONYMA"}
                             {m.sample && <span>PREPARED EXAMPLE</span>}
+                            {m.blind && <span>BLIND COMPARE</span>}
                             {m.role === "assistant" && m.model && !m.sample && (
                               <span className="model-tag">
                                 {models.find((x) => x.id === m.model)?.name || m.model}
                               </span>
                             )}
                           </div>
+                          {m.blind ? (
+                            <BlindTurn
+                              blind={m.blind}
+                              last={i === messages.length - 1}
+                              busy={busy}
+                              voting={blindVoting != null || !blindLive}
+                              veilMap={veilStateRef.current.map}
+                              trailLive={trailLive}
+                              receiptsLive={isReleased(config, "receipts")}
+                              models={models}
+                              onVote={(outcome) => voteBlind(i, outcome)}
+                              onContinue={continueWith}
+                              onKeepComparing={() => keepComparing(m.blind.reveal)}
+                            />
+                          ) : (
+                          <>
                           {/* The typed text is user content, so it stays
                               untranslated; with documents attached only it is
                               fenced off, leaving the chips' labels to the
@@ -2809,6 +3113,8 @@ export default function Workspace() {
                               <p data-i18n="off">{m.reasoning}</p>
                             </details>
                           )}
+                          </>
+                          )}
                           {m.role === "assistant" && m.private && (
                             <PrivateReplyNote info={m.private} masked={m.masked} />
                           )}
@@ -2826,10 +3132,10 @@ export default function Workspace() {
                               receiptsLive={isReleased(config, "receipts")}
                             />
                           )}
-                          {m.role === "assistant" && m.content && (
+                          {m.role === "assistant" && m.content && !m.blind && (
                             <CopyButton text={m.content} />
                           )}
-                          {longAnswersLive && m.role === "assistant" && completionNotice(m) && (
+                          {longAnswersLive && m.role === "assistant" && !m.blind && completionNotice(m) && (
                             <div className="fine-print" role="status">
                               <p>{completionNotice(m)}</p>
                               {i === messages.length - 1 && !busy && (m.content || m.reasoning) && (
@@ -2842,7 +3148,7 @@ export default function Workspace() {
                             </div>
                           )}
                           {!demo && isReleased(config, "voice") && !sealedOn && !sealedThread &&
-                            m.role === "assistant" && m.content && !busy && (
+                            m.role === "assistant" && m.content && !m.blind && !busy && (
                             <button type="button" className="small-button"
                               onClick={() => setReadAloud(m.content)}>
                               Read aloud
@@ -2908,7 +3214,7 @@ export default function Workspace() {
                                 </button>
                               )}
                               {rememberButton(m)}
-                              {m.role === "assistant" && m.content && (
+                              {m.role === "assistant" && m.content && !m.blind && (
                                 <button type="button" onClick={() => rewind(i, "regenerate")}>
                                   Regenerate
                                 </button>
@@ -2939,6 +3245,7 @@ export default function Workspace() {
                           {doubleCheckLive &&
                             m.role === "assistant" &&
                             m.content &&
+                            !m.blind &&
                             m.model &&
                             !m.sample &&
                             !(busy && i === messages.length - 1) &&
@@ -3092,6 +3399,30 @@ export default function Workspace() {
                     }
                     onLeave={leaveProject}
                   />
+                )}
+                {blindActive && (
+                  <BlindBar
+                    pool={blindModels}
+                    pair={blindPair}
+                    surprise={blindSurprise}
+                    current={selected}
+                    busy={busy}
+                    waiting={blindAwaiting && !busy}
+                    onPick={(pair) => {
+                      setBlindPair(pair);
+                      setBlindSurprise(false);
+                    }}
+                    onSurprise={surpriseBlind}
+                    onChoose={() => setBlindSurprise(false)}
+                    onRankings={() => setBlindRankings(true)}
+                    notes={[
+                      privateMode ? "Private mode: zero-data-retention models only." : "",
+                      needsVision ? "Showing models that can read your images." : "",
+                    ].filter(Boolean)}
+                  />
+                )}
+                {blindAwaiting && !blindActive && !busy && (
+                  <Notice>Vote on the replies above to continue.</Notice>
                 )}
                 {sealedOn && (
                   <SealedPanel
@@ -3309,7 +3640,7 @@ export default function Workspace() {
                     }
                   >
                     <div>
-                      {sealedOn ? (
+                      {blindActive ? null : sealedOn ? (
                         <select
                           className="sealed-model"
                           aria-label="Sealed model"
@@ -3394,7 +3725,10 @@ export default function Workspace() {
                       )}
                       </>
                       )}
-                      {(mode === "image" || (selected?.vision && !sealedOn)) && (
+                      {(mode === "image" ||
+                        (blindActive
+                          ? blindTargets.length === 2 && blindTargets.every((m) => m.vision)
+                          : selected?.vision && !sealedOn)) && (
                         <label
                           className="attachment-control"
                           title="Add reference image"
@@ -3432,7 +3766,9 @@ export default function Workspace() {
                       )}
                       {["chat", "code"].includes(mode) &&
                         !sealedOn &&
-                        isReleased(config, "search") && (
+                        isReleased(config, "search") &&
+                        // Blind never searches the web.
+                        !blindActive && (
                         <button
                           type="button"
                           className={
@@ -3472,6 +3808,14 @@ export default function Workspace() {
                           active={privateMode}
                           onToggle={togglePrivateMode}
                           disabled={sealedOn}
+                        />
+                      )}
+                      {blindLive && !shared && (
+                        <BlindToggle
+                          active={blindActive}
+                          onToggle={toggleBlind}
+                          disabled={busy || sealedOn || sealedThread}
+                          reason={sealedOn || sealedThread ? "Blind isn't available in Sealed Mode" : undefined}
                         />
                       )}
                       {sealedAvailable && (
@@ -3628,8 +3972,12 @@ export default function Workspace() {
                       <span role="status">The mentioned model cannot read this conversation’s images. Choose a vision model.</span>
                     )}
                     <span className="send-cluster">
-                    {estimatesLive && textMode && <CreditEstimate state={estimate} />}
-                    {costCompareLive && (
+                    {blindActive ? (
+                      <BlindEstimate state={blindEstimate} />
+                    ) : (
+                      estimatesLive && textMode && <CreditEstimate state={estimate} />
+                    )}
+                    {costCompareLive && !blindActive && (
                       <CostCompare
                         base={compareBase}
                         mode={mode}
@@ -3670,7 +4018,9 @@ export default function Workspace() {
                         disabled={
                           !prompt.trim() ||
                           !!seedHit ||
-                          (finderLive && !selected && !sealedOn) ||
+                          (finderLive && !selected && !sealedOn && !blindActive) ||
+                          (blindActive && !validPair(blindPair, blindModels)) ||
+                          blindAwaiting ||
                           incompatibleMention ||
                           (privateMode && !privateModelsCallable.length) ||
                           // Sealed Mode sends only once the enclave is verified.
@@ -3684,7 +4034,7 @@ export default function Workspace() {
                     </span>
                   </div>
                   {/* Training Labels: under the model picker, never blocking Send. */}
-                  {trainingSelected && !sealedOn && (
+                  {trainingSelected && !sealedOn && !blindActive && (
                     <TrainingNotice
                       model={trainingSelected}
                       alternative={trainingAlternative}
@@ -3960,6 +4310,7 @@ export default function Workspace() {
           )}
         </Modal>
       )}
+      {blindRankings && blindLive && <BlindRankings onClose={() => setBlindRankings(false)} />}
       {scrollsPanel && (
         <ScrollsPanel
           scrolls={scrolls}

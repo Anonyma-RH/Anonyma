@@ -18,6 +18,7 @@ export const FEATURE_LABELS = {
   speech: "Text to speech",
   transcription: "Transcription",
   audio: "Audio",
+  sealed: "Sealed Mode",
   other: "Other",
 };
 export const SOURCE_LABELS = {

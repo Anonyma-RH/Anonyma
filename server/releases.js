@@ -616,6 +616,24 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "sealed",
+    title: "Sealed Mode",
+    tagline: "Encrypted in your browser. Readable only in the enclave.",
+    points: [
+      "Open-weight private models only, running inside a hardware-verified enclave",
+      "We relay only ciphertext, but still see metadata: model, time, size and tokens",
+      "You trust the open-source page code we serve to do the encrypting",
+    ],
+    // RELEASE PRECONDITION (docs/operations/sealed-mode.md): billing must be
+    // known before this ships. PPQ has to confirm that sealed requests may be
+    // relayed and either that the X-Tinfoil-Usage-Metrics trailer reaches us
+    // (SEALED_BILLING=trailer) or how its query history identifies a request
+    // (SEALED_BILLING=reconcile with SEALED_RECONCILE=true), and the private/*
+    // rates. Until SEALED_BILLING is set the routes refuse and the app hides
+    // the toggle, even with this flag on.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -745,6 +763,10 @@ export function featuresFor(req) {
   }
   // Bookmarks: stars on saved messages, with private notes.
   if (p === "/api/bookmarks" || p.startsWith("/api/bookmarks/")) return ["bookmarks"];
+  // Sealed Mode: the attestation passthrough, the ciphertext relay and a
+  // sealed request's billing. Nothing else is needed: a sealed chat is never
+  // stored, and its body is never read here.
+  if (p === "/api/sealed" || p.startsWith("/api/sealed/")) return ["sealed"];
   // Panic Wipe: the one route that erases an account's content at once.
   if (/^\/api\/account\/wipe\/?$/.test(p)) return ["wipe"];
   // Two-Step Sign-in's settings. The sign-in step itself, /api/auth/two-step,

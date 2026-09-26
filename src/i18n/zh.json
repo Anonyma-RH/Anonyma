@@ -795,7 +795,7 @@
     "of intelligence.": "智能类型。",
     "Off the record": "不留记录",
     "Off the record — this chat isn't saved. Leaving or reloading clears it.": "不留记录——此聊天不会保存。离开或重新加载页面后，聊天内容将被清除。",
-    "Off the record is on for this chat because Private mode is on": "此聊天已开启私密模式，因此不留记录",
+    "Off the record is on for this chat because Private mode is on": "此会话已开启隐私模式，因此不留记录",
     "Off the record, or gone on schedule.": "不留记录，或按计划消失。",
     "Off the record: nothing about this chat is saved": "不留记录：此聊天不会保存任何内容",
     "on": "上的",
@@ -2205,11 +2205,11 @@
     "Facts you choose. Context you control.": "你选择的事实，由你掌控的上下文。",
     "Off until you turn it on; you write every fact": "默认关闭，由你开启；每条事实都由你亲自写下",
     "Edit, pause or delete any fact, and see exactly what was sent": "可编辑、暂停或删除任意事实，并准确查看发送了什么",
-    "Never used off the record, in Private Mode or shared chats": "不记录模式、私密模式和共享会话中从不使用",
+    "Never used off the record, in Private Mode or shared chats": "在不留记录、隐私模式和共享会话中从不使用",
     "Deleting a fact stops future use. Copies in existing answers remain.": "删除事实后，今后将不再使用该事实。已有回答中的副本仍会保留。",
     "Use my memory in chats": "在对话中使用我的记忆",
     "Off until you switch it on. When on, the facts below go with each chat, code and Uncensored message, to whichever model you pick. Only what you write here is remembered: chats never add to memory on their own.": "默认关闭，由你开启。开启后，下面的事实会随每条对话、代码和无审查消息一起发送给你选择的模型。只有你在这里写下的内容才会被记住：对话本身从不自动写入记忆。",
-    "Never used or saved off the record, in Private Mode, in shared (collab) chats, in Symposium or Double-check, or over the API. With Veil on, facts are masked in your browser before they're sent.": "在不记录模式、私密模式、共享（协作）会话、Symposium 或再核对中以及通过 API 时，从不使用或保存记忆。开启 Veil 后，事实会在发送前于你的浏览器中被遮蔽。",
+    "Never used or saved off the record, in Private Mode, in shared (collab) chats, in Symposium or Double-check, or over the API. With Veil on, facts are masked in your browser before they're sent.": "在不留记录、隐私模式、共享（协作）会话、模型圆桌或再核对中，以及通过 API 时，从不使用或保存记忆。开启 Veil 后，记忆会在发送前于你的浏览器中被遮盖。",
     "Remember from this chat": "从这段对话中记住",
     "Add a fact": "添加一条事实",
     "e.g. I'm vegetarian. I prefer metric units. I write in British English.": "例如：我吃素。我偏好公制单位。我用英式英语写作。",
@@ -2229,8 +2229,8 @@
     "Sent as one system message after your standing instructions. With Veil on, detected details are replaced by tags first. Each reply lists the facts it was sent.": "作为一条系统消息，在你的常驻指令之后发送。开启 Veil 时，检测到的细节会先被替换为标签。每条回复都会列出随其发送的事实。",
     "Once memory is switched on, this is sent as one system message after your standing instructions. With Veil on, detected details are replaced by tags first. Each reply lists the facts it was sent.": "开启记忆后，这些内容会作为一条系统消息，在你的常驻指令之后发送。开启 Veil 时，检测到的细节会先被替换为标签。每条回复都会列出随其发送的事实。",
     "1 memory fact sent": "已发送 1 条记忆事实",
-    "Private Mode: memory isn't used or saved in this chat.": "私密模式：此对话中不使用也不保存记忆。",
-    "Off the record: memory isn't used or saved in this chat.": "不记录模式：此对话中不使用也不保存记忆。",
+    "Private Mode: memory isn't used or saved in this chat.": "隐私模式：此会话中不使用也不保存记忆。",
+    "Off the record: memory isn't used or saved in this chat.": "不留记录：此会话中不使用也不保存记忆。",
     "Shared chat: memory isn't used here, so other members never see your facts.": "共享会话：此处不使用记忆，其他成员永远看不到你的事实。",
     "Memory is used in chat, code and Uncensored.": "记忆用于对话、代码和无审查模式。",
     "Memory: facts you choose to share with every model": "记忆：你选择与每个模型分享的事实",
@@ -3114,7 +3114,7 @@
     "This sealed conversation couldn't be read. It may be damaged.": "无法读取这个密封会话，它可能已损坏。",
     "Private Mode chats are never stored on our servers, so they can't be shared by link, even from Device Vault.": "隐私模式的会话从不存储在我们的服务器上，因此无法通过链接分享，即使保存在本机保险库中也不行。",
     "A Device-only chat can only be shared as a sealed link.": "仅存本机的会话只能以密封链接分享。",
-    "Device-only chat": "仅存本机的会话",
+    "Device-only chat": "仅限设备的对话",
     "Sealed": "密封",
     "Its key is only in the link you copied.": "它的密钥只在你复制的链接中。",
     "SEALED LINK CREATED": "密封链接已创建",
@@ -3415,7 +3415,6 @@
     "Download Markdown": "下载 Markdown",
     "Download JSON": "下载 JSON",
     "Open print view": "打开打印视图",
-    "Device-only chat": "仅限设备的对话",
     "Private Mode chat": "隐私模式对话",
     "Off-the-record chat": "不留记录的对话",
     "Print view": "打印视图",
@@ -3483,7 +3482,61 @@
     "A note must be text.": "备注必须是文字。",
     "Your bookmarks and their notes, in every chat": "你在所有会话中的书签及其备注",
     "Bookmarks: which messages you starred and your private notes, up to 1,000 per account, visible only to you. A bookmark stores no copy of the message: it goes when you remove it, when its chat is deleted or auto-deleted, when you leave the collab it belongs to, and when you wipe or close your account.": "书签：你加了书签的消息以及你的私人备注，每个账户最多 1,000 个，只有你能看到。书签不会保存消息的副本：当你移除它、它所在的会话被删除或自动删除、你离开它所属的协作，或者你清除或注销账户时，书签都会随之删除。",
-    "The export also lists your bookmarks: each one’s message and conversation ids and your note. The messages themselves are already in the export.": "导出内容还会列出你的书签：每个书签对应的消息和会话 ID 以及你的备注。消息本身已包含在导出内容中。"
+    "The export also lists your bookmarks: each one’s message and conversation ids and your note. The messages themselves are already in the export.": "导出内容还会列出你的书签：每个书签对应的消息和会话 ID 以及你的备注。消息本身已包含在导出内容中。",
+    "Sealed Mode": "密封模式",
+    "Encrypted in your browser. Readable only in the enclave.": "在你的浏览器中加密，只有安全飞地能读取。",
+    "Open-weight private models only, running inside a hardware-verified enclave": "仅限开放权重的私密模型，运行在经硬件验证的安全飞地中",
+    "We relay only ciphertext, but still see metadata: model, time, size and tokens": "我们只中转密文，但仍能看到元数据：模型、时间、大小和 Token 数",
+    "You trust the open-source page code we serve to do the encrypting": "你需要信任我们提供的开源页面代码来完成加密",
+    "Sealed Mode encrypts your message in your browser to a hardware-verified enclave. ANONYMA only relays ciphertext.": "密封模式会在你的浏览器中加密消息，只有经硬件验证的安全飞地能解密。ANONYMA 只中转密文。",
+    "On open-weight private models, which run inside that enclave, neither ANONYMA nor our providers can read your prompt or reply.": "开放权重的私密模型就运行在该安全飞地中；使用这些模型时，ANONYMA 和我们的提供商都无法读取你的提示词或回复。",
+    "We still see metadata (model, time, size, tokens), and you're trusting the open-source page code we serve.": "我们仍能看到元数据（模型、时间、大小、Token 数），并且你需要信任我们提供的开源页面代码。",
+    "Sealed Mode: encrypted in your browser, readable only in the enclave": "密封模式：在你的浏览器中加密，只有安全飞地能读取",
+    "Enclave verified": "安全飞地已验证",
+    "Verification failed": "验证失败",
+    "Verifying the enclave…": "正在验证安全飞地……",
+    "No sealed models are available right now.": "目前没有可用的密封模型。",
+    "Verify again": "重新验证",
+    "Enclave measurement": "安全飞地度量值",
+    "Source": "源代码",
+    "Signed release, checked with Sigstore": "已签名的发布版本，已通过 Sigstore 校验",
+    "Hardware": "硬件",
+    "Report checked against AMD's roots in this browser": "已在此浏览器中对照 AMD 根证书校验报告",
+    "Verified": "验证时间",
+    "Unknown hardware": "未知硬件",
+    "What Sealed Mode turns off": "密封模式会关闭哪些功能",
+    "Memory is off: saved facts are added on our server, which only sees ciphertext.": "记忆已关闭：已保存的记忆需要在我们的服务器上添加，而服务器只能看到密文。",
+    "Web search is off: the search would run outside the enclave.": "联网搜索已关闭：搜索会在安全飞地之外进行。",
+    "Saved files are off: they're read on our server. Documents you attach are read in your browser and stay sealed.": "已保存的文件已关闭：它们需要在我们的服务器上读取。你附加的文档会在浏览器中读取，并保持密封。",
+    "Saving scrolls is off: it stores text on our server. Inserting your scrolls still works.": "保存卷轴已关闭：它会把文本存到我们的服务器上。插入已有卷轴仍然可用。",
+    "Double-check and Symposium are off: they send the chat to models outside the enclave.": "再核对和模型圆桌已关闭：它们会把对话发送给安全飞地之外的模型。",
+    "Voice and read aloud are off: audio is processed outside the enclave.": "语音和朗读已关闭：音频会在安全飞地之外处理。",
+    "The live estimate is off: it would send your prompt unsealed. The most it can cost is shown instead.": "实时估算已关闭：它会以未密封的形式发送你的提示词。这里改为显示最高可能费用。",
+    "Checking the charge…": "正在确认费用……",
+    "Charge not confirmed yet": "费用尚未确认",
+    "Nothing charged": "未扣费",
+    "Sealed model": "密封模型",
+    "Off the record is on for this chat because Sealed Mode is on": "此会话已开启密封模式，因此不留记录",
+    "Sealed Mode: memory isn't used or saved in this chat.": "密封模式：此会话中不使用也不保存记忆。",
+    "This chat was sealed. Turn on Sealed Mode to continue it, or start a new chat.": "此会话是密封的。请开启密封模式继续，或开始新会话。",
+    "Sealed models can't read images. Remove them to send.": "密封模型无法读取图片。请移除图片后再发送。",
+    "Stopped. A sealed request the provider accepted is charged for what it used.": "已停止。提供商已接受的密封请求将按实际用量扣费。",
+    "The enclave's attestation couldn't be fetched. Nothing was sent.": "无法获取安全飞地的远程证明。未发送任何内容。",
+    "The enclave failed verification. Nothing was sent.": "安全飞地未通过验证。未发送任何内容。",
+    "The enclave's code doesn't come from the expected repository. Nothing was sent.": "安全飞地的代码并非来自预期的代码仓库。未发送任何内容。",
+    "The enclave hasn't been verified recently. Nothing was sent.": "安全飞地最近未经验证。未发送任何内容。",
+    "The enclave couldn't be verified again. Nothing was sent.": "无法再次验证安全飞地。未发送任何内容。",
+    "The enclave's certificate couldn't be read. Nothing was sent.": "无法读取安全飞地的证书。未发送任何内容。",
+    "The enclave's certificate isn't valid yet. Nothing was sent.": "安全飞地的证书尚未生效。未发送任何内容。",
+    "The enclave's certificate has expired. Nothing was sent.": "安全飞地的证书已过期。未发送任何内容。",
+    "The enclave's attestation is older than the maximum age. Nothing was sent.": "安全飞地的远程证明已超过最长有效期。未发送任何内容。",
+    "Sealed Mode is unavailable right now.": "密封模式暂不可用。",
+    "Sealed Mode isn't available right now.": "密封模式目前不可用。",
+    "Sealed Mode works only with open-weight private models, which run inside the enclave.": "密封模式仅适用于在安全飞地中运行的开放权重私密模型。",
+    "This isn't a sealed request.": "这不是密封请求。",
+    "The private endpoint couldn't be reached. Nothing was charged.": "无法连接私有端点。未扣费。",
+    "The private endpoint's reply wasn't sealed, so it wasn't passed on. Your hold waits for reconciliation.": "私有端点的回复未经密封，因此没有转发。你的冻结积分将等待对账。",
+    "This enclave model isn't available right now, so nothing was sent or charged. Pick another sealed model.": "此安全飞地模型目前不可用，因此未发送任何内容，也未扣费。请选择其他密封模型。"
   },
   "patterns": [
     {
@@ -5389,6 +5442,34 @@
     {
       "en": "1 bookmark · up to {0}",
       "zh": "1 个书签 · 最多 {0} 个"
+    },
+    {
+      "en": "{0} credits held until the charge is confirmed",
+      "zh": "{0} 积分已冻结，待费用确认"
+    },
+    {
+      "en": "Sealed · decrypted only in the enclave · not saved on our servers · {0}",
+      "zh": "密封 · 仅在安全飞地中解密 · 不保存在我们的服务器上 · {0}"
+    },
+    {
+      "en": "This message holds up to {0} credits; you're charged for what it uses.",
+      "zh": "此消息最多冻结 {0} 积分；按实际用量扣费。"
+    },
+    {
+      "en": "This sealed request could cost up to {0} credits, more than the {1} a sealed request may hold. Start a new conversation or send less. Nothing was sent or charged.",
+      "zh": "此密封请求最多可能花费 {0} 积分，超过单个密封请求可冻结的 {1} 积分。请开始新对话或减少发送内容。未发送任何内容，也未扣费。"
+    },
+    {
+      "en": "The private endpoint is having trouble ({0}). Nothing was charged.",
+      "zh": "私有端点出现问题（{0}）。未扣费。"
+    },
+    {
+      "en": "The private endpoint rejected this sealed request ({0}). Nothing was charged.",
+      "zh": "私有端点拒绝了此密封请求（{0}）。未扣费。"
+    },
+    {
+      "en": "Model: {0}, {1} preset. Change model",
+      "zh": "模型：{0}，{1}预设。更改模型"
     }
   ]
 }

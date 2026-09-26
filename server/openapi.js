@@ -1582,6 +1582,41 @@ route("delete", "/api/projects/{id}/chats/{conversation}", "Take a chat out of a
   response: ref("Ok"),
   description: "The chat stays saved, in no project. 404 not_in_project when it isn't in this one.",
 });
+// Sealed Mode (update "sealed"; server/sealed.js). The body of a sealed chat
+// is EHBP ciphertext the server can't read: see docs/operations/sealed-mode.md.
+const sealedRequest = object({
+  requestId: string,
+  status: {
+    ...string,
+    enum: ["relaying", "settled", "released", "reconcile_pending"],
+    description: "settled: charged from the enclave's usage record or PPQ's query history. released: nothing was charged (the provider never accepted it). reconcile_pending: the hold is kept until PPQ's query history shows the charge.",
+  },
+  model: string,
+  held: number,
+  charged: { type: ["number", "null"] },
+  usage: { type: ["object", "null"], description: "Token counts, once settled" },
+  reason: { type: ["string", "null"] },
+  ciphertextBytes: integer,
+  responseBytes: integer,
+  created: integer,
+  finished: { type: ["integer", "null"] },
+});
+route("get", "/api/sealed/attestation", "The enclave's attestation bundle", {
+  query: [{ name: "fresh", in: "query", required: false, schema: string, description: "1 skips the relay's one-minute cache (after the enclave rotated its key)" }],
+  response: object({}),
+  description:
+    "PPQ's /private/attestation bundle as served (Tinfoil's router enclave: an AMD SEV-SNP report, the Sigstore bundle of its release, the VCEK and the enclave certificate binding its HPKE key). The browser verifies it itself; nothing here is trusted. 503 sealed_unavailable until Sealed Mode is released and SEALED_BILLING is set; 503 attestation_unavailable. 30 reads a minute.",
+});
+route("post", "/api/sealed/chat", "Relay a sealed chat request", {
+  body: { ...string, format: "binary", description: "EHBP ciphertext: a 4-byte big-endian length, then the HPKE-sealed chat request. Sent as application/json, as EHBP keeps the original type; never parsed. At most 1.5 MiB." },
+  stream: true,
+  description:
+    "Headers: Ehbp-Encapsulated-Key (64 hex), X-Private-Model (an open-weight private/* model with privacyLevel e2e; anything else is 400 sealed_model_required) and Idempotency-Key (the request id). The hold is the worst case at the model's catalog price (every ciphertext byte as an input token plus the sealed output cap), refused above SEALED_MAX_HOLD_USD with 413 sealed_hold_cap. The body goes to PPQ's private endpoint unchanged and the encrypted reply streams back unbuffered with its Ehbp-Response-Nonce. A 422 key-config problem passes through so the browser re-verifies; other refusals are released with no charge. Settled from the X-Tinfoil-Usage-Metrics trailer, or held as reconcile_pending until PPQ's query history shows the charge. 20 a minute.",
+});
+route("get", "/api/sealed/requests/{id}", "A sealed request's billing", {
+  response: sealedRequest,
+  description: "Metadata only: the relay never sees the prompt or reply. 404 for another account's request.",
+});
 paths["/s/{token}"].get.responses[200].content = { "text/html": { schema: string } };
 // Bookmarks (update "bookmarks").
 const bookmark = object({
@@ -2041,7 +2076,7 @@ route(
   "Download account JSON with explicit monetary units",
   {
     description:
-      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs), once Projects is released or while any exists, projects (each project's settings, the ids of the chats and Symposium runs filed in it, and its pinned files), and whether two-step sign-in is on (twoStep: { enabled }, once that update is live or while it's on; never its secret or recovery codes), and, once Bookmarks is released or while any exist, bookmarks (bookmarks: id, message_id, conversation_id, note, created and updated; the message text is already in its conversation). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
+      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs), once Projects is released or while any exists, projects (each project's settings, the ids of the chats and Symposium runs fiealed in it, anMod its pinned files), and whether two-step sign-in is on (twoStep: { enabled }, once that update is live or while it's obillin; never its secret org recovrds (sery coaledReques),ts: metand,ata once Bookmarks is released or while any exist, bookmarks (bookmarks: id, message_id, conversation_id, note, created and updated; the message text is already in its conversation). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
   },
 );
 route("delete", "/api/account", "Close account and forfeit unused credits", {

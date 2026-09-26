@@ -3,9 +3,12 @@ import { now, fail, transaction } from "../core.js";
 import { eraseAccountContent } from "./account.js";
 
 // A request still running on this account: one reserved on its own balance,
-// or a team-paid one it started on a collab's treasury.
+// or a team-paid one it started on a collab's treasury. A sealed request
+// waiting only for its charge (server/sealed.js) isn't running and holds no
+// content, so it never blocks a wipe.
 const IN_FLIGHT = `SELECT 1 FROM holds WHERE status='held' AND (user_id=?
-  OR id IN (SELECT hold_id FROM treasury_spends WHERE user_id=?)) LIMIT 1`;
+  OR id IN (SELECT hold_id FROM treasury_spends WHERE user_id=?))
+  AND id NOT IN (SELECT hold_id FROM sealed_requests WHERE status='reconcile_pending') LIMIT 1`;
 
 // Panic Wipe: one confirmed request erases everything the account has stored
 // except what the ledger and the data controls keep. It removes the same

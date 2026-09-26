@@ -24,7 +24,7 @@ import {
 // Background maintenance: due routines, video completion, payment status
 // checks, expired media and reservations, token holdings and table cleanup.
 export function createWorker(ctx) {
-  const { db, cfg, inflight, routines } = ctx;
+  const { db, cfg, inflight, routines, sealed } = ctx;
   const { mediaJSON, saveMedia, deleteMedia, assignCosts } = ctx.media;
   const workerController = new AbortController();
   let workerPromise = null;
@@ -33,7 +33,9 @@ export function createWorker(ctx) {
   function recoverExpiredHolds() {
     const expired = db
       .prepare(
-        "SELECT * FROM holds WHERE status='held' AND kind!='video' AND expires<?",
+        // A sealed hold is kept until its charge is known (server/sealed.js):
+        // reconciliation settles it, never expiry.
+        "SELECT * FROM holds WHERE status='held' AND kind NOT IN ('video','sealed') AND expires<?",
       )
       .all(now());
     for (const hold of expired) {
@@ -61,6 +63,9 @@ export function createWorker(ctx) {
       // Routines (server/routines.js): start the runs that are due. They go
       // on alongside the rest of maintenance rather than holding it up.
       routines?.startDue();
+      // Sealed Mode: settle held sealed requests from PPQ's query history
+      // (only with SEALED_RECONCILE on), alongside the rest.
+      sealed?.tick();
       const jobs = db
         .prepare(
           "SELECT * FROM videos WHERE status IN ('pending','processing') ORDER BY updated ASC,created ASC LIMIT 20",

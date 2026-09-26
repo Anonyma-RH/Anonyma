@@ -849,6 +849,7 @@ const featureIcons = {
   costcompare: "coins",
   chatexport: "download",
   bookmarks: "star",
+  sealed: "lock",
 };
 const launch = {
   id: "mvp",

@@ -145,8 +145,40 @@ export function config(overrides = {}) {
       .split(",")
       .map((v) => v.trim())
       .filter(Boolean),
+    // Sealed Mode (server/sealed.js). How a sealed request's charge is known:
+    // "trailer" settles from Tinfoil's X-Tinfoil-Usage-Metrics trailer,
+    // "reconcile" from PPQ's query history. Unset, Sealed Mode stays off:
+    // it must never run with unknown billing.
+    sealedBilling: (e.SEALED_BILLING || "").trim().toLowerCase(),
+    // Settles held sealed requests from PPQ's /queries/history (required for
+    // "reconcile", and the fallback for a missing trailer).
+    sealedReconcile: e.SEALED_RECONCILE === "true",
+    // PPQ's private endpoint and the key sealed requests are billed to. A
+    // dedicated key keeps its query history to sealed requests alone.
+    sealedGateway: e.SEALED_GATEWAY_BASE_URL || e.GATEWAY_BASE_URL || "https://api.ppq.ai",
+    sealedGatewayKey: e.SEALED_GATEWAY_API_KEY || e.GATEWAY_API_KEY || "",
+    // The reply budget a sealed request is held for (and asks for), and the
+    // most one sealed request may hold, in USD.
+    sealedMaxOutputTokens: Number(e.SEALED_MAX_OUTPUT_TOKENS ?? 8192),
+    sealedMaxHoldUsd: Number(e.SEALED_MAX_HOLD_USD ?? 2),
     ...overrides,
   };
+  if (!["", "trailer", "reconcile"].includes(cfg.sealedBilling))
+    throw Error("SEALED_BILLING must be trailer or reconcile (or unset to keep Sealed Mode off).");
+  if (cfg.sealedBilling === "reconcile" && !cfg.sealedReconcile)
+    throw Error("SEALED_BILLING=reconcile needs SEALED_RECONCILE=true.");
+  if (
+    !Number.isInteger(cfg.sealedMaxOutputTokens) ||
+    cfg.sealedMaxOutputTokens < 256 ||
+    cfg.sealedMaxOutputTokens > 32768
+  )
+    throw Error("SEALED_MAX_OUTPUT_TOKENS must be a whole number from 256 to 32768.");
+  if (
+    !Number.isFinite(cfg.sealedMaxHoldUsd) ||
+    cfg.sealedMaxHoldUsd <= 0 ||
+    cfg.sealedMaxHoldUsd > 50
+  )
+    throw Error("SEALED_MAX_HOLD_USD must be more than 0 and at most 50.");
   if (!(cfg.released instanceof Set))
     cfg.released = parseReleased(cfg.released);
   if (!Number.isSafeInteger(cfg.serverInstances) || cfg.serverInstances < 1)
@@ -183,6 +215,7 @@ export function config(overrides = {}) {
     "rpc",
     "gateway2",
     "walletPaymentRpc",
+    "sealedGateway",
   ]) {
     if (!cfg[field] && ["publicUrl", "rpc", "gateway2"].includes(field))
       continue;
@@ -797,6 +830,23 @@ export const MIGRATIONS = [
             (SELECT m.id FROM messages m JOIN conversations c ON c.id=m.conversation_id
              WHERE c.collab_id=OLD.collab_id);
         END;
+  `),
+  // Sealed Mode (server/sealed.js): the relay's billing record of each sealed
+  // request, keyed by its hold. Metadata only (model, sizes, times, tokens,
+  // charge): the relay never sees the prompt or reply and stores no body.
+  // factor is the account's rate when the hold was placed. reconcile_ref is
+  // the PPQ query-history row a held request was settled from, unique so one
+  // row can never settle two requests.
+  additive(`
+      CREATE TABLE IF NOT EXISTS sealed_requests(hold_id TEXT PRIMARY KEY REFERENCES holds(id),
+        user_id TEXT NOT NULL REFERENCES users(id),request_id TEXT NOT NULL,model TEXT NOT NULL,
+        ciphertext_bytes INTEGER NOT NULL,response_bytes INTEGER NOT NULL DEFAULT 0,
+        input_bound INTEGER NOT NULL,output_cap INTEGER NOT NULL,factor REAL NOT NULL,held INTEGER NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('relaying','settled','released','reconcile_pending')),
+        reason TEXT,usage TEXT,charged INTEGER,reconcile_ref TEXT UNIQUE,
+        created INTEGER NOT NULL,accepted INTEGER,finished INTEGER,settled INTEGER);
+      CREATE INDEX IF NOT EXISTS sealed_requests_status ON sealed_requests(status,created);
+      CREATE INDEX IF NOT EXISTS sealed_requests_user ON sealed_requests(user_id,created);
   `),
 ];
 // The schema versions whose migrations were recorded as additive.

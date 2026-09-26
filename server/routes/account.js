@@ -7,6 +7,7 @@ import { exportProjects } from "./projects.js";
 import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
 import { isReleased } from "../releases.js";
+import { sealedView } from "../sealed.js";
 import {
   uid,
   hash,
@@ -89,6 +90,11 @@ export function eraseAccountContent(db, user) {
   // Bookmarks and their notes, including those in other people's collabs.
   forgetBookmarks(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
+  // Sealed Mode's request records (metadata only). One still waiting for
+  // its charge stays until it's settled, like its hold and the ledger.
+  db.prepare(
+    "DELETE FROM sealed_requests WHERE user_id=? AND status IN ('settled','released')",
+  ).run(id);
 }
 
 // Ledger, API keys, support tickets, data export and account closure.
@@ -485,6 +491,12 @@ export function accountRoutes(ctx) {
       // any exist). The messages are already exported with their
       // conversations above, so their text isn't repeated here.
       ...bookmarksExport(req.user.id),
+      // Sealed Mode: each sealed request's billing record. The relay never
+      // saw the prompt or reply, so there is none to export.
+      sealedRequests: db
+        .prepare("SELECT * FROM sealed_requests WHERE user_id=? ORDER BY created,rowid")
+        .all(req.user.id)
+        .map((row) => sealedView(row)),
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {

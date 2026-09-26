@@ -1153,7 +1153,7 @@ route("get", "/api/s/{token}", "A shared conversation snapshot (public)", {
 });
 route("get", "/s/{token}", "The shared conversation page (public)", {
   auth: null,
-  description: "The web app's page for a share link, with the same headers and the same 404 as /api/s/{token}. Once Sealed Share is released, an open link's page names its title and message count for link previews; a sealed link's page names nothing.",
+  description: "The web app's page for a share link, with the same headers and the same 404 as /api/s/{token}. The page is the same generic app shell for every link, sealed or not: link previews never show a snapshot's title or text.",
 });
 // Routines (update "routines").
 const routineSchedule = object(

@@ -280,12 +280,12 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
                     <Icon name="eye" size={14} />
                     <span>{SEALED_FACTS.who}</span>
                   </li>
-                  <li>
-                    <Icon name="eyeoff" size={14} />
-                    <span>{SEALED_FACTS.preview}</span>
-                  </li>
                 </>
               )}
+              <li>
+                <Icon name="eyeoff" size={14} />
+                <span>{SEALED_FACTS.preview}</span>
+              </li>
               <li>
                 <Icon name="check" size={14} />
                 <span>
@@ -353,8 +353,7 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
                         Sealed <em>Recommended</em>
                       </b>
                       <small>
-                        Encrypted in your browser. ANONYMA can't read it, and
-                        there's no link preview.
+                        ANONYMA stores only ciphertext and can't read it.
                       </small>
                     </span>
                   </label>
@@ -371,8 +370,8 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
                         Unsealed
                       </b>
                       <small>
-                        ANONYMA stores a readable copy, so apps can show its
-                        title in a link preview.
+                        ANONYMA can read the snapshot, and it can show on the
+                        page without the key.
                       </small>
                     </span>
                   </label>
@@ -441,10 +440,6 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
                     <Icon name="key" size={14} />
                     <span>{SEALED_FACTS.lost}</span>
                   </li>
-                  <li>
-                    <Icon name="eyeoff" size={14} />
-                    <span>{SEALED_FACTS.preview}</span>
-                  </li>
                 </>
               ) : (
                 <li>
@@ -454,6 +449,11 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
                   </span>
                 </li>
               )}
+              {/* Generic for every link, sealed or not. */}
+              <li>
+                <Icon name="eyeoff" size={14} />
+                <span>{SEALED_FACTS.preview}</span>
+              </li>
             </ul>
             {sealed && !device && (
               <p className="fine-print">

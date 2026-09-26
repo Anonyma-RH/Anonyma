@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { uid, now, fail, transaction } from "../core.js";
 import { isReleased } from "../releases.js";
@@ -375,50 +375,15 @@ export function shareRoutes(ctx) {
   });
 
   // The shared page itself: the web app, with the same headers, and the
-  // same 404 for every link that isn't live. Once Sealed Share is released,
-  // an open (unsealed) link's page carries its title for link previews; a
-  // sealed one carries nothing about what's inside.
+  // same 404 for every link that isn't live. The page is the same generic
+  // app shell for every link, sealed or not: nothing from a snapshot (not
+  // even its title) goes into what link previews read.
   app.get("/s/:token", viewLimit, (req, res) => {
     privatePage(res);
-    const s = published(req.params.token);
-    const status = s ? 200 : 404;
+    const status = published(req.params.token) ? 200 : 404;
     const index = resolve("dist/client/index.html");
-    if (!existsSync(index)) return res.status(status).end();
-    if (s && !s.sealed && sealedLive())
-      return res
-        .status(200)
-        .type("html")
-        .send(withPreview(readFileSync(index, "utf8"), s));
-    res.status(status).sendFile("index.html", { root: resolve("dist/client") });
+    if (existsSync(index))
+      res.status(status).sendFile("index.html", { root: resolve("dist/client") });
+    else res.status(status).end();
   });
-}
-
-// An open link's page with its title and message count in the tags link
-// previews read. Nothing else from the snapshot.
-const escapeHtml = (text) =>
-  String(text).replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
-  );
-export function withPreview(html, share) {
-  const title = escapeHtml(share.title);
-  const description = escapeHtml(
-    share.message_count === 1
-      ? "A read-only snapshot of 1 message, shared from ANONYMA."
-      : `A read-only snapshot of ${share.message_count} messages, shared from ANONYMA.`,
-  );
-  const tags =
-    `<meta property="og:type" content="website"/>` +
-    `<meta property="og:site_name" content="ANONYMA"/>` +
-    `<meta property="og:title" content="${title}"/>` +
-    `<meta property="og:description" content="${description}"/>` +
-    `<meta name="twitter:card" content="summary"/>` +
-    `<meta name="robots" content="noindex, nofollow"/>`;
-  return html
-    .replace(/<title>[^<]*<\/title>/, () => `<title>${title} · ANONYMA</title>`)
-    .replace(
-      /<meta name="description" content="[^"]*"\s*\/?>/,
-      () => `<meta name="description" content="${description}"/>`,
-    )
-    .replace("</head>", () => tags + "</head>");
 }

@@ -241,6 +241,8 @@ export const sealedLink = (url, key) => url + "#k=" + key;
 export const SEALED_FACTS = {
   who: "Anyone with the full link can read it. ANONYMA can't: the key never reaches our servers.",
   lost: "Lose the link and it can't be recovered.",
+  // Every share page, sealed or not, is the same generic page to a link
+  // preview (server/routes/shares.js).
   preview: "No link preview: apps you paste it into can't show what's inside.",
 };
 

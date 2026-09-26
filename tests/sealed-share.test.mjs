@@ -8,7 +8,6 @@ import { createApp } from "../server/app.js";
 import { uid } from "../server/core.js";
 import { UPDATES, featuresFor } from "../server/releases.js";
 import { openapiForConfig } from "../server/openapi.js";
-import { withPreview } from "../server/routes/shares.js";
 import { compileDictionary, translateText } from "../src/i18n.js";
 import {
   MAX_SEALED_BYTES,
@@ -301,7 +300,8 @@ test("a wrong, missing or damaged key never opens a sealed snapshot", async () =
   };
   // Someone else's key, a key one character off, a missing or short key.
   assert.equal(await code(() => openSnapshot(a.ciphertext, b.key)), "wrong_key");
-  const off = a.key.slice(0, -1) + (a.key.endsWith("A") ? "B" : "A");
+  // (The first character: the last one's two low bits are base64 padding.)
+  const off = (a.key.startsWith("A") ? "B" : "A") + a.key.slice(1);
   assert.equal(await code(() => openSnapshot(a.ciphertext, off)), "wrong_key");
   for (const k of [undefined, "", "short", a.key + "x", a.key.slice(0, 42) + "="])
     assert.equal(await code(() => openSnapshot(a.ciphertext, k)), "no_key", String(k));
@@ -566,20 +566,35 @@ test("a Device-only snapshot follows the same rules: tags stay tags, attachments
   assert.deepEqual(snapshotMessage(rows[2]), { role: "user", text: "Email [EMAIL_1] about it", withheld: 1 });
 });
 
-test("once released, an open link's page carries a link preview; a sealed one's never does", () => {
-  const html =
-    '<!doctype html><html><head><meta name="description" content="Site"/><title>ANONYMA — Site</title></head><body></body></html>';
-  const out = withPreview(html, { title: 'Trip <script>"x"</script> & more', message_count: 4 });
-  assert.match(out, /<title>Trip &lt;script&gt;&quot;x&quot;&lt;\/script&gt; &amp; more · ANONYMA<\/title>/);
-  assert.match(out, /<meta property="og:title" content="Trip &lt;script&gt;/);
-  assert.match(out, /A read-only snapshot of 4 messages, shared from ANONYMA\./);
-  assert.match(out, /<meta name="robots" content="noindex, nofollow"\/>/);
-  assert.doesNotMatch(out, /<script>/);
-  assert.match(withPreview(html, { title: "$& $1", message_count: 1 }), /<title>\$&amp; \$1 · ANONYMA<\/title>/);
-  assert.match(withPreview(html, { title: "One", message_count: 1 }), /snapshot of 1 message,/);
-  // Only when Sealed Share is live, only for an open link.
+test("link previews stay generic for every share page, sealed or not", async (t) => {
+  const s = fixture(t);
+  const { agent } = await person(s, "previewer");
+  const conversation = await say(agent, "Preview secret Marrakesh 4412");
+  const open = (
+    await agent
+      .post("/api/shares")
+      .send({ conversationId: conversation, title: "Open title Tangier 7781" })
+      .expect(201)
+  ).body;
+  const { r: sealed } = await sealSaved(agent, conversation, { title: "Sealed title Fez 9034" });
+  assert.equal(sealed.status, 201);
+  const shell = existsSync("dist/client/index.html") ? readFileSync("dist/client/index.html", "utf8") : "";
+  for (const link of [open, sealed.body]) {
+    const p = await page(s, tokenOf(link)).expect(200);
+    assert.equal(p.headers["referrer-policy"], "no-referrer");
+    assert.equal(p.headers["x-robots-tag"], "noindex, nofollow");
+    // Exactly the app's own page: nothing from the snapshot, no preview tags.
+    assert.equal(p.text, shell);
+    for (const leak of ["Tangier", "Fez", "Marrakesh", "og:title", "og:description", "twitter:", "snapshot of"])
+      assert.ok(!p.text.includes(leak), leak);
+  }
   const route = src("server/routes/shares.js");
-  assert.match(route, /if \(s && !s\.sealed && sealedLive\(\)\)/);
+  assert.doesNotMatch(route, /og:|twitter:|withPreview|readFileSync/);
+  // The copy promises no preview to either kind.
+  const dialog = src("src/ShareLinks.jsx").replace(/\s+/g, " ");
+  assert.match(dialog, /ANONYMA stores only ciphertext and can't read it\./);
+  assert.match(dialog, /ANONYMA can read the snapshot, and it can show on the page without the key\./);
+  assert.doesNotMatch(dialog, /show its title in a link preview/);
 });
 
 test("the copy is honest, and every visible line has Chinese", () => {
@@ -600,9 +615,9 @@ test("the copy is honest, and every visible line has Chinese", () => {
     "Sharing it copies it out: an encrypted copy is stored on our servers until the link expires or you revoke it. Device-only chats can only be shared sealed.",
     "How it's shared",
     "Recommended",
-    "Encrypted in your browser. ANONYMA can't read it, and there's no link preview.",
+    "ANONYMA stores only ciphertext and can't read it.",
     "Unsealed",
-    "ANONYMA stores a readable copy, so apps can show its title in a link preview.",
+    "ANONYMA can read the snapshot, and it can show on the page without the key.",
     "The chat itself stays saved in your account as before; only the copy behind the link is sealed.",
     "Sealing…",
     "Seal and create link",

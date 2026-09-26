@@ -553,7 +553,7 @@ export const UPDATES = [
     ],
     // Pinning files needs Files & Reusable Uploads, and a default privacy
     // mode needs the update behind it (PRIVACY_FEATURES in src/projects.js).
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

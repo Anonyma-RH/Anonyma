@@ -646,6 +646,19 @@ export const UPDATES = [
     // Needs WALLET_PAYMENT_ADDRESS on chain 4663 (server/routes/nyma.js).
     released: true,
   },
+  {
+    id: "onchain",
+    title: "Onchain Explainer",
+    tagline: "Any transaction, in plain English.",
+    points: [
+      "Paste a transaction hash, an address or an explorer link",
+      "Exact chain facts first, then a plain-English explanation",
+      "Looked up by our server, so the explorer never sees you",
+    ],
+    // Read only: the lookup (/api/onchain/lookup) is free and never signs,
+    // sends or connects a wallet; the explanation is an ordinary chat.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -840,6 +853,8 @@ export function featuresFor(req) {
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
   // Pay with NYMA: the rate, quotes and claims.
   if (p === "/api/nyma" || p.startsWith("/api/nyma/")) return ["paynyma"];
+  // Onchain Explainer: the read-only chain lookup.
+  if (p === "/api/onchain" || p.startsWith("/api/onchain/")) return ["onchain"];
   if (
     p === "/api/account/wallet/unlink" ||
     p === "/api/account/holdings" ||

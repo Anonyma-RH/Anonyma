@@ -142,7 +142,9 @@ import { buildChatRequest, cloneVeilState, quoteBody, REPLY_BUDGET } from "./est
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
 import CostCompare from "./CostCompare.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
-import { scanSecrets } from "./seed-guard.js";
+import { scanSecrets, isSoft } from "./seed-guard.js";
+import { OnchainChip, MessageChainFacts, onchainReleased } from "./Onchain.jsx";
+import { detectOnchain, chainFactsDocument, isChainFactsDocument } from "./onchain.js";
 import ModelFinder from "./ModelFinder.jsx";
 import { STORAGE_KEY as MODEL_CHOICES, loadChoices, resolveChoice, withChoice, requestNeedsVision } from "./model-finder.js";
 import { useShareTargetPrefill } from "./share-target.js";
@@ -163,7 +165,7 @@ import {
   recentStoreKey,
   MODEL_MODES,
 } from "./command-palette.js";
-import { useLanguage, setLanguage } from "./i18n.js";
+import { useLanguage, setLanguage, getLanguage } from "./i18n.js";
 const initial = [
   {
     id: "welcome",
@@ -1441,6 +1443,54 @@ export default function Workspace() {
   );
   const seedHit = promptSeed || documentSeed || instructionsSeed;
   const editSeed = useSeedScan(seedLive, editing?.text || "");
+  // Onchain Explainer: a transaction hash, address or explorer link in the
+  // composer offers "Explain on-chain". Nothing leaves the browser until it's
+  // pressed; then the server looks it up (free, read only) and the facts go
+  // with the message as a Chain facts document, sent like any chat turn.
+  // Not in Sealed Mode, whose relay must never learn what's being asked.
+  const onchainLive =
+    !demo && !!user && onchainReleased(config) && textMode && !sealedOn && !sealedThread;
+  const onchainHit = useMemo(
+    () => (onchainLive ? detectOnchain(sendText) : null),
+    [onchainLive, sendText],
+  );
+  const onchainKey = onchainHit
+    ? `${onchainHit.kind}:${onchainHit.value}:${onchainHit.chain ?? ""}`
+    : null;
+  const [onchainChoice, setOnchainChoice] = useState("auto");
+  const [onchainLooking, setOnchainLooking] = useState(false);
+  const [onchainError, setOnchainError] = useState("");
+  const [onchainDismissed, setOnchainDismissed] = useState(null);
+  useEffect(() => {
+    setOnchainChoice(onchainHit?.chain ? String(onchainHit.chain) : "auto");
+    setOnchainError("");
+  }, [onchainKey]);
+  const onchainShown = onchainHit && onchainDismissed !== onchainKey ? onchainHit : null;
+  // A seed phrase or key still blocks; a bare 64-hex notice is answered by
+  // choosing to explain it as a transaction.
+  const onchainBlocked = !!seedHit && !isSoft(seedHit);
+  async function explainOnchain() {
+    const hit = onchainShown;
+    if (!hit || busy || onchainLooking || onchainBlocked) return;
+    setOnchainLooking(true);
+    setOnchainError("");
+    let facts;
+    try {
+      const chain = onchainChoice === "auto" ? "auto" : Number(onchainChoice);
+      facts = (
+        await api("/api/onchain/lookup", {
+          method: "POST",
+          body: { kind: hit.kind, value: hit.value, chain },
+        })
+      ).facts;
+    } catch (err) {
+      setOnchainError(err.message);
+      return;
+    } finally {
+      setOnchainLooking(false);
+    }
+    await send(null, null, { allowSeed: !!seedHit, chainFacts: facts });
+  }
   // Credit Estimates: a live estimate beside Send in chat, code and
   // Uncensored, whenever Send would go through. Image, video and Symposium
   // keep their own explicit pricing.
@@ -1476,7 +1526,7 @@ export default function Workspace() {
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
   // history before it and the conversation to add to, instead of the composer.
   // `allowSeed` is Seed Guard's confirmed "Send anyway".
-  async function send(e, redo = null, { allowSeed = false } = {}) {
+  async function send(e, redo = null, { allowSeed = false, chainFacts = null } = {}) {
     e?.preventDefault?.();
     if (!(redo ? redo.content.trim() : prompt.trim()) || busy || (!redo && branchFlight.current?.pending)) return;
     // Seed Guard: a new or edited message waits for "Send anyway" (the notice
@@ -1713,7 +1763,13 @@ export default function Workspace() {
       messages: redo ? redo.base : messages,
       text,
       attachments: redo ? (redo.images || []).map((url) => ({ url })) : attachments,
-      documents: redo ? [] : documents,
+      // Onchain Explainer's facts lead the attached documents, so the
+      // budget never trims them.
+      documents: redo
+        ? []
+        : chainFacts
+          ? [chainFactsDocument(chainFacts, { lang: getLanguage() }), ...documents]
+          : documents,
       instructions: sentInstructions,
       preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
@@ -2695,6 +2751,13 @@ export default function Workspace() {
                           ? parseDocumentBlocks(m.content)
                           : { text: m.content, documents: [] };
                       const hasDocuments = parsed.documents.length > 0;
+                      // Onchain Explainer's facts are drawn as a card, not a chip.
+                      const chainDocs = onchainReleased(config)
+                        ? parsed.documents.filter(isChainFactsDocument)
+                        : [];
+                      const otherDocs = chainDocs.length
+                        ? parsed.documents.filter((d) => !chainDocs.includes(d))
+                        : parsed.documents;
                       const shown =
                         parsed.text || (hasDocuments ? "" : m.interrupted && chatControlLive ? "Reply interrupted. Check charge status below." : "Preparing…");
                       const body = (
@@ -2765,9 +2828,15 @@ export default function Workspace() {
                             ) : (
                               body
                             )}
-                            {hasDocuments && (
+                            {otherDocs.length > 0 && (
                               <MessageDocuments
-                                documents={parsed.documents}
+                                documents={otherDocs}
+                                veilMap={veilStateRef.current.map}
+                              />
+                            )}
+                            {chainDocs.length > 0 && (
+                              <MessageChainFacts
+                                documents={chainDocs}
                                 veilMap={veilStateRef.current.map}
                               />
                             )}
@@ -3147,8 +3216,21 @@ export default function Workspace() {
                 )}
                 <SeedGuardNotice
                   hit={seedHit}
-                  busy={busy}
+                  busy={busy || onchainLooking}
                   onProceed={() => send(null, null, { allowSeed: true })}
+                  onExplain={onchainShown?.kind === "transaction" ? explainOnchain : undefined}
+                />
+                <OnchainChip
+                  hit={onchainShown}
+                  choice={onchainChoice}
+                  setChoice={setOnchainChoice}
+                  onExplain={explainOnchain}
+                  onDismiss={() => setOnchainDismissed(onchainKey)}
+                  busy={busy}
+                  looking={onchainLooking}
+                  error={onchainError}
+                  blocked={onchainBlocked}
+                  veilOn={veilOn && isReleased(config, "veil")}
                 />
                 <form className="composer" onSubmit={send}>
                   {imageItems.length > 0 && (

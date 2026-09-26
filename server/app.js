@@ -47,6 +47,7 @@ import { balanceAlertRoutes } from "./routes/balance-alerts.js";
 import { connectRoutes } from "./routes/connect.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { nymaRoutes } from "./routes/nyma.js";
+import { onchainRoutes } from "./routes/onchain.js";
 import { historyLibrary } from "./history-library.js";
 import { previewRoutes } from "./routes/preview.js";
 import { siteRoutes } from "./routes/site.js";
@@ -140,6 +141,8 @@ export function createApp(overrides = {}) {
   paymentRoutes(ctx);
   // Pay with NYMA: quotes and claims on the wallet-payment address.
   nymaRoutes(ctx);
+  // Onchain Explainer: read-only chain lookups (the explanation is a chat).
+  ctx.onchain = onchainRoutes(ctx).onchain;
   // Live Preview's frame page, before the site's static files and fallback.
   previewRoutes(ctx);
   siteRoutes(ctx);

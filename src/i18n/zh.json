@@ -3566,7 +3566,75 @@
     "The export also includes your Pay with NYMA quotes.": "导出内容还包括你的“使用 NYMA 付款”报价。",
     "Reading the NYMA rate on Robinhood Chain…": "正在读取 Robinhood Chain 上的 NYMA 兑换率……",
     "A quote holds the rate for 10 minutes": "报价锁定兑换率 10 分钟",
-    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。"
+    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。",
+    "Onchain Explainer": "链上解读",
+    "Any transaction, in plain English.": "任何一笔交易，一看就懂。",
+    "Paste a transaction hash, an address or an explorer link": "粘贴交易哈希、地址或区块浏览器链接",
+    "Exact chain facts first, then a plain-English explanation": "先给出准确的链上事实，再用通俗的语言解释",
+    "Looked up by our server, so the explorer never sees you": "由我们的服务器查询，区块浏览器看不到你",
+    "ONCHAIN EXPLAINER": "链上解读",
+    "Address": "地址",
+    "Any chain": "任意链",
+    "Explain on-chain": "解读链上数据",
+    "Looking up…": "查询中……",
+    "Chain": "链",
+    "Not now": "暂不需要",
+    "Tries Robinhood Chain, Ethereum, Base, Arbitrum or Optimism in turn.": "依次尝试 Robinhood Chain、Ethereum、Base、Arbitrum 和 Optimism。",
+    "Looked up by ANONYMA's server, so the explorer never sees you. The lookup is free and read only; the explanation is billed like any message.": "由 ANONYMA 的服务器查询，区块浏览器看不到你。查询免费且只读；解释按普通消息计费。",
+    "Seed Guard found a secret in this message. Remove it first.": "助记词防护在这条消息中发现了助记词或私钥。请先删除。",
+    "Explain this transaction": "解读这笔交易",
+    "Paste a transaction hash (0x and 64 hex characters) or an address (0x and 40).": "请粘贴交易哈希（0x 加 64 个十六进制字符）或地址（0x 加 40 个）。",
+    "That value doesn't match the kind asked for.": "该值与所选类型不符。",
+    "Choose one of the listed chains.": "请选择列表中的一条链。",
+    "This transaction wasn't found on Robinhood Chain, Ethereum, Base, Arbitrum or Optimism.": "在 Robinhood Chain、Ethereum、Base、Arbitrum 和 Optimism 上都未找到这笔交易。",
+    "One of the chains couldn't be reached, so this lookup is incomplete. Nothing was charged; try again in a minute.": "有一条链暂时无法访问，因此本次查询不完整。未收取任何费用；请一分钟后重试。",
+    "The chain's data couldn't be read right now. Nothing was charged; try again in a minute.": "暂时无法读取该链的数据。未收取任何费用；请一分钟后重试。",
+    "CHAIN FACTS ·": "链上事实 ·",
+    "Chain facts": "链上事实",
+    "Success": "成功",
+    "From": "发送方",
+    "To": "接收方",
+    "New contract": "新合约",
+    "Action": "操作",
+    "Value": "金额",
+    "Fee": "手续费",
+    "Block": "区块",
+    "Plain transfer": "普通转账",
+    "Labels": "标签",
+    "Transactions": "交易数",
+    "Sent": "已发送交易",
+    "Token": "代币",
+    "Holders": "持有人",
+    "Creator": "创建者",
+    "Smart wallet": "智能钱包",
+    "contract": "合约",
+    "wallet": "钱包",
+    "smart wallet": "智能钱包",
+    "verified": "已验证",
+    "flagged": "已标记",
+    "not verified": "未验证",
+    "minted": "铸造",
+    "burned": "销毁",
+    "internal": "内部",
+    "revoked": "已撤销",
+    "all tokens": "全部代币",
+    "unlimited": "无限额",
+    "Transfers": "转账",
+    "Approvals": "授权",
+    "Spender": "被授权方",
+    "Worth checking": "值得核实",
+    "Tokens held": "持有的代币",
+    "1 more transfer isn't shown.": "还有 1 笔转账未显示。",
+    "More transfers aren't shown.": "还有更多转账未显示。",
+    "More tokens aren't shown.": "还有更多代币未显示。",
+    "Only NYMA is checked for token balances on this chain.": "在这条链上只查询 NYMA 的代币余额。",
+    "No activity on this chain.": "这条链上没有活动记录。",
+    "No activity on Robinhood Chain, Ethereum, Base, Arbitrum or Optimism.": "在 Robinhood Chain、Ethereum、Base、Arbitrum 和 Optimism 上都没有活动记录。",
+    "View on explorer": "在区块浏览器中查看",
+    "Read by ANONYMA's server from Robinhood Chain's public node. Names here come from ANONYMA or the token itself.": "由 ANONYMA 的服务器从 Robinhood Chain 的公共节点读取。这里的名称来自 ANONYMA 或代币本身。",
+    "Read by ANONYMA's server from the Blockscout explorer. Names and labels come from the explorer.": "由 ANONYMA 的服务器从 Blockscout 区块浏览器读取。名称和标签来自该浏览器。",
+    "Veil is on: addresses reach the model as placeholders, but a transaction hash can't be hidden that way, since anyone can look it up.": "Veil 已开启：地址会以占位符的形式发给模型，但交易哈希无法这样隐藏，因为任何人都能查到它。",
+    "Veil is on: the address reaches the model as a placeholder.": "Veil 已开启：这个地址会以占位符的形式发给模型。"
   },
   "patterns": [
     {
@@ -5560,6 +5628,54 @@
     {
       "en": "Pay with NYMA: ask for a quote on Credits & funding, then send the quoted NYMA on Robinhood Chain from your linked wallet to the same payment address within {0} minutes. The quote's rate is the lower of the current rate and its {1}-minute average on Robinhood Chain, plus a {2}% bonus in credits, recorded as a separate NYMA top-up bonus.",
       "zh": "使用 NYMA 付款：先在“积分与充值”页获取报价，然后在 {0} 分钟内，从你关联的钱包在 Robinhood Chain 上将报价中的 NYMA 发送到同一付款地址。报价兑换率取当前兑换率与其在 Robinhood Chain 上 {1} 分钟均值中的较低者，另加 {2}% 的奖励积分，作为单独的 NYMA 充值奖励记录。"
+    },
+    {
+      "en": "This transaction wasn't found on {0}.",
+      "zh": "在 {0} 上未找到这笔交易。"
+    },
+    {
+      "en": "This address wasn't found on {0}.",
+      "zh": "在 {0} 上未找到这个地址。"
+    },
+    {
+      "en": "{0} couldn't be reached. Nothing was charged; try again in a minute.",
+      "zh": "暂时无法访问 {0}。未收取任何费用；请一分钟后重试。"
+    },
+    {
+      "en": "{0} more transfers aren't shown.",
+      "zh": "还有 {0} 笔转账未显示。"
+    },
+    {
+      "en": "No activity on {0}.",
+      "zh": "在 {0} 上没有活动记录。"
+    },
+    {
+      "en": "This gives {0} permission to move any amount of {1} from the wallet, with no limit. Worth checking it's a contract you trust; approvals can be revoked.",
+      "zh": "这笔交易授权 {0} 从该钱包转走任意数量的 {1}，没有上限。值得核实这是否是你信任的合约；授权可以撤销。"
+    },
+    {
+      "en": "This gives {0} control of every {1} in this collection the wallet holds. Worth checking it's a contract you trust.",
+      "zh": "这笔交易授权 {0} 控制该钱包在这个系列中持有的全部 {1}。值得核实这是否是你信任的合约。"
+    },
+    {
+      "en": "{0} is a contract whose code isn't verified on the explorer, so it can't be read there. Worth checking before you interact with it.",
+      "zh": "{0} 是一个代码未在区块浏览器上验证的合约，无法在那里查看其代码。与它交互前值得核实。"
+    },
+    {
+      "en": "The explorer marks {0} as a possible scam. Worth checking before you interact with it.",
+      "zh": "区块浏览器将 {0} 标记为可能的诈骗。与它交互前值得核实。"
+    },
+    {
+      "en": "{0} has almost no history on this chain. Worth checking it's the address you meant.",
+      "zh": "{0} 在这条链上几乎没有历史记录。值得核实这是否是你想要的地址。"
+    },
+    {
+      "en": "This approval is given to {0}, a wallet rather than a contract. That's unusual; worth checking who controls it.",
+      "zh": "这项授权给了 {0}，它是一个钱包而不是合约。这不常见；值得核实是谁在控制它。"
+    },
+    {
+      "en": "{0} has never sent a transaction on this chain. Worth checking it's the address you meant.",
+      "zh": "{0} 从未在这条链上发送过交易。值得核实这是否是你想要的地址。"
     }
   ]
 }

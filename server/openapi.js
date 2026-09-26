@@ -195,6 +195,21 @@ const schemas = {
   Session: object({ user: { oneOf: [ref("User"), { type: "null" }] } }, [
     "user",
   ]),
+  // Two-Step Sign-in: a correct first step for an account with two-step on
+  // sets no cookie and returns this instead of a Session.
+  TwoStepChallenge: object(
+    {
+      twoStep: object(
+        {
+          token: { ...string, description: "Send with the code to /api/auth/two-step. Single use; expires after 5 minutes or 5 wrong codes." },
+          method: { enum: ["password", "email", "recover", "wallet"], description: "The first step that succeeded. recover: the new password applies only once the code is right." },
+          expires: integer,
+        },
+        ["token", "method", "expires"],
+      ),
+    },
+    ["twoStep"],
+  ),
   ChatRequest: chat,
   ApiChatRequest: apiChat,
   Media: object({
@@ -525,13 +540,115 @@ for (const [path, summary, body, status] of [
     body,
     status,
     description:
-      "Email/wallet linking requires an existing session. Sign-in responses set an HttpOnly session cookie. Codes and wallet challenges expire after 10 minutes.",
+      "Email/wallet linking requires an existing session. Sign-in responses set an HttpOnly session cookie. Codes and wallet challenges expire after 10 minutes." +
+      (["/api/auth/password", "/api/auth/email/verify", "/api/auth/wallet/verify"].includes(path)
+        ? " For an account with Two-Step Sign-in on, a correct first step (password, email code, password reset or wallet signature, but not email or wallet linking) sets no cookie and returns a TwoStepChallenge; the session comes from /api/auth/two-step. A password reset then applies only after the code."
+        : ""),
     response: path.endsWith("/send")
       ? object({ id: string, message: string })
       : path.endsWith("/challenge")
         ? object({ id: string, message: string })
-        : ref("Session"),
+        : ["/api/auth/password", "/api/auth/email/verify", "/api/auth/wallet/verify"].includes(path)
+          ? { oneOf: [ref("Session"), ref("TwoStepChallenge")] }
+          : ref("Session"),
   });
+// Two-Step Sign-in (update "twostep"). The sign-in step is listed once the
+// update is live, but always answers: an account that turned two-step on
+// keeps needing its code.
+route("post", "/api/auth/two-step", "Finish a sign-in with a two-step code", {
+  auth: null,
+  body: object(
+    {
+      token: { ...string, description: "From the TwoStepChallenge" },
+      code: { ...string, description: "The current 6-digit authenticator code, or an unused recovery code (xxxx-xxxx-xxxx-xxxx; case, spaces and dashes are ignored)" },
+    },
+    ["token", "code"],
+  ),
+  response: object({
+    user: ref("User"),
+    twoStep: object({
+      method: { enum: ["totp", "recovery"] },
+      recoveryCodesLeft: integer,
+    }),
+  }),
+  description:
+    "Sets the HttpOnly session cookie. Authenticator codes use RFC 6238 (SHA-1, 6 digits, 30-second steps); a code from the step before or after is accepted, and each code works once (401 two_step_code_used). A recovery code is spent when used. 400 two_step_expired when the token is unknown, expired or used up (sign in again); 400 two_step_code_format when the code isn't a code; 401 two_step_invalid for a wrong code. Five wrong codes for one account within 15 minutes lock its code entry for 15 minutes (429 two_step_locked with Retry-After). 20 requests per 15 minutes per IP. 503 two_step_unavailable when the server can't read authenticator secrets (a changed APP_SECRET); recovery codes still work.",
+});
+const twoStepStatus = {
+  enabled: bool,
+  enabledAt: { type: ["integer", "null"] },
+  recoveryCodesLeft: integer,
+  reauthMethods: {
+    ...array({ enum: ["password", "email", "wallet"] }),
+    description: "How this account confirms it's you: its password when it has one, otherwise an email code and/or a wallet signature",
+  },
+  reauthUntil: {
+    type: ["integer", "null"],
+    description: "Until when this session's last confirmation counts; null means confirm again before turning two-step on or making new recovery codes",
+  },
+};
+const reauthNeeded =
+  " Needs this session to have confirmed it's you within the last 10 minutes (POST /api/account/two-step/reauth), otherwise 403 two_step_reauth_required: a stolen session can't turn two-step on or take new recovery codes.";
+route("get", "/api/account/two-step", "Two-step sign-in status", {
+  response: object(twoStepStatus),
+  description: "Never returns the secret or recovery codes.",
+});
+route("post", "/api/account/two-step/reauth/start", "Start confirming it's you with an email code or a wallet signature", {
+  body: object({ method: { enum: ["email", "wallet"] } }, ["method"]),
+  response: object({
+    id: string,
+    message: { ...string, description: "wallet: the one-time message to sign (it authorizes no transaction and can't be used to sign in); email: a notice" },
+    testCode: { ...string, description: "Local test mode only" },
+  }),
+  description:
+    "Only for accounts without a password (400 two_step_reauth_method otherwise). email sends a 6-digit code to the account's own address (five per address per hour, 10-minute expiry); wallet returns a message for the linked wallet. Either is bound to this session. 10 an hour.",
+});
+route("post", "/api/account/two-step/reauth", "Confirm it's you", {
+  body: object({
+    method: { enum: ["password", "email", "wallet"] },
+    password: { ...string, description: "method password" },
+    id: { ...string, description: "method email or wallet: from /reauth/start" },
+    code: { ...string, description: "method email" },
+    signature: { ...string, description: "method wallet: the linked wallet's signature of the message" },
+  }, ["method"]),
+  response: object({ reauthUntil: integer }),
+  description:
+    "The account's password when it has one; otherwise a fresh email code or wallet signature started by this session (400 two_step_reauth_method for another method). Marks this session, and only this session, as confirmed for 10 minutes. 401 two_step_reauth_failed for a wrong password or signature, 400 for a wrong email code, 400 two_step_reauth_expired for an unknown, expired, used or other session's confirmation. 10 tries per 15 minutes.",
+});
+route("post", "/api/account/two-step/setup", "Start turning on two-step sign-in", {
+  body: object(),
+  response: object({
+    secret: { ...string, description: "Base32 (RFC 4648) authenticator key" },
+    uri: { ...string, description: "otpauth://totp link for a QR code" },
+    issuer: string,
+    label: string,
+    expires: integer,
+  }),
+  description:
+    "A new secret, stored sealed with a key derived from the app secret and valid for 15 minutes; it replaces any setup not yet confirmed. Nothing changes for sign-in until /enable. 409 two_step_on when already on. 10 an hour." + reauthNeeded,
+});
+route("post", "/api/account/two-step/enable", "Confirm the setup with a current code", {
+  body: object({ code: string }, ["code"]),
+  response: object({
+    ...twoStepStatus,
+    recoveryCodes: { ...array(string), description: "Ten single-use codes, shown only here; stored as hashes" },
+    signedOutSessions: integer,
+  }),
+  description:
+    "Turns two-step sign-in on and signs out every other session. 400 two_step_setup_expired, 400 two_step_code_format, 401 two_step_invalid, 409 two_step_on. API keys and connected apps are unaffected." + reauthNeeded,
+});
+route("post", "/api/account/two-step/recovery-codes", "Replace the recovery codes", {
+  body: object({ code: string }, ["code"]),
+  response: object({ ...twoStepStatus, recoveryCodes: array(string) }),
+  description:
+    "Needs a current authenticator code (a recovery code isn't accepted here). The old codes stop working. Wrong codes count towards the account's lock. The confirmation is checked before the code, so a refused request never uses a code up." + reauthNeeded,
+});
+route("post", "/api/account/two-step/disable", "Turn off two-step sign-in", {
+  body: object({ code: string }, ["code"]),
+  response: object({ ...twoStepStatus, signedOutSessions: integer }),
+  description:
+    "Needs a current authenticator code or an unused recovery code. Deletes the secret and recovery codes and signs out every other session. Wrong codes count towards the account's lock (429 two_step_locked).",
+});
 for (const path of ["/api/auth/logout", "/api/auth/logout-all"])
   route(
     "post",
@@ -1744,20 +1861,20 @@ route(
   "Download account JSON with explicit monetary units",
   {
     description:
-      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs) and, once Projects is released or while any exists, projects (each project's settings, the ids of the chats and Symposium runs filed in it, and its pinned files). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
+      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs), once Projects is released or while any exists, projects (each project's settings, the ids of the chats and Symposium runs filed in it, and its pinned files), and whether two-step sign-in is on (twoStep: { enabled }, once that update is live or while it's on; never its secret or recovery codes). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
   },
 );
 route("delete", "/api/account", "Close account and forfeit unused credits", {
   body: object({ confirm: { const: "DELETE" } }, ["confirm"]),
   response: ref("Ok"),
   description:
-    "409 while holds or unresolved invoices exist, or while an owned collab's Team Treasury holds any credits (treasury_not_empty: withdraw or spend them first) or has team-paid requests in progress (treasury_busy). Deletes personal content, saved media files, account-linked tickets, video jobs, sessions and owned collaborations. Clears profile identifiers and API-key hashes/names/prefixes. Other owners shared content, financial records and external copies remain. Retained accounting has no automatic expiry. Media removal errors prevent a success response and may require retry; deletion does not erase provider copies or existing backups.",
+    "409 while holds or unresolved invoices exist, or while an owned collab's Team Treasury holds any credits (treasury_not_empty: withdraw or spend them first) or has team-paid requests in progress (treasury_busy). Deletes personal content, saved media files, account-linked tickets, video jobs, sessions, two-step sign-in (its secret and recovery codes) and owned collaborations. Clears profile identifiers and API-key hashes/names/prefixes. Other owners shared content, financial records and external copies remain. Retained accounting has no automatic expiry. Media removal errors prevent a success response and may require retry; deletion does not erase provider copies or existing backups.",
 });
 route("post", "/api/account/wipe", "Panic Wipe: erase the account's content, keep its credits", {
   body: object({ confirm: { const: "WIPE" } }, ["confirm"]),
   response: ref("Ok"),
   description:
-    "Needs the wipe update released (403 feature_unreleased otherwise). 400 confirmation_required unless confirm is WIPE. 409 requests_in_flight while a request reserved on the account, or a team-paid request it started, is in progress; 409 treasury_not_empty or treasury_busy while a collab it owns has Team Treasury credits or team-paid requests (the account-closure rule). Saved media files are removed first (503 media_delete_failed stops the wipe with nothing else changed; retry). Then one transaction deletes personal conversations and messages (Symposium runs, branches, Double-checks), share links, saved media and library entries, saved uploads, video jobs, memory facts, Scrolls, standing instructions, account-linked support tickets, owned collabs with their shared conversations, membership of other collabs (their shared messages stay), every session and pending sign-in code, and connected apps' tokens and codes; it revokes every API key and connected app, overwriting deleted rows in the database file. The account, balance, ledger, deposits, request records, receipts and settings (spending limits, auto-delete, the memory switch) are unchanged. Clears the session cookie. Safe to repeat: already-removed content is skipped and revocation times are kept. 10 requests an hour. Backups, exports and provider copies are not erased.",
+    "Needs the wipe update released (403 feature_unreleased otherwise). 400 confirmation_required unless confirm is WIPE. 409 requests_in_flight while a request reserved on the account, or a team-paid request it started, is in progress; 409 treasury_not_empty or treasury_busy while a collab it owns has Team Treasury credits or team-paid requests (the account-closure rule). Saved media files are removed first (503 media_delete_failed stops the wipe with nothing else changed; retry). Then one transaction deletes personal conversations and messages (Symposium runs, branches, Double-checks), share links, saved media and library entries, saved uploads, video jobs, memory facts, Scrolls, standing instructions, account-linked support tickets, owned collabs with their shared conversations, membership of other collabs (their shared messages stay), every session and pending sign-in code, and connected apps' tokens and codes; it revokes every API key and connected app, overwriting deleted rows in the database file. The account, balance, ledger, deposits, request records, receipts and settings (spending limits, auto-delete, the memory switch, two-step sign-in) are unchanged. Clears the session cookie. Safe to repeat: already-removed content is skipped and revocation times are kept. 10 requests an hour. Backups, exports and provider copies are not erased.",
 });
 route("get", "/v1", "Free API connection check", {
   auth: null,
@@ -2209,6 +2326,9 @@ export function openapiForConfig(cfg) {
             body: {},
           });
           if (/\/treasury(\/|$)/.test(path)) needs.push("treasury");
+          // Two-Step Sign-in's sign-in step answers always, but is listed
+          // only once the update is live.
+          if (path === "/api/auth/two-step") needs.push("twostep");
           return needs.every((id) => isReleased(cfg, id));
         }),
       );

@@ -555,6 +555,20 @@ export const UPDATES = [
     // mode needs the update behind it (PRIVACY_FEATURES in src/projects.js).
     released: true,
   },
+  {
+    id: "twostep",
+    title: "Two-Step Sign-in",
+    tagline: "A stolen password isn’t enough.",
+    points: [
+      "A code from your authenticator app after every sign-in",
+      "Ten single-use recovery codes, shown once",
+      "Covers password, email code and wallet sign-in",
+    ],
+    // Only the settings routes are gated. The sign-in's own second step
+    // (/api/auth/two-step) stays open: an account that turned two-step on
+    // keeps needing its code even if the update is switched off again.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -684,6 +698,10 @@ export function featuresFor(req) {
   }
   // Panic Wipe: the one route that erases an account's content at once.
   if (/^\/api\/account\/wipe\/?$/.test(p)) return ["wipe"];
+  // Two-Step Sign-in's settings. The sign-in step itself, /api/auth/two-step,
+  // is never gated (see the UPDATES entry).
+  if (p === "/api/account/two-step" || p.startsWith("/api/account/two-step/"))
+    return ["twostep"];
   if (post && (body.libraryMediaId !== undefined || body.libraryQuote !== undefined)) {
     if (p === "/api/images") return ["historylibrary", "images"];
     if (p === "/api/videos") return ["historylibrary", "video"];

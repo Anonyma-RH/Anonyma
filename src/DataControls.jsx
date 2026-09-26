@@ -12,6 +12,8 @@ export default function DataControls() {
   const sealedShares = shares && isReleased(config, "sealedshare");
   // And Projects.
   const projects = !!config && isReleased(config, "projects");
+  // And Two-Step Sign-in.
+  const twoStep = !!config && isReleased(config, "twostep");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -109,6 +111,16 @@ export default function DataControls() {
             encrypted vault. Deleting a project keeps its chats; a pin goes when
             its saved file expires or is deleted. Closing your account or Panic
             Wipe deletes every project.
+          </li>
+        )}
+        {twoStep && (
+          <li>
+            Two-step sign-in: while it’s on, your authenticator key, sealed
+            with the server’s app secret, and your ten recovery codes, kept only
+            as one-way hashes. A sign-in waiting for its code lasts 5 minutes,
+            and a session’s “confirm it’s you” 10 minutes. Your export says
+            only whether it’s on. Turning it off or closing
+            your account deletes the key and codes; Panic Wipe leaves it on.
           </li>
         )}
         <li>

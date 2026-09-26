@@ -16,6 +16,10 @@ import { refreshTokenHoldings } from "./auth.js";
 import { sweepOAuth } from "./oauth.js";
 import { settleHolderCycles, monthOf } from "./holders.js";
 import { issueMediaReceipt } from "./receipts.js";
+import {
+  SETUP_MS as TWO_STEP_SETUP_MS,
+  REAUTH_MS as TWO_STEP_REAUTH_MS,
+} from "./two-step.js";
 
 // Background maintenance: due routines, video completion, payment status
 // checks, expired media and reservations, token holdings and table cleanup.
@@ -281,6 +285,15 @@ export function createWorker(ctx) {
         now() - 86400000,
       );
       db.prepare("DELETE FROM sessions WHERE expires<?").run(now());
+      // Two-Step Sign-in: sign-ins that never got their code, setups never
+      // confirmed and "confirm it's you" marks past their 10 minutes.
+      db.prepare("DELETE FROM two_step_pending WHERE expires<?").run(now());
+      db.prepare("DELETE FROM two_step_reauth WHERE at<?").run(
+        now() - TWO_STEP_REAUTH_MS,
+      );
+      db.prepare("DELETE FROM two_step WHERE enabled=0 AND created<?").run(
+        now() - TWO_STEP_SETUP_MS,
+      );
       sweepOAuth(db);
     } finally {
       working = false;

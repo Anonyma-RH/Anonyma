@@ -37,6 +37,7 @@ import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { accountRoutes } from "./routes/account.js";
 import { wipeRoutes } from "./routes/wipe.js";
+import { twoStepRoutes } from "./routes/two-step.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
 import { connectRoutes } from "./routes/connect.js";
@@ -116,6 +117,8 @@ export function createApp(overrides = {}) {
   accountRoutes(ctx);
   // Panic Wipe: erases the account's content, keeps its credits.
   wipeRoutes(ctx);
+  // Two-Step Sign-in's settings (its sign-in step is in authRoutes).
+  twoStepRoutes(ctx);
   allowanceRoutes(ctx);
   // Also registers the Spending Limits check every reservation runs.
   spendingLimitRoutes(ctx);

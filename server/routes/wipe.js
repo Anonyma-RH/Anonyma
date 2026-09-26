@@ -13,7 +13,7 @@ const IN_FLIGHT = `SELECT 1 FROM holds WHERE status='held' AND (user_id=?
 // revokes every API key and connected app, and signs out every session,
 // this one included. The account, its balance, the ledger, deposits, request
 // records, receipts and settings (spending limits, auto-delete, the memory
-// switch) stay. Everything is a DELETE or a first-time-only UPDATE, so a
+// switch, two-step sign-in) stay. Everything is a DELETE or a first-time-only UPDATE, so a
 // retry (or a second wipe after signing in again) is safe and changes
 // nothing that is already gone.
 export function wipeRoutes(ctx) {

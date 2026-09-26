@@ -34,7 +34,8 @@ import {
 // - share links, sealed ones too (Device-only ones included), then personal
 //   conversations and their messages (Symposium runs, branches and
 //   Double-checks are conversations too);
-// - every session and pending sign-in code;
+// - every session and pending sign-in code (and sign-in waiting for a
+//   two-step code);
 // - connected apps' tokens and pending codes;
 // - projects, with their filed chats and pinned files (the chats go with
 //   the conversations above);
@@ -58,6 +59,11 @@ export function eraseAccountContent(db, user) {
   db.prepare("DELETE FROM project_files WHERE user_id=?").run(id);
   db.prepare("DELETE FROM projects WHERE user_id=?").run(id);
   db.prepare("DELETE FROM sessions WHERE user_id=?").run(id);
+  // Sign-ins waiting for a two-step code, and sessions' "confirm it's you"
+  // marks. The two-step setting itself is the caller's to keep (Panic Wipe)
+  // or delete (closure).
+  db.prepare("DELETE FROM two_step_pending WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM two_step_reauth WHERE user_id=?").run(id);
   db.prepare(
     "DELETE FROM oauth_tokens WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
   ).run(id);
@@ -131,6 +137,14 @@ export function accountRoutes(ctx) {
   function projectsExport(user) {
     const projects = exportProjects(db, user);
     return projects.length || isReleased(cfg, "projects") ? { projects } : {};
+  }
+  // Two-Step Sign-in: only whether it's on (once the update is live, or
+  // while it is on). Never the secret or the recovery codes.
+  function twoStepExport(user) {
+    const enabled = ctx.twoStep.isOn(user);
+    return enabled || isReleased(cfg, "twostep")
+      ? { twoStep: { enabled } }
+      : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -451,6 +465,7 @@ export function accountRoutes(ctx) {
       // Projects: each one's settings, filed chats and pinned files (once
       // the update is live, or while any project exists).
       ...projectsExport(req.user.id),
+      ...twoStepExport(req.user.id),
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {
@@ -501,6 +516,9 @@ export function accountRoutes(ctx) {
       ).run(now(), req.user.id);
       db.prepare("DELETE FROM memory_settings WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM spending_limits WHERE user_id=?").run(req.user.id);
+      // Two-Step Sign-in: the sealed secret and the recovery code hashes.
+      db.prepare("DELETE FROM two_step_recovery WHERE user_id=?").run(req.user.id);
+      db.prepare("DELETE FROM two_step WHERE user_id=?").run(req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.
       db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);
       db.prepare(

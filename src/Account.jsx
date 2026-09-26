@@ -39,6 +39,8 @@ import { ConnectedApps, connectReleased } from "./Connect.jsx";
 import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
 import { ShareLinksManager } from "./ShareLinks.jsx";
 import { PanicWipe } from "./PanicWipe.jsx";
+import { TwoStepSettings } from "./TwoStep.jsx";
+import { twoStepReleased } from "./two-step.js";
 import { holdersReleased } from "./holders.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
 import { paletteReleased, paletteActions, recentStoreKey } from "./command-palette.js";
@@ -278,12 +280,15 @@ export default function Account() {
   const limitsOn = isReleased(config, "limits");
   // Usage Insights & Export shows only once it's released.
   const insightsOn = isReleased(config, "insights");
+  // Security (Two-Step Sign-in) shows only once it's released.
+  const securityOn = twoStepReleased(config);
   const tabs = [
     ["overview", "Overview"],
     ...(insightsOn ? [["usage", "Usage"]] : []),
     ["credits", "Credits & funding"],
     ...(limitsOn ? [["limits", "Spending limits"]] : []),
     ["keys", "API keys"],
+    ...(securityOn ? [["security", "Security"]] : []),
     ["settings", "Account settings"],
   ];
   return (
@@ -347,6 +352,8 @@ export default function Account() {
                 ? "API keys"
                 : section === "limits"
                   ? "Spending limits"
+                : section === "security"
+                  ? "Security"
                 : section === "usage"
                   ? "Usage insights"
                   : section === "credits"
@@ -667,6 +674,12 @@ export default function Account() {
           )}
           {section === "limits" && limitsOn && (demo || user) && (
             <SpendingLimits demo={demo} />
+          )}
+          {section === "security" && !securityOn && (
+            <ComingSoon update={releaseUpdate(config, "twostep")} />
+          )}
+          {section === "security" && securityOn && (demo || user) && (
+            <TwoStepSettings user={user} demo={demo} config={config} />
           )}
           {section === "usage" && !insightsOn && (
             <ComingSoon update={releaseUpdate(config, "insights")} />

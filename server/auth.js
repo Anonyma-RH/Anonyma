@@ -25,6 +25,7 @@ import {
   retentionCaps,
   HOLDER_RESET,
 } from "./holders.js";
+import { createTwoStep } from "./two-step.js";
 
 export function sessionCookieOptions(cfg) {
   return {
@@ -37,6 +38,69 @@ export function sessionCookieOptions(cfg) {
 
 export function authRoutes(app, db, cfg, limit) {
   const cookieOptions = { ...sessionCookieOptions(cfg), maxAge: 30 * 86400000 };
+  // Two-Step Sign-in: an account that turned it on gets a session only after
+  // its code (POST /api/auth/two-step). Enforced whether or not the update
+  // is currently released, so switching it off never drops the protection.
+  const twoStep = createTwoStep(db, cfg);
+  function signIn(res, user, method, payload) {
+    if (twoStep.isOn(user.id)) return twoStep.begin(user, method, payload);
+    return { user: session(res, user) };
+  }
+  // A password reset: the new password, every session signed out and the
+  // email's other sign-in and reset codes gone.
+  function resetPassword(user, passwordHashed, email) {
+    db.prepare("UPDATE users SET password=? WHERE id=?").run(
+      passwordHashed,
+      user.id,
+    );
+    db.prepare("DELETE FROM sessions WHERE user_id=?").run(user.id);
+    db.prepare(
+      "DELETE FROM challenges WHERE target=? AND purpose IN ('login','recover')",
+    ).run(email);
+  }
+  // A 6-digit email code for `purpose`, valid for 10 minutes, five per
+  // address per hour. Also used by Two-Step Sign-in's "confirm it's you"
+  // (routes/two-step.js). Returns the challenge id and the code.
+  async function sendEmailCode(email, purpose, payload) {
+    if (
+      db
+        .prepare(
+          "SELECT COUNT(*) n FROM rate_events WHERE kind='email' AND target=? AND created>?",
+        )
+        .get(email, now() - 3600000).n >= 5
+    )
+      fail(429, "Only five codes per email per hour.");
+    if ((!cfg.smtp || !cfg.smtpFrom) && !cfg.testMode)
+      fail(503, "Email delivery is not configured.", "email_unconfigured");
+    db.prepare("INSERT INTO rate_events(kind,target,created) VALUES(?,?,?)").run(
+      "email",
+      email,
+      now(),
+    );
+    const code = String(randomInt(100000, 1000000));
+    const id = uid("e_");
+    db.prepare(
+      "INSERT INTO challenges(id,target,purpose,hash,expires,payload) VALUES(?,?,?,?,?,?)",
+    ).run(id, email, purpose, hash(id + code), now() + 600000, payload);
+    if (cfg.smtp) {
+      try {
+        await nodemailer.createTransport(cfg.smtp).sendMail({
+          from: cfg.smtpFrom,
+          to: email,
+          subject: "Your Anonyma verification code",
+          text: `Your code is ${code}. It expires in 10 minutes. If you did not request it, ignore this email.`,
+        });
+      } catch {
+        db.prepare("DELETE FROM challenges WHERE id=?").run(id);
+        fail(
+          503,
+          "The verification email could not be sent. Please try again later.",
+          "email_unavailable",
+        );
+      }
+    }
+    return { id, code };
+  }
   function session(res, user) {
     const token = uid("session_");
     db.prepare(
@@ -173,7 +237,7 @@ export function authRoutes(app, db, cfg, limit) {
       !passwordMatches(password, user.password)
     )
       fail(401, "Incorrect username or password.");
-    res.json({ user: session(res, user) });
+    res.json(signIn(res, user, "password"));
   });
   app.post(
     "/api/auth/email/send",
@@ -188,48 +252,11 @@ export function authRoutes(app, db, cfg, limit) {
       if (!["login", "recover", "link"].includes(purpose))
         fail(400, "Invalid email purpose");
       if (purpose === "link" && !req.user) fail(401, "Sign in first.");
-      if (
-        db
-          .prepare(
-            "SELECT COUNT(*) n FROM rate_events WHERE kind='email' AND target=? AND created>?",
-          )
-          .get(email, now() - 3600000).n >= 5
-      )
-        fail(429, "Only five codes per email per hour.");
-      if ((!cfg.smtp || !cfg.smtpFrom) && !cfg.testMode)
-        fail(503, "Email delivery is not configured.", "email_unconfigured");
-      db.prepare(
-        "INSERT INTO rate_events(kind,target,created) VALUES(?,?,?)",
-      ).run("email", email, now());
-      const code = String(randomInt(100000, 1000000));
-      const id = uid("e_");
-      db.prepare(
-        "INSERT INTO challenges(id,target,purpose,hash,expires,payload) VALUES(?,?,?,?,?,?)",
-      ).run(
-        id,
+      const { id, code } = await sendEmailCode(
         email,
         purpose,
-        hash(id + code),
-        now() + 600000,
         req.user?.id || null,
       );
-      if (cfg.smtp) {
-        try {
-          await nodemailer.createTransport(cfg.smtp).sendMail({
-            from: cfg.smtpFrom,
-            to: email,
-            subject: "Your Anonyma verification code",
-            text: `Your code is ${code}. It expires in 10 minutes. If you did not request it, ignore this email.`,
-          });
-        } catch {
-          db.prepare("DELETE FROM challenges WHERE id=?").run(id);
-          fail(
-            503,
-            "The verification email could not be sent. Please try again later.",
-            "email_unavailable",
-          );
-        }
-      }
       res.json({
         id,
         ...(cfg.testMode ? { testCode: code } : {}),
@@ -271,17 +298,26 @@ export function authRoutes(app, db, cfg, limit) {
         const p = req.body.password;
         if (typeof p !== "string" || p.length < 10 || p.length > 256)
           fail(400, "New password must be 10–256 characters.");
-        db.prepare("UPDATE users SET password=? WHERE id=?").run(
-          passwordHash(p),
-          user.id,
-        );
-        db.prepare("DELETE FROM sessions WHERE user_id=?").run(user.id);
-        db.prepare(
-          "DELETE FROM challenges WHERE target=? AND purpose IN ('login','recover')",
-        ).run(ch.target);
+        // With two-step on, the reset waits for the code: an email code
+        // alone never changes the password or signs anyone in.
+        if (twoStep.isOn(user.id)) {
+          db.prepare("DELETE FROM challenges WHERE id=?").run(ch.id);
+          return res.json(
+            twoStep.begin(user, "recover", {
+              password: passwordHash(p),
+              email: ch.target,
+            }),
+          );
+        }
+        resetPassword(user, passwordHash(p), ch.target);
       } else user ||= newUser({ email: ch.target }, req);
       db.prepare("DELETE FROM challenges WHERE id=?").run(ch.id);
-      res.json({ user: session(res, user) });
+      // Linking an email happens inside a signed-in session: no second step.
+      res.json(
+        ch.purpose === "link"
+          ? { user: session(res, user) }
+          : signIn(res, user, ch.purpose === "recover" ? "recover" : "email"),
+      );
     },
   );
   app.post(
@@ -347,7 +383,55 @@ export function authRoutes(app, db, cfg, limit) {
         user = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
       } else user ||= newUser({ wallet: signer }, req);
       db.prepare("DELETE FROM challenges WHERE id=?").run(ch.id);
-      res.json({ user: session(res, user) });
+      // Wallet sign-in takes the same second step; linking a wallet happens
+      // inside a signed-in session.
+      res.json(
+        ch.purpose === "wallet_link"
+          ? { user: session(res, user) }
+          : signIn(res, user, "wallet"),
+      );
+    },
+  );
+  // The second step: the pending sign-in's token and a code. Per IP here,
+  // per account in twoStep.verify (wrong codes lock code entry), per pending
+  // sign-in by its attempt count.
+  app.post(
+    "/api/auth/two-step",
+    limit("two_step", 20, 900000),
+    (req, res) => {
+      const p = twoStep.pending(req.body.token);
+      const user = db
+        .prepare("SELECT * FROM users WHERE id=? AND deleted IS NULL")
+        .get(p.user_id);
+      if (!user || !twoStep.isOn(user.id)) {
+        db.prepare("DELETE FROM two_step_pending WHERE hash=?").run(p.hash);
+        fail(400, "This sign-in expired. Sign in again.", "two_step_expired");
+      }
+      let result;
+      try {
+        result = twoStep.verify(user.id, req.body.code, { res });
+      } catch (e) {
+        if (e.status === 401)
+          db.prepare(
+            "UPDATE two_step_pending SET attempts=attempts+1 WHERE hash=?",
+          ).run(p.hash);
+        throw e;
+      }
+      db.prepare("DELETE FROM two_step_pending WHERE hash=?").run(p.hash);
+      if (p.method === "recover") {
+        const reset = JSON.parse(p.payload);
+        resetPassword(user, reset.password, reset.email);
+      }
+      res.json({
+        user: session(
+          res,
+          db.prepare("SELECT * FROM users WHERE id=?").get(user.id),
+        ),
+        twoStep: {
+          method: result.method,
+          recoveryCodesLeft: twoStep.codesLeft(user.id),
+        },
+      });
     },
   );
   app.post("/api/auth/logout", (req, res) => {
@@ -414,7 +498,7 @@ export function authRoutes(app, db, cfg, limit) {
       });
     },
   );
-  return { requireUser, publicUser };
+  return { requireUser, publicUser, twoStep, sendEmailCode };
 }
 export const canonical = (v) =>
   Array.isArray(v)

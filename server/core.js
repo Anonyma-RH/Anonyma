@@ -730,6 +730,39 @@ export const MIGRATIONS = [
         WHEN (SELECT COUNT(*) FROM project_files WHERE project_id=NEW.project_id)>=5
         BEGIN SELECT RAISE(ABORT,'project_files_limit'); END;
   `),
+  // Two-Step Sign-in (server/two-step.js). two_step: the authenticator
+  // secret, sealed with a key derived from the app secret (never stored in
+  // the clear); enabled=0 is a setup waiting for its first code. last_step
+  // is the newest 30-second step whose code was accepted (older codes are
+  // refused), then the wrong-code count and the lock. Recovery codes are
+  // kept only as salted hashes, each usable once. two_step_pending: a
+  // sign-in whose first step (method) succeeded, waiting for its code; the
+  // token is kept as a hash, and payload holds a password reset's new hash
+  // until the code is right. two_step_reauth: when a session last confirmed
+  // it's its owner (password, email code or wallet signature), which turning
+  // two-step on and new recovery codes need within the last 10 minutes; keyed
+  // by the session's hash, so it never carries over to another session.
+  additive(`
+      CREATE TABLE IF NOT EXISTS two_step(user_id TEXT PRIMARY KEY REFERENCES users(id),
+        secret TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 0 CHECK(enabled IN (0,1)),
+        enabled_at INTEGER,last_step INTEGER,
+        failures INTEGER NOT NULL DEFAULT 0,failed_since INTEGER,locked_until INTEGER,
+        created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS two_step_recovery(user_id TEXT NOT NULL REFERENCES users(id),
+        hash TEXT NOT NULL,used INTEGER,created INTEGER NOT NULL,
+        PRIMARY KEY(user_id,hash));
+      CREATE TABLE IF NOT EXISTS two_step_pending(hash TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        method TEXT NOT NULL CHECK(method IN ('password','email','recover','wallet')),
+        payload TEXT,attempts INTEGER NOT NULL DEFAULT 0,
+        expires INTEGER NOT NULL,created INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS two_step_pending_user ON two_step_pending(user_id);
+      CREATE TABLE IF NOT EXISTS two_step_reauth(session_hash TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        method TEXT NOT NULL CHECK(method IN ('password','email','wallet')),
+        at INTEGER NOT NULL);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

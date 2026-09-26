@@ -392,6 +392,34 @@ export async function walletSign(config, link = false) {
     throw walletError(e);
   }
 }
+// Two-Step Sign-in's "confirm it's you" for an account without a password:
+// its linked wallet signs a one-time message that the server binds to this
+// session. Nothing is sent from the wallet.
+export async function walletReauth(config, linkedWallet) {
+  const provider = await walletProvider(config);
+  try {
+    const [address] = await provider.request({ method: "eth_requestAccounts" });
+    if (!address) throw new Error("No wallet account was selected.");
+    if (address.toLowerCase() !== String(linkedWallet || "").toLowerCase())
+      throw new Error("Sign with the wallet linked to this account.");
+    const challenge = await api("/api/account/two-step/reauth/start", {
+      method: "POST",
+      body: { method: "wallet" },
+    });
+    const signature = await provider.request({
+      method: "personal_sign",
+      params: [challenge.message, address],
+    });
+    return await api("/api/account/two-step/reauth", {
+      method: "POST",
+      body: { method: "wallet", id: challenge.id, signature },
+    });
+  } catch (e) {
+    if (e?.code === 4001)
+      throw new Error("The wallet request was cancelled. Nothing was signed.");
+    throw walletError(e);
+  }
+}
 
 // Released updates (see server/releases.js). Without config (preview or
 // offline) gated features stay unavailable.

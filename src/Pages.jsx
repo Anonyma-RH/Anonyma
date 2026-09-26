@@ -34,6 +34,7 @@ import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
 import "./mcp.css";
 import V1Media from "./V1Media.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
+import { TwoStepPrompt } from "./TwoStep.jsx";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -1131,12 +1132,19 @@ export function Auth({ register = false }) {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [challenge, setChallenge] = useState(null),
-    [recover, setRecover] = useState(false);
+    [recover, setRecover] = useState(false),
+    // Two-Step Sign-in: the first step succeeded and a code is needed.
+    [twoStep, setTwoStep] = useState(null);
+  async function finish() {
+    await refresh();
+    done();
+  }
   async function walletSubmit() {
     setBusy(true);
     setError("");
     try {
-      await walletSign(config);
+      const r = await walletSign(config);
+      if (r?.twoStep) return setTwoStep(r.twoStep);
       await refresh();
       done();
     } catch (e) {
@@ -1159,7 +1167,7 @@ export function Auth({ register = false }) {
         setChallenge(r);
         return;
       }
-      await api(
+      const r = await api(
         method === "email"
           ? "/api/auth/email/verify"
           : register
@@ -1177,6 +1185,7 @@ export function Auth({ register = false }) {
               : { username: data.username, password: data.password },
         },
       );
+      if (r.twoStep) return setTwoStep(r.twoStep);
       await refresh();
       done();
     } catch (e) {
@@ -1199,7 +1208,9 @@ export function Auth({ register = false }) {
       <div className="auth-card">
         <p className="eyebrow">YOUR ANONYMA ACCOUNT</p>
         <h1>
-          {recover
+          {twoStep
+            ? "One more step."
+            : recover
             ? "A fresh start."
             : register
               ? "Make room for your ideas."
@@ -1216,6 +1227,18 @@ export function Auth({ register = false }) {
             shared until you approve.
           </Notice>
         )}
+        {twoStep ? (
+          <TwoStepPrompt
+            challenge={twoStep}
+            onDone={finish}
+            onCancel={() => {
+              setTwoStep(null);
+              setChallenge(null);
+              setError("");
+            }}
+          />
+        ) : (
+        <>
         <div className="filter-tabs">
           {["password", "email", "wallet"].map((m) => (
             <button
@@ -1355,13 +1378,15 @@ export function Auth({ register = false }) {
             </Button>
           </form>
         )}
+        </>
+        )}
         {!connected && (
           <p className="auth-status">
             Account services are currently unavailable. Try again when the service reconnects.
           </p>
         )}
         <div className="auth-bottom">
-          {!register && (
+          {!register && !twoStep && (
             <button
               className="text-link recovery-link"
               onClick={() => {

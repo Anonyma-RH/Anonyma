@@ -10,6 +10,7 @@ import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { scanSecrets } from "./seed-guard.js";
+import { ProjectPicker } from "./Projects.jsx";
 import {
   defaultSymposiumModels,
   buildFusionMessages,
@@ -55,6 +56,10 @@ export default function Symposium({
   setVeilOn,
   veilWords = [],
   setVeilWords,
+  // Projects: the account's projects (empty until released) and a callback
+  // once a run is filed in one.
+  projects = [],
+  onFiled,
 }) {
   const welcome = useRef();
   // This run's tag -> value map. It lives only in this browser tab: runs have
@@ -78,6 +83,16 @@ export default function Symposium({
   const visibleModels = models.filter(
     (m) => m.type === "chat" && m.callable && !uncensoredIds.includes(m.id),
   );
+  // Projects: the project this run is filed in, its instructions (masked
+  // with the run's map when Veil is on) and id, fixed when the run starts so
+  // the fusion step goes to the same place.
+  const [projectId, setProjectId] = useState(null);
+  const project = projects.find((p) => p.id === projectId) || null;
+  const runProject = useRef({ id: null, instructions: "" });
+  const withInstructions = (messages) =>
+    runProject.current.instructions
+      ? [{ role: "system", content: runProject.current.instructions }, ...messages]
+      : messages;
   const [selected, setSelected] = useState([]),
     [prompt, setPrompt] = useState(""),
     [askedQuestion, setAskedQuestion] = useState(""),
@@ -126,18 +141,25 @@ export default function Symposium({
     setError("");
     setQuoting(true);
     // Quote what would be sent: masked with a throwaway map when Veil is on.
+    const quoteState = createVeilState();
     const { text } = veilQuestion(question, {
       on: veilOn && veilLive,
-      state: createVeilState(),
+      state: quoteState,
       words: veilWords,
     });
+    const own = project?.instructions?.trim()
+      ? veilQuestion(project.instructions.trim(), { on: veilOn && veilLive, state: quoteState, words: veilWords }).text
+      : "";
     const results = await Promise.allSettled(
       selected.map((id) =>
         api("/api/quote", {
           method: "POST",
           body: {
             model: id,
-            messages: [{ role: "user", content: text }],
+            messages: [
+              ...(own ? [{ role: "system", content: own }] : []),
+              { role: "user", content: text },
+            ],
             max_tokens: COLUMN_TOKENS,
           },
         }).then((r) => ({ credits: r.credits })),
@@ -161,10 +183,11 @@ export default function Symposium({
       await streamChat(
         {
           model: id,
-          messages: [{ role: "user", content: question }],
+          messages: withInstructions([{ role: "user", content: question }]),
           mode: "symposium",
           max_tokens: COLUMN_TOKENS,
           requestId: uid(),
+          ...(runProject.current.id ? { project: runProject.current.id } : {}),
           ...trailBody(),
           ...(allowSeed ? { allow_seed_phrase: true } : {}),
         },
@@ -229,8 +252,23 @@ export default function Symposium({
       state: veilState.current,
       words: veilWords,
     });
-    setVeilNote(masked.count ? { count: masked.count, entries: masked.entries } : null);
-    veilMasked.current = veilOn && veilLive ? masked.count : null;
+    // The project's instructions lead every column's request, masked with
+    // the same map as the question.
+    const own = project?.instructions?.trim()
+      ? veilQuestion(project.instructions.trim(), {
+          on: veilOn && veilLive,
+          state: veilState.current,
+          words: veilWords,
+        })
+      : null;
+    runProject.current = { id: project?.id || null, instructions: own?.text || "" };
+    const count = masked.count + (own?.count || 0);
+    setVeilNote(
+      count
+        ? { count, entries: [...masked.entries, ...(own?.entries || []).filter((e) => !masked.entries.some((m) => m.tag === e.tag))] }
+        : null,
+    );
+    veilMasked.current = veilOn && veilLive ? count : null;
     setAskedQuestion(masked.text);
     setRunModels(selected);
     setFuseModel(selected[0]);
@@ -241,6 +279,7 @@ export default function Symposium({
       selected.map((id) => runOne(id, masked.text, seedHit?.kind === "seed")),
     );
     if (!demo) refresh();
+    if (runProject.current.id) onFiled?.();
   }
   function stopOne(id) {
     controllers.current[id]?.abort();
@@ -260,7 +299,7 @@ export default function Symposium({
     let text = "";
     // Fusing resends the question every column already received (confirmed
     // then if Seed Guard stopped it) with the models' answers.
-    const messages = buildFusionMessages({ question: askedQuestion, answers });
+    const messages = withInstructions(buildFusionMessages({ question: askedQuestion, answers }));
     const resent =
       seedLive && scanSecrets(messages.map((m) => m.content))?.kind === "seed";
     try {
@@ -271,6 +310,7 @@ export default function Symposium({
           mode: "symposium",
           max_tokens: 4096,
           requestId: uid(),
+          ...(runProject.current.id ? { project: runProject.current.id } : {}),
           ...trailBody(),
           ...(resent ? { allow_seed_phrase: true } : {}),
         },
@@ -329,6 +369,14 @@ export default function Symposium({
           {/* A div, not a p: the band styles its last paragraph. */}
           <div className="symposium-saved">
             Symposium runs are saved to your account, even with Private Mode on.
+            {project && (
+              <>
+                {" "}
+                <span>This run goes in the project</span>{" "}
+                <b data-i18n="off">{project.name}</b>
+                <span>, with its instructions.</span>
+              </>
+            )}
           </div>
           <BandSteps />
         </div>
@@ -521,6 +569,15 @@ export default function Symposium({
                     setVeilOn?.((v) => !v);
                     setQuotes({});
                   }}
+                />
+              )}
+              {projects.length > 0 && (
+                <ProjectPicker
+                  className="inline"
+                  projects={projects}
+                  value={projectId}
+                  onChange={setProjectId}
+                  disabled={busy}
                 />
               )}
               <span className="fine-print">

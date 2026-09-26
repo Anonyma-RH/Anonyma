@@ -31,6 +31,7 @@ import { collabRoutes } from "./routes/collabs.js";
 import { treasuryRoutes } from "./routes/treasury.js";
 import { retentionRoutes } from "./routes/retention.js";
 import { scrollsRoutes } from "./routes/scrolls.js";
+import { projectRoutes } from "./routes/projects.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
@@ -103,6 +104,8 @@ export function createApp(overrides = {}) {
   collabRoutes(ctx);
   retentionRoutes(ctx);
   scrollsRoutes(ctx);
+  // Projects: runChat files a new chat in one (ctx.projects.forChat/file).
+  ctx.projects = projectRoutes(ctx);
   usageInsightRoutes(ctx);
   Object.assign(ctx, memoryRoutes(ctx));
   shareRoutes(ctx);

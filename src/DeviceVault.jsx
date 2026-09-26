@@ -257,8 +257,11 @@ export function VaultLimits() {
 
 // The sidebar's Device Vault section: its chats while unlocked, otherwise a
 // prompt to set it up or unlock it.
-export function VaultSection({ vault, currentId, onOpen, onDialog }) {
+// `filter` narrows the list (the sidebar's project filter) and `mark` adds a
+// tag before a chat's title (its project's colour); both are optional.
+export function VaultSection({ vault, currentId, onOpen, onDialog, filter = null, mark = null }) {
   if (vault.status === "off" || vault.status === "loading") return null;
+  const chats = filter ? vault.chats.filter(filter) : vault.chats;
   return (
     <section className="vault-section" aria-label="Device Vault">
       <div className="sidebar-group-label vault-label">
@@ -296,9 +299,10 @@ export function VaultSection({ vault, currentId, onOpen, onDialog }) {
       ) : (
         <>
           <div className="conversation-list vault-list">
-            {vault.chats.map((c) => (
+            {chats.map((c) => (
               <div className={c.id === currentId ? "current" : ""} key={c.id}>
                 <button data-i18n="off" onClick={() => onOpen(c)}>
+                  {mark?.(c)}
                   {c.title}
                 </button>
                 <button
@@ -312,8 +316,10 @@ export function VaultSection({ vault, currentId, onOpen, onDialog }) {
               </div>
             ))}
           </div>
-          {!vault.chats.length && (
+          {!vault.chats.length ? (
             <p className="vault-hint">No device-only chats yet. Turn on Device only in the composer.</p>
+          ) : (
+            !chats.length && <p className="vault-hint">None here for this filter.</p>
           )}
           {vault.damaged > 0 && (
             <p className="vault-hint">

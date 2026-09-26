@@ -230,12 +230,14 @@ export const GROUPS = [
   { id: "chats", label: "Chats" },
   { id: "models", label: "Models" },
   { id: "scrolls", label: "Scrolls" },
+  // Projects (src/projects.js): Go to project and New chat in project.
+  { id: "projects", label: "Projects" },
   { id: "actions", label: "Actions" },
   { id: "goto", label: "Go to" },
 ];
 // Per-group caps with an empty query (a short overview) and with a query.
-export const EMPTY_LIMITS = { recent: 5, chats: 5, models: 5, scrolls: 5, actions: 50, goto: 50 };
-export const QUERY_LIMITS = { chats: 8, models: 8, scrolls: 6, actions: 8, goto: 8 };
+export const EMPTY_LIMITS = { recent: 5, chats: 5, models: 5, scrolls: 5, projects: 6, actions: 50, goto: 50 };
+export const QUERY_LIMITS = { chats: 8, models: 8, scrolls: 6, projects: 8, actions: 8, goto: 8 };
 // A recently used item gets a small lift, never enough to jump a tier.
 export const recentBonus = (index) => (index < 0 ? 0 : Math.max(0, 30 - index * 5));
 // Once something matches as a whole word or better, weak scattered matches
@@ -365,6 +367,7 @@ export const MODE_LABELS = {
   collab: "Collab",
   library: "Your library",
   tools: "Research, Writing & Calculators",
+  projects: "Projects",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -379,6 +382,7 @@ const PLACES = [
   ["collab", "Collab", ["team", "shared", "members", "together"]],
   ["tools", "Research, Writing & Calculators", ["task tools", "research", "writing", "calculator"]],
   ["library", "Your library", ["library", "media", "saved images", "saved videos"]],
+  ["projects", "Projects", ["project", "folders", "group chats", "pinned files"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

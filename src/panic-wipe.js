@@ -19,6 +19,8 @@ export const WIPE_GOES = [
   "Every sign-in, on every device, including this one",
   "Unsent drafts and everything ANONYMA keeps in this browser, such as Device Vault chats, Veil words, recent searches and the offline copy",
 ];
+// Listed once Projects is released (see PanicWipe.jsx).
+export const WIPE_GOES_PROJECTS = "Projects, with their instructions and pinned files";
 export const WIPE_STAYS = [
   "Your account and every credit in it",
   "Your ledger, deposits and receipts",

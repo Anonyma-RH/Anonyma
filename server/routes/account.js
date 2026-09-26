@@ -3,6 +3,7 @@ import { exportConversations } from "./conversations.js";
 import { HOLDER_RESET } from "../holders.js";
 import { limitsView } from "../spending-limits.js";
 import { exportRoutines, forgetRoutines } from "../routines.js";
+import { exportProjects } from "./projects.js";
 import { isReleased } from "../releases.js";
 import {
   uid,
@@ -34,6 +35,8 @@ import {
 //   runs, branches and Double-checks are conversations too);
 // - every session and pending sign-in code;
 // - connected apps' tokens and pending codes;
+// - projects, with their filed chats and pinned files (the chats go with
+//   the conversations above);
 // - support requests, video jobs, saved uploads, Scrolls, standing
 //   instructions and memory facts;
 // - saved media rows. Their files can't join a transaction, so the caller
@@ -48,6 +51,10 @@ export function eraseAccountContent(db, user) {
   db.prepare(
     "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
   ).run(id);
+  // Projects: their filed chats and pins go with them.
+  db.prepare("DELETE FROM project_chats WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM project_files WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM projects WHERE user_id=?").run(id);
   db.prepare("DELETE FROM sessions WHERE user_id=?").run(id);
   db.prepare(
     "DELETE FROM oauth_tokens WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
@@ -97,6 +104,10 @@ export function accountRoutes(ctx) {
     return links.length || isReleased(cfg, "sharelinks")
       ? { shareLinks: links }
       : {};
+  }
+  function projectsExport(user) {
+    const projects = exportProjects(db, user);
+    return projects.length || isReleased(cfg, "projects") ? { projects } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -414,6 +425,9 @@ export function accountRoutes(ctx) {
       spendingLimits: exportLimits(req.user.id),
       // Routines: each routine and its inbox (answers, charges, receipts).
       routines: exportRoutines(db, req.user.id),
+      // Projects: each one's settings, filed chats and pinned files (once
+      // the update is live, or while any project exists).
+      ...projectsExport(req.user.id),
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {

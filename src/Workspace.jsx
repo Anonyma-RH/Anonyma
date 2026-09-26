@@ -35,6 +35,18 @@ import { Reveal } from "./ReferenceMotion.jsx";
 import WorkspaceHome from "./WorkspaceHome.jsx";
 import TaskTools from "./TaskTools.jsx";
 import Routines from "./Routines.jsx";
+import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
+import {
+  projectsReleased,
+  projectChatStart,
+  withProjectInstructions,
+  projectRequestFields,
+  pinnedFilesBlocked,
+  withPinnedDocuments,
+  projectItems,
+  projectChatPath,
+  projectPagePath,
+} from "./projects.js";
 import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import CollabHub from "./Collab.jsx";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
@@ -200,6 +212,7 @@ export function AppSidebar({
           ["collab", "Collab"],
           ["tools", "Task tools"],
           ["routines", "Routines"],
+          ["projects", "Projects"],
           ["library", "Your library"],
         ].map(([id, t]) =>
           modeReleased(config, id) ? (
@@ -385,10 +398,23 @@ export default function Workspace() {
     "library",
     "tools",
     "routines",
+    "projects",
   ].includes(mode);
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
+  // Projects (src/Projects.jsx): the account's projects, and the one the open
+  // chat is in (or a new chat was started in). Signed in only, never the demo.
+  const projectsLive = !demo && !!user && projectsReleased(config);
+  const projects = useProjects(projectsLive, user?.id);
+  const [projectId, setProjectId] = useState(null),
+    // The sidebar's chat filter: "all", "none" or a project id.
+    [chatFilter, setChatFilter] = useState("all"),
+    // Bumped whenever a fresh chat starts, so its pinned files attach.
+    [freshKey, setFreshKey] = useState(0),
+    // A Device only project chat waiting for the vault's state to load.
+    [vaultPrompt, setVaultPrompt] = useState(false);
+  const project = projectsLive && textMode ? projects.byId(projectId) : null;
   // Scrolls (saved prompts, "/" insert and standing instructions) work in
   // every text mode: chat, code and Uncensored.
   const chatControlLive = !demo && textMode && isReleased(config, "chatcontrol");
@@ -430,6 +456,12 @@ export default function Workspace() {
   });
   const instructionsActive =
     scrollsLive && instructions.enabled && !!instructions.body.trim();
+  // Standing instructions (Scrolls), then the project's own: the one leading
+  // system message on every request in this chat, masked by Veil like the rest.
+  const sentInstructions = withProjectInstructions(
+    instructionsActive ? instructions.body.trim() : "",
+    project,
+  );
   // Memory Across Models goes with chat, code and Uncensored messages once
   // switched on, never off the record, in Private Mode or in a shared chat
   // (the server refuses those too; see server/routes/memory.js).
@@ -504,7 +536,7 @@ export default function Workspace() {
   const needsVision = textMode && requestNeedsVision(buildChatRequest({
     messages, attachments,
     preserveHistory: longAnswersLive,
-    instructions: instructionsActive ? instructions.body.trim() : "",
+    instructions: sentInstructions,
   }).request);
   const finderModels = needsVision ? visibleModels.filter((m) => m.vision) : visibleModels;
   const finderOpts = useMemo(
@@ -596,6 +628,7 @@ export default function Workspace() {
     vaultChatRef.current = null;
     vaultSavedRef.current = "";
     setVaultChatId(null);
+    setProjectId(null);
   }, [mode, demo]);
   // Share-to-ANONYMA: prefill the composer from a share_target request
   // (public/manifest.webmanifest) and drop the params from the URL. Runs
@@ -708,6 +741,70 @@ export default function Workspace() {
       if (saved) openChat(saved);
     } else if (user) openChat({ id: linked, mode });
   }, [linked, user?.id, mode, demo]);
+  // "New chat in project" (the Projects page, the Command Palette) arrives
+  // as ?project=<id>: a fresh chat in that project, then the link is dropped
+  // so a reload doesn't start another.
+  const projectParam = params.get("project");
+  useEffect(() => {
+    if (!projectParam || !textMode || !projects.loaded) return;
+    const next = new URLSearchParams(location.search);
+    next.delete("project");
+    const search = next.toString();
+    navigate(location.pathname + (search ? "?" + search : ""), { replace: true });
+    const p = projects.byId(projectParam);
+    if (p) startProjectChat(p);
+    else setError("That project wasn't found.");
+  }, [projectParam, projects.loaded, mode]);
+  // A Device only project chat asks to set up or unlock the vault. A browser
+  // that can't keep a vault starts it off the record instead.
+  useEffect(() => {
+    if (!vaultPrompt || vault.status === "loading" || vault.status === "off") return;
+    setVaultPrompt(false);
+    if (!deviceOnly || vault.unlocked) return;
+    if (vault.status === "unavailable") {
+      setDeviceOnly(false);
+      setInfo("This browser can't keep a Device Vault, so this chat is off the record instead.");
+    } else setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock", then: "deviceOnly" });
+  }, [vaultPrompt, vault.status]);
+  // A project deleted elsewhere leaves the sidebar filter.
+  useEffect(() => {
+    if (!["all", "none"].includes(chatFilter) && projects.loaded && !projects.byId(chatFilter))
+      setChatFilter("all");
+  }, [projects.list, chatFilter]);
+  // Projects: a fresh chat in a project gets its pinned files' text as
+  // documents, only where Saved files work (not Private Mode, off the record,
+  // Device only or with Veil on). Switching to one of those, leaving the
+  // project or opening another chat drops them.
+  const pinsLive = isReleased(config, "files") && isReleased(config, "documents");
+  const pinsBlocked = pinnedFilesBlocked({
+    privateMode,
+    ephemeral,
+    veilOn: veilOn && isReleased(config, "veil"),
+  });
+  useEffect(() => {
+    const fresh = !!project && !current && !messages.length;
+    if (!fresh || pinsBlocked || !pinsLive || !project.files.length) {
+      setDocuments((d) => (d.some((x) => x.pinned) ? d.filter((x) => !x.pinned) : d));
+      return;
+    }
+    let live = true;
+    Promise.all(
+      project.files.map((f) =>
+        api("/api/files/" + encodeURIComponent(f.id) + "/text").then(
+          (t) => ({ ...t, id: f.id }),
+          () => null,
+        ),
+      ),
+    ).then((list) => {
+      if (!live) return;
+      setDocuments((d) => withPinnedDocuments(d, list.filter(Boolean), uid));
+      if (list.some((x) => !x))
+        setInfo("A pinned file couldn't be attached. Its saved file may have expired.");
+    });
+    return () => {
+      live = false;
+    };
+  }, [project?.id, current, pinsBlocked, freshKey]);
   // A vault chat opened from another section arrives here after the section
   // reset above. Its id travels in navigation state, never in the URL.
   const vaultRequest = location.state?.vaultChat;
@@ -739,6 +836,8 @@ export default function Workspace() {
           privateMode,
           messages: kept,
           veil: veilStateRef.current,
+          // Projects: grouped with its project inside the vault only.
+          project: project?.id || null,
         }),
       )
       .then(() => forgetVeilState(veilKey))
@@ -808,6 +907,60 @@ export default function Workspace() {
     vaultChatRef.current = null;
     vaultSavedRef.current = "";
     setVaultChatId(null);
+    setFreshKey((k) => k + 1);
+  }
+  // Projects: a new chat in a project starts the way the project says: its
+  // default privacy mode (never saved when that's off the record, Private
+  // Mode or Device only), its default model and its pinned files.
+  function startProjectChat(p) {
+    // Device only is this browser's own choice (the server stores it as
+    // off the record), and needs Device Vault here.
+    const start = projectChatStart(projects.privacyOf(p, vaultLive), {
+      vault: vaultLive,
+      privateMode: privateModeReleased(config),
+    });
+    newChat();
+    setProjectId(p.id);
+    setDocuments((d) => d.filter((x) => !x.pinned));
+    setPrivateMode(start.privateMode);
+    if (start.privateMode) setVeilOn(true);
+    setDeviceOnly(start.deviceOnly);
+    setEphemeral(start.ephemeral);
+    // Device only asks to set up or unlock the vault once its state is known.
+    if (start.deviceOnly && !vault.unlocked) setVaultPrompt(true);
+    // The project's model, for this visit: the choice the picker remembers
+    // in this browser is left as it was.
+    const own = p.model && models.find((m) => m.id === p.model);
+    if (own && (!start.privateMode || own.private)) {
+      if (finderLive) setModelChoices((prev) => withChoice(prev, mode, { model: own.id }));
+      else setModel(own.id);
+    } else if (start.privateMode && !finderLive) setModel(privateModelsCallable[0]?.id || "");
+  }
+  // Out of the project before the first message: a plain new chat.
+  function leaveProject() {
+    setProjectId(null);
+    setDocuments((d) => (d.some((x) => x.pinned) ? d.filter((x) => !x.pinned) : d));
+  }
+  // Moves a saved chat into a project, between projects or out of one.
+  async function moveChat(c, to) {
+    try {
+      if (to)
+        await api(`/api/projects/${encodeURIComponent(to)}/chats`, {
+          method: "POST",
+          body: { conversationId: c.id },
+        });
+      else if (c.project_id)
+        await api(
+          `/api/projects/${encodeURIComponent(c.project_id)}/chats/${encodeURIComponent(c.id)}`,
+          { method: "DELETE" },
+        );
+      setAll((prev) => prev.map((x) => (x.id === c.id ? { ...x, project_id: to } : x)));
+      setDialog((d) => (d?.item?.id === c.id ? { ...d, item: { ...d.item, project_id: to } } : d));
+      if (c.id === current) setProjectId(to);
+      projects.reload();
+    } catch (e) {
+      setError(e.message);
+    }
   }
   // Off the record only ever applies to a fresh, unsaved thread: switching
   // it either way starts a new chat rather than mixing saved and unsaved turns.
@@ -858,6 +1011,7 @@ export default function Workspace() {
     setVaultChatId(chat.id);
     setDeviceOnly(true);
     setEphemeral(true);
+    setProjectId(chat.project || null);
     const wasPrivate = !!chat.private && privateModeReleased(config);
     setPrivateMode(wasPrivate);
     if (wasPrivate) setVeilOn(true);
@@ -913,6 +1067,7 @@ export default function Workspace() {
     setVaultChatId(null);
     setChecking(null);
     setCurrent(c.id);
+    setProjectId(c.project_id ?? null);
     setMessages(c.messages || []);
     setLineage({ parent: null, branches: [] });
     setEditing(null);
@@ -922,6 +1077,7 @@ export default function Workspace() {
         const r = await api("/api/conversations/" + c.id);
         setCurrent(c.id);
         setShared(r.collab || null);
+        setProjectId(r.project_id ?? null);
         setLineage({ parent: r.parent || null, branches: r.branches || [] });
         setMessages(r.messages.map(messageFromServer));
       } catch (e) {
@@ -1087,7 +1243,7 @@ export default function Workspace() {
       text: sendText,
       attachments,
       documents,
-      instructions: instructionsActive ? instructions.body.trim() : "",
+      instructions: sentInstructions,
       preserveHistory: longAnswersLive,
       veilWith: veiling
         ? { state: cloneVeilState(veilStateRef.current), words: veilWords }
@@ -1114,8 +1270,8 @@ export default function Workspace() {
   const promptSeed = useSeedScan(seedLive, sendText);
   const documentSeed = useSeedScan(seedLive && textMode, documentTexts);
   const instructionsSeed = useSeedScan(
-    seedLive && textMode && instructionsActive,
-    instructions.body,
+    seedLive && textMode && !!sentInstructions,
+    sentInstructions,
   );
   const seedHit = promptSeed || documentSeed || instructionsSeed;
   const editSeed = useSeedScan(seedLive, editing?.text || "");
@@ -1140,7 +1296,7 @@ export default function Workspace() {
     () => (autoEstimate ? estimateRequest() : null),
     // Everything estimateRequest reads that can change between renders.
     [autoEstimate, sendText, sendModel, messages, attachments, documents,
-      instructionsActive, instructions.body, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive, memoryFacts, mode],
+      sentInstructions, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive, memoryFacts, mode],
   );
   const estimate = useCreditEstimate(estimateBody);
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
@@ -1155,7 +1311,7 @@ export default function Workspace() {
     const seedFound = !seedLive
       ? null
       : redo
-        ? scanSecrets(redo.edited ?? redo.content, instructionsActive ? instructions.body : "")
+        ? scanSecrets(redo.edited ?? redo.content, sentInstructions)
         : seedHit;
     if (seedFound && !allowSeed && (!redo || redo.edited != null)) return;
     // The server checks the same text for seed phrases only; one found here
@@ -1175,7 +1331,7 @@ export default function Workspace() {
           messages: redo.base,
           preserveHistory: longAnswersLive,
           attachments: (redo.images || []).map((url) => ({ url })),
-          instructions: instructionsActive ? instructions.body.trim() : "",
+          instructions: sentInstructions,
         }).request)
       : needsVision;
     if (finderLive && textMode && requestVision && !effectiveModel?.vision) {
@@ -1378,7 +1534,7 @@ export default function Workspace() {
       text,
       attachments: redo ? (redo.images || []).map((url) => ({ url })) : attachments,
       documents: redo ? [] : documents,
-      instructions: instructionsActive ? instructions.body.trim() : "",
+      instructions: sentInstructions,
       preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
       memoryFacts,
@@ -1457,6 +1613,9 @@ export default function Workspace() {
           // so a saved reply's trail can still show it after a reload.
           ...(trailLive ? { veil_masked: veiling ? requestMasked : null } : {}),
           ...(allowSeedPhrase ? { allow_seed_phrase: true } : {}),
+          // Projects: a new saved chat is filed in its project; off the
+          // record, Private and Device only chats never name one.
+          ...(projectsLive ? projectRequestFields(project, { ephemeral, conversationId }) : {}),
           ...teamPays.body,
         },
         (event) => {
@@ -1553,6 +1712,8 @@ export default function Workspace() {
         api("/api/conversations")
           .then((r) => setAll(recentConversations(r.data)))
           .catch(() => {});
+        // A chat just filed in a project changes its counts.
+        if (project && !ephemeral) projects.reload();
       }
     }
   }
@@ -1736,6 +1897,8 @@ export default function Workspace() {
       ...chatItems(demo || user ? all : [], { current }),
       ...modelItems(paletteModels, { current: model, demo, trainingLive }),
       ...(textMode && scrollsLive ? scrollItems(scrolls) : []),
+      // Projects: Go to project and New chat in project.
+      ...(projectsLive ? projectItems(projects.list) : []),
       ...paletteActions(ctx),
       ...[historySearchItem(query, ctx)].filter(Boolean),
     ];
@@ -1750,6 +1913,13 @@ export default function Workspace() {
         setModel(item.value.id);
         setQuote(null);
       }
+      return;
+    }
+    if (item.group === "projects" && item.value) {
+      if (item.run !== "new") return navigate(projectPagePath(item.value));
+      if (!textMode) return navigate(projectChatPath(item.value, mode));
+      startProjectChat(item.value);
+      focusComposer();
       return;
     }
     if (item.group === "scrolls" && item.value) {
@@ -1826,6 +1996,15 @@ export default function Workspace() {
       "application/zip",
     );
   }
+  // The sidebar's recent chats, narrowed to a project (or to none) once
+  // Projects is live.
+  const sidebarChats = (demo || user ? all : []).filter((c) =>
+    !projectsLive || chatFilter === "all"
+      ? true
+      : chatFilter === "none"
+        ? !projects.byId(c.project_id)
+        : c.project_id === chatFilter,
+  );
   if (!validMode)
     return (
       <main id="main">
@@ -1845,15 +2024,61 @@ export default function Workspace() {
         open={menu}
         onClose={() => setMenu(false)}
       >
-        <button className="new-conversation" onClick={newChat}>
+        <button
+          className="new-conversation"
+          onClick={() => {
+            newChat();
+            leaveProject();
+          }}
+        >
           <Icon name="plus" size={17} />
           New conversation
         </button>
+        {projectsLive && (
+          <ProjectsSidebar
+            projects={projects.list}
+            currentId={mode === "projects" ? params.get("p") : project?.id}
+            onNew={() => {
+              setMenu(false);
+              navigate("/workspace/projects?new=1");
+            }}
+          />
+        )}
         <div className="sidebar-group-label">RECENT CONVERSATIONS</div>
+        {projectsLive && projects.list.length > 0 && (
+          <select
+            className="project-filter"
+            aria-label="Show chats from"
+            value={chatFilter}
+            onChange={(e) => setChatFilter(e.target.value)}
+          >
+            <option value="all">All chats</option>
+            <option value="none">No project</option>
+            {projects.list.map((p) => (
+              <option key={p.id} value={p.id} data-i18n="off">
+                {p.name}
+              </option>
+            ))}
+          </select>
+        )}
+        {projectsLive && chatFilter !== "all" && !sidebarChats.length && (
+          <p className="sidebar-empty">
+            {chatFilter === "none" ? "Every saved chat is in a project." : "No saved chats in this project yet."}
+          </p>
+        )}
         <div className="conversation-list">
-          {(demo ? all : user ? all : []).slice(0, 12).map((c) => (
+          {sidebarChats.slice(0, chatFilter === "all" ? 12 : 40).map((c) => (
             <div className={c.id === current ? "current" : ""} key={c.id}>
-              <button data-i18n="off" onClick={() => openChat(c)}>{c.title}</button>
+              <button data-i18n="off" onClick={() => openChat(c)}>
+                {projectsLive && projects.byId(c.project_id) && (
+                  <ProjectSwatch
+                    color={projects.byId(c.project_id).color}
+                    title={projects.byId(c.project_id).name}
+                    className="chat-project"
+                  />
+                )}
+                {c.title}
+              </button>
               {!demo && isReleased(config, "ephemeral") && (
                 <RetentionIndicator expires={c.expires} />
               )}
@@ -1874,6 +2099,25 @@ export default function Workspace() {
         {vaultLive && (
           <VaultSection
             vault={vault}
+            // Projects: the sidebar filter reaches the vault's chats too,
+            // grouped by project in this browser only.
+            filter={
+              projectsLive && chatFilter !== "all"
+                ? (c) => (chatFilter === "none" ? !projects.byId(c.project) : c.project === chatFilter)
+                : null
+            }
+            mark={
+              projectsLive
+                ? (c) =>
+                    projects.byId(c.project) && (
+                      <ProjectSwatch
+                        color={projects.byId(c.project).color}
+                        title={projects.byId(c.project).name}
+                        className="chat-project"
+                      />
+                    )
+                : null
+            }
             currentId={deviceOnly ? vaultChatId : null}
             onOpen={(c) => {
               setMenu(false);
@@ -1915,6 +2159,7 @@ export default function Workspace() {
                 library: "Your library",
                 tools: "Research, Writing & Calculators",
                 routines: "Routines",
+                projects: "Projects",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -2003,7 +2248,7 @@ export default function Workspace() {
               onOpen={openChat}
             />
           ) : mode === "library" && isReleased(config, "historylibrary") ? (
-            <HistoryLibrary key={`${user?.id || "guest"}:${demo}`} user={user} demo={demo} config={config} media={media} Grid={MediaGrid} request={paletteLive && location.state?.libraryTab ? { tab: location.state.libraryTab, query: location.state.historyQuery, key: location.key } : null} onOpen={openChat} onDelete={(item) => setDialog({ type: "media", item })} refreshMedia={async () => { const r = await api("/api/media"); setMedia(r.data); refresh(); }} />
+            <HistoryLibrary key={`${user?.id || "guest"}:${demo}`} user={user} demo={demo} config={config} projects={projectsLive ? projects.list : []} media={media} Grid={MediaGrid} request={paletteLive && location.state?.libraryTab ? { tab: location.state.libraryTab, query: location.state.historyQuery, key: location.key } : null} onOpen={openChat} onDelete={(item) => setDialog({ type: "media", item })} refreshMedia={async () => { const r = await api("/api/media"); setMedia(r.data); refresh(); }} />
           ) : mode === "library" ? (
             <div className="library-page">
               <div className="page-heading-inline">
@@ -2048,6 +2293,23 @@ export default function Workspace() {
                 </Empty>
               )}
             </div>
+          ) : mode === "projects" ? (
+            <Projects
+              key={`${user?.id || "guest"}:${demo}`}
+              demo={demo}
+              user={user}
+              config={config}
+              models={models}
+              projects={projects}
+              vault={vault}
+              vaultLive={vaultLive}
+              onOpenChat={openChat}
+              onOpenVaultChat={openVaultChat}
+              onNewChat={(p) => navigate(projectChatPath(p, "chat"))}
+              onUnlockVault={() =>
+                setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })
+              }
+            />
           ) : mode === "routines" ? (
             <Routines key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} />
           ) : mode === "tools" ? (
@@ -2065,6 +2327,8 @@ export default function Workspace() {
               setVeilOn={setVeilOn}
               veilWords={veilWords}
               setVeilWords={setVeilWords}
+              projects={projectsLive ? projects.list : []}
+              onFiled={projects.reload}
             />
           ) : mode === "audio" ? (
             <AudioStudio
@@ -2483,6 +2747,24 @@ export default function Workspace() {
                   ) : (
                     <NoPrivateModelsNotice />
                   ))}
+                {project && (
+                  <ProjectBar
+                    project={project}
+                    saved={!!current || messages.length > 0}
+                    fresh={!current && !messages.length}
+                    instructionsOn={!!project.instructions.trim()}
+                    attached={documents.filter((d) => d.pinned).length}
+                    pinsBlocked={pinsBlocked}
+                    note={
+                      deviceOnly
+                        ? "Device only: grouped with this project in Device Vault"
+                        : ephemeral
+                          ? "Not saved, so not listed in the project"
+                          : ""
+                    }
+                    onLeave={leaveProject}
+                  />
+                )}
                 {info && <Notice>{info}</Notice>}
                 {error && (
                   <Notice type="error">
@@ -3211,6 +3493,15 @@ export default function Workspace() {
                     }}
                   />
                   <RetentionIndicator expires={dialog.item.expires} />
+                </div>
+              )}
+              {projectsLive && !dialog.item.collab_id && (
+                <div className="project-move-row">
+                  <ProjectPicker
+                    projects={projects.list}
+                    value={projects.byId(dialog.item.project_id)?.id || null}
+                    onChange={(to) => moveChat(dialog.item, to)}
+                  />
                 </div>
               )}
               <div className="inline-actions">

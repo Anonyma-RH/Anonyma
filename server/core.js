@@ -637,6 +637,59 @@ export const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS routine_runs_routine ON routine_runs(routine_id,started);
       CREATE INDEX IF NOT EXISTS routine_runs_user ON routine_runs(user_id,started);
   `),
+  // Projects (server/routes/projects.js): folders for an account's saved
+  // chats with shared context. A project keeps a name, a colour from the
+  // house palette, optional instructions (the browser sends them with every
+  // chat in it, like standing instructions), how a new chat in it starts
+  // (starts: normal, off_record or private) and a default model; at most 50
+  // per account, also enforced here.
+  // project_chats files a saved personal conversation (a Symposium run too)
+  // in one project of its own creator; the row goes with the conversation
+  // (delete, delete all, cap pruning, auto-delete) or the project, whose
+  // chats then stay unfiled. Off-the-record, Private and Device-only chats
+  // are never saved, so never filed. project_files pins up to five of the
+  // account's saved uploads; a pin goes with its upload (expiry included)
+  // or the project. The triggers keep every row inside one account,
+  // whichever code writes it.
+  additive(`
+      CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),
+        name TEXT NOT NULL,color TEXT NOT NULL,instructions TEXT NOT NULL DEFAULT '',
+        starts TEXT NOT NULL DEFAULT 'normal' CHECK(starts IN ('normal','off_record','private')),
+        model TEXT,created INTEGER NOT NULL,updated INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS projects_user ON projects(user_id,created);
+      CREATE TRIGGER IF NOT EXISTS projects_per_account BEFORE INSERT ON projects
+        WHEN (SELECT COUNT(*) FROM projects WHERE user_id=NEW.user_id)>=50
+        BEGIN SELECT RAISE(ABORT,'project_limit'); END;
+      CREATE TABLE IF NOT EXISTS project_chats(
+        conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),added INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS project_chats_project ON project_chats(project_id,added);
+      CREATE INDEX IF NOT EXISTS project_chats_user ON project_chats(user_id);
+      CREATE TRIGGER IF NOT EXISTS project_chats_own BEFORE INSERT ON project_chats
+        WHEN (SELECT user_id FROM projects WHERE id=NEW.project_id) IS NOT NEW.user_id
+          OR (SELECT user_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NEW.user_id
+          OR (SELECT collab_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NULL
+        BEGIN SELECT RAISE(ABORT,'project_owner_only'); END;
+      CREATE TRIGGER IF NOT EXISTS project_chats_own_update BEFORE UPDATE ON project_chats
+        WHEN (SELECT user_id FROM projects WHERE id=NEW.project_id) IS NOT NEW.user_id
+          OR (SELECT user_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NEW.user_id
+          OR (SELECT collab_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NULL
+        BEGIN SELECT RAISE(ABORT,'project_owner_only'); END;
+      CREATE TABLE IF NOT EXISTS project_files(
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        upload_id TEXT NOT NULL REFERENCES uploads(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),added INTEGER NOT NULL,
+        PRIMARY KEY(project_id,upload_id));
+      CREATE INDEX IF NOT EXISTS project_files_upload ON project_files(upload_id);
+      CREATE TRIGGER IF NOT EXISTS project_files_own BEFORE INSERT ON project_files
+        WHEN (SELECT user_id FROM projects WHERE id=NEW.project_id) IS NOT NEW.user_id
+          OR (SELECT user_id FROM uploads WHERE id=NEW.upload_id) IS NOT NEW.user_id
+        BEGIN SELECT RAISE(ABORT,'project_owner_only'); END;
+      CREATE TRIGGER IF NOT EXISTS project_files_per_project BEFORE INSERT ON project_files
+        WHEN (SELECT COUNT(*) FROM project_files WHERE project_id=NEW.project_id)>=5
+        BEGIN SELECT RAISE(ABORT,'project_files_limit'); END;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

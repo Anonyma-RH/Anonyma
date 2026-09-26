@@ -88,6 +88,11 @@ const chat = object(
       description:
         "Seed Guard: once the seedguard update is released, a request whose newest user message or system instructions contain a valid BIP39 seed phrase (12, 15, 18, 21 or 24 English wordlist words with a valid checksum) is refused with 400 seed_phrase_blocked before anything is reserved, stored or sent. Send true only after the user has confirmed sending it anyway (the workspace asks twice). Needs the seedguard update released (403 feature_unreleased otherwise). Nothing about a match is logged or stored.",
     },
+    project: {
+      ...string,
+      description:
+        "Projects: file the new saved conversation this request creates (a Symposium run too) in one of your projects. Needs the projects update released (403 feature_unreleased otherwise); 404 project_not_found for a project that isn't yours. Refused (400 invalid_request) with ephemeral or private, which store nothing and so are never filed, and with conversationId (move a saved chat with POST /api/projects/{id}/chats). The project's instructions aren't added by the server: the workspace sends them as the leading system message, like standing instructions, so Veil can mask them.",
+    },
     memory: {
       ...array(object({ id: string, text: { ...string, maxLength: 2400 }, updated: integer }, ["id", "text"])),
       maxItems: 50,
@@ -628,7 +633,7 @@ for (const [path, summary] of [
 route("get", "/api/conversations", "List latest 300 conversations", {
   response: object({ data: array(object()) }),
   description:
-    "Each entry includes expires (epoch ms, or null for no auto-delete). An expired-but-not-yet-purged conversation is already excluded.",
+    "Each entry includes expires (epoch ms, or null for no auto-delete). An expired-but-not-yet-purged conversation is already excluded. Once Projects is released each entry also has project_id (null when the chat is in no project); GET /api/conversations/{id} includes it for a personal chat too.",
 });
 route("post", "/api/conversations", "Create conversation", {
   body: object({ title: string, mode: string }),
@@ -1218,6 +1223,104 @@ route("delete", "/api/routines/runs/{id}", "Delete one run from the inbox", {
   response: ref("Ok"),
   description: "The ledger entry and signed receipt stay. 409 routine_running while it's in flight.",
 });
+// Projects (update "projects"; pinning files also needs "files", and a
+// default privacy mode the update behind it).
+const projectFile = object({
+  id: string,
+  name: string,
+  bytes: integer,
+  kind: { const: "document" },
+  truncated: bool,
+  characters: integer,
+  expires: { ...integer, description: "The saved upload's own expiry; the pin goes with it." },
+});
+const projectChat = object({
+  id: string,
+  title: string,
+  mode: string,
+  created: integer,
+  updated: integer,
+  expires: { type: ["integer", "null"] },
+});
+const projectFields = {
+  name: { ...string, minLength: 1, maxLength: 60 },
+  color: { enum: ["cobalt", "navy", "amber", "ink", "slate", "mist"], default: "cobalt" },
+  instructions: {
+    ...string,
+    maxLength: 4000,
+    default: "",
+    description:
+      "Sent by the workspace with every chat in the project, after the account's standing instructions, as the leading system message; Veil masks them in the browser. Once Seed Guard is released a wallet seed phrase is refused (400 seed_phrase_blocked), with no override.",
+  },
+  privacy: {
+    enum: ["normal", "off_record", "private"],
+    default: "normal",
+    description:
+      "How a new chat in the project starts. off_record needs Ephemeral Chats and private needs Private Mode and Ephemeral Chats (403 feature_unreleased otherwise). Off the record and Private chats store nothing on the server, so they're never listed in a project here.",
+  },
+  model: { type: ["string", "null"], description: "A default chat model id, or null for none." },
+  files: {
+    ...array(string),
+    maxItems: 5,
+    description:
+      "Saved upload ids to pin (text and Office files only), replacing the current pins. Needs Files & Reusable Uploads released. The workspace attaches their text to each new chat in the project where Saved files work: not in Private Mode, off the record, Device only or with Veil on. 404 for a file that isn't yours.",
+  },
+};
+const project = object({
+  id: string,
+  name: string,
+  color: string,
+  instructions: string,
+  privacy: string,
+  model: { type: ["string", "null"] },
+  files: array(projectFile),
+  chat_count: integer,
+  run_count: { ...integer, description: "Symposium runs filed in the project" },
+  created: integer,
+  updated: integer,
+});
+const projectDetail = {
+  ...project,
+  properties: {
+    ...project.properties,
+    chats: array(projectChat),
+    runs: { ...array(projectChat), description: "Symposium runs, newest first" },
+  },
+};
+route("get", "/api/projects", "Your projects", {
+  response: object({ projects: array(project), max_projects: integer, max_pinned: integer }),
+  description: "Oldest first. Counts and lists leave out auto-deleted chats.",
+});
+route("post", "/api/projects", "Create a project", {
+  status: 201,
+  body: object(projectFields, ["name"]),
+  response: projectDetail,
+  description:
+    "At most 50 per account (409 project_limit). 400 invalid_project, invalid_model or project_files_limit. 240 changes an hour.",
+});
+route("get", "/api/projects/{id}", "A project with its chats and Symposium runs", {
+  response: projectDetail,
+  description: "404 project_not_found for a project that isn't yours.",
+});
+route("patch", "/api/projects/{id}", "Change a project", {
+  body: object(projectFields),
+  response: projectDetail,
+  description: "Omitted fields keep their value; files replaces the pins.",
+});
+route("delete", "/api/projects/{id}", "Delete a project", {
+  response: ref("Ok"),
+  description: "Its chats and Symposium runs stay saved, in no project; pinned uploads stay in Saved files.",
+});
+route("post", "/api/projects/{id}/chats", "Move a saved chat into a project", {
+  body: object({ conversationId: string }, ["conversationId"]),
+  response: object({ ok: bool, conversation_id: string, project_id: string }),
+  description:
+    "From no project or another project. Your own personal chats and Symposium runs only: a collab's shared chats stay in the collab (400), and another account's chat or project is 404.",
+});
+route("delete", "/api/projects/{id}/chats/{conversation}", "Take a chat out of a project", {
+  response: ref("Ok"),
+  description: "The chat stays saved, in no project. 404 not_in_project when it isn't in this one.",
+});
 paths["/s/{token}"].get.responses[200].content = { "text/html": { schema: string } };
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
@@ -1618,7 +1721,7 @@ route(
   "Download account JSON with explicit monetary units",
   {
     description:
-      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set) and routines (routines: each routine and its inbox runs). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
+      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs) and, once Projects is released or while any exists, projects (each project's settings, the ids of the chats and Symposium runs filed in it, and its pinned files). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
   },
 );
 route("delete", "/api/account", "Close account and forfeit unused credits", {

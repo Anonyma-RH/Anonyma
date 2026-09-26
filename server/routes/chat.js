@@ -179,6 +179,28 @@ export function chatRoutes(ctx) {
         ? accessConversation(req.body.conversationId, req.user.id).id
         : null;
     }
+    // Projects: a new saved chat (or Symposium run) can be filed in one of
+    // the account's own projects, checked before anything is reserved. Off
+    // the record, Private Mode and Device only chats are never saved, so
+    // never filed: such a request is refused rather than tell the server
+    // which project an unsaved chat belongs to. A saved chat is moved with
+    // /api/projects/{id}/chats, never by a message added to it.
+    let project = null;
+    if (!api && req.body.project != null) {
+      if (ephemeral)
+        fail(
+          400,
+          "Off-the-record and Private chats are never saved, so they aren't filed in a project.",
+          "invalid_request",
+        );
+      if (req.body.conversationId)
+        fail(
+          400,
+          "A saved chat moves between projects from its details, not with a new message.",
+          "invalid_request",
+        );
+      project = ctx.projects.forChat(req.user.id, req.body.project);
+    }
     // Team Treasury: with "Team pays" on, a collab conversation's request is
     // held on the collab's treasury account, within the member's limits.
     const team = teamPaid
@@ -240,6 +262,7 @@ export function chatRoutes(ctx) {
             checkSource.id,
             conversation,
           );
+        if (project) ctx.projects.file(conversation, project.id, req.user.id);
         db.prepare(
           "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
         ).run(

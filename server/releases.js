@@ -1,4 +1,5 @@
 import { fail } from "./core.js";
+import { PRIVACY_FEATURES } from "../src/projects.js";
 import {
   parseHolderRewards,
   parseHolderLoyalty,
@@ -528,6 +529,19 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "projects",
+    title: "Projects",
+    tagline: "Keep related chats, files and instructions together.",
+    points: [
+      "Group chats and Symposium runs by project",
+      "Instructions and pinned files go with every new chat",
+      "A default model and privacy mode for each project",
+    ],
+    // Pinning files needs Files & Reusable Uploads, and a default privacy
+    // mode needs the update behind it (PRIVACY_FEATURES in src/projects.js).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -637,7 +651,24 @@ export function featuresFor(req) {
   const p = String(req.path).toLowerCase(),
     post = req.method === "POST",
     body = req.body || {};
-  if (p.startsWith("/api/history/") || p.startsWith("/api/library/")) return ["historylibrary"];
+  // History search can be narrowed to one project.
+  if (p.startsWith("/api/history/"))
+    return req.query?.project !== undefined ? ["historylibrary", "projects"] : ["historylibrary"];
+  if (p.startsWith("/api/library/")) return ["historylibrary"];
+  // Projects, and what a project turns on: pinned files need Files &
+  // Reusable Uploads, and a default privacy mode the update behind it.
+  if (p === "/api/projects" || p.startsWith("/api/projects/")) {
+    const needed = ["projects"];
+    if (post || req.method === "PATCH") {
+      if (body.files !== undefined) needed.push("files");
+      const privacy = typeof body.privacy === "string" && Object.hasOwn(PRIVACY_FEATURES, body.privacy)
+        ? PRIVACY_FEATURES[body.privacy]
+        : [];
+      for (const id of privacy)
+        if (!needed.includes(id)) needed.push(id);
+    }
+    return needed;
+  }
   // Panic Wipe: the one route that erases an account's content at once.
   if (/^\/api\/account\/wipe\/?$/.test(p)) return ["wipe"];
   if (post && (body.libraryMediaId !== undefined || body.libraryQuote !== undefined)) {
@@ -745,6 +776,8 @@ export function featuresFor(req) {
   )
     return ["ephemeral"];
   const needed = [];
+  // A new saved chat (or Symposium run) filed in a project.
+  if (p === "/api/chat" && post && body.project !== undefined) needed.push("projects");
   if (p === "/api/chat" && post && body.taskTool !== undefined) needed.push("tasktools");
   // Privacy Trail: the browser's Veil mask count (null when Veil was off),
   // kept with the reply's trail.

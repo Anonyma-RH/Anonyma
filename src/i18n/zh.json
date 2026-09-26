@@ -3308,7 +3308,43 @@
     "Confirm with a code sent to your email or a signature from your linked wallet.": "请使用发送到你邮箱的验证码，或已关联钱包的签名来确认。",
     "Incorrect password.": "密码错误。",
     "Sign with the wallet linked to this account.": "请使用与此账户关联的钱包签名。",
-    "Two-step sign-in: while it’s on, your authenticator key, sealed with the server’s app secret, and your ten recovery codes, kept only as one-way hashes. A sign-in waiting for its code lasts 5 minutes, and a session’s “confirm it’s you” 10 minutes. Your export says only whether it’s on. Turning it off or closing your account deletes the key and codes; Panic Wipe leaves it on.": "两步登录：开启期间，会保存你的身份验证器密钥（使用服务器的应用密钥加密封存）和 10 个恢复码（仅保存单向哈希值）。等待输入验证码的登录会保留 5 分钟，会话的“确认是你本人”保留 10 分钟。导出内容只会说明两步登录是否开启。关闭两步登录或关闭账户会删除密钥和恢复码；紧急清除不会关闭两步登录。"
+    "Two-step sign-in: while it’s on, your authenticator key, sealed with the server’s app secret, and your ten recovery codes, kept only as one-way hashes. A sign-in waiting for its code lasts 5 minutes, and a session’s “confirm it’s you” 10 minutes. Your export says only whether it’s on. Turning it off or closing your account deletes the key and codes; Panic Wipe leaves it on.": "两步登录：开启期间，会保存你的身份验证器密钥（使用服务器的应用密钥加密封存）和 10 个恢复码（仅保存单向哈希值）。等待输入验证码的登录会保留 5 分钟，会话的“确认是你本人”保留 10 分钟。导出内容只会说明两步登录是否开启。关闭两步登录或关闭账户会删除密钥和恢复码；紧急清除不会关闭两步登录。",
+    "Cost Compare": "费用对比",
+    "See what your message costs on other models.": "看看你的消息在其他模型上要花多少。",
+    "Your message priced on up to 8 models before you send it": "发送前，查看你的消息在最多 8 个模型上的价格",
+    "The same quote as Send, with context fit and image support shown": "与发送时相同的报价，并显示上下文是否放得下、能否读取图片",
+    "Switch models in one click; nothing is sent or charged": "一键切换模型；不会发送任何内容，也不会扣费",
+    "Compare this message's cost on other models": "对比这条消息在其他模型上的费用",
+    "This message, priced on other models before you send it.": "发送前，查看这条消息在其他模型上的价格。",
+    "Web search fee included.": "已包含联网搜索费用。",
+    "Type a message to compare what it would cost.": "输入消息后，即可对比它的费用。",
+    "Estimates by model": "各模型的估算",
+    "Added": "已添加",
+    "Too long for this model": "超出此模型的上下文额度",
+    "Can't read your images": "无法读取你的图片",
+    "Not a private model": "不是隐私模型",
+    "Not offered in this section": "此分区不提供",
+    "Not available right now": "当前不可用",
+    "No longer in the catalog": "已不在模型目录中",
+    "Not a chat model": "不是对话模型",
+    "Can't be priced for this message": "无法为这条消息估价",
+    "Same price": "价格相同",
+    "Pricing this message…": "正在为这条消息估价……",
+    "Estimates are unavailable right now.": "目前无法估算。",
+    "Try again": "重试",
+    "Add a model to compare": "添加要对比的模型",
+    "Models to add": "可添加的模型",
+    "No other model here matches that search.": "这里没有其他模型与该搜索匹配。",
+    "Estimates, not final charges: each model is priced by the same quote as Send, with the reply budget Send would give it. Actual usage and the amount held can differ. Comparing sends and charges nothing.": "这是估算，不是最终费用：每个模型都按与发送时相同的报价计算，并使用发送时会给它的回复预算。实际用量和冻结金额可能不同。对比不会发送任何内容，也不会扣费。",
+    "Cost Compare prices chat models only.": "费用对比仅为对话模型估价。",
+    "This isn't one of the Uncensored models.": "这不是无审查模型之一。",
+    "This model is offered in the Uncensored section only.": "此模型仅在无审查分区提供。",
+    "This model can't read the images in this message.": "此模型无法读取这条消息中的图片。",
+    "This message and reply budget don't fit this model's context allowance.": "这条消息和回复预算超出了此模型的上下文额度。",
+    "List each model once.": "每个模型只列一次。",
+    "Cost Compare works in chat, code and Uncensored.": "费用对比适用于对话、代码和无审查模式。",
+    "models must list the model ids to compare.": "models 必须列出要对比的模型 ID。",
+    "private must be true or false.": "private 必须为 true 或 false。"
   },
   "patterns": [
     {
@@ -5106,6 +5142,50 @@
     {
       "en": "Too many incorrect codes. Try again in {0} minutes.",
       "zh": "错误验证码次数过多。请在 {0} 分钟后重试。"
+    },
+    {
+      "en": "Priced with the {0}-token reply budget Send would ask this model for.",
+      "zh": "按发送时会为此模型设置的 {0} Token 回复预算估价。"
+    },
+    {
+      "en": "Reply budget {0} tokens",
+      "zh": "回复预算 {0} 个 Token"
+    },
+    {
+      "en": "≈{0} input + {1} reply tokens; allowance {2}",
+      "zh": "约 {0} 个输入 Token + {1} 个回复 Token；额度 {2}"
+    },
+    {
+      "en": "{0}× the price",
+      "zh": "价格的 {0} 倍"
+    },
+    {
+      "en": "{0}% more",
+      "zh": "贵 {0}%"
+    },
+    {
+      "en": "{0}% less",
+      "zh": "便宜 {0}%"
+    },
+    {
+      "en": "Remove {0} from the comparison",
+      "zh": "从对比中移除 {0}"
+    },
+    {
+      "en": "Use {0}",
+      "zh": "改用 {0}"
+    },
+    {
+      "en": "Now using {0}. Nothing was sent.",
+      "zh": "现在使用 {0}。未发送任何内容。"
+    },
+    {
+      "en": "You can add up to {0} models.",
+      "zh": "最多可添加 {0} 个模型。"
+    },
+    {
+      "en": "Compare up to {0} models at a time.",
+      "zh": "每次最多对比 {0} 个模型。"
     }
   ]
 }

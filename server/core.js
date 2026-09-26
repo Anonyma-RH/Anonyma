@@ -1215,3 +1215,10 @@ export function markupFactor(user, cfg) {
 // The rate before any per-account adjustment. A connected app is charged at
 // this rate, so what it's charged says nothing about the account.
 export const standardFactor = (cfg) => 1 + cfg.markup / 100;
+// What a chat request is priced at, in integer units, before any hold
+// headroom: its token estimate plus the web search fee (USD, 0 without
+// search), at the account's rate factor. /api/chat holds against exactly
+// this, and /api/quote and Cost Compare quote it, so an estimate and Send
+// can never price the same request differently.
+export const chatPrice = (m, messages, maxTokens, webSearchUsd, factor) =>
+  Math.ceil((quote(m, messages, maxTokens) + usdUnits(webSearchUsd)) * factor);

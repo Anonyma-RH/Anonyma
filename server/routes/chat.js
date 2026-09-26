@@ -9,7 +9,7 @@ import {
   settle,
   release,
   imageCallable,
-  quote,
+  chatPrice,
   tokenCost,
   generationPrice,
   markupFactor,
@@ -159,9 +159,7 @@ export function chatRoutes(ctx) {
     // Web search is a PPQ plugin with its own per-request fee.
     const webSearch = wantsWebSearch(req.body);
     const searchFee = webSearch ? cfg.webSearchPrice : 0;
-    const amount = Math.ceil(
-      (quote(m, sent, max) + usdUnits(searchFee)) * factor,
-    );
+    const amount = chatPrice(m, sent, max, searchFee, factor);
     // Off the record: nothing about the chat is written to storage, not even
     // the user's message. Billing is unaffected — only persistence changes.
     // Private Mode always takes this path too, so nothing it sends is saved.

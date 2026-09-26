@@ -128,6 +128,7 @@ import {
 } from "./veil.js";
 import { buildChatRequest, cloneVeilState, quoteBody, REPLY_BUDGET } from "./estimate.js";
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
+import CostCompare from "./CostCompare.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { scanSecrets } from "./seed-guard.js";
 import ModelFinder from "./ModelFinder.jsx";
@@ -1312,6 +1313,12 @@ export default function Workspace() {
       sentInstructions, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive, memoryFacts, mode],
   );
   const estimate = useCreditEstimate(estimateBody);
+  // Cost Compare: from the estimate chip, the same request priced on other
+  // models from the picker's pool. Not for an @mention, whose model isn't
+  // the chat's to switch.
+  const costCompareLive =
+    estimatesLive && isReleased(config, "costcompare") && textMode && !demo && !!user;
+  const compareBase = costCompareLive && !mentioned ? estimateBody : null;
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
   // history before it and the conversation to add to, instead of the composer.
   // `allowSeed` is Seed Guard's confirmed "Send anyway".
@@ -3275,6 +3282,31 @@ export default function Workspace() {
                     )}
                     <span className="send-cluster">
                     {estimatesLive && textMode && <CreditEstimate state={estimate} />}
+                    {costCompareLive && (
+                      <CostCompare
+                        base={compareBase}
+                        mode={mode}
+                        privateMode={privateMode}
+                        replyBudget={longAnswersLive ? replyBudget : REPLY_BUDGET}
+                        current={selected}
+                        pool={finderLive ? finderModels : visibleModels}
+                        allModels={models}
+                        presetOpts={finderOpts}
+                        presetsLive={finderLive}
+                        notes={[
+                          privateMode ? "Private mode: zero-data-retention models only." : "",
+                          finderLive && needsVision ? "Showing models that can read your images." : "",
+                        ].filter(Boolean)}
+                        busy={busy}
+                        onSwitch={(id) => {
+                          if (finderLive) chooseModel({ model: id });
+                          else {
+                            setModel(id);
+                            setQuote(null);
+                          }
+                        }}
+                      />
+                    )}
                     {busy ? (
                       <button
                         type="button"

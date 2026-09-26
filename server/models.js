@@ -54,7 +54,10 @@ export function createModels(cfg) {
       fail(400, `Choose a ${type} model.`);
     return m;
   };
-  function validateMessages(input, m, api = false) {
+  // Everything about a request's messages that doesn't depend on the model:
+  // the checked messages and how many images they carry. Only whether the
+  // model can read those images is left to validateMessages.
+  function checkMessages(input, api = false) {
     if (!Array.isArray(input) || !input.length)
       fail(400, "Provide a non-empty messages array.");
     if (
@@ -128,10 +131,24 @@ export function createModels(cfg) {
           : removed.content.reduce((n, p) => n + (p.text?.length || 0), 0);
     }
     if (images > 8) fail(400, "At most eight images are allowed.");
+    if (!total && !images) fail(400, "Enter a message.");
+    return { messages, images };
+  }
+  function validateMessages(input, m, api = false) {
+    const { messages, images } = checkMessages(input, api);
     if (images && !vision(m))
       fail(400, "Choose a model that accepts image input.");
-    if (!total && !images) fail(400, "Enter a message.");
     return messages;
+  }
+  // Whether the messages and reply budget fit the model's context
+  // allowance, without refusing: null when no allowance applies (Longer
+  // Answers unreleased, or not a chat model). Cost Compare flags a model
+  // this says no to; validateContext refuses the request.
+  function contextFit(messages, model, output) {
+    if (!isReleased(cfg, "longanswers") || model.type !== "chat") return null;
+    const limits = chatLimits(model), input = contextEstimate(messages);
+    const allowance = limits.contextTokens || 32768;
+    return { limits, input, output, allowance, fits: input + output <= allowance };
   }
   const maxTokens = (value, model) => {
     const n = value ?? 4096;
@@ -149,13 +166,15 @@ export function createModels(cfg) {
     current,
     find: (id) => models.data.find((m) => m.id === id),
     getModel,
+    checkMessages,
     validateMessages,
     maxTokens,
+    contextFit,
     validateContext(messages, model, output) {
-      if (!isReleased(cfg, "longanswers") || model.type !== "chat") return null;
-      const limits = chatLimits(model), input = contextEstimate(messages);
-      const context = limits.contextTokens || 32768;
-      if (input + output > context)
+      const fit = contextFit(messages, model, output);
+      if (!fit) return null;
+      const { limits, input, allowance: context } = fit;
+      if (!fit.fits)
         fail(400, `This conversation and reply budget exceed the ${limits.contextTokens ? "model's" : "service's conservative"} context allowance (conservative estimate: ${input.toLocaleString("en-US")} input + ${output.toLocaleString("en-US")} reply tokens; allowance ${context.toLocaleString("en-US")}). Reduce the reply budget or start a new conversation with selected context. Nothing was sent or charged.`, "context_limit_exceeded");
       return { ...limits, inputTokensEstimate: input, replyBudget: output };
     },

@@ -23,6 +23,7 @@ import {
   imageCallable,
   vision,
   quote,
+  chatPrice,
   generationPrice,
   markupFactor,
   standardFactor,
@@ -140,14 +141,16 @@ export function catalogRoutes(ctx) {
     const memory = m.type === "chat" ? ctx.memory.forRequest(req.user.id, req.body) : null;
     const sent = m.type === "chat" ? withMemory(messages, memory?.message) : messages;
     const budget = models.validateContext(sent, m, max);
-    const base =
-      m.type === "chat" ? quote(m, sent, max) : quote(m, messages, max, req.body);
-    const amount = Math.ceil(
-      (video
-        ? usdUnits(video.price)
-        : base + (wantsWebSearch(req.body) ? usdUnits(cfg.webSearchPrice) : 0)) *
-        (teamPaid ? standardFactor(cfg) : markupFactor(req.user, cfg)),
-    );
+    const factor = teamPaid ? standardFactor(cfg) : markupFactor(req.user, cfg);
+    const searchFee = wantsWebSearch(req.body) ? cfg.webSearchPrice : 0;
+    const amount =
+      m.type === "chat"
+        ? chatPrice(m, sent, max, searchFee, factor)
+        : Math.ceil(
+            (video
+              ? usdUnits(video.price)
+              : quote(m, messages, max, req.body) + usdUnits(searchFee)) * factor,
+          );
     // Spending Limits: the room left under the account's own limits, which
     // a personal request can't go over (team-paid requests don't count).
     const room =

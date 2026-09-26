@@ -837,6 +837,89 @@ route("post", "/api/quote", "Estimate credits for a request", {
   description:
     "Estimate only: nothing is reserved, charged or stored. For a chat model it is the amount /api/chat prices the same messages, max_tokens and web search at; a chat request may hold up to the reservation multiplier times it while it runs. Final charge follows usage and the documented failure-billing policy. Limited to 120 quotes a minute per account.",
 });
+route("post", "/api/estimate/compare", "Cost Compare: estimate one chat request on several models", {
+  body: object(
+    {
+      models: {
+        ...array(string),
+        minItems: 1,
+        maxItems: 8,
+        description:
+          "1 to 8 distinct model ids. The first is the model in use: every difference is measured against it.",
+      },
+      messages: array(message),
+      max_tokens: {
+        ...integer,
+        minimum: 1,
+        default: 4096,
+        description:
+          "The reply budget as chosen. Each model is priced at the budget /api/chat would take from it: this one, up to that model's limit shown by /api/models (with Longer, More Reliable Answers released).",
+      },
+      mode: { enum: ["chat", "code", "uncensored"], default: "chat" },
+      private: {
+        ...bool,
+        description:
+          "Private Mode: only models flagged private are priced (others: private_model_required), and saved memory is never added. Needs the private update released.",
+      },
+      web_search: chat.properties.web_search,
+      memory: {
+        ...array(object({ id: string, text: string, updated: integer }, ["id", "text"])),
+        description: "The saved memory facts Send would carry, priced exactly as /api/quote prices them. Needs the memory update released.",
+      },
+      conversationId: string,
+      treasury: {
+        ...bool,
+        description: "Team-paid estimate, as for /api/quote: an accessible collab conversationId, the team rate and the member's spendable team balance.",
+      },
+    },
+    ["models", "messages"],
+  ),
+  response: object({
+    estimate: { const: true },
+    current: string,
+    available: number,
+    web_search: bool,
+    spending_limit: object({ remaining: number }),
+    memory: object({ used: integer, skipped: integer }),
+    results: array(
+      object(
+        {
+          model: string,
+          status: { enum: ["ok", "refused"] },
+          credits: number,
+          usd: number,
+          difference: {
+            type: ["number", "null"],
+            description: "credits minus the first model's credits, subtracted in whole ledger units; null when the first model was refused.",
+          },
+          reply_budget: integer,
+          code: {
+            enum: [
+              "context_limit_exceeded",
+              "vision_required",
+              "private_model_required",
+              "other_section",
+              "unsupported_model",
+              "model_not_found",
+              "model_unavailable",
+              "unpriced_model",
+            ],
+          },
+          message: string,
+          context: object({
+            input_tokens_estimate: integer,
+            reply_budget: integer,
+            allowance: integer,
+            fits: bool,
+          }),
+        },
+        ["model", "status"],
+      ),
+    ),
+  }),
+  description:
+    "Cost Compare. Estimate only: nothing is reserved, charged or stored. Each ok result is exactly what POST /api/quote returns for that model with the same body and that model's reply_budget, which is what /api/chat would price (a chat may hold up to the reservation multiplier times it while it runs). A model that Send would refuse for this request is returned as refused with a code instead of a price: the message and reply budget exceed its context allowance (context_limit_exceeded, with the conservative token estimate), it can't read attached images (vision_required), it isn't private in Private Mode (private_model_required), it belongs to another section (other_section: Uncensored prices only its curated models, chat and code leave them out), or it's unknown, unavailable, unpriced or not a chat model. A problem with the request itself (no messages, an invalid budget or model list, more than 8 models) is a 400 for the whole comparison. Needs the Cost Compare and Credit Estimates updates released (403 feature_unreleased otherwise), plus Private Mode, Memory, Code & Build, Uncensored, Live Web Search or Team Treasury when the body uses them. Limited to 30 comparisons a minute per account.",
+});
 route(
   "get",
   "/api/requests/{id}",

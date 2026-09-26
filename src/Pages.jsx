@@ -846,6 +846,7 @@ const featureIcons = {
   routines: "history",
   sealedshare: "lock",
   projects: "folder",
+  costcompare: "coins",
 };
 const launch = {
   id: "mvp",

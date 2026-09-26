@@ -569,6 +569,17 @@ export const UPDATES = [
     // keeps needing its code even if the update is switched off again.
     released: false,
   },
+  {
+    id: "costcompare",
+    title: "Cost Compare",
+    tagline: "See what your message costs on other models.",
+    points: [
+      "Your message priced on up to 8 models before you send it",
+      "The same quote as Send, with context fit and image support shown",
+      "Switch models in one click; nothing is sent or charged",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -766,6 +777,26 @@ export function featuresFor(req) {
     return ["receipts"];
   if (p.startsWith("/api/retention")) return ["ephemeral"];
   if (p === "/api/memory" || p.startsWith("/api/memory/")) return ["memory"];
+  // Cost Compare opens from Credit Estimates' chip, so it needs both. A
+  // comparison priced with saved memory, in Private Mode, for code or
+  // Uncensored models, with Web or on the team's treasury needs those
+  // updates too, as the same chat would.
+  if (/^\/api\/estimate\/compare\/?$/.test(p)) {
+    const needed = ["costcompare", "estimates"];
+    if (post) {
+      if (body.memory != null) needed.push("memory");
+      if (body.private === true) needed.push("private");
+      if (body.mode === "code") needed.push("code");
+      if (body.mode === "uncensored") needed.push("uncensored");
+      if (
+        body.web_search === true ||
+        (Array.isArray(body.plugins) && body.plugins.some((x) => x?.id === "web"))
+      )
+        needed.push("search");
+      if (body.treasury === true) needed.push("treasury", "collab");
+    }
+    return needed;
+  }
   if (p === "/api/spending-limits" || p.startsWith("/api/spending-limits/"))
     return ["limits"];
   // Live Preview's sandboxed frame document (server/routes/preview.js).

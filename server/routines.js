@@ -30,6 +30,9 @@ import {
   runsBetween,
   monthWindow,
 } from "../src/routines.js";
+import { findSeedPhrase } from "../src/seed-guard.js";
+const ROUTINE_SEED_MESSAGE =
+  "This looks like a wallet seed phrase. A routine's prompt is saved and sent on every run, so ANONYMA won't save one. Remove it to continue.";
 
 // Routines: a saved prompt that runs on a schedule, with a per-run maximum
 // and a monthly budget, and whose results land in the account's Routines
@@ -134,6 +137,10 @@ export function routineInput(ctx, body, existing = null) {
     const prompt = typeof body.prompt === "string" ? body.prompt : "";
     if (!prompt.trim() || prompt.length > PROMPT_LIMIT)
       fail(400, `Write a prompt of 1 to ${PROMPT_LIMIT.toLocaleString("en-US")} characters.`, "invalid_routine");
+    // Seed Guard: a routine's prompt is stored here and sent on every run, so
+    // a seed phrase is never saved in one, with no override.
+    if (isReleased(ctx.cfg, "seedguard") && findSeedPhrase(prompt))
+      fail(400, ROUTINE_SEED_MESSAGE, "seed_phrase_blocked");
     next.prompt = prompt;
   }
   if (need("model")) {

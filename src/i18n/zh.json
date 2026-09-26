@@ -2919,7 +2919,7 @@
     "Support requests you sent while signed in": "你在登录状态下提交的支持请求",
     "API keys and connected apps, revoked": "API 密钥和已连接的应用，均会被撤销",
     "Every sign-in, on every device, including this one": "所有设备上的登录状态，包括当前设备",
-    "Unsent drafts and everything ANONYMA keeps in this browser, such as Veil words, recent searches and the offline copy": "未发送的草稿，以及 ANONYMA 保存在此浏览器中的全部内容，例如 Veil 遮盖词、最近搜索和离线副本",
+    "Unsent drafts and everything ANONYMA keeps in this browser, such as Device Vault chats, Veil words, recent searches and the offline copy": "未发送的草稿，以及 ANONYMA 保存在此浏览器中的全部内容，例如本机保险库会话、Veil 遮盖词、最近搜索和离线副本",
     "Your account and every credit in it": "你的账户及其中的全部积分",
     "Your ledger, deposits and receipts": "你的账本、充值记录和收据",
     "Your settings, such as spending limits and auto-delete": "你的设置，例如消费上限和自动删除",
@@ -3092,7 +3092,9 @@
     "Routine not found.": "未找到该定时任务。",
     "Run not found.": "未找到该次运行。",
     "This run is still in progress.": "此次运行仍在进行中。",
-    "routines": "定时任务"
+    "routines": "定时任务",
+    "Routines and their inbox": "定时任务及其收件箱",
+    "This looks like a wallet seed phrase. A routine's prompt is saved and sent on every run, so ANONYMA won't save one. Remove it to continue.": "这看起来像钱包助记词。定时任务的提示词会被保存，并在每次运行时发送，因此 ANONYMA 不会保存它。请删除后再继续。"
   },
   "patterns": [
     {

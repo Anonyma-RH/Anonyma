@@ -66,6 +66,9 @@ export function eraseAccountContent(db, user) {
   db.prepare("DELETE FROM scrolls WHERE user_id=?").run(id);
   db.prepare("DELETE FROM user_instructions WHERE user_id=?").run(id);
   db.prepare("DELETE FROM memory_facts WHERE user_id=?").run(id);
+  // Routines and their inbox. A run already picked up is refused by its
+  // reservation, which finds the routine gone.
+  forgetRoutines(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
 }
 
@@ -461,9 +464,6 @@ export function accountRoutes(ctx) {
       ).run(now(), req.user.id);
       db.prepare("DELETE FROM memory_settings WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM spending_limits WHERE user_id=?").run(req.user.id);
-      // Routines stop with the account: a run already picked up is refused
-      // by its reservation, which finds the routine gone.
-      forgetRoutines(db, req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.
       db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);
       db.prepare(

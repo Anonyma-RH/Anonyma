@@ -90,6 +90,8 @@ const GONE = {
   oauth_codes: "SELECT COUNT(*) n FROM oauth_codes WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
   live_keys: "SELECT COUNT(*) n FROM api_keys WHERE user_id=? AND revoked IS NULL",
   live_apps: "SELECT COUNT(*) n FROM oauth_connections WHERE user_id=? AND revoked IS NULL",
+  routines: "SELECT COUNT(*) n FROM routines WHERE user_id=?",
+  routine_runs: "SELECT COUNT(*) n FROM routine_runs WHERE user_id=?",
 };
 const tally = (s, id) =>
   Object.fromEntries(
@@ -124,6 +126,15 @@ async function seed(s) {
   const db = s.db,
     t = now(),
     run = (sql, ...args) => db.prepare(sql).run(...args);
+  // A routine with one delivered run in its inbox.
+  run(
+    "INSERT INTO routines(id,user_id,name,prompt,model,repeat,minute,timezone,run_cap,monthly_budget,next_run,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    "rt_1", alice.id, "Morning news", "Five bullets on AI news", "test-model", "daily", 480, "UTC", 10000, 100000, t + 86400000, t, t,
+  );
+  run(
+    "INSERT INTO routine_runs(id,routine_id,user_id,slot,started,finished,status,answer) VALUES(?,?,?,?,?,?,?,?)",
+    "rr_1", "rt_1", alice.id, t, t, t, "done", "A routine answer",
+  );
   // Conversations: a chat, a Symposium run, a branch and a Double-check,
   // each with a message; a share link on the chat.
   for (const [id, mode, extra] of [

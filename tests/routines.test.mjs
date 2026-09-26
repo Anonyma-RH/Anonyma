@@ -656,7 +656,7 @@ test("one run at a time per routine", async (t) => {
   // The local test provider echoes the prompt a few characters at a time,
   // so a long prompt keeps the run in flight for a while.
   const made = await create(p, {
-    prompt: "Slow routine. " + "word ".repeat(300),
+    prompt: "Slow routine. " + "zzyzx ".repeat(300),
     schedule: { repeat: "daily", time: "08:00", timezone: "UTC" },
   });
   c.set(utc("2026-09-21T08:00:10Z"));
@@ -1112,4 +1112,24 @@ test("the page marks user and model content off, and translates the rest", async
     }
     assert.match(translateText(text, dict) ?? "", /\p{Script=Han}/u, `untranslated: ${text}`);
   }
+});
+
+test("a routine never saves a seed phrase, with Seed Guard live", async (t) => {
+  const s = fixture(t);
+  const p = await person(s.app);
+  const mnemonic =
+    "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+  const saved = (i) => UPDATES[i].released;
+  const at = UPDATES.findIndex((u) => u.id === "seedguard");
+  const was = saved(at);
+  UPDATES[at].released = true;
+  t.after(() => (UPDATES[at].released = was));
+  const r = await p.agent
+    .post("/api/routines")
+    .send(body({ prompt: "Check this wallet: " + mnemonic }))
+    .expect(400);
+  assert.equal(r.body.error.code, "seed_phrase_blocked");
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM routines").get().n, 0);
+  // An ordinary prompt still saves.
+  await create(p, { prompt: "Five bullets on today's AI news" });
 });

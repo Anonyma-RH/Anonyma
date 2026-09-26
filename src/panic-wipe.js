@@ -12,11 +12,12 @@ export const WIPE_GOES = [
   "Saved images, videos and audio, and the files themselves",
   "Saved uploads and video jobs",
   "Memory facts, Scrolls and standing instructions",
+  "Routines and their inbox",
   "Collabs you own, with everything shared in them",
   "Support requests you sent while signed in",
   "API keys and connected apps, revoked",
   "Every sign-in, on every device, including this one",
-  "Unsent drafts and everything ANONYMA keeps in this browser, such as Veil words, recent searches and the offline copy",
+  "Unsent drafts and everything ANONYMA keeps in this browser, such as Device Vault chats, Veil words, recent searches and the offline copy",
 ];
 export const WIPE_STAYS = [
   "Your account and every credit in it",

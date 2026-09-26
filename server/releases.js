@@ -501,7 +501,7 @@ export const UPDATES = [
       "Signs out every device and clears this browser",
       "Your balance, ledger and receipts stay intact",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "vault",

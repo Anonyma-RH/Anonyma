@@ -41,6 +41,7 @@ import { wipeRoutes } from "./routes/wipe.js";
 import { twoStepRoutes } from "./routes/two-step.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
+import { balanceAlertRoutes } from "./routes/balance-alerts.js";
 import { connectRoutes } from "./routes/connect.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { historyLibrary } from "./history-library.js";
@@ -125,6 +126,8 @@ export function createApp(overrides = {}) {
   allowanceRoutes(ctx);
   // Also registers the Spending Limits check every reservation runs.
   spendingLimitRoutes(ctx);
+  // Low-Balance Alerts: the account's alert level (a setting only).
+  balanceAlertRoutes(ctx);
   connectRoutes(ctx);
   paymentRoutes(ctx);
   // Live Preview's frame page, before the site's static files and fallback.

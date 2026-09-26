@@ -763,6 +763,15 @@ export const MIGRATIONS = [
         method TEXT NOT NULL CHECK(method IN ('password','email','wallet')),
         at INTEGER NOT NULL);
   `),
+  // Low-Balance Alerts (server/balance-alerts.js): the available balance, in
+  // integer subcredits, below which the app warns the account, and whether
+  // it asked for a browser notification too. No row means the alert is off.
+  // Settings only: an alert never writes the ledger or holds anything.
+  additive(`CREATE TABLE IF NOT EXISTS balance_alerts(
+      user_id TEXT PRIMARY KEY REFERENCES users(id),
+      threshold INTEGER NOT NULL CHECK(typeof(threshold)='integer' AND threshold>0),
+      notify INTEGER NOT NULL DEFAULT 0 CHECK(notify IN (0,1)),
+      updated INTEGER NOT NULL);`),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

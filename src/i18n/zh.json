@@ -3344,7 +3344,41 @@
     "List each model once.": "每个模型只列一次。",
     "Cost Compare works in chat, code and Uncensored.": "费用对比适用于对话、代码和无审查模式。",
     "models must list the model ids to compare.": "models 必须列出要对比的模型 ID。",
-    "private must be true or false.": "private 必须为 true 或 false。"
+    "private must be true or false.": "private 必须为 true 或 false。",
+    "Low-Balance Alerts": "低余额提醒",
+    "Know before you run out of credits.": "积分用完之前，提前知道。",
+    "Choose the balance you want a heads-up at": "自行设定在哪个余额时提醒你",
+    "A banner in the workspace with a Top up button": "工作台中显示提醒横幅，附带充值按钮",
+    "An optional browser notification while ANONYMA is open": "可选：ANONYMA 打开时显示浏览器通知",
+    "Out of credits.": "积分已用完。",
+    "Low balance.": "余额偏低。",
+    "No credits available. Top up to keep going.": "没有可用积分。充值后即可继续使用。",
+    "Top up": "充值",
+    "Alert settings": "提醒设置",
+    "Dismiss the low-balance warning": "关闭低余额提醒",
+    "Low balance on ANONYMA": "ANONYMA 余额偏低",
+    "Low-balance alert": "低余额提醒",
+    "Get a heads-up before you run out. The alert watches your available balance: your credits minus any on hold for requests in progress.": "在积分用完之前收到提醒。提醒关注的是你的可用余额：你的积分减去为处理中的请求冻结的部分。",
+    "Loading your alert…": "正在加载你的提醒……",
+    "Warn me when my available balance drops below": "当我的可用余额低于以下数值时提醒我",
+    "Alert level (credits)": "提醒阈值（积分）",
+    "Also show a browser notification": "同时显示浏览器通知",
+    "This browser will show the notification.": "此浏览器会显示该通知。",
+    "Notifications are blocked for this site. Allow them in your browser's site settings to get one.": "此网站的通知已被屏蔽。请在浏览器的网站设置中允许通知后再使用。",
+    "Your browser will ask for permission when you tick this box.": "勾选此项时，浏览器会请求你的许可。",
+    "This browser can't show notifications. The workspace banner still works.": "此浏览器无法显示通知。工作台横幅仍会正常显示。",
+    "Allow in this browser": "在此浏览器中允许",
+    "Save alert": "保存提醒",
+    "Alert off. No low-balance warnings will show.": "提醒已关闭。不会再显示低余额提醒。",
+    "A banner shows in the workspace, with a Top up button. Dismiss it and it stays away until your balance drops further, or until tomorrow.": "工作台中会显示提醒横幅，并附带充值按钮。关闭后，在余额进一步下降或到第二天之前不会再次出现。",
+    "The notification shows once, when your balance first drops below the level while ANONYMA is open in a tab. There's no email and no background push.": "当 ANONYMA 在标签页中打开、且余额首次低于该阈值时，通知只显示一次。不会发送邮件，也没有后台推送。",
+    "It watches your personal balance only, not a team treasury.": "它只关注你的个人余额，不包括团队金库。",
+    "Spending limits are separate: they cap what you can spend even with credits left.": "消费上限是另一项功能：即使还有积分，它也会限制你能花费的额度。",
+    "Set the alert level in credits, from 1 to 1,000,000,000 with at most four decimals.": "请以积分设置提醒阈值，范围为 1 至 1,000,000,000，最多保留 4 位小数。",
+    "Set an alert level to turn the alert on.": "请先设置提醒阈值，再开启提醒。",
+    "Change": "更改",
+    "Low-balance alerts: your alert level and whether you asked for browser notifications. Whether you dismissed the banner is kept only in this browser. Closing your account deletes the setting; Panic Wipe keeps it with your other settings.": "低余额提醒：你设定的提醒阈值，以及你是否选择了浏览器通知。你是否关闭过提醒横幅只保存在此浏览器中。关闭账户会删除该设置；紧急清除会将其与你的其他设置一起保留。",
+    "The export also includes your low-balance alert setting.": "导出内容还包括你的低余额提醒设置。"
   },
   "patterns": [
     {
@@ -5186,6 +5220,42 @@
     {
       "en": "Compare up to {0} models at a time.",
       "zh": "每次最多对比 {0} 个模型。"
+    },
+    {
+      "en": "{0} credits available, below your alert at {1} credits.",
+      "zh": "{0} 积分可用，已低于你设定的 {1} 积分提醒线。"
+    },
+    {
+      "en": "{0} more are on hold for requests in progress.",
+      "zh": "另有 {0} 积分为处理中的请求冻结。"
+    },
+    {
+      "en": "{0} credits available.",
+      "zh": "{0} 积分可用。"
+    },
+    {
+      "en": "About ${0}. We suggest {1} credits: one long reply from a large model can hold over 100.",
+      "zh": "约 ${0}。建议设为 {1} 积分：大型模型的一次长回复就可能冻结 100 多积分。"
+    },
+    {
+      "en": "We suggest {0} credits: one long reply from a large model can hold over 100.",
+      "zh": "建议设为 {0} 积分：大型模型的一次长回复就可能冻结 100 多积分。"
+    },
+    {
+      "en": "Alert on: you'll be warned below {0} credits.",
+      "zh": "提醒已开启：可用余额低于 {0} 积分时会提醒你。"
+    },
+    {
+      "en": "Now: {0} credits available, below your alert.",
+      "zh": "当前：{0} 积分可用，低于提醒阈值。"
+    },
+    {
+      "en": "Now: {0} credits available, above your alert.",
+      "zh": "当前：{0} 积分可用，高于提醒阈值。"
+    },
+    {
+      "en": "Low-balance alert below {0} credits",
+      "zh": "低余额提醒：低于 {0} 积分"
     }
   ]
 }

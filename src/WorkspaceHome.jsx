@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { PixelIcon, CountUp, SoonTag } from "./ui.jsx";
 import { useApp } from "./context.jsx";
 import { api, isReleased, modeReleased } from "./lib.js";
+import { useAlertSetting, alertsReleased } from "./BalanceAlerts.jsx";
+import { SUGGESTED_CREDITS, showCredits } from "./balance-alerts.js";
 import "./dashboard.css";
 
 // The workspace dashboard: greeting and composer, the balance, where the
@@ -255,6 +257,15 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
   }, [demo, user?.id, live.collab, live.social, live.api, live.video, live.limits]);
 
   const { summary, collabs, referrals, keys } = data;
+  // Low-Balance Alerts: the level the workspace warns below, when one is set.
+  const alertView = useAlertSetting(config, user, demo);
+  const alertLevel = !alertsReleased(config)
+    ? null
+    : demo
+      ? SUGGESTED_CREDITS
+      : alertView?.enabled
+        ? alertView.threshold
+        : null;
   // Spending Limits: the room left under each limit in force.
   const limitNotes = live.limits
     ? [
@@ -499,6 +510,13 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
                   {limitNotes.join(" · ")}
                   {" · "}
                   <Link to={"/account/limits" + q}>Spending limits</Link>
+                </p>
+              )}
+              {alertLevel != null && (
+                <p className="dash-limit dash-alert">
+                  {`Low-balance alert below ${showCredits(alertLevel)} credits`}
+                  {" · "}
+                  <Link to={"/account/credits" + q + "#balance-alert"}>Change</Link>
                 </p>
               )}
               <div className="dash-actions">

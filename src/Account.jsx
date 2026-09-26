@@ -35,6 +35,11 @@ import McpConnect from "./McpConnect.jsx";
 import UsageInsights from "./UsageInsights.jsx";
 import { KeyAllowance } from "./Allowances.jsx";
 import { SpendingLimits } from "./SpendingLimits.jsx";
+import {
+  BalanceAlertSettings,
+  BalanceAlertWatch,
+  alertsReleased,
+} from "./BalanceAlerts.jsx";
 import { ConnectedApps, connectReleased } from "./Connect.jsx";
 import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
 import { ShareLinksManager } from "./ShareLinks.jsx";
@@ -282,6 +287,8 @@ export default function Account() {
   const insightsOn = isReleased(config, "insights");
   // Security (Two-Step Sign-in) shows only once it's released.
   const securityOn = twoStepReleased(config);
+  // Low-Balance Alerts: its panel, and the optional notification's watch.
+  const alertsLive = alertsReleased(config);
   const tabs = [
     ["overview", "Overview"],
     ...(insightsOn ? [["usage", "Usage"]] : []),
@@ -293,6 +300,7 @@ export default function Account() {
   ];
   return (
     <main id="main" className="app-shell">
+      {alertsLive && <BalanceAlertWatch config={config} user={user} demo={demo} />}
       <AppSidebar
         demo={demo}
         active="account"
@@ -591,6 +599,10 @@ export default function Account() {
               )}
               </div>
               <div>
+                {/* Low-Balance Alerts: the level the workspace warns below. */}
+                {alertsLive && (demo || user) && (
+                  <BalanceAlertSettings config={config} user={user} demo={demo} />
+                )}
                 <h2>Funding activity</h2>
                 {deposits.length ? (
                   deposits.map((d) => (

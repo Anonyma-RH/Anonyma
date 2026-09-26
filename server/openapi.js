@@ -1280,6 +1280,44 @@ route("delete", "/api/spending-limits/pending/{limit}", "Cancel a pending raise 
   description:
     "limit is daily or monthly. The limit in force stays. 404 no_pending_change when nothing is pending.",
 });
+// Low-Balance Alerts (update "balancealerts").
+const alertLevel = {
+  type: ["number", "null"],
+  minimum: 1,
+  maximum: 1e9,
+  description:
+    "The alert level in credits (at most four decimals); null means the alert is off.",
+};
+const balanceAlert = object({
+  enabled: bool,
+  threshold: alertLevel,
+  notify: {
+    ...bool,
+    description:
+      "Whether the account asked for a browser notification as well as the in-app warning. Each browser still has to grant permission itself.",
+  },
+  available: {
+    ...number,
+    description:
+      "The available balance now, in credits: credits minus every open hold (the same figure as /api/me's available).",
+  },
+  below: { ...bool, description: "enabled and available < threshold." },
+  suggested: { ...number, description: "The level the app offers when you turn the alert on (500 credits)." },
+  min: number,
+  max: number,
+  updated: { type: ["integer", "null"] },
+});
+route("get", "/api/balance-alert", "Your low-balance alert", {
+  response: balanceAlert,
+  description:
+    "Off until you set a level. The app warns in the workspace when the available balance (personal balance minus open holds) is below it, and, if notify is on and the browser allowed it, shows one browser notification when it first drops below while ANONYMA is open. There is no email and no background push. Team Treasury balances aren't watched. Separate from spending limits. Account export includes it as balanceAlert; closing the account deletes it; Panic Wipe keeps it.",
+});
+route("patch", "/api/balance-alert", "Turn the low-balance alert on or off, or change it", {
+  body: object({ threshold: alertLevel, notify: bool }),
+  response: balanceAlert,
+  description:
+    "Omitted fields keep their value. threshold null turns the alert off and forgets notify with it. Turning it on needs a threshold (400 invalid_threshold otherwise); notify alone changes an alert that's already on. Stored as integer ledger subunits; never writes the ledger. 400 invalid_threshold, invalid_notify or invalid_alert. 60 changes an hour.",
+});
 // Share a Chat (update "sharelinks").
 const shareLink = object({
   id: string,

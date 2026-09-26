@@ -580,6 +580,17 @@ export const UPDATES = [
     ],
     released: false,
   },
+  {
+    id: "balancealerts",
+    title: "Low-Balance Alerts",
+    tagline: "Know before you run out of credits.",
+    points: [
+      "Choose the balance you want a heads-up at",
+      "A banner in the workspace with a Top up button",
+      "An optional browser notification while ANONYMA is open",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -799,6 +810,9 @@ export function featuresFor(req) {
   }
   if (p === "/api/spending-limits" || p.startsWith("/api/spending-limits/"))
     return ["limits"];
+  // Low-Balance Alerts: the account's alert level and notification choice.
+  if (p === "/api/balance-alert" || p.startsWith("/api/balance-alert/"))
+    return ["balancealerts"];
   // Live Preview's sandboxed frame document (server/routes/preview.js).
   if (p === "/preview-frame.html") return ["preview"];
   // Sealed Share: the browser seals a snapshot before uploading it, so the

@@ -4,6 +4,7 @@ import { HOLDER_RESET } from "../holders.js";
 import { limitsView } from "../spending-limits.js";
 import { exportRoutines, forgetRoutines } from "../routines.js";
 import { exportProjects } from "./projects.js";
+import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { isReleased } from "../releases.js";
 import {
   uid,
@@ -95,6 +96,12 @@ export function accountRoutes(ctx) {
     db.prepare("SELECT 1 FROM spending_limits WHERE user_id=?").get(user)
       ? limitsView(db, user)
       : null;
+  // Low-Balance Alerts: the alert level and notification choice, once the
+  // update is live or while one is set (null when the alert is off).
+  function balanceAlertExport(user) {
+    const alert = exportAlert(db, user);
+    return alert || alertsLive(cfg) ? { balanceAlert: alert } : {};
+  }
   const { mediaJSON, deleteMedia } = ctx.media;
   function shareLinksExport(user) {
     const t = now();
@@ -466,6 +473,7 @@ export function accountRoutes(ctx) {
       // the update is live, or while any project exists).
       ...projectsExport(req.user.id),
       ...twoStepExport(req.user.id),
+      ...balanceAlertExport(req.user.id),
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {
@@ -519,6 +527,7 @@ export function accountRoutes(ctx) {
       // Two-Step Sign-in: the sealed secret and the recovery code hashes.
       db.prepare("DELETE FROM two_step_recovery WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM two_step WHERE user_id=?").run(req.user.id);
+      forgetAlert(db, req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.
       db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);
       db.prepare(

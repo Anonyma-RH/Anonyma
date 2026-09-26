@@ -99,6 +99,7 @@ import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import { MEMORY_MODES, MAX_FACT_LENGTH } from "./memory.js";
 import { extractVariables } from "./scrolls.js";
 import { useTeamPays } from "./Treasury.jsx";
+import { LowBalanceBanner, LowBalanceRefusal } from "./BalanceAlerts.jsx";
 import {
   api,
   ApiError,
@@ -2245,6 +2246,8 @@ export default function Workspace() {
             </Link>
           )}
         </div>
+        {/* Low-Balance Alerts: below the account's alert level, with Top up. */}
+        <LowBalanceBanner config={config} user={user} demo={demo} />
         <div
           key={mode}
           className={
@@ -2796,6 +2799,8 @@ export default function Workspace() {
                           Spending limits
                         </Link>
                       )}
+                    {/* Too few credits (never a spending limit): Top up. */}
+                    <LowBalanceRefusal config={config} user={user} demo={demo} error={error} />
                   </Notice>
                 )}
                 {chatControlLive && <ChargeStatus state={charge.state} checking={charge.checking} recover={charge.recover} />}

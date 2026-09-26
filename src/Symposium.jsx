@@ -23,6 +23,7 @@ import {
 // Symposium asks for shorter answers than chat to keep four at once
 // within a normal balance. Fusion keeps the chat limit.
 const COLUMN_TOKENS = 2048;
+import { LowBalanceRefusal } from "./BalanceAlerts.jsx";
 import "./symposium.css";
 
 const STATUS_LABEL = {
@@ -528,7 +529,12 @@ export default function Symposium({
         )}
       </div>
       <div className="composer-zone">
-        {error && <Notice type="error">{error}</Notice>}
+        {error && (
+          <Notice type="error">
+            {error}
+            <LowBalanceRefusal config={config} user={user} demo={demo} error={error} />
+          </Notice>
+        )}
         {Object.keys(quotes).length > 0 && (
           <div className="receipt">
             Estimated total: {totalEstimate(quotes)} credits

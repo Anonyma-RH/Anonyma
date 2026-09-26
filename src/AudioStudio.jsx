@@ -3,6 +3,7 @@ import { Icon, Notice, BandLines, BandSteps } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { api, uid } from "./lib.js";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
+import { LowBalanceRefusal } from "./BalanceAlerts.jsx";
 
 const MAX_RECORDING_SECONDS = 10 * 60;
 
@@ -108,7 +109,12 @@ export default function AudioStudio({
         )}
       </div>
       <div className="composer-zone">
-        {error && <Notice type="error">{error}</Notice>}
+        {error && (
+          <Notice type="error">
+            {error}
+            <LowBalanceRefusal config={config} user={user} demo={demo} error={error} />
+          </Notice>
+        )}
         {receipt && (
           <div className="receipt">
             <span className="sq" aria-hidden="true" />

@@ -14,6 +14,8 @@ export default function DataControls() {
   const projects = !!config && isReleased(config, "projects");
   // And Two-Step Sign-in.
   const twoStep = !!config && isReleased(config, "twostep");
+  // And Low-Balance Alerts.
+  const alerts = !!config && isReleased(config, "balancealerts");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -123,6 +125,14 @@ export default function DataControls() {
             your account deletes the key and codes; Panic Wipe leaves it on.
           </li>
         )}
+        {alerts && (
+          <li>
+            Low-balance alerts: your alert level and whether you asked for
+            browser notifications. Whether you dismissed the banner is kept
+            only in this browser. Closing your account deletes the setting;
+            Panic Wipe keeps it with your other settings.
+          </li>
+        )}
         <li>
           Temporary API-generated media expires after 24 hours when created with
           an expiry. Access stops at expiry; background maintenance removes the
@@ -166,6 +176,9 @@ export default function DataControls() {
         <p>
           The export also includes your routines and their inbox runs.
         </p>
+      )}
+      {alerts && (
+        <p>The export also includes your low-balance alert setting.</p>
       )}
       {shares && (
         <p>

@@ -3651,7 +3651,9 @@
     "A sheets question can't be combined with other chat options.": "表格提问不能与其他对话选项同时使用。",
     "The sheets request is too large.": "表格请求过大。",
     "The model ran out of room while planning. Try again, or pick a faster model.": "模型在规划时用完了回复空间。请重试，或换一个更快的模型。",
-    "Each question is billed as a message, two if the first plan needs fixing. You pay only what the model uses, including any reasoning. Nothing is saved.": "每次提问按一条消息计费；若首个计划需要修正，则为两条。你只需为模型实际使用的部分付费，包括推理。不会保存任何内容。"
+    "Each question is billed as a message, two if the first plan needs fixing. You pay only what the model uses, including any reasoning. Nothing is saved.": "每次提问按一条消息计费；若首个计划需要修正，则为两条。你只需为模型实际使用的部分付费，包括推理。不会保存任何内容。",
+    "Share date ranges": "分享日期范围",
+    "The AI sees only the first and last date of each date column, so questions like \"Q2\" pick the right year.": "AI 只能看到每个日期列的最早和最晚日期，这样“Q2”这类问题才能对应正确的年份。"
   },
   "patterns": [
     {

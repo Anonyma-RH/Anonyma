@@ -364,10 +364,22 @@ function createBuilder(header) {
           const code = codes[i];
           data[i] = code < 0 ? (type === "boolean" ? -1 : NaN) : parsed[code];
         }
+        // A date column's first and last day, which the profile may share.
+        let range = null;
+        if (type === "date") {
+          let lo = Infinity,
+            hi = -Infinity;
+          for (const t of parsed)
+            if (Number.isFinite(t)) {
+              if (t < lo) lo = t;
+              if (t > hi) hi = t;
+            }
+          if (lo <= hi) range = { from: isoDate(lo), to: isoDate(hi) };
+        }
         return {
           name: c.name,
           type,
-          ...(type === "date" ? { time } : {}),
+          ...(type === "date" ? { time, range } : {}),
           data,
         };
       });
@@ -446,16 +458,23 @@ export function loadSheet(
 }
 // What a model may learn about the sheet: its size, column names and types,
 // and for text columns how many different values each has. No cells.
+// Date columns also carry their first and last day (YYYY-MM-DD, no time),
+// which a question includes only while "Share date ranges" is on.
 export function sheetProfile(sheet) {
   return {
     rows: sheet.rows,
     columns: sheet.columns.map((c) =>
       c.type === "text"
         ? { name: c.name, type: c.type, distinct: c.distinct }
-        : { name: c.name, type: c.type },
+        : c.type === "date" && c.range
+          ? { name: c.name, type: c.type, from: c.range.from, to: c.range.to }
+          : { name: c.name, type: c.type },
     ),
   };
 }
+// Whether any date column has a range to share.
+export const hasDateRanges = (profile) =>
+  profile.columns.some((c) => c.type === "date" && c.from && c.to);
 
 // ---- The query plan: checked strictly against the real columns ----
 
@@ -1533,15 +1552,25 @@ export function chartSeries(result, chart, max = 40) {
 // ---- What the model is sent ----
 
 // A query's payload (see src/sheets-spec.js): the question and the profile,
-// plus the first rows only when the user ticked "Also share 5 sample rows".
-// `mask` is Veil (masking in this browser) or identity. Returns the payload
-// and the columns as the model will see them, for checking its plan.
+// with date columns' first and last day while `dateRanges` is on (the
+// default), plus the first rows only when the user ticked "Also share 5
+// sample rows". `mask` is Veil (masking in this browser) or identity; the
+// ISO range dates aren't masked. Returns the payload and the columns as the
+// model will see them, for checking its plan.
 export function queryPayload(
   profile,
   question,
-  { samples = null, mask = (s) => s } = {},
+  { samples = null, mask = (s) => s, dateRanges = true } = {},
 ) {
-  const columns = profile.columns.map((c) => ({ ...c, name: mask(c.name) }));
+  const columns = profile.columns.map((c) => {
+    const col = { name: mask(c.name), type: c.type };
+    if (c.type === "text") col.distinct = c.distinct;
+    if (dateRanges && c.type === "date" && c.from && c.to) {
+      col.from = c.from;
+      col.to = c.to;
+    }
+    return col;
+  });
   const payload = {
     task: "query",
     question: mask(question.trim()),

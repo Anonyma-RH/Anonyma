@@ -46,6 +46,7 @@ import {
   sampleSheetCSV,
   sheetKind,
   sheetProfile,
+  hasDateRanges,
   toCSV,
   validateSpec,
   TRUNCATED_MESSAGE,
@@ -192,7 +193,7 @@ const PROFILE = {
   question: "Which region had the most revenue?",
   rows: 1200,
   columns: [
-    { name: "Order date", type: "date" },
+    { name: "Order date", type: "date", from: "2025-01-03", to: "2025-12-30" },
     { name: "Region", type: "text", distinct: 4 },
     { name: "Revenue", type: "number" },
   ],
@@ -327,7 +328,7 @@ test("the server builds exactly the documented messages, and nothing else", () =
       "Question: Which region had the most revenue?",
       "",
       "The sheet has 1200 rows and 3 columns:",
-      '1. "Order date" (date)',
+      '1. "Order date" (date, 2025-01-03 to 2025-12-30)',
       '2. "Region" (text, 4 different values)',
       '3. "Revenue" (number)',
       "",
@@ -566,7 +567,8 @@ test("types are inferred from the values: numbers, dates, true/false and text", 
   assert.deepEqual(sheetProfile(loaded()), {
     rows: 6,
     columns: [
-      { name: "Date", type: "date" },
+      // First and last day only, never the time of day.
+      { name: "Date", type: "date", from: "2026-01-05", to: "2026-03-15" },
       { name: "Region", type: "text", distinct: 4 },
       { name: "Rep", type: "text", distinct: 3 },
       { name: "Units", type: "number" },
@@ -764,24 +766,113 @@ test("the sample sheet is made up, stable, and answers the demo question", () =>
 test("a question's payload has no cell values unless sample rows are ticked, and then exactly those", () => {
   const sheet = loaded();
   const cells = new Set(
-    SALES.split(/\r\n|,/)
-      .map((c) => c.replace(/"/g, "").trim())
+    parseDelimited(SALES)
+      .slice(1)
+      .flat()
       // Distinctive cells only: a digit like "3" is also in "3 columns".
-      .filter((c) => c.length >= 4 && !/^\d+$/.test(c) && !/^(Date|Region|Rep|Units|Price|Paid|Note)$/.test(c)),
+      .filter((c) => c.length >= 4 && !/^\d+$/.test(c)),
   );
+  assert.ok(cells.has("first, of the year") && cells.has("2026-03-15T09:30:00Z"));
+  const sentText = (payload) =>
+    JSON.stringify(payload) + sheetsMessages(checkSheetsPayload(payload)).map((m) => m.content).join();
+  // "Share date ranges" off: no cell at all, not even a date.
+  const bare = queryPayload(sheetProfile(sheet), "How many units?", { dateRanges: false }).payload;
+  for (const cell of cells) assert.ok(!sentText(bare).includes(cell), `cell ${cell} leaked`);
+  assert.doesNotMatch(sentText(bare), /2026/);
+  assert.deepEqual(Object.keys(bare).sort(), ["columns", "question", "rows", "task"]);
+  // On (the default), the declared exception: each date column's first and
+  // last day, without the time. Every other cell stays out.
   const { payload } = queryPayload(sheetProfile(sheet), "How many units?");
-  const sent = JSON.stringify(payload) + sheetsMessages(checkSheetsPayload(payload)).map((m) => m.content).join();
-  for (const cell of cells) assert.ok(!sent.includes(cell), `cell ${cell} leaked`);
+  const sent = sentText(payload);
+  assert.match(sent, /"Date" \(date, 2026-01-05 to 2026-03-15\)/);
+  const endpoints = new Set(["2026-01-05"]);
+  for (const cell of cells)
+    if (!endpoints.has(cell)) assert.ok(!sent.includes(cell), `cell ${cell} leaked`);
+  for (const middle of ["2026-01-20", "2026-02-03", "2026-02-28", "2026-03-01", "09:30"])
+    assert.ok(!sent.includes(middle), middle);
   assert.deepEqual(Object.keys(payload).sort(), ["columns", "question", "rows", "task"]);
   const withRows = queryPayload(sheetProfile(sheet), "How many units?", { samples: sheet.samples }).payload;
   assert.equal(withRows.samples.length, 5);
   assert.deepEqual(withRows.samples[0], ["2026-01-05", "North", "Ana", "3", "10.50", "yes", "first, of the year"]);
   assert.deepEqual(withRows.samples[2][6], "line one line two", "line breaks in a sample become spaces");
-  assert.ok(!JSON.stringify(withRows).includes("2026-03-15"), "the sixth row isn't a sample");
+  assert.ok(!JSON.stringify(withRows).includes("he said"), "the sixth row isn't a sample");
   checkSheetsPayload(withRows);
   // Long sample cells are cut to 100 characters.
   const long = loadSheet(`a\n${"x".repeat(300)}\n`);
   assert.equal(queryPayload(sheetProfile(long), "q", { samples: long.samples }).payload.samples[0][0].length, LIMITS.cell);
+});
+
+test("date ranges: each date column's first and last day, shown to the model only while the switch is on", () => {
+  const sheet = loadSheet(
+    "When,Also when,Amount,Label\n2025-03-05T23:30:00-02:00,2025-06,5,x\n2025-01-03,2024-12,7,y\nNA,,1,z\n2025-12-30,2025-01,2,w\n",
+  );
+  const profile = sheetProfile(sheet);
+  assert.deepEqual(profile.columns, [
+    // 23:30 at UTC-2 is the 6th in UTC; the range is date only.
+    { name: "When", type: "date", from: "2025-01-03", to: "2025-12-30" },
+    { name: "Also when", type: "date", from: "2024-12-01", to: "2025-06-01" },
+    { name: "Amount", type: "number" },
+    { name: "Label", type: "text", distinct: 4 },
+  ]);
+  assert.equal(hasDateRanges(profile), true);
+  assert.equal(hasDateRanges(sheetProfile(loadSheet("a\n1\n"))), false);
+  const on = queryPayload(profile, "Q2 total?").payload;
+  assert.deepEqual(on.columns[0], { name: "When", type: "date", from: "2025-01-03", to: "2025-12-30" });
+  assert.deepEqual(checkSheetsPayload(on).columns, on.columns);
+  const lines = queryText(checkSheetsPayload(on)).split("\n");
+  assert.equal(lines[3], '1. "When" (date, 2025-01-03 to 2025-12-30)');
+  assert.equal(lines[4], '2. "Also when" (date, 2024-12-01 to 2025-06-01)');
+  assert.equal(lines[5], '3. "Amount" (number)');
+  const off = queryPayload(profile, "Q2 total?", { dateRanges: false }).payload;
+  assert.deepEqual(off.columns[0], { name: "When", type: "date" });
+  assert.equal(queryText(checkSheetsPayload(off)).split("\n")[3], '1. "When" (date)');
+  // The planner is told how to use a range, and not to guess a year without one.
+  assert.match(QUERY_SYSTEM, /first and last date: use them to pick the year/);
+  assert.match(QUERY_SYSTEM, /don't guess one: group by that column with bucket "year", "quarter" or "month"/);
+  // Veil masks names, never the ISO range.
+  const masked = queryPayload(profile, "q", { mask: (s) => s.toUpperCase() }).payload;
+  assert.deepEqual(masked.columns[0], { name: "WHEN", type: "date", from: "2025-01-03", to: "2025-12-30" });
+  // The page: on by default for each sheet, sent as chosen, explained in one line.
+  const page = readFileSync(new URL("../src/Sheets.jsx", import.meta.url), "utf8");
+  assert.match(page, /\[shareRanges, setShareRanges\] = useState\(true\)/);
+  assert.equal(page.match(/dateRanges: shareRanges/g).length, 2, "the preview and the request");
+  const zh = JSON.parse(readFileSync(new URL("../src/i18n/zh.json", import.meta.url), "utf8")).strings;
+  assert.match(zh["Share date ranges"], /\p{Script=Han}/u);
+  assert.match(page, /The AI sees only the first and last date of each date\s+column, so questions like "Q2" pick the right year\./);
+  assert.match(zh['The AI sees only the first and last date of each date column, so questions like "Q2" pick the right year.'], /\p{Script=Han}/u);
+});
+
+test("the checker allows a date range only on date columns, as two strict ISO days", async (t) => {
+  const withCol = (col) => ({ ...PROFILE, columns: [col] });
+  const date = { name: "D", type: "date" };
+  assert.deepEqual(checkSheetsPayload(withCol({ ...date, from: "2024-02-29", to: "2024-02-29" })).columns[0], {
+    ...date,
+    from: "2024-02-29",
+    to: "2024-02-29",
+  });
+  const refused = (col, pattern) => assert.throws(() => checkSheetsPayload(withCol(col)), pattern, JSON.stringify(col));
+  refused({ name: "N", type: "number", from: "2025-01-01", to: "2025-02-01" }, /Only date columns report a date range/);
+  refused({ name: "T", type: "text", distinct: 2, from: "2025-01-01", to: "2025-02-01" }, /Only date columns/);
+  refused({ name: "B", type: "boolean", to: "2025-02-01" }, /Only date columns/);
+  for (const [from, to] of [
+    ["2025-01-01", undefined],
+    [undefined, "2025-01-01"],
+    ["2025-1-01", "2025-02-01"],
+    ["2025-02-30", "2025-03-01"],
+    ["2025-01-01T10:00:00Z", "2025-02-01"],
+    ["2025-01-01 ", "2025-02-01"],
+    ["01/02/2025", "2025-02-01"],
+    [20250101, "2025-02-01"],
+    ["2025-03-01", "2025-02-01"],
+  ])
+    refused({ ...date, from, to }, /A date range is wrong/);
+  // Through the server: refused before anything is charged.
+  const s = fixture(t);
+  const { agent, user } = await person(s.app);
+  const before = balance(s.db, user.id).total;
+  const res = await ask(agent, withCol({ name: "Revenue", type: "number", from: "2025-01-01", to: "2025-02-01" })).expect(400);
+  assert.equal(res.body.error.code, "invalid_sheets");
+  assert.equal(balance(s.db, user.id).total, before);
 });
 
 test("an explanation sends only the question, the title and the result table, at most 50 rows", () => {

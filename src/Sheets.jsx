@@ -27,6 +27,7 @@ import {
   realizeSpec,
   sampleSheetCSV,
   sheetKind,
+  hasDateRanges,
   toCSV,
   TRUNCATED_MESSAGE,
 } from "./sheets.js";
@@ -73,6 +74,8 @@ export default function Sheets({
     [dragging, setDragging] = useState(false),
     [question, setQuestion] = useState(""),
     [shareSamples, setShareSamples] = useState(false),
+    // "Share date ranges": on by default for each sheet.
+    [shareRanges, setShareRanges] = useState(true),
     [privateOn, setPrivateOn] = useState(false),
     [model, setModel] = useState(""),
     [results, setResults] = useState([]),
@@ -129,10 +132,11 @@ export default function Sheets({
     const mask = veiling ? (s) => veil(s, copy, veilWords).text : (s) => s;
     const { payload } = queryPayload(sheet.profile, question.trim() || "…", {
       samples: shareSamples ? sheet.samples : null,
+      dateRanges: shareRanges,
       mask,
     });
     return queryText(payload);
-  }, [sheet, question, shareSamples, veiling, veilWords]);
+  }, [sheet, question, shareSamples, shareRanges, veiling, veilWords]);
   const seedHit = useSeedScan(live && seedGuardLive(config), preview);
 
   async function open(source) {
@@ -161,6 +165,7 @@ export default function Sheets({
       setSheet(loaded);
       setResults([]);
       setShareSamples(false);
+      setShareRanges(true);
       setError("");
     } catch (e) {
       if (engine.current === next) {
@@ -182,6 +187,7 @@ export default function Sheets({
     setResults([]);
     setQuestion("");
     setShareSamples(false);
+    setShareRanges(true);
     setError("");
     setLoadError("");
   }
@@ -252,6 +258,7 @@ export default function Sheets({
       : (s) => s;
     const { payload, columns } = queryPayload(sheet.profile, question, {
       samples: shareSamples ? sheet.samples : null,
+      dateRanges: shareRanges,
       mask,
     });
     const spent = [];
@@ -555,6 +562,11 @@ export default function Sheets({
                             : `${c.distinct.toLocaleString("en-US")} different values`}
                         </small>
                       )}
+                      {c.type === "date" && c.from && (
+                        <small data-i18n="off">
+                          {c.from === c.to ? c.from : `${c.from} – ${c.to}`}
+                        </small>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -615,6 +627,23 @@ export default function Sheets({
                   )}
                 </div>
                 {noPrivate && <NoPrivateModelsNotice />}
+                {hasDateRanges(sheet.profile) && (
+                  <label className="sheets-check">
+                    <input
+                      type="checkbox"
+                      checked={shareRanges}
+                      disabled={busy}
+                      onChange={(e) => setShareRanges(e.target.checked)}
+                    />
+                    <span>
+                      <b>Share date ranges</b>
+                      <small>
+                        The AI sees only the first and last date of each date
+                        column, so questions like "Q2" pick the right year.
+                      </small>
+                    </span>
+                  </label>
+                )}
                 <label className="sheets-check">
                   <input
                     type="checkbox"

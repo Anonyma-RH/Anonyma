@@ -71,6 +71,7 @@ export const QUERY_SYSTEM = [
   '- Use column names exactly as given. The output names are the groupBy columns and each aggregate\'s "as".',
   '- sum, avg and median need a number column; min and max a number or date column. count may leave out "col" to count rows; distinct counts different values.',
   '- >, >=, <, <= and between work on number and date columns, contains on text columns. "in" takes a list, "between" takes [low, high], dates are "YYYY-MM-DD", and null with = or != matches empty cells. Text matching ignores case.',
+  '- A date column may show its first and last date: use them to pick the year a question means ("Q2", "last month"). If no range is shown and the question needs a year it doesn\'t name, don\'t guess one: group by that column with bucket "year", "quarter" or "month" instead of filtering on a year.',
   "- With no aggregates and no groupBy, the matching rows are listed.",
   '- Use "line" for values over time, "bar" to compare groups, "pie" for shares of a whole and "table" otherwise.',
   '- If these columns can\'t answer the question, reply {"error": "<one short sentence>"}.',
@@ -80,6 +81,12 @@ export const EXPLAIN_SYSTEM =
   "You explain a small result table from ANONYMA Sheets in one short paragraph of at most four sentences. Use only the numbers in the table: don't guess causes, add facts or assume anything about rows the table leaves out. Reply in the language of the question, as plain text without headings or lists.";
 
 const CONTROL = /[\u0000-\u001f\u007f]/;
+// A real calendar day written YYYY-MM-DD, and nothing else.
+export function isoDay(v) {
+  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const d = new Date(v + "T00:00:00Z");
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
+}
 const plain = (v) =>
   v !== null &&
   typeof v === "object" &&
@@ -196,7 +203,7 @@ export function checkSheetsPayload(raw) {
   const seen = new Set();
   out.columns = raw.columns.map((c) => {
     if (!plain(c)) fault("A column is malformed.");
-    onlyKeys(c, ["name", "type", "distinct"], "A column");
+    onlyKeys(c, ["name", "type", "distinct", "from", "to"], "A column");
     const name = text(c.name, LIMITS.name, "A column name");
     if (seen.has(name)) fault("Column names must be different.");
     seen.add(name);
@@ -212,6 +219,15 @@ export function checkSheetsPayload(raw) {
       )
         fault("A count of different values is wrong.");
       col.distinct = c.distinct;
+    }
+    // "Share date ranges": a date column's first and last day, both or
+    // neither, as strict YYYY-MM-DD dates.
+    if (c.from !== undefined || c.to !== undefined) {
+      if (c.type !== "date") fault("Only date columns report a date range.");
+      if (!isoDay(c.from) || !isoDay(c.to) || c.from > c.to)
+        fault("A date range is wrong.");
+      col.from = c.from;
+      col.to = c.to;
     }
     return col;
   });
@@ -268,7 +284,7 @@ export function queryText(p) {
           c.distinct !== undefined
             ? `, ${plural(c.distinct, "different value", "different values")}`
             : ""
-        })`,
+        }${c.from !== undefined ? `, ${c.from} to ${c.to}` : ""})`,
     ),
   ];
   if (p.samples?.length)

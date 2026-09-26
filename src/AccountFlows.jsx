@@ -330,6 +330,12 @@ export function InvoiceDetails({ initial, onCredited }) {
         <dd>{p.pay_currency || "Waiting for processor"}</dd>
         <dt>Exact payment amount</dt>
         <dd>{p.pay_amount ?? "Waiting for processor"}</dd>
+        {p.bonus_credits != null && (
+          <>
+            <dt>Bonus credits</dt>
+            <dd>{p.bonus_credits.toLocaleString()}</dd>
+          </>
+        )}
         <dt>Payment address</dt>
         <dd>{p.pay_address || "No address returned yet"}</dd>
         {p.tx_hash && (

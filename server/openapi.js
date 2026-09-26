@@ -1570,6 +1570,59 @@ route(
       "For the chain and token in /api/config walletPayments. The server reads the transaction and credits the sum of that token's transfers from the account's linked wallet to the payment address, at 1 token = 1 USD, once it has the configured confirmations. Returns 202 {status: waiting|confirming, confirmations, required} until then; post the same hash again. Each transaction is credited once (repeats return 200 and the same deposit). Transfers from another wallet, of another token, to another address, reverted, or older than 7 days are refused.",
   },
 );
+// Pay with NYMA (update "paynyma").
+const nymaQuote = object({
+  id: string,
+  wallet: { ...string, description: "The linked wallet when the quote was made" },
+  nyma: { ...string, description: "Whole NYMA to send" },
+  credits: { ...number, description: "Credits that NYMA is worth at the quoted rate" },
+  bonusCredits: { ...number, description: "Bonus credits on top, at bonusPercent" },
+  usd: number,
+  bonusPercent: number,
+  usdPerNyma: number,
+  created: integer,
+  expires: integer,
+  open: bool,
+});
+const nymaLimits = { usedTodayUsd: number, remainingTodayUsd: number };
+route("get", "/api/nyma/rate", "The current NYMA top-up rate", {
+  response: object({
+    usdPerNyma: number,
+    creditsPerMillion: { ...number, description: "Credits 1,000,000 NYMA are worth now, before the bonus" },
+    bonus: { ...number, description: "Bonus share of credits, e.g. 0.1" },
+    averageMinutes: integer,
+    measuredAt: integer,
+  }),
+  description:
+    "Read from Robinhood Chain: the lower of the NYMA/ETH and ETH/USDG pools' current values and their time-weighted averages over at least 30 minutes, rebuilt from the pools' Swap events. 503 nyma_rate_unavailable when a pool's current value is more than the allowed deviation from its average, the NYMA pool is too thin, or the chain data is missing; 503 nyma_payments_unconfigured without a wallet-payment address on chain 4663. Measured at most every 30 seconds. 240 reads an hour.",
+});
+route("get", "/api/nyma/quote", "Your open NYMA quote", {
+  response: object({ quote: { ...nymaQuote, type: ["object", "null"] }, ...nymaLimits }),
+  description: "The quote that is still open, or null, and what the 24-hour NYMA limit leaves.",
+});
+route("post", "/api/nyma/quote", "Ask for a NYMA top-up quote", {
+  status: 201,
+  body: object({ usd: { ...number, description: "Value in USD, within /api/config nymaPayments minUsd and maxUsd" } }, ["usd"]),
+  response: object({ quote: nymaQuote, ...nymaLimits }),
+  description:
+    "Locks the current rate for 20 minutes: send `nyma` NYMA from the linked wallet to /api/config walletPayments.address. A new quote ends the open one at once. Needs a linked wallet (400 wallet_not_linked). 400 invalid_amount; 409 nyma_daily_limit past the 24-hour limit; 409 payment_reconciliation_pending while a credited payment is under reconciliation; 503 nyma_rate_unavailable. 30 quotes an hour.",
+});
+route("post", "/api/nyma/claim", "Credit a NYMA transfer", {
+  status: 201,
+  body: object(
+    {
+      txHash: {
+        ...string,
+        pattern: "^0x[0-9a-fA-F]{64}$",
+        description: "Transaction hash of the NYMA transfer",
+      },
+    },
+    ["txHash"],
+  ),
+  response: ref("Deposit"),
+  description:
+    "Reads the transaction from chain 4663 and sums its NYMA Transfer logs from the linked wallet to the payment address. Returns 202 {status: waiting|confirming, confirmations, required} until it has the configured confirmations; post the same hash again. The transfer is matched to the quote made before it: inside that quote's window it is credited at the quoted rate; after it, at the lower of the quoted and current rates. Whatever arrived is credited at that rate (less NYMA proportionally, more in full), as a deposit in currency nyma with ledger entries nyma_topup (the value) and nyma_bonus (the quote's bonus share). Each Transfer log is credited once; repeats return 200 and the same deposit. 400 payment_not_matched (another token, sender or recipient), transaction_failed, wallet_not_linked; 409 payment_already_claimed; 409 wallet_payment_review for a transfer sent before any quote, over the per-payment or 24-hour limit, or older than 7 days; 503 chain_unavailable or nyma_rate_unavailable (late transfers need a current rate). 240 checks an hour.",
+});
 route(
   "get",
   "/api/deposits/{id}",
@@ -1618,7 +1671,7 @@ route(
   "Download account JSON with explicit monetary units",
   {
     description:
-      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set) and routines (routines: each routine and its inbox runs). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
+      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs) and Pay with NYMA quotes (nymaQuotes). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
   },
 );
 route("delete", "/api/account", "Close account and forfeit unused credits", {

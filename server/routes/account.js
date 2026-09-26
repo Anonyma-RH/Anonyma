@@ -35,7 +35,8 @@ import {
 // - every session and pending sign-in code;
 // - connected apps' tokens and pending codes;
 // - support requests, video jobs, saved uploads, Scrolls, standing
-//   instructions and memory facts;
+//   instructions, memory facts and NYMA top-up quotes (a credited top-up
+//   stays as its deposit);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -66,6 +67,7 @@ export function eraseAccountContent(db, user) {
   db.prepare("DELETE FROM scrolls WHERE user_id=?").run(id);
   db.prepare("DELETE FROM user_instructions WHERE user_id=?").run(id);
   db.prepare("DELETE FROM memory_facts WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM nyma_quotes WHERE user_id=?").run(id);
   // Routines and their inbox. A run already picked up is refused by its
   // reservation, which finds the routine gone.
   forgetRoutines(db, id);
@@ -414,6 +416,11 @@ export function accountRoutes(ctx) {
       spendingLimits: exportLimits(req.user.id),
       // Routines: each routine and its inbox (answers, charges, receipts).
       routines: exportRoutines(db, req.user.id),
+      // Pay with NYMA quotes (credited top-ups are in deposits above).
+      nymaQuotes: db
+        .prepare("SELECT * FROM nyma_quotes WHERE user_id=? ORDER BY created,rowid")
+        .all(req.user.id)
+        .map(({ user_id, ...q }) => q),
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {
@@ -441,6 +448,16 @@ export function accountRoutes(ctx) {
       fail(
         409,
         "Resolve pending payment invoices before closing this account.",
+      );
+    // An open NYMA quote may have a transfer on its way.
+    if (
+      db
+        .prepare("SELECT id FROM nyma_quotes WHERE user_id=? AND expires>?")
+        .get(req.user.id, now())
+    )
+      fail(
+        409,
+        "Your NYMA top-up quote is still open. Close the account after it ends, within 20 minutes.",
       );
     // Owned collabs' Team Treasuries must be empty: members' credits never
     // disappear with the owner's account.

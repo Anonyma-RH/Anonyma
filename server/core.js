@@ -127,6 +127,16 @@ export function config(overrides = {}) {
     walletPaymentSymbol: e.WALLET_PAYMENT_SYMBOL || "USDG",
     walletPaymentDecimals: Number(e.WALLET_PAYMENT_DECIMALS ?? 6),
     walletPaymentConfirmations: Number(e.WALLET_PAYMENT_CONFIRMATIONS ?? 10),
+    // Pay with NYMA (server/nyma-price.js, server/routes/nyma.js): NYMA sent
+    // from the linked wallet to the same payment address, credited at a
+    // quoted rate plus a bonus share of credits. Caps are in USD of value.
+    nymaTopupBonus: Number(e.NYMA_TOPUP_BONUS ?? 0.1),
+    nymaMinUsd: Number(e.NYMA_TOPUP_MIN_USD ?? 1),
+    nymaMaxUsd: Number(e.NYMA_TOPUP_MAX_USD ?? 250),
+    nymaDailyMaxUsd: Number(e.NYMA_TOPUP_DAILY_MAX_USD ?? 1000),
+    nymaTwapMinutes: Number(e.NYMA_TWAP_MINUTES ?? 30),
+    nymaMaxDeviation: Number(e.NYMA_PRICE_MAX_DEVIATION ?? 0.1),
+    nymaMinPoolEth: Number(e.NYMA_MIN_POOL_ETH ?? 2),
     // Ed25519 private key (base64 PKCS8 DER) that signs settlement receipts.
     // Production should set this; when unset, a key is generated on first
     // use and persisted in the database instead (see server/receipts.js).
@@ -234,6 +244,31 @@ export function config(overrides = {}) {
     cfg.walletPaymentConfirmations > 10000
   )
     throw Error("Wallet payment confirmations must be from 1 to 10000.");
+  if (
+    !Number.isFinite(cfg.nymaTopupBonus) ||
+    cfg.nymaTopupBonus < 0 ||
+    cfg.nymaTopupBonus > 1
+  )
+    throw Error("NYMA_TOPUP_BONUS must be a share from 0 to 1 (0.1 is 10%).");
+  if (
+    !(cfg.nymaMinUsd > 0) ||
+    !(cfg.nymaMaxUsd >= cfg.nymaMinUsd) ||
+    !(cfg.nymaDailyMaxUsd >= cfg.nymaMaxUsd) ||
+    !(cfg.nymaDailyMaxUsd <= 1000000)
+  )
+    throw Error(
+      "NYMA top-up limits must satisfy 0 < minimum <= per-payment maximum <= daily maximum <= 1000000 USD.",
+    );
+  if (
+    !Number.isInteger(cfg.nymaTwapMinutes) ||
+    cfg.nymaTwapMinutes < 30 ||
+    cfg.nymaTwapMinutes > 240
+  )
+    throw Error("NYMA_TWAP_MINUTES must be a whole number from 30 to 240.");
+  if (!(cfg.nymaMaxDeviation > 0 && cfg.nymaMaxDeviation <= 0.5))
+    throw Error("NYMA_PRICE_MAX_DEVIATION must be above 0 and at most 0.5.");
+  if (!(cfg.nymaMinPoolEth >= 0 && cfg.nymaMinPoolEth <= 1000000))
+    throw Error("NYMA_MIN_POOL_ETH must be from 0 to 1000000.");
   if (!Number.isFinite(cfg.markup) || cfg.markup < 0)
     throw Error("Markup must be a nonnegative percentage.");
   if (!Array.isArray(cfg.holderRewards))
@@ -636,6 +671,27 @@ export const MIGRATIONS = [
         answer TEXT,citations TEXT,receipt TEXT,code TEXT,message TEXT);
       CREATE INDEX IF NOT EXISTS routine_runs_routine ON routine_runs(routine_id,started);
       CREATE INDEX IF NOT EXISTS routine_runs_user ON routine_runs(user_id,started);
+  `),
+  // Pay with NYMA (server/routes/nyma.js). A quote locks a rate for 20
+  // minutes: nyma is the NYMA to send in base units, value and bonus the
+  // subcredits it's worth and the bonus on top, rate subcredits per whole
+  // NYMA times 10^12 (both BigInts as decimal text). A newer quote ends the
+  // account's open one at once, so quote windows never overlap. Quotes go
+  // with the account's content; each credited top-up is a deposit. Claims
+  // make each NYMA Transfer log (transaction hash and log index) creditable
+  // once, and are kept with the deposit they credited.
+  additive(`
+      CREATE TABLE IF NOT EXISTS nyma_quotes(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),
+        wallet TEXT NOT NULL,nyma TEXT NOT NULL,
+        value INTEGER NOT NULL CHECK(typeof(value)='integer' AND value>0),
+        bonus INTEGER NOT NULL CHECK(typeof(bonus)='integer' AND bonus>=0),
+        bonus_bps INTEGER NOT NULL CHECK(bonus_bps BETWEEN 0 AND 10000),
+        rate TEXT NOT NULL,usd_per_nyma REAL NOT NULL,spot REAL,average REAL,block INTEGER,
+        created INTEGER NOT NULL,expires INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS nyma_quotes_user ON nyma_quotes(user_id,created);
+      CREATE TABLE IF NOT EXISTS nyma_claims(chain INTEGER NOT NULL,tx_hash TEXT NOT NULL,
+        log_index INTEGER NOT NULL,deposit_id TEXT NOT NULL REFERENCES deposits(id),
+        PRIMARY KEY(chain,tx_hash,log_index));
   `),
 ];
 // The schema versions whose migrations were recorded as additive.

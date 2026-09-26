@@ -60,7 +60,9 @@ export function formatTokenAmount(value, decimals) {
   return frac ? `${whole}.${frac}` : whole;
 }
 
-async function rpc(cfg, method, params, retry = true) {
+// One JSON-RPC call to the server's node for the payment chain. Shared with
+// the NYMA rate (server/nyma-price.js), which reads the same node.
+export async function rpc(cfg, method, params, retry = true) {
   let body, reason, status;
   try {
     const response = await fetch(cfg.walletPaymentRpc, {
@@ -104,15 +106,17 @@ const topicAddress = (topic) =>
 
 // Reads a transaction and sums the configured token's transfers from `wallet`
 // to the payment address. Returns { pending } until it has enough
-// confirmations; fails when it can never be credited.
-export async function verifyWalletPayment(cfg, txHash, wallet) {
+// confirmations; fails when it can never be credited. `asset` names another
+// token on the same chain (Pay with NYMA); the matched Transfer logs' indexes
+// come back in `logs`.
+export async function verifyWalletPayment(cfg, txHash, wallet, asset) {
   if (!TX_HASH.test(txHash))
     fail(
       400,
       "Enter a valid transaction hash (0x and 64 hex characters).",
       "invalid_transaction",
     );
-  const info = walletPaymentInfo(cfg);
+  const info = { ...walletPaymentInfo(cfg), ...asset };
   // The node's network can't change under a URL, so it's checked once.
   if (checkedNodes.get(cfg.walletPaymentRpc) !== info.chainId) {
     const chainId = Number(await rpc(cfg, "eth_chainId", []));
@@ -153,6 +157,7 @@ export async function verifyWalletPayment(cfg, txHash, wallet) {
     );
   const from = getAddress(String(wallet).toLowerCase());
   let value = 0n;
+  const matched = [];
   for (const log of receipt.logs || []) {
     if (log?.removed || typeof log?.address !== "string") continue;
     if (log.address.toLowerCase() !== info.token.toLowerCase()) continue;
@@ -170,6 +175,8 @@ export async function verifyWalletPayment(cfg, txHash, wallet) {
     if (typeof log.data !== "string" || !/^0x[0-9a-fA-F]{1,64}$/.test(log.data))
       continue;
     value += BigInt(log.data);
+    const index = typeof log.logIndex === "string" ? Number(log.logIndex) : NaN;
+    matched.push(Number.isSafeInteger(index) && index >= 0 ? index : null);
   }
   if (value <= 0n)
     fail(
@@ -189,5 +196,6 @@ export async function verifyWalletPayment(cfg, txHash, wallet) {
     from,
     block: Number(receipt.blockNumber),
     time,
+    logs: matched,
   };
 }

@@ -10,6 +10,8 @@ export default function BillingRules() {
   const { config } = useApp();
   const billing = config?.billing;
   const wallet = config?.walletPayments;
+  // Pay with NYMA, once it's released (server/routes/nyma.js).
+  const nyma = wallet && config?.nymaPayments;
   return (
     <div className="billing-rules">
       <section>
@@ -137,6 +139,16 @@ export default function BillingRules() {
             <Link to="/account/credits">Credits &amp; funding</Link>. Do not
             send funds using an address from an old page, message or unsupported
             network.
+          </p>
+        )}
+        {nyma && (
+          <p>
+            <span>
+              {`Pay with NYMA: ask for a quote on Credits & funding, then send the quoted NYMA on Robinhood Chain from your linked wallet to the same payment address within ${nyma.quoteMinutes} minutes. The quote's rate is the lower of the current rate and its ${nyma.averageMinutes}-minute average on Robinhood Chain, plus a ${Math.round(nyma.bonus * 1000) / 10}% bonus in credits, recorded as a separate NYMA top-up bonus.`}
+            </span>{" "}
+            <span>
+              {`Less NYMA is credited proportionally and more in full; a transfer after the quote ends gets the lower of the quoted and current rates. Up to $${nyma.maxUsd.toLocaleString("en-US")} per payment and $${nyma.dailyMaxUsd.toLocaleString("en-US")} in 24 hours; anything above that is reviewed by support. If there's no reliable rate, NYMA top-ups pause.`}
+            </span>
           </p>
         )}
         <ul>

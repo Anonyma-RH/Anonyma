@@ -17,6 +17,23 @@ import {
   walletPaymentsEnabled,
 } from "../wallet-payments.js";
 
+// A deposit as the API returns it: USD amount, parsed payload, and credited
+// only while its credit stands.
+export const depositJSON = (d) => {
+  const payload = JSON.parse(d.payload);
+  return {
+    ...d,
+    amount: d.amount / 1e7,
+    payload,
+    credited:
+      d.credited &&
+      d.status === "finished" &&
+      payload.creditState !== "reversed"
+        ? 1
+        : 0,
+  };
+};
+
 // Crypto deposit invoices and processor callbacks.
 export function paymentRoutes(ctx) {
   const { app, db, cfg, limit, requireUser } = ctx;
@@ -29,20 +46,6 @@ export function paymentRoutes(ctx) {
     const result = await payment(cfg, "/currencies");
     res.json({ data: result.currencies || [], live: true });
   });
-  const depositJSON = (d) => {
-    const payload = JSON.parse(d.payload);
-    return {
-      ...d,
-      amount: d.amount / 1e7,
-      payload,
-      credited:
-        d.credited &&
-        d.status === "finished" &&
-        payload.creditState !== "reversed"
-          ? 1
-          : 0,
-    };
-  };
   app.get("/api/deposits", requireUser, (req, res) =>
     res.json({
       data: db

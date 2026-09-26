@@ -528,6 +528,18 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "paynyma",
+    title: "Pay with NYMA",
+    tagline: "Top up with NYMA. Get more credits for it.",
+    points: [
+      "Send NYMA from your own wallet on Robinhood Chain",
+      "A quote holds the rate for 20 minutes",
+      "Bonus credits on every NYMA top-up",
+    ],
+    // Needs WALLET_PAYMENT_ADDRESS on chain 4663 (server/routes/nyma.js).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -693,6 +705,8 @@ export function featuresFor(req) {
   )
     return ["app"];
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
+  // Pay with NYMA: the rate, quotes and claims.
+  if (p === "/api/nyma" || p.startsWith("/api/nyma/")) return ["paynyma"];
   if (
     p === "/api/account/wallet/unlink" ||
     p === "/api/account/holdings" ||

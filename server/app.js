@@ -40,6 +40,7 @@ import { allowanceRoutes } from "./routes/allowances.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
 import { connectRoutes } from "./routes/connect.js";
 import { paymentRoutes } from "./routes/payments.js";
+import { nymaRoutes } from "./routes/nyma.js";
 import { historyLibrary } from "./history-library.js";
 import { previewRoutes } from "./routes/preview.js";
 import { siteRoutes } from "./routes/site.js";
@@ -118,6 +119,8 @@ export function createApp(overrides = {}) {
   spendingLimitRoutes(ctx);
   connectRoutes(ctx);
   paymentRoutes(ctx);
+  // Pay with NYMA: quotes and claims on the wallet-payment address.
+  nymaRoutes(ctx);
   // Live Preview's frame page, before the site's static files and fallback.
   previewRoutes(ctx);
   siteRoutes(ctx);

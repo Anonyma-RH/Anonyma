@@ -9,6 +9,7 @@ import {
   walletPaymentInfo,
   walletPaymentsEnabled,
 } from "../wallet-payments.js";
+import { nymaPaymentInfo } from "./nyma.js";
 import { modelReleased, releaseInfo, isReleased } from "../releases.js";
 import { isPrivateModel } from "../private-mode.js";
 import { withMemory } from "../../src/memory.js";
@@ -56,8 +57,11 @@ export function catalogRoutes(ctx) {
         walletConnect: !!cfg.walletProject,
         token: !!cfg.rpc && !!cfg.token,
         walletPayments: walletPaymentsEnabled(cfg),
+        nymaPayments: !!nymaPaymentInfo(cfg),
       },
       walletPayments: walletPaymentInfo(cfg),
+      // Pay with NYMA's public settings, once it's released (null before).
+      nymaPayments: nymaPaymentInfo(cfg),
       walletProject: cfg.walletProject,
       walletChain: cfg.walletChain,
       chain: cfg.chain,

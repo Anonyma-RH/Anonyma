@@ -840,6 +840,7 @@ const featureIcons = {
   trail: "route",
   seedguard: "lock",
   cleanuploads: "eraser",
+  wipe: "delete",
 };
 const launch = {
   id: "mvp",

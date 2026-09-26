@@ -62,6 +62,8 @@ export function knownPage(path, served = {}) {
     PUBLIC_PAGES.includes(path) ||
     gatedPages(served).includes(path) ||
     (served.connect === true && path === "/connect") ||
+    // Where Panic Wipe lands; never in the sitemap.
+    (served.wipe === true && path === "/wiped") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

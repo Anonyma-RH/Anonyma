@@ -492,6 +492,17 @@ export const UPDATES = [
     ],
     released: false,
   },
+  {
+    id: "wipe",
+    title: "Panic Wipe",
+    tagline: "Everything gone in one tap. Your credits stay.",
+    points: [
+      "Erase chats, files, memory and keys in one confirmed step",
+      "Signs out every device and clears this browser",
+      "Your balance, ledger and receipts stay intact",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -602,6 +613,8 @@ export function featuresFor(req) {
     post = req.method === "POST",
     body = req.body || {};
   if (p.startsWith("/api/history/") || p.startsWith("/api/library/")) return ["historylibrary"];
+  // Panic Wipe: the one route that erases an account's content at once.
+  if (/^\/api\/account\/wipe\/?$/.test(p)) return ["wipe"];
   if (post && (body.libraryMediaId !== undefined || body.libraryQuote !== undefined)) {
     if (p === "/api/images") return ["historylibrary", "images"];
     if (p === "/api/videos") return ["historylibrary", "video"];

@@ -1,0 +1,104 @@
+/* Panic Wipe: the confirm dialog (src/PanicWipe.jsx) and the Wiped page
+   (src/Wiped.jsx). Builds on .modal, .notice, .button, .small-button and
+   .settings-stack from styles.css. */
+.panic-wipe .small-button {
+  gap: 6px;
+}
+.panic-wipe-confirm > p:first-child {
+  font-size: 13px;
+  color: #8d4f3d;
+  margin: 0 0 22px;
+}
+.panic-wipe-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-bottom: 22px;
+}
+.panic-wipe-lists h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+.panic-wipe-lists > div:first-child h3 {
+  color: #a2634f;
+}
+.panic-wipe-lists ul {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.panic-wipe-lists li + li {
+  margin-top: 6px;
+}
+.panic-wipe-lists .fine-print {
+  margin-top: 14px;
+}
+.panic-wipe-lists .fine-print a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.panic-wipe-confirm .inline-actions {
+  margin-top: 0;
+}
+.panic-wipe-confirm .button.danger {
+  background: #a2634f;
+  border-color: #a2634f;
+  color: #fff;
+}
+.panic-wipe-confirm .button.danger:hover {
+  background: #8d4f3d;
+}
+.panic-wipe-confirm .button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+@media (max-width: 640px) {
+  .panic-wipe-lists {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+.wiped-body {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px 90px;
+}
+.wiped-body h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+  margin: 0 0 14px;
+}
+.wiped-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px;
+  border-top: 1px solid var(--line);
+}
+.wiped-body li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.wiped-body li svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--brand-blue, var(--ink));
+}
+.wiped-body .fine-print a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.wiped-body .inline-actions {
+  margin-top: 28px;
+}

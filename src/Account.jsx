@@ -38,6 +38,7 @@ import { SpendingLimits } from "./SpendingLimits.jsx";
 import { ConnectedApps, connectReleased } from "./Connect.jsx";
 import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
 import { ShareLinksManager } from "./ShareLinks.jsx";
+import { PanicWipe } from "./PanicWipe.jsx";
 import { holdersReleased } from "./holders.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
 import { paletteReleased, paletteActions, recentStoreKey } from "./command-palette.js";
@@ -978,6 +979,10 @@ export default function Account() {
                     onChange={saveRetentionDefault}
                   />
                 </section>
+              )}
+              {/* Panic Wipe: erase the content, keep the account and its credits. */}
+              {!demo && user && isReleased(config, "wipe") && (
+                <PanicWipe user={user} />
               )}
               <section className="danger-zone">
                 <div>

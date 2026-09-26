@@ -24,6 +24,50 @@ import {
   validSupportEmail,
 } from "../support.js";
 
+// What account closure and Panic Wipe (routes/wipe.js) both erase, inside
+// the caller's transaction:
+// - collabs the account owns, with their shared conversations (the caller
+//   checks their Team Treasuries are empty first);
+// - its membership of other collabs, whose shared messages stay;
+// - share links, then personal conversations and their messages (Symposium
+//   runs, branches and Double-checks are conversations too);
+// - every session and pending sign-in code;
+// - connected apps' tokens and pending codes;
+// - support requests, video jobs, saved uploads, Scrolls, standing
+//   instructions and memory facts;
+// - saved media rows. Their files can't join a transaction, so the caller
+//   removes them first (deleteMedia or removeMediaFile).
+// The ledger, deposits, request records, receipts and the account row are
+// the caller's to keep or change.
+export function eraseAccountContent(db, user) {
+  const id = user.id;
+  db.prepare("DELETE FROM collabs WHERE owner_id=?").run(id);
+  db.prepare("DELETE FROM collab_members WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM share_links WHERE user_id=?").run(id);
+  db.prepare(
+    "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
+  ).run(id);
+  db.prepare("DELETE FROM sessions WHERE user_id=?").run(id);
+  db.prepare(
+    "DELETE FROM oauth_tokens WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
+  ).run(id);
+  db.prepare(
+    "DELETE FROM oauth_codes WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
+  ).run(id);
+  db.prepare("DELETE FROM challenges WHERE target IN (?,?) OR payload=?").run(
+    user.email || "",
+    user.wallet || "",
+    id,
+  );
+  db.prepare("DELETE FROM tickets WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM videos WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM uploads WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM scrolls WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM user_instructions WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM memory_facts WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM media WHERE user_id=?").run(id);
+}
+
 // Ledger, API keys, support tickets, data export and account closure.
 export function accountRoutes(ctx) {
   const { app, db, cfg, limit, requireUser, publicUser } = ctx;
@@ -403,41 +447,15 @@ export function accountRoutes(ctx) {
       // Checked again with the deletion, atomically; a database trigger
       // backs this up (see the Team Treasury migration).
       ctx.treasury.assertOwnedEmpty(req.user.id);
-      // Owned collabs go (with their shared conversations); in other
-      // collabs the member leaves and their messages stay, unattributed.
-      db.prepare("DELETE FROM collabs WHERE owner_id=?").run(req.user.id);
-      db.prepare("DELETE FROM collab_members WHERE user_id=?").run(req.user.id);
-      // Share links stop working with the account (their conversations go
-      // next, which would take them anyway).
-      db.prepare("DELETE FROM share_links WHERE user_id=?").run(req.user.id);
-      db.prepare(
-        "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
-      ).run(req.user.id);
-      db.prepare("DELETE FROM sessions WHERE user_id=?").run(req.user.id);
+      eraseAccountContent(db, req.user);
       db.prepare(
         "UPDATE api_keys SET revoked=?,hash=NULL,name='Deleted account',prefix=NULL,agent_label=NULL WHERE user_id=?",
       ).run(now(), req.user.id);
-      // Connected apps lose their tokens and pending codes with the account.
-      db.prepare(
-        "DELETE FROM oauth_tokens WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
-      ).run(req.user.id);
-      db.prepare(
-        "DELETE FROM oauth_codes WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
-      ).run(req.user.id);
+      // Connected apps lose their tokens and pending codes with the account
+      // (eraseAccountContent), and their names here.
       db.prepare(
         "UPDATE oauth_connections SET revoked=COALESCE(revoked,?),name='Deleted account',client_name='',redirect_uri='' WHERE user_id=?",
       ).run(now(), req.user.id);
-      db.prepare(
-        "DELETE FROM challenges WHERE target IN (?,?) OR payload=?",
-      ).run(req.user.email || "", req.user.wallet || "", req.user.id);
-      db.prepare("DELETE FROM tickets WHERE user_id=?").run(req.user.id);
-      db.prepare("DELETE FROM videos WHERE user_id=?").run(req.user.id);
-      db.prepare("DELETE FROM uploads WHERE user_id=?").run(req.user.id);
-      db.prepare("DELETE FROM scrolls WHERE user_id=?").run(req.user.id);
-      db.prepare("DELETE FROM user_instructions WHERE user_id=?").run(
-        req.user.id,
-      );
-      db.prepare("DELETE FROM memory_facts WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM memory_settings WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM spending_limits WHERE user_id=?").run(req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.

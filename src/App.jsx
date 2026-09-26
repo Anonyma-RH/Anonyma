@@ -28,6 +28,7 @@ const Workspace = lazy(() => import("./Workspace.jsx"));
 const Account = lazy(() => import("./Account.jsx"));
 const Connect = lazy(() => import("./Connect.jsx"));
 const SharedChat = lazy(() => import("./SharedChat.jsx"));
+const Wiped = lazy(() => import("./Wiped.jsx"));
 // Pages that exist only once their update is live: until then no link to
 // them shows at all (the NYMA page ships with the NYMA Holder Program).
 const unpublished = (config, to) => to === "/token" && !featureEnabled(config, "holders");
@@ -376,6 +377,7 @@ function Shell() {
           <Route path="/register" element={<Auth register />} />
           <Route path="/connect" element={<Connect />} />
           <Route path="/s/:token" element={<SharedChat />} />
+          <Route path="/wiped" element={<Wiped />} />
           <Route
             path="/workspace/:mode?"
             element={

@@ -11,6 +11,7 @@ import {
 } from "../core.js";
 import { requestIdentifier } from "../middleware.js";
 import { assertSpendingRoom, limitsLive } from "../spending-limits.js";
+import { referralBoostFor } from "../referral-boost.js";
 
 export const MIN_TRANSFER = 1; // credits
 export const MAX_TRANSFER = 1_000_000; // credits
@@ -59,6 +60,9 @@ export function creditRoutes(ctx) {
         .prepare("SELECT COUNT(*) n FROM users WHERE referred_by=?")
         .get(req.user.id).n,
       earned: credits(earned),
+      // Referral Boost, while live: this account's rate now (by its NYMA
+      // tier) and every tier's. Absent otherwise.
+      ...referralBoostFor(cfg, req.user),
     });
   });
   app.post(

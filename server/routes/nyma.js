@@ -1,6 +1,7 @@
 import { UNITS, fail, hasDisputedCredit, now, transaction, uid } from "../core.js";
 import { isReleased } from "../releases.js";
 import { recordNymaPayment } from "../payments.js";
+import { referralOptions } from "../referral-boost.js";
 import { depositJSON } from "./payments.js";
 import {
   TX_HASH,
@@ -328,7 +329,7 @@ export function nymaRoutes(ctx) {
             bonus_credits: credits(Math.floor((units * quote.bonus_bps) / 10000)),
           },
         },
-        { referralPercent: cfg.referralPercent },
+        referralOptions(cfg),
       );
       res.status(201).json(depositJSON(stored));
     },

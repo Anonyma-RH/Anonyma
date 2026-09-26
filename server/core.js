@@ -13,7 +13,11 @@ import {
   modelReleased,
   parseReleased,
 } from "./releases.js";
-import { parseHolderRewards, parseHolderLoyalty } from "./holder-tiers.js";
+import {
+  parseHolderRewards,
+  parseHolderLoyalty,
+  parseHolderReferralPercents,
+} from "./holder-tiers.js";
 
 export const uid = (prefix = "") => prefix + randomBytes(16).toString("hex");
 export const hash = (value) => createHash("sha256").update(value).digest("hex");
@@ -111,6 +115,9 @@ export function config(overrides = {}) {
     webSearchPrice: Number(e.WEB_SEARCH_PRICE ?? 0.0211),
     // Share of a referred account's deposits credited to its referrer.
     referralPercent: Number(e.REFERRAL_PERCENT ?? 5),
+    // Referral Boost: each Holder Program tier's referral percent
+    // (server/holder-tiers.js). Unset: the defaults; empty or "off": none.
+    holderReferralPercents: e.HOLDER_REFERRAL_PERCENTS,
     // Optional backup OpenAI-compatible gateway for chat (e.g. OpenRouter).
     gateway2: e.GATEWAY2_BASE_URL || "",
     gateway2Key: e.GATEWAY2_API_KEY || "",
@@ -332,6 +339,14 @@ export function config(overrides = {}) {
     cfg.referralPercent > 50
   )
     throw Error("Referral percent must be between 0 and 50.");
+  if (
+    cfg.holderReferralPercents === undefined ||
+    typeof cfg.holderReferralPercents === "string"
+  )
+    cfg.holderReferralPercents = parseHolderReferralPercents(
+      cfg.holderReferralPercents,
+      cfg.referralPercent,
+    );
   if (
     !Number.isFinite(cfg.gateway2FeePercent) ||
     cfg.gateway2FeePercent < 0 ||

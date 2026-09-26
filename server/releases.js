@@ -6,6 +6,7 @@ import {
   BASE_CAPS,
   HOLDER_CAPS,
   CYCLE_DAYS,
+  referralTierRates,
 } from "./holder-tiers.js";
 
 // The app launches as an MVP (chat with a short list of models, credits and
@@ -659,6 +660,21 @@ export const UPDATES = [
     // there's no route to gate in featuresFor and no API contract.
     released: false,
   },
+  {
+    id: "referralboost",
+    title: "Referral Boost",
+    tagline: "Hold NYMA. Get more back from referrals.",
+    points: [
+      "A higher referral rate for NYMA holders, by tier",
+      "Paid in credits when a friend's top-up is confirmed",
+      "Your tier at that moment sets the rate",
+    ],
+    // No routes of its own, so nothing to gate in featuresFor: it sets the
+    // rate of the reward Referrals & Credits already pays
+    // (server/referral-boost.js), from the NYMA Holder Program's tiers, and
+    // does nothing unless that program is released too.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -994,6 +1010,11 @@ export function releaseGuard(cfg, holder = () => false) {
   };
 }
 
+const referralBoostInfo = (cfg) => {
+  const tiers = isReleased(cfg, "referralboost") ? referralTierRates(cfg) : null;
+  return tiers ? { base: cfg.referralPercent, tiers } : null;
+};
+
 // What the app needs to show released features and the roadmap.
 export function releaseInfo(cfg) {
   return {
@@ -1024,6 +1045,9 @@ export function releaseInfo(cfg) {
           })),
           loyalty: cfg?.holderLoyalty ?? parseHolderLoyalty(),
           caps: { standard: BASE_CAPS, holder: HOLDER_CAPS },
+          // Referral Boost, once released: each tier's referral percent
+          // and the base everyone else earns. Null while it has no effect.
+          referralBoost: referralBoostInfo(cfg),
         }
       : null,
   };

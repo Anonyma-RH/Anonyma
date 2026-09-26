@@ -15,6 +15,7 @@ import { recordPayment, OPEN_PAYMENT_STATUSES, sqlList } from "./payments.js";
 import { refreshTokenHoldings } from "./auth.js";
 import { sweepOAuth } from "./oauth.js";
 import { settleHolderCycles, monthOf } from "./holders.js";
+import { referralOptions } from "./referral-boost.js";
 import { issueMediaReceipt } from "./receipts.js";
 import {
   SETUP_MS as TWO_STEP_SETUP_MS,
@@ -223,7 +224,7 @@ export function createWorker(ctx) {
               throw Error("Processor invoice identity mismatch.");
             recordPayment(db, update, {
               current: true,
-              referralPercent: cfg.referralPercent,
+              ...referralOptions(cfg),
             });
           } catch {
             db.prepare("UPDATE deposits SET updated=? WHERE id=?").run(

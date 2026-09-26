@@ -5,6 +5,7 @@ import { useApp } from "./context.jsx";
 import { api, isReleased, modeReleased } from "./lib.js";
 import { useAlertSetting, alertsReleased } from "./BalanceAlerts.jsx";
 import { SUGGESTED_CREDITS, showCredits } from "./balance-alerts.js";
+import { ownPercent } from "./referral-boost.js";
 import "./dashboard.css";
 
 // The workspace dashboard: greeting and composer, the balance, where the
@@ -694,7 +695,7 @@ export default function WorkspaceHome({ demo, user, models, conversations, media
               <h3>Invite a friend</h3>
               <p>
                 {referrals
-                  ? `You get ${referrals.percent}% back in credits when they top up. ` +
+                  ? `You get ${ownPercent(referrals)}% back in credits when they top up. ` +
                     (referrals.invited
                       ? `${plural(referrals.invited, "person has", "people have")} joined through your link so far, giving you ${fmt(referrals.earned)} credits back.`
                       : "Nobody has joined through your link yet.")

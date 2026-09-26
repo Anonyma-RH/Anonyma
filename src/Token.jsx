@@ -17,6 +17,8 @@ import {
   usageValue,
   multiplierText,
 } from "./holders.js";
+import { referralBoost, boostPerk, tierList, percentText } from "./referral-boost.js";
+import "./referral-boost.css";
 import "./holders.css";
 
 // /token: what NYMA is and what holding it does in ANONYMA: the NYMA Holder
@@ -52,6 +54,8 @@ export default function Token() {
   const tiers = program?.tiers || [];
   const loyalty = program?.loyalty;
   const caps = program?.caps;
+  // Referral Boost, once live: each tier's referral rate, as a perk.
+  const boost = referralBoost(config);
   const holderMin = nymaAmount(tiers[0]?.min ?? 1_000_000);
   const creditsOn = tiers.some((t) => t.credits > 0);
   const early = earlyUpdates(config);
@@ -139,6 +143,9 @@ export default function Token() {
                         {tierPerks(program, i).map((perk) => (
                           <li key={perk}>{perk}</li>
                         ))}
+                        {boostPerk(boost, t.id) && (
+                          <li>{boostPerk(boost, t.id)}</li>
+                        )}
                       </ul>
                     </td>
                   </tr>
@@ -226,6 +233,32 @@ export default function Token() {
               Account. You can change it until the month ends. Inner Circle
               votes help decide what ships next.
             </dd>
+            {boost && (
+              <>
+                <dt>
+                  Referral boost <small>Holder and up</small>
+                </dt>
+                <dd>
+                  <p>
+                    More back in credits when a friend you invited tops up
+                    and the payment is confirmed. Your tier when each top-up
+                    is confirmed sets its rate.
+                  </p>
+                  <ul className="token-boost" aria-label="Referral boost by tier">
+                    {tierList(boost).map((t) => (
+                      <li key={t.id}>
+                        <span>{t.name}</span>
+                        <b>{percentText(t.percent)}</b>
+                      </li>
+                    ))}
+                    <li>
+                      <span>Without a tier</span>
+                      <b>{percentText(boost.base)}</b>
+                    </li>
+                  </ul>
+                </dd>
+              </>
+            )}
           </dl>
         </Section>
 

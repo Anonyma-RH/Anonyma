@@ -3584,7 +3584,20 @@
     "Next match (Enter)": "下一个匹配（Enter）",
     "Close find": "关闭查找",
     "Close (Esc)": "关闭（Esc）",
-    "Searched in your browser": "在你的浏览器中搜索"
+    "Searched in your browser": "在你的浏览器中搜索",
+    "Referral Boost": "推荐加成",
+    "Hold NYMA. Get more back from referrals.": "持有 NYMA，推荐好友返还更多。",
+    "A higher referral rate for NYMA holders, by tier": "NYMA 持有者按等级享有更高的推荐返还比例",
+    "Paid in credits when a friend's top-up is confirmed": "好友的充值确认后，以积分发放",
+    "Your tier at that moment sets the rate": "比例取决于你在那一刻的等级",
+    "Referral rate by NYMA tier": "各 NYMA 等级的推荐返还比例",
+    "Your NYMA tier when each friend's top-up is confirmed sets the rate for that top-up.": "每笔好友充值确认时你的 NYMA 等级，决定这笔充值的返还比例。",
+    "Referral boost": "推荐加成",
+    "Referral boost by tier": "各等级的推荐加成",
+    "Your tier when each top-up is confirmed sets its rate, with the same fresh balance check as every perk.": "每笔充值确认时你的等级决定它的返还比例；与所有权益一样，需要近期的余额检查。",
+    "More back in credits when a friend you invited tops up and the payment is confirmed. Your tier when each top-up is confirmed sets its rate.": "你邀请的好友充值且付款确认后，返还更多积分。每笔充值确认时你的等级决定它的返还比例。",
+    "Without a tier": "无等级",
+    "Referral reward reinstated": "推荐奖励已恢复"
   },
   "patterns": [
     {
@@ -5578,6 +5591,66 @@
     {
       "en": "Pay with NYMA: ask for a quote on Credits & funding, then send the quoted NYMA on Robinhood Chain from your linked wallet to the same payment address within {0} minutes. The quote's rate is the lower of the current rate and its {1}-minute average on Robinhood Chain, plus a {2}% bonus in credits, recorded as a separate NYMA top-up bonus.",
       "zh": "使用 NYMA 付款：先在“积分与充值”页获取报价，然后在 {0} 分钟内，从你关联的钱包在 Robinhood Chain 上将报价中的 NYMA 发送到同一付款地址。报价兑换率取当前兑换率与其在 Robinhood Chain 上 {1} 分钟均值中的较低者，另加 {2}% 的奖励积分，作为单独的 NYMA 充值奖励记录。"
+    },
+    {
+      "en": "Your rate: {0} ({1} boost)",
+      "zh": "你的返还比例：{0}（{1}加成）"
+    },
+    {
+      "en": "Your rate: {0} (base rate)",
+      "zh": "你的返还比例：{0}（基础比例）"
+    },
+    {
+      "en": "Base rate: {0}",
+      "zh": "基础比例：{0}"
+    },
+    {
+      "en": "Link a wallet that holds NYMA to get up to {0} back. Your tier when each friend's top-up is confirmed sets the rate for that top-up.",
+      "zh": "关联一个持有 NYMA 的钱包，最高可获得 {0} 的返还。每笔好友充值确认时你的等级，决定这笔充值的返还比例。"
+    },
+    {
+      "en": "Back in credits when a friend you invited tops up and the payment is confirmed. Without a tier: {0}.",
+      "zh": "你邀请的好友充值且付款确认后，以积分返还。无等级时：{0}。"
+    },
+    {
+      "en": "Referral boost: {0}",
+      "zh": "推荐加成：{0}"
+    },
+    {
+      "en": "Referral reward ({0}, {1} boost)",
+      "zh": "推荐奖励（{0}，{1}加成）"
+    },
+    {
+      "en": "Referral reward ({0})",
+      "zh": "推荐奖励（{0}）"
+    },
+    {
+      "en": "Referral reward reversed ({0}, {1} boost)",
+      "zh": "推荐奖励已撤回（{0}，{1}加成）"
+    },
+    {
+      "en": "Referral reward reversed ({0})",
+      "zh": "推荐奖励已撤回（{0}）"
+    },
+    {
+      "en": "Referral reward reinstated ({0}, {1} boost)",
+      "zh": "推荐奖励已恢复（{0}，{1}加成）"
+    },
+    {
+      "en": "Referral reward reinstated ({0})",
+      "zh": "推荐奖励已恢复（{0}）"
+    },
+    {
+      "en": "Bigger library, Referral boost: {0}",
+      "zh": "更大的媒体库、推荐加成：{0}"
+    },
+    {
+      "en": "Bigger library, Early access, Referral boost: {0}",
+      "zh": "更大的媒体库、抢先体验、推荐加成：{0}"
+    },
+    {
+      "en": "Bigger library, Early access, Roadmap vote, Referral boost: {0}",
+      "zh": "更大的媒体库、抢先体验、路线图投票、推荐加成：{0}"
     }
   ]
 }

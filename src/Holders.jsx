@@ -11,6 +11,8 @@ import {
   multiplierText,
   TIER_NAMES,
 } from "./holders.js";
+import { HoldingsBoost } from "./ReferralBoost.jsx";
+import { referralBoost, boostPerk } from "./referral-boost.js";
 import "./holders.css";
 
 // The small tag on a feature a holder is using before its public release.
@@ -58,7 +60,11 @@ export function HoldingsSettings({ config, user, demo, refresh, onNotice, onErro
   const holderMin = program?.tiers?.[0]?.min ?? 1_000_000;
   const innerMin = program?.tiers?.[2]?.min ?? 25_000_000;
   const tierIndex = (program?.tiers || []).findIndex((t) => t.id === state?.tier?.id);
+  const boost = referralBoost(config);
   const perks = tierIndex >= 0 ? tierPerks(program, tierIndex) : [];
+  // Referral Boost, once live, is one more perk of the account's tier.
+  const boostText = tierIndex >= 0 ? boostPerk(boost, state.tier.id) : null;
+  if (boostText) perks.push(boostText);
   const caps = program?.caps?.holder;
   const balance = !wallet
     ? "No wallet linked"
@@ -193,6 +199,7 @@ export function HoldingsSettings({ config, user, demo, refresh, onNotice, onErro
             {`If your balance drops below ${nymaAmount(holderMin)}, nothing is deleted at once. The normal caps simply apply again, so the oldest items beyond them are removed as new ones are saved.`}
           </p>
         )}
+        <HoldingsBoost config={config} tierId={state?.tier?.id} />
         {vote && (
           <div className="holdings-vote">
             <h3>Roadmap vote</h3>

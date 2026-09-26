@@ -1779,15 +1779,49 @@ chat.properties.treasury = {
     'Team Treasury "Team pays": hold and charge this request to the treasury of the collab that owns conversationId, within the member\'s daily and monthly limits (checked atomically with the hold, counting their held requests). 400 treasury_unavailable outside collab conversations; 402 treasury_limit or treasury_insufficient. Charged at the standard rate, since every member sees the spend. Settlement, receipts and refunds are unchanged.',
 };
 route("get", "/api/referrals", "Your referral link and rewards", {
-  response: object({
-    code: string,
-    link: string,
-    percent: number,
-    invited: integer,
-    earned: number,
-  }),
+  response: object(
+    {
+      code: string,
+      link: string,
+      percent: {
+        ...number,
+        description: "The base referral percent (REFERRAL_PERCENT)",
+      },
+      invited: integer,
+      earned: number,
+      rate: {
+        ...object({
+          percent: number,
+          base: number,
+          tier: {
+            ...nullableString,
+            enum: ["holder", "insider", "inner", null],
+            description: "The NYMA tier that raises the rate, or null",
+          },
+        }),
+        description:
+          "Referral Boost, only while it's released: your rate now. The rate a reward uses is fixed when each deposit is credited.",
+      },
+      boost: {
+        ...object({
+          base: number,
+          tiers: array(
+            object({
+              id: string,
+              name: string,
+              min: number,
+              percent: number,
+            }),
+          ),
+        }),
+        description:
+          "Referral Boost, only while it's released: each NYMA Holder Program tier's referral percent.",
+      },
+    },
+    ["code", "link", "percent", "invited", "earned"],
+  ),
   description:
-    "Sign-ups through the link (the ref query parameter sets the anonyma_ref cookie) are attributed to you. You earn percent of each credited deposit they make; the reward is reversed if that deposit is reversed.",
+    "Sign-ups through the link (the ref query parameter sets the anonyma_ref cookie) are attributed to you. You earn percent of each credited deposit they make; the reward is reversed if that deposit is reversed. With Referral Boost released, a referrer at a NYMA Holder Program tier (a fresh balance check, as for every holder perk) earns that tier's percent instead, fixed when the deposit is credited and recorded in the reward's ledger description, e.g. \"Referral reward (7.5%, Insider boost)\"; a reversal takes back exactly what was paid.",
 });
 route("post", "/api/credits/send", "Send credits to another account", {
   body: object(

@@ -30,14 +30,33 @@ export const UNCONFIRMED_INVOICE_STATUSES = [
 ];
 export const sqlList = (values) => values.map((v) => `'${v}'`).join(",");
 
+// Exactly `percent` of an integer amount, rounded down: never a subcredit
+// over. The percent counts to four decimals (tier rates have at most two),
+// so percent × 10,000 is a whole number and BigInt keeps the product exact
+// at any deposit size. For a whole-number percent this equals
+// Math.floor(amount × percent / 100).
+export function referralUnits(amount, percent) {
+  const scaled = Math.round(Number(percent) * 10000);
+  if (!Number.isSafeInteger(amount) || amount <= 0 || !(scaled > 0)) return 0;
+  return Number((BigInt(amount) * BigInt(scaled)) / 1_000_000n);
+}
+
+// "7.5" or "10", for the rate a reward records.
+const percentText = (n) => String(Math.round(Number(n) * 100) / 100);
+
 // A referred account's credited deposits earn its referrer a share. The
 // reward follows the deposit: reversed with it and reinstated with it, as
-// append-only entries keyed by the deposit.
-function referralReward(db, deposit, percent, event) {
-  if (!(percent > 0)) return;
+// append-only entries keyed by the deposit. `referral.rate(referrer)`
+// (Referral Boost, server/referral-boost.js) may raise the percent by the
+// referrer's NYMA tier at the moment of crediting; the rate is recorded in
+// the reward's description, and the correction entries carry the same note.
+// A reversal takes back what is outstanding and a reinstatement repeats
+// the original amount, so neither is ever recomputed from today's rate.
+function referralReward(db, deposit, referral, event) {
+  if (!(referral.percent > 0)) return;
   const referrer = db
     .prepare(
-      "SELECT r.id FROM users u JOIN users r ON r.id=u.referred_by WHERE u.id=? AND r.deleted IS NULL",
+      "SELECT r.* FROM users u JOIN users r ON r.id=u.referred_by WHERE u.id=? AND r.deleted IS NULL",
     )
     .get(deposit.user_id);
   if (!referrer) return;
@@ -53,26 +72,39 @@ function referralReward(db, deposit, percent, event) {
         "INSERT OR IGNORE INTO ledger(id,user_id,amount,kind,ref,key_id,description,created) VALUES(?,?,?,?,?,?,?,?)",
       )
       .run(uid("l_"), referrer.id, amount, kind, key, null, description, now());
-  const reward = Math.floor((deposit.amount * percent) / 100);
-  if (event === "credit" && !outstanding.c && reward > 0)
-    insert(reward, ref, "referral", "Referral reward");
-  else if (event === "reverse" && outstanding.n > 0)
+  if (event === "credit") {
+    if (outstanding.c) return;
+    const rate = referral.rate?.(referrer) ?? null;
+    const reward = referralUnits(
+      deposit.amount,
+      rate ? rate.percent : referral.percent,
+    );
+    const note = rate
+      ? ` (${percentText(rate.percent)}%${rate.tier ? `, ${rate.tier.name} boost` : ""})`
+      : "";
+    if (reward > 0) insert(reward, ref, "referral", "Referral reward" + note);
+    return;
+  }
+  const original = db
+    .prepare("SELECT amount,description FROM ledger WHERE ref=?")
+    .get(ref);
+  // The rate the reward recorded, e.g. " (7.5%, Insider boost)".
+  const note =
+    /^Referral reward( \(.+\))$/.exec(original?.description ?? "")?.[1] ?? "";
+  if (event === "reverse" && outstanding.n > 0)
     insert(
       -outstanding.n,
       `${ref}_correction_${outstanding.c}`,
       "referral_correction",
-      "Referral reward reversed",
+      "Referral reward reversed" + note,
     );
   else if (event === "reinstate" && outstanding.c && outstanding.n === 0) {
-    const original = db
-      .prepare("SELECT amount FROM ledger WHERE ref=?")
-      .get(ref);
     if (original?.amount > 0)
       insert(
         original.amount,
         `${ref}_correction_${outstanding.c}`,
         "referral_correction",
-        "Referral reward reinstated",
+        "Referral reward reinstated" + note,
       );
   }
 }
@@ -83,8 +115,14 @@ function referralReward(db, deposit, percent, event) {
 export function recordPayment(
   db,
   body,
-  { current = false, allowReinstate = false, referralPercent = 0 } = {},
+  {
+    current = false,
+    allowReinstate = false,
+    referralPercent = 0,
+    referralRate = null,
+  } = {},
 ) {
+  const referral = { percent: referralPercent, rate: referralRate };
   if (!body || typeof body !== "object" || Array.isArray(body))
     fail(400, "Invalid payment update.");
   const providerId = String(body.payment_id || "");
@@ -172,7 +210,7 @@ export function recordPayment(
           -d.amount,
           `${d.currency.toUpperCase()} payment reversed`,
         );
-        referralReward(db, d, referralPercent, "reverse");
+        referralReward(db, d, referral, "reverse");
         creditState = "reversed";
         review = false;
         status = body.payment_status;
@@ -188,7 +226,7 @@ export function recordPayment(
           d.amount,
           `${d.currency.toUpperCase()} payment reinstated`,
         );
-        referralReward(db, d, referralPercent, "reinstate");
+        referralReward(db, d, referral, "reinstate");
         creditState = "credited";
         review = false;
         status = "finished";
@@ -251,7 +289,7 @@ export function recordPayment(
         `${d.currency.toUpperCase()} deposit`,
       );
       db.prepare("UPDATE deposits SET credited=1 WHERE id=?").run(d.id);
-      referralReward(db, d, referralPercent, "credit");
+      referralReward(db, d, referral, "credit");
     }
     return db.prepare("SELECT * FROM deposits WHERE id=?").get(d.id);
   });
@@ -264,7 +302,7 @@ export function recordPayment(
 export function recordWalletPayment(
   db,
   { user, providerId, amount, currency, payload },
-  { referralPercent = 0 } = {},
+  { referralPercent = 0, referralRate = null } = {},
 ) {
   if (!Number.isSafeInteger(amount) || amount <= 0)
     fail(400, "This payment is too small to credit.", "payment_not_matched");
@@ -313,7 +351,7 @@ export function recordWalletPayment(
     referralReward(
       db,
       { id, user_id: user, amount },
-      referralPercent,
+      { percent: referralPercent, rate: referralRate },
       "credit",
     );
     return db.prepare("SELECT * FROM deposits WHERE id=?").get(id);
@@ -329,7 +367,7 @@ export function recordWalletPayment(
 export function recordNymaPayment(
   db,
   { user, providerId, chain, txHash, logs, value, bonus, maxUsd, dailyMaxUsd, slack = 0, payload },
-  { referralPercent = 0 } = {},
+  { referralPercent = 0, referralRate = null } = {},
 ) {
   if (!Number.isSafeInteger(value) || value <= 0)
     fail(400, "This payment is too small to credit.", "payment_not_matched");
@@ -412,7 +450,12 @@ export function recordNymaPayment(
         "NYMA top-up bonus",
       );
     // Referral rewards follow the top-up's value, never its bonus.
-    referralReward(db, { id, user_id: user, amount: value }, referralPercent, "credit");
+    referralReward(
+      db,
+      { id, user_id: user, amount: value },
+      { percent: referralPercent, rate: referralRate },
+      "credit",
+    );
     return db.prepare("SELECT * FROM deposits WHERE id=?").get(id);
   });
 }

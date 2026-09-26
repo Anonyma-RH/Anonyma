@@ -616,6 +616,28 @@ test("a referred account's NYMA top-up rewards the referrer on its value, not th
   assert.equal(reward.amount, Math.floor((units(q.credits) * 5) / 100));
 });
 
+test("a NYMA top-up pays an Insider referrer the Referral Boost rate, still on its value", async (t) => {
+  const node = await chain(t);
+  // Holder tiers need the token check configured (holders.js tokenChecks);
+  // this is NYMA's public contract address.
+  const NYMA_CONTRACT = "0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583";
+  const svc = fixture(t, node.url, { referralPercent: 5, rpc: node.url, token: NYMA_CONTRACT });
+  const alice = await register(svc, "alice");
+  const bob = await register(svc, "bob", BOB_WALLET);
+  svc.db.prepare("UPDATE users SET referred_by=? WHERE id=?").run(alice.user.id, bob.user.id);
+  // Alice holds 5,000,000 NYMA with a fresh check: the Insider tier.
+  const checked = Date.now();
+  svc.db
+    .prepare("UPDATE users SET wallet=?,token_balance=?,token_checked=?,holder_cycle=?,holder_low=? WHERE id=?")
+    .run("0x" + "ab".repeat(20), "5000000", checked, checked, "5000000", alice.user.id);
+  const q = (await quote(bob.agent, 20).expect(201)).body.quote;
+  node.pay(hashOf(81), { from: BOB_WALLET, amount: BigInt(q.nyma) * WEI });
+  await claim(bob.agent, hashOf(81)).expect(201);
+  const [reward] = ledger(svc, alice.user.id, "referral");
+  assert.equal(reward.amount, Math.floor((units(q.credits) * 75) / 1000));
+  assert.match(reward.description, /7\.5%, Insider boost/);
+});
+
 test("quotes are exported, erased by Panic Wipe and block closure while open; top-ups stay", async (t) => {
   const node = await chain(t);
   const svc = fixture(t, node.url);

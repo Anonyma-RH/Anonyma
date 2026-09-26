@@ -48,6 +48,8 @@ import { PanicWipe } from "./PanicWipe.jsx";
 import { TwoStepSettings } from "./TwoStep.jsx";
 import { twoStepReleased } from "./two-step.js";
 import { holdersReleased } from "./holders.js";
+import { ReferralRate } from "./ReferralBoost.jsx";
+import { ownPercent } from "./referral-boost.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
 import { paletteReleased, paletteActions, recentStoreKey } from "./command-palette.js";
 import { useLanguage, setLanguage } from "./i18n.js";
@@ -1231,7 +1233,7 @@ function InviteCard({ data, onLoad }) {
         </p>
         <h2>
           {data.percent > 0
-            ? `Get ${data.percent}% back in credits when friends top up.`
+            ? `Get ${ownPercent(data)}% back in credits when friends top up.`
             : "Share Anonyma with a friend."}
         </h2>
         <p>
@@ -1240,6 +1242,7 @@ function InviteCard({ data, onLoad }) {
             ? ". You receive credits whenever their deposits are confirmed."
             : "."}
         </p>
+        <ReferralRate data={data} />
       </div>
       <div className="invite-link">
         <code>{data.link}</code>

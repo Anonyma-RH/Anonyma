@@ -8,6 +8,7 @@ import {
   FINAL_PAYMENT_STATUSES,
 } from "../payments.js";
 import { requestIdentifier } from "../middleware.js";
+import { referralOptions } from "../referral-boost.js";
 import {
   TX_HASH,
   formatTokenAmount,
@@ -126,7 +127,7 @@ export function paymentRoutes(ctx) {
             price_amount: invoice.price_amount ?? dollars,
             price_currency: invoice.price_currency ?? "usd",
           },
-          { current: false, referralPercent: cfg.referralPercent },
+          { current: false, ...referralOptions(cfg) },
         );
         res.status(201).json({ id, ...JSON.parse(stored.payload) });
       } catch (e) {
@@ -218,7 +219,7 @@ export function paymentRoutes(ctx) {
               : null,
           },
         },
-        { referralPercent: cfg.referralPercent },
+        referralOptions(cfg),
       );
       res.status(201).json(depositJSON(stored));
     },
@@ -226,7 +227,7 @@ export function paymentRoutes(ctx) {
   const applyPayment = (body, current = false) =>
     recordPayment(db, body, {
       current,
-      referralPercent: cfg.referralPercent,
+      ...referralOptions(cfg),
     });
   app.post("/api/payments/ipn", (req, res) => {
     if (

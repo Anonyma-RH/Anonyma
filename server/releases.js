@@ -567,7 +567,7 @@ export const UPDATES = [
     // Only the settings routes are gated. The sign-in's own second step
     // (/api/auth/two-step) stays open: an account that turned two-step on
     // keeps needing its code even if the update is switched off again.
-    released: false,
+    released: true,
   },
   {
     id: "costcompare",

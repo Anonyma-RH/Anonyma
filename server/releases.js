@@ -786,7 +786,7 @@ export const UPDATES = [
     // The workspace's Sheets page (src/Sheets.jsx). Its model calls are
     // /api/chat requests carrying `sheets` (server/sheets.js); nothing about
     // them is stored, so there's nothing to erase or export.
-    released: false,
+    released: true,
   },
   {
     id: "blind",

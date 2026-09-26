@@ -646,6 +646,20 @@ export const UPDATES = [
     // Needs WALLET_PAYMENT_ADDRESS on chain 4663 (server/routes/nyma.js).
     released: true,
   },
+  {
+    id: "redact",
+    title: "Redact Before You Send",
+    tagline: "Black out what you don't want to share.",
+    points: [
+      "Box out text, faces or a whole corner of a screenshot before it's sent",
+      "Redrawn in your browser: the original never leaves your device",
+      "Black for text, Pixelate for faces, never a blur that can be undone",
+    ],
+    // Browser only: the redacted copy is made before the request exists and
+    // is sent like any other image, so no route is gated on it (like Clean
+    // Uploads). The app shows Redact only once this is released.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

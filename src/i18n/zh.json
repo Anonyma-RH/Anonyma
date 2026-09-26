@@ -3566,7 +3566,55 @@
     "The export also includes your Pay with NYMA quotes.": "导出内容还包括你的“使用 NYMA 付款”报价。",
     "Reading the NYMA rate on Robinhood Chain…": "正在读取 Robinhood Chain 上的 NYMA 兑换率……",
     "A quote holds the rate for 10 minutes": "报价锁定兑换率 10 分钟",
-    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。"
+    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。",
+    "Redact Before You Send": "发送前打码",
+    "Black out what you don't want to share.": "不想分享的部分，发送前先涂黑。",
+    "Box out text, faces or a whole corner of a screenshot before it's sent": "发送前框出截图中的文字、人脸或整个角落",
+    "Redrawn in your browser: the original never leaves your device": "在你的浏览器中重新绘制：原图绝不离开你的设备",
+    "Black for text, Pixelate for faces, never a blur that can be undone": "文字用涂黑，人脸用马赛克，绝不使用可被还原的模糊",
+    "Redacted": "已打码",
+    "Redact": "打码",
+    "Black out parts of this image before it's sent": "在发送前涂黑这张图片的部分内容",
+    "Redact image": "图片打码",
+    "Tool": "工具",
+    "Draw boxes": "画框",
+    "Box": "画框",
+    "Crop": "裁剪",
+    "Pan": "平移",
+    "Style for new boxes": "新框的样式",
+    "Black": "涂黑",
+    "for text": "用于文字",
+    "Pixelate": "马赛克",
+    "for faces": "用于人脸",
+    "Undo": "撤销",
+    "Redo": "重做",
+    "Zoom out": "缩小",
+    "Zoom in": "放大",
+    "Fit to screen": "适应屏幕",
+    "Find text": "查找文字",
+    "Add boxes around text this browser can find": "在此浏览器能识别的文字周围添加框",
+    "Apply": "应用",
+    "Applying…": "正在应用……",
+    "Draw a box or crop first": "请先画框或裁剪",
+    "Opening the image…": "正在打开图片……",
+    "The image, with your boxes applied": "已应用你所画框的图片",
+    "Drag a corner, or drag across the image, to crop. Only what's inside is sent.": "拖动角点，或在图片上拖出一个区域来裁剪。只发送框内的部分。",
+    "Drag to move around. Pinch, or hold Ctrl and scroll, to zoom.": "拖动即可移动画面。双指捏合，或按住 Ctrl 滚动即可缩放。",
+    "Drag the box to move it or a corner to resize it.": "拖动框可移动位置，拖动角点可调整大小。",
+    "Drag over anything you don't want to send. Use Black for text; Pixelate is for faces.": "在不想发送的内容上拖出一个框。文字请用涂黑，马赛克适用于人脸。",
+    "This box": "此框",
+    "Delete box": "删除框",
+    "Reset crop": "重置裁剪",
+    "Only the redacted copy is sent. The original never leaves this device.": "只发送打码后的副本。原图绝不离开此设备。",
+    "Boxes added around the text this browser found. Check the whole image: it can miss text.": "已在此浏览器识别到的文字周围添加框。请检查整张图片：它可能会漏掉部分文字。",
+    "No text found. Draw boxes yourself.": "未找到文字。请自己画框。",
+    "Find text isn't working in this browser. Draw boxes yourself.": "“查找文字”在此浏览器中无法使用。请自己画框。",
+    "This image can't be opened for redaction.": "无法打开这张图片进行打码。",
+    "The redacted image couldn't be made.": "无法生成打码后的图片。",
+    "The redacted image is over 1.5 MiB. Crop it smaller, then apply again.": "打码后的图片超过 1.5 MiB。请裁剪得更小，然后再次应用。",
+    "The redacted image couldn't be checked.": "无法检查打码后的图片。",
+    "Metadata couldn't be removed from an image. Redact it to send a redrawn copy, tick Keep original to send it as it is, or remove it.": "有一张图片的元数据无法移除。你可以为它打码以发送重新绘制的副本，勾选“保留原文件”按原样发送，或将其移除。",
+    "Redact Before You Send: the boxes you draw on an image are applied in your browser. Only the redacted copy is sent, and only it is kept in a saved chat. The original isn't uploaded, and ANONYMA isn't told that an image was redacted.": "发送前打码：你在图片上画的框会在你的浏览器中应用。只有打码后的副本会被发送，已保存的会话中也只保留这份副本。原图不会上传，ANONYMA 也不会得知图片经过打码。"
   },
   "patterns": [
     {
@@ -5560,6 +5608,10 @@
     {
       "en": "Pay with NYMA: ask for a quote on Credits & funding, then send the quoted NYMA on Robinhood Chain from your linked wallet to the same payment address within {0} minutes. The quote's rate is the lower of the current rate and its {1}-minute average on Robinhood Chain, plus a {2}% bonus in credits, recorded as a separate NYMA top-up bonus.",
       "zh": "使用 NYMA 付款：先在“积分与充值”页获取报价，然后在 {0} 分钟内，从你关联的钱包在 Robinhood Chain 上将报价中的 NYMA 发送到同一付款地址。报价兑换率取当前兑换率与其在 Robinhood Chain 上 {1} 分钟均值中的较低者，另加 {2}% 的奖励积分，作为单独的 NYMA 充值奖励记录。"
+    },
+    {
+      "en": "Redact {0}",
+      "zh": "为 {0} 打码"
     }
   ]
 }

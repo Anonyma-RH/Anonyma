@@ -20,6 +20,8 @@ export default function DataControls() {
   const bookmarks = !!config && isReleased(config, "bookmarks");
   // And Pay with NYMA.
   const nyma = !!config && isReleased(config, "paynyma");
+  // And Redact Before You Send.
+  const redact = !!config && isReleased(config, "redact");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -39,6 +41,11 @@ export default function DataControls() {
         <li>
           Clean Uploads removes location, camera and author details from photos, saved Office files and saved audio in your browser before they leave your device; chat documents send only their text.
         </li>
+        {redact && (
+          <li>
+            Redact Before You Send: the boxes you draw on an image are applied in your browser. Only the redacted copy is sent, and only it is kept in a saved chat. The original isn't uploaded, and ANONYMA isn't told that an image was redacted.
+          </li>
+        )}
         <li>
           Device Vault keeps device-only chats encrypted in this browser with your passphrase; ANONYMA's servers store none of them, and they can't be recovered without the passphrase.
         </li>

@@ -165,7 +165,8 @@ export function PasskeySettings({ user, demo = false, config }) {
     run(async () => {
       const r = await addPasskey(name.trim() || defaultPasskeyName());
       setStatus(r);
-      setName(defaultPasskeyName());
+      // Cleared, so a second passkey isn't saved under the same name.
+      setName("");
       setNotice("Passkey added. Next time, sign in with it: no password needed.");
     }, "add");
   const remove = (p) =>

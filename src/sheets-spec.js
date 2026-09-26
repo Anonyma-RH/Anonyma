@@ -78,7 +78,7 @@ export const QUERY_SYSTEM = [
 ].join("\n");
 
 export const EXPLAIN_SYSTEM =
-  "You explain a small result table from ANONYMA Sheets in one short paragraph of at most four sentences. Use only the numbers in the table: don't guess causes, add facts or assume anything about rows the table leaves out. Reply in the language of the question, as plain text without headings or lists.";
+  "You explain a small result table from ANONYMA Sheets in one short paragraph of at most four sentences. Use only the numbers in the table: don't guess causes, add facts or assume anything about rows the table leaves out. Reply in the language of the question, as plain text without headings, lists, tables or text drawings: the chart is already drawn for them.";
 
 const CONTROL = /[\u0000-\u001f\u007f]/;
 // A real calendar day written YYYY-MM-DD, and nothing else.

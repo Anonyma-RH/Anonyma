@@ -70,6 +70,7 @@
 .app-shell .message-label>span{font-size:9px;color:var(--work-muted);letter-spacing:.5px}
 .app-shell .markdown{font-size:14px;color:#374660;line-height:1.85}
 .app-shell .markdown h3{font-family:inherit;font-size:17px;color:var(--work-ink);letter-spacing:0}
+.app-shell .markdown h1,.app-shell .markdown h2,.app-shell .markdown h4{font-family:inherit;color:var(--work-ink);letter-spacing:0;line-height:1.35;margin:20px 0 8px}.app-shell .markdown h1{font-size:21px;font-weight:600}.app-shell .markdown h2{font-size:18px;font-weight:600}.app-shell .markdown h4{font-size:15px;font-weight:600}
 .app-shell .markdown pre,.app-shell .code-panel pre{background:#f5f7fb;border:1px solid var(--work-line);color:#243454;border-radius:6px}
 .app-shell .code-panel{background:#f8faff;border-color:var(--work-line);padding:24px}
 .app-shell .code-panel h3{font-family:inherit;font-size:14px;color:var(--work-ink)}

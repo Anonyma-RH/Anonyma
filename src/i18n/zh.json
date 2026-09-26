@@ -3566,7 +3566,25 @@
     "The export also includes your Pay with NYMA quotes.": "导出内容还包括你的“使用 NYMA 付款”报价。",
     "Reading the NYMA rate on Robinhood Chain…": "正在读取 Robinhood Chain 上的 NYMA 兑换率……",
     "A quote holds the rate for 10 minutes": "报价锁定兑换率 10 分钟",
-    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。"
+    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。",
+    "Math & Diagrams": "数学公式与图表",
+    "Equations and diagrams, rendered right in the chat.": "公式和图表，直接在会话中呈现。",
+    "LaTeX equations in replies, typeset with KaTeX": "回复中的 LaTeX 公式，由 KaTeX 排版",
+    "Mermaid flowcharts, sequences and charts, drawn in your browser": "Mermaid 流程图、时序图和各类图表，在你的浏览器中绘制",
+    "Copy either as SVG, or download a diagram as PNG": "公式和图表都可复制为 SVG，图表还可下载为 PNG",
+    "Show source": "显示源码",
+    "Hide source": "隐藏源码",
+    "Copy SVG": "复制 SVG",
+    "Download PNG": "下载 PNG",
+    "Couldn't copy this equation.": "无法复制这个公式。",
+    "Couldn't copy this diagram.": "无法复制这张图表。",
+    "Couldn't make a PNG in this browser.": "无法在此浏览器中生成 PNG。",
+    "Couldn't typeset this equation.": "无法排版这个公式。",
+    "Couldn't draw this diagram.": "无法绘制这张图表。",
+    "Drawing the diagram…": "正在绘制图表……",
+    "This diagram is too long to draw here.": "这张图表太长，无法在此绘制。",
+    "Equation source": "公式源码",
+    "Diagram": "图表"
   },
   "patterns": [
     {

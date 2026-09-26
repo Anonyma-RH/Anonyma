@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
+import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import { Notice, CopyButton } from "./ui.jsx";
 import { api, streamChat, uid, isReleased, download } from "./lib.js";
@@ -413,14 +413,15 @@ export default function TaskTools({
                 </p>
                 {/* Model output stays as written; only the placeholder translates. */}
                 <div className="prose" data-i18n={r.text ? "off" : undefined}>
-                  <ReactMarkdown
+                  <ReplyMarkdown
+                    rich={!!r.text}
                     remarkPlugins={[
                       remarkGfm,
                       [veilRemarkPlugin, { map: r.map }],
                     ]}
                   >
                     {r.text || "Waiting for the model…"}
-                  </ReactMarkdown>
+                  </ReplyMarkdown>
                 </div>
                 {r.kind === "research" && (
                   <aside className="task-sources">

@@ -1,4 +1,4 @@
-import ReactMarkdown from "react-markdown";
+import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import React, { useEffect, useRef, useState } from "react";
 import { api, isReleased, messageFromServer } from "./lib.js";
@@ -276,15 +276,15 @@ export default function HistoryLibrary({
               <strong>
                 {m.role === "user" ? "You" : m.model || "Assistant"}
               </strong>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReplyMarkdown rich={m.role !== "user"} remarkPlugins={[remarkGfm]}>
                 {m.content}
-              </ReactMarkdown>
+              </ReplyMarkdown>
               {m.reasoning && (
                 <details>
                   <summary>Saved reasoning</summary>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <ReplyMarkdown rich={false} remarkPlugins={[remarkGfm]}>
                     {m.reasoning}
-                  </ReactMarkdown>
+                  </ReplyMarkdown>
                 </details>
               )}
               {(m.images || []).map((url, index) => (

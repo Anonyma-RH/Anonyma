@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
+import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import { Button, Icon, Notice, Empty, CopyButton } from "./ui.jsx";
 import SignedReceipt from "./SignedReceipt.jsx";
@@ -577,7 +577,7 @@ export function RunCard({ run, modelName, onDelete, busy }) {
       {run.status === "done" ? (
         <>
           <div className="run-answer" data-i18n="off">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{run.answer || ""}</ReactMarkdown>
+            <ReplyMarkdown remarkPlugins={[remarkGfm]}>{run.answer || ""}</ReplyMarkdown>
           </div>
           {run.finish_reason === "length" && (
             <p className="run-note">

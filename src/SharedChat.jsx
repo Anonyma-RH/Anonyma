@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
+import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import { useApp } from "./context.jsx";
 import { Logo, Mark, Icon, Button, CopyButton } from "./ui.jsx";
@@ -94,12 +94,13 @@ function SharedMessage({ m }) {
         </div>
         {m.text && (
           <div className="markdown" data-i18n="off">
-            <ReactMarkdown
+            <ReplyMarkdown
+              rich={m.role === "assistant"}
               remarkPlugins={[remarkGfm, veilTags]}
               components={markdownParts}
             >
               {m.text}
-            </ReactMarkdown>
+            </ReplyMarkdown>
           </div>
         )}
         {m.withheld > 0 && (

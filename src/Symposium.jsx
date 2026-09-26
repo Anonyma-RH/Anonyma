@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import { Icon, Notice, Empty, BandLines, BandSteps } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
@@ -423,9 +423,9 @@ export default function Symposium({
                       )}
                     </header>
                     <div className="markdown" data-i18n={col.text ? "off" : undefined}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm, veilMarks]}>
+                      <ReplyMarkdown rich={!!col.text} remarkPlugins={[remarkGfm, veilMarks]}>
                         {col.text || (col.status === "pending" ? "Preparing…" : "")}
-                      </ReactMarkdown>
+                      </ReplyMarkdown>
                     </div>
                     {col.error && <p className="symposium-error">{col.error}</p>}
                     {col.receipt && (
@@ -497,9 +497,9 @@ export default function Symposium({
                       )}
                     </header>
                     <div className="markdown" data-i18n={fusion.text ? "off" : undefined}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm, veilMarks]}>
+                      <ReplyMarkdown rich={!!fusion.text} remarkPlugins={[remarkGfm, veilMarks]}>
                         {fusion.text || (fusion.status === "pending" ? "Preparing…" : "")}
-                      </ReactMarkdown>
+                      </ReplyMarkdown>
                     </div>
                     {fusion.error && <p className="symposium-error">{fusion.error}</p>}
                     {fusion.receipt && (

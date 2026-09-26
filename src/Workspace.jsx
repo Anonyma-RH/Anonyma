@@ -12,7 +12,6 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useApp } from "./context.jsx";
 import {
@@ -51,6 +50,7 @@ import {
 import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import CollabHub from "./Collab.jsx";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
+import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import DoubleCheck from "./DoubleCheck.jsx";
 import {
   EphemeralToggle,
@@ -2698,7 +2698,9 @@ export default function Workspace() {
                       const shown =
                         parsed.text || (hasDocuments ? "" : m.interrupted && chatControlLive ? "Reply interrupted. Check charge status below." : "Preparing…");
                       const body = (
-                        <ReactMarkdown
+                        <ReplyMarkdown
+                          // Math & Diagrams: only replies are typeset or drawn.
+                          rich={m.role === "assistant"}
                           remarkPlugins={[
                             remarkGfm,
                             // Re-runs on every render (incl. mid-stream) so a
@@ -2708,7 +2710,7 @@ export default function Workspace() {
                           components={m.role === "assistant" ? htmlPreview.components : undefined}
                         >
                           {shown}
-                        </ReactMarkdown>
+                        </ReplyMarkdown>
                       );
                       return (
                       <article

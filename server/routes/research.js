@@ -70,6 +70,10 @@ export function researchRoutes(ctx) {
   // Everything a quote and a run share, checked before anything is held.
   function prepare(req) {
     const body = req.body || {};
+    // Blind Compare and Sheets are modes of their own (batch 5 integration):
+    // the composer turns them off together, and a run never carries them.
+    if (body.models !== undefined || body.sheets !== undefined)
+      fail(400, "Deep research can't be combined with Blind or Sheets.", "invalid_request");
     const question = typeof body.question === "string" ? body.question.trim() : "";
     if (!question) fail(400, "Enter a question to research.", "invalid_request");
     if (question.length > MAX_QUESTION)

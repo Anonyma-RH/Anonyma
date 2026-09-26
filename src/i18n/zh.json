@@ -4170,7 +4170,9 @@
     "Waiting for your passkey…": "正在等待你的通行密钥……",
     "Unlock with your passkey.": "请用你的通行密钥解锁。",
     "Confirm with your passkey again.": "请再次用你的通行密钥确认。",
-    "A passkey works too.": "也可以用通行密钥。"
+    "A passkey works too.": "也可以用通行密钥。",
+    "Blind can't be combined with Deep research or Sheets.": "盲测对比不能与深度研究或表格同时使用。",
+    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。"
   },
   "patterns": [
     {

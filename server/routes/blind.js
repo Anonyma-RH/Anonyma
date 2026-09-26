@@ -151,6 +151,10 @@ export function blindRoutes(ctx) {
       fail(400, "Blind isn't available with Team pays.", "blind_unsupported");
     if (body.double_check != null || body.taskTool !== undefined)
       fail(400, "Blind compares chat replies only.", "blind_unsupported");
+    // Deep research and Sheets are modes of their own (batch 5 integration):
+    // the composer turns them off together, and a round never carries them.
+    if (body.sheets !== undefined || body.depth !== undefined || body.question !== undefined)
+      fail(400, "Blind can't be combined with Deep research or Sheets.", "blind_unsupported");
     const mode = body.mode ?? "chat";
     if (!MODES.includes(mode))
       fail(400, "Blind works in chat, code and Uncensored.", "invalid_request");

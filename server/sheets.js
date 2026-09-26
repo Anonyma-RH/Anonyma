@@ -26,6 +26,11 @@ const REFUSED = [
   "double_check",
   "treasury",
   "messages",
+  // Blind Compare's and Deep research's fields (batch 5 integration): each
+  // is a mode of its own, never combined with a sheets question.
+  "models",
+  "depth",
+  "question",
 ];
 export function prepareSheetsRequest(body) {
   if (!body || body.sheets === undefined) return;

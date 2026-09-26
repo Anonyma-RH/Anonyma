@@ -515,7 +515,7 @@ export const UPDATES = [
     // Browser only: a device-only chat is sent as an off-the-record request,
     // so the server gates it as "ephemeral" and never learns a vault exists.
     // The app needs both released (vaultReleased in src/DeviceVault.jsx).
-    released: false,
+    released: true,
   },
   {
     id: "routines",

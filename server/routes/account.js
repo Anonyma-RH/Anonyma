@@ -457,7 +457,7 @@ export function accountRoutes(ctx) {
     )
       fail(
         409,
-        "Your NYMA top-up quote is still open. Close the account after it ends, within 20 minutes.",
+        "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.",
       );
     // Owned collabs' Team Treasuries must be empty: members' credits never
     // disappear with the owner's account.

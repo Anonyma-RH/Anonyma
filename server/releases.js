@@ -534,7 +534,7 @@ export const UPDATES = [
     tagline: "Top up with NYMA. Get more credits for it.",
     points: [
       "Send NYMA from your own wallet on Robinhood Chain",
-      "A quote holds the rate for 20 minutes",
+      "A quote holds the rate for 10 minutes",
       "Bonus credits on every NYMA top-up",
     ],
     // Needs WALLET_PAYMENT_ADDRESS on chain 4663 (server/routes/nyma.js).

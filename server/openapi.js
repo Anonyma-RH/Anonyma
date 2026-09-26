@@ -1605,7 +1605,7 @@ route("post", "/api/nyma/quote", "Ask for a NYMA top-up quote", {
   body: object({ usd: { ...number, description: "Value in USD, within /api/config nymaPayments minUsd and maxUsd" } }, ["usd"]),
   response: object({ quote: nymaQuote, ...nymaLimits }),
   description:
-    "Locks the current rate for 20 minutes: send `nyma` NYMA from the linked wallet to /api/config walletPayments.address. A new quote ends the open one at once. Needs a linked wallet (400 wallet_not_linked). 400 invalid_amount; 409 nyma_daily_limit past the 24-hour limit; 409 payment_reconciliation_pending while a credited payment is under reconciliation; 503 nyma_rate_unavailable. 30 quotes an hour.",
+    "Locks the current rate for 10 minutes: send `nyma` NYMA from the linked wallet to /api/config walletPayments.address. A new quote ends the open one at once. Needs a linked wallet (400 wallet_not_linked). 400 invalid_amount; 409 nyma_daily_limit past the 24-hour limit; 409 payment_reconciliation_pending while a credited payment is under reconciliation; 503 nyma_rate_unavailable. 30 quotes an hour.",
 });
 route("post", "/api/nyma/claim", "Credit a NYMA transfer", {
   status: 201,

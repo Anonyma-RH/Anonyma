@@ -3102,7 +3102,6 @@
     "Pay with NYMA": "使用 NYMA 付款",
     "Top up with NYMA. Get more credits for it.": "用 NYMA 充值，获得更多积分。",
     "Send NYMA from your own wallet on Robinhood Chain": "在 Robinhood Chain 上从你自己的钱包发送 NYMA",
-    "A quote holds the rate for 20 minutes": "报价锁定兑换率 20 分钟",
     "Bonus credits on every NYMA top-up": "每次 NYMA 充值都有奖励积分",
     "NYMA top-up": "NYMA 充值",
     "NYMA top-up bonus": "NYMA 充值奖励",
@@ -3125,10 +3124,11 @@
     "This transfer was sent before any NYMA quote on this account, so it can't be credited automatically. Contact support with the transaction hash.": "此转账早于该账户的任何 NYMA 报价，无法自动入账。请联系支持团队并提供交易哈希。",
     "This transfer was already credited.": "此转账已入账。",
     "The payment network returned an incomplete transaction. Try checking again in a minute.": "付款网络返回的交易信息不完整。请一分钟后再检查。",
-    "Your NYMA top-up quote is still open. Close the account after it ends, within 20 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（20 分钟内）再关闭账户。",
     "Pay with NYMA quotes: each quote’s NYMA amount, rate, bonus and your linked wallet address, until Panic Wipe or closing your account deletes them. A credited NYMA top-up stays as a deposit record with its transaction hash, sending wallet and rate, like any other payment.": "“使用 NYMA 付款”报价：每个报价的 NYMA 数量、兑换率、奖励和你关联的钱包地址，保留到紧急清除或关闭账户时删除。已入账的 NYMA 充值与其他付款一样，作为充值记录保留，包含交易哈希、发送钱包和兑换率。",
     "The export also includes your Pay with NYMA quotes.": "导出内容还包括你的“使用 NYMA 付款”报价。",
-    "Reading the NYMA rate on Robinhood Chain…": "正在读取 Robinhood Chain 上的 NYMA 兑换率……"
+    "Reading the NYMA rate on Robinhood Chain…": "正在读取 Robinhood Chain 上的 NYMA 兑换率……",
+    "A quote holds the rate for 10 minutes": "报价锁定兑换率 10 分钟",
+    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。"
   },
   "patterns": [
     {

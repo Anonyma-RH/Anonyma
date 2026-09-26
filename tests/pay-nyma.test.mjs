@@ -268,7 +268,7 @@ test("a quote locks the rate, and the quoted NYMA is credited at it with a 10% b
   assert.equal(q.quote.credits, value / 10000);
   assert.equal(q.quote.bonusCredits, Math.floor(value / 10) / 10000);
   assert.equal(q.quote.open, true);
-  assert.equal(q.quote.expires - q.quote.created, 20 * 60000);
+  assert.equal(q.quote.expires - q.quote.created, 10 * 60000);
   assert.equal(q.remainingTodayUsd, 1000);
   // The open quote comes back for a reloaded page.
   const open = (await alice.agent.get("/api/nyma/quote").expect(200)).body;
@@ -670,7 +670,7 @@ test("Pay with NYMA is registered off, gated and described without investment la
     symbol: "NYMA",
     decimals: 18,
     bonus: 0.1,
-    quoteMinutes: 20,
+    quoteMinutes: 10,
     averageMinutes: 30,
     minUsd: 1,
     maxUsd: 250,

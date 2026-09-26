@@ -32,7 +32,7 @@ import {
 //    proportionally fewer credits and more NYMA all of them, within the
 //    per-payment and 24-hour limits. The bonus is the quote's share of that.
 export const NYMA_CHAIN = 4663;
-export const NYMA_QUOTE_MINUTES = 20;
+export const NYMA_QUOTE_MINUTES = 10;
 const QUOTE_MS = NYMA_QUOTE_MINUTES * 60000;
 // A transfer may land a little before its quote: the chain's clock and this
 // server's can differ.

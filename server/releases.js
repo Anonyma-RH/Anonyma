@@ -614,7 +614,7 @@ export const UPDATES = [
       "Search your bookmarks and jump straight back",
       "Yours alone, even in shared Collab chats",
     ],
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

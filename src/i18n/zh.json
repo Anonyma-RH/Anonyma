@@ -3638,7 +3638,72 @@
     "Drawing the diagram…": "正在绘制图表……",
     "This diagram is too long to draw here.": "这张图表太长，无法在此绘制。",
     "Equation source": "公式源码",
-    "Diagram": "图表"
+    "Diagram": "图表",
+    "Injection Shield": "注入防护",
+    "A document can't hijack your AI.": "文档无法劫持你的 AI。",
+    "Flags hidden instructions and invisible characters in files and pastes": "标记文件和粘贴内容中的隐藏指令与不可见字符",
+    "Sends attached files as data, not instructions": "把附加文件作为数据发送，而不是指令",
+    "Holds remote images in replies until you load them": "回复中的远程图片须经你确认才会加载",
+    "Shield": "注入防护",
+    "nothing found": "未发现问题",
+    "Sent as data": "作为数据发送",
+    "These files were sent with a note that their contents are data, not instructions.": "这些文件发送时附有说明：其内容是数据，而不是指令。",
+    "Spelled out in invisible tag characters": "以不可见的标签字符拼写",
+    "Hidden in variation selectors": "藏在变体选择符中",
+    "Inside an HTML comment": "位于 HTML 注释中",
+    "Inside text hidden with CSS": "位于用 CSS 隐藏的文字中",
+    "Zero-width characters": "零宽字符",
+    "Text-direction controls": "文字方向控制符",
+    "Unicode tag characters": "Unicode 标签字符",
+    "Variation-selector runs": "连续的变体选择符",
+    "HTML comment": "HTML 注释",
+    "Hidden with CSS": "用 CSS 隐藏",
+    "Text too small to see": "小到看不见的文字",
+    "Text off the page": "页面之外的文字",
+    "Marked hidden in Word": "在 Word 中被标记为隐藏",
+    "White text": "白色文字",
+    "Hidden text": "隐藏文字",
+    "Invisible characters": "不可见字符",
+    "Pasted text": "粘贴的文字",
+    "Shield found nothing to flag.": "注入防护未发现需要标记的内容。",
+    "Shield catches known tricks. It can't guarantee a document is safe.": "注入防护能识别已知的手法，但无法保证文档绝对安全。",
+    "Checked in this browser. Nothing about it is sent or saved.": "检查在此浏览器中完成，相关信息不会被发送或保存。",
+    "Shield catches known tricks. It can't guarantee a document is safe. Checked in this browser. Nothing about it is sent or saved.": "注入防护能识别已知的手法，但无法保证文档绝对安全。检查在此浏览器中完成，相关信息不会被发送或保存。",
+    "Flagged, not removed: a phrase aimed at an AI rather than a reader.": "仅标记、不删除：这些语句是写给 AI 而不是读者的。",
+    "Tells the AI to ignore its instructions": "要求 AI 忽略它的指令",
+    "Tries to give the AI a new role or remove its limits": "试图给 AI 设定新角色或解除它的限制",
+    "Poses as a system prompt or asks for yours": "冒充系统提示词，或索要 AI 的系统提示词",
+    "Asks the AI to keep something from you": "要求 AI 对你隐瞒信息",
+    "Tries to send data to a web address": "试图把数据发送到某个网址",
+    "Speaks directly to an AI reading the document": "直接对阅读此文档的 AI 下指令",
+    "Characters you can't see but a model reads. Legitimate uses, such as emoji and right-to-left text, aren't counted.": "你看不见、但模型会读取的字符。表情符号、从右到左书写的文字等正常用法不计在内。",
+    "The tag characters spell:": "这些标签字符拼出的内容：",
+    "The hidden bytes read:": "隐藏字节的内容：",
+    "Text a reader wouldn't see on the page, but a model reads.": "读者在页面上看不到、但模型会读取的文字。",
+    "Contains an instruction-like phrase": "含有类似指令的语句",
+    "What's sent": "发送的内容",
+    "Remove invisible characters": "删除不可见字符",
+    "On by default. Turn off to send the file's text exactly as extracted.": "默认开启。关闭后将按提取结果原样发送文件文字。",
+    "None in this file.": "此文件中没有。",
+    "Remove flagged lines": "删除被标记的行",
+    "Takes out each line, or sentence in a long line, with a flagged phrase.": "删除每一处含有被标记语句的行；如果该行很长，只删除所在的句子。",
+    "Nothing flagged in this file.": "此文件中没有被标记的内容。",
+    "Send attached files as data": "将附加文件作为数据发送",
+    "Adds one line after your files telling the model their contents are data to read, not instructions to follow. Covers every file in this message.": "在文件之后附上一行说明，告诉模型这些内容是供阅读的数据，而不是要执行的指令。对此消息中的所有文件生效。",
+    "INJECTION SHIELD": "注入防护",
+    "Removed 1 invisible character from what you pasted.": "已从你粘贴的内容中删除 1 个不可见字符。",
+    "They spelled:": "它们拼出的内容：",
+    "1 instruction-like phrase in what you pasted. It's flagged, not removed.": "你粘贴的内容中有 1 条类似指令的语句。仅作标记，未删除。",
+    "Review": "查看",
+    "Send it as an attached file": "改为附加文件发送",
+    "Put them back": "恢复这些字符",
+    "Load?": "加载？",
+    "Shared chats never load remote images.": "分享的会话从不加载远程图片。",
+    "Injection Shield.": "注入防护。",
+    "Checks attached files and long pastes for hidden instructions and invisible characters, sends files as data, and holds remote images in replies until you load them. Shield catches known tricks. It can't guarantee a document is safe. It runs in this browser; nothing about a finding is sent.": "检查附加文件和长段粘贴内容中的隐藏指令与不可见字符，把文件作为数据发送，并让回复中的远程图片在你确认后才加载。注入防护能识别已知的手法，但无法保证文档绝对安全。它在此浏览器中运行，任何检查结果都不会被发送。",
+    "On in this browser": "在此浏览器中已开启",
+    "Off in this browser": "在此浏览器中已关闭",
+    "The pasted text has changed since, so Shield left it as it is.": "粘贴的文字之后已被修改，注入防护没有改动它。"
   },
   "patterns": [
     {
@@ -5756,6 +5821,66 @@
     {
       "en": "{0}: {1} requests/min, file uploads {2} requests/min",
       "zh": "{0}：每分钟 {1} 个请求，文件上传每分钟 {2} 个请求"
+    },
+    {
+      "en": "{0} hidden instruction",
+      "zh": "{0} 条隐藏指令"
+    },
+    {
+      "en": "{0} hidden instructions",
+      "zh": "{0} 条隐藏指令"
+    },
+    {
+      "en": "{0} invisible character",
+      "zh": "{0} 个不可见字符"
+    },
+    {
+      "en": "{0} invisible characters",
+      "zh": "{0} 个不可见字符"
+    },
+    {
+      "en": "{0} hidden passage",
+      "zh": "{0} 段隐藏文字"
+    },
+    {
+      "en": "{0} hidden passages",
+      "zh": "{0} 段隐藏文字"
+    },
+    {
+      "en": "Hidden instructions ({0})",
+      "zh": "隐藏指令（{0}）"
+    },
+    {
+      "en": "Invisible characters ({0})",
+      "zh": "不可见字符（{0}）"
+    },
+    {
+      "en": "Hidden text ({0})",
+      "zh": "隐藏文字（{0}）"
+    },
+    {
+      "en": "And {0} more.",
+      "zh": "还有 {0} 条。"
+    },
+    {
+      "en": "Page {0}",
+      "zh": "第 {0} 页"
+    },
+    {
+      "en": "Removed {0} invisible characters from what you pasted.",
+      "zh": "已从你粘贴的内容中删除 {0} 个不可见字符。"
+    },
+    {
+      "en": "{0} instruction-like phrases in what you pasted. They're flagged, not removed.",
+      "zh": "你粘贴的内容中有 {0} 条类似指令的语句。仅作标记，未删除。"
+    },
+    {
+      "en": "Image from {0}.",
+      "zh": "图片来自 {0}。"
+    },
+    {
+      "en": "Its address carries {0} characters of data. Loading it sends them to {1}.",
+      "zh": "其地址携带 {0} 个字符的数据。加载后，这些数据会发送到 {1}。"
     }
   ]
 }

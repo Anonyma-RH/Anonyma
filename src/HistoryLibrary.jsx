@@ -5,6 +5,7 @@ import { api, isReleased, messageFromServer } from "./lib.js";
 import { Icon, Notice } from "./ui.jsx";
 import { ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import BookmarksPanel from "./Bookmarks.jsx";
+import { shieldMarkdown, useShieldLive } from "./Shield.jsx";
 import "./history-library.css";
 
 export default function HistoryLibrary({
@@ -29,6 +30,8 @@ export default function HistoryLibrary({
   bookmarks = false,
   models = [],
 }) {
+  // Injection Shield: remote images in a saved result wait for the user.
+  const shieldParts = useShieldLive(config) ? shieldMarkdown() : undefined;
   const [tab, setTab] = useState("media"),
     [filter, setFilter] = useState("all"),
     [query, setQuery] = useState(""),
@@ -276,13 +279,13 @@ export default function HistoryLibrary({
               <strong>
                 {m.role === "user" ? "You" : m.model || "Assistant"}
               </strong>
-              <ReplyMarkdown rich={m.role !== "user"} remarkPlugins={[remarkGfm]}>
+              <ReplyMarkdown rich={m.role !== "user"} remarkPlugins={[remarkGfm]} components={shieldParts}>
                 {m.content}
               </ReplyMarkdown>
               {m.reasoning && (
                 <details>
                   <summary>Saved reasoning</summary>
-                  <ReplyMarkdown rich={false} remarkPlugins={[remarkGfm]}>
+                  <ReplyMarkdown rich={false} remarkPlugins={[remarkGfm]} components={shieldParts}>
                     {m.reasoning}
                   </ReplyMarkdown>
                 </details>

@@ -19,6 +19,7 @@ import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
 import { RetentionSelect } from "./Ephemeral.jsx";
 import { LanguageSettings } from "./LanguageSwitch.jsx";
+import { ShieldSettings } from "./Shield.jsx";
 import {
   api,
   readStore,
@@ -967,6 +968,7 @@ export default function Account() {
                 onError={setError}
               />
               <LanguageSettings config={config} />
+              <ShieldSettings config={config} />
               <section>
                 <div>
                   <h2>Active sessions.</h2>

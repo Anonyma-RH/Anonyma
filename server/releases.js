@@ -719,6 +719,20 @@ export const UPDATES = [
     // source out once this is released (routes/bookmarks.js).
     released: false,
   },
+  {
+    id: "shield",
+    title: "Injection Shield",
+    tagline: "A document can't hijack your AI.",
+    points: [
+      "Flags hidden instructions and invisible characters in files and pastes",
+      "Sends attached files as data, not instructions",
+      "Holds remote images in replies until you load them",
+    ],
+    // Browser only: every check runs in the page (src/shield.js) and nothing
+    // about a finding reaches the server, so there's no route to gate in
+    // featuresFor. The data notice rides inside the message as text.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

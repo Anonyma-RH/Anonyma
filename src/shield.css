@@ -1,0 +1,471 @@
+/* Injection Shield: the Shield line under an attachment, its findings
+   panel, the paste notice, and the held-image placeholder in replies. Flat
+   cobalt and white with the capability-icon tile (a cobalt square with the
+   brand-yellow shield), the workspace's 2px corners and hairlines, and the
+   existing warn brown for anything that needs a second look. */
+.document-chip-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.document-chip-main details {
+  flex: none;
+}
+.shield-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  background: #0135df;
+  color: #ffb21c;
+}
+.shield-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  align-self: flex-start;
+  gap: 4px 7px;
+  max-width: calc(100% - 20px);
+  margin: 0 10px 8px;
+  padding: 3px 8px 3px 3px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: left;
+  color: #0135df;
+  background: #edf2ff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.shield-chip:hover {
+  border-color: #0135df;
+}
+.shield-chip:focus-visible,
+.shield-button:focus-visible,
+.shield-image-load:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: 2px;
+}
+.shield-chip-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.shield-chip-text {
+  color: #3e5070;
+}
+.shield-chip.found {
+  background: #fff;
+  border-color: #0135df;
+}
+.shield-chip.found .shield-chip-text {
+  color: #9c3d2a;
+  font-weight: 600;
+}
+.shield-chip-data,
+.shield-data-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 5px;
+  font-size: 10px;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0135df;
+  background: #fff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+}
+.shield-data-tag {
+  align-self: flex-start;
+  background: #edf2ff;
+}
+
+/* The panel (inside .modal). */
+.shield-panel {
+  color: #142343;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.shield-panel p {
+  margin: 0;
+}
+.shield-panel-name {
+  font-weight: 600;
+  color: #061b69;
+  overflow-wrap: anywhere;
+}
+.shield-panel-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 6px !important;
+  font-size: 15px;
+  font-weight: 600;
+}
+.shield-panel-summary .shield-tile {
+  width: 28px;
+  height: 28px;
+}
+.shield-panel-note,
+.shield-section-note {
+  font-size: 12px;
+  color: #68748a;
+}
+.shield-section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e3e8f0;
+}
+.shield-section h3 {
+  margin: 0 0 2px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0135df;
+}
+.shield-section ul {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.shield-section li {
+  padding: 8px 0;
+  border-top: 1px dashed #e3e8f0;
+}
+.shield-section li:first-child {
+  border-top: 0;
+}
+.shield-section li > b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.shield-section li > small,
+.shield-spelled > small {
+  display: block;
+  font-size: 11px;
+  color: #68748a;
+}
+.shield-section small.warn {
+  color: #9c3d2a;
+  font-weight: 600;
+}
+.shield-excerpt {
+  margin-top: 6px !important;
+  padding: 7px 9px;
+  max-height: 140px;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #3e5070;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+}
+.shield-excerpt mark {
+  color: #142343;
+  background: #fff6e8;
+  border-bottom: 2px solid #ffb21c;
+}
+.shield-invisible {
+  display: inline-block;
+  margin: 0 1px;
+  padding: 0 3px;
+  font-size: 10px;
+  line-height: 15px;
+  color: #fff;
+  background: #0135df;
+  border-radius: 2px;
+}
+.shield-counts {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0 0;
+}
+.shield-counts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 9px;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+}
+.shield-counts dt {
+  font-size: 12px;
+}
+.shield-counts dd {
+  margin: 0;
+  font-weight: 700;
+  color: #0135df;
+}
+.shield-spelled {
+  margin-top: 10px;
+}
+.shield-choices {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 14px 0 0;
+  border: 0;
+  border-top: 1px solid #e3e8f0;
+}
+.shield-choices legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 4px;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0135df;
+}
+.modal .shield-choices label {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.modal .shield-choices input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #0135df;
+}
+.shield-choices label:has(input:disabled) {
+  color: #8a96ab;
+  cursor: default;
+}
+.shield-choices small {
+  display: block;
+  font-size: 12px;
+  color: #68748a;
+}
+.shield-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+.shield-button {
+  appearance: none;
+  min-height: 0;
+  padding: 7px 14px;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: none;
+  color: #0135df;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+}
+.shield-button:hover {
+  background: #edf2ff;
+}
+.shield-button.solid {
+  background: #0135df;
+  color: #fff;
+}
+.shield-button.solid:hover {
+  background: #0029b8;
+}
+.shield-button.quiet {
+  border-color: #e3e8f0;
+  color: #68748a;
+}
+
+/* The paste notice, above the composer like Seed Guard's. */
+.shield-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+  color: #142343;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+.shield-notice > .shield-tile {
+  width: 32px;
+  height: 32px;
+}
+.shield-notice-body {
+  flex: 1;
+  min-width: 0;
+}
+.shield-notice p {
+  margin: 0;
+}
+.shield-notice .shield-notice-eyebrow {
+  margin-bottom: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #0135df;
+}
+.shield-notice .shield-notice-message {
+  font-weight: 600;
+}
+.shield-notice .shield-notice-spelled {
+  margin-top: 4px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.shield-notice-spelled q {
+  margin-left: 5px;
+  color: #9c3d2a;
+}
+.shield-notice .shield-notice-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #68748a;
+}
+.shield-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* A remote image in a reply, held until the user loads it. */
+.shield-image {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+  margin: 6px 0;
+  padding: 10px 12px;
+  vertical-align: top;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #142343;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+}
+.shield-image.carries-data {
+  border-left-color: #ffb21c;
+}
+.shield-image-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.shield-image-head svg {
+  color: #0135df;
+}
+.shield-image-load {
+  appearance: none;
+  padding: 2px 10px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0135df;
+  background: #fff;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.shield-image-load:hover {
+  background: #edf2ff;
+}
+.shield-image code.shield-image-url {
+  display: block;
+  padding: 5px 7px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #3e5070;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+}
+.shield-image-flag {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9c3d2a;
+}
+.shield-image-flag svg {
+  flex: none;
+  margin-top: 2px;
+}
+.shield-image-note {
+  font-size: 11px;
+  color: #68748a;
+}
+.shield-host {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  vertical-align: 1px;
+  color: #0135df;
+  background: #edf2ff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+}
+.shield-host.carries-data {
+  color: #9c3d2a;
+  background: #fff3ee;
+  border-color: #eecfc1;
+}
+
+/* Account → Settings. */
+.shield-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.shield-switch input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #0135df;
+}
+
+@media (max-width: 700px) {
+  .shield-notice {
+    gap: 10px;
+    padding: 12px;
+  }
+  .shield-notice > .shield-tile {
+    width: 26px;
+    height: 26px;
+  }
+  .shield-image {
+    display: flex;
+  }
+}

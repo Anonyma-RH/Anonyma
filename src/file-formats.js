@@ -240,7 +240,72 @@ const contents = (node) => {
   }
   return pieces.join("");
 };
-export async function extractOffice(input, extension, inflate) {
+// DOCX text a reader wouldn't see: runs marked hidden (w:vanish), set under
+// 2 pt, or white on an unshaded page outside tables. Only the browser asks
+// for it (Injection Shield, src/shield.js); the text itself is unchanged.
+const localName = (node) => node.name.split(":").at(-1);
+const childNamed = (node, name) =>
+  node?.children?.find((n) => typeof n !== "string" && localName(n) === name) || null;
+function attrNamed(node, name) {
+  for (const key in node?.attrs || {}) if (key.split(":").at(-1) === name) return node.attrs[key];
+  return undefined;
+}
+const shaded = (shd) => {
+  const fill = String(attrNamed(shd, "fill") || "auto").toLowerCase();
+  return !!shd && !["auto", "ffffff", "none"].includes(fill);
+};
+export function docxHidden(tree) {
+  const out = [];
+  let chars = 0,
+    last = null;
+  const background = childNamed(childNamed(tree, "document") || tree, "background");
+  const darkPage = !!background && !/^(?:ffffff|auto)?$/i.test(attrNamed(background, "color") || "");
+  const walk = (node, inTable, shadedParagraph) => {
+    if (typeof node === "string" || out.length >= 50 || chars > 20000) return;
+    const local = localName(node);
+    if (local === "tbl") inTable = true;
+    if (local === "p") shadedParagraph = shaded(childNamed(childNamed(node, "pPr"), "shd"));
+    if (local === "r") {
+      const pr = childNamed(node, "rPr");
+      let why = null;
+      if (pr) {
+        const vanish = childNamed(pr, "vanish"),
+          size = childNamed(pr, "sz"),
+          color = childNamed(pr, "color");
+        const off = /^(?:0|false|off)$/i.test(attrNamed(vanish, "val") || "");
+        if (vanish && !off) why = "vanish";
+        else if (size && Number(attrNamed(size, "val")) < 4) why = "tiny";
+        else if (
+          color &&
+          /^(?:ffffff|fffffe|fefefe)$/i.test(attrNamed(color, "val") || "") &&
+          !inTable &&
+          !darkPage &&
+          !shadedParagraph &&
+          !shaded(childNamed(pr, "shd")) &&
+          !childNamed(pr, "highlight")
+        )
+          why = "white";
+      }
+      const text = all(node, "t").map(contents).join("");
+      if (!text.trim()) return;
+      if (!why) {
+        last = null;
+        return;
+      }
+      chars += text.length;
+      if (last && last.why === why) last.text += text;
+      else out.push((last = { why, text }));
+      return;
+    }
+    for (const child of node.children) walk(child, inTable, shadedParagraph);
+    if (local === "p" && last) last.text += "\n";
+  };
+  walk(tree, false, false);
+  return out
+    .map((h) => ({ ...h, text: h.text.replace(/\s+/g, " ").trim().slice(0, 2000) }))
+    .filter((h) => h.text);
+}
+export async function extractOffice(input, extension, inflate, { hidden = false } = {}) {
   if (!OFFICE_EXTENSIONS.includes(extension))
     bad(
       "Choose DOCX, XLSX or PPTX. Legacy and macro-enabled Office files are not supported.",
@@ -285,7 +350,12 @@ export async function extractOffice(input, extension, inflate) {
       }
     }
   };
-  if (extension === "docx") paragraphs(await read("word/document.xml"));
+  let hiddenText = [];
+  if (extension === "docx") {
+    const tree = await read("word/document.xml");
+    paragraphs(tree);
+    if (hidden) hiddenText = docxHidden(tree);
+  }
   if (extension === "pptx") {
     const names = [...entries.keys()]
       .filter((n) => /^ppt\/slides\/slide\d+\.xml$/.test(n))
@@ -341,6 +411,7 @@ export async function extractOffice(input, extension, inflate) {
     truncated: overflow || size > EXTRACTED_LIMIT,
     warning:
       "Text only. Layout, comments, embedded objects and formula calculation are not included.",
+    ...(hidden ? { hidden: hiddenText } : {}),
   };
 }
 export async function browserInflate(bytes, expected) {

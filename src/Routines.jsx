@@ -549,7 +549,9 @@ export function RoutineCard({ r, modelName, busy, onEdit, onToggle, onDelete, on
   );
 }
 
-export function RunCard({ run, modelName, onDelete, busy }) {
+// `markdown`: the answer's markdown components. With Injection Shield on
+// (src/Shield.jsx) a remote image waits for the user and links show their host.
+export function RunCard({ run, modelName, onDelete, busy, markdown }) {
   const skipped = run.skipped || 0;
   return (
     <article className={"run-card " + run.status}>
@@ -577,7 +579,9 @@ export function RunCard({ run, modelName, onDelete, busy }) {
       {run.status === "done" ? (
         <>
           <div className="run-answer" data-i18n="off">
-            <ReplyMarkdown remarkPlugins={[remarkGfm]}>{run.answer || ""}</ReplyMarkdown>
+            <ReplyMarkdown remarkPlugins={[remarkGfm]} components={markdown}>
+              {run.answer || ""}
+            </ReplyMarkdown>
           </div>
           {run.finish_reason === "length" && (
             <p className="run-note">
@@ -621,7 +625,7 @@ export function RunCard({ run, modelName, onDelete, busy }) {
   );
 }
 
-export default function Routines({ demo, user, models, config, refresh }) {
+export default function Routines({ demo, user, models, config, refresh, markdown }) {
   const [tab, setTab] = useState("inbox"),
     [routines, setRoutines] = useState(() => (demo ? demoState().routines : [])),
     [runs, setRuns] = useState(() => (demo ? demoState().runs : [])),
@@ -904,6 +908,7 @@ export default function Routines({ demo, user, models, config, refresh }) {
                   key={run.id}
                   run={run}
                   modelName={nameOf(run.model)}
+                  markdown={markdown}
                   busy={busy}
                   onDelete={() => removeRun(run)}
                 />

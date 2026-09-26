@@ -5,6 +5,8 @@ import ReusableUploads from "./ReusableUploads.jsx";
 import { extractOffice, browserInflate, textBytes } from "./file-formats.js";
 import { unveil } from "./veil.js";
 import { CleanNote } from "./CleanUploads.jsx";
+import { ShieldChip, SentAsDataTag } from "./Shield.jsx";
+import { pdfHiddenText } from "./shield.js";
 import {
   MAX_DOCUMENTS,
   MAX_FILE_BYTES,
@@ -28,7 +30,7 @@ async function loadPdfjs() {
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl.default;
   return pdfjs;
 }
-async function extractPdfText(file, withDetails = false) {
+async function extractPdfText(file, withDetails = false, withHidden = false) {
   const pdfjs = await loadPdfjs();
   const data = await file.arrayBuffer();
   const doc = await pdfjs.getDocument({ data }).promise;
@@ -43,10 +45,13 @@ async function extractPdfText(file, withDetails = false) {
       hidden = null;
     }
   }
-  const pages = [];
+  const pages = [],
+    hiddenText = [];
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
+    // Injection Shield: text too small to see or off the page.
+    if (withHidden) hiddenText.push(...pdfHiddenText(content.items, page.view, i));
     pages.push(
       content.items
         .map((item) => item.str || "")
@@ -54,14 +59,16 @@ async function extractPdfText(file, withDetails = false) {
         .trim(),
     );
   }
-  return { text: pages.join("\n\n").trim(), pages: doc.numPages, hidden };
+  return { text: pages.join("\n\n").trim(), pages: doc.numPages, hidden, hiddenText };
 }
 
 // One document, attached in the composer or recovered from a saved message.
 // onRemove is only passed for live attachments; history chips are read-only.
 // The file name and its text are user content, so they carry
 // data-i18n="off"; the size, count and notes around them are UI text.
-function DocumentChip({ doc, onRemove }) {
+// With Injection Shield on, `shield` is { result, asData, onOpen }: the
+// chip's Shield line, which opens its findings.
+function DocumentChip({ doc, onRemove, shield = null }) {
   const meta = [
     doc.pages
       ? `${doc.pages} page${doc.pages === 1 ? "" : "s"}`
@@ -74,43 +81,53 @@ function DocumentChip({ doc, onRemove }) {
     .filter(Boolean)
     .join(" · ");
   const hidden = doc.hidden?.length ? { status: "cleaned", details: doc.hidden } : null;
+  const details = (
+    <details>
+      <summary className={hidden ? "has-clean-note" : undefined}>
+        <Icon name="file" size={14} />
+        <span className="document-chip-name" data-i18n="off">
+          {doc.name}
+        </span>
+        <span className="document-chip-meta">{meta}</span>
+        {doc.warning && (
+          <Icon
+            name="warning"
+            size={13}
+            className="document-chip-warn-icon"
+          />
+        )}
+        {hidden && <CleanNote result={hidden} notSent />}
+      </summary>
+      {doc.warning && <p className="document-chip-note">{doc.warning}</p>}
+      {doc.truncated && !doc.warning && (
+        <p className="document-chip-note">
+          Only part of this file was sent — it was trimmed to fit the
+          context budget.
+        </p>
+      )}
+      {doc.text ? (
+        <pre className="document-chip-preview" data-i18n="off">
+          {doc.text}
+        </pre>
+      ) : (
+        !doc.warning && (
+          <p className="document-chip-note">
+            No text was extracted from this file.
+          </p>
+        )
+      )}
+    </details>
+  );
   return (
     <div className="document-chip">
-      <details>
-        <summary className={hidden ? "has-clean-note" : undefined}>
-          <Icon name="file" size={14} />
-          <span className="document-chip-name" data-i18n="off">
-            {doc.name}
-          </span>
-          <span className="document-chip-meta">{meta}</span>
-          {doc.warning && (
-            <Icon
-              name="warning"
-              size={13}
-              className="document-chip-warn-icon"
-            />
-          )}
-          {hidden && <CleanNote result={hidden} notSent />}
-        </summary>
-        {doc.warning && <p className="document-chip-note">{doc.warning}</p>}
-        {doc.truncated && !doc.warning && (
-          <p className="document-chip-note">
-            Only part of this file was sent — it was trimmed to fit the
-            context budget.
-          </p>
-        )}
-        {doc.text ? (
-          <pre className="document-chip-preview" data-i18n="off">
-            {doc.text}
-          </pre>
-        ) : (
-          !doc.warning && (
-            <p className="document-chip-note">
-              No text was extracted from this file.
-            </p>
-          )
-        )}
-      </details>
+      {shield ? (
+        <div className="document-chip-main">
+          {details}
+          <ShieldChip result={shield.result} asData={shield.asData} onOpen={shield.onOpen} />
+        </div>
+      ) : (
+        details
+      )}
       {onRemove && (
         <button
           type="button"
@@ -139,6 +156,8 @@ export default function DocumentAttach({
   onRefresh,
   openRequest = 0,
   seedGuard = false,
+  // Injection Shield: also report the text a PDF or DOCX hides.
+  shieldHidden = false,
 }) {
   const [busy, setBusy] = useState(false);
   async function addFiles(e) {
@@ -170,21 +189,24 @@ export default function DocumentAttach({
         let text = "",
           pages = null,
           warning = "",
-          hidden = null;
+          hidden = null,
+          hiddenText = [];
         try {
           if (kind === "pdf") {
-            const r = await extractPdfText(file, cleanEnabled);
+            const r = await extractPdfText(file, cleanEnabled, shieldHidden);
             text = r.text;
             pages = r.pages;
             hidden = r.hidden;
+            hiddenText = r.hiddenText;
             if (!text)
               warning =
                 "No extractable text found — this PDF may be a scanned image.";
           } else if (kind === "office") {
             const bytes = await file.arrayBuffer();
             const extension = file.name.split(".").at(-1).toLowerCase();
-            const result = await extractOffice(bytes, extension, browserInflate);
+            const result = await extractOffice(bytes, extension, browserInflate, { hidden: shieldHidden });
             text = result.text;
+            hiddenText = result.hidden || [];
             warning = result.warning + (result.truncated ? " Extracted text was trimmed." : "");
             if (cleanEnabled) {
               // Only the text is sent; the properties stay on this device.
@@ -213,6 +235,7 @@ export default function DocumentAttach({
           chars: text.length,
           warning,
           hidden,
+          ...(hiddenText.length ? { hiddenText } : {}),
         });
       }
       setDocuments((prev) => [...prev, ...added]);
@@ -242,10 +265,12 @@ export default function DocumentAttach({
 }
 
 // Chips for documents attached to the message being composed, plus a notice
-// once their combined size would be trimmed before sending.
-export function DocumentChips({ documents, setDocuments, prompt = "" }) {
+// once their combined size would be trimmed before sending. With Injection
+// Shield on, `documents` are the documents as they'll be sent and `shield`
+// is { results (Map of id -> scan), asData, onOpen(id) }.
+export function DocumentChips({ documents, setDocuments, prompt = "", shield = null }) {
   if (!documents.length) return null;
-  const budget = fitDocuments(prompt, documents);
+  const budget = fitDocuments(prompt, documents, undefined, shield?.asData ? { asData: true } : {});
   return (
     <div className="document-list">
       {documents.map((doc, i) => (
@@ -254,6 +279,15 @@ export function DocumentChips({ documents, setDocuments, prompt = "" }) {
           doc={doc}
           onRemove={() =>
             setDocuments((prev) => prev.filter((_, j) => j !== i))
+          }
+          shield={
+            shield?.results?.get(doc.id)
+              ? {
+                  result: shield.results.get(doc.id),
+                  asData: shield.asData,
+                  onOpen: () => shield.onOpen(doc.id),
+                }
+              : null
           }
         />
       ))}
@@ -271,7 +305,8 @@ export function DocumentChips({ documents, setDocuments, prompt = "" }) {
 // (see documents.js parseDocumentBlocks), used in conversation history.
 // With Veil on, the saved text holds [TAG_n] placeholders; veilMap (this
 // browser's tag -> value map) restores the real values on screen only.
-export function MessageDocuments({ documents, veilMap }) {
+// `asData`: they went with Injection Shield's "treat as data" notice.
+export function MessageDocuments({ documents, veilMap, asData = false }) {
   if (!documents?.length) return null;
   const shown = veilMap
     ? documents.map((doc) => {
@@ -284,6 +319,7 @@ export function MessageDocuments({ documents, veilMap }) {
       {shown.map((doc, i) => (
         <DocumentChip key={i} doc={doc} />
       ))}
+      {asData && <SentAsDataTag />}
     </div>
   );
 }

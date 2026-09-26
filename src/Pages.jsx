@@ -858,6 +858,7 @@ const featureIcons = {
   findinchat: "search",
   earlymodels: "models",
   diagrams: "sigma",
+  shield: "shield",
 };
 const launch = {
   id: "mvp",

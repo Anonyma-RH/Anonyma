@@ -16,6 +16,7 @@ import {
 import { createVeilState, veil, unveil, saveVeilState } from "./veil.js";
 import { VeilToggle, veilRemarkPlugin } from "./Veil.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
+import { shieldMarkdown, useShieldLive } from "./Shield.jsx";
 import "./task-tools.css";
 
 export default function TaskTools({
@@ -44,6 +45,8 @@ export default function TaskTools({
     !demo && seedGuardLive(config) && tab !== "calculator",
     input,
   );
+  // Injection Shield: remote images in results wait for the user.
+  const shieldParts = useShieldLive(config) ? shieldMarkdown() : undefined;
   const controller = useRef(null),
     quoteController = useRef(null),
     lock = useRef(false),
@@ -419,6 +422,7 @@ export default function TaskTools({
                       remarkGfm,
                       [veilRemarkPlugin, { map: r.map }],
                     ]}
+                    components={shieldParts}
                   >
                     {r.text || "Waiting for the model…"}
                   </ReplyMarkdown>

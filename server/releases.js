@@ -632,7 +632,7 @@ export const UPDATES = [
     // (SEALED_BILLING=reconcile with SEALED_RECONCILE=true), and the private/*
     // rates. Until SEALED_BILLING is set the routes refuse and the app hides
     // the toggle, even with this flag on.
-    released: false,
+    released: true,
   },
   {
     id: "paynyma",

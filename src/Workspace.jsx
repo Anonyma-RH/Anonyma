@@ -104,7 +104,7 @@ import { RedactChipTools, RedactEditor, redactReleased } from "./Redact.jsx";
 import { IMAGE_TYPES, IMAGE_LIMIT, HEIC_LIMIT, isHeicFile, withKeep } from "./clean-notes.js";
 import { parseDocumentBlocks, MAX_DOCUMENTS } from "./documents.js";
 import { useShieldLive, shieldReleased, ShieldPanel, ShieldPasteNotice, shieldMarkdown } from "./Shield.jsx";
-import { scanText, scanDocument, shieldDocument, cleanText, LARGE_PASTE } from "./shield.js";
+import { scanText, scanDocument, shieldDocument, cleanText, LARGE_PASTE, pdfHiddenText } from "./shield.js";
 import Symposium from "./Symposium.jsx";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
 import { MemoryPanel, MemoryUsedNote, useMemory } from "./Memory.jsx";
@@ -3470,7 +3470,7 @@ export default function Workspace() {
                       setDocuments={setDocuments}
                       disabled={busy}
                       sealed={sealedOn}
-                      shieldHidden={shieldOn}
+                      pdfHidden={shieldOn ? pdfHiddenText : null}
                       onError={setError}
                     />
                   )}

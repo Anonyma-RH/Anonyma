@@ -686,7 +686,9 @@ test("Seed Guard skips a read page's text, but still checks what the user typed"
   assert.equal(stripLinkBlocks("before " + buildDocumentBlock(page) + " after"), "before  after");
   // The browser skips it too.
   const ws = readFileSync(new URL("../src/Workspace.jsx", import.meta.url), "utf8");
-  assert.match(ws, /documents\.filter\(\(d\) => d\.source !== "link"\)\.map\(\(d\) => d\.text \|\| ""\)/);
+  // With Injection Shield merged, the scan reads the documents as they'll be
+  // sent (sentDocuments); a read page is left out either way.
+  assert.match(ws, /(?:sentDocuments|documents)\.filter\(\(d\) => d\.source !== "link"\)\.map\(\(d\) => d\.text \|\| ""\)/);
 });
 
 // ---- The chips and the card ----

@@ -3,7 +3,6 @@ import { Icon } from "./ui.jsx";
 import { api, uid } from "./lib.js";
 import { MAX_DOCUMENTS } from "./documents.js";
 import { pdfText } from "./pdf-text.js";
-import { pdfHiddenText } from "./shield.js";
 import {
   capWords,
   countWords,
@@ -31,8 +30,9 @@ function fromBase64(b64) {
 
 // Turns the server's answer into an attached document. A PDF comes back as
 // bytes and is read here, with the same PDF reader Documents uses (and, with
-// Injection Shield on, the same check for text too small to see).
-async function toDocument(link, r, shieldHidden = false) {
+// Injection Shield on, its check for text too small to see: `pdfHidden` is
+// shield.js's pdfHiddenText, passed in by the workspace).
+async function toDocument(link, r, pdfHidden = null) {
   let text = r.text || "",
     words = r.words || 0,
     truncated = !!r.truncated,
@@ -40,7 +40,7 @@ async function toDocument(link, r, shieldHidden = false) {
     hiddenText = [];
   if (r.kind === "pdf") {
     const bytes = fromBase64(r.pdf || "");
-    const read = await pdfText(bytes, false, shieldHidden ? pdfHiddenText : null);
+    const read = await pdfText(bytes, false, pdfHidden);
     hiddenText = read.hiddenText || [];
     const capped = capWords(read.text);
     ({ text, words, truncated } = capped);
@@ -73,7 +73,7 @@ export function LinkReaderChips({
   setDocuments,
   disabled = false,
   sealed = false,
-  shieldHidden = false,
+  pdfHidden = null,
   onError,
 }) {
   const [reading, setReading] = useState([]);
@@ -95,7 +95,7 @@ export function LinkReaderChips({
     setReading((r) => [...r, link]);
     try {
       const r = await api("/api/read", { method: "POST", body: { url: link } });
-      const doc = await toDocument(link, r, shieldHidden);
+      const doc = await toDocument(link, r, pdfHidden);
       if (alive.current)
         setDocuments((prev) =>
           prev.some((d) => d.source === "link" && d.url === doc.url) || prev.length >= MAX_DOCUMENTS

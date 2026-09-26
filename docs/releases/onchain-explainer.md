@@ -31,10 +31,10 @@ the explanation bills as a normal message.
 A 22-second launch film recorded on the release build, on a local demo account.
 It explains a real NYMA buy on Robinhood Chain: 0.025 ETH for 317,853.79 NYMA
 through the Uniswap v4 PoolManager, in block 73,094,428. Claude Haiku 4.5 wrote
-the explanation for 2.8538 credits; the lookup itself was free.
+the explanation for 2.358 credits; the lookup itself was free.
 
 - The facts card matched an independent read of the chain.
-- The recording browser made 88 requests, all to the ANONYMA server, and none
+- The recording browser made 89 requests, all to the ANONYMA server, and none
   to any explorer or RPC host.
 - The buyer's full wallet address, which the model wrote out, is hidden in the
   film.

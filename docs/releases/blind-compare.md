@@ -25,10 +25,11 @@ it, and it's included in erase and export.
 
 A 23-second launch film recorded on the release build, on a local demo account.
 Claude Haiku 4.5 and GPT-5.4 Mini answered "Explain a zero-knowledge proof to a
-12-year-old in three sentences." The vote went to A, and the reveal showed:
+12-year-old in three sentences." The vote went to B, which kept to three
+sentences with no heading, and the reveal showed:
 
-- **A:** GPT-5.4 Mini, 0.331 credits, 1.3 s.
-- **B:** Claude Haiku 4.5, 0.597 credits, 2.5 s.
+- **A:** Claude Haiku 4.5, 0.518 credits, 1.6 s.
+- **B:** GPT-5.4 Mini, 0.359 credits, 1.4 s.
 
 Before the vote, neither model's name nor either reply's cost appeared anywhere
 in the page.

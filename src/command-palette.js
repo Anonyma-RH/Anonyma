@@ -368,6 +368,7 @@ export const MODE_LABELS = {
   library: "Your library",
   tools: "Research, Writing & Calculators",
   projects: "Projects",
+  sheets: "Sheets",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -383,6 +384,8 @@ const PLACES = [
   ["tools", "Research, Writing & Calculators", ["task tools", "research", "writing", "calculator"]],
   ["library", "Your library", ["library", "media", "saved images", "saved videos"]],
   ["projects", "Projects", ["project", "folders", "group chats", "pinned files"]],
+  // Local Sheets: only once released (modeReleased checks MODE_FEATURES).
+  ["sheets", "Sheets", ["spreadsheet", "csv", "tsv", "excel", "analyse", "analyze", "chart", "table", "data"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

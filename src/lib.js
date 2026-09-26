@@ -450,6 +450,7 @@ export const MODE_FEATURES = {
   collab: "collab",
   uncensored: "uncensored",
   symposium: "symposium",
+  sheets: "sheets",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

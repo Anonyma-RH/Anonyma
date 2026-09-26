@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fail, generationPrice } from "./core.js";
+import { sheetsTestReply } from "./sheets.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -95,7 +96,9 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       typeof last === "string"
         ? last
         : last?.find((p) => p.type === "text")?.text || "";
-    const answer = /code|function|javascript|python/i.test(text)
+    // Local Sheets' planner and explainer get a deterministic stand-in.
+    const sheets = sheetsTestReply(body.messages);
+    const answer = sheets !== null ? sheets : /code|function|javascript|python/i.test(text)
       ? "**Local test provider** — this is a deterministic integration fixture, not a live model.\n\n```javascript filename=hello.js\nexport function greet(name) {\n  return `Hello, ${name}!`;\n}\n```\n\nThe file is available in the code panel."
       : "**Local test provider**\n\nYou asked: " +
         text +

@@ -1,0 +1,420 @@
+/* Deep Research: the composer switch reuses .attachment-control/.web-toggle;
+   this file covers the panel above the composer, the live progress panel in
+   a reply and the sources under a finished report. Flat cobalt and white
+   with the brand yellow as the only accent, 2px corners and hairlines, like
+   Seed Guard and the Privacy Trail panel. */
+.app-shell .research-panel {
+  margin: 0 0 12px;
+  padding: 14px 16px 12px;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+  color: #142343;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+.app-shell .research-panel p {
+  margin: 0;
+}
+.app-shell .research-panel-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.app-shell .research-panel-head > div:not(.research-depth) {
+  flex: 1;
+  min-width: 0;
+}
+.app-shell .research-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: #0135df;
+  color: #ffb21c;
+}
+.app-shell .research-eyebrow {
+  margin: 0 0 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #0135df;
+}
+.app-shell .research-lede {
+  font-weight: 600;
+}
+.app-shell .research-depth {
+  display: inline-flex;
+  flex: none;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+}
+.app-shell .research-depth button {
+  display: grid;
+  gap: 1px;
+  min-width: 92px;
+  padding: 6px 12px;
+  background: #fff;
+  color: #0135df;
+  border: 0;
+  border-left: 1px solid #0135df;
+  border-radius: 0;
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.app-shell .research-depth button:first-child {
+  border-left: 0;
+}
+.app-shell .research-depth button span {
+  font-size: 11px;
+  color: #68748a;
+}
+.app-shell .research-depth button.on {
+  background: #0135df;
+  color: #fff;
+}
+.app-shell .research-depth button.on span {
+  color: #ffb21c;
+}
+.app-shell .research-depth button:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: -2px;
+}
+.app-shell .research-cost {
+  margin-top: 10px !important;
+  padding-top: 10px;
+  border-top: 1px solid #e3e8f0;
+  color: #24498b;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell .research-cost b {
+  color: #0135df;
+}
+.app-shell .research-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 10px !important;
+  padding: 8px 10px;
+  background: #fff6e8;
+  border: 1px solid #ffd9a0;
+  border-radius: 2px;
+  color: #8a4b00;
+  font-size: 12px;
+}
+.app-shell .research-block svg {
+  flex: none;
+  margin-top: 2px;
+}
+.app-shell .research-fine {
+  margin-top: 6px !important;
+  font-size: 11px;
+  color: #68748a;
+}
+
+/* The live progress panel inside a reply. */
+.app-shell .research-progress {
+  max-width: 620px;
+  padding: 14px 16px;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  border-top: 2px solid #0135df;
+  border-radius: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.app-shell .research-progress p {
+  margin: 0;
+}
+.app-shell .research-stages {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.app-shell .research-stages > li {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding: 0 0 12px 22px;
+  color: #68748a;
+}
+.app-shell .research-stages > li::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 14px;
+  bottom: 0;
+  width: 1px;
+  background: #d7e1ff;
+}
+.app-shell .research-stages > li:last-child {
+  padding-bottom: 0;
+}
+.app-shell .research-stages > li:last-child::before {
+  display: none;
+}
+.app-shell .research-stages > li > b {
+  font-weight: 600;
+}
+.app-shell .research-stages > li.active,
+.app-shell .research-stages > li.done {
+  color: #142343;
+}
+.app-shell .research-dot {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 11px;
+  height: 11px;
+  border: 1px solid #d7e1ff;
+  background: #fff;
+}
+.app-shell .research-stages > li.done .research-dot {
+  background: #0135df;
+  border-color: #0135df;
+}
+.app-shell .research-stages > li.active .research-dot {
+  background: #ffb21c;
+  border-color: #0135df;
+  animation: research-pulse 1.2s ease-in-out infinite;
+}
+@keyframes research-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .research-stages > li.active .research-dot {
+    animation: none;
+  }
+}
+.app-shell .research-searches {
+  flex: 1 1 100%;
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 1px solid #e3e8f0;
+  background: #fff;
+}
+.app-shell .research-searches li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border-top: 1px solid #e3e8f0;
+  font-size: 12px;
+  color: #142343;
+}
+.app-shell .research-searches li:first-child {
+  border-top: 0;
+}
+.app-shell .research-q {
+  min-width: 0;
+}
+.app-shell .research-state {
+  flex: none;
+  color: #68748a;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell .research-searches .search-done .research-state {
+  color: #0135df;
+}
+.app-shell .research-searches .search-searching .research-state {
+  color: #8a4b00;
+}
+.app-shell .research-searches .search-queued {
+  color: #68748a;
+}
+
+/* Under a finished report. */
+.app-shell .research-details {
+  margin: 12px 0 4px;
+  max-width: 720px;
+}
+.app-shell .research-details p {
+  margin: 0;
+}
+.app-shell .research-ended {
+  margin-bottom: 8px !important;
+  padding: 8px 10px;
+  background: #fff6e8;
+  border: 1px solid #ffd9a0;
+  border-radius: 2px;
+  color: #8a4b00;
+  font-size: 12px;
+}
+.app-shell .research-summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0135df;
+}
+.app-shell .research-summary svg {
+  flex: none;
+}
+.app-shell .research-sources {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  border-top: 1px solid #e3e8f0;
+}
+.app-shell .research-sources li {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid #e3e8f0;
+  font-size: 13px;
+}
+.app-shell .research-n {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 18px;
+  background: #edf2ff;
+  color: #0135df;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell .research-sources a {
+  color: #0135df;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-shell .research-sources a:hover {
+  text-decoration: underline;
+}
+.app-shell .research-host {
+  color: #68748a;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.app-shell .research-plan {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #142343;
+}
+.app-shell .research-plan summary {
+  cursor: pointer;
+  color: #0135df;
+  font-size: 12px;
+}
+.app-shell .research-plan ol {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+.app-shell .research-plan li {
+  margin: 0 0 5px;
+}
+.app-shell .research-plan li small {
+  display: block;
+  color: #68748a;
+  font-size: 11px;
+}
+
+@media (max-width: 640px) {
+  .app-shell .research-panel-head {
+    flex-wrap: wrap;
+  }
+  .app-shell .research-depth {
+    flex: 1 1 100%;
+  }
+  .app-shell .research-depth button {
+    flex: 1;
+  }
+  .app-shell .research-sources li {
+    grid-template-columns: 26px minmax(0, 1fr);
+  }
+  .app-shell .research-host {
+    display: none;
+  }
+  .app-shell .research-searches li {
+    flex-direction: column;
+    gap: 2px;
+  }
+  /* Once a chat is under way the panel is one row on a phone. */
+  .app-shell .research-panel.compact .research-tile,
+  .app-shell .research-panel.compact .research-only,
+  .app-shell .research-panel.compact .research-depth button span {
+    display: none;
+  }
+  .app-shell .research-panel.compact .research-panel-head {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+  .app-shell .research-panel.compact .research-depth {
+    flex: none;
+  }
+  .app-shell .research-panel.compact .research-depth button {
+    min-width: 0;
+    padding: 5px 14px;
+    white-space: nowrap;
+  }
+}
+
+/* The compact panel once a chat is under way: one row, then the cost. */
+.app-shell .research-panel.compact {
+  padding: 10px 14px 8px;
+}
+.app-shell .research-panel.compact .research-panel-head {
+  align-items: center;
+}
+.app-shell .research-panel.compact .research-eyebrow {
+  margin: 0;
+}
+.app-shell .research-panel.compact .research-cost {
+  margin-top: 8px !important;
+  padding-top: 8px;
+}
+
+/* A report's own headings, sized for a reply rather than a page. */
+.app-shell .research-report .markdown h1 {
+  margin: 2px 0 14px;
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: #142343;
+}
+.app-shell .research-report .markdown h2 {
+  margin: 22px 0 8px;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: #142343;
+}
+/* The report's key findings read as a list: square cobalt markers. */
+.app-shell .research-report .markdown > ul {
+  list-style: square;
+  padding-left: 20px;
+}
+.app-shell .research-report .markdown > ul > li {
+  margin: 6px 0;
+}
+.app-shell .research-report .markdown > ul > li::marker {
+  color: #0135df;
+}
+/* No typing caret after the live progress panel. */
+.app-shell .message.streaming .markdown > .research-progress::after {
+  display: none;
+}
+@media (max-width: 640px) {
+  .app-shell .research-report .markdown h1 {
+    font-size: 23px;
+  }
+}

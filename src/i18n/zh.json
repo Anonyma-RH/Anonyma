@@ -4013,7 +4013,63 @@
     "Copy reply B": "复制回复 B",
     "Blind Compare votes: the two models compared, your vote and its date, for Your rankings. Never the prompt or the replies, and nothing about a comparison before you vote. Reset them from Your rankings; Panic Wipe and closing your account delete them.": "盲测对比投票：被对比的两个模型、你的投票及其日期，用于“你的排行”。从不保存提示词或回复，你投票之前也不保存这次对比的任何信息。可在“你的排行”中重置；紧急清除和关闭账户会将其删除。",
     "The export also lists your Blind Compare votes: the two models, the outcome and the date.": "导出内容还会列出你的盲测对比投票：两个模型、结果和日期。",
-    "Your Blind Compare votes and rankings": "你的盲测对比投票和排行"
+    "Your Blind Compare votes and rankings": "你的盲测对比投票和排行",
+    "Deep Research": "深度研究",
+    "Ask a hard question. Get a sourced report.": "提出一个难题，得到一份附来源的报告。",
+    "Plans the question, runs 3 or 6 web searches, then writes a report": "先拆解问题，再进行 3 次或 6 次联网搜索，然后写成报告",
+    "Numbered citations that point only to pages the searches found": "编号引用只指向搜索实际找到的网页",
+    "See the most it can cost first; pay only for the steps that finish": "先看最高费用；只为完成的步骤付费",
+    "Deep research": "深度研究",
+    "Deep research: plans your question, searches the web and writes a sourced report": "深度研究：拆解你的问题、联网搜索，并写成附来源的报告",
+    "DEEP RESEARCH": "深度研究",
+    "Plans your question, searches the web, then writes a report with numbered sources.": "拆解你的问题并联网搜索，然后写成一份带编号来源的报告。",
+    "Research depth": "研究深度",
+    "Quick": "快速",
+    "Thorough": "深入",
+    "1 search": "1 次搜索",
+    "Type a question to see the most it can cost.": "输入问题，即可查看最高费用。",
+    "Only this question is sent, not earlier messages. You pay only for steps that finish, and Stop ends the rest.": "只发送这个问题，不发送之前的消息。你只为完成的步骤付费，点“停止”即可结束其余步骤。",
+    "Attachments aren't used by Deep research. They stay here for your next message.": "深度研究不使用附件。附件会保留在这里，供你下一条消息使用。",
+    "The most this research can cost. Each step is charged on its actual usage as it finishes; steps that don't finish cost nothing.": "这次研究的最高费用。每个步骤完成时按实际用量计费；未完成的步骤不收费。",
+    "Deep research turns your question into web searches, so it never sends this.": "深度研究会把你的问题变成联网搜索，所以绝不会发送这段内容。",
+    "Deep research isn't available in Sealed Mode: its web searches would leave the enclave.": "密封模式下无法使用深度研究：它的联网搜索会离开安全飞地。",
+    "Deep research is paid from your own balance. Turn off Team pays to run it.": "深度研究从你自己的余额付费。请关闭“团队付费”后再运行。",
+    "Veil masked details in this question, so Deep research won't run it: web searches with placeholders would find nothing, and the real details never leave this browser. Remove them, or turn Veil off for this question.": "Veil 遮盖了这个问题中的细节，所以深度研究不会运行：用占位符联网搜索找不到任何结果，而真实细节永远不会离开这个浏览器。请删除这些细节，或针对这个问题关闭 Veil。",
+    "DEEP RESEARCH · QUICK": "深度研究 · 快速",
+    "DEEP RESEARCH · THOROUGH": "深度研究 · 深入",
+    "Planning": "规划",
+    "Searching": "搜索",
+    "1 sub-question": "1 个子问题",
+    "Searching your question as it is": "按原问题直接搜索",
+    "Writing the report from what the searches found…": "正在根据搜索结果撰写报告……",
+    "Waiting": "等待中",
+    "Searching…": "搜索中……",
+    "Failed, not charged": "失败，未计费",
+    "Stopped, not charged": "已停止，未计费",
+    "Not run": "未运行",
+    "1 source": "1 个来源",
+    "Stopped before the report. Here is what the finished searches found; only finished steps were charged.": "在撰写报告前已停止。以下是已完成搜索的结果；只对完成的步骤计费。",
+    "The report couldn't be written. Here is what the searches found; the report step wasn't charged.": "报告未能写成。以下是搜索结果；报告步骤未计费。",
+    "How this was researched": "研究过程",
+    "Primary route": "主线路",
+    "Backup route": "备用线路",
+    "The plan wasn't usable, so your question was searched as it is.": "规划结果无法使用，所以按原问题直接搜索。",
+    "Citations point only to pages these searches returned. Check important facts at the source.": "引用只指向这些搜索返回的网页。重要事实请到来源处核实。",
+    "Enter a question to research.": "请输入要研究的问题。",
+    "Keep a research question under 2,000 characters.": "研究问题请控制在 2,000 个字符以内。",
+    "Choose Quick or Thorough research.": "请选择快速或深入研究。",
+    "Deep research runs in chat and code.": "深度研究可在对话和代码模式中使用。",
+    "Deep research is paid from your own balance, not a team treasury.": "深度研究从你自己的余额付费，不使用团队金库。",
+    "Deep research needs a text model.": "深度研究需要文本模型。",
+    "A deep research run is already going. Wait for it, or stop it first.": "已有一次深度研究正在进行。请等待它完成，或先将其停止。",
+    "None of the web searches finished, so no report was written. Only finished steps were charged.": "没有一次联网搜索完成，所以没有写成报告。只对完成的步骤计费。",
+    "The report couldn't be written, so here is what the searches found. The report step wasn't charged.": "报告未能写成，以下是搜索结果。报告步骤未计费。",
+    "Deep research stopped unexpectedly. Only finished steps were charged.": "深度研究意外停止。只对完成的步骤计费。",
+    "Deep research is unavailable.": "深度研究暂不可用。",
+    "Deep research stopped.": "深度研究已停止。",
+    "The connection ended before the report arrived.": "报告送达前连接已中断。",
+    "Only this question is sent, not earlier messages.": "只发送这个问题，不发送之前的消息。",
+    "cut short": "已截断"
   },
   "patterns": [
     {
@@ -6347,6 +6403,46 @@
     {
       "en": "Took {0}",
       "zh": "用时 {0}"
+    },
+    {
+      "en": "{0} searches",
+      "zh": "{0} 次搜索"
+    },
+    {
+      "en": "Up to ≈{0} credits",
+      "zh": "最多约 {0} 积分"
+    },
+    {
+      "en": "plan {0}, {1} searches up to {2} each (web fee included), report {3}",
+      "zh": "规划 {0}，{1} 次搜索每次最多 {2}（含联网费用），报告 {3}"
+    },
+    {
+      "en": "{0} sub-questions",
+      "zh": "{0} 个子问题"
+    },
+    {
+      "en": "Searching {0}/{1}",
+      "zh": "搜索中 {0}/{1}"
+    },
+    {
+      "en": "{0} sources",
+      "zh": "{0} 个来源"
+    },
+    {
+      "en": "Charged so far: {0} credits",
+      "zh": "目前已扣除：{0} 积分"
+    },
+    {
+      "en": "{0} of {1} searches",
+      "zh": "{1} 次搜索完成 {0} 次"
+    },
+    {
+      "en": "{0} of {1} search",
+      "zh": "{1} 次搜索完成 {0} 次"
+    },
+    {
+      "en": "Stopped. Only finished steps were charged: {0} credits.",
+      "zh": "已停止。只对完成的步骤计费：{0} 积分。"
     }
   ]
 }

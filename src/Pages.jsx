@@ -864,6 +864,7 @@ const featureIcons = {
   onchain: "chain",
   sheets: "sheet",
   blind: "scale",
+  deepresearch: "research",
 };
 const launch = {
   id: "mvp",

@@ -241,7 +241,10 @@ const STATUS = {
 };
 
 // One compared turn: A and B side by side (stacked on a phone), the vote,
-// and after it the reveal with names, costs and speeds.
+// and after it the reveal with names, costs and speeds. `Markdown` renders
+// each reply (the workspace passes its reply renderer, so Math & Diagrams
+// apply) with `markdown` components (Injection Shield's image and link
+// guards when it's on).
 export function BlindTurn({
   blind,
   last,
@@ -254,6 +257,8 @@ export function BlindTurn({
   onVote,
   onContinue,
   onKeepComparing,
+  Markdown = ReactMarkdown,
+  markdown,
 }) {
   const reveal = blind.reveal || null;
   const outcome = reveal?.outcome || null;
@@ -301,7 +306,9 @@ export function BlindTurn({
               </header>
               <div className="markdown" data-i18n="off">
                 {x.text ? (
-                  <ReactMarkdown remarkPlugins={marks}>{x.text}</ReactMarkdown>
+                  <Markdown remarkPlugins={marks} components={markdown}>
+                    {x.text}
+                  </Markdown>
                 ) : status === "streaming" ? (
                   <p className="blind-waiting">…</p>
                 ) : null}

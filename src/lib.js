@@ -197,6 +197,11 @@ export function messageFromServer(m) {
     ...(c?.privacy && typeof c.privacy === "object" ? { privacy: c.privacy } : {}),
     // Blind Compare: both replies, and the reveal once voted (src/blind.js).
     ...(c?.blind && typeof c.blind === "object" ? { blind: c.blind } : {}),
+    // Deep Research: the plan, each step's outcome and charge, and the
+    // run's total (src/DeepResearch.jsx shows it under the report).
+    ...(c?.research && typeof c.research === "object" && !Array.isArray(c.research)
+      ? { research: { ...c.research, live: false } }
+      : {}),
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.

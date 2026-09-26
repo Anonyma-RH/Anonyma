@@ -38,6 +38,7 @@ import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
 import { linkReaderRoutes } from "./routes/link-reader.js";
 import { blindRoutes } from "./routes/blind.js";
+import { researchRoutes } from "./routes/research.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { sealedRoutes } from "./routes/sealed.js";
@@ -142,6 +143,10 @@ export function createApp(overrides = {}) {
   // Blind Compare: two chat replies through runChat, and the account's
   // votes (after projects, which a saved round can be filed in).
   blindRoutes(ctx);
+  // Deep Research: plan, web searches and a sourced report, each step held
+  // and settled on the ordinary billing path (after Memory and Projects,
+  // whose checks it uses).
+  researchRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

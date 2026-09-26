@@ -14,6 +14,7 @@ export const FEATURE_LABELS = {
   symposium: "Symposium",
   double_check: "Double-check",
   blind: "Blind Compare",
+  deep_research: "Deep research",
   image: "Images",
   video: "Video",
   speech: "Text to speech",

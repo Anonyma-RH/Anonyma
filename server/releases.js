@@ -688,7 +688,7 @@ export const UPDATES = [
     // only while the NYMA Holder Program is live with balance checks on;
     // otherwise, or with EARLY_MODEL_DAYS=0, every model opens to everyone
     // as soon as it's added. No routes of its own to gate.
-    released: false,
+    released: true,
   },
   {
     id: "apiboost",

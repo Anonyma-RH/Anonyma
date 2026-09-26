@@ -759,7 +759,7 @@ export const UPDATES = [
     // POST /api/read (server/routes/link-reader.js, SSRF rules in
     // server/link-reader.js). The page is attached as a Documents block, so
     // it needs "documents" released too (featuresFor).
-    released: false,
+    released: true,
   },
   {
     id: "onchain",

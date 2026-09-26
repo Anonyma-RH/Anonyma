@@ -745,7 +745,7 @@ export const UPDATES = [
     // Browser only: the redacted copy is made before the request exists and
     // is sent like any other image, so no route is gated on it (like Clean
     // Uploads). The app shows Redact only once this is released.
-    released: false,
+    released: true,
   },
   {
     id: "linkreader",

@@ -54,7 +54,6 @@ function PasskeyRow({ p, busy, canRemove, onRename, onRemove }) {
                 maxLength={PASSKEY_NAME_MAX}
                 required
                 autoFocus
-                data-i18n="off"
               />
             </label>
             <button className="small-button" disabled={busy || !name.trim()}>
@@ -263,7 +262,6 @@ export function PasskeySettings({ user, demo = false, config }) {
               maxLength={PASSKEY_NAME_MAX}
               placeholder="e.g. iPhone"
               disabled={blocked || full}
-              data-i18n="off"
             />
           </label>
           <Button disabled={busy || blocked || full}>
@@ -355,7 +353,6 @@ export function PasskeyAuth({ register = false, connected, onSignedIn }) {
             maxLength="32"
             pattern="[A-Za-z0-9_.\-]+"
             placeholder="Your username"
-            data-i18n="off"
           />
         </label>
       )}

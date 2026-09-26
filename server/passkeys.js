@@ -149,11 +149,6 @@ export function challengeOf(response) {
     return null;
   }
 }
-// The sign counter in authenticatorData (bytes 33–36, big-endian).
-export function counterOf(authenticatorData) {
-  const b = Buffer.from(authenticatorData, "base64url");
-  return b.length >= 37 ? b.readUInt32BE(33) : null;
-}
 // A counter that went backwards (or stood still) can mean a copied
 // authenticator. Synced passkeys report 0 every time, which is allowed.
 export const counterRegressed = (stored, next) =>

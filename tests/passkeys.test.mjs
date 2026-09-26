@@ -1,9 +1,13 @@
 import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
-import { mkdtempSync, rmSync, readFileSync } from "node:fs";
+import { mkdtempSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { transformWithEsbuild } from "vite";
 import {
   createHash,
   generateKeyPairSync,
@@ -897,4 +901,85 @@ test("the Chinese dictionary covers the update, the sign-in tab, Security and th
   // The dates line is one string, translated as a whole.
   assert.equal(translateText(`Added ${d} · Not used yet`, zh), "添加于 2026/9/26 · 尚未使用");
   assert.equal(translateText(`Added ${d} · Last used ${d}`, zh), "添加于 2026/9/26 · 上次使用 2026/9/26");
+});
+
+// Passkeys.jsx compiled for Node with the same esbuild Vite uses; shared UI
+// is swapped for plain stand-ins so only its own text renders.
+async function pageModule() {
+  const src = new URL("../src/Passkeys.jsx", import.meta.url);
+  const { code } = await transformWithEsbuild(readFileSync(src, "utf8"), src.pathname, {
+    jsx: "transform",
+    format: "esm",
+  });
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-passkeys-ui-"));
+  const react = import.meta.resolve("react");
+  const stub = (name, body) => {
+    writeFileSync(join(dir, name), `import React from "${react}";\n` + body);
+    return pathToFileURL(join(dir, name)).href;
+  };
+  const ui = stub(
+    "ui.mjs",
+    `export const Notice = ({ children }) => React.createElement("div", null, children);
+     export const Button = ({ children }) => React.createElement("button", null, children);
+     export const Icon = () => React.createElement("svg");`,
+  );
+  const twoStep = stub("two-step.mjs", `export const ConfirmItsYou = () => null;`);
+  const out = code
+    .replace(/^import "\.\/passkeys\.css";$/m, "")
+    .replace(/from "\.\/ui\.jsx"/g, `from "${ui}"`)
+    .replace(/from "\.\/TwoStep\.jsx"/g, `from "${twoStep}"`)
+    .replace(/from "\.\/(lib|passkeys)\.js"/g, (_, f) => `from "${new URL(`../src/${f}.js`, import.meta.url)}"`)
+    .replace(/from "react"/g, `from "${react}"`);
+  const file = join(dir, "Passkeys.mjs");
+  writeFileSync(file, out);
+  try {
+    return await import(pathToFileURL(file).href);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+const entities = (s) =>
+  s.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+// Text split by whether it sits inside data-i18n="off" (the person's own
+// words) or not (the page's, to be translated).
+function textsOf(html) {
+  const VOID = new Set(["input", "br", "img", "hr"]);
+  const stack = [],
+    page = [],
+    kept = [];
+  for (const [, tag, text] of html.matchAll(/(<[^>]+>)|([^<]+)/g)) {
+    if (tag) {
+      const m = /^<(\/?)([a-z0-9]+)/i.exec(tag);
+      if (!m) continue;
+      const off = /data-i18n="off"/.test(tag);
+      for (const [, attr] of tag.matchAll(/(?:placeholder|aria-label|title)="([^"]*)"/g))
+        (off || stack.some((x) => x.off) ? kept : page).push(entities(attr));
+      if (m[1]) stack.pop();
+      else if (!VOID.has(m[2].toLowerCase()) && !tag.endsWith("/>")) stack.push({ off });
+    } else {
+      const t = entities(text).trim();
+      if (t) (stack.some((x) => x.off) ? kept : page).push(t);
+    }
+  }
+  const words = (list) => list.filter((x) => /[A-Za-z]{2}/.test(x));
+  return { page: words(page), kept: words(kept) };
+}
+
+test("the passkey list keeps names untranslated and translates the rest", async () => {
+  const { PasskeySettings, PasskeyAuth } = await pageModule();
+  const settings = renderToStaticMarkup(createElement(PasskeySettings, { demo: true, config: {} }));
+  const { page, kept } = textsOf(settings);
+  assert.ok(kept.includes("iPhone") && kept.includes("YubiKey"), "passkey names are the person's words");
+  assert.ok(page.some((t) => t.startsWith("Added ")));
+  assert.ok(page.includes("e.g. iPhone"), "the placeholder is translated");
+  for (const t of page) assert.match(translateText(t, zh) ?? "", han, t);
+  for (const register of [false, true]) {
+    const html = renderToStaticMarkup(createElement(PasskeyAuth, { register, connected: true, onSignedIn() {} }));
+    const texts = textsOf(html);
+    assert.ok(texts.page.includes(register ? "Create an account with a passkey" : "Sign in with a passkey"));
+    for (const t of texts.page) assert.match(translateText(t, zh) ?? "", han, t);
+    // Inputs hold the person's text as values, which are never translated;
+    // their placeholders are.
+    if (register) assert.ok(texts.page.includes("Your username"));
+  }
 });

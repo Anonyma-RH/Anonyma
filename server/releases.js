@@ -772,7 +772,7 @@ export const UPDATES = [
     ],
     // Read only: the lookup (/api/onchain/lookup) is free and never signs,
     // sends or connects a wallet; the explanation is an ordinary chat.
-    released: false,
+    released: true,
   },
   {
     id: "sheets",

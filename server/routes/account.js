@@ -6,6 +6,7 @@ import { exportRoutines, forgetRoutines } from "../routines.js";
 import { exportProjects } from "./projects.js";
 import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
+import { exportBlindVotes, forgetBlindVotes } from "./blind.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -38,13 +39,13 @@ import {
 //   conversations and their messages (Symposium runs, branches and
 //   Double-checks are conversations too);
 // - every session and pending sign-in code (and sign-in waiting for a
-//   two-step code);
+//   two-step code, and passkey ceremonies it started);
 // - connected apps' tokens and pending codes;
 // - projects, with their filed chats and pinned files (the chats go with
 //   the conversations above);
 // - support requests, video jobs, saved uploads, Scrolls, standing
-//   instructions, memory facts, routines, bookmarks and NYMA top-up quotes
-//   (a credited top-up stays as its deposit);
+//   instructions, memory facts, routines, bookmarks, Blind Compare votes and
+//   NYMA top-up quotes (a credited top-up stays as its deposit);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -68,6 +69,11 @@ export function eraseAccountContent(db, user) {
   // or delete (closure).
   db.prepare("DELETE FROM two_step_pending WHERE user_id=?").run(id);
   db.prepare("DELETE FROM two_step_reauth WHERE user_id=?").run(id);
+  // Passkeys: ceremonies this account started and sessions' passkey "confirm
+  // it's you" marks. The passkeys themselves are sign-in methods, like the
+  // password: the caller keeps them (Panic Wipe) or deletes them (closure).
+  db.prepare("DELETE FROM passkey_challenges WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM passkey_reauth WHERE user_id=?").run(id);
   db.prepare(
     "DELETE FROM oauth_tokens WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
   ).run(id);
@@ -91,6 +97,8 @@ export function eraseAccountContent(db, user) {
   forgetRoutines(db, id);
   // Bookmarks and their notes, including those in other people's collabs.
   forgetBookmarks(db, id);
+  // Blind Compare: the votes behind "Your rankings".
+  forgetBlindVotes(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -164,9 +172,25 @@ export function accountRoutes(ctx) {
       ? { twoStep: { enabled } }
       : {};
   }
+  // Passkeys: each one's name, dates and whether it's synced (once the
+  // update is live, or while any exist). Never the credential id or public
+  // key: they're only useful to ANONYMA's own sign-in check.
+  function passkeysExport(user) {
+    const list = ctx.passkeys
+      .list(user)
+      .map(({ name, created, lastUsed, synced }) => ({ name, created, lastUsed, synced }));
+    return list.length || isReleased(cfg, "passkeys") ? { passkeys: list } : {};
+  }
   function bookmarksExport(user) {
     const list = exportBookmarks(db, user);
     return list.length || isReleased(cfg, "bookmarks") ? { bookmarks: list } : {};
+  }
+  // Blind Compare: each vote (model ids, outcome, date), once the update is
+  // live or while any exist. Compared replies of saved chats are already in
+  // their conversations above.
+  function blindExport(user) {
+    const list = exportBlindVotes(db, user);
+    return list.length || isReleased(cfg, "blind") ? { blindVotes: list } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -488,11 +512,14 @@ export function accountRoutes(ctx) {
       // the update is live, or while any project exists).
       ...projectsExport(req.user.id),
       ...twoStepExport(req.user.id),
+      ...passkeysExport(req.user.id),
       ...balanceAlertExport(req.user.id),
       // Bookmarks: message ids and notes (once the update is live, or while
       // any exist). The messages are already exported with their
       // conversations above, so their text isn't repeated here.
       ...bookmarksExport(req.user.id),
+      // Blind Compare: the votes behind "Your rankings".
+      ...blindExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db
@@ -567,6 +594,8 @@ export function accountRoutes(ctx) {
       // Two-Step Sign-in: the sealed secret and the recovery code hashes.
       db.prepare("DELETE FROM two_step_recovery WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM two_step WHERE user_id=?").run(req.user.id);
+      // Passkeys: every credential and its public key.
+      db.prepare("DELETE FROM passkeys WHERE user_id=?").run(req.user.id);
       forgetAlert(db, req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.
       db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);

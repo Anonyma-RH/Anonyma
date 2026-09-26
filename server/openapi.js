@@ -649,6 +649,141 @@ route("post", "/api/account/two-step/disable", "Turn off two-step sign-in", {
   description:
     "Needs a current authenticator code or an unused recovery code. Deletes the secret and recovery codes and signs out every other session. Wrong codes count towards the account's lock (429 two_step_locked).",
 });
+// Passkeys (update "passkeys"). WebAuthn with user verification required,
+// resident (discoverable) credentials and "none" attestation. The RP ID is
+// APP_ORIGIN's host and responses must come from exactly APP_ORIGIN.
+const webauthnOptions = {
+  type: "object",
+  description: "WebAuthn options for navigator.credentials (JSON form, base64url fields). The challenge is single-use and expires after 5 minutes.",
+};
+const webauthnResponse = {
+  type: "object",
+  description: "The browser's PublicKeyCredential as JSON (base64url fields), e.g. from @simplewebauthn/browser",
+};
+const passkeyEntry = object({
+  id: string,
+  name: string,
+  created: integer,
+  lastUsed: { type: ["integer", "null"] },
+  synced: { ...bool, description: "Backed up to a passkey manager (multi-device)" },
+});
+const passkeyStatus = {
+  data: array(passkeyEntry),
+  max: integer,
+  available: { ...bool, description: "False when APP_ORIGIN is an IP address or plain HTTP other than localhost" },
+  methods: object({ password: bool, email: bool, wallet: bool, passkeys: integer }),
+  reauthMethods: array({ enum: ["password", "email", "wallet", "passkey"] }),
+  reauthUntil: { type: ["integer", "null"] },
+};
+const passkeyReauth =
+  " Needs this session to have confirmed it's you within the last 10 minutes (POST /api/account/two-step/reauth, or POST /api/account/passkeys/reauth), otherwise 403 passkey_reauth_required.";
+const passkeyCommon =
+  " 400 passkey_invalid_response for a malformed response; 400 passkey_expired for an unknown, expired or already used challenge (every challenge is deleted when answered); 401 passkey_invalid when the origin, RP ID, challenge, signature or user verification is wrong; 503 passkeys_unavailable when APP_ORIGIN can't be a WebAuthn RP.";
+route("post", "/api/auth/passkey/options", "Start signing in with a passkey", {
+  auth: null,
+  body: object(),
+  response: object({ options: webauthnOptions }),
+  description:
+    "Usernameless: no allowCredentials, so the browser offers any passkey for this site. Sets a short-lived HttpOnly, SameSite=Strict pending cookie (path /api/auth/passkey) that the answer must come back with. 30 per 15 minutes per IP.",
+});
+route("post", "/api/auth/passkey/verify", "Finish signing in with a passkey", {
+  auth: null,
+  body: object({ response: webauthnResponse }, ["response"]),
+  response: object({ user: ref("User"), passkey: object({ name: string }) }),
+  description:
+    "Sets the HttpOnly session cookie. User verification is required, so this counts as both steps of Two-Step Sign-in: no code is asked. The user handle must match the passkey's account, and the sign counter must go up (0 stays allowed for synced passkeys; 401 passkey_counter otherwise). 401 passkey_unknown for a passkey this service doesn't know. Five failed answers from one passkey within 15 minutes lock it for 15 minutes (429 passkey_locked with Retry-After). 20 per 15 minutes per IP." + passkeyCommon,
+});
+route("post", "/api/auth/passkey/signup/options", "Start creating an account with a passkey", {
+  auth: null,
+  body: object({ username: { ...string, pattern: "^\\w[\\w.-]{2,31}$" } }, ["username"]),
+  response: object({ options: webauthnOptions }),
+  description:
+    "No password and no email. The authenticator stores the username and a random user handle, never an email or wallet address. 409 when the username is taken. Sets the pending cookie. 20 an hour per IP.",
+});
+route("post", "/api/auth/passkey/signup/verify", "Finish creating an account with a passkey", {
+  auth: null,
+  body: object({ response: webauthnResponse, name: { ...string, maxLength: 40 } }, ["response"]),
+  status: 201,
+  response: object({ user: ref("User"), passkey: object({ name: string }) }),
+  description:
+    "Creates the account with the passkey as its only sign-in method and sets the session cookie. 409 when the username was taken meanwhile. Shares the password sign-up's 10 accounts an hour per IP." + passkeyCommon,
+});
+route("get", "/api/account/passkeys", "Your passkeys", {
+  response: object(passkeyStatus),
+  description: "Names, dates and whether each is synced; never credential ids or public keys.",
+});
+route("post", "/api/account/passkeys/reauth/options", "Start confirming it's you with a passkey", {
+  body: object(),
+  response: object({ options: webauthnOptions }),
+  description: "Offers only this account's passkeys; bound to this session. 400 passkey_none without any. 10 per 15 minutes.",
+});
+route("post", "/api/account/passkeys/reauth", "Confirm it's you with a passkey", {
+  body: object({ response: webauthnResponse }, ["response"]),
+  response: object({ reauthUntil: integer }),
+  description:
+    "Marks this session, and only this session, as confirmed for 10 minutes, for adding and removing passkeys. 10 per 15 minutes." + passkeyCommon,
+});
+route("post", "/api/account/passkeys/options", "Start adding a passkey", {
+  body: object(),
+  response: object({ options: webauthnOptions }),
+  description:
+    "Excludes the account's existing passkeys. 409 passkey_limit at 10. 10 an hour." + passkeyReauth,
+});
+route("post", "/api/account/passkeys", "Add a passkey", {
+  body: object({ response: webauthnResponse, name: { ...string, maxLength: 40 } }, ["response"]),
+  status: 201,
+  response: object({ id: string, ...passkeyStatus }),
+  description:
+    "Stores the credential id, public key, sign counter and name. 400 passkey_name; 400 passkey_not_discoverable when the browser reports a key that can't sign in on its own; 409 passkey_exists." + passkeyCommon + passkeyReauth,
+});
+route("patch", "/api/account/passkeys/{id}", "Rename a passkey", {
+  body: object({ name: { ...string, maxLength: 40 } }, ["name"]),
+  response: object(passkeyStatus),
+  description: "1 to 40 characters. 404 passkey_not_found.",
+});
+route("delete", "/api/account/passkeys/{id}", "Remove a passkey", {
+  response: object(passkeyStatus),
+  description:
+    "409 passkey_last_method when it's the account's only way to sign in (no password, email or wallet, and no other passkey). The passkey stays on the device until removed there. 404 passkey_not_found." + passkeyReauth,
+});
+// Privacy Screen (update "privacyscreen"): the idle lock is a screen in the
+// browser; these routes only re-check it's the account's owner.
+const unlockNote =
+  " Never creates, rotates or ends a session. Five wrong attempts for one account within 15 minutes refuse unlocking for 15 minutes (429 unlock_locked with Retry-After); signing out always works. Only wrong attempts are counted, under a hashed key that expires on its own.";
+route("get", "/api/auth/unlock", "How this account unlocks the Privacy Screen", {
+  response: object({
+    methods: {
+      ...array({ enum: ["password", "email", "wallet", "passkey"] }),
+      description: "The account's password when it has one, otherwise an email code and/or a wallet signature; and a passkey when Passkeys is released and the account has one",
+    },
+    retryAfter: { type: ["integer", "null"], description: "Seconds until unlocking is allowed again after too many wrong attempts; null when it is" },
+  }),
+});
+route("post", "/api/auth/unlock/start", "Start unlocking with an email code or a wallet signature", {
+  body: object({ method: { enum: ["email", "wallet"] } }, ["method"]),
+  response: object({
+    id: string,
+    message: { ...string, description: "wallet: the one-time message to sign (it authorizes no transaction and can't be used to sign in); email: a notice" },
+    testCode: { ...string, description: "Local test mode only" },
+  }),
+  description:
+    "Only for accounts without a password (400 unlock_method otherwise). email sends a 6-digit code to the account's own address (five per address per hour, 10-minute expiry); wallet returns a message for the linked wallet. Either is bound to this session. 10 an hour." + unlockNote,
+});
+route("post", "/api/auth/unlock", "Unlock the Privacy Screen", {
+  body: object({
+    method: {
+      enum: ["password", "email", "wallet", "passkey"],
+      description: "passkey (needs the passkeys update too): after this session confirmed it's you with one of the account's passkeys (POST /api/account/passkeys/reauth) in the last 2 minutes; 400 unlock_expired otherwise",
+    },
+    password: { ...string, description: "method password" },
+    id: { ...string, description: "method email or wallet: from /api/auth/unlock/start" },
+    code: { ...string, description: "method email" },
+    signature: { ...string, description: "method wallet: the linked wallet's signature of the message" },
+  }, ["method"]),
+  response: object({ ok: bool, unlocked: integer }),
+  description:
+    "The account's password when it has one; otherwise a fresh email code or wallet signature started by this session (400 unlock_method for another method). 401 unlock_failed for a wrong password, code or signature; 400 unlock_expired for an unknown, expired, used or other session's code or message. 30 requests per 15 minutes." + unlockNote,
+});
 for (const path of ["/api/auth/logout", "/api/auth/logout-all"])
   route(
     "post",
@@ -1668,6 +1803,7 @@ const bookmark = object({
   message_created: integer,
   excerpt: { ...string, description: "Up to 280 characters of the message as one line (a prompt without its attached documents); empty for an image- or attachment-only message" },
   more: { ...bool, description: "The message goes on past the excerpt" },
+  diagram: { ...bool, description: "Math & Diagrams: present (true) once that update is released, on an answer whose Mermaid diagram was left out of the excerpt" },
   note: { ...string, maxLength: 140, description: "Your private note; empty when there is none" },
   created: integer,
   updated: integer,
@@ -1711,6 +1847,143 @@ route("patch", "/api/bookmarks/{id}", "Change a bookmark's note", {
 route("delete", "/api/bookmarks/{id}", "Remove a bookmark", {
   response: ref("Ok"),
   description: "The message itself is unchanged.",
+});
+// Link Reader (update "linkreader", which also needs "documents").
+route("post", "/api/read", "Read a web page for a message", {
+  body: object(
+    { url: { ...string, maxLength: 2048, description: "An http:// or https:// link on port 80 or 443, without a username or password" } },
+    ["url"],
+  ),
+  response: object({
+    kind: { enum: ["html", "text", "pdf"] },
+    url: { ...string, description: "The page's final address, after redirects, without tracking parameters (utm_*, fbclid, gclid, ...)" },
+    host: string,
+    redirected: bool,
+    title: string,
+    site_name: { ...string, description: "The site's own name when the page gives one; may be empty" },
+    byline: { ...string, description: "The author line when the page gives one; may be empty" },
+    words: { ...integer, description: "Words in text (html and text only)" },
+    truncated: { ...bool, description: "The page was longer than 30,000 words and text is its start (html and text only)" },
+    text: { ...string, description: "The readable text: scripts, styles, forms, navigation and link URLs removed (html and text only)" },
+    bytes: { ...integer, description: "The PDF's size (pdf only)" },
+    pdf: { ...string, description: "The PDF, base64-encoded, for the browser's own text extraction (pdf only)" },
+  }),
+  description:
+    "Fetched by the server, so the site never sees your browser or IP: no cookies, no Referer, a generic User-Agent. Only public addresses are fetched: the name is resolved once per hop and every address must be public (loopback, private, link-local, CGNAT, multicast, reserved, IPv6 ULA and link-local, their IPv4-mapped forms and cloud metadata addresses are refused, 400 link_blocked), and the connection goes to the checked address. At most 3 redirects, each checked again (502 link_redirects); 10 seconds (504 link_timeout); 5 MB (413 link_too_large); text/html, text/plain and application/pdf only (415 link_type). Other refusals: 400 link_invalid, link_userinfo, link_port; 502 link_unreachable, link_status; 422 link_unreadable; 429 link_busy (2 at once per account) or rate_limit (60 an hour). Free: nothing is charged or stored, and the link is never logged. The browser attaches the text to your message as a document.",
+});
+// Blind Compare (update "blind").
+const blindSide = object({
+  model: string,
+  name: string,
+  credits: { ...number, description: "What this reply was charged" },
+  ms: { type: ["integer", "null"], description: "Milliseconds from sending to the last word" },
+  request_id: { type: ["string", "null"], description: "This side's request id (its receipt, once Signed Receipts is released)" },
+  privacy: { type: "object", description: "This side's Privacy Trail, once released" },
+});
+const blindReveal = object({
+  outcome: { enum: ["a", "b", "tie", "bad", null], description: "null when a side failed, so the round was revealed without a vote" },
+  a: blindSide,
+  b: blindSide,
+});
+route("post", "/api/blind", "Compare two models' replies, names hidden", {
+  body: object(
+    {
+      models: { ...array(string), minItems: 2, maxItems: 2, description: "Two different chat models; the order shown (A, B) is random" },
+      messages: array(message),
+      max_tokens: { ...integer, minimum: 1, description: "Each side's reply budget, checked against both models" },
+      requestId: { ...requestId, maxLength: 190, description: "Each side runs as <requestId>:a and <requestId>:b" },
+      conversationId: string,
+      mode: { enum: ["chat", "code", "uncensored"] },
+      ephemeral: bool,
+      private: { ...bool, description: "Both models must be private (zero data retention)" },
+      project: string,
+      veil_masked: { type: ["integer", "null"] },
+      allow_seed_phrase: bool,
+    },
+    ["models", "messages"],
+  ),
+  stream: true,
+  description:
+    "Always SSE via fetch POST. Each side is a chat request on the same hold/settle path as /api/chat (balance, Spending Limits, failure billing and receipts apply per side), and neither is sent until both are reserved: a side that is refused (402 insufficient_credits, 402 spending_limit, a validation error) releases the other, and the whole request fails before any stream starts, charging nothing. Events: { blind: { conversationId } } first; { side, delta: { content?, reasoning? } } while replying; { side, status: done|failed|stopped, error? } as each side ends; then { blind: { done: true, conversationId, message_id, credits_charged (both sides together), round, reveal, sides } } and [DONE]. No event names a model or a side's own charge before the vote: round is a sealed token for POST /api/blind/votes. A side that fails is charged by the usual failure policies and only it; such a round is revealed at once (reveal) and can't be voted on. Web search (400 blind_unsupported), Memory, Team pays and shared collab conversations are not supported. A saved chat stores the question and one reply holding both answers (and the reveal once voted); off-the-record and Private rounds store nothing. 400 blind_same_model, 400 private_model_required.",
+});
+route("post", "/api/blind/votes", "Vote on a blind round, then reveal it", {
+  body: object(
+    {
+      round: { ...string, description: "The round token from the final /api/blind event (or a saved reply's blind.token)" },
+      outcome: { enum: ["a", "b", "tie", "bad"] },
+      message_id: { ...string, description: "The saved reply to update with the reveal (optional)" },
+    },
+    ["round", "outcome"],
+  ),
+  response: object({
+    reveal: blindReveal,
+    counted: { ...bool, description: "false when this round was already voted on; the first vote stands" },
+    message_id: { type: ["string", "null"] },
+  }),
+  description:
+    "Stores the two model ids, the outcome and the date for your rankings, and nothing else. Only the account that ran the round can vote (404 blind_round_not_found otherwise, or for a token that isn't valid). Rounds can be voted on for 30 days (410 blind_vote_closed).",
+});
+route("get", "/api/blind/rankings", "Your Blind Compare rankings", {
+  response: object({
+    votes: integer,
+    data: array(
+      object({
+        model: string,
+        name: string,
+        rounds: integer,
+        wins: integer,
+        ties: integer,
+        losses: { ...integer, description: "Includes both_bad" },
+        both_bad: integer,
+        win_rate: { ...number, description: "(wins + ties / 2) / rounds, 0 to 1" },
+      }),
+    ),
+  }),
+  description: "From this account's own votes only; best win rate first.",
+});
+route("delete", "/api/blind/rankings", "Reset your Blind Compare rankings", {
+  response: object({ deleted: integer }),
+  description: "Deletes every vote. Saved chats keep their reveals.",
+});
+// Deep Research (update "deepresearch", which also needs "search").
+const researchRequest = object(
+  {
+    model: { ...string, description: "A callable text model; it plans, searches and writes" },
+    question: { ...string, minLength: 1, maxLength: 2000 },
+    depth: { enum: ["quick", "thorough"], description: "quick runs at most 3 web searches, thorough at most 6" },
+    mode: { enum: ["chat", "code"], default: "chat" },
+    requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+    conversationId: { ...string, description: "Add the run to this saved conversation" },
+    ephemeral: { ...bool, description: "Off the record: nothing is saved (needs ephemeral)" },
+    private: { ...bool, description: "Private Mode: a zero-data-retention model, ZDR routing on every step, nothing saved (needs private and ephemeral)" },
+    project: { ...string, description: "File a new saved run in this project (needs projects)" },
+    memory: { ...array(object({ id: string, text: string, updated: integer })), description: "As on /api/chat; used for the plan and the report, never sent as a search (needs memory)" },
+    veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for the question (needs trail); anything above 0 is refused with 400 research_veiled" },
+  },
+  ["model", "question", "depth"],
+);
+route("post", "/api/research/quote", "The most a Deep research run can cost", {
+  body: researchRequest,
+  response: object({
+    credits: { ...number, description: "The maximum: the plan, every search with its web search fee, and the report" },
+    usd: number,
+    available: number,
+    spending_limit: object({ remaining: number }),
+    model: string,
+    depth: string,
+    searches: integer,
+    steps: object({ plan: number, search: { ...number, description: "Each search" }, write: number }),
+    web_search_fee: number,
+    estimate: bool,
+  }),
+  description:
+    "Reserves and charges nothing. The same checks as a run (Seed Guard with no override, Veil, Private Mode, context allowance), so a quote that succeeds describes exactly what a run would hold.",
+});
+route("post", "/api/research", "Run Deep research", {
+  body: researchRequest,
+  stream: true,
+  description:
+    "Workspace only (session). Plans up to 3 or 6 sub-questions (strict JSON; invalid output falls back to the question itself), runs one web search per sub-question and writes a Markdown report whose [n] citations map only to the pages those searches returned; other URLs and out-of-range numbers are removed. Before anything runs, every step is held at its maximum (402 insufficient_credits or spending_limit, 409 research_running for a second run, with nothing charged). Each step settles on its own usage as it finishes; a step that fails, is stopped (closing the stream) or never starts is released, so only finished steps are charged. SSE events: research.stage planning, planned (questions), searching / searched (index, status, sources, credits), writing, then done with message { text, citations, research } and anonyma { credits_charged, request_id, private?, privacy?, memory? }, or error with whatever finished. A saved run adds the question and the report to the conversation as ordinary messages.",
 });
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
@@ -1983,7 +2256,7 @@ route("get", "/api/account/usage", "Where your credits went, from your own ledge
     ),
   }),
   description:
-    "Needs the insights update released (403 feature_unreleased otherwise); only the signed-in account's own ledger; 60 requests a minute. Days are UTC days, and the range is at most 366 of them (400 invalid_range or range_too_long). All sums are integer subcredits written as exact decimal strings, so net equals the ledger's own sum for the range and equals topups + received + rewards + team_transfers + other - spent - sent. spent is settled requests only (a released hold adds nothing), and daily, by_model, by_feature and by_source each add up to it. by_feature is chat, web_search, symposium, double_check (chat requests labelled from this release on; off the record and Private only chat or web_search), image, video, speech, transcription. held is what is reserved right now, not a range figure. team_paid is what this account's Team pays requests cost Team Treasuries in the range: not this account's balance, so it is in no other figure and not exported. No prompts, replies or media are read.",
+    "Needs the insights update released (403 feature_unreleased otherwise); only the signed-in account's own ledger; 60 requests a minute. Days are UTC days, and the range is at most 366 of them (400 invalid_range or range_too_long). All sums are integer subcredits written as exact decimal strings, so net equals the ledger's own sum for the range and equals topups + received + rewards + team_transfers + other - spent - sent. spent is settled requests only (a released hold adds nothing), and daily, by_model, by_feature and by_source each add up to it. by_feature is chat, web_search, symposium, double_check, deep_research (chat requests labelled from this release on; off the record and Private only chat or web_search), image, video, speech, transcription. held is what is reserved right now, not a range figure. team_paid is what this account's Team pays requests cost Team Treasuries in the range: not this account's balance, so it is in no other figure and not exported. No prompts, replies or media are read.",
 });
 route("get", "/api/account/usage/export", "Download your ledger rows as CSV or JSON", {
   query: [
@@ -2264,6 +2537,35 @@ for (const method of ["get", "delete"]) paths["/mcp"][method].responses = {
     content: { "application/json": { schema: ref("Error") } },
   },
 };
+// Onchain Explainer (update "onchain"; server/onchain.js).
+route("post", "/api/onchain/lookup", "Look up a transaction or address", {
+  body: object(
+    {
+      value: {
+        ...string,
+        pattern: "^0x([0-9a-fA-F]{64}|[0-9a-fA-F]{40})$",
+        description: "A transaction hash (0x and 64 hex) or an address (0x and 40 hex). Sent in the body so no access log records it.",
+      },
+      kind: { enum: ["transaction", "address"], description: "Optional; must match the value's shape" },
+      chain: {
+        oneOf: [{ const: "auto" }, { enum: [4663, 1, 8453, 42161, 10] }],
+        default: "auto",
+        description: "A chain id, or auto: Robinhood Chain, Ethereum, Base, Arbitrum, then Optimism, stopping at the first that has it (for an address, the first with any activity)",
+      },
+    },
+    ["value"],
+  ),
+  response: object({
+    facts: object({
+      kind: { enum: ["transaction", "address"] },
+      chain: object({ id: integer, name: string }),
+      source: { ...string, description: "Where the facts were read" },
+      hints: array(object({ code: { enum: ["unlimited_approval", "approval_for_all", "approval_to_wallet", "unverified_contract", "flagged", "new_recipient", "never_sent"] } })),
+    }),
+  }),
+  description:
+    "Free and read only: nothing is signed, sent or connected. Read on the server from fixed public sources (Robinhood Chain's JSON-RPC node; Blockscout's API for the others), so the user's IP never reaches them; no redirects, JSON only, 8 seconds and 1 MB at most, kept in memory for 60 seconds, never stored or logged. A transaction's facts: status, time, block, from/to with explorer names, the call, value, fee, token transfers, approvals and a created contract; an address's: kind, name and labels, balance, activity counts, tokens held and token details. Hints appear only when the facts show them. 400 invalid_request; 400 onchain_chain_unsupported; 404 onchain_not_found; 502 onchain_unavailable. 20 a minute and 200 an hour per account.",
+});
 // Seed Guard's opt-out header for API clients (server/seed-guard.js).
 const seedGuardHeader = {
   name: "X-Anonyma-Seed-Guard",

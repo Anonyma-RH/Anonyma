@@ -67,8 +67,9 @@ export async function api(path, { method = "GET", body, signal } = {}) {
     );
   return data;
 }
-export async function streamChat(body, onEvent, signal) {
-  const response = await fetch("/api/chat", {
+// `path` is /api/chat, or /api/blind for a Blind Compare round.
+export async function streamChat(body, onEvent, signal, path = "/api/chat") {
+  const response = await fetch(path, {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
@@ -194,6 +195,13 @@ export function messageFromServer(m) {
     citations: Array.isArray(c?.citations) ? c.citations : [],
     // Privacy Trail metadata kept with a saved reply (never prompt text).
     ...(c?.privacy && typeof c.privacy === "object" ? { privacy: c.privacy } : {}),
+    // Blind Compare: both replies, and the reveal once voted (src/blind.js).
+    ...(c?.blind && typeof c.blind === "object" ? { blind: c.blind } : {}),
+    // Deep Research: the plan, each step's outcome and charge, and the
+    // run's total (src/DeepResearch.jsx shows it under the report).
+    ...(c?.research && typeof c.research === "object" && !Array.isArray(c.research)
+      ? { research: { ...c.research, live: false } }
+      : {}),
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.
@@ -426,6 +434,35 @@ export async function walletReauth(config, linkedWallet) {
   }
 }
 
+// Privacy Screen's unlock for an account without a password: its linked
+// wallet signs a one-time message bound to this session, which can't sign
+// anyone in. Nothing is sent from the wallet.
+export async function walletUnlock(config, linkedWallet) {
+  const provider = await walletProvider(config);
+  try {
+    const [address] = await provider.request({ method: "eth_requestAccounts" });
+    if (!address) throw new Error("No wallet account was selected.");
+    if (address.toLowerCase() !== String(linkedWallet || "").toLowerCase())
+      throw new Error("Sign with the wallet linked to this account.");
+    const challenge = await api("/api/auth/unlock/start", {
+      method: "POST",
+      body: { method: "wallet" },
+    });
+    const signature = await provider.request({
+      method: "personal_sign",
+      params: [challenge.message, address],
+    });
+    return await api("/api/auth/unlock", {
+      method: "POST",
+      body: { method: "wallet", id: challenge.id, signature },
+    });
+  } catch (e) {
+    if (e?.code === 4001)
+      throw new Error("The wallet request was cancelled. Nothing was signed.");
+    throw walletError(e);
+  }
+}
+
 // Released updates (see server/releases.js). Without config (preview or
 // offline) gated features stay unavailable.
 // Where signing in may send someone back to: only the Connect an App
@@ -450,6 +487,7 @@ export const MODE_FEATURES = {
   collab: "collab",
   uncensored: "uncensored",
   symposium: "symposium",
+  sheets: "sheets",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

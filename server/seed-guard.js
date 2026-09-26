@@ -1,6 +1,7 @@
 import { fail } from "./core.js";
 import { isReleased } from "./releases.js";
 import { findSeedPhrase, SEED_MESSAGE } from "../src/seed-guard.js";
+import { stripLinkBlocks } from "../src/link-reader.js";
 
 // Seed Guard's server check, behind the browser's own (src/SeedGuard.jsx):
 // once the update is released, a chat or /v1 request whose text holds a
@@ -47,10 +48,14 @@ export function guardedTexts(body) {
 export const apiOptOut = (req) =>
   String(req.headers?.[SEED_GUARD_HEADER] ?? "").trim().toLowerCase() === "off";
 
+// A page read by Link Reader (a source="link" document block in a workspace
+// message) is public text the server fetched, not something the user typed
+// or attached from their device, so it isn't scanned.
 export function refuseSeedPhrase(cfg, req, api) {
   if (!isReleased(cfg, "seedguard")) return;
   if (api ? apiOptOut(req) : req.body?.allow_seed_phrase === true) return;
-  if (guardedTexts(req.body).some((t) => findSeedPhrase(t)))
+  const skipLinks = !api && isReleased(cfg, "linkreader");
+  if (guardedTexts(req.body).some((t) => findSeedPhrase(skipLinks ? stripLinkBlocks(t) : t)))
     fail(400, api ? API_SEED_MESSAGE : SEED_MESSAGE, "seed_phrase_blocked");
 }
 

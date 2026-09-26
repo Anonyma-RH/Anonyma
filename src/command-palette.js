@@ -368,6 +368,7 @@ export const MODE_LABELS = {
   library: "Your library",
   tools: "Research, Writing & Calculators",
   projects: "Projects",
+  sheets: "Sheets",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -383,6 +384,8 @@ const PLACES = [
   ["tools", "Research, Writing & Calculators", ["task tools", "research", "writing", "calculator"]],
   ["library", "Your library", ["library", "media", "saved images", "saved videos"]],
   ["projects", "Projects", ["project", "folders", "group chats", "pinned files"]],
+  // Local Sheets: only once released (modeReleased checks MODE_FEATURES).
+  ["sheets", "Sheets", ["spreadsheet", "csv", "tsv", "excel", "analyse", "analyze", "chart", "table", "data"]],
 ];
 
 // The actions and places the palette offers, from release flags and the
@@ -508,6 +511,15 @@ export function paletteActions(ctx = {}) {
       keywords: ["files", "uploads", "reusable uploads", "documents"],
       detail: "Owner-only files you saved for reuse",
     });
+  // Privacy Screen: the palette is where its shortcut, Esc twice, is shown.
+  if (live && signedIn && on("privacyscreen"))
+    add("actions", {
+      id: "privacy-screen",
+      label: "Hide the screen",
+      icon: "eyeoff",
+      keywords: ["privacy screen", "hide", "blank", "cover", "boss key", "esc esc", "隐私屏", "隐藏"],
+      detail: "Shortcut: press Esc twice",
+    });
   if (on("zh"))
     add("actions", {
       id: "language",
@@ -545,7 +557,11 @@ export function paletteActions(ctx = {}) {
   account("top-up", "Add credits", "credits", ["top up", "buy credits", "deposit", "fund", "balance", "pay"], { icon: "credits" });
   if (on("api")) account("api-keys", "API keys", "keys", ["developer", "api", "keys", "cli", "tokens"], { icon: "key" });
   if (on("twostep"))
-    account("security", "Security", "security", ["two-step", "2fa", "authenticator", "one-time code", "recovery codes", "sign-in"], { icon: "shield" });
+    account("security", "Security", "security", [
+      "two-step", "2fa", "authenticator", "one-time code", "recovery codes", "sign-in",
+      // Passkeys live in Security too, once released.
+      ...(on("passkeys") ? ["passkey", "passkeys", "face id", "fingerprint", "webauthn"] : []),
+    ], { icon: "shield" });
   account("settings", "Account settings", "settings", ["preferences", "sessions", "export", "sign out"], { icon: "settings" });
   add("goto", {
     id: "models",

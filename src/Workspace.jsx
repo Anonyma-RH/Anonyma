@@ -4,7 +4,7 @@ import { useReadingPosition, useRequestCharge, ChargeStatus } from "./ChatContro
 import HistoryLibrary from "./HistoryLibrary.jsx";
 import { useBookmarks, bookmarksReleased } from "./Bookmarks.jsx";
 import { useFindInChat, findInChatReleased } from "./FindInChat.jsx";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { VoiceAssist, ReadAloud } from "./VoiceAssist.jsx";
 import {
   Link,
@@ -13,7 +13,6 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useApp } from "./context.jsx";
 import {
@@ -36,6 +35,8 @@ import SignedReceipt from "./SignedReceipt.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
 import WorkspaceHome from "./WorkspaceHome.jsx";
 import TaskTools from "./TaskTools.jsx";
+// Local Sheets: its parser, planner checks and charts load only on its page.
+const Sheets = lazy(() => import("./Sheets.jsx"));
 import Routines from "./Routines.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import {
@@ -52,6 +53,7 @@ import {
 import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import CollabHub from "./Collab.jsx";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
+import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import DoubleCheck from "./DoubleCheck.jsx";
 import {
   EphemeralToggle,
@@ -98,9 +100,35 @@ import {
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
 import { CleanImageChip } from "./CleanUploads.jsx";
+import { RedactChipTools, RedactEditor, redactReleased } from "./Redact.jsx";
 import { IMAGE_TYPES, IMAGE_LIMIT, HEIC_LIMIT, isHeicFile, withKeep } from "./clean-notes.js";
-import { parseDocumentBlocks } from "./documents.js";
+import { parseDocumentBlocks, MAX_DOCUMENTS } from "./documents.js";
+import { useShieldLive, shieldReleased, ShieldPanel, ShieldPasteNotice, shieldMarkdown } from "./Shield.jsx";
+import { scanText, scanDocument, shieldDocument, cleanText, LARGE_PASTE, pdfHiddenText } from "./shield.js";
 import Symposium from "./Symposium.jsx";
+import {
+  BlindToggle,
+  BlindBar,
+  BlindTurn,
+  BlindRankings,
+  BlindEstimate,
+  useBlindEstimate,
+  blindReleased,
+} from "./Blind.jsx";
+import {
+  blindPool,
+  surprisePair,
+  defaultPair,
+  validPair,
+  pairInPool,
+  pendingBlind,
+  applyBlindEvent,
+  blindText,
+  canVote,
+  revealTurn,
+  closeTurn,
+  secureRandom,
+} from "./blind.js";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
 import { MemoryPanel, MemoryUsedNote, useMemory } from "./Memory.jsx";
 import { ShareDialog, sealedShareLive } from "./ShareLinks.jsx";
@@ -139,11 +167,14 @@ import {
   createVeilState,
   forgetVeilState,
 } from "./veil.js";
-import { buildChatRequest, cloneVeilState, quoteBody, REPLY_BUDGET } from "./estimate.js";
+import { buildChatRequest, cloneVeilState, formatCredits, quoteBody, REPLY_BUDGET } from "./estimate.js";
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
 import CostCompare from "./CostCompare.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
-import { scanSecrets } from "./seed-guard.js";
+import { LinkReaderChips } from "./LinkReader.jsx";
+import { scanSecrets, isSoft } from "./seed-guard.js";
+import { OnchainChip, MessageChainFacts, onchainReleased } from "./Onchain.jsx";
+import { detectOnchain, chainFactsDocument, isChainFactsDocument } from "./onchain.js";
 import ModelFinder from "./ModelFinder.jsx";
 import { STORAGE_KEY as MODEL_CHOICES, loadChoices, resolveChoice, withChoice, requestNeedsVision } from "./model-finder.js";
 import { useShareTargetPrefill } from "./share-target.js";
@@ -154,6 +185,7 @@ import { EarlyTag } from "./Holders.jsx";
 import { EarlyModelTag, earlyModelSuffix } from "./early-models.js";
 import { isEarlyAccess } from "./holders.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
+import { PrivacyScreen, HideScreenButton, hideScreen } from "./PrivacyScreen.jsx";
 import {
   paletteReleased,
   paletteActions,
@@ -165,7 +197,19 @@ import {
   recentStoreKey,
   MODEL_MODES,
 } from "./command-palette.js";
-import { useLanguage, setLanguage } from "./i18n.js";
+import { useLanguage, setLanguage, getLanguage } from "./i18n.js";
+import {
+  ResearchDetails,
+  ResearchEstimate,
+  ResearchPanel,
+  ResearchProgress,
+  ResearchToggle,
+  researchBlock,
+  researchLive as researchReleased,
+  runResearch,
+  stoppedReply,
+  useResearchEstimate,
+} from "./DeepResearch.jsx";
 const initial = [
   {
     id: "welcome",
@@ -226,10 +270,14 @@ export function AppSidebar({
           ["audio", "Voice & audio"],
           ["collab", "Collab"],
           ["tools", "Task tools"],
+          ["sheets", "Sheets"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
-        ].map(([id, t]) =>
+        ]
+          // Local Sheets stays out of sight entirely until it's released.
+          .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
+          .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
               key={id}
@@ -308,6 +356,9 @@ export default function Workspace() {
   const demo = params.get("demo") === "1";
   const { models, user, connected, config, refresh } = useApp();
   const cleanLive = isReleased(config, "cleanuploads");
+  // Redact Before You Send: black out parts of a composer image in this
+  // browser; only the redacted copy replaces it (src/Redact.jsx).
+  const redactLive = redactReleased(config);
   const [all, setAll] = useState(() =>
       demo ? readStore("conversations", initial) : [],
     ),
@@ -322,6 +373,8 @@ export default function Workspace() {
     // Every chosen reference image. Clean Uploads can hold one back (no url)
     // until the user keeps its original; `attachments` are the ones Send uses.
     [imageItems, setAttachments] = useState([]),
+    // The composer image open in the redaction editor, if any.
+    [redacting, setRedacting] = useState(null),
     [documents, setDocuments] = useState([]),
     [media, setMedia] = useState(() => (demo ? readStore("media", []) : [])),
     [dialog, setDialog] = useState(null),
@@ -336,6 +389,8 @@ export default function Workspace() {
     // only reflects a choice made in this session rather than a stored one.
     [retentionDays, setRetentionDays] = useState(null),
     [webSearch, setWebSearch] = useState(false),
+    // Deep Research: null (off), "quick" or "thorough".
+    [researchDepth, setResearchDepth] = useState(null),
     [replyBudget, setReplyBudget] = useState(8192),
     [veilOn, setVeilOn] = useState(() => loadVeilOn()),
     [veilWords, setVeilWords] = useState(() => loadVeilWords()),
@@ -357,6 +412,13 @@ export default function Workspace() {
     // as ciphertext, never saved on the server (see src/SealedMode.jsx).
     [sealed, setSealed] = useState(false),
     [sealedModelId, setSealedModelId] = useState(""),
+    // Blind Compare: on or off, the two models (or a surprise pair), Your
+    // rankings, and the turn whose vote is being sent.
+    [blindOn, setBlindOn] = useState(false),
+    [blindPair, setBlindPair] = useState([]),
+    [blindSurprise, setBlindSurprise] = useState(false),
+    [blindRankings, setBlindRankings] = useState(false),
+    [blindVoting, setBlindVoting] = useState(null),
     [voiceOpen, setVoiceOpen] = useState(false),
     [readAloud, setReadAloud] = useState(null),
     // Double-check This: the index of the answer whose second-opinion panel is open.
@@ -420,10 +482,47 @@ export default function Workspace() {
     "tools",
     "routines",
     "projects",
-  ].includes(mode);
+  ].includes(mode) ||
+    // Local Sheets' page: unknown until it's released (config still loading
+    // counts as known, so it doesn't flash "not found").
+    (mode === "sheets" && (!config || isReleased(config, "sheets")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
+  // Injection Shield (src/Shield.jsx, src/shield.js): files attached to a
+  // text message are scanned in this browser. What's sent is each file's
+  // text as the user chose (invisible characters out by default, flagged
+  // lines out if asked) and, by default, a notice that the files are data.
+  // Nothing about a finding leaves the browser.
+  const shieldView = useShieldLive(config);
+  const shieldOn = shieldView && !demo && textMode;
+  const [shieldPrefs, setShieldPrefs] = useState({}),
+    [sendAsData, setSendAsData] = useState(true),
+    [shieldOpen, setShieldOpen] = useState(null),
+    [pasteShield, setPasteShield] = useState(null);
+  const shieldScans = useMemo(() => {
+    const scans = new Map();
+    if (shieldOn) for (const d of documents) scans.set(d.id, scanDocument(d));
+    return scans;
+  }, [shieldOn, documents]);
+  const sentDocuments = useMemo(
+    () =>
+      shieldOn
+        ? documents.map((d) => shieldDocument(d, shieldScans.get(d.id), shieldPrefs[d.id]))
+        : documents,
+    [shieldOn, documents, shieldScans, shieldPrefs],
+  );
+  const documentsAsData = shieldOn && sendAsData && documents.length > 0;
+  // Each message starts again with "Send as data" on. A file's own choices
+  // are kept by its id, so a send that's refused and put back keeps them.
+  useEffect(() => {
+    if (documents.length) return;
+    setSendAsData(true);
+    setShieldOpen((o) => (o?.doc ? null : o));
+  }, [documents.length]);
+  useEffect(() => {
+    if (!prompt) setPasteShield(null);
+  }, [prompt]);
   // Projects (src/Projects.jsx): the account's projects, and the one the open
   // chat is in (or a new chat was started in). Signed in only, never the demo.
   const projectsLive = !demo && !!user && projectsReleased(config);
@@ -449,6 +548,11 @@ export default function Workspace() {
   const sealedAvailable =
     !demo && !!user && sealedLiveFor(config) && ["chat", "code"].includes(mode);
   const sealedOn = sealedAvailable && sealed;
+  // Link Reader (src/LinkReader.jsx): "Read this page" for a link in the
+  // prompt, in every text mode, once it and Documents (whose attach format
+  // it uses) are released. Signed in only: the server does the fetching.
+  const linkCardsLive = isReleased(config, "linkreader") && isReleased(config, "documents");
+  const linkLive = !demo && !!user && textMode && linkCardsLive;
   const sealedModels = useMemo(
     () => models.filter((m) => m.type === "chat" && m.sealed),
     [models],
@@ -464,6 +568,10 @@ export default function Workspace() {
   // sealed, and nothing in it is sent anywhere unsealed.
   const sealedThread = messages.some((x) => x.sealed);
   const uncensoredIds = config?.releases?.uncensoredModels || [];
+  // Blind Compare (src/Blind.jsx): chat, code and Uncensored, signed in,
+  // never in the demo, a shared chat or Sealed Mode.
+  const blindLive = !demo && !!user && blindReleased(config) && textMode;
+  const blindActive = blindLive && blindOn && !sealedOn && !sealedThread && !shared;
   // Demo shows the catalog for illustration; live mode offers only models the service can run.
   // Private mode narrows the text modes further, to private, callable models
   // in the current section.
@@ -572,6 +680,8 @@ export default function Workspace() {
     ? ""
     : sealedOn || sealedThread
       ? "Sealed Mode: memory isn't used or saved in this chat."
+      : blindActive
+      ? "Blind: memory isn't used when two models answer."
       : privateMode
       ? "Private Mode: memory isn't used or saved in this chat."
       : ephemeral
@@ -624,6 +734,16 @@ export default function Workspace() {
     instructions: sentInstructions,
   }).request);
   const finderModels = needsVision ? visibleModels.filter((m) => m.vision) : visibleModels;
+  // Blind Compare's models here: this section's, private ones in Private
+  // Mode, and ones that read images when the chat has some.
+  const blindModels = blindPool(models, {
+    mode,
+    privateMode,
+    needsVision,
+    uncensored: uncensoredIds,
+  });
+  const blindPoolKey = blindModels.map((m) => m.id).join(" ");
+  const blindTargets = blindPair.map((id) => models.find((m) => m.id === id)).filter(Boolean);
   const finderOpts = useMemo(
     () => ({ mode, privateMode: textMode && privateMode, needsVision, avoidTraining: trainingLive && !privateMode, demo }),
     [mode, textMode, privateMode, needsVision, trainingLive, demo],
@@ -702,6 +822,7 @@ export default function Workspace() {
     setQuote(null);
     setPrompt(location.state?.prompt || "");
     setWebSearch(!!location.state?.web);
+    setResearchDepth(null);
     setAttachments([]);
     setDocuments([]);
     setCurrent(null);
@@ -714,7 +835,15 @@ export default function Workspace() {
     vaultSavedRef.current = "";
     setVaultChatId(null);
     setProjectId(null);
+    setBlindOn(false);
   }, [mode, demo]);
+  // Blind Compare: keep the pair to models still offered here (Private Mode,
+  // images in the chat and the section all narrow it).
+  useEffect(() => {
+    if (!blindActive || pairInPool(blindPair, blindModels)) return;
+    setBlindPair(defaultPair(blindModels, selected));
+    setBlindSurprise(false);
+  }, [blindActive, blindPoolKey]);
   // Share-to-ANONYMA: prefill the composer from a share_target request
   // (public/manifest.webmanifest) and drop the params from the URL. Runs
   // after the reset above so a shared prompt survives it.
@@ -1149,6 +1278,8 @@ export default function Workspace() {
     if (next) {
       setPrivateMode(false);
       setWebSearch(false);
+      setBlindOn(false);
+      setResearchDepth(null);
       setVoiceOpen(false);
       setAttachments([]);
       setDeviceOnly(vaultLive && vault.unlocked);
@@ -1274,7 +1405,7 @@ export default function Workspace() {
     setAttachments((prev) => [...prev, ...prepared.filter((p) => !p.error)]);
   }
   // "@model-id your message" sends that one message to another chat model.
-  const mentionQuery = textMode && !sealedOn
+  const mentionQuery = textMode && !sealedOn && !blindActive
     ? prompt.match(/^@([^\s]*)$/)?.[1]
     : undefined;
   const mentionMatches =
@@ -1285,7 +1416,7 @@ export default function Workspace() {
             (m.id + " " + m.name).toLowerCase().includes(mentionQuery.toLowerCase()),
           )
           .slice(0, 6);
-  const mention = textMode && !sealedOn
+  const mention = textMode && !sealedOn && !blindActive
     ? prompt.trim().match(/^@(\S+)\s+([\s\S]+)$/)
     : null;
   const mentioned = mention
@@ -1305,7 +1436,8 @@ export default function Workspace() {
     const { request } = buildChatRequest({
       messages,
       text: sendText,
-      documents,
+      documents: sentDocuments,
+      asData: documentsAsData,
       instructions: instructionsActive ? instructions.body.trim() : "",
       preserveHistory: longAnswersLive,
     });
@@ -1318,7 +1450,7 @@ export default function Workspace() {
     });
     const bytes = ciphertextLength(utf8Length(JSON.stringify(body)));
     return sealedHoldUsd(sealedTarget, bytes, cap) * 1000 * (1 + (Number(config?.markup) || 0) / 100);
-  }, [sealedOn, sealedTarget, messages, sendText, documents, instructionsActive, instructions.body, longAnswersLive, config?.markup]);
+  }, [sealedOn, sealedTarget, messages, sendText, sentDocuments, documentsAsData, instructionsActive, instructions.body, longAnswersLive, config?.markup]);
   const branchesLive = isReleased(config, "branches");
   // Live Preview (src/LivePreview.jsx): Code & Build's Preview tab and a
   // Preview button on HTML blocks in replies. Browser-only and sandboxed.
@@ -1423,7 +1555,8 @@ export default function Workspace() {
       messages,
       text: sendText,
       attachments,
-      documents,
+      documents: sentDocuments,
+      asData: documentsAsData,
       instructions: sentInstructions,
       preserveHistory: longAnswersLive,
       veilWith: veiling
@@ -1447,7 +1580,13 @@ export default function Workspace() {
   // browser. A find blocks Send, and the estimate too, since a quote posts
   // the same text, until the user removes it or confirms "Send anyway".
   const seedLive = seedGuardLive(config) && !demo;
-  const documentTexts = useMemo(() => documents.map((d) => d.text || ""), [documents]);
+  // A page read by Link Reader is public text our server fetched, not the
+  // user's own, so it isn't scanned (the server skips it too). The rest are
+  // the documents as they'll be sent (after Injection Shield's clean-up).
+  const documentTexts = useMemo(
+    () => sentDocuments.filter((d) => d.source !== "link").map((d) => d.text || ""),
+    [sentDocuments],
+  );
   const promptSeed = useSeedScan(seedLive, sendText);
   const documentSeed = useSeedScan(seedLive && textMode, documentTexts);
   const instructionsSeed = useSeedScan(
@@ -1456,6 +1595,62 @@ export default function Workspace() {
   );
   const seedHit = promptSeed || documentSeed || instructionsSeed;
   const editSeed = useSeedScan(seedLive, editing?.text || "");
+  // Deep Research (src/DeepResearch.jsx): offered where Web is (chat and
+  // code, signed in, never the demo or Sealed Mode).
+  const researchAvailable =
+    !demo && !!user && researchReleased(config) && ["chat", "code"].includes(mode);
+  const researchOn = researchAvailable && !!researchDepth && !sealedOn && !blindActive;
+  // Onchain Explainer: a transaction hash, address or explorer link in the
+  // composer offers "Explain on-chain". Nothing leaves the browser until it's
+  // pressed; then the server looks it up (free, read only) and the facts go
+  // with the message as a Chain facts document, sent like any chat turn.
+  // Not in Sealed Mode, whose relay must never learn what's being asked.
+  const onchainLive =
+    !demo && !!user && onchainReleased(config) && textMode && !sealedOn && !sealedThread &&
+    // Blind Compare and Deep research send their own requests, which
+    // carry no chain facts, so the chip waits until they're off.
+    !blindActive && !researchOn;
+  const onchainHit = useMemo(
+    () => (onchainLive ? detectOnchain(sendText) : null),
+    [onchainLive, sendText],
+  );
+  const onchainKey = onchainHit
+    ? `${onchainHit.kind}:${onchainHit.value}:${onchainHit.chain ?? ""}`
+    : null;
+  const [onchainChoice, setOnchainChoice] = useState("auto");
+  const [onchainLooking, setOnchainLooking] = useState(false);
+  const [onchainError, setOnchainError] = useState("");
+  const [onchainDismissed, setOnchainDismissed] = useState(null);
+  useEffect(() => {
+    setOnchainChoice(onchainHit?.chain ? String(onchainHit.chain) : "auto");
+    setOnchainError("");
+  }, [onchainKey]);
+  const onchainShown = onchainHit && onchainDismissed !== onchainKey ? onchainHit : null;
+  // A seed phrase or key still blocks; a bare 64-hex notice is answered by
+  // choosing to explain it as a transaction.
+  const onchainBlocked = !!seedHit && !isSoft(seedHit);
+  async function explainOnchain() {
+    const hit = onchainShown;
+    if (!hit || busy || onchainLooking || onchainBlocked) return;
+    setOnchainLooking(true);
+    setOnchainError("");
+    let facts;
+    try {
+      const chain = onchainChoice === "auto" ? "auto" : Number(onchainChoice);
+      facts = (
+        await api("/api/onchain/lookup", {
+          method: "POST",
+          body: { kind: hit.kind, value: hit.value, chain },
+        })
+      ).facts;
+    } catch (err) {
+      setOnchainError(err.message);
+      return;
+    } finally {
+      setOnchainLooking(false);
+    }
+    await send(null, null, { allowSeed: !!seedHit, chainFacts: facts });
+  }
   // Credit Estimates: a live estimate beside Send in chat, code and
   // Uncensored, whenever Send would go through. Image, video and Symposium
   // keep their own explicit pricing.
@@ -1473,25 +1668,164 @@ export default function Workspace() {
     !!target?.callable &&
     !!config?.services?.generation &&
     !(privateMode && !target?.private) &&
+    // Blind quotes both of its models instead (below).
+    !blindActive &&
+    // Deep research shows its own maximum instead.
+    !researchOn &&
     // Sealed Mode never posts a prompt for an estimate (it would go unsealed).
     !sealedOn;
   const estimateBody = useMemo(
     () => (autoEstimate ? estimateRequest() : null),
     // Everything estimateRequest reads that can change between renders.
-    [autoEstimate, sendText, sendModel, messages, attachments, documents,
+    [autoEstimate, sendText, sendModel, messages, attachments, sentDocuments, documentsAsData,
       sentInstructions, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive, memoryFacts, mode],
   );
   const estimate = useCreditEstimate(estimateBody);
+  // Blind Compare: each reply's budget fits both models, and the estimate
+  // beside Send is the same request quoted on both, added up.
+  const blindBudget =
+    longAnswersLive && blindTargets.length === 2
+      ? Math.min(...blindTargets.map((m) => replyBudgetFor(m, replyBudget)))
+      : REPLY_BUDGET;
+  const blindReady = blindActive && validPair(blindPair, blindModels);
+  const blindEstimateBody = useMemo(() => {
+    if (!blindReady || seedHit || busy || branching || !sendText || !config?.services?.generation)
+      return null;
+    const veiling = veilOn && isReleased(config, "veil");
+    const { request } = buildChatRequest({
+      messages,
+      text: sendText,
+      attachments,
+      documents,
+      instructions: sentInstructions,
+      preserveHistory: longAnswersLive,
+      veilWith: veiling
+        ? { state: cloneVeilState(veilStateRef.current), words: veilWords }
+        : null,
+    });
+    return { models: blindPair, messages: request, max_tokens: blindBudget };
+  }, [blindReady, seedHit, busy, branching, sendText, messages, attachments, documents,
+    sentInstructions, veilOn, veilWords, longAnswersLive, blindPair.join(" "), blindBudget, config]);
+  const blindEstimate = useBlindEstimate(blindEstimateBody);
+  // The last turn is a comparison still waiting for its vote: the thread
+  // goes on once the person has picked (or called it a tie or both bad).
+  const blindAwaiting = blindLive && canVote(messages.at(-1)?.blind);
   // Cost Compare: from the estimate chip, the same request priced on other
   // models from the picker's pool. Not for an @mention, whose model isn't
   // the chat's to switch.
   const costCompareLive =
     estimatesLive && isReleased(config, "costcompare") && textMode && !demo && !!user;
   const compareBase = costCompareLive && !mentioned ? estimateBody : null;
+  // Injection Shield on a paste: invisible characters come out of every
+  // paste, and a long one (LARGE_PASTE) is checked for instruction-like
+  // phrases. The paste is put in by hand so what lands is exactly what was
+  // scanned; the notice above the composer can undo or act on it while the
+  // pasted text is still there as it landed.
+  function shieldPaste(e) {
+    const raw = e.clipboardData?.getData("text/plain") || "";
+    if (!raw) return;
+    const pasted = raw.replace(/\r\n?/g, "\n");
+    const long = pasted.length >= LARGE_PASTE;
+    const result = scanText(pasted, { phrases: long });
+    if (!result.invisible.total && !result.instructionCount) return;
+    e.preventDefault();
+    const el = e.currentTarget;
+    const start = el.selectionStart ?? prompt.length,
+      end = el.selectionEnd ?? start;
+    const room = Math.max(0, (el.maxLength > 0 ? el.maxLength : Infinity) - (prompt.length - (end - start)));
+    const inserted = cleanText(pasted, result).slice(0, room);
+    setPrompt(prompt.slice(0, start) + inserted + prompt.slice(end));
+    requestAnimationFrame(() => {
+      el.selectionStart = el.selectionEnd = start + inserted.length;
+    });
+    setPasteShield({ result, original: pasted, removed: result.invisible.total, at: start, inserted, long });
+  }
+  // Replaces the pasted text, if it's still there as it landed.
+  function rewritePaste(next, changes = {}) {
+    const p = pasteShield;
+    if (!p) return;
+    if (prompt.slice(p.at, p.at + p.inserted.length) !== p.inserted) {
+      setError("The pasted text has changed since, so Shield left it as it is.");
+      return;
+    }
+    const text = next(p).slice(0, Math.max(0, 48000 - (prompt.length - p.inserted.length)));
+    setPrompt(prompt.slice(0, p.at) + text + prompt.slice(p.at + p.inserted.length));
+    const report = { ...p, inserted: text, ...changes };
+    if (changes.flagged === false) report.result = { ...p.result, instructionCount: 0, instructions: [] };
+    setPasteShield(report.removed || report.result.instructionCount ? report : null);
+  }
+  // A long paste becomes an attached file, so it's scanned like one and sent
+  // as data, and the prompt is left with only what the user typed.
+  function attachPaste() {
+    const p = pasteShield;
+    if (!p) return;
+    if (prompt.slice(p.at, p.at + p.inserted.length) !== p.inserted) {
+      setError("The pasted text has changed since, so Shield left it as it is.");
+      return;
+    }
+    const text = p.removed ? cleanText(p.original, p.result) : p.original;
+    setPrompt(prompt.slice(0, p.at) + prompt.slice(p.at + p.inserted.length));
+    setDocuments((d) =>
+      d.length >= MAX_DOCUMENTS
+        ? d
+        : [...d, { id: uid(), name: "pasted-text.txt", kind: "text", size: null, text, chars: text.length, warning: "" }],
+    );
+    setPasteShield(null);
+  }
+  // Deep Research: only the typed question is sent. Veil is checked on it
+  // with a copy of this chat's map, and anything masked stops the run (the
+  // server refuses it too).
+  const researchVeiling = veilOn && isReleased(config, "veil");
+  const researchVeiled = useMemo(
+    () =>
+      researchOn && researchVeiling && sendText
+        ? veil(sendText, cloneVeilState(veilStateRef.current), veilWords).count
+        : 0,
+    [researchOn, researchVeiling, sendText, veilWords, current],
+  );
+  const researchBlocked = researchOn
+    ? researchBlock({ sealed: sealedOn, sealedThread, teamPays: teamPays.on, veiled: researchVeiled })
+    : null;
+  // The /api/research body (and its quote's): Memory as a chat would send
+  // it, masked by Veil with the live map on Send and a copy for a quote.
+  function researchRequest(live = false) {
+    const { memory } = buildChatRequest({
+      text: sendText,
+      veilWith: researchVeiling
+        ? { state: live ? veilStateRef.current : cloneVeilState(veilStateRef.current), words: veilWords }
+        : null,
+      memoryFacts,
+    });
+    return {
+      model: sendModel,
+      question: sendText,
+      depth: researchDepth,
+      mode,
+      ...(ephemeral ? { ephemeral: true } : current ? { conversationId: current } : {}),
+      ...(privateMode ? { private: true } : {}),
+      ...(memory ? { memory } : {}),
+      ...(trailLive ? { veil_masked: researchVeiling ? 0 : null } : {}),
+      ...(projectsLive ? projectRequestFields(project, { ephemeral, conversationId: current }) : {}),
+    };
+  }
+  const researchQuote =
+    researchOn &&
+    !researchBlocked &&
+    !seedHit &&
+    !busy &&
+    !!sendText &&
+    !!target?.callable &&
+    !!config?.services?.generation &&
+    !(privateMode && !target?.private);
+  const researchQuoteBody = useMemo(
+    () => (researchQuote ? researchRequest() : null),
+    [researchQuote, sendText, sendModel, researchDepth, mode, ephemeral, privateMode, current, memoryFacts, veilWords, trailLive, project?.id],
+  );
+  const researchEstimate = useResearchEstimate(researchQuoteBody);
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
   // history before it and the conversation to add to, instead of the composer.
   // `allowSeed` is Seed Guard's confirmed "Send anyway".
-  async function send(e, redo = null, { allowSeed = false } = {}) {
+  async function send(e, redo = null, { allowSeed = false, chainFacts = null } = {}) {
     e?.preventDefault?.();
     if (!(redo ? redo.content.trim() : prompt.trim()) || busy || (!redo && branchFlight.current?.pending)) return;
     // Seed Guard: a new or edited message waits for "Send anyway" (the notice
@@ -1510,7 +1844,11 @@ export default function Workspace() {
       seedFound?.kind === "seed" ||
       (seedLive && !!redo && scanSecrets(redo.content)?.kind === "seed");
     if (!redo && attachments.length !== imageItems.length) {
-      setError("Metadata couldn't be removed from an image. Tick Keep original to send it as it is, or remove it.");
+      setError(
+        redactLive
+          ? "Metadata couldn't be removed from an image. Redact it to send a redrawn copy, tick Keep original to send it as it is, or remove it."
+          : "Metadata couldn't be removed from an image. Tick Keep original to send it as it is, or remove it.",
+      );
       return;
     }
     // Sealed Mode has its own send; a sealed thread never goes on unsealed.
@@ -1519,6 +1857,15 @@ export default function Workspace() {
       setError("This chat was sealed. Turn on Sealed Mode to continue it, or start a new chat.");
       return;
     }
+    // Blind Compare: the thread goes on once the last comparison is voted
+    // on, and a new message with Blind on goes to both models.
+    if (!redo && blindAwaiting) {
+      setError("Vote on the replies above to continue.");
+      return;
+    }
+    if (blindActive && !redo) return sendBlind(allowSeedPhrase);
+    // Deep research runs a new question; an edit or regenerate is a chat.
+    if (researchOn && !redo) return sendResearch();
     const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
     const effectiveModel = redo ? redoModel || selected : target;
     const requestVision = redo
@@ -1728,7 +2075,14 @@ export default function Workspace() {
       messages: redo ? redo.base : messages,
       text,
       attachments: redo ? (redo.images || []).map((url) => ({ url })) : attachments,
-      documents: redo ? [] : documents,
+      // Onchain Explainer's facts lead the attached documents, so the
+      // budget never trims them. The rest are as Injection Shield sends them.
+      documents: redo
+        ? []
+        : chainFacts
+          ? [chainFactsDocument(chainFacts, { lang: getLanguage() }), ...sentDocuments]
+          : sentDocuments,
+      asData: !redo && documentsAsData,
       instructions: sentInstructions,
       preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
@@ -1919,6 +2273,318 @@ export default function Workspace() {
       }
     }
   }
+  // Blind Compare's send (server/routes/blind.js): the request is built as
+  // any chat's is (documents, standing and project instructions, Veil), then
+  // goes to both models at once. The server picks the order and keeps the
+  // names and each reply's cost to itself until the vote. Memory and web
+  // search aren't used; off the record, Private Mode and projects apply.
+  async function sendBlind(allowSeedPhrase) {
+    if (!config?.services?.generation) {
+      setError("This model is not currently available for generation.");
+      return;
+    }
+    if (!validPair(blindPair, blindModels)) {
+      setError("Choose two different models to compare.");
+      return;
+    }
+    if (deviceOnly && !vault.unlocked) {
+      setError("Unlock Device Vault to keep chatting on this device only.");
+      return;
+    }
+    setError("");
+    setInfo("");
+    setReceipt(null);
+    setVeilNote(null);
+    // Each side has its own charge record; the round shows its total.
+    if (chatControlLive) {
+      charge.reset();
+      reading.reset();
+    }
+    setBusy(true);
+    controller.current = new AbortController();
+    const veiling = veilOn && isReleased(config, "veil");
+    const built = buildChatRequest({
+      messages,
+      text: sendText,
+      attachments,
+      // As Injection Shield sends them (cleaned, and "as data" when on).
+      documents: sentDocuments,
+      asData: documentsAsData,
+      instructions: sentInstructions,
+      preserveHistory: longAnswersLive,
+      veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
+    });
+    if (veiling) {
+      if (!deviceOnly) saveVeilState(veilKeyRef.current, veilStateRef.current);
+      if (built.masked)
+        setVeilNote({
+          count: built.masked,
+          entries: built.tags.map((tag) => ({ tag, value: veilStateRef.current.map[tag] })),
+        });
+    }
+    const before = { messages, prompt, attachments, documents };
+    setPrompt("");
+    setAttachments([]);
+    setDocuments([]);
+    const conversationId = current;
+    let liveId = conversationId,
+      messageId = null,
+      heard = false,
+      blind = pendingBlind();
+    const place = () =>
+      setMessages([
+        ...built.next,
+        {
+          role: "assistant",
+          content: blindText(blind),
+          blind,
+          ...(messageId ? { id: messageId } : {}),
+          ...(blind.credits != null ? { credits: blind.credits } : {}),
+        },
+      ]);
+    place();
+    try {
+      await streamChat(
+        {
+          models: blindPair,
+          messages: built.request,
+          ...(ephemeral ? { ephemeral: true } : { conversationId }),
+          mode,
+          max_tokens: blindBudget,
+          requestId: uid(),
+          ...(privateMode ? { private: true } : {}),
+          ...(trailLive ? { veil_masked: veiling ? built.masked : null } : {}),
+          ...(allowSeedPhrase ? { allow_seed_phrase: true } : {}),
+          ...(projectsLive ? projectRequestFields(project, { ephemeral, conversationId }) : {}),
+        },
+        (event) => {
+          heard = true;
+          if (event.error)
+            throw new ApiError(
+              event.error.message || "The stream ended with an error.",
+              200,
+              event.error.code,
+              event,
+            );
+          if (event.blind?.conversationId) liveId = event.blind.conversationId;
+          if (event.blind?.message_id) messageId = event.blind.message_id;
+          blind = applyBlindEvent(blind, event);
+          place();
+        },
+        controller.current.signal,
+        "/api/blind",
+      );
+      setCurrent(liveId);
+    } catch (err) {
+      setCurrent(liveId);
+      // Refused before either model started (out of credits, a spending
+      // limit, Seed Guard, a model that can't take it): nothing was charged,
+      // so the composer comes back as it was.
+      if (!heard && err?.status >= 400) {
+        setMessages(before.messages);
+        setPrompt(before.prompt);
+        setAttachments(before.attachments);
+        setDocuments(before.documents);
+      } else {
+        // Stopped or cut off: what arrived stays, with nothing to vote on.
+        const cut = (x) => ({ ...x, status: x.status === "streaming" ? "stopped" : x.status });
+        blind = { ...blind, pending: false, a: cut(blind.a), b: cut(blind.b) };
+        place();
+      }
+      setError(
+        err.name === "AbortError"
+          ? "Stopped. A reply that had started may be charged for what it used; check your activity."
+          : err.message,
+      );
+    } finally {
+      if (veilOn && liveId && liveId !== veilKeyRef.current) {
+        moveVeilState(veilKeyRef.current, liveId);
+        veilKeyRef.current = liveId;
+      }
+      setBusy(false);
+      refresh();
+      api("/api/conversations")
+        .then((r) => setAll(recentConversations(r.data)))
+        .catch(() => {});
+      if (project && !ephemeral) projects.reload();
+    }
+  }
+  // Vote, then reveal: the names, what each reply cost and how fast it was.
+  async function voteBlind(index, outcome) {
+    const m = messages[index];
+    if (!m?.blind?.token || blindVoting != null) return;
+    setBlindVoting(index);
+    setError("");
+    try {
+      const r = await api("/api/blind/votes", {
+        method: "POST",
+        body: { round: m.blind.token, outcome, ...(m.id ? { message_id: m.id } : {}) },
+      });
+      setMessages((prev) =>
+        prev.map((x, j) => (j === index && x.blind ? revealTurn(x, r.reveal) : x)),
+      );
+      if (!r.counted) setInfo("This comparison already had a vote. The first one stands.");
+    } catch (e) {
+      if (["blind_vote_closed", "blind_round_not_found"].includes(e.code))
+        setMessages((prev) => prev.map((x, j) => (j === index && x.blind ? closeTurn(x) : x)));
+      setError(e.message);
+    } finally {
+      setBlindVoting(null);
+    }
+  }
+  // After the reveal: go on with one model (Blind off), or keep comparing
+  // the same two in a fresh random order.
+  function continueWith(id) {
+    setBlindOn(false);
+    if (finderLive) chooseModel({ model: id });
+    else {
+      setModel(id);
+      setQuote(null);
+    }
+    setInfo(`Blind is off. Your next message goes to ${modelName(id)}.`);
+    promptBox.current?.focus();
+  }
+  function keepComparing(reveal) {
+    setBlindOn(true);
+    setWebSearch(false);
+    setResearchDepth(null);
+    if (reveal?.a?.model && reveal?.b?.model) {
+      setBlindPair([reveal.a.model, reveal.b.model]);
+      setBlindSurprise(false);
+    }
+    promptBox.current?.focus();
+  }
+  function toggleBlind() {
+    if (blindOn) return setBlindOn(false);
+    setBlindOn(true);
+    setWebSearch(false);
+    // Blind and Deep research are one or the other.
+    setResearchDepth(null);
+    if (!pairInPool(blindPair, blindModels)) {
+      setBlindPair(defaultPair(blindModels, selected));
+      setBlindSurprise(false);
+    }
+  }
+  function surpriseBlind() {
+    const pick = surprisePair(blindModels, selected, secureRandom);
+    if (pick) {
+      setBlindPair(pick);
+      setBlindSurprise(true);
+    }
+  }
+  // Deep research's send: the question alone, run by /api/research, with a
+  // live progress panel in the reply until the report arrives. A refusal
+  // before anything ran puts the question back; Stop keeps what finished.
+  async function sendResearch() {
+    if (!user) {
+      setError("Sign in to start generating, or open the demo.");
+      return;
+    }
+    if (!target?.callable || !config?.services?.generation) {
+      setError("This model is not currently available for generation.");
+      return;
+    }
+    if (privateMode && !target?.private) {
+      setError("Choose a private model, or turn off Private mode.");
+      return;
+    }
+    if (deviceOnly && !vault.unlocked) {
+      setError("Unlock Device Vault to keep chatting on this device only.");
+      return;
+    }
+    if (researchBlocked) {
+      setError(researchBlocked);
+      return;
+    }
+    setError("");
+    setInfo("");
+    setReceipt(null);
+    setVeilNote(null);
+    // Chat Control's charge panel follows chat requests; a run shows its own.
+    if (chatControlLive) charge.reset();
+    setBusy(true);
+    controller.current = new AbortController();
+    const requestId = uid();
+    const body = { ...researchRequest(true), requestId };
+    if (researchVeiling && !deviceOnly) saveVeilState(veilKeyRef.current, veilStateRef.current);
+    const question = sendText;
+    const requestModel = target.id;
+    const before = { messages, prompt };
+    setPrompt("");
+    const next = [...messages, { role: "user", content: question }];
+    const reply = (extra) => ({ role: "assistant", model: requestModel, requestId, ...extra });
+    setMessages([...next, reply({ content: "", research: { live: true, stage: "planning", depth: body.depth, questions: [], results: [] } })]);
+    let liveId = ephemeral ? null : current;
+    const sendingPrivate = privateMode;
+    try {
+      const done = await runResearch(
+        body,
+        (state) => {
+          if (state.conversationId) liveId = state.conversationId;
+          setMessages([...next, reply({ content: "", research: state })]);
+        },
+        controller.current.signal,
+      );
+      if (done.conversationId) liveId = done.conversationId;
+      const a = done.anonyma || {};
+      setMessages([
+        ...next,
+        reply({
+          content: done.message?.text || "",
+          citations: done.message?.citations || [],
+          research: done.message?.research,
+          finishReason: a.finish_reason || "stop",
+          credits: a.credits_charged,
+          ...(a.private ? { private: a.private, masked: 0 } : {}),
+          ...(a.privacy ? { privacy: a.privacy } : {}),
+          ...(a.memory ? { memoryUsed: a.memory } : {}),
+        }),
+      ]);
+      // The run's total is under the report; the plain receipt line shows it
+      // too where Chat Control's charge panel isn't live.
+      if (!chatControlLive) setReceipt(a);
+      setCurrent(liveId);
+    } catch (err) {
+      const state = err.state || err.data?.state;
+      if (err.data?.conversationId) liveId = err.data.conversationId;
+      if (err.name === "AbortError") {
+        // Stopped: the finished steps stay charged; show what they found.
+        const kept = stoppedReply(state || { depth: body.depth });
+        setMessages(kept.content ? [...next, reply({ ...kept, finishReason: "interrupted" })] : next);
+        if (!chatControlLive) setReceipt({ credits_charged: kept.research.credits_charged, request_id: requestId });
+        setInfo(`Stopped. Only finished steps were charged: ${formatCredits(kept.research.credits_charged) || "0"} credits.`);
+        setCurrent(liveId);
+      } else if (err.data?.refused) {
+        // Refused before anything ran (balance, a limit, Veil, Seed Guard, a
+        // rate limit): nothing was charged, so the question comes back.
+        setMessages(before.messages);
+        setPrompt(before.prompt);
+        setError(err.message);
+      } else {
+        const m = err.data?.message;
+        const a = err.data?.anonyma || {};
+        setMessages(
+          m?.text
+            ? [...next, reply({ content: m.text, citations: m.citations || [], research: m.research, finishReason: "interrupted", credits: a.credits_charged, ...(a.privacy ? { privacy: a.privacy } : {}), ...(sendingPrivate ? { private: { privacy: "zdr", stored: false }, masked: 0 } : {}) })]
+            : next,
+        );
+        if (a.credits_charged != null && !chatControlLive) setReceipt(a);
+        setError(err.message);
+        setCurrent(liveId);
+      }
+    } finally {
+      if (researchVeiling && liveId && liveId !== veilKeyRef.current && !deviceOnly) {
+        moveVeilState(veilKeyRef.current, liveId);
+        veilKeyRef.current = liveId;
+      }
+      setBusy(false);
+      refresh();
+      api("/api/conversations")
+        .then((r) => setAll(recentConversations(r.data)))
+        .catch(() => {});
+      if (project && !ephemeral) projects.reload();
+    }
+  }
   // Sealed Mode's send. The request is built as any chat's is (documents read
   // in this browser, standing instructions, Veil), then sealed here to the
   // verified enclave and relayed as ciphertext. The enclave is verified again
@@ -1950,7 +2616,8 @@ export default function Workspace() {
     const built = buildChatRequest({
       messages: redo ? redo.base : messages,
       text,
-      documents: redo ? [] : documents,
+      documents: redo ? [] : sentDocuments,
+      asData: !redo && documentsAsData,
       instructions: instructionsActive ? instructions.body.trim() : "",
       preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
@@ -2274,6 +2941,8 @@ export default function Workspace() {
         return setLanguage(language === "zh" ? "en" : "zh");
       case "find-in-chat":
         return find.show();
+      case "privacy-screen":
+        return hideScreen();
       default:
         if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
     }
@@ -2336,6 +3005,8 @@ export default function Workspace() {
     );
   return (
     <main id="main" className="app-shell">
+      {/* Privacy Screen: Esc twice or Hide covers the page (and idle locks it). */}
+      <PrivacyScreen config={config} user={user} />
       <AppSidebar
         active={mode}
         demo={demo}
@@ -2478,6 +3149,7 @@ export default function Workspace() {
                 tools: "Research, Writing & Calculators",
                 routines: "Routines",
                 projects: "Projects",
+                sheets: "Sheets",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -2513,6 +3185,7 @@ export default function Workspace() {
             {paletteLive && (
               <PaletteButton onOpen={() => palette.setOpen(true)} apple={palette.apple} />
             )}
+            <HideScreenButton config={config} user={user} />
             <Link
               to={"/account/credits" + (demo ? "?demo=1" : "")}
               className="balance-chip"
@@ -2647,7 +3320,13 @@ export default function Workspace() {
               }
             />
           ) : mode === "routines" ? (
-            <Routines key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} />
+            <Routines key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} markdown={shieldView ? shieldMarkdown() : undefined} />
+          ) : mode === "sheets" ? (
+            isReleased(config, "sheets") && (
+              <Suspense fallback={<p className="sheets-loading">Opening Sheets…</p>}>
+                <Sheets key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
           ) : mode === "tools" ? (
             <TaskTools key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
           ) : mode === "collab" ? (
@@ -2717,20 +3396,35 @@ export default function Workspace() {
                           ? parseDocumentBlocks(m.content)
                           : { text: m.content, documents: [] };
                       const hasDocuments = parsed.documents.length > 0;
+                      // Onchain Explainer's facts are drawn as a card, not a chip.
+                      const chainDocs = onchainReleased(config)
+                        ? parsed.documents.filter(isChainFactsDocument)
+                        : [];
+                      const otherDocs = chainDocs.length
+                        ? parsed.documents.filter((d) => !chainDocs.includes(d))
+                        : parsed.documents;
                       const shown =
                         parsed.text || (hasDocuments ? "" : m.interrupted && chatControlLive ? "Reply interrupted. Check charge status below." : "Preparing…");
                       const body = (
-                        <ReactMarkdown
+                        <ReplyMarkdown
+                          // Math & Diagrams: only replies are typeset or drawn.
+                          rich={m.role === "assistant"}
                           remarkPlugins={[
                             remarkGfm,
                             // Re-runs on every render (incl. mid-stream) so a
                             // [TAG_n] split across chunks resolves once whole.
                             [veilRemarkPlugin, { map: veilStateRef.current.map }],
                           ]}
-                          components={m.role === "assistant" ? htmlPreview.components : undefined}
+                          components={
+                            shieldView
+                              ? shieldMarkdown(m.role === "assistant" ? htmlPreview.components : null)
+                              : m.role === "assistant"
+                                ? htmlPreview.components
+                                : undefined
+                          }
                         >
                           {shown}
-                        </ReactMarkdown>
+                        </ReplyMarkdown>
                       );
                       return (
                       <article
@@ -2744,7 +3438,8 @@ export default function Workspace() {
                           m.role === "assistant"
                             ? " streaming"
                             : "") +
-                          (highlight && m.id === highlight ? " bookmark-target" : "")
+                          (highlight && m.id === highlight ? " bookmark-target" : "") +
+                          (m.research && researchAvailable ? " research-report" : "")
                         }
                       >
                         <div className="message-avatar">
@@ -2766,12 +3461,31 @@ export default function Workspace() {
                                 : "You"
                               : "ANONYMA"}
                             {m.sample && <span>PREPARED EXAMPLE</span>}
+                            {m.blind && <span>BLIND COMPARE</span>}
                             {m.role === "assistant" && m.model && !m.sample && (
                               <span className="model-tag">
                                 {models.find((x) => x.id === m.model)?.name || m.model}
                               </span>
                             )}
                           </div>
+                          {m.blind ? (
+                            <BlindTurn
+                              blind={m.blind}
+                              last={i === messages.length - 1}
+                              busy={busy}
+                              voting={blindVoting != null || !blindLive}
+                              veilMap={veilStateRef.current.map}
+                              trailLive={trailLive}
+                              receiptsLive={isReleased(config, "receipts")}
+                              models={models}
+                              onVote={(outcome) => voteBlind(i, outcome)}
+                              onContinue={continueWith}
+                              onKeepComparing={() => keepComparing(m.blind.reveal)}
+                              Markdown={ReplyMarkdown}
+                              markdown={shieldView ? shieldMarkdown() : undefined}
+                            />
+                          ) : (
+                          <>
                           {/* The typed text is user content, so it stays
                               untranslated; with documents attached only it is
                               fenced off, leaving the chips' labels to the
@@ -2780,16 +3494,26 @@ export default function Workspace() {
                             className="markdown"
                             data-i18n={m.content && !hasDocuments ? "off" : undefined}
                           >
-                            {hasDocuments ? (
+                            {m.research?.live ? (
+                              <ResearchProgress research={m.research} />
+                            ) : hasDocuments ? (
                               <div className="document-prompt" data-i18n="off">
                                 {body}
                               </div>
                             ) : (
                               body
                             )}
-                            {hasDocuments && (
+                            {otherDocs.length > 0 && (
                               <MessageDocuments
-                                documents={parsed.documents}
+                                documents={otherDocs}
+                                veilMap={veilStateRef.current.map}
+                                asData={shieldReleased(config) && parsed.asData}
+                                linkCards={linkCardsLive}
+                              />
+                            )}
+                            {chainDocs.length > 0 && (
+                              <MessageChainFacts
+                                documents={chainDocs}
                                 veilMap={veilStateRef.current.map}
                               />
                             )}
@@ -2806,7 +3530,14 @@ export default function Workspace() {
                               />
                             ))}
                           </div>
-                          {m.citations?.length > 0 && (
+                          {researchAvailable && m.role === "assistant" && m.research && !m.research.live && (
+                            <ResearchDetails
+                              research={m.research}
+                              citations={m.citations}
+                              trail={trailLive}
+                            />
+                          )}
+                          {m.citations?.length > 0 && !(researchAvailable && m.research) && (
                             <div className="citations">
                               <span>Sources</span>
                               {m.citations.map((c) => (
@@ -2831,6 +3562,8 @@ export default function Workspace() {
                               <p data-i18n="off">{m.reasoning}</p>
                             </details>
                           )}
+                          </>
+                          )}
                           {m.role === "assistant" && m.private && (
                             <PrivateReplyNote info={m.private} masked={m.masked} />
                           )}
@@ -2848,10 +3581,12 @@ export default function Workspace() {
                               receiptsLive={isReleased(config, "receipts")}
                             />
                           )}
-                          {m.role === "assistant" && m.content && (
+                          {m.role === "assistant" && m.content && !m.blind && (
                             <CopyButton text={m.content} />
                           )}
-                          {longAnswersLive && m.role === "assistant" && completionNotice(m) && (
+                          {/* A Deep research report says so itself when it was cut short;
+                              a continuation would be a chat, not more research. */}
+                          {longAnswersLive && m.role === "assistant" && !m.blind && !m.research && completionNotice(m) && (
                             <div className="fine-print" role="status">
                               <p>{completionNotice(m)}</p>
                               {i === messages.length - 1 && !busy && (m.content || m.reasoning) && (
@@ -2864,7 +3599,7 @@ export default function Workspace() {
                             </div>
                           )}
                           {!demo && isReleased(config, "voice") && !sealedOn && !sealedThread &&
-                            m.role === "assistant" && m.content && !busy && (
+                            m.role === "assistant" && m.content && !m.blind && !busy && (
                             <button type="button" className="small-button"
                               onClick={() => setReadAloud(m.content)}>
                               Read aloud
@@ -2930,7 +3665,7 @@ export default function Workspace() {
                                 </button>
                               )}
                               {rememberButton(m)}
-                              {m.role === "assistant" && m.content && (
+                              {m.role === "assistant" && m.content && !m.blind && !m.research && (
                                 <button type="button" onClick={() => rewind(i, "regenerate")}>
                                   Regenerate
                                 </button>
@@ -2961,6 +3696,7 @@ export default function Workspace() {
                           {doubleCheckLive &&
                             m.role === "assistant" &&
                             m.content &&
+                            !m.blind &&
                             m.model &&
                             !m.sample &&
                             !(busy && i === messages.length - 1) &&
@@ -2983,6 +3719,7 @@ export default function Workspace() {
                                 onClose={() => setChecking(null)}
                                 refresh={refresh}
                                 seedGuard={seedLive}
+                                shield={shieldView}
                               />
                             ) : (
                               <button
@@ -3115,6 +3852,40 @@ export default function Workspace() {
                     onLeave={leaveProject}
                   />
                 )}
+                {blindActive && (
+                  <BlindBar
+                    pool={blindModels}
+                    pair={blindPair}
+                    surprise={blindSurprise}
+                    current={selected}
+                    busy={busy}
+                    waiting={blindAwaiting && !busy}
+                    onPick={(pair) => {
+                      setBlindPair(pair);
+                      setBlindSurprise(false);
+                    }}
+                    onSurprise={surpriseBlind}
+                    onChoose={() => setBlindSurprise(false)}
+                    onRankings={() => setBlindRankings(true)}
+                    notes={[
+                      privateMode ? "Private mode: zero-data-retention models only." : "",
+                      needsVision ? "Showing models that can read your images." : "",
+                    ].filter(Boolean)}
+                  />
+                )}
+                {blindAwaiting && !blindActive && !busy && (
+                  <Notice>Vote on the replies above to continue.</Notice>
+                )}
+                {researchOn && !busy && (
+                  <ResearchPanel
+                    depth={researchDepth}
+                    onDepth={setResearchDepth}
+                    estimate={researchEstimate}
+                    block={researchBlocked}
+                    attached={imageItems.length + documents.length}
+                    compact={messages.length > 0}
+                  />
+                )}
                 {sealedOn && (
                   <SealedPanel
                     state={enclave.state}
@@ -3169,13 +3940,47 @@ export default function Workspace() {
                 )}
                 <SeedGuardNotice
                   hit={seedHit}
-                  busy={busy}
+                  busy={busy || onchainLooking}
                   onProceed={() => send(null, null, { allowSeed: true })}
+                  onExplain={onchainShown?.kind === "transaction" ? explainOnchain : undefined}
+                  hardOverride={!researchOn}
+                >
+                  {researchOn && (
+                    <p className="seed-guard-note">
+                      Deep research turns your question into web searches, so it never sends this.
+                    </p>
+                  )}
+                </SeedGuardNotice>
+                <OnchainChip
+                  hit={onchainShown}
+                  choice={onchainChoice}
+                  setChoice={setOnchainChoice}
+                  onExplain={explainOnchain}
+                  onDismiss={() => setOnchainDismissed(onchainKey)}
+                  busy={busy}
+                  looking={onchainLooking}
+                  error={onchainError}
+                  blocked={onchainBlocked}
+                  veilOn={veilOn && isReleased(config, "veil")}
                 />
+                {shieldOn && (
+                  <ShieldPasteNotice
+                    report={pasteShield}
+                    onReview={() => setShieldOpen({ paste: true })}
+                    onRemoveFlagged={() => rewritePaste((p) => cleanText(p.original, p.result, { stripInvisible: p.removed > 0, removeFlagged: true }), { flagged: false })}
+                    onAttach={
+                      pasteShield?.long && isReleased(config, "documents") && documents.length < MAX_DOCUMENTS
+                        ? attachPaste
+                        : null
+                    }
+                    onRestore={() => rewritePaste((p) => p.original, { removed: 0 })}
+                    onDismiss={() => setPasteShield(null)}
+                  />
+                )}
                 <form className="composer" onSubmit={send}>
                   {imageItems.length > 0 && (
                     <div className="attachment-list">
-                      {imageItems.map((a, i) => a.clean ? (
+                      {imageItems.map((a, i) => a.clean || redactLive ? (
                         <CleanImageChip
                           key={i}
                           item={a}
@@ -3183,7 +3988,15 @@ export default function Workspace() {
                             setAttachments((p) => p.map((x, j) => (j === i ? withKeep(x, keep) : x)))
                           }
                           onRemove={() => setAttachments((p) => p.filter((_, j) => j !== i))}
-                        />
+                        >
+                          {redactLive && (
+                            <RedactChipTools
+                              item={a}
+                              disabled={busy}
+                              onOpen={() => setRedacting(a)}
+                            />
+                          )}
+                        </CleanImageChip>
                       ) : (
                         <span key={i}>
                           <img src={a.url} alt={a.name} />
@@ -3204,9 +4017,25 @@ export default function Workspace() {
                     textMode &&
                     isReleased(config, "documents") && (
                     <DocumentChips
-                      documents={documents}
+                      documents={sentDocuments}
                       setDocuments={setDocuments}
                       prompt={prompt}
+                      shield={
+                        shieldOn
+                          ? { results: shieldScans, asData: sendAsData, onOpen: (id) => setShieldOpen({ doc: id }) }
+                          : null
+                      }
+                    />
+                  )}
+                  {linkLive && (
+                    <LinkReaderChips
+                      prompt={prompt}
+                      documents={documents}
+                      setDocuments={setDocuments}
+                      disabled={busy}
+                      sealed={sealedOn}
+                      pdfHidden={shieldOn ? pdfHiddenText : null}
+                      onError={setError}
                     />
                   )}
                   <textarea
@@ -3225,6 +4054,7 @@ export default function Workspace() {
                       setPrompt(e.target.value);
                       setSlashIndex(0);
                     }}
+                    onPaste={shieldOn ? shieldPaste : undefined}
                     onKeyDown={(e) => {
                       if (scrollMatches.length) {
                         if (e.key === "Escape") {
@@ -3332,7 +4162,7 @@ export default function Workspace() {
                     }
                   >
                     <div>
-                      {sealedOn ? (
+                      {blindActive ? null : sealedOn ? (
                         <select
                           className="sealed-model"
                           aria-label="Sealed model"
@@ -3418,7 +4248,10 @@ export default function Workspace() {
                       )}
                       </>
                       )}
-                      {(mode === "image" || (selected?.vision && !sealedOn)) && (
+                      {(mode === "image" ||
+                        (blindActive
+                          ? blindTargets.length === 2 && blindTargets.every((m) => m.vision)
+                          : selected?.vision && !sealedOn)) && (
                         <label
                           className="attachment-control"
                           title="Add reference image"
@@ -3452,11 +4285,14 @@ export default function Workspace() {
                           onRefresh={refresh}
                           openRequest={filesRequest}
                           seedGuard={seedLive}
+                          shieldHidden={shieldOn}
                         />
                       )}
                       {["chat", "code"].includes(mode) &&
                         !sealedOn &&
-                        isReleased(config, "search") && (
+                        isReleased(config, "search") &&
+                        // Blind never searches the web.
+                        !blindActive && (
                         <button
                           type="button"
                           className={
@@ -3465,11 +4301,29 @@ export default function Workspace() {
                           }
                           aria-pressed={webSearch}
                           title="Search the web before answering (about 21 credits per search)"
-                          onClick={() => setWebSearch((v) => !v)}
+                          onClick={() => {
+                            // Deep research always searches; the two are one or the other.
+                            if (!webSearch) setResearchDepth(null);
+                            setWebSearch((v) => !v);
+                          }}
                         >
                           <Icon name="globe" size={17} />
                           <span>Web</span>
                         </button>
+                      )}
+                      {researchAvailable && !sealedOn && (
+                        <ResearchToggle
+                          on={researchOn}
+                          disabled={busy}
+                          onToggle={() => {
+                            if (!researchDepth) {
+                              setWebSearch(false);
+                              // Blind and Deep research are one or the other.
+                              setBlindOn(false);
+                            }
+                            setResearchDepth((d) => (d ? null : "quick"));
+                          }}
+                        />
                       )}
                       {["chat", "code"].includes(mode) && !sealedOn && teamPays.toggle}
                       {!demo &&
@@ -3496,6 +4350,14 @@ export default function Workspace() {
                           active={privateMode}
                           onToggle={togglePrivateMode}
                           disabled={sealedOn}
+                        />
+                      )}
+                      {blindLive && !shared && (
+                        <BlindToggle
+                          active={blindActive}
+                          onToggle={toggleBlind}
+                          disabled={busy || sealedOn || sealedThread}
+                          reason={sealedOn || sealedThread ? "Blind isn't available in Sealed Mode" : undefined}
                         />
                       )}
                       {sealedAvailable && (
@@ -3549,7 +4411,7 @@ export default function Workspace() {
                           )}
                         </button>
                       )}
-                      {longAnswersLive && textMode && !demo && !sealedOn && (
+                      {longAnswersLive && textMode && !demo && !sealedOn && !researchOn && (
                         <label className="fine-print">
                           Reply budget
                           <select aria-label="Reply token budget" value={selectedReplyBudget} disabled={busy}
@@ -3652,8 +4514,14 @@ export default function Workspace() {
                       <span role="status">The mentioned model cannot read this conversation’s images. Choose a vision model.</span>
                     )}
                     <span className="send-cluster">
-                    {estimatesLive && textMode && <CreditEstimate state={estimate} />}
-                    {costCompareLive && (
+                    {blindActive ? (
+                      <BlindEstimate state={blindEstimate} />
+                    ) : researchOn ? (
+                      <ResearchEstimate state={researchEstimate} />
+                    ) : (
+                      estimatesLive && textMode && <CreditEstimate state={estimate} />
+                    )}
+                    {costCompareLive && !blindActive && !researchOn && (
                       <CostCompare
                         base={compareBase}
                         mode={mode}
@@ -3694,7 +4562,10 @@ export default function Workspace() {
                         disabled={
                           !prompt.trim() ||
                           !!seedHit ||
-                          (finderLive && !selected && !sealedOn) ||
+                          !!researchBlocked ||
+                          (finderLive && !selected && !sealedOn && !blindActive) ||
+                          (blindActive && !validPair(blindPair, blindModels)) ||
+                          blindAwaiting ||
                           incompatibleMention ||
                           (privateMode && !privateModelsCallable.length) ||
                           // Sealed Mode sends only once the enclave is verified.
@@ -3708,7 +4579,7 @@ export default function Workspace() {
                     </span>
                   </div>
                   {/* Training Labels: under the model picker, never blocking Send. */}
-                  {trainingSelected && !sealedOn && (
+                  {trainingSelected && !sealedOn && !blindActive && (
                     <TrainingNotice
                       model={trainingSelected}
                       alternative={trainingAlternative}
@@ -3880,6 +4751,20 @@ export default function Workspace() {
         </div>
       </div>
       {htmlPreview.dialog}
+      {shieldOn && shieldOpen?.doc && shieldScans.get(shieldOpen.doc) && (
+        <ShieldPanel
+          name={documents.find((d) => d.id === shieldOpen.doc)?.name || ""}
+          result={shieldScans.get(shieldOpen.doc)}
+          prefs={shieldPrefs[shieldOpen.doc] || {}}
+          onPrefs={(p) => setShieldPrefs((all) => ({ ...all, [shieldOpen.doc]: p }))}
+          asData={sendAsData}
+          onAsData={setSendAsData}
+          onClose={() => setShieldOpen(null)}
+        />
+      )}
+      {shieldOn && shieldOpen?.paste && pasteShield && (
+        <ShieldPanel paste result={pasteShield.result} onClose={() => setShieldOpen(null)} />
+      )}
       {dialog && (
         <Modal
           title={
@@ -3985,6 +4870,7 @@ export default function Workspace() {
           )}
         </Modal>
       )}
+      {blindRankings && blindLive && <BlindRankings onClose={() => setBlindRankings(false)} />}
       {scrollsPanel && (
         <ScrollsPanel
           scrolls={scrolls}
@@ -4063,6 +4949,18 @@ export default function Workspace() {
           blocked={share.blocked}
           modelName={shareModelName}
           onClose={() => setShare(null)}
+        />
+      )}
+      {redactLive && redacting && imageItems.includes(redacting) && (
+        <RedactEditor
+          item={redacting}
+          onCancel={() => setRedacting(null)}
+          onApply={(next) => {
+            // The redacted copy takes the original's place; nothing keeps
+            // the original after this.
+            setAttachments((p) => p.map((x) => (x === redacting ? next : x)));
+            setRedacting(null);
+          }}
         />
       )}
       {palette.open && (

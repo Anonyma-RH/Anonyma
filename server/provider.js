@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fail, generationPrice } from "./core.js";
+import { sheetsTestReply } from "./sheets.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -59,6 +60,32 @@ export function providerFailure(status, detail, label = "Provider") {
     "provider_rejected",
   );
 }
+// Local test mode's fixed reply to a question about a diagram or a formula:
+// a sample with inline and display math and a Mermaid flowchart, for trying
+// out Math & Diagrams without a live model.
+const TEST_DIAGRAM_ANSWER = [
+  "**Local test provider** — a fixed sample reply, not a live model.",
+  "",
+  "A prepaid request is held, run, then settled. For a model listed at $p_{in}$ and $p_{out}$ credits per million input and output tokens, the charge is",
+  "",
+  "$$",
+  "\\text{charge} = \\frac{t_{in}\\,p_{in} + t_{out}\\,p_{out}}{10^{6}}",
+  "$$",
+  "",
+  "and whatever was held beyond that goes straight back to your balance.",
+  "",
+  "```mermaid",
+  "flowchart TD",
+  "  A[Your message] --> B{Enough balance?}",
+  "  B -- No --> C[Refused, nothing charged]",
+  "  B -- Yes --> D[Hold the estimate]",
+  "  D --> E[Model replies]",
+  "  E --> F[Charge the tokens used, release the rest]",
+  "```",
+  "",
+  "Nothing is charged for a refused or failed request.",
+].join("\n");
+
 export async function* chatStream(cfg, body, signal, onAccepted) {
   if (cfg.testMode) {
     onAccepted?.();
@@ -95,8 +122,12 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       typeof last === "string"
         ? last
         : last?.find((p) => p.type === "text")?.text || "";
-    const answer = /code|function|javascript|python/i.test(text)
+    // Local Sheets' planner and explainer get a deterministic stand-in.
+    const sheets = sheetsTestReply(body.messages);
+    const answer = sheets !== null ? sheets : /code|function|javascript|python/i.test(text)
       ? "**Local test provider** — this is a deterministic integration fixture, not a live model.\n\n```javascript filename=hello.js\nexport function greet(name) {\n  return `Hello, ${name}!`;\n}\n```\n\nThe file is available in the code panel."
+      : /\b(diagram|equation|formula)s?\b|图表|公式|流程图/i.test(text)
+      ? TEST_DIAGRAM_ANSWER
       : "**Local test provider**\n\nYou asked: " +
         text +
         "\n\nThis response verifies streaming, saved conversations, usage receipts, and the shared credit ledger. Configure your gateway key to receive real model output.";

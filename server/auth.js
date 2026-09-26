@@ -26,6 +26,7 @@ import {
   HOLDER_RESET,
 } from "./holders.js";
 import { createTwoStep } from "./two-step.js";
+import { isReleased } from "./releases.js";
 
 export function sessionCookieOptions(cfg) {
   return {
@@ -475,14 +476,18 @@ export function authRoutes(app, db, cfg, limit) {
   );
   // NYMA Holder Program: unlinking removes the wallet, its holdings and its
   // cycle from the account. An account that signs in only with that wallet must add
-  // an email first, or it could never sign in again.
+  // an email (or a passkey) first, or it could never sign in again.
   app.post(
     "/api/account/wallet/unlink",
     requireUser,
     limit("wallet_unlink", 10, 3600000),
     (req, res) => {
       if (!req.user.wallet) fail(400, "No wallet is linked.", "wallet_not_linked");
-      if (!req.user.password && !req.user.email)
+      // A passkey is another way in, once Passkeys is live.
+      const passkey =
+        isReleased(cfg, "passkeys") &&
+        !!db.prepare("SELECT 1 FROM passkeys WHERE user_id=?").get(req.user.id);
+      if (!req.user.password && !req.user.email && !passkey)
         fail(
           409,
           "This wallet is how you sign in. Link an email first, so you can still sign in without it.",
@@ -498,7 +503,16 @@ export function authRoutes(app, db, cfg, limit) {
       });
     },
   );
-  return { requireUser, publicUser, twoStep, sendEmailCode };
+  // Passkeys (routes/passkeys.js) start sessions and create passwordless
+  // accounts the same way.
+  return {
+    requireUser,
+    publicUser,
+    twoStep,
+    sendEmailCode,
+    startSession: session,
+    newUser,
+  };
 }
 export const canonical = (v) =>
   Array.isArray(v)

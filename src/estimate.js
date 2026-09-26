@@ -5,8 +5,15 @@
 import { toRequestMessage } from "./lib.js";
 import { historyLimit, withStanding } from "./scrolls.js";
 import { fitDocuments, composeMessageWithDocuments } from "./documents.js";
+import { maskOutsideLinks } from "./link-reader.js";
 import { veil } from "./veil.js";
 import { factsToSend } from "./memory.js";
+import { historyText } from "./blind.js";
+
+// A Blind Compare turn goes on as the reply the person picked (see
+// chosenSide in src/blind.js), never both answers or the reveal.
+const asHistory = (m) =>
+  m?.blind ? { role: "assistant", content: historyText(m.blind) } : m;
 
 // The reply budget Send asks for; the estimate quotes the same one.
 export const REPLY_BUDGET = 4096;
@@ -27,22 +34,24 @@ export function buildChatRequest({
   // Memory Across Models: the account's facts when memory applies to this
   // request, else null. Sent as [{ id, text }]; the server adds them.
   memoryFacts = null,
+  // Injection Shield's "Send as data": the documents go with a one-line
+  // notice that their contents are data, not instructions.
+  asData = false,
 }) {
   // Document text (already trimmed to the shared budget) rides along as
   // delimited blocks after the typed prompt; see src/documents.js.
-  const budgeted = documents.length ? fitDocuments(text, documents).documents : [];
-  const content = budgeted.length ? composeMessageWithDocuments(text, budgeted) : text;
-  const rawNext = [
-    ...messages,
-    { role: "user", content, images: attachments.map((a) => a.url) },
-  ];
+  const options = asData ? { asData: true } : {};
+  const budgeted = documents.length ? fitDocuments(text, documents, undefined, options).documents : [];
+  const content = budgeted.length ? composeMessageWithDocuments(text, budgeted, options) : text;
+  const asked = { role: "user", content, images: attachments.map((a) => a.url) };
+  const rawNext = [...messages.map(asHistory), asked];
   // Standing instructions (Scrolls) lead the request as a system message in
   // one of the context slots (see historyLimit).
   let standing = instructions || "";
   const history = preserveHistory ? rawNext.length : historyLimit(standing);
   if (!veilWith)
     return {
-      next: rawNext,
+      next: [...messages, asked],
       request: withStanding(standing, rawNext.slice(-history).map(toRequestMessage)),
       memory: memoryFacts ? factsToSend(memoryFacts) : null,
       masked: 0,
@@ -59,9 +68,11 @@ export function buildChatRequest({
     return r.text;
   };
   if (standing) standing = mask(standing);
+  // A page read by Link Reader is public text, not the user's: Veil masks
+  // the typed question around it and leaves the page as it is.
   const payload = rawNext
     .slice(-history)
-    .map((m) => ({ ...m, content: mask(m.content || "") }));
+    .map((m) => ({ ...m, content: maskOutsideLinks(m.content || "", mask) }));
   return {
     // The just-sent message is displayed the way the server saw it.
     next: [...messages, payload[payload.length - 1]],

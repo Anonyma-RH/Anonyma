@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import { Notice } from "./ui.jsx";
 import { api, streamChat, uid } from "./lib.js";
 import { veilRemarkPlugin } from "./Veil.jsx";
+import { shieldMarkdown } from "./Shield.jsx";
 import { SeedGuardNotice, useSeedScan } from "./SeedGuard.jsx";
 import {
   checkerCandidates,
@@ -39,6 +40,9 @@ export default function DoubleCheck({
   // Seed Guard is live: the question and answer are scanned before the
   // check's estimate or request can send them to another provider.
   seedGuard = false,
+  // Injection Shield is on: remote images in the second opinion wait for
+  // the user, and links show their host.
+  shield = false,
 }) {
   const source = models.find((m) => m.id === answer.model) || {
     id: answer.model,
@@ -260,14 +264,16 @@ export default function DoubleCheck({
               </div>
               <p className="fine-print">{`On the answer from ${result.sourceName}.`}</p>
               <div className="markdown" data-i18n="off">
-                <ReactMarkdown
+                <ReplyMarkdown
+                  rich={!!result.text}
                   remarkPlugins={[
                     remarkGfm,
                     [veilRemarkPlugin, { map: veilMap }],
                   ]}
+                  components={shield ? shieldMarkdown() : undefined}
                 >
                   {result.text || (running ? "Reviewing…" : "")}
-                </ReactMarkdown>
+                </ReplyMarkdown>
               </div>
               {result.receipt?.credits_charged != null && (
                 <p className="fine-print">

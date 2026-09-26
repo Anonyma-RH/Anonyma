@@ -36,12 +36,18 @@ import { projectRoutes } from "./routes/projects.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
+import { linkReaderRoutes } from "./routes/link-reader.js";
+import { blindRoutes } from "./routes/blind.js";
+import { researchRoutes } from "./routes/research.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { sealedRoutes } from "./routes/sealed.js";
 import { accountRoutes } from "./routes/account.js";
 import { wipeRoutes } from "./routes/wipe.js";
 import { twoStepRoutes } from "./routes/two-step.js";
+import { passkeyRoutes } from "./routes/passkeys.js";
+import { createPasskeys } from "./passkeys.js";
+import { unlockRoutes } from "./routes/unlock.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { apiBoostRoutes } from "./routes/api-boost.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
@@ -49,6 +55,7 @@ import { balanceAlertRoutes } from "./routes/balance-alerts.js";
 import { connectRoutes } from "./routes/connect.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { nymaRoutes } from "./routes/nyma.js";
+import { onchainRoutes } from "./routes/onchain.js";
 import { historyLibrary } from "./history-library.js";
 import { previewRoutes } from "./routes/preview.js";
 import { siteRoutes } from "./routes/site.js";
@@ -134,16 +141,31 @@ export function createApp(overrides = {}) {
   // Bookmarks: stars on saved messages (after conversations, whose access
   // rules it uses).
   bookmarkRoutes(ctx);
+  // Link Reader: fetches one public page for a message (reads only).
+  linkReaderRoutes(ctx);
+  // Blind Compare: two chat replies through runChat, and the account's
+  // votes (after projects, which a saved round can be filed in).
+  blindRoutes(ctx);
+  // Deep Research: plan, web searches and a sourced report, each step held
+  // and settled on the ordinary billing path (after Memory and Projects,
+  // whose checks it uses).
+  researchRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).
   ctx.routines = routineRoutes(ctx);
   const worker = createWorker(ctx);
+  // Passkeys' store, for the account export (routes are registered below).
+  ctx.passkeys = createPasskeys(db, cfg);
   accountRoutes(ctx);
   // Panic Wipe: erases the account's content, keeps its credits.
   wipeRoutes(ctx);
   // Two-Step Sign-in's settings (its sign-in step is in authRoutes).
   twoStepRoutes(ctx);
+  // Passkeys: sign-in, passwordless sign-up and Account → Security's list.
+  passkeyRoutes(ctx);
+  // Privacy Screen: the idle lock's unlock check (never touches the session).
+  unlockRoutes(ctx);
   allowanceRoutes(ctx);
   // API Boost: the account's own API rate limit (the limits are applied by
   // the /v1 and /mcp routes, server/api-boost.js).
@@ -156,6 +178,8 @@ export function createApp(overrides = {}) {
   paymentRoutes(ctx);
   // Pay with NYMA: quotes and claims on the wallet-payment address.
   nymaRoutes(ctx);
+  // Onchain Explainer: read-only chain lookups (the explanation is a chat).
+  ctx.onchain = onchainRoutes(ctx).onchain;
   // Live Preview's frame page, before the site's static files and fallback.
   previewRoutes(ctx);
   siteRoutes(ctx);

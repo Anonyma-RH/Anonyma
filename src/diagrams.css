@@ -1,0 +1,160 @@
+/* Math & Diagrams (src/RichMarkdown.jsx): typeset equations and drawn
+   Mermaid diagrams inside replies. Flat cobalt and white with the
+   workspace's 2px corners and hairlines, like the Privacy chip. KaTeX's own
+   stylesheet arrives with its lazy chunk (src/math-katex.js). */
+.rich-block {
+  margin: 14px 0;
+  padding: 0;
+  min-width: 0;
+}
+.rich-block-body {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+}
+.rich-math-block .katex-display {
+  margin: 0.35em 0;
+}
+.rich-math .katex,
+.rich-math-block .katex {
+  color: var(--work-ink, #142343);
+}
+/* TeX KaTeX couldn't read shows as written, not in red. */
+.rich-math .katex-error,
+.rich-math-block .katex-error {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  border-bottom: 1px dotted #0135df;
+  white-space: pre-wrap;
+}
+.rich-diagram {
+  background: #fff;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-top: 2px solid #0135df;
+  border-radius: 2px;
+  padding: 18px 18px 12px;
+}
+.rich-diagram-canvas {
+  overflow-x: auto;
+  text-align: center;
+}
+.rich-diagram-canvas svg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+.rich-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+.rich-tools .small-button.rich-tool,
+.message .rich-tools .small-button.rich-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  min-height: 26px;
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0135df;
+  background: #fff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.rich-tools .small-button.rich-tool:hover,
+.rich-tools .small-button.rich-tool[aria-pressed="true"] {
+  border-color: #0135df;
+  background: #edf2ff;
+}
+.rich-tools .small-button.rich-tool:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 1px;
+}
+.rich-math-block .rich-tools {
+  margin-top: 2px;
+}
+.rich-block-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--work-muted, #68748a);
+}
+.rich-block-note::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  vertical-align: 1px;
+  background: #ffb21c;
+}
+.rich-block-note.quiet::before {
+  background: #0135df;
+}
+.rich-diagram-pending {
+  min-width: 0;
+}
+.rich-source,
+.rich-source-block pre {
+  margin: 10px 0 0;
+  text-align: left;
+}
+.rich-source {
+  overflow: auto;
+  background: #f5f7fb;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: #243454;
+}
+/* Bookmarks: a diagram left out of the excerpt. */
+.bookmark-diagram-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0135df;
+  background: #edf2ff;
+  border: 1px solid #d7e1ff;
+  border-radius: 2px;
+  padding: 1px 6px;
+  vertical-align: 1px;
+}
+@media (max-width: 700px) {
+  .rich-diagram {
+    padding: 12px 10px 10px;
+  }
+  .rich-tools {
+    justify-content: flex-start;
+  }
+}
+/* Chat Export's print view is a document: no buttons in it. */
+.chat-print-page .rich-tools {
+  display: none;
+}
+@media print {
+  .rich-tools {
+    display: none !important;
+  }
+  .rich-diagram {
+    border: 0;
+    padding: 0;
+    break-inside: avoid;
+  }
+  .rich-block {
+    break-inside: avoid;
+  }
+}

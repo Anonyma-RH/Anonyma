@@ -19,6 +19,7 @@ import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
 import { RetentionSelect } from "./Ephemeral.jsx";
 import { LanguageSettings } from "./LanguageSwitch.jsx";
+import { ShieldSettings } from "./Shield.jsx";
 import {
   api,
   readStore,
@@ -48,10 +49,18 @@ import { ShareLinksManager } from "./ShareLinks.jsx";
 import { PanicWipe } from "./PanicWipe.jsx";
 import { TwoStepSettings } from "./TwoStep.jsx";
 import { twoStepReleased } from "./two-step.js";
+import { PasskeySettings } from "./Passkeys.jsx";
+import { passkeysReleased } from "./passkeys.js";
 import { holdersReleased } from "./holders.js";
 import { ReferralRate } from "./ReferralBoost.jsx";
 import { ownPercent } from "./referral-boost.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
+import {
+  PrivacyScreen,
+  HideScreenButton,
+  PrivacyScreenSettings,
+  hideScreen,
+} from "./PrivacyScreen.jsx";
 import { paletteReleased, paletteActions, recentStoreKey } from "./command-palette.js";
 import { useLanguage, setLanguage } from "./i18n.js";
 // Ledger entry kinds as readable labels; an unknown kind reads as words.
@@ -109,6 +118,7 @@ export default function Account() {
   const language = useLanguage();
   function runPaletteItem(item) {
     if (item.id === "language") return setLanguage(language === "zh" ? "en" : "zh");
+    if (item.id === "privacy-screen") return hideScreen();
     if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
   }
   const q = demo ? "?demo=1" : "";
@@ -292,8 +302,10 @@ export default function Account() {
   const limitsOn = isReleased(config, "limits");
   // Usage Insights & Export shows only once it's released.
   const insightsOn = isReleased(config, "insights");
-  // Security (Two-Step Sign-in) shows only once it's released.
+  // Security (Two-Step Sign-in) shows only once it's released; Passkeys
+  // join it once they are too (their "confirm it's you" is Two-Step's).
   const securityOn = twoStepReleased(config);
+  const passkeysOn = securityOn && passkeysReleased(config);
   // Low-Balance Alerts: its panel, and the optional notification's watch.
   const alertsLive = alertsReleased(config);
   const tabs = [
@@ -307,6 +319,8 @@ export default function Account() {
   ];
   return (
     <main id="main" className="app-shell">
+      {/* Privacy Screen: Esc twice or Hide covers the page (and idle locks it). */}
+      <PrivacyScreen config={config} user={user} />
       {alertsLive && <BalanceAlertWatch config={config} user={user} demo={demo} />}
       <AppSidebar
         demo={demo}
@@ -337,6 +351,7 @@ export default function Account() {
           {paletteLive && (
             <PaletteButton onOpen={() => palette.setOpen(true)} apple={palette.apple} />
           )}
+          <HideScreenButton config={config} user={user} />
           <Link to={"/workspace" + q} className="small-button">
             Back to workspace <Icon name="arrow" size={15} />
           </Link>
@@ -737,7 +752,12 @@ export default function Account() {
             <ComingSoon update={releaseUpdate(config, "twostep")} />
           )}
           {section === "security" && securityOn && (demo || user) && (
-            <TwoStepSettings user={user} demo={demo} config={config} />
+            <>
+              {passkeysOn && (
+                <PasskeySettings user={user} demo={demo} config={config} />
+              )}
+              <TwoStepSettings user={user} demo={demo} config={config} />
+            </>
           )}
           {section === "usage" && !insightsOn && (
             <ComingSoon update={releaseUpdate(config, "insights")} />
@@ -967,6 +987,9 @@ export default function Account() {
                 onError={setError}
               />
               <LanguageSettings config={config} />
+              <ShieldSettings config={config} />
+              {/* Privacy Screen: this browser's hide and lock choices. */}
+              {!demo && <PrivacyScreenSettings config={config} user={user} />}
               <section>
                 <div>
                   <h2>Active sessions.</h2>

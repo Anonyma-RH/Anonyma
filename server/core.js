@@ -959,6 +959,58 @@ export const MIGRATIONS = [
         catalog TEXT PRIMARY KEY CHECK(catalog IN ('models','tts','stt')),
         taken INTEGER NOT NULL);
   `),
+  // Blind Compare (server/routes/blind.js): one vote per compared round, for
+  // the account's own rankings. Only the two model ids (in the order shown,
+  // A then B), the outcome and the date: never a prompt, a reply or the chat
+  // it came from. The round's id makes a second vote on it a no-op. Erased
+  // with the account's content (closure, Panic Wipe); the newest 5,000 kept.
+  additive(`
+      CREATE TABLE IF NOT EXISTS blind_votes(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        model_a TEXT NOT NULL,model_b TEXT NOT NULL,
+        outcome TEXT NOT NULL CHECK(outcome IN ('a','b','tie','bad')),
+        created INTEGER NOT NULL,
+        CHECK(model_a<>model_b));
+      CREATE INDEX IF NOT EXISTS blind_votes_user ON blind_votes(user_id,created);
+  `),
+  // Passkeys (server/passkeys.js, server/routes/passkeys.js). passkeys: one
+  // WebAuthn credential per row: its id, COSE public key and sign counter,
+  // the random user handle the authenticator stores for this account (never
+  // the username, email or wallet), its name, dates, whether it's synced
+  // (backed up), and the per-passkey failure count and lock. At most 10 per
+  // account, also enforced here. passkey_challenges: a started ceremony,
+  // single-use, 5 minutes, kept as a hash of its challenge and bound to the
+  // session that asked (add, reauth) or to a pending-sign-in cookie's hash
+  // (signin, signup). passkey_reauth: when a session last confirmed it's you
+  // with a passkey, keyed by the session's hash like two_step_reauth.
+  additive(`
+      CREATE TABLE IF NOT EXISTS passkeys(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        credential_id TEXT NOT NULL UNIQUE,
+        public_key BLOB NOT NULL,
+        counter INTEGER NOT NULL DEFAULT 0 CHECK(counter>=0),
+        user_handle TEXT NOT NULL,
+        transports TEXT,
+        backed_up INTEGER NOT NULL DEFAULT 0 CHECK(backed_up IN (0,1)),
+        name TEXT NOT NULL CHECK(length(name) BETWEEN 1 AND 40),
+        failures INTEGER NOT NULL DEFAULT 0,failed_since INTEGER,locked_until INTEGER,
+        created INTEGER NOT NULL,last_used INTEGER);
+      CREATE INDEX IF NOT EXISTS passkeys_user ON passkeys(user_id,created);
+      CREATE TRIGGER IF NOT EXISTS passkeys_per_account BEFORE INSERT ON passkeys
+        WHEN (SELECT COUNT(*) FROM passkeys WHERE user_id=NEW.user_id)>=10
+        BEGIN SELECT RAISE(ABORT,'passkey_limit'); END;
+      CREATE TABLE IF NOT EXISTS passkey_challenges(id TEXT PRIMARY KEY,
+        purpose TEXT NOT NULL CHECK(purpose IN ('add','reauth','signin','signup')),
+        challenge TEXT NOT NULL,
+        user_id TEXT REFERENCES users(id),session_hash TEXT,binding TEXT,
+        username TEXT,user_handle TEXT,
+        expires INTEGER NOT NULL,created INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS passkey_challenges_challenge ON passkey_challenges(challenge);
+      CREATE INDEX IF NOT EXISTS passkey_challenges_user ON passkey_challenges(user_id);
+      CREATE TABLE IF NOT EXISTS passkey_reauth(session_hash TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        at INTEGER NOT NULL);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

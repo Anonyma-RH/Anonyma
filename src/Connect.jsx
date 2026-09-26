@@ -5,6 +5,7 @@ import { Icon, Button, Notice, Logo, Modal, Empty } from "./ui.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import { api, isReleased } from "./lib.js";
 import { NotFound } from "./Pages.jsx";
+import { PrivacyScreen } from "./PrivacyScreen.jsx";
 import "./allowances.css";
 import "./connect.css";
 
@@ -172,6 +173,8 @@ export default function Connect() {
 
   return (
     <main id="main" className="connect-page">
+      {/* Privacy Screen: Esc twice covers the page (and idle locks it). */}
+      <PrivacyScreen config={config} user={user} />
       <div className="connect-shell">
         <aside className="connect-band">
           <div className="connect-band-top">

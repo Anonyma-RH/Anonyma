@@ -20,6 +20,17 @@ export default function DataControls() {
   const bookmarks = !!config && isReleased(config, "bookmarks");
   // And Pay with NYMA.
   const nyma = !!config && isReleased(config, "paynyma");
+  // And Redact Before You Send.
+  const redact = !!config && isReleased(config, "redact");
+  // And Link Reader, which needs Documents.
+  const linkReader =
+    !!config && isReleased(config, "linkreader") && isReleased(config, "documents");
+  // And Blind Compare.
+  const blind = !!config && isReleased(config, "blind");
+  // Passkeys: listed once that update is live.
+  const passkeys = !!config && isReleased(config, "passkeys");
+  // And the Privacy Screen.
+  const privacyScreen = !!config && isReleased(config, "privacyscreen");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -39,6 +50,11 @@ export default function DataControls() {
         <li>
           Clean Uploads removes location, camera and author details from photos, saved Office files and saved audio in your browser before they leave your device; chat documents send only their text.
         </li>
+        {redact && (
+          <li>
+            Redact Before You Send: the boxes you draw on an image are applied in your browser. Only the redacted copy is sent, and only it is kept in a saved chat. The original isn't uploaded, and ANONYMA isn't told that an image was redacted.
+          </li>
+        )}
         <li>
           Device Vault keeps device-only chats encrypted in this browser with your passphrase; ANONYMA's servers store none of them, and they can't be recovered without the passphrase.
         </li>
@@ -129,6 +145,18 @@ export default function DataControls() {
             your account deletes the key and codes; Panic Wipe leaves it on.
           </li>
         )}
+        {passkeys && (
+          <li>
+            Passkeys: each passkey’s public key, credential id, sign counter,
+            name, dates and whether it’s synced, plus a random account handle
+            the passkey stores instead of your username, email or wallet. Your
+            face, fingerprint and PIN never leave your device. A sign-in or
+            setup waiting for your device lasts 5 minutes. Your export lists
+            each passkey’s name and dates, not its keys. Removing a passkey or
+            closing your account deletes it; Panic Wipe keeps your passkeys so
+            you can still sign in.
+          </li>
+        )}
         {alerts && (
           <li>
             Low-balance alerts: your alert level and whether you asked for
@@ -146,6 +174,24 @@ export default function DataControls() {
             wipe or close your account.
           </li>
         )}
+        {blind && (
+          <li>
+            Blind Compare votes: the two models compared, your vote and its
+            date, for Your rankings. Never the prompt or the replies, and
+            nothing about a comparison before you vote. Reset them from Your
+            rankings; Panic Wipe and closing your account delete them.
+          </li>
+        )}
+        {privacyScreen && (
+          <li>
+            Privacy Screen: its choices and whether the screen is locked are
+            kept only in this browser. Unlocking checks your password (or an
+            email code or wallet signature) on the server, which keeps nothing
+            but a count of wrong attempts, under a one-way key, for up to 15
+            minutes. Hiding takes your chats off the screen, not out of this
+            browser’s memory.
+          </li>
+        )}
         {nyma && (
           <li>
             Pay with NYMA quotes: each quote’s NYMA amount, rate, bonus and
@@ -153,6 +199,15 @@ export default function DataControls() {
             account deletes them. A credited NYMA top-up stays as a deposit
             record with its transaction hash, sending wallet and rate, like any
             other payment.
+          </li>
+        )}
+        {linkReader && (
+          <li>
+            Link Reader: a page you ask it to read is fetched by ANONYMA’s
+            server with no cookies and no referrer, so the site sees our server,
+            not you. The link and the page are never logged or stored on their
+            own; the page’s text is kept only inside your message, like an
+            attached document, when the chat is saved.
           </li>
         )}
         <li>
@@ -210,6 +265,16 @@ export default function DataControls() {
         </p>
       )}
       {nyma && <p>The export also includes your Pay with NYMA quotes.</p>}
+      {blind && (
+        <p>The export also lists your Blind Compare votes: the two models, the outcome and the date.</p>
+      )}
+      {passkeys && (
+        <p>
+          The export also lists your passkeys: each one’s name, when it was
+          added and last used, and whether it’s synced. Public keys and
+          credential ids are left out: only ANONYMA’s sign-in check uses them.
+        </p>
+      )}
       {shares && (
         <p>
           The export also lists your live share links with their addresses,

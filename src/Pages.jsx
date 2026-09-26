@@ -25,6 +25,7 @@ import {
   walletSign,
   walletAvailable,
   safeNext,
+  isReleased,
 } from "./lib.js";
 import { articles } from "./data.js";
 import ReleaseStatus from "./ReleaseStatus.jsx";
@@ -36,6 +37,8 @@ import "./mcp.css";
 import V1Media from "./V1Media.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { TwoStepPrompt } from "./TwoStep.jsx";
+import { PasskeyAuth } from "./Passkeys.jsx";
+import { passkeysReleased } from "./passkeys.js";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -857,6 +860,16 @@ const featureIcons = {
   paynyma: "coins",
   findinchat: "search",
   earlymodels: "models",
+  diagrams: "sigma",
+  shield: "shield",
+  redact: "redact",
+  linkreader: "link",
+  onchain: "chain",
+  sheets: "sheet",
+  blind: "scale",
+  deepresearch: "research",
+  passkeys: "fingerprint",
+  privacyscreen: "eyeoff",
 };
 const launch = {
   id: "mvp",
@@ -1137,8 +1150,15 @@ export function Auth({ register = false }) {
   // with a full page load so its own headers (no referrer) apply.
   const [params] = useSearchParams();
   const next = safeNext(params.get("next"));
-  const done = () =>
-    next ? window.location.assign(next) : navigate("/workspace");
+  const done = () => {
+    // Privacy Screen: signing in proves who's there, so a screen lock kept
+    // in this browser (src/privacy-screen.js) no longer applies.
+    if (isReleased(config, "privacyscreen"))
+      try {
+        localStorage.removeItem("anonyma:privacy-screen-lock");
+      } catch {}
+    return next ? window.location.assign(next) : navigate("/workspace");
+  };
   const [method, setMethod] = useState("password"),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -1146,6 +1166,9 @@ export function Auth({ register = false }) {
     [recover, setRecover] = useState(false),
     // Two-Step Sign-in: the first step succeeded and a code is needed.
     [twoStep, setTwoStep] = useState(null);
+  // Passkeys: a tab of their own, once released.
+  const passkeysOn = passkeysReleased(config);
+  const methods = ["password", ...(passkeysOn ? ["passkey"] : []), "email", "wallet"];
   async function finish() {
     await refresh();
     done();
@@ -1229,7 +1252,9 @@ export function Auth({ register = false }) {
         </h1>
         <p>
           {register
-            ? "Start with a username and password."
+            ? method === "passkey"
+              ? "Start with a username and a passkey."
+              : "Start with a username and password."
             : "Pick up where your last idea left off."}
         </p>
         {next && (
@@ -1251,7 +1276,7 @@ export function Auth({ register = false }) {
         ) : (
         <>
         <div className="filter-tabs">
-          {["password", "email", "wallet"].map((m) => (
+          {methods.map((m) => (
             <button
               key={m}
               aria-pressed={m === method}
@@ -1267,7 +1292,13 @@ export function Auth({ register = false }) {
             </button>
           ))}
         </div>
-        {method === "wallet" ? (
+        {method === "passkey" && passkeysOn ? (
+          <PasskeyAuth
+            register={register}
+            connected={connected}
+            onSignedIn={finish}
+          />
+        ) : method === "wallet" ? (
           <>
             <Notice>
               Sign a one-time message to prove you control a wallet. No

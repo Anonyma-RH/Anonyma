@@ -704,6 +704,146 @@ export const UPDATES = [
     // keep the standard per-IP limit and the account's limit route refuses.
     released: true,
   },
+  {
+    id: "diagrams",
+    title: "Math & Diagrams",
+    tagline: "Equations and diagrams, rendered right in the chat.",
+    points: [
+      "LaTeX equations in replies, typeset with KaTeX",
+      "Mermaid flowcharts, sequences and charts, drawn in your browser",
+      "Copy either as SVG, or download a diagram as PNG",
+    ],
+    // Browser only: replies are typeset and drawn in the page (src/
+    // RichMarkdown.jsx), so there's no route to gate in featuresFor. The one
+    // server change is the Bookmarks excerpt, which leaves a reply's diagram
+    // source out once this is released (routes/bookmarks.js).
+    released: false,
+  },
+  {
+    id: "shield",
+    title: "Injection Shield",
+    tagline: "A document can't hijack your AI.",
+    points: [
+      "Flags hidden instructions and invisible characters in files and pastes",
+      "Sends attached files as data, not instructions",
+      "Holds remote images in replies until you load them",
+    ],
+    // Browser only: every check runs in the page (src/shield.js) and nothing
+    // about a finding reaches the server, so there's no route to gate in
+    // featuresFor. The data notice rides inside the message as text.
+    released: false,
+  },
+  {
+    id: "redact",
+    title: "Redact Before You Send",
+    tagline: "Black out what you don't want to share.",
+    points: [
+      "Box out text, faces or a whole corner of a screenshot before it's sent",
+      "Redrawn in your browser: the original never leaves your device",
+      "Black for text, Pixelate for faces, never a blur that can be undone",
+    ],
+    // Browser only: the redacted copy is made before the request exists and
+    // is sent like any other image, so no route is gated on it (like Clean
+    // Uploads). The app shows Redact only once this is released.
+    released: false,
+  },
+  {
+    id: "linkreader",
+    title: "Link Reader",
+    tagline: "Paste a link and ask about the page. The site sees our server, not you.",
+    points: [
+      "Read this page on any link in your message",
+      "Fetched by our server: no cookies, no referrer, never your IP",
+      "The page goes with your question; reading it is free",
+    ],
+    // POST /api/read (server/routes/link-reader.js, SSRF rules in
+    // server/link-reader.js). The page is attached as a Documents block, so
+    // it needs "documents" released too (featuresFor).
+    released: false,
+  },
+  {
+    id: "onchain",
+    title: "Onchain Explainer",
+    tagline: "Any transaction, in plain English.",
+    points: [
+      "Paste a transaction hash, an address or an explorer link",
+      "Exact chain facts first, then a plain-English explanation",
+      "Looked up by our server, so the explorer never sees you",
+    ],
+    // Read only: the lookup (/api/onchain/lookup) is free and never signs,
+    // sends or connects a wallet; the explanation is an ordinary chat.
+    released: false,
+  },
+  {
+    id: "sheets",
+    title: "Local Sheets",
+    tagline: "Ask your spreadsheet. It never leaves your device.",
+    points: [
+      "Drop a CSV, TSV or JSON file; it's read in your browser only",
+      "By default the AI sees only column names and types, not your rows",
+      "Charts and tables calculated on your device, with CSV and image export",
+    ],
+    // The workspace's Sheets page (src/Sheets.jsx). Its model calls are
+    // /api/chat requests carrying `sheets` (server/sheets.js); nothing about
+    // them is stored, so there's nothing to erase or export.
+    released: false,
+  },
+  {
+    id: "blind",
+    title: "Blind Compare",
+    tagline: "Two models answer. You pick the better one.",
+    points: [
+      "Two replies side by side, names and costs hidden",
+      "Vote A, B, tie or both bad, then see who's who, the cost and the speed",
+      "Your own rankings from your votes; no prompts kept",
+    ],
+    // Each side is a chat request on runChat's hold/settle path; a vote
+    // stores only model ids, the outcome and the date (routes/blind.js).
+    released: false,
+  },
+  {
+    id: "deepresearch",
+    title: "Deep Research",
+    tagline: "Ask a hard question. Get a sourced report.",
+    points: [
+      "Plans the question, runs 3 or 6 web searches, then writes a report",
+      "Numbered citations that point only to pages the searches found",
+      "See the most it can cost first; pay only for the steps that finish",
+    ],
+    // Runs Live Web Search's plugin for each search, so it needs "search"
+    // released too (featuresFor). Workspace only; nothing new is stored: a
+    // saved run is an ordinary conversation turn (server/routes/research.js).
+    released: false,
+  },
+  {
+    id: "passkeys",
+    title: "Passkeys",
+    tagline: "Sign in with Face ID or your fingerprint.",
+    points: [
+      "No password to leak, no email needed",
+      "Counts as both steps of two-step sign-in",
+      "Your device keeps the private key; we store only the public one",
+    ],
+    // Every route is gated (featuresFor). Once released, keep it released:
+    // an account made with a passkey has no other way to sign in. Needs
+    // APP_ORIGIN on a domain over HTTPS (the WebAuthn RP ID is its host);
+    // server/passkeys.js passkeysAvailable.
+    released: false,
+  },
+  {
+    id: "privacyscreen",
+    title: "Privacy Screen",
+    tagline: "One key and your screen goes blank.",
+    points: [
+      "Press Esc twice or tap Hide, and your chats leave the screen",
+      "Optional: hide when you switch away, lock when you're idle",
+      "Unlock with your password; a reply in progress keeps going",
+    ],
+    // Browser only (src/privacy-screen.js), apart from the idle lock's
+    // unlock check (server/routes/unlock.js), which re-verifies the account's
+    // password, email code or wallet signature without touching the session.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -833,12 +973,61 @@ export function featuresFor(req) {
   }
   // Bookmarks: stars on saved messages, with private notes.
   if (p === "/api/bookmarks" || p.startsWith("/api/bookmarks/")) return ["bookmarks"];
+  // Link Reader: the server-side fetch of one public page. The page rides
+  // with the message as a Documents block, so it needs Documents too.
+  if (p === "/api/read" || p.startsWith("/api/read/")) return ["linkreader", "documents"];
+  // Blind Compare: a round, votes and rankings. A round needs whatever the
+  // same chat would: code or Uncensored, off the record, Private Mode, a
+  // project, Privacy Trail's Veil count and Seed Guard's override.
+  if (p === "/api/blind" || p.startsWith("/api/blind/")) {
+    const needed = ["blind"];
+    if (post && /^\/api\/blind\/?$/.test(p)) {
+      if (body.mode === "code") needed.push("code");
+      if (body.mode === "uncensored") needed.push("uncensored");
+      if (body.ephemeral === true || body.private === true) needed.push("ephemeral");
+      if (body.private === true) needed.push("private");
+      if (body.project !== undefined) needed.push("projects");
+      if (body.veil_masked !== undefined) needed.push("trail");
+      if (body.allow_seed_phrase !== undefined) needed.push("seedguard");
+    }
+    return needed;
+  }
+  // Deep Research: a plan, one web search per sub-question and a report, so
+  // it needs Live Web Search too. What a run turns on needs its own update,
+  // as the same chat would: Private Mode, off the record, a project, Memory,
+  // Privacy Trail's Veil count, and code mode.
+  if (p === "/api/research" || p.startsWith("/api/research/")) {
+    const needed = ["deepresearch", "search"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      else if (body.ephemeral === true) needed.push("ephemeral");
+      if (body.project !== undefined) needed.push("projects");
+      if (body.memory != null) needed.push("memory");
+      if (body.veil_masked !== undefined) needed.push("trail");
+      if (body.mode === "code") needed.push("code");
+    }
+    return needed;
+  }
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.
   if (p === "/api/sealed" || p.startsWith("/api/sealed/")) return ["sealed"];
   // Panic Wipe: the one route that erases an account's content at once.
   if (/^\/api\/account\/wipe\/?$/.test(p)) return ["wipe"];
+  // Passkeys: signing in and signing up with one, and Account → Security's
+  // passkeys, whose "confirm it's you" also takes Two-Step Sign-in's.
+  if (p === "/api/auth/passkey" || p.startsWith("/api/auth/passkey/"))
+    return ["passkeys"];
+  if (p === "/api/account/passkeys" || p.startsWith("/api/account/passkeys/"))
+    return ["passkeys", "twostep"];
+  // Privacy Screen: unlocking the screen after idle re-checks the account's
+  // password (or an email code or wallet signature). Nothing else is served.
+  // With Passkeys, a passkey is one more way to unlock, so a passkey unlock
+  // needs that update too.
+  if (p === "/api/auth/unlock" || p.startsWith("/api/auth/unlock/"))
+    return post && p === "/api/auth/unlock" && body.method === "passkey"
+      ? ["privacyscreen", "passkeys"]
+      : ["privacyscreen"];
   // Two-Step Sign-in's settings. The sign-in step itself, /api/auth/two-step,
   // is never gated (see the UPDATES entry).
   if (p === "/api/account/two-step" || p.startsWith("/api/account/two-step/"))
@@ -900,6 +1089,8 @@ export function featuresFor(req) {
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
   // Pay with NYMA: the rate, quotes and claims.
   if (p === "/api/nyma" || p.startsWith("/api/nyma/")) return ["paynyma"];
+  // Onchain Explainer: the read-only chain lookup.
+  if (p === "/api/onchain" || p.startsWith("/api/onchain/")) return ["onchain"];
   if (
     p === "/api/account/wallet/unlink" ||
     p === "/api/account/holdings" ||
@@ -993,6 +1184,9 @@ export function featuresFor(req) {
   // kept with the reply's trail.
   if (p === "/api/chat" && post && body.veil_masked !== undefined)
     needed.push("trail");
+  // Local Sheets: a question about a spreadsheet (server/sheets.js). It's
+  // always off the record, so it needs Ephemeral Chats too (pushed below).
+  if (p === "/api/chat" && post && body.sheets !== undefined) needed.push("sheets");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

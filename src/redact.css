@@ -1,0 +1,45 @@
+/* Redact Before You Send: the composer chip's Redact button and
+   "Redacted" tag. The editor's styles (redact-editor.css) load with the
+   editor itself. */
+
+/* ---- the composer chip ---- */
+.redact-chip-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.attachment-list .redact-chip-tools button.redact-open {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  background: #fff;
+  color: #0135df;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.attachment-list .redact-chip-tools button.redact-open:hover:not(:disabled) {
+  background: #0135df;
+  color: #fff;
+}
+.attachment-list .redact-chip-tools button.redact-open:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: 1px;
+}
+.redact-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: #061b69;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

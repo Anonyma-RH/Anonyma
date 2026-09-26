@@ -1,0 +1,369 @@
+/* Redact Before You Send: the full-screen editor. Cobalt bar, white
+   footer, flat controls, 2px corners, like the rest of the workspace. It's
+   a modal <dialog> portalled to <body>, so it carries its own styles, and
+   they load only when the editor opens. */
+dialog.redact-root {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: #e9edf5;
+  color: #142343;
+  font-size: 13px;
+  overflow: hidden;
+}
+dialog.redact-root:not([open]) {
+  display: none;
+}
+dialog.redact-root::backdrop {
+  background: #061b69;
+}
+.redact-root :focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: 2px;
+}
+.redact-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: #0135df;
+  color: #fff;
+  min-width: 0;
+}
+.redact-title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 220px;
+}
+.redact-title strong {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+}
+.redact-title span {
+  font-size: 11px;
+  color: #c9d6ff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.redact-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.redact-group {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #ffffff4d;
+  border-radius: 2px;
+}
+.redact-group > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 11px;
+  color: #fff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.redact-group > button + button {
+  border-left: 1px solid #ffffff33;
+}
+.redact-group > button:hover:not(:disabled) {
+  background: #ffffff1f;
+}
+.redact-group > button.on {
+  background: #fff;
+  color: #0135df;
+  font-weight: 600;
+}
+.redact-group > button small {
+  font-size: 10px;
+  opacity: 0.75;
+  font-weight: 400;
+}
+.redact-group > button.redact-icon {
+  padding: 0 9px;
+}
+.redact-group > button.redact-zoom {
+  min-width: 56px;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+.redact-swatch {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border: 1px solid #fff;
+}
+.redact-swatch.black {
+  background: #000;
+}
+.redact-swatch.pixelate {
+  background:
+    linear-gradient(90deg, transparent 50%, #0000001f 50%) 0 0 / 6px 6px,
+    linear-gradient(#8fa6ff 50%, #3b5fe8 50%) 0 0 / 6px 6px;
+}
+.redact-group > button.on .redact-swatch {
+  border-color: #0135df;
+}
+.redact-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.redact-actions button {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.redact-cancel {
+  color: #fff;
+  border: 1px solid #ffffff66;
+}
+.redact-cancel:hover:not(:disabled) {
+  background: #ffffff1f;
+}
+.redact-apply {
+  background: #ffb21c;
+  color: #061b69;
+}
+.redact-apply:hover:not(:disabled) {
+  background: #ffc34d;
+}
+
+.redact-stage {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: crosshair;
+}
+.redact-stage.tool-pan,
+.redact-stage.panning {
+  cursor: grab;
+}
+.redact-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #68748a;
+}
+.redact-sheet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  box-shadow: 0 0 0 1px #c9d2e3, 0 12px 36px #061b6924;
+  background:
+    conic-gradient(#f3f5fa 25%, #fff 0 50%, #f3f5fa 0 75%, #fff 0) 0 0 / 16px 16px;
+}
+.redact-sheet canvas,
+.redact-sheet svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.redact-sheet.crisp canvas {
+  image-rendering: pixelated;
+}
+.redact-overlay {
+  overflow: visible;
+  pointer-events: none;
+}
+.redact-shade {
+  fill: #061b69a6;
+}
+.redact-box rect {
+  fill: none;
+}
+.redact-box .halo {
+  stroke: #fff;
+  stroke-width: 3;
+}
+.redact-box .line {
+  stroke: #0135df;
+  stroke-width: 1.5;
+}
+.redact-box.selected .halo {
+  stroke: #061b69;
+  stroke-width: 4;
+}
+.redact-box.selected .line {
+  stroke: #ffb21c;
+  stroke-width: 2;
+}
+.redact-handle {
+  fill: #fff;
+  stroke: #0135df;
+  stroke-width: 1.5;
+}
+.redact-handle.crop {
+  fill: #ffb21c;
+  stroke: #061b69;
+}
+.redact-crop {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.redact-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 20px;
+  padding: 10px 16px;
+  background: #fff;
+  border-top: 1px solid #e3e8f0;
+}
+.redact-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  flex: 1;
+  min-width: 0;
+  color: #3e5070;
+}
+.redact-this {
+  display: inline-flex;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.redact-this button {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #0135df;
+}
+.redact-this button + button {
+  border-left: 1px solid #0135df;
+}
+.redact-this button.on {
+  background: #0135df;
+  color: #fff;
+  font-weight: 600;
+}
+dialog.redact-root:focus {
+  outline: none;
+}
+.redact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  color: #0135df;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.redact-note {
+  flex-basis: 100%;
+  order: 3;
+  margin: 0;
+  font-size: 12px;
+  color: #3e5070;
+}
+.redact-note.error {
+  color: #9c3d2a;
+}
+.redact-promise {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: #0135df;
+  font-weight: 600;
+}
+.redact-promise svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .redact-bar {
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    padding: 8px 12px;
+  }
+  .redact-title {
+    flex: 1;
+    max-width: none;
+  }
+  .redact-actions {
+    order: 2;
+  }
+  .redact-tools {
+    order: 3;
+    flex-basis: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    /* The row scrolls sideways; its right edge fades to say so. */
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+  .redact-tools::-webkit-scrollbar {
+    display: none;
+  }
+  .redact-group {
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 560px) {
+  .redact-group > button {
+    padding: 0 9px;
+    min-height: 38px;
+  }
+  .redact-group > button small {
+    display: none;
+  }
+  /* Box, Crop and Pan keep their names for screen readers. */
+  .redact-group:first-child > button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .redact-foot {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  .redact-promise {
+    font-size: 11px;
+  }
+}

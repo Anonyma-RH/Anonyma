@@ -8,7 +8,9 @@ import {
   WIPE_GOES,
   WIPE_GOES_PROJECTS,
   WIPE_BOOKMARKS,
+  WIPE_BLIND,
   WIPE_STAYS,
+  WIPE_KEEPS_PASSKEYS,
   WIPED_PATH,
   clearBrowserData,
   walletPaymentPending,
@@ -25,6 +27,10 @@ export function PanicWipe({ user }) {
   const projectsLive = !!config && isReleased(config, "projects");
   // Bookmarks are listed once that update is live.
   const bookmarksLive = isReleased(useApp()?.config, "bookmarks");
+  // And Blind Compare's votes.
+  const blindLive = isReleased(useApp()?.config, "blind");
+  // Passkeys stay, like the password: listed once that update is live.
+  const passkeysLive = !!config && isReleased(config, "passkeys");
   const [open, setOpen] = useState(false),
     [typed, setTyped] = useState(""),
     [busy, setBusy] = useState(false),
@@ -91,6 +97,7 @@ export function PanicWipe({ user }) {
                   ))}
                   {projectsLive && <li>{WIPE_GOES_PROJECTS}</li>}
                   {bookmarksLive && <li>{WIPE_BOOKMARKS}</li>}
+                  {blindLive && <li>{WIPE_BLIND}</li>}
                 </ul>
               </div>
               <div>
@@ -99,6 +106,7 @@ export function PanicWipe({ user }) {
                   {WIPE_STAYS.map((t) => (
                     <li key={t}>{t}</li>
                   ))}
+                  {passkeysLive && <li>{WIPE_KEEPS_PASSKEYS}</li>}
                 </ul>
                 <p className="fine-print">
                   <Link to="/docs/privacy" onClick={close}>

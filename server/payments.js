@@ -1,4 +1,4 @@
-import { addCredit, fail, hash, now, transaction, uid } from "./core.js";
+import { UNITS, addCredit, fail, hash, now, transaction, uid } from "./core.js";
 
 const statuses = new Set([
   "waiting",
@@ -316,6 +316,103 @@ export function recordWalletPayment(
       referralPercent,
       "credit",
     );
+    return db.prepare("SELECT * FROM deposits WHERE id=?").get(id);
+  });
+}
+
+// A confirmed NYMA transfer for Pay with NYMA (server/routes/nyma.js),
+// credited like a wallet payment: a deposit recorded already credited, whose
+// value goes on the ledger as nyma_topup and its bonus as nyma_bonus. Each
+// Transfer log (chain, transaction hash, log index) is claimed once, and the
+// per-payment and rolling 24-hour limits (USD of value, plus `slack` for a
+// quote rounded up to whole NYMA) are checked with the insert.
+export function recordNymaPayment(
+  db,
+  { user, providerId, chain, txHash, logs, value, bonus, maxUsd, dailyMaxUsd, slack = 0, payload },
+  { referralPercent = 0 } = {},
+) {
+  if (!Number.isSafeInteger(value) || value <= 0)
+    fail(400, "This payment is too small to credit.", "payment_not_matched");
+  if (!Number.isSafeInteger(bonus) || bonus < 0)
+    fail(400, "Invalid bonus.", "invalid_request");
+  const review = (why) =>
+    fail(
+      409,
+      `${why} so it can't be credited automatically. Contact support with the transaction hash.`,
+      "wallet_payment_review",
+    );
+  return transaction(db, () => {
+    const existing = db
+      .prepare("SELECT * FROM deposits WHERE provider_id=?")
+      .get(providerId);
+    if (existing) {
+      if (existing.user_id !== user)
+        fail(
+          409,
+          "This transaction was already credited to another account.",
+          "payment_already_claimed",
+        );
+      return existing;
+    }
+    const claimed = db.prepare(
+      "SELECT deposit_id FROM nyma_claims WHERE chain=? AND tx_hash=? AND log_index=?",
+    );
+    if (logs.some((i) => claimed.get(chain, txHash, i)))
+      fail(
+        409,
+        "This transfer was already credited.",
+        "payment_already_claimed",
+      );
+    if (value > maxUsd * UNITS + slack)
+      review(
+        `This top-up is worth more than the $${maxUsd} limit for one NYMA payment,`,
+      );
+    const today = db
+      .prepare(
+        "SELECT COALESCE(SUM(amount),0) n FROM deposits WHERE user_id=? AND currency='nyma' AND credited=1 AND created>?",
+      )
+      .get(user, now() - 86400000).n;
+    if (today + value > dailyMaxUsd * UNITS + slack)
+      review(
+        `This top-up would pass the $${dailyMaxUsd} limit for NYMA top-ups in 24 hours,`,
+      );
+    const id = "deposit_" + hash(providerId).slice(0, 32);
+    const created = now();
+    db.prepare(
+      "INSERT INTO deposits(id,user_id,provider_id,amount,currency,status,payload,credited,created,updated) VALUES(?,?,?,?,?,?,?,?,?,?)",
+    ).run(
+      id,
+      user,
+      providerId,
+      value,
+      "nyma",
+      "finished",
+      JSON.stringify({
+        ...payload,
+        payment_id: providerId,
+        payment_status: "finished",
+        creditState: "credited",
+      }),
+      1,
+      created,
+      created,
+    );
+    const claim = db.prepare(
+      "INSERT INTO nyma_claims(chain,tx_hash,log_index,deposit_id) VALUES(?,?,?,?)",
+    );
+    for (const i of logs) claim.run(chain, txHash, i, id);
+    addCredit(db, user, value, "payment_" + providerId, "nyma_topup", "NYMA top-up");
+    if (bonus > 0)
+      addCredit(
+        db,
+        user,
+        bonus,
+        "nyma_bonus_" + providerId,
+        "nyma_bonus",
+        "NYMA top-up bonus",
+      );
+    // Referral rewards follow the top-up's value, never its bonus.
+    referralReward(db, { id, user_id: user, amount: value }, referralPercent, "credit");
     return db.prepare("SELECT * FROM deposits WHERE id=?").get(id);
   });
 }

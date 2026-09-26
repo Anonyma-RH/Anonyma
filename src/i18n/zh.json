@@ -3536,7 +3536,37 @@
     "This isn't a sealed request.": "这不是密封请求。",
     "The private endpoint couldn't be reached. Nothing was charged.": "无法连接私有端点。未扣费。",
     "The private endpoint's reply wasn't sealed, so it wasn't passed on. Your hold waits for reconciliation.": "私有端点的回复未经密封，因此没有转发。你的冻结积分将等待对账。",
-    "This enclave model isn't available right now, so nothing was sent or charged. Pick another sealed model.": "此安全飞地模型目前不可用，因此未发送任何内容，也未扣费。请选择其他密封模型。"
+    "This enclave model isn't available right now, so nothing was sent or charged. Pick another sealed model.": "此安全飞地模型目前不可用，因此未发送任何内容，也未扣费。请选择其他密封模型。",
+    "Pay with NYMA": "使用 NYMA 付款",
+    "Top up with NYMA. Get more credits for it.": "用 NYMA 充值，获得更多积分。",
+    "Send NYMA from your own wallet on Robinhood Chain": "在 Robinhood Chain 上从你自己的钱包发送 NYMA",
+    "Bonus credits on every NYMA top-up": "每次 NYMA 充值都有奖励积分",
+    "NYMA top-up": "NYMA 充值",
+    "NYMA top-up bonus": "NYMA 充值奖励",
+    "Bonus credits": "奖励积分",
+    "Your quote": "你的报价",
+    "Send exactly": "请准确发送",
+    "Copy amount": "复制数量",
+    "To this address": "发送至此地址",
+    "Less NYMA is credited proportionally and more is credited in full. A transfer after the quote ends gets the lower of the quoted and current rates.": "少于报价的 NYMA 按比例计入，多于报价的全额计入。报价结束后发送的转账，按报价兑换率与当前兑换率中较低者计入。",
+    "New quote": "重新报价",
+    "Top-up value in USD": "充值金额（USD）",
+    "You send about": "你大约需发送",
+    "Get a quote": "获取报价",
+    "Already sent NYMA? Check a transaction": "已发送 NYMA？检查交易",
+    "A transaction hash is public. Never paste a private key.": "交易哈希是公开信息。切勿粘贴私钥。",
+    "You send from your own wallet. ANONYMA never asks for your keys or seed phrase.": "由你从自己的钱包发送。ANONYMA 绝不会索要你的私钥或助记词。",
+    "There's no reliable NYMA rate right now, so NYMA top-ups are paused. Try again in a few minutes, or pay with USDG.": "目前没有可靠的 NYMA 兑换率，NYMA 充值已暂停。请几分钟后重试，或使用 USDG 付款。",
+    "NYMA top-ups aren't set up on this service yet.": "此服务尚未开通 NYMA 充值。",
+    "A credited payment is under reconciliation. New top-ups are paused until it's resolved.": "一笔已入账的付款正在对账中。处理完成前，新的充值已暂停。",
+    "This transfer was sent before any NYMA quote on this account, so it can't be credited automatically. Contact support with the transaction hash.": "此转账早于该账户的任何 NYMA 报价，无法自动入账。请联系支持团队并提供交易哈希。",
+    "This transfer was already credited.": "此转账已入账。",
+    "The payment network returned an incomplete transaction. Try checking again in a minute.": "付款网络返回的交易信息不完整。请一分钟后再检查。",
+    "Pay with NYMA quotes: each quote’s NYMA amount, rate, bonus and your linked wallet address, until Panic Wipe or closing your account deletes them. A credited NYMA top-up stays as a deposit record with its transaction hash, sending wallet and rate, like any other payment.": "“使用 NYMA 付款”报价：每个报价的 NYMA 数量、兑换率、奖励和你关联的钱包地址，保留到紧急清除或关闭账户时删除。已入账的 NYMA 充值与其他付款一样，作为充值记录保留，包含交易哈希、发送钱包和兑换率。",
+    "The export also includes your Pay with NYMA quotes.": "导出内容还包括你的“使用 NYMA 付款”报价。",
+    "Reading the NYMA rate on Robinhood Chain…": "正在读取 Robinhood Chain 上的 NYMA 兑换率……",
+    "A quote holds the rate for 10 minutes": "报价锁定兑换率 10 分钟",
+    "Your NYMA top-up quote is still open. Close the account after it ends, within 10 minutes.": "你的 NYMA 充值报价仍然有效。请在报价结束后（10 分钟内）再关闭账户。"
   },
   "patterns": [
     {
@@ -5470,6 +5500,66 @@
     {
       "en": "Model: {0}, {1} preset. Change model",
       "zh": "模型：{0}，{1}预设。更改模型"
+    },
+    {
+      "en": "Rate now: 1,000,000 NYMA = {0} credits, plus a {1}% bonus.",
+      "zh": "当前兑换率：1,000,000 NYMA = {0} 积分，另加 {1}% 奖励。"
+    },
+    {
+      "en": "Valid for {0}",
+      "zh": "剩余有效时间 {0}"
+    },
+    {
+      "en": "{0} credits + {1} bonus",
+      "zh": "{0} 积分 + {1} 奖励"
+    },
+    {
+      "en": "Send {0} NYMA from your wallet",
+      "zh": "从你的钱包发送 {0} NYMA"
+    },
+    {
+      "en": "A quote holds the rate for {0} minutes. Up to ${1} per payment and ${2} in 24 hours.",
+      "zh": "报价锁定兑换率 {0} 分钟。每笔最多 ${1}，24 小时内最多 ${2}。"
+    },
+    {
+      "en": "${0} left today.",
+      "zh": "今日还可充值 ${0}。"
+    },
+    {
+      "en": "Payment confirmed. {0} credits and {1} bonus credits were added to your balance.",
+      "zh": "付款已确认。已将 {0} 积分和 {1} 奖励积分计入你的余额。"
+    },
+    {
+      "en": "Choose an amount from ${0} to ${1}.",
+      "zh": "请选择 ${0} 到 ${1} 之间的金额。"
+    },
+    {
+      "en": "NYMA top-ups are limited to ${0} in 24 hours. You can top up ${1} more now.",
+      "zh": "NYMA 充值 24 小时内上限为 ${0}。你现在还可以充值 ${1}。"
+    },
+    {
+      "en": "This top-up is worth more than the ${0} limit for one NYMA payment, so it can't be credited automatically. Contact support with the transaction hash.",
+      "zh": "此次充值超过单笔 NYMA 付款 ${0} 的上限，无法自动入账。请联系支持团队并提供交易哈希。"
+    },
+    {
+      "en": "This top-up would pass the ${0} limit for NYMA top-ups in 24 hours, so it can't be credited automatically. Contact support with the transaction hash.",
+      "zh": "此次充值将超过 NYMA 充值 24 小时内 ${0} 的上限，无法自动入账。请联系支持团队并提供交易哈希。"
+    },
+    {
+      "en": "Less NYMA is credited proportionally and more in full; a transfer after the quote ends gets the lower of the quoted and current rates. Up to ${0} per payment and ${1} in 24 hours; anything above that is reviewed by support. If there's no reliable rate, NYMA top-ups pause.",
+      "zh": "少于报价的 NYMA 按比例计入，多于报价的全额计入；报价结束后发送的转账，按报价兑换率与当前兑换率中较低者计入。每笔最多 ${0}，24 小时内最多 ${1}；超出部分由支持团队审核。没有可靠兑换率时，NYMA 充值将暂停。"
+    },
+    {
+      "en": "The rate is the lower of the current rate and its {0}-minute average on Robinhood Chain, so a sudden jump never raises it.",
+      "zh": "兑换率取当前兑换率与其在 Robinhood Chain 上 {0} 分钟均值中的较低者，因此短时的突然跳升不会抬高兑换率。"
+    },
+    {
+      "en": "Only NYMA on Robinhood Chain from your linked wallet {0} is credited automatically. You need a little ETH on Robinhood Chain for the network fee.",
+      "zh": "只有从你关联的钱包 {0} 在 Robinhood Chain 上发送的 NYMA 会自动入账。你需要在 Robinhood Chain 上持有少量 ETH 来支付网络费用。"
+    },
+    {
+      "en": "Pay with NYMA: ask for a quote on Credits & funding, then send the quoted NYMA on Robinhood Chain from your linked wallet to the same payment address within {0} minutes. The quote's rate is the lower of the current rate and its {1}-minute average on Robinhood Chain, plus a {2}% bonus in credits, recorded as a separate NYMA top-up bonus.",
+      "zh": "使用 NYMA 付款：先在“积分与充值”页获取报价，然后在 {0} 分钟内，从你关联的钱包在 Robinhood Chain 上将报价中的 NYMA 发送到同一付款地址。报价兑换率取当前兑换率与其在 Robinhood Chain 上 {1} 分钟均值中的较低者，另加 {2}% 的奖励积分，作为单独的 NYMA 充值奖励记录。"
     }
   ]
 }

@@ -315,6 +315,7 @@ export function CopyButton({ text, label = "Copy" }) {
   const [done, setDone] = useState("");
   return (
     <button
+      type="button"
       className="small-button"
       onClick={async () => {
         try {

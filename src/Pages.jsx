@@ -850,6 +850,7 @@ const featureIcons = {
   chatexport: "download",
   bookmarks: "star",
   sealed: "lock",
+  paynyma: "coins",
 };
 const launch = {
   id: "mvp",

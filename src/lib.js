@@ -287,11 +287,12 @@ export function transferData(to, value) {
   const word = (hex) => hex.replace(/^0x/, "").toLowerCase().padStart(64, "0");
   return "0xa9059cbb" + word(to) + word(value.toString(16));
 }
-// Sends the stablecoin from the linked wallet to the payment address and
-// returns the transaction hash. Crediting happens server-side once the
-// chain confirms it; see claimWalletPayment.
-export async function payWithWallet(config, linkedWallet, amount) {
-  const wp = config.walletPayments;
+// Sends the stablecoin (or `asset`, another token on the same chain: Pay
+// with NYMA) from the linked wallet to the payment address and returns the
+// transaction hash. Crediting happens server-side once the chain confirms
+// it; see claimWalletPayment.
+export async function payWithWallet(config, linkedWallet, amount, asset) {
+  const wp = { ...config.walletPayments, ...asset };
   const value = toTokenUnits(amount, wp.decimals);
   if (value <= 0n) throw new Error("Enter an amount above zero.");
   const provider = await walletProvider(config, wp.chainId);
@@ -340,10 +341,14 @@ export async function payWithWallet(config, linkedWallet, amount) {
 }
 // Asks the server to credit a sent transaction, checking again every few
 // seconds while the chain confirms it. Resolves with the credited deposit.
-export async function claimWalletPayment(txHash, { onProgress, signal } = {}) {
+// `path` is /api/nyma/claim for Pay with NYMA.
+export async function claimWalletPayment(
+  txHash,
+  { onProgress, signal, path = "/api/deposits/wallet" } = {},
+) {
   const deadline = Date.now() + 10 * 60000;
   for (;;) {
-    const r = await api("/api/deposits/wallet", {
+    const r = await api(path, {
       method: "POST",
       body: { txHash },
       signal,

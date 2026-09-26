@@ -18,6 +18,8 @@ export default function DataControls() {
   const alerts = !!config && isReleased(config, "balancealerts");
   // And Bookmarks.
   const bookmarks = !!config && isReleased(config, "bookmarks");
+  // And Pay with NYMA.
+  const nyma = !!config && isReleased(config, "paynyma");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -144,6 +146,15 @@ export default function DataControls() {
             wipe or close your account.
           </li>
         )}
+        {nyma && (
+          <li>
+            Pay with NYMA quotes: each quote’s NYMA amount, rate, bonus and
+            your linked wallet address, until Panic Wipe or closing your
+            account deletes them. A credited NYMA top-up stays as a deposit
+            record with its transaction hash, sending wallet and rate, like any
+            other payment.
+          </li>
+        )}
         <li>
           Temporary API-generated media expires after 24 hours when created with
           an expiry. Access stops at expiry; background maintenance removes the
@@ -198,6 +209,7 @@ export default function DataControls() {
           in the export.
         </p>
       )}
+      {nyma && <p>The export also includes your Pay with NYMA quotes.</p>}
       {shares && (
         <p>
           The export also lists your live share links with their addresses,

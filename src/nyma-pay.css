@@ -1,0 +1,132 @@
+/* Pay with NYMA (src/NymaPay.jsx): flat cobalt on white, like the account. */
+.pay-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--work-line, #e3e8f0);
+  margin-bottom: -8px;
+}
+.pay-switch > span {
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+  margin-right: 8px;
+}
+.pay-switch button {
+  padding: 9px 14px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--work-muted, #68748a);
+  cursor: pointer;
+}
+.pay-switch button.active {
+  color: #0135df;
+  border-bottom-color: #0135df;
+}
+.nyma-rate {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  margin: 4px 0 10px;
+  background: #edf2ff;
+  color: #0135df;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.nyma-rate svg {
+  flex: none;
+  margin-top: 2px;
+}
+.nyma-quote {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #89a4ee;
+  background: #fff;
+}
+.nyma-quote-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.nyma-timer {
+  color: #0135df;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.nyma-quote-label {
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+}
+.nyma-quote-amount,
+.nyma-quote-address {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.nyma-quote-amount b {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.4px;
+  color: #0135df;
+  font-variant-numeric: tabular-nums;
+}
+.nyma-quote-address code {
+  font-size: 12px;
+  word-break: break-all;
+  background: var(--work-surface, #f7f9fc);
+  padding: 8px 10px;
+  flex: 1;
+}
+.nyma-quote .funding-estimate {
+  margin: 4px 0;
+}
+.nyma-quote .button {
+  justify-content: center;
+}
+.nyma-quote > .small-button {
+  justify-self: start;
+}
+.nyma-pay .nyma-receive {
+  margin-top: -18px;
+  border-top: 0;
+}
+.nyma-own-wallet {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 20px 0 8px;
+  padding: 12px 14px;
+  border-left: 2px solid #0135df;
+  background: var(--work-surface, #f7f9fc);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.nyma-own-wallet svg {
+  flex: none;
+  margin-top: 2px;
+  color: #0135df;
+}
+@media (max-width: 700px) {
+  .nyma-quote-amount,
+  .nyma-quote-address {
+    flex-wrap: wrap;
+  }
+  .nyma-quote-amount b {
+    font-size: 22px;
+  }
+}
+.nyma-pay form {
+  margin-top: 18px;
+}

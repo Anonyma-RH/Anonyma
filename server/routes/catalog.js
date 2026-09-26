@@ -9,6 +9,7 @@ import {
   walletPaymentInfo,
   walletPaymentsEnabled,
 } from "../wallet-payments.js";
+import { nymaPaymentInfo } from "./nyma.js";
 import { modelReleased, releaseInfo, isReleased } from "../releases.js";
 import { isPrivateModel } from "../private-mode.js";
 import { sealedLive } from "../sealed.js";
@@ -60,8 +61,11 @@ export function catalogRoutes(ctx) {
         walletPayments: walletPaymentsEnabled(cfg),
         // Sealed Mode: released, with its billing mode configured.
         sealed: sealedLive(cfg),
+        nymaPayments: !!nymaPaymentInfo(cfg),
       },
       walletPayments: walletPaymentInfo(cfg),
+      // Pay with NYMA's public settings, once it's released (null before).
+      nymaPayments: nymaPaymentInfo(cfg),
       walletProject: cfg.walletProject,
       walletChain: cfg.walletChain,
       chain: cfg.chain,

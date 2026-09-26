@@ -31,6 +31,7 @@ import {
   releaseUpdate,
 } from "./lib.js";
 import { EmailLink, InvoiceDetails, WalletPayPanel } from "./AccountFlows.jsx";
+import NymaPayPanel, { nymaPayAvailable } from "./NymaPay.jsx";
 import McpConnect from "./McpConnect.jsx";
 import UsageInsights from "./UsageInsights.jsx";
 import { KeyAllowance } from "./Allowances.jsx";
@@ -64,6 +65,8 @@ const LEDGER_KINDS = {
   referral: "Referral reward",
   referral_correction: "Referral correction",
   holder_reward: "NYMA holder reward",
+  nyma_topup: "NYMA top-up",
+  nyma_bonus: "NYMA top-up bonus",
 };
 const ledgerKind = (kind) =>
   LEDGER_KINDS[kind] ||
@@ -93,7 +96,8 @@ export default function Account() {
     [invoiceIntent, setInvoiceIntent] = useState(uid),
     [referrals, setReferrals] = useState(null),
     [retentionDefault, setRetentionDefault] = useState(null),
-    [transfer, setTransfer] = useState({ to: "", amount: "", confirm: false, id: uid() });
+    [transfer, setTransfer] = useState({ to: "", amount: "", confirm: false, id: uid() }),
+    [payWith, setPayWith] = useState("usdg");
   useEffect(() => setInvoiceIntent(uid()), [amount, currency]);
   // Command Palette: on account pages it offers actions and places only
   // (chats and models live in the workspace), and fetches nothing.
@@ -505,6 +509,42 @@ export default function Account() {
           {section === "credits" && (
             <div className="funding-layout">
               <div className="funding-stack">
+              {nymaPayAvailable(config) && (
+                <div className="pay-switch" role="tablist" aria-label="Pay with">
+                  <span>Pay with</span>
+                  {[
+                    ["usdg", config.walletPayments.symbol],
+                    ["nyma", "NYMA"],
+                  ].map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={payWith === id}
+                      className={payWith === id ? "active" : ""}
+                      onClick={() => setPayWith(id)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {payWith === "nyma" && nymaPayAvailable(config) ? (
+                <NymaPayPanel
+                  config={config}
+                  user={user}
+                  demo={demo}
+                  onChanged={async () => {
+                    await refresh();
+                    api("/api/deposits")
+                      .then((d) => setDeposits(d.data))
+                      .catch(() => {});
+                    api("/api/account/ledger")
+                      .then((l) => setLedger(l.data))
+                      .catch(() => {});
+                  }}
+                />
+              ) : (
               <WalletPayPanel
                 config={config}
                 user={user}
@@ -516,6 +556,7 @@ export default function Account() {
                     .catch(() => {});
                 }}
               />
+              )}
               {(config?.services?.payments || !config?.walletPayments) && (
               <form className="form-panel" onSubmit={submitDeposit}>
                 <h2>Add credits</h2>
@@ -607,7 +648,9 @@ export default function Account() {
                 {deposits.length ? (
                   deposits.map((d) => (
                     <article className="deposit-row" key={d.id}>
-                      <b>${d.amount}</b>
+                      <b>
+                        ${d.currency === "nyma" ? Number(d.amount.toFixed(2)) : d.amount}
+                      </b>
                       <span>{d.status}</span>
                       <span>{d.credited ? "Credited" : "Not credited"}</span>
                       <button

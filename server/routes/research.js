@@ -32,7 +32,7 @@ import {
   partialReport,
   stepSources,
 } from "../../src/deep-research.js";
-import { researchCosts, searchMessages, writeMessages } from "../research.js";
+import { researchCosts, searchMessages, writeMessages, cutShortNote } from "../research.js";
 
 // Deep Research (update "deepresearch", which needs Live Web Search too; see
 // featuresFor). One question becomes a short plan of sub-questions, one web
@@ -366,7 +366,12 @@ export function researchRoutes(ctx) {
       try {
         const r = await call(costs.messages.plan, costs.budget.plan, false);
         if (!r.text.trim()) fail(502, "The planner returned nothing.", "empty_output");
-        Object.assign(planStep, { status: "done", credits: settleStep("plan", r), ...withRoute(r.route) });
+        Object.assign(planStep, {
+          status: "done",
+          credits: settleStep("plan", r),
+          finish_reason: r.finish || "stop",
+          ...withRoute(r.route),
+        });
         plan = parsePlan(r.text, question, cap);
       } catch (e) {
         releaseStep("plan");
@@ -388,12 +393,15 @@ export function researchRoutes(ctx) {
           try {
             const r = await call(searchMessages(plan.questions[i]), costs.budget.search, true);
             if (!r.text.trim()) fail(502, "The search returned nothing.", "empty_output");
+            // A search that hit its reply budget keeps what it wrote; the
+            // step says it was cut short.
             results[i] = {
               status: "done",
               findings: r.text.slice(0, MAX_FINDINGS),
               sources: r.sources,
               credits: settleStep(step, r),
               route: r.route,
+              finish: r.finish || "stop",
             };
           } catch {
             releaseStep(step);
@@ -407,6 +415,7 @@ export function researchRoutes(ctx) {
               sources: results[i].sources,
               findings: results[i].findings,
               credits: results[i].credits,
+              ...(results[i].finish ? { finish_reason: results[i].finish } : {}),
             },
           });
         }
@@ -434,8 +443,22 @@ export function researchRoutes(ctx) {
             false,
           );
           if (!r.text.trim()) fail(502, "The report came back empty.", "empty_output");
-          Object.assign(writeStep, { status: "done", credits: settleStep("write", r), ...withRoute(r.route) });
-          outcome = { status: "done", text: cleanReport(r.text, sources).text, sources, finish: r.finish || "stop" };
+          Object.assign(writeStep, {
+            status: "done",
+            credits: settleStep("write", r),
+            finish_reason: r.finish || "stop",
+            ...withRoute(r.route),
+          });
+          // A report that hit its reply budget is kept, and ends by saying so
+          // (in the question's language, as the report is written), so the
+          // note goes with it into History, Export and Share.
+          const report = cleanReport(r.text, sources).text;
+          outcome = {
+            status: "done",
+            text: r.finish === "length" ? `${report}\n\n---\n\n${cutShortNote(question)}` : report,
+            sources,
+            finish: r.finish || "stop",
+          };
         } catch (e) {
           releaseStep("write");
           writeStep.status = stopped() ? "stopped" : "failed";
@@ -474,7 +497,7 @@ export function researchRoutes(ctx) {
         status: r.status,
         sources: r.sources.length,
         credits: r.credits,
-        ...(r.status === "done" ? withRoute(r.route) : {}),
+        ...(r.status === "done" ? { finish_reason: r.finish || "stop", ...withRoute(r.route) } : {}),
       })),
       writeStep,
     ];

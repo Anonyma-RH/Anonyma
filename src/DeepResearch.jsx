@@ -250,6 +250,7 @@ export async function runResearch(body, onUpdate, signal) {
           sources: Array.isArray(r.sources) ? r.sources : [],
           findings: typeof r.findings === "string" ? r.findings : "",
           credits: Number(r.credits) || 0,
+          ...(typeof r.finish_reason === "string" ? { finish: r.finish_reason } : {}),
         };
       } else if (r?.stage === "writing") state.stage = "writing";
       else if (r?.stage === "done") return { ...event, state };
@@ -286,6 +287,7 @@ export function stoppedReply(state) {
       status: r.status === "queued" ? "skipped" : r.status === "searching" ? "stopped" : r.status,
       sources: r.sources?.length || 0,
       credits: r.credits || 0,
+      ...(r.status === "done" && r.finish ? { finish_reason: r.finish } : {}),
     })),
     { kind: "write", status: state.stage === "writing" ? "stopped" : "skipped", credits: 0 },
   ];
@@ -314,6 +316,9 @@ const STATUS = {
   skipped: "Not run",
 };
 const sourcesLabel = (n) => (n === 1 ? "1 source" : `${n} sources`);
+// A step that hit its reply budget: what it wrote is kept, marked as such.
+const CUT = " · cut short";
+export const cutShort = (step) => step?.finish_reason === "length" || step?.finish === "length";
 
 // The live panel in the reply while a run goes: Planning, then each search
 // as it runs, then Writing.
@@ -352,7 +357,9 @@ export function ResearchProgress({ research }) {
                     {research.questions[i]}
                   </span>
                   <span className="research-state">
-                    {r.status === "done" ? sourcesLabel(r.sources?.length || 0) : STATUS[r.status] || ""}
+                    {r.status === "done"
+                      ? sourcesLabel(r.sources?.length || 0) + (cutShort(r) ? CUT : "")
+                      : STATUS[r.status] || ""}
                   </span>
                 </li>
               ))}
@@ -424,7 +431,7 @@ export function ResearchDetails({ research, citations = [], trail = false }) {
                 <li key={i}>
                   <span data-i18n="off">{q}</span>
                   <small>
-                    {s?.status === "done" ? sourcesLabel(s.sources || 0) : STATUS[s?.status] || ""}
+                    {s?.status === "done" ? sourcesLabel(s.sources || 0) + (cutShort(s) ? CUT : "") : STATUS[s?.status] || ""}
                     {trail && s?.route ? ` · ${s.route === "backup" ? "Backup route" : "Primary route"}` : ""}
                   </small>
                 </li>

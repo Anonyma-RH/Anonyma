@@ -13,6 +13,7 @@ import { createApp } from "../server/app.js";
 import { addCredit, balance, credits } from "../server/core.js";
 import { UPDATES, featuresFor } from "../server/releases.js";
 import { eraseAccountContent } from "../server/routes/account.js";
+import { BUDGETS, CUT_SHORT_NOTE } from "../server/research.js";
 import {
   DEPTHS,
   MAX_SOURCES,
@@ -106,7 +107,7 @@ async function gateway(t, script = {}) {
           },
         ],
       });
-    event(res, { choices: [{ delta: {}, finish_reason: "stop" }], usage: { prompt_tokens: 200, completion_tokens: 100 } });
+    event(res, { choices: [{ delta: {}, finish_reason: answer?.finish || "stop" }], usage: { prompt_tokens: 200, completion_tokens: 100 } });
     res.end("data: [DONE]\n\n");
   });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
@@ -362,6 +363,59 @@ test("a quick run plans, searches 3 times, writes, charges each step and saves o
   assert.ok(JSON.stringify(exported.conversations).includes("Passkeys vs passwords"));
   eraseAccountContent(s.db, a.user);
   assert.equal(savedMessages(s, a.user.id).length, 0);
+});
+
+test("step budgets leave room for reasoning; the quote, the hold and the maximum shown agree", async (t) => {
+  assert.deepEqual(BUDGETS, { plan: 4000, search: 4000, write: 8000 });
+  const g = await gateway(t);
+  const s = fixture(t, { gatewayUrl: g.url });
+  const a = await person(s, "bea");
+  const units = (c) => Math.round(c * 10000);
+  const quotes = {};
+  for (const depth of ["quick", "thorough"]) {
+    const q = (await a.agent.post("/api/research/quote").send({ model: MODEL, question: QUESTION, depth }).expect(200)).body;
+    assert.equal(units(q.credits), units(q.steps.plan) + q.searches * units(q.steps.search) + units(q.steps.write));
+    quotes[depth] = q;
+  }
+  // gemini-2.5-flash at the published rates (no markup in tests).
+  // Quick 82.13 -> 95.26 and Thorough 154.60 -> 175.23 with the raised budgets.
+  assert.equal(quotes.quick.credits, 95.2568);
+  assert.equal(quotes.thorough.credits, 175.2299);
+  // Each step asks for its budget, and the hold is 4x the quoted maximum.
+  await ask(a).expect(200);
+  const asked = Object.fromEntries(g.calls.map((c) => [c.kind, c.body.max_tokens]));
+  assert.deepEqual(asked, { plan: 4000, search: 4000, write: 8000 });
+  const held = holdsOf(s, a.user.id).reduce((n, h) => n + h.amount, 0);
+  assert.equal(held, 4 * units(quotes.quick.credits));
+});
+
+test("a search or a report cut short by its budget is kept and says so", async (t) => {
+  const g = await gateway(t, {
+    search: (i) => ({ text: `Finding ${i}, cut off mid`, sources: [SOURCE(i)], finish: i === 1 ? "length" : "stop" }),
+    write: { text: "# Report\n\nFirst point [1]. Second point [2", finish: "length" },
+  });
+  const s = fixture(t, { gatewayUrl: g.url });
+  const a = await person(s, "cal");
+  const list = events((await ask(a).expect(200)).body);
+  const searched = list.filter((e) => e.research?.stage === "searched").map((e) => e.research);
+  assert.equal(searched.find((r) => r.index === 1).finish_reason, "length");
+  const final = list.at(-1);
+  assert.equal(final.research.stage, "done");
+  const steps = final.message.research.steps;
+  assert.deepEqual(steps.map((x) => x.finish_reason), ["stop", "stop", "length", "stop", "length"]);
+  // The cut-short search's findings still went to the report.
+  const write = g.calls.find((c) => c.kind === "write");
+  assert.match(JSON.stringify(write.body.messages), /Finding 1, cut off mid/);
+  // The report is kept, and ends with a plain note.
+  assert.ok(final.message.text.startsWith("# Report"));
+  assert.ok(final.message.text.endsWith("\n\n---\n\n" + CUT_SHORT_NOTE.en), final.message.text);
+  assert.equal(final.anonyma.finish_reason, "length");
+  const saved = savedMessages(s, a.user.id);
+  assert.equal(saved[1].content.text, final.message.text);
+  assert.equal(saved[1].content.finish_reason, "length");
+  // A question in Chinese gets the note in Chinese, as its report would be.
+  const zh = events((await ask(a, { question: "通行密钥比密码更安全吗？" }).expect(200)).body).at(-1);
+  assert.ok(zh.message.text.endsWith(CUT_SHORT_NOTE.zh));
 });
 
 test("thorough runs up to 6 searches; invalid planner JSON falls back to one search of the question", async (t) => {
@@ -628,6 +682,18 @@ test("the UI: gated on the release, live progress and numbered sources, model te
   assert.match(details, /Stopped before the report/);
   assert.match(details, /<span class="research-n">1<\/span><a data-i18n="off" href="https:\/\/source-1\.example\.org\/page"[^>]*rel="noopener noreferrer nofollow">Source 1<\/a>/);
   assert.match(details, /Primary route/);
+  const cut = renderToStaticMarkup(
+    createElement(ui.ResearchDetails, {
+      research: {
+        questions: ["Sub one?"],
+        status: "done",
+        steps: [{ kind: "plan", status: "done" }, { kind: "search", status: "done", sources: 3, finish_reason: "length" }, { kind: "write", status: "done" }],
+        credits_charged: 30,
+      },
+      citations: [SOURCE(1)],
+    }),
+  );
+  assert.match(cut, /3 sources · cut short/);
   // Only a web address is ever a link, and the numbering never shifts.
   const unsafe = renderToStaticMarkup(
     createElement(ui.ResearchDetails, {
@@ -709,6 +775,8 @@ test("every visible string has a Chinese entry, including the release copy", asy
     "The most this research can cost. Each step is charged on its actual usage as it finishes; steps that don't finish cost nothing.",
     "Deep Research is coming soon.",
     "Deep research",
+    "3 sources · cut short",
+    "3 sources · cut short · Primary route",
   ];
   for (const s of strings) {
     const zh = translateText(s, dict);

@@ -3621,7 +3621,8 @@
     "Deep research is unavailable.": "深度研究暂不可用。",
     "Deep research stopped.": "深度研究已停止。",
     "The connection ended before the report arrived.": "报告送达前连接已中断。",
-    "Only this question is sent, not earlier messages.": "只发送这个问题，不发送之前的消息。"
+    "Only this question is sent, not earlier messages.": "只发送这个问题，不发送之前的消息。",
+    "cut short": "已截断"
   },
   "patterns": [
     {

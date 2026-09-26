@@ -17,9 +17,11 @@ import {
 // src/deep-research.js.
 
 // Reply budgets per step, in tokens. Reasoning models spend part of these
-// thinking, so they're larger than the visible text needs. Each is also
-// capped by the model's own output limit (see stepBudget).
-export const BUDGETS = { plan: 1500, search: 2000, write: 6000 };
+// thinking before they answer (gemini-2.5-flash was seen using about 1,900
+// hidden tokens), so they're well above what the visible text needs: a plan
+// cut short falls back to one search, and cut-short findings weaken the
+// report. Each is also capped by the model's own output limit (stepBudget).
+export const BUDGETS = { plan: 4000, search: 4000, write: 8000 };
 
 export const plannerPrompt = (cap) =>
   `You plan web research. Split the user's question into at most ${cap} focused sub-questions. ` +
@@ -43,6 +45,16 @@ export const WRITE_PROMPT = [
   "Use only numbers from the source list. Never write URLs or a list of sources; the app shows them.",
   "If the findings are thin, one-sided or disagree, say so plainly. Report what sources say rather than giving financial, legal or medical advice.",
 ].join("\n");
+
+// The line a report cut short by its reply budget ends with: Chinese for a
+// question written in Chinese (the report follows the question's language),
+// English otherwise.
+export const CUT_SHORT_NOTE = {
+  en: "*Cut short: the model reached its reply limit, so this report may be incomplete.*",
+  zh: "*已截断：模型已达到回复上限，这份报告可能不完整。*",
+};
+export const cutShortNote = (question) =>
+  /[\u3400-\u9fff]/.test(String(question)) ? CUT_SHORT_NOTE.zh : CUT_SHORT_NOTE.en;
 
 // A step's reply budget for this model: the step's own budget, within what
 // /api/chat would allow the model (its output limit once Longer Answers is

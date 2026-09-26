@@ -3027,7 +3027,9 @@ export default function Workspace() {
                           {m.role === "assistant" && m.content && (
                             <CopyButton text={m.content} />
                           )}
-                          {longAnswersLive && m.role === "assistant" && completionNotice(m) && (
+                          {/* A Deep research report says so itself when it was cut short;
+                              a continuation would be a chat, not more research. */}
+                          {longAnswersLive && m.role === "assistant" && !m.research && completionNotice(m) && (
                             <div className="fine-print" role="status">
                               <p>{completionNotice(m)}</p>
                               {i === messages.length - 1 && !busy && (m.content || m.reasoning) && (

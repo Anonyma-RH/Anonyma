@@ -14,6 +14,8 @@ import {
 import { HoldingsBoost } from "./ReferralBoost.jsx";
 import { referralBoost, boostPerk } from "./referral-boost.js";
 import { opensLabel } from "./early-models.js";
+import { HoldingsApiBoost } from "./ApiBoost.jsx";
+import { apiBoostOf, apiBoostPerk } from "./api-boost.js";
 import "./holders.css";
 
 // The small tag on a feature a holder is using before its public release.
@@ -98,6 +100,9 @@ export function HoldingsSettings({ config, user, demo, refresh, onNotice, onErro
   // Referral Boost, once live, is one more perk of the account's tier.
   const boostText = tierIndex >= 0 ? boostPerk(boost, state.tier.id) : null;
   if (boostText) perks.push(boostText);
+  // API Boost, once live, is one more perk of the account's tier (on its
+  // own line, so it translates on its own).
+  const apiPerk = tierIndex >= 0 ? apiBoostPerk(apiBoostOf(config), state.tier.id) : null;
   const caps = program?.caps?.holder;
   const balance = !wallet
     ? "No wallet linked"
@@ -193,7 +198,10 @@ export function HoldingsSettings({ config, user, demo, refresh, onNotice, onErro
           </div>
           <div>
             <span>Perks</span>
-            <b>{perks.length ? perks.join(", ") : "None yet"}</b>
+            <b>
+              {perks.length ? perks.join(", ") : "None yet"}
+              {apiPerk && <em className="holdings-perk">{apiPerk}</em>}
+            </b>
           </div>
           <div>
             <span>Early access</span>
@@ -233,6 +241,7 @@ export function HoldingsSettings({ config, user, demo, refresh, onNotice, onErro
           </p>
         )}
         <HoldingsBoost config={config} tierId={state?.tier?.id} />
+        <HoldingsApiBoost config={config} tierId={state?.tier?.id} />
         <EarlyModelList early={state?.earlyModels} eligible={on} />
         {vote && (
           <div className="holdings-vote">

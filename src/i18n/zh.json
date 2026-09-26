@@ -3607,7 +3607,20 @@
     "New models open to Insiders first": "新模型优先向资深持有者开放",
     "They're in your model pickers now, tagged Early.": "它们现在已出现在你的模型选择器中，并标有“抢先”标签。",
     "No new models in early access right now. The next ones show here.": "目前没有新模型处于抢先体验阶段。下一批将显示在这里。",
-    "Open to NYMA Insiders first": "优先向 NYMA 资深持有者开放"
+    "Open to NYMA Insiders first": "优先向 NYMA 资深持有者开放",
+    "API Boost": "API 提速",
+    "Higher API limits for NYMA holders.": "NYMA 持有者享有更高的 API 速率上限。",
+    "More API and MCP requests a minute at every holder tier": "每个持有者等级每分钟都可发送更多 API 和 MCP 请求",
+    "Your keys, MCP and connected apps all get the higher limit": "你的密钥、MCP 和已连接的应用都享有更高上限",
+    "Your balance, key caps and allowances still set what's spent": "实际花费仍由你的余额、密钥上限和额度决定",
+    "Loading your API rate limit…": "正在加载你的 API 速率上限……",
+    "API rate limit": "API 速率上限",
+    "API rate limit by NYMA tier": "按 NYMA 等级划分的 API 速率上限",
+    "API rate limit by tier": "按等级划分的 API 速率上限",
+    "Rates only: your balance, key caps, allowances and spending limits still set what's spent.": "只影响速率：实际花费仍由你的余额、密钥上限、额度和支出限额决定。",
+    "API Boost: NYMA holders get more. It follows your current holder tier, with a balance check from the last 48 hours. Connected apps get your limit but are never told your tier.": "API 提速：NYMA 持有者可获得更高上限。它取决于你当前的持有者等级，并需要过去 48 小时内的余额检查。已连接的应用会使用你的上限，但永远不会得知你的等级。",
+    "429 — rate limit or key_cap_exceeded. See the rate limits above; each key can also have a rolling 24-hour credit cap.": "429 ——速率限制或 key_cap_exceeded。请参阅上方的速率上限；每个密钥还可能有滚动 24 小时积分上限。",
+    "Your current tier sets it, with the same fresh balance check as every perk. Rates only: your balance, key caps, allowances and spending limits still set what's spent.": "它由你当前的等级决定，并和其他权益一样需要近期的余额检查。只影响速率：实际花费仍由你的余额、密钥上限、额度和支出限额决定。"
   },
   "patterns": [
     {
@@ -5681,6 +5694,50 @@
     {
       "en": "This model is new and open to NYMA Insiders first. It opens to everyone on {0}. Nothing was sent or charged.",
       "zh": "此模型为新模型，优先向 NYMA 资深持有者开放。它将于 {0} 向所有人开放。未发送任何内容，也未扣费。"
+    },
+    {
+      "en": "Your API rate limit: {0} requests/min ({1} boost)",
+      "zh": "你的 API 速率上限：每分钟 {0} 个请求（{1}提速）"
+    },
+    {
+      "en": "Your API rate limit: {0} requests/min",
+      "zh": "你的 API 速率上限：每分钟 {0} 个请求"
+    },
+    {
+      "en": "{0} requests/min",
+      "zh": "每分钟 {0} 个请求"
+    },
+    {
+      "en": "{0}/min",
+      "zh": "{0}/分钟"
+    },
+    {
+      "en": "API limit {0}",
+      "zh": "API 上限 {0}"
+    },
+    {
+      "en": "Chat completions, media and MCP share this limit, counted for your account from each IP address. File uploads have their own: {0} requests/min. Rates only: your balance, key caps, allowances and spending limits still set what's spent.",
+      "zh": "聊天补全、媒体和 MCP 共用此上限，按你的账户在每个 IP 地址分别计算。文件上传另有上限：每分钟 {0} 个请求。只影响速率：实际花费仍由你的余额、密钥上限、额度和支出限额决定。"
+    },
+    {
+      "en": "Holding NYMA in a linked wallet raises it, up to {0} requests/min at {1}.",
+      "zh": "在关联钱包中持有 NYMA 可提高此上限，{1}最高可达每分钟 {0} 个请求。"
+    },
+    {
+      "en": "More API and MCP requests a minute at every tier, for your keys and connected apps. Standard: {0} requests/min.",
+      "zh": "每个等级每分钟都可发送更多 API 和 MCP 请求，适用于你的密钥和已连接的应用。标准：每分钟 {0} 个请求。"
+    },
+    {
+      "en": "More API and MCP requests a minute for your API keys and connected apps. Standard: {0} requests/min. Your balance, key caps and allowances still set what's spent.",
+      "zh": "你的 API 密钥和已连接的应用每分钟可发送更多 API 和 MCP 请求。标准：每分钟 {0} 个请求。实际花费仍由你的余额、密钥上限和额度决定。"
+    },
+    {
+      "en": "Rate limits: chat completions, the media endpoints and MCP share {0} requests/min for each account from each IP address; file uploads have {1} requests/min. A request without a valid key counts per IP address. Over the limit you get 429 rate_limit with a Retry-After header.",
+      "zh": "速率上限：聊天补全、媒体端点和 MCP 共用一个上限，每个账户在每个 IP 地址每分钟 {0} 个请求；文件上传为每分钟 {1} 个请求。没有有效密钥的请求按 IP 地址计算。超过上限会返回 429 rate_limit，并附带 Retry-After 响应头。"
+    },
+    {
+      "en": "{0}: {1} requests/min, file uploads {2} requests/min",
+      "zh": "{0}：每分钟 {1} 个请求，文件上传每分钟 {2} 个请求"
     }
   ]
 }

@@ -18,9 +18,17 @@ export function createLimiter(db, cfg) {
     RETURNING count,expires`);
   const cleanup = db.prepare("DELETE FROM rate_limits WHERE expires<=?");
   let nextCleanup = 0;
-  return (name, max, window) => async (req, res, next) => {
+  // `max` may be a function of the request (API Boost's per-account limits,
+  // server/api-boost.js), and `subjectOf` may name what is counted; by
+  // default it's the signed-in account, or the IP address.
+  return (name, max, window, subjectOf) => async (req, res, next) => {
+    const ceiling = typeof max === "function" ? max(req) : max;
     // Hash identifiers so shared-store keys never include account IDs or IPs.
-    const subject = name === "api_ip" ? req.ip : req.user?.id || req.ip;
+    const subject = subjectOf
+      ? subjectOf(req)
+      : name === "api_ip"
+        ? req.ip
+        : req.user?.id || req.ip;
     const key = `${cfg.rateLimitNamespace}:${name}:${createHash("sha256").update(String(subject)).digest("hex")}`;
     try {
       let count, remaining;
@@ -62,7 +70,7 @@ export function createLimiter(db, cfg) {
         count = record.count;
         remaining = record.expires - time;
       }
-      if (count > max) {
+      if (count > ceiling) {
         res.set(
           "Retry-After",
           String(Math.max(1, Math.ceil(remaining / 1000))),

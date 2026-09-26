@@ -19,6 +19,8 @@ import {
 } from "./holders.js";
 import { referralBoost, boostPerk, tierList, percentText } from "./referral-boost.js";
 import "./referral-boost.css";
+import { apiBoostOf, apiBoostPerk, boostedTiers, perMinuteText } from "./api-boost.js";
+import "./api-boost.css";
 import { EarlyModelList } from "./Holders.jsx";
 import "./holders.css";
 
@@ -55,6 +57,9 @@ export default function Token() {
   const tiers = program?.tiers || [];
   const loyalty = program?.loyalty;
   const caps = program?.caps;
+  // API Boost, once live: each tier's API and MCP request rate, as a perk.
+  const apiBoost = apiBoostOf(config);
+  const apiTiers = boostedTiers(apiBoost);
   // Referral Boost, once live: each tier's referral rate, as a perk.
   const boost = referralBoost(config);
   const holderMin = nymaAmount(tiers[0]?.min ?? 1_000_000);
@@ -150,6 +155,9 @@ export default function Token() {
                         ))}
                         {boostPerk(boost, t.id) && (
                           <li>{boostPerk(boost, t.id)}</li>
+                        )}
+                        {apiBoostPerk(apiBoost, t.id) && (
+                          <li>{apiBoostPerk(apiBoost, t.id)}</li>
                         )}
                       </ul>
                     </td>
@@ -266,6 +274,27 @@ export default function Token() {
                       <span>Without a tier</span>
                       <b>{percentText(boost.base)}</b>
                     </li>
+                  </ul>
+                </dd>
+              </>
+            )}
+            {apiTiers.length > 0 && (
+              <>
+                <dt>
+                  API Boost <small>{`${apiTiers[0].name} and up`}</small>
+                </dt>
+                <dd>
+                  <p>
+                    {`More API and MCP requests a minute for your API keys and connected apps. Standard: ${perMinuteText(apiBoost.perMinute)}. Your balance, key caps and allowances still set what's spent.`}
+                  </p>
+                  <ul className="token-api-boost" aria-label="API rate limit by tier">
+                    {apiTiers.map((t) => (
+                      <li key={t.id}>
+                        <span>{t.name}</span>
+                        <b>{perMinuteText(t.perMinute)}</b>
+                        <em>{multiplierText(t.multiplier)}</em>
+                      </li>
+                    ))}
                   </ul>
                 </dd>
               </>

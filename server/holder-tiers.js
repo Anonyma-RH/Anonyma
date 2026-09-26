@@ -194,3 +194,49 @@ export const parseModelList = (value) =>
             .filter(Boolean),
         ),
       ];
+
+// API Boost (server/api-boost.js): the multiple of the standard API and MCP
+// request rate each tier gets. "tier:multiplier" for all three tiers. Unset:
+// these defaults. Empty (or "off"): no boost, every account gets the
+// standard rate. Rates only: a boost never lets anything spend more.
+export const DEFAULT_HOLDER_API_MULTIPLIERS = "holder:2,insider:3,inner:5";
+export const MAX_API_MULTIPLIER = 10;
+const MULTIPLIER = /^\d{1,2}(\.\d{1,2})?$/;
+
+// Returns { holder, insider, inner }, or null when the boost is off. Each
+// multiplier is from 1 to 10 with at most two decimals ("2", "2x" and
+// "2.5" all work), and a higher tier never gets less than the one below.
+export function parseHolderApiMultipliers(value) {
+  const text =
+    value === undefined || value === null
+      ? DEFAULT_HOLDER_API_MULTIPLIERS
+      : String(value).trim();
+  if (!text || text.toLowerCase() === "off") return null;
+  const ids = TIERS.map((t) => t.id);
+  const found = {};
+  for (const pair of text.split(",")) {
+    const [id, raw, ...rest] = pair.split(":").map((s) => s.trim().toLowerCase());
+    const number = String(raw ?? "").replace(/[x×]$/, "");
+    if (rest.length || !ids.includes(id) || !MULTIPLIER.test(number))
+      throw Error(
+        `HOLDER_API_MULTIPLIERS must be tier:multiplier for holder, insider and inner, e.g. "${DEFAULT_HOLDER_API_MULTIPLIERS}", or empty (or off) for no boost.`,
+      );
+    if (Object.hasOwn(found, id))
+      throw Error(`HOLDER_API_MULTIPLIERS lists ${id} more than once.`);
+    found[id] = Number(number);
+  }
+  const missing = ids.filter((id) => !Object.hasOwn(found, id));
+  if (missing.length)
+    throw Error(
+      `HOLDER_API_MULTIPLIERS needs a multiplier for every tier; missing: ${missing.join(", ")}.`,
+    );
+  if (ids.some((id) => !(found[id] >= 1 && found[id] <= MAX_API_MULTIPLIER)))
+    throw Error(
+      `HOLDER_API_MULTIPLIERS: each multiplier must be from 1 to ${MAX_API_MULTIPLIER}.`,
+    );
+  if (ids.some((id, i) => i > 0 && found[id] < found[ids[i - 1]]))
+    throw Error(
+      "HOLDER_API_MULTIPLIERS: a higher tier's multiplier can't be below the tier under it.",
+    );
+  return Object.freeze(Object.fromEntries(ids.map((id) => [id, found[id]])));
+}

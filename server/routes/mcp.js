@@ -3,6 +3,7 @@ import { isPrivateModel } from "../private-mode.js";
 import { connectLive } from "../releases.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { SEED_GUARD_HEADER } from "../seed-guard.js";
+import { apiRateLimit } from "../api-boost.js";
 import { viewerOf } from "../early-models.js";
 import {
   ACCESS_PREFIX,
@@ -417,7 +418,7 @@ async function handleOne(ctx, req, res, msg) {
 }
 
 export function mcpRoutes(ctx) {
-  const { app, db, cfg, limit, apiAuth } = ctx;
+  const { app, db, cfg, apiAuth } = ctx;
   // What a failed Bearer auth tells an MCP client. Once Connect an App is
   // live it points at the protected resource metadata, so a client can start
   // OAuth; before that it must not, so clients never try.
@@ -469,7 +470,10 @@ export function mcpRoutes(ctx) {
       });
   app.get("/mcp", notAllowed);
   app.delete("/mcp", notAllowed);
-  app.post("/mcp", limit("api_ip", 120, 60000), mcpAuth, async (req, res) => {
+  // Counted with /v1 (server/api-boost.js); a connected app's requests
+  // count for the account that approved it.
+  const rateLimit = apiRateLimit(ctx, { oauth: true });
+  app.post("/mcp", rateLimit, mcpAuth, async (req, res) => {
     const body = req.body;
     const batch = Array.isArray(body);
     const messages = batch ? body : [body];

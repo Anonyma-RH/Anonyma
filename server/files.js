@@ -1,6 +1,7 @@
 import { inflateRawSync } from "node:zlib";
 import { now, uid, fail, transaction, hash } from "./core.js";
 import { isReleased } from "./releases.js";
+import { filesRateLimit } from "./api-boost.js";
 import {
   extractOffice,
   FILE_LIMIT,
@@ -303,7 +304,8 @@ export function fileRoutes(ctx) {
   const guard = [requireUser, limit("files", 60, 60000)];
   const apiGuard = [
     apiAuth,
-    limit("api-files", 60, 60000),
+    // 60 a minute per account, raised by NYMA tier once API Boost is live.
+    filesRateLimit(ctx),
     (req, res, next) => {
       policy(req);
       next();

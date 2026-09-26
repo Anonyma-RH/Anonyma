@@ -17,6 +17,7 @@ import { viewerOf } from "../early-models.js";
 import { withMemory } from "../../src/memory.js";
 import { trainingFields, liveIds } from "../training.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
+import { apiBoostInfo } from "../api-boost.js";
 import {
   fail,
   balance,
@@ -88,6 +89,8 @@ export function catalogRoutes(ctx) {
       catalogUpdatedAt: models.snapshot.updatedAt,
       readiness: configurationStatus(cfg),
       releases: releaseInfo(cfg),
+      // API Boost's public settings, once it's released (null before).
+      apiBoost: apiBoostInfo(cfg),
     }),
   );
   app.get("/api/models", async (req, res) => {

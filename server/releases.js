@@ -690,6 +690,20 @@ export const UPDATES = [
     // as soon as it's added. No routes of its own to gate.
     released: false,
   },
+  {
+    id: "apiboost",
+    title: "API Boost",
+    tagline: "Higher API limits for NYMA holders.",
+    points: [
+      "More API and MCP requests a minute at every holder tier",
+      "Your keys, MCP and connected apps all get the higher limit",
+      "Your balance, key caps and allowances still set what's spent",
+    ],
+    // Rates only (server/api-boost.js): HOLDER_API_MULTIPLIERS per tier,
+    // from the Holder Program's current tier. Before release, /v1 and /mcp
+    // keep the standard per-IP limit and the account's limit route refuses.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -834,6 +848,8 @@ export function featuresFor(req) {
     if (p === "/api/videos") return ["historylibrary", "video"];
     if (p === "/api/audio/speech") return ["historylibrary", "audio"];
   }
+  // API Boost: the account's own API rate limit.
+  if (p === "/api/account/api-limit") return ["api", "apiboost"];
   if (p.startsWith("/api/files")) return ["files", "documents"];
   if (p.startsWith("/v1/files")) return ["api", "files"];
   if (p.startsWith("/api/videos")) return ["video"];

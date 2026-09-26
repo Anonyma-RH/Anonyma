@@ -43,6 +43,7 @@ import { accountRoutes } from "./routes/account.js";
 import { wipeRoutes } from "./routes/wipe.js";
 import { twoStepRoutes } from "./routes/two-step.js";
 import { allowanceRoutes } from "./routes/allowances.js";
+import { apiBoostRoutes } from "./routes/api-boost.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
 import { balanceAlertRoutes } from "./routes/balance-alerts.js";
 import { connectRoutes } from "./routes/connect.js";
@@ -144,6 +145,9 @@ export function createApp(overrides = {}) {
   // Two-Step Sign-in's settings (its sign-in step is in authRoutes).
   twoStepRoutes(ctx);
   allowanceRoutes(ctx);
+  // API Boost: the account's own API rate limit (the limits are applied by
+  // the /v1 and /mcp routes, server/api-boost.js).
+  apiBoostRoutes(ctx);
   // Also registers the Spending Limits check every reservation runs.
   spendingLimitRoutes(ctx);
   // Low-Balance Alerts: the account's alert level (a setting only).

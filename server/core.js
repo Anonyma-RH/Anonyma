@@ -19,6 +19,7 @@ import {
   parseHolderReferralPercents,
   parseEarlyModelDays,
   parseModelList,
+  parseHolderApiMultipliers,
 } from "./holder-tiers.js";
 
 export const uid = (prefix = "") => prefix + randomBytes(16).toString("hex");
@@ -98,6 +99,9 @@ export function config(overrides = {}) {
     // opens from the second tier (Insider).
     holderRewards: e.HOLDER_REWARDS || "",
     holderLoyalty: e.HOLDER_LOYALTY || "",
+    // API Boost (server/api-boost.js): each tier's multiple of the standard
+    // API and MCP request rate. Unset: the defaults; empty or "off": none.
+    holderApiMultipliers: e.HOLDER_API_MULTIPLIERS,
     // Early Model Access (server/early-models.js): the days a new model is
     // open to Insiders and up first (default 14, 0 turns it off), and model
     // ids that open to everyone at once.
@@ -322,6 +326,14 @@ export function config(overrides = {}) {
     cfg.holderRewards = parseHolderRewards(cfg.holderRewards);
   if (typeof cfg.holderLoyalty !== "object" || cfg.holderLoyalty === null)
     cfg.holderLoyalty = parseHolderLoyalty(cfg.holderLoyalty);
+  // null (no boost) and an already parsed object are kept as they are.
+  if (
+    cfg.holderApiMultipliers === undefined ||
+    typeof cfg.holderApiMultipliers === "string"
+  )
+    cfg.holderApiMultipliers = parseHolderApiMultipliers(
+      cfg.holderApiMultipliers,
+    );
   cfg.earlyModelDays = parseEarlyModelDays(cfg.earlyModelDays);
   cfg.earlyModelExempt = parseModelList(cfg.earlyModelExempt);
   if (

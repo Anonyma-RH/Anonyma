@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { useApp } from "./context.jsx";
 import { CopyButton, Notice } from "./ui.jsx";
 import { featureEnabled } from "./release-copy.js";
+import { ApiGuideLimits } from "./ApiBoost.jsx";
+import { apiBoostOf } from "./api-boost.js";
 
 export function ApiExample() {
   const { config } = useApp();
@@ -97,6 +99,7 @@ export default function ApiGuide() {
         This is a limited compatible interface, not support for every OpenAI
         client feature.
       </p>
+      <ApiGuideLimits config={config} />
       <ApiExample />
       <h3>Responses and streaming</h3>
       <p>
@@ -130,11 +133,18 @@ export default function ApiGuide() {
           404 model_not_found or unsupported_endpoint; 400 unsupported_model —
           check model and route.
         </li>
-        <li>
-          429 — rate limit or key_cap_exceeded. Chat completions allows 120
-          requests per minute per IP; each key can also have a rolling 24-hour
-          credit cap.
-        </li>
+        {apiBoostOf(config) ? (
+          <li>
+            429 — rate limit or key_cap_exceeded. See the rate limits above;
+            each key can also have a rolling 24-hour credit cap.
+          </li>
+        ) : (
+          <li>
+            429 — rate limit or key_cap_exceeded. Chat completions allows 120
+            requests per minute per IP; each key can also have a rolling
+            24-hour credit cap.
+          </li>
+        )}
         {featureEnabled(config, "allowances") && (
           <li>
             402 allowance_exhausted, 403 key_paused or key_expired — the key’s

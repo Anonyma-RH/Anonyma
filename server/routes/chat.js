@@ -30,6 +30,7 @@ import { tagUsage, chatFeature } from "../usage-insights.js";
 import { privacyTrail, storageFor, trailLive, veilMaskedFrom } from "../privacy-trail.js";
 import { refuseSeedPhrase } from "../seed-guard.js";
 import { viewerOf } from "../early-models.js";
+import { apiRateLimit } from "../api-boost.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -782,7 +783,9 @@ export function chatRoutes(ctx) {
   });
   app.post(
     "/v1/chat/completions",
-    limit("api_ip", 120, 60000),
+    // 120 a minute per IP; once API Boost is live, per account and IP,
+    // raised by NYMA tier (server/api-boost.js).
+    apiRateLimit(ctx),
     apiAuth,
     (req, res) => runChat(req, res, true),
   );

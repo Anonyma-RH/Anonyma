@@ -43,6 +43,7 @@ import {
 } from "./BalanceAlerts.jsx";
 import { ConnectedApps, connectReleased } from "./Connect.jsx";
 import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
+import { ApiRateLimit } from "./ApiBoost.jsx";
 import { ShareLinksManager } from "./ShareLinks.jsx";
 import { PanicWipe } from "./PanicWipe.jsx";
 import { TwoStepSettings } from "./TwoStep.jsx";
@@ -764,6 +765,7 @@ export default function Account() {
                   Create {demo ? "sample " : ""}key
                 </Button>
               </div>
+              <ApiRateLimit config={config} user={user} demo={demo} />
               {keys.length ? (
                 <div className="table-scroll">
                   <table>

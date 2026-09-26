@@ -14,6 +14,7 @@ import {
   API_MEDIA_TTL_MS,
 } from "../core.js";
 import { generateImages } from "../provider.js";
+import { apiRateLimit } from "../api-boost.js";
 import {
   synthesizeSpeech,
   transcribeAudio,
@@ -119,11 +120,12 @@ function readMultipart(body, boundary) {
 // switch, expiry, allowance and rolling 24-hour cap before any provider work,
 // and every settled request gets a signed receipt once receipts are live.
 export function v1MediaRoutes(ctx) {
-  const { app, db, cfg, limit, apiAuth, inflight } = ctx;
+  const { app, db, cfg, apiAuth, inflight } = ctx;
   const { saveMedia, assignCosts, signMedia } = ctx.media;
   const { getModel } = ctx.models;
   // Seed Guard reads each POST's prompt or input once the key is known.
-  const guard = [limit("api_ip", 120, 60000), apiAuth, seedGuardMiddleware(cfg)];
+  // The same request limit as /v1/chat/completions (server/api-boost.js).
+  const guard = [apiRateLimit(ctx), apiAuth, seedGuardMiddleware(cfg)];
 
   function signedMediaURL(media) {
     const base = (cfg.publicUrl || cfg.origin) + "/api/media/" + media.id;

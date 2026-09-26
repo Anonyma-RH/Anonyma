@@ -714,6 +714,33 @@ route("get", "/api/account/holdings", "The account's NYMA Holder Program state",
   description:
     "The current tier is set by the lowest balance successful reads saw in the open 30-day cycle, with a read in the last 48 hours. cycle.due is what the cycle pays at its end at the current tier; waiting means it is due but needs a fresh read first. Once Early Model Access is released (with the Holder Program live and balance checks on), earlyModels lists the models open to Insiders and up first right now (days is the early window; opensAt is when each opens to everyone, epoch ms), the same list for every account.",
 });
+// API Boost (update "apiboost").
+route("get", "/api/account/api-limit", "Your API and MCP request limits", {
+  response: object({
+    perMinute: {
+      ...integer,
+      description:
+        "Requests a minute for /v1/chat/completions, the /v1 media endpoints and POST /mcp together: 120, times the multiplier.",
+    },
+    filesPerMinute: {
+      ...integer,
+      description: "Requests a minute for /v1/files: 60, times the multiplier.",
+    },
+    standard: object({ perMinute: integer, filesPerMinute: integer }),
+    multiplier: {
+      ...number,
+      description:
+        "Your current NYMA tier's multiplier from HOLDER_API_MULTIPLIERS (default holder 2, insider 3, inner 5); 1 without a tier.",
+    },
+    tier: {
+      oneOf: [object({ id: string, name: string }), { type: "null" }],
+      description: "The tier behind a boost; null when there is none.",
+    },
+    windowSeconds: integer,
+  }),
+  description:
+    "Session only; API keys and connected apps are never told a tier. Your tier is the NYMA Holder Program's current tier (the lowest balance read this 30-day cycle, with a successful read in the last 48 hours); a stale read, no wallet or no tier means the standard limits. A tier change applies to the next request. Once API Boost is released, requests with a valid API key (or, on /mcp, a connected app's access token) count per account and IP address; requests without one count per IP address at the standard limit. Rates only: every paid request is still bounded by your balance, key caps, allowances and spending limits. 429 rate_limit responses are unchanged (same message and Retry-After). Needs the api and apiboost updates released (403 feature_unreleased otherwise).",
+});
 route("put", "/api/holders/vote", "Cast or change this month's roadmap vote", {
   body: object({ update: string }, ["update"]),
   response: ref("HolderVote"),
@@ -2207,7 +2234,7 @@ route("post", "/v1/chat/completions", "OpenAI-style chat completion", {
   body: ref("ApiChatRequest"),
   response: ref("ChatCompletion"),
   description:
-    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Other optional parameters such as temperature, tools and response_format are ignored. Tool calling, audio, embeddings and Responses are not implemented. web_search=true or plugins: [{id: web}] requests web search and its fee. Idempotency-Key (1–200 characters) overrides requestId; repeats return 409 duplicate_request without replaying output or charging again. Missing IDs generate a new request, so transport retries without an ID can create another charge. Errors use {error: {message, code, type, param}}. 402 spending_limit (with a spending_limit object) means the account's own daily or monthly spending limit would be exceeded; it is returned before anything is reserved. Once Early Model Access is released, a model in its first days needs the key's account at the NYMA Insider tier or above: otherwise 403 early_model, with early_model: {model, opens_at}, before anything is reserved. The same applies to image, speech, transcription and video models on the /v1 media routes and the workspace routes. SSE errors may occur after HTTP 200; inspect every event through [DONE]. Timeouts and unreadable provider responses can charge the base estimate; see /docs/billing. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged. Once Privacy Trail is released they also carry anonyma.privacy (see PrivacyTrail): the model, provider, gateway route, retention, storage (not_saved over the API) and signed receipt id.",
+    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Other optional parameters such as temperature, tools and response_format are ignored. Tool calling, audio, embeddings and Responses are not implemented. web_search=true or plugins: [{id: web}] requests web search and its fee. Idempotency-Key (1–200 characters) overrides requestId; repeats return 409 duplicate_request without replaying output or charging again. Missing IDs generate a new request, so transport retries without an ID can create another charge. Errors use {error: {message, code, type, param}}. 402 spending_limit (with a spending_limit object) means the account's own daily or monthly spending limit would be exceeded; it is returned before anything is reserved. Once Early Model Access is released, a model in its first days needs the key's account at the NYMA Insider tier or above: otherwise 403 early_model, with early_model: {model, opens_at}, before anything is reserved. The same applies to image, speech, transcription and video models on the /v1 media routes and the workspace routes. SSE errors may occur after HTTP 200; inspect every event through [DONE]. Timeouts and unreadable provider responses can charge the base estimate; see /docs/billing. Rate limit: 120 requests a minute per IP address, shared with the /v1 media endpoints and /mcp (429 rate_limit with Retry-After); once API Boost is released they count per account and IP address for a valid key, and NYMA holders get their tier's multiple (GET /api/account/api-limit). Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged. Once Privacy Trail is released they also carry anonyma.privacy (see PrivacyTrail): the model, provider, gateway route, retention, storage (not_saved over the API) and signed receipt id.",
 });
 paths["/v1/chat/completions"].post.parameters = [
   { name: "Idempotency-Key", in: "header", required: false, schema: requestId },
@@ -2223,7 +2250,7 @@ route(
     body: ref("McpRequest"),
     response: ref("McpResponse"),
     description:
-      "Stateless: no Mcp-Session-Id, no SSE stream. Methods: initialize, ping, tools/list, tools/call (list_models, ask, balance). A notification (no id) is acknowledged with 202 and no body. Unknown methods return -32601; malformed input returns -32700/-32600. Same key authorization, rate limits and caps as /v1. Requires the api update released as well as mcp. Once Connect an App is live, an OAuth access token also works here (and only here): its tools report that connection's own budget, and a private-only connection lists and runs zero-data-retention models only. Once Privacy Trail is released, ask results carry structuredContent.privacy (see PrivacyTrail). A 401 then carries WWW-Authenticate resource_metadata for OAuth discovery.",
+      "Stateless: no Mcp-Session-Id, no SSE stream. Methods: initialize, ping, tools/list, tools/call (list_models, ask, balance). A notification (no id) is acknowledged with 202 and no body. Unknown methods return -32601; malformed input returns -32700/-32600. Same key authorization, rate limits and caps as /v1 (a connected app's requests count for the account that approved it, at that account's limit, and are never told its tier). Requires the api update released as well as mcp. Once Connect an App is live, an OAuth access token also works here (and only here): its tools report that connection's own budget, and a private-only connection lists and runs zero-data-retention models only. Once Privacy Trail is released, ask results carry structuredContent.privacy (see PrivacyTrail). A 401 then carries WWW-Authenticate resource_metadata for OAuth discovery.",
   },
 );
 for (const method of ["get", "delete"])

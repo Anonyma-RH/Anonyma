@@ -3094,7 +3094,11 @@
     "This run is still in progress.": "此次运行仍在进行中。",
     "routines": "定时任务",
     "Routines and their inbox": "定时任务及其收件箱",
-    "This looks like a wallet seed phrase. A routine's prompt is saved and sent on every run, so ANONYMA won't save one. Remove it to continue.": "这看起来像钱包助记词。定时任务的提示词会被保存，并在每次运行时发送，因此 ANONYMA 不会保存它。请删除后再继续。"
+    "This looks like a wallet seed phrase. A routine's prompt is saved and sent on every run, so ANONYMA won't save one. Remove it to continue.": "这看起来像钱包助记词。定时任务的提示词会被保存，并在每次运行时发送，因此 ANONYMA 不会保存它。请删除后再继续。",
+    "Clean Uploads removes location, camera and author details from photos, saved Office files and saved audio in your browser before they leave your device; chat documents send only their text.": "净化上传会在文件离开你的设备之前，在浏览器中移除照片、已保存的 Office 文件和已保存音频里的位置、相机信息和作者信息；聊天中的文档只发送其文本。",
+    "Device Vault keeps device-only chats encrypted in this browser with your passphrase; ANONYMA's servers store none of them, and they can't be recovered without the passphrase.": "本机保险库会用你的密码短语在此浏览器中加密保存仅存本机的会话；ANONYMA 的服务器不保存任何此类会话，没有密码短语就无法恢复。",
+    "Routines: each routine's prompt and settings, and the newest 50 runs per routine (answer, charge and receipt), until you delete them.": "定时任务：每个定时任务的提示词和设置，以及每个定时任务最新 50 次运行（回答、扣费和收据），保留到你将其删除为止。",
+    "Panic Wipe (Account → Settings, type WIPE) erases your conversations, media files, uploads, memory, Scrolls, routines, collabs you own and support requests, revokes keys and connected apps, and signs out everywhere; your balance, ledger, deposits, receipts and settings remain, and backups are separate copies.": "紧急清除（账户 → 设置，输入 WIPE）会清除你的会话、媒体文件、上传内容、记忆、卷轴、定时任务、你拥有的协作空间和支持请求，撤销密钥和已连接的应用，并在所有设备上退出登录；你的余额、账本、充值记录、收据和设置会保留，备份是单独的副本。"
   },
   "patterns": [
     {

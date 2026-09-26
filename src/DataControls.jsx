@@ -25,6 +25,18 @@ export default function DataControls() {
           type. These are count limits, not day limits.
         </li>
         <li>
+          Clean Uploads removes location, camera and author details from photos, saved Office files and saved audio in your browser before they leave your device; chat documents send only their text.
+        </li>
+        <li>
+          Device Vault keeps device-only chats encrypted in this browser with your passphrase; ANONYMA's servers store none of them, and they can't be recovered without the passphrase.
+        </li>
+        <li>
+          Routines: each routine's prompt and settings, and the newest 50 runs per routine (answer, charge and receipt), until you delete them.
+        </li>
+        <li>
+          Panic Wipe (Account → Settings, type WIPE) erases your conversations, media files, uploads, memory, Scrolls, routines, collabs you own and support requests, revokes keys and connected apps, and signs out everywhere; your balance, ledger, deposits, receipts and settings remain, and backups are separate copies.
+        </li>
+        <li>
           Privacy Trail keeps only these facts with a saved reply: the model,
           provider, gateway route, retention, storage, Veil's mask count and
           the receipt id. No prompt text is added.

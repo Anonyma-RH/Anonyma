@@ -252,6 +252,12 @@ test("every visible string has Chinese, following the glossary", async () => {
     "This wallet request expired. Try again.",
     "Unlock with your password.",
     "Unlock with a code sent to your email or a signature from your linked wallet.",
+    // With Passkeys released too (batch 5 integration).
+    "Unlock with a passkey",
+    "Waiting for your passkey…",
+    "Unlock with your passkey.",
+    "Confirm with your passkey again.",
+    "A passkey works too.",
     "Hide",
     "Hide the screen",
     "Hide the screen (Esc twice)",
@@ -400,6 +406,61 @@ test("unlock: an email-only account gets a code; wipe and closure leave nothing 
   assert.equal(s.db.prepare("SELECT COUNT(*) n FROM challenges WHERE purpose='unlock_wallet'").get().n, 1);
   await w.agent.delete("/api/account").send({ confirm: "DELETE" }).expect(200);
   assert.equal(s.db.prepare("SELECT COUNT(*) n FROM challenges WHERE purpose='unlock_wallet'").get().n, 0);
+});
+
+// Batch 5 integration: with Passkeys released too, a passkey unlocks, and a
+// passkey-only account (no password, email or wallet) isn't left with only
+// "Sign out instead". The passkey itself is checked by Passkeys' "confirm
+// it's you" (covered in tests/passkeys.test.mjs); here it's the row that
+// check writes for this session.
+test("unlock: with Passkeys released, a passkey-only account unlocks with a passkey", async (t) => {
+  const s = fixture(t);
+  const a = await person(s.app);
+  const [session] = sessions(s, a.user.id);
+  s.db.prepare("UPDATE users SET password=NULL,email=NULL,wallet=NULL WHERE id=?").run(a.user.id);
+  const at = Date.now();
+  s.db
+    .prepare(
+      "INSERT INTO passkeys(id,user_id,credential_id,public_key,counter,user_handle,backed_up,name,created) VALUES(?,?,?,?,0,?,1,?,?)",
+    )
+    .run("pk_1", a.user.id, "cred-1", Buffer.from([1, 2, 3]), "handle-1", "iPhone", at);
+  assert.deepEqual((await a.agent.get("/api/auth/unlock").expect(200)).body.methods, ["passkey"]);
+  const other = await unlock(a.agent, { method: "password", password: PASSWORD }).expect(400);
+  assert.equal(other.body.error.code, "unlock_method");
+  assert.equal(other.body.error.message, "Unlock with your passkey.");
+  // No passkey confirmation from this session yet, or a stale one: refused.
+  assert.equal((await unlock(a.agent, { method: "passkey" }).expect(400)).body.error.code, "unlock_expired");
+  const confirm = (when) =>
+    s.db
+      .prepare(
+        "INSERT INTO passkey_reauth(session_hash,user_id,at) VALUES(?,?,?) ON CONFLICT(session_hash) DO UPDATE SET at=excluded.at",
+      )
+      .run(session, a.user.id, when);
+  confirm(Date.now() - 3 * 60000);
+  assert.equal((await unlock(a.agent, { method: "passkey" }).expect(400)).body.error.code, "unlock_expired");
+  confirm(Date.now());
+  const before = sessions(s, a.user.id);
+  const ok = await unlock(a.agent, { method: "passkey" }).expect(200);
+  assert.equal(ok.body.ok, true);
+  assert.equal(ok.headers["set-cookie"], undefined, "no new cookie");
+  assert.deepEqual(sessions(s, a.user.id), before);
+  // Another session's confirmation doesn't count for this one.
+  const b = await person(s.app, "ben_other");
+  s.db
+    .prepare("INSERT INTO passkeys(id,user_id,credential_id,public_key,counter,user_handle,backed_up,name,created) VALUES(?,?,?,?,0,?,1,?,?)")
+    .run("pk_2", b.user.id, "cred-2", Buffer.from([4, 5, 6]), "handle-2", "Mac", at);
+  assert.deepEqual((await b.agent.get("/api/auth/unlock").expect(200)).body.methods, ["password", "passkey"]);
+  assert.equal((await unlock(b.agent, { method: "passkey" }).expect(400)).body.error.code, "unlock_expired");
+
+  // Without Passkeys released, a passkey unlock is refused at the gate and
+  // isn't offered.
+  const only = fixture(t, "mvp,privacyscreen");
+  const c = await person(only.app);
+  assert.deepEqual((await c.agent.get("/api/auth/unlock").expect(200)).body.methods, ["password"]);
+  assert.equal((await unlock(c.agent, { method: "passkey" }).expect(403)).body.error.code, "feature_unreleased");
+  assert.deepEqual(featuresFor({ path: "/api/auth/unlock", method: "POST", body: { method: "passkey" } }), ["privacyscreen", "passkeys"]);
+  assert.deepEqual(featuresFor({ path: "/api/auth/unlock", method: "POST", body: { method: "password" } }), ["privacyscreen"]);
+  assert.deepEqual(featuresFor({ path: "/api/auth/unlock", method: "GET", body: {} }), ["privacyscreen"]);
 });
 
 test("unlock: the server never logs a password, code or signature", async (t) => {

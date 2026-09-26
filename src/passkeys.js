@@ -109,3 +109,9 @@ export async function confirmWithPasskey() {
   const response = await startAuthentication({ optionsJSON: options });
   return post("/api/account/passkeys/reauth", { response });
 }
+// Privacy Screen's lock (with both updates released): confirm it's you with
+// a passkey, then the unlock check, which accepts that confirmation.
+export async function unlockWithPasskey() {
+  await confirmWithPasskey();
+  return post("/api/auth/unlock", { method: "passkey" });
+}

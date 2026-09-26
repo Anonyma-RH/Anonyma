@@ -753,8 +753,8 @@ const unlockNote =
 route("get", "/api/auth/unlock", "How this account unlocks the Privacy Screen", {
   response: object({
     methods: {
-      ...array({ enum: ["password", "email", "wallet"] }),
-      description: "The account's password when it has one, otherwise an email code and/or a wallet signature",
+      ...array({ enum: ["password", "email", "wallet", "passkey"] }),
+      description: "The account's password when it has one, otherwise an email code and/or a wallet signature; and a passkey when Passkeys is released and the account has one",
     },
     retryAfter: { type: ["integer", "null"], description: "Seconds until unlocking is allowed again after too many wrong attempts; null when it is" },
   }),
@@ -771,7 +771,10 @@ route("post", "/api/auth/unlock/start", "Start unlocking with an email code or a
 });
 route("post", "/api/auth/unlock", "Unlock the Privacy Screen", {
   body: object({
-    method: { enum: ["password", "email", "wallet"] },
+    method: {
+      enum: ["password", "email", "wallet", "passkey"],
+      description: "passkey (needs the passkeys update too): after this session confirmed it's you with one of the account's passkeys (POST /api/account/passkeys/reauth) in the last 2 minutes; 400 unlock_expired otherwise",
+    },
     password: { ...string, description: "method password" },
     id: { ...string, description: "method email or wallet: from /api/auth/unlock/start" },
     code: { ...string, description: "method email" },

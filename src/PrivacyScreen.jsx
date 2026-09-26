@@ -160,6 +160,37 @@ function LockScreen({ config, user }) {
       setBusy("");
     }
   }
+  // With Passkeys released too: the device's passkey prompt, then the check.
+  // Loaded only when pressed, like the rest of Passkeys' browser code.
+  async function passkeyUnlock() {
+    setBusy("passkey");
+    setError("");
+    let kit = null;
+    try {
+      kit = await import("./passkeys.js");
+      await kit.unlockWithPasskey();
+      unlocked();
+    } catch (e) {
+      if (e?.status === 401 && e.code === "authentication_required")
+        return setSignedOut(true);
+      setError(kit ? kit.passkeyError(e) : e?.message || "The request could not be completed.");
+    } finally {
+      setBusy("");
+    }
+  }
+  const passkeyChoice = (primary) =>
+    methods?.includes("passkey") && (
+      <Button
+        type="button"
+        secondary={!primary}
+        ref={primary ? field : undefined}
+        className="privacy-lock-wide"
+        disabled={!!busy}
+        onClick={passkeyUnlock}
+      >
+        {busy === "passkey" ? "Waiting for your passkey…" : "Unlock with a passkey"}
+      </Button>
+    );
   // Only once the session is really gone: a failed sign-out keeps the lock.
   async function signOut() {
     setBusy("signout");
@@ -237,6 +268,7 @@ function LockScreen({ config, user }) {
           <Icon name="unlock" size={16} />{" "}
           {busy === "check" ? "Checking…" : "Unlock"}
         </Button>
+        {passkeyChoice(false)}
       </form>
     );
   else if (challenge)
@@ -279,6 +311,8 @@ function LockScreen({ config, user }) {
   else
     body = (
       <div className="privacy-lock-choices">
+        {/* A passkey-only account's one way; otherwise one more. */}
+        {passkeyChoice(!methods.includes("wallet") && !methods.includes("email"))}
         {methods.includes("wallet") && (
           <Button
             type="button"
@@ -369,6 +403,8 @@ export function HideScreenButton({ config, user }) {
 export function PrivacyScreenSettings({ config, user }) {
   const s = useSyncExternalStore(subscribe, getSettings, getSettings);
   if (!privacyScreenReleased(config) || !user) return null;
+  // Passkeys, once released (as src/passkeys.js passkeysReleased checks).
+  const passkeysOn = isReleased(config, "passkeys") && config?.services?.passkeys === true;
   return (
     <section id="privacy-screen" className="privacy-screen-settings">
       <div>
@@ -401,6 +437,7 @@ export function PrivacyScreenSettings({ config, user }) {
               After no typing, clicking or scrolling for this long. Locking
               doesn’t sign you out: unlock with your password, or with an email
               code or wallet signature if your account has no password.
+              {passkeysOn && " A passkey works too."}
             </small>
           </span>
           <select

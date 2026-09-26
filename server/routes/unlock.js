@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { getAddress, verifyMessage } from "ethers";
 import { hash, now, fail, uid, passwordMatches } from "../core.js";
 import { reauthMethods } from "../two-step.js";
+import { passkeysLive } from "../passkeys.js";
 
 // Privacy Screen's "Lock after idle" (update "privacyscreen"). The lock is a
 // screen in the browser (src/privacy-screen.js): the chats stay in the page's
@@ -19,6 +20,12 @@ export const UNLOCK_MAX_FAILURES = 5;
 export const UNLOCK_FAIL_WINDOW_MS = 15 * 60000;
 export const UNLOCK_LOCK_MS = 15 * 60000;
 export const UNLOCK_CHALLENGE_MS = 10 * 60000;
+// With Passkeys released too, a passkey is one more way to unlock (and the
+// only one an account made with a passkey has). The passkey itself is
+// checked by Passkeys' "confirm it's you" (/api/account/passkeys/reauth,
+// with its own per-passkey lockout); this check then accepts that
+// confirmation, by this session, from the last 2 minutes.
+export const UNLOCK_PASSKEY_MS = 2 * 60000;
 
 export function unlockRoutes(ctx) {
   const { app, db, cfg, limit, requireUser, sendEmailCode } = ctx;
@@ -72,14 +79,27 @@ export function unlockRoutes(ctx) {
     }
     fail(401, message, "unlock_failed");
   }
+  // The account's password, email code or wallet signature, as Two-Step's
+  // "confirm it's you" takes them, and a passkey once Passkeys is live.
+  function unlockMethods(user) {
+    const methods = reauthMethods(user);
+    if (
+      passkeysLive(cfg) &&
+      db.prepare("SELECT 1 FROM passkeys WHERE user_id=? LIMIT 1").get(user.id)
+    )
+      methods.push("passkey");
+    return methods;
+  }
   function allowed(req, method) {
-    const methods = reauthMethods(req.user);
+    const methods = unlockMethods(req.user);
     if (!methods.includes(method))
       fail(
         400,
         methods[0] === "password"
           ? "Unlock with your password."
-          : "Unlock with a code sent to your email or a signature from your linked wallet.",
+          : methods[0] === "passkey"
+            ? "Unlock with your passkey."
+            : "Unlock with a code sent to your email or a signature from your linked wallet.",
         "unlock_method",
       );
   }
@@ -88,7 +108,7 @@ export function unlockRoutes(ctx) {
   app.get("/api/auth/unlock", requireUser, (req, res) => {
     const ms = lockedFor(req.user.id);
     res.json({
-      methods: reauthMethods(req.user),
+      methods: unlockMethods(req.user),
       retryAfter: ms ? Math.ceil(ms / 1000) : null,
     });
   });
@@ -153,11 +173,17 @@ export function unlockRoutes(ctx) {
     limit("unlock", 30, 900000),
     (req, res) => {
       const method = req.body?.method;
-      if (!["password", "email", "wallet"].includes(method))
+      if (!["password", "email", "wallet", "passkey"].includes(method))
         fail(400, "Choose how to unlock.", "unlock_method");
       allowed(req, method);
       assertOpen(req, res);
-      if (method === "password") {
+      if (method === "passkey") {
+        const at = db
+          .prepare("SELECT at FROM passkey_reauth WHERE session_hash=? AND user_id=?")
+          .get(sessionHash(req), req.user.id)?.at;
+        if (at == null || at < now() - UNLOCK_PASSKEY_MS)
+          fail(400, "Confirm with your passkey again.", "unlock_expired");
+      } else if (method === "password") {
         const p = req.body.password;
         if (typeof p !== "string" || !p || p.length > 256)
           fail(400, "Enter your password.", "unlock_password_required");

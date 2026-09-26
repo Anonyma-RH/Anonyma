@@ -1022,8 +1022,12 @@ export function featuresFor(req) {
     return ["passkeys", "twostep"];
   // Privacy Screen: unlocking the screen after idle re-checks the account's
   // password (or an email code or wallet signature). Nothing else is served.
+  // With Passkeys, a passkey is one more way to unlock, so a passkey unlock
+  // needs that update too.
   if (p === "/api/auth/unlock" || p.startsWith("/api/auth/unlock/"))
-    return ["privacyscreen"];
+    return post && p === "/api/auth/unlock" && body.method === "passkey"
+      ? ["privacyscreen", "passkeys"]
+      : ["privacyscreen"];
   // Two-Step Sign-in's settings. The sign-in step itself, /api/auth/two-step,
   // is never gated (see the UPDATES entry).
   if (p === "/api/account/two-step" || p.startsWith("/api/account/two-step/"))

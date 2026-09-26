@@ -799,7 +799,7 @@ export const UPDATES = [
     ],
     // Each side is a chat request on runChat's hold/settle path; a vote
     // stores only model ids, the outcome and the date (routes/blind.js).
-    released: false,
+    released: true,
   },
   {
     id: "deepresearch",

@@ -118,6 +118,36 @@ enclave; open-weight private models only, with the honest limits. Includes its l
 [Pay with NYMA](docs/releases/pay-with-nyma.md): top up credits by sending NYMA from your own wallet,
 with a 10% credit bonus. Includes its launch film.
 
+[Deep Research](docs/releases/deep-research.md): a sourced report from 3 or 6 web searches, citing only pages
+the searches returned, with the maximum cost shown first. Includes its launch film.
+
+[Passkeys](docs/releases/passkeys.md): sign in with Face ID or a fingerprint; no password to leak, no email
+needed. Includes its launch film.
+
+[Privacy Screen](docs/releases/privacy-screen.md): Esc Esc hides the screen, and it can lock when you walk
+away. A screen lock, not encryption. Includes its launch film.
+
+[Redact Before You Send](docs/releases/redact-before-you-send.md): black out or pixelate parts of a
+screenshot; only the redacted image is sent. Includes its launch film.
+
+[Injection Shield](docs/releases/injection-shield.md): flags hidden instructions in attached files and
+blocks data-leaking images in replies. Includes its launch film.
+
+[Onchain Explainer](docs/releases/onchain-explainer.md): paste a transaction hash or address for exact chain
+facts and a plain-English explanation; read-only. Includes its launch film.
+
+[Blind Compare](docs/releases/blind-compare.md): two models answer with names and costs hidden until you
+vote. Includes its launch film.
+
+[Local Sheets](docs/releases/local-sheets.md): ask questions about a spreadsheet that never leaves your
+device; the AI sees column names, not rows. Includes its launch film.
+
+[Link Reader](docs/releases/link-reader.md): paste a link and ask about the page; our server fetches it, so
+the site sees us, not you. Includes its launch film.
+
+[Math & Diagrams](docs/releases/math-and-diagrams.md): LaTeX math and Mermaid diagrams render in replies,
+with Copy SVG. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

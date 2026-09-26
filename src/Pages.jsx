@@ -839,6 +839,7 @@ const featureIcons = {
   voice: "audio",
   trail: "route",
   seedguard: "lock",
+  cleanuploads: "eraser",
 };
 const launch = {
   id: "mvp",

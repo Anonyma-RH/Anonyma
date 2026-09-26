@@ -1,0 +1,74 @@
+/* Clean Uploads: the small "Removed: …" line, Keep original, and the
+   composer's reference-image chips that carry them. Reuses the workspace's
+   --work-* tokens and 2px corners. */
+.clean-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--work-muted, #68748a);
+}
+.clean-note.warn {
+  color: #9c3d2a;
+}
+.clean-note svg {
+  flex-shrink: 0;
+}
+.clean-keep,
+.uploads-panel .clean-keep {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--work-ink, #142343);
+  cursor: pointer;
+}
+.clean-keep input {
+  margin: 0;
+  accent-color: #0135df;
+}
+.attachment-list > .clean-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 320px;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  background: var(--work-surface, #f7f9fc);
+}
+.clean-chip img {
+  flex-shrink: 0;
+}
+.clean-chip.held img {
+  opacity: 0.5;
+}
+.clean-chip-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+/* A chat document's line sits under its name, inside the summary. */
+.document-chip summary.has-clean-note {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.document-chip summary .clean-note {
+  flex-basis: 100%;
+  padding-left: 22px;
+}
+.clean-upload-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+}
+@media (max-width: 700px) {
+  .attachment-list > .clean-chip {
+    max-width: 100%;
+  }
+}

@@ -4,6 +4,7 @@ import { uid } from "./lib.js";
 import ReusableUploads from "./ReusableUploads.jsx";
 import { extractOffice, browserInflate, textBytes } from "./file-formats.js";
 import { unveil } from "./veil.js";
+import { CleanNote } from "./CleanUploads.jsx";
 import {
   MAX_DOCUMENTS,
   MAX_FILE_BYTES,
@@ -27,10 +28,21 @@ async function loadPdfjs() {
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl.default;
   return pdfjs;
 }
-async function extractPdfText(file) {
+async function extractPdfText(file, withDetails = false) {
   const pdfjs = await loadPdfjs();
   const data = await file.arrayBuffer();
   const doc = await pdfjs.getDocument({ data }).promise;
+  // Clean Uploads: only the text below is sent, so the PDF's author,
+  // software and dates never leave; the chip says which were there.
+  let hidden = null;
+  if (withDetails) {
+    try {
+      const { pdfDetails } = await import("./clean-uploads.js");
+      hidden = pdfDetails(await doc.getMetadata());
+    } catch {
+      hidden = null;
+    }
+  }
   const pages = [];
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
@@ -42,7 +54,7 @@ async function extractPdfText(file) {
         .trim(),
     );
   }
-  return { text: pages.join("\n\n").trim(), pages: doc.numPages };
+  return { text: pages.join("\n\n").trim(), pages: doc.numPages, hidden };
 }
 
 // One document, attached in the composer or recovered from a saved message.
@@ -61,10 +73,11 @@ function DocumentChip({ doc, onRemove }) {
   ]
     .filter(Boolean)
     .join(" · ");
+  const hidden = doc.hidden?.length ? { status: "cleaned", details: doc.hidden } : null;
   return (
     <div className="document-chip">
       <details>
-        <summary>
+        <summary className={hidden ? "has-clean-note" : undefined}>
           <Icon name="file" size={14} />
           <span className="document-chip-name" data-i18n="off">
             {doc.name}
@@ -77,6 +90,7 @@ function DocumentChip({ doc, onRemove }) {
               className="document-chip-warn-icon"
             />
           )}
+          {hidden && <CleanNote result={hidden} notSent />}
         </summary>
         {doc.warning && <p className="document-chip-note">{doc.warning}</p>}
         {doc.truncated && !doc.warning && (
@@ -119,6 +133,7 @@ export default function DocumentAttach({
   disabled,
   onError,
   filesEnabled = false,
+  cleanEnabled = false,
   privateContext = false,
   audioEnabled = false,
   onRefresh,
@@ -154,19 +169,32 @@ export default function DocumentAttach({
         const kind = documentKind(file);
         let text = "",
           pages = null,
-          warning = "";
+          warning = "",
+          hidden = null;
         try {
           if (kind === "pdf") {
-            const r = await extractPdfText(file);
+            const r = await extractPdfText(file, cleanEnabled);
             text = r.text;
             pages = r.pages;
+            hidden = r.hidden;
             if (!text)
               warning =
                 "No extractable text found — this PDF may be a scanned image.";
           } else if (kind === "office") {
-            const result = await extractOffice(await file.arrayBuffer(), file.name.split(".").at(-1).toLowerCase(), browserInflate);
+            const bytes = await file.arrayBuffer();
+            const extension = file.name.split(".").at(-1).toLowerCase();
+            const result = await extractOffice(bytes, extension, browserInflate);
             text = result.text;
             warning = result.warning + (result.truncated ? " Extracted text was trimmed." : "");
+            if (cleanEnabled) {
+              // Only the text is sent; the properties stay on this device.
+              try {
+                const { cleanOffice } = await import("./clean-uploads.js");
+                hidden = (await cleanOffice(bytes, extension, { inspectOnly: true })).details;
+              } catch {
+                hidden = null;
+              }
+            }
           } else {
             text = textBytes(new Uint8Array(await file.arrayBuffer()));
           }
@@ -184,6 +212,7 @@ export default function DocumentAttach({
           text,
           chars: text.length,
           warning,
+          hidden,
         });
       }
       setDocuments((prev) => [...prev, ...added]);
@@ -207,7 +236,7 @@ export default function DocumentAttach({
         onChange={addFiles}
       />
     </label>
-    {filesEnabled && <ReusableUploads documents={documents} setDocuments={setDocuments} disabled={disabled} privateContext={privateContext} audioEnabled={audioEnabled} onRefresh={onRefresh} openRequest={openRequest} seedGuard={seedGuard} />}
+    {filesEnabled && <ReusableUploads documents={documents} setDocuments={setDocuments} disabled={disabled} privateContext={privateContext} audioEnabled={audioEnabled} cleanEnabled={cleanEnabled} onRefresh={onRefresh} openRequest={openRequest} seedGuard={seedGuard} />}
     </>
   );
 }

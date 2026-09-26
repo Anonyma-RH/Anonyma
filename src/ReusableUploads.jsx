@@ -14,6 +14,7 @@ import {
   formatBytes,
   createUploadActivity,
 } from "./documents.js";
+import { CleanNote, KeepOriginal } from "./CleanUploads.jsx";
 import "./reusable-uploads.css";
 const ACCEPT =
   ".txt,.md,.csv,.json,.js,.ts,.jsx,.tsx,.py,.go,.rs,.java,.rb,.php,.c,.cpp,.h,.cs,.swift,.kt,.sql,.html,.css,.yaml,.yml,.toml,.sh,.docx,.xlsx,.pptx,.wav,.mp3,.flac,.ogg,.webm,.m4a";
@@ -42,6 +43,7 @@ export default function ReusableUploads({
   disabled,
   privateContext,
   audioEnabled,
+  cleanEnabled = false,
   onRefresh,
   // Bumped by the Command Palette's "Open saved files": opens this panel
   // exactly as its own button does, and never where that button is disabled.
@@ -63,13 +65,18 @@ export default function ReusableUploads({
     [transcript, setTranscript] = useState(null),
     [receipt, setReceipt] = useState(null),
     // Seed Guard's finding for the chosen file: null, "scanning" or a hit.
-    [chosenSeed, setChosenSeed] = useState(null);
+    [chosenSeed, setChosenSeed] = useState(null),
+    // Clean Uploads: the chosen file with its hidden details removed, and
+    // whether to save the original instead.
+    [cleaned, setCleaned] = useState(null),
+    [keep, setKeep] = useState(false);
   const lock = useRef(false),
     alive = useRef(true),
     activity = useRef(null),
     panel = useRef(null),
     requestId = useRef(null),
-    seedScan = useRef(0);
+    seedScan = useRef(0),
+    picked = useRef(0);
   if (!activity.current) activity.current = createUploadActivity();
   activity.current.update(privateContext, disabled);
   useEffect(() => {
@@ -140,22 +147,40 @@ export default function ReusableUploads({
     );
     setOpen(false);
   }
-  function choose(file) {
-    setChosen(file);
+  // What Save sends: the cleaned bytes, unless the original is kept or
+  // there's nothing to clean (plain text).
+  const cleaning = cleanEnabled && !!chosen;
+  const usesCleaned = cleaning && !keep && !!cleaned?.bytes && cleaned.status !== "none";
+  const waiting = cleaning && (!cleaned || (cleaned.status === "failed" && !keep));
+  // A chosen file is scanned by Seed Guard and, with Clean Uploads, has its
+  // hidden details removed; Save waits for both.
+  async function choose(f) {
+    const pick = ++picked.current;
+    setCleaned(null);
+    setKeep(false);
+    setChosen(f);
     const token = ++seedScan.current;
-    if (!file || !seedGuard) return setChosenSeed(null);
-    setChosenSeed("scanning");
-    scanFile(file)
-      .catch(() => null)
-      .then((hit) => {
-        if (alive.current && token === seedScan.current) setChosenSeed(hit);
-      });
+    if (!f || !seedGuard) setChosenSeed(null);
+    else {
+      setChosenSeed("scanning");
+      scanFile(f)
+        .catch(() => null)
+        .then((hit) => {
+          if (alive.current && token === seedScan.current) setChosenSeed(hit);
+        });
+    }
+    if (!cleanEnabled || !f) return;
+    await run(async (canAct) => {
+      const { cleanUpload } = await import("./clean-uploads.js");
+      const result = await cleanUpload(await f.arrayBuffer(), { name: f.name });
+      if (canAct() && pick === picked.current) setCleaned(result);
+    });
   }
   async function save({ allowSeed = false } = {}) {
-    if (!chosen || !consent || chosenSeed === "scanning") return;
+    if (!chosen || !consent || waiting || chosenSeed === "scanning") return;
     if (chosenSeed && !allowSeed) return;
     await run(async (canAct) => {
-      const data = await asBase64(chosen);
+      const data = await asBase64(usesCleaned ? new Blob([cleaned.bytes]) : chosen);
       if (!canAct()) return;
       await api("/api/files", {
         method: "POST",
@@ -306,8 +331,18 @@ export default function ReusableUploads({
               {chosen && (
                 <>
                   <strong>
-                    {chosen.name} · {formatBytes(chosen.size)}
+                    <span data-i18n="off">{chosen.name}</span> ·{" "}
+                    {formatBytes(usesCleaned ? cleaned.bytes.length : chosen.size)}
                   </strong>
+                  {cleaning && cleaned && cleaned.status !== "none" && (
+                    <div className="clean-upload-note">
+                      <CleanNote result={cleaned} keep={keep} />
+                      <KeepOriginal checked={keep} onChange={setKeep} disabled={busy} />
+                      {cleaned.status === "failed" && !keep && (
+                        <small>Tick Keep original to save it as it is, or choose another file.</small>
+                      )}
+                    </div>
+                  )}
                   <label>
                     Delete automatically after
                     <select
@@ -327,7 +362,9 @@ export default function ReusableUploads({
                       disabled={busy}
                       onChange={(e) => setConsent(e.target.checked)}
                     />
-                    Save the original bytes and extracted text to my account.
+                    {usesCleaned
+                      ? "Save the cleaned file and extracted text to my account."
+                      : "Save the original bytes and extracted text to my account."}
                   </label>
                   <SeedGuardNotice
                     hit={chosenSeed === "scanning" ? null : chosenSeed}
@@ -337,7 +374,7 @@ export default function ReusableUploads({
                   />
                   <button
                     type="button"
-                    disabled={busy || !consent || !!chosenSeed}
+                    disabled={busy || !consent || !!chosenSeed || waiting}
                     onClick={() => save()}
                   >
                     Save for reuse · no generation charge

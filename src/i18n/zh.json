@@ -3850,7 +3850,93 @@
     "Read by ANONYMA's server from Robinhood Chain's public node. Names here come from ANONYMA or the token itself.": "由 ANONYMA 的服务器从 Robinhood Chain 的公共节点读取。这里的名称来自 ANONYMA 或代币本身。",
     "Read by ANONYMA's server from the Blockscout explorer. Names and labels come from the explorer.": "由 ANONYMA 的服务器从 Blockscout 区块浏览器读取。名称和标签来自该浏览器。",
     "Veil is on: addresses reach the model as placeholders, but a transaction hash can't be hidden that way, since anyone can look it up.": "Veil 已开启：地址会以占位符的形式发给模型，但交易哈希无法这样隐藏，因为任何人都能查到它。",
-    "Veil is on: the address reaches the model as a placeholder.": "Veil 已开启：这个地址会以占位符的形式发给模型。"
+    "Veil is on: the address reaches the model as a placeholder.": "Veil 已开启：这个地址会以占位符的形式发给模型。",
+    "Sheets": "表格",
+    "Local Sheets": "本地表格",
+    "Ask your spreadsheet. It never leaves your device.": "向你的表格提问。文件从不离开你的设备。",
+    "Drop a CSV, TSV or JSON file; it's read in your browser only": "拖入 CSV、TSV 或 JSON 文件，只在你的浏览器中读取",
+    "By default the AI sees only column names and types, not your rows": "默认情况下，AI 只能看到列名和类型，看不到你的数据行",
+    "Charts and tables calculated on your device, with CSV and image export": "图表和结果表在你的设备上计算，可导出 CSV 和图片",
+    "YOUR SPREADSHEET STAYS ON THIS DEVICE": "你的表格留在这台设备上",
+    "Ask questions about a spreadsheet. The file never leaves your device; the AI only sees the column names.": "向表格提问。文件从不离开你的设备；AI 只能看到列名。",
+    "Open another file": "打开其他文件",
+    "Reading your sheet…": "正在读取你的表格……",
+    "Drop a CSV, TSV or JSON file": "拖入 CSV、TSV 或 JSON 文件",
+    "Read in this browser only, up to 50 MB and 500,000 rows. Nothing is uploaded.": "只在此浏览器中读取，最大 50 MB、500,000 行。不会上传任何内容。",
+    "Choose a file": "选择文件",
+    "Try a sample sheet": "试用示例表格",
+    "The sample is made-up shop sales, generated in your browser.": "示例是在你的浏览器中生成的虚构商店销售数据。",
+    "Stays here": "留在本地",
+    "Your browser reads the file. It isn't uploaded, saved or kept after you close it.": "由你的浏览器读取文件。文件不会被上传或保存，关闭后也不会保留。",
+    "The AI sees the shape": "AI 只看结构",
+    "Column names and types, the row count and how many different values each text column has.": "列名和类型、行数，以及每个文本列有多少个不同的值。",
+    "Calculated here": "在本地计算",
+    "The AI answers with a query plan, not code. Your device runs it on every row.": "AI 只返回查询计划，而不是代码。由你的设备在每一行上运行。",
+    "Read on this device": "在本设备上读取",
+    "Close sheet": "关闭表格",
+    "1 row": "1 行",
+    "1 column": "1 列",
+    "1 row had more cells than there are columns; the extra cells were left out.": "有 1 行的单元格比列数多，多出的单元格已被忽略。",
+    "The file ended inside a quoted value, so its last value may be cut short.": "文件在引号内的值中途结束，最后一个值可能不完整。",
+    "Columns": "列",
+    "Number": "数字",
+    "Text": "文本",
+    "True/false": "是/否",
+    "1 different value": "1 个不同的值",
+    "Ask a question about this sheet": "就这个表格提问",
+    "For example: which region had the most revenue?": "例如：哪个地区的收入最高？",
+    "Ask": "提问",
+    "Also share 1 sample row": "同时分享 1 行示例",
+    "Off by default. When on, exactly these rows go with each question, so the model can see what values look like.": "默认关闭。开启后，每次提问都会附带这几行，让模型了解数据的样子。",
+    "Sign in to ask questions. Opening and reading a sheet works without an account.": "登录后即可提问。打开和读取表格无需账户。",
+    "What the AI sees": "AI 看到的内容",
+    "Exactly this goes with each question, plus ANONYMA's fixed instructions for the plan format. Nothing else from your file.": "每次提问只发送以下内容，外加 ANONYMA 关于计划格式的固定说明。不会发送文件中的其他任何内容。",
+    "Veil is on: details it recognises are masked before sending, as shown.": "Veil 已开启：识别到的细节会在发送前被遮盖，如上所示。",
+    "Show the fixed instructions": "查看固定说明",
+    "Kept in this tab only, gone when you close the sheet or leave": "只保留在此标签页中，关闭表格或离开后即消失",
+    "Asking the model for a plan…": "正在请模型制定计划……",
+    "Asking the model to fix its plan…": "正在请模型修正计划……",
+    "Calculating on this device…": "正在本设备上计算……",
+    "Calculated on this device": "已在本设备上计算",
+    "Couldn't answer": "无法回答",
+    "1 more row is in the table but not the chart.": "还有 1 行在表格中，但未显示在图表里。",
+    "How this was calculated": "计算方式",
+    "The plan the model returned": "模型返回的计划",
+    "Download CSV": "下载 CSV",
+    "Download SVG": "下载 SVG",
+    "Explain this result": "解释这个结果",
+    "The model says these columns can't answer this:": "模型表示这些列无法回答这个问题：",
+    "The model's plan still wasn't one Sheets can run after one retry. Try rephrasing the question, or choose another model.": "重试一次后，模型的计划仍无法在表格中运行。请换个方式提问，或选择其他模型。",
+    "Stopped. If the model had already started, that part may be charged; check your activity.": "已停止。如果模型已经开始处理，这部分可能已扣费，请查看你的活动记录。",
+    "What was wrong with the plan": "计划的问题",
+    "Private: zero data retention": "隐私：零数据保留",
+    "Veil on": "Veil 已开启",
+    "1 sample row shared": "已分享 1 行示例",
+    "No rows matched.": "没有匹配的行。",
+    "Explanation": "解释",
+    "Written by the model from the table only. Check it against the numbers above.": "由模型仅根据表格写成。请对照上方数字核实。",
+    "Only this is sent: your question, the result's title and this 1-row table.": "只发送以下内容：你的问题、结果标题和这张 1 行的表格。",
+    "Explaining…": "正在解释……",
+    "Send for an explanation": "发送并获取解释",
+    "Stopped.": "已停止。",
+    "The model returned no text.": "模型没有返回文本。",
+    "Sheets reads CSV, TSV and JSON files. Save the workbook as CSV first.": "表格支持 CSV、TSV 和 JSON 文件。请先将工作簿另存为 CSV。",
+    "This sheet has column names but no rows.": "这个表格只有列名，没有数据行。",
+    "This JSON file couldn't be read. Check that it's valid JSON.": "无法读取这个 JSON 文件。请检查它是否为有效的 JSON。",
+    "A JSON sheet must be a list of rows.": "JSON 表格必须是由行组成的列表。",
+    "A JSON sheet must be a list of objects or a list of arrays.": "JSON 表格必须是对象列表或数组列表。",
+    "This file is empty.": "这个文件是空的。",
+    "This sheet is too large for this browser's memory.": "这个表格太大，超出了此浏览器的内存。",
+    "The sheet engine stopped. Open the file again.": "表格引擎已停止。请重新打开文件。",
+    "Open a sheet first.": "请先打开一个表格。",
+    "Opening Sheets…": "正在打开表格……",
+    "Sheets questions are never saved: send them off the record.": "表格提问从不保存：请以不留记录的方式发送。",
+    "A sheets question can't be combined with other chat options.": "表格提问不能与其他对话选项同时使用。",
+    "The sheets request is too large.": "表格请求过大。",
+    "The model ran out of room while planning. Try again, or pick a faster model.": "模型在规划时用完了回复空间。请重试，或换一个更快的模型。",
+    "Each question is billed as a message, two if the first plan needs fixing. You pay only what the model uses, including any reasoning. Nothing is saved.": "每次提问按一条消息计费；若首个计划需要修正，则为两条。你只需为模型实际使用的部分付费，包括推理。不会保存任何内容。",
+    "Share date ranges": "分享日期范围",
+    "The AI sees only the first and last date of each date column, so questions like \"Q2\" pick the right year.": "AI 只能看到每个日期列的最早和最晚日期，这样“Q2”这类问题才能对应正确的年份。"
   },
   "patterns": [
     {
@@ -6096,6 +6182,58 @@
     {
       "en": "{0} has never sent a transaction on this chain. Worth checking it's the address you meant.",
       "zh": "{0} 从未在这条链上发送过交易。值得核实这是否是你想要的地址。"
+    },
+    {
+      "en": "{0} rows",
+      "zh": "{0} 行"
+    },
+    {
+      "en": "{0} columns",
+      "zh": "{0} 列"
+    },
+    {
+      "en": "{0} rows had more cells than there are columns; the extra cells were left out.",
+      "zh": "有 {0} 行的单元格比列数多，多出的单元格已被忽略。"
+    },
+    {
+      "en": "{0} different values",
+      "zh": "{0} 个不同的值"
+    },
+    {
+      "en": "Also share {0} sample rows",
+      "zh": "同时分享 {0} 行示例"
+    },
+    {
+      "en": "{0} credits this session",
+      "zh": "本次共 {0} 积分"
+    },
+    {
+      "en": "{0} more rows are in the table but not the chart.",
+      "zh": "还有 {0} 行在表格中，但未显示在图表里。"
+    },
+    {
+      "en": "{0} sample rows shared",
+      "zh": "已分享 {0} 行示例"
+    },
+    {
+      "en": "Showing {0} of {1} rows here; the CSV has them all.",
+      "zh": "此处显示 {1} 行中的 {0} 行；CSV 包含全部数据。"
+    },
+    {
+      "en": "Only this is sent: your question, the result's title and this {0}-row table.",
+      "zh": "只发送以下内容：你的问题、结果标题和这张 {0} 行的表格。"
+    },
+    {
+      "en": "This file is larger than {0} MB. Split it into smaller files and open one at a time.",
+      "zh": "这个文件超过 {0} MB。请拆分成较小的文件，一次打开一个。"
+    },
+    {
+      "en": "This sheet has more than {0} rows. Split it into smaller files and open one at a time.",
+      "zh": "这个表格超过 {0} 行。请拆分成较小的文件，一次打开一个。"
+    },
+    {
+      "en": "This sheet has more than {0} columns. Remove some and try again.",
+      "zh": "这个表格超过 {0} 列。请删除一些列后重试。"
     }
   ]
 }

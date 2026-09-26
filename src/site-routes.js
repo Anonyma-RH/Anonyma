@@ -68,6 +68,8 @@ export function knownPage(path, served = {}) {
     (served.connect === true && path === "/connect") ||
     // Where Panic Wipe lands; never in the sitemap.
     (served.wipe === true && path === "/wiped") ||
+    // Local Sheets' page exists only once that update is live.
+    (served.sheets === true && path === "/workspace/sheets") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

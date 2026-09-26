@@ -31,6 +31,7 @@ import { privacyTrail, storageFor, trailLive, veilMaskedFrom } from "../privacy-
 import { refuseSeedPhrase } from "../seed-guard.js";
 import { viewerOf } from "../early-models.js";
 import { apiRateLimit } from "../api-boost.js";
+import { prepareSheetsRequest, sheetsBudget } from "../sheets.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -61,6 +62,10 @@ export function chatRoutes(ctx) {
   const validTokenCount = (value, fallback) =>
     Number.isSafeInteger(value) && value >= 0 ? value : fallback;
   async function runChat(req, res, api) {
+    // Local Sheets: a workspace sheets question's messages are built here
+    // from its checked `sheets` payload (server/sheets.js), before Seed
+    // Guard reads them. Its release gate is in featuresFor.
+    const sheetsTask = api ? undefined : prepareSheetsRequest(req.body);
     // Seed Guard: refused before anything is validated, reserved or stored.
     refuseSeedPhrase(cfg, req, api);
     if (!api) validateTaskRequest(req.body);
@@ -69,6 +74,9 @@ export function chatRoutes(ctx) {
     // (never a connected app), refused here before anything is reserved.
     // Covers the workspace, /v1, MCP ask and Routines, which all run here.
     ctx.earlyModels.check(viewerOf(req), "models", m.id);
+    // A sheets reply budget fitted to the chosen model (server/sheets.js).
+    if (sheetsTask && m.type === "chat")
+      req.body.max_tokens = sheetsBudget(sheetsTask, m, req.body.messages);
     // Dedicated image models are priced per option and served by
     // /v1/images/generations; through chat they would be held at the
     // cheapest variant while the provider chooses the quality.

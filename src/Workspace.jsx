@@ -4,7 +4,7 @@ import { useReadingPosition, useRequestCharge, ChargeStatus } from "./ChatContro
 import HistoryLibrary from "./HistoryLibrary.jsx";
 import { useBookmarks, bookmarksReleased } from "./Bookmarks.jsx";
 import { useFindInChat, findInChatReleased } from "./FindInChat.jsx";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { VoiceAssist, ReadAloud } from "./VoiceAssist.jsx";
 import {
   Link,
@@ -35,6 +35,8 @@ import SignedReceipt from "./SignedReceipt.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
 import WorkspaceHome from "./WorkspaceHome.jsx";
 import TaskTools from "./TaskTools.jsx";
+// Local Sheets: its parser, planner checks and charts load only on its page.
+const Sheets = lazy(() => import("./Sheets.jsx"));
 import Routines from "./Routines.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import {
@@ -232,10 +234,14 @@ export function AppSidebar({
           ["audio", "Voice & audio"],
           ["collab", "Collab"],
           ["tools", "Task tools"],
+          ["sheets", "Sheets"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
-        ].map(([id, t]) =>
+        ]
+          // Local Sheets stays out of sight entirely until it's released.
+          .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
+          .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
               key={id}
@@ -431,7 +437,10 @@ export default function Workspace() {
     "tools",
     "routines",
     "projects",
-  ].includes(mode);
+  ].includes(mode) ||
+    // Local Sheets' page: unknown until it's released (config still loading
+    // counts as known, so it doesn't flash "not found").
+    (mode === "sheets" && (!config || isReleased(config, "sheets")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -2652,6 +2661,7 @@ export default function Workspace() {
                 tools: "Research, Writing & Calculators",
                 routines: "Routines",
                 projects: "Projects",
+                sheets: "Sheets",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -2822,6 +2832,12 @@ export default function Workspace() {
             />
           ) : mode === "routines" ? (
             <Routines key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} markdown={shieldView ? shieldMarkdown() : undefined} />
+          ) : mode === "sheets" ? (
+            isReleased(config, "sheets") && (
+              <Suspense fallback={<p className="sheets-loading">Opening Sheets…</p>}>
+                <Sheets key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
           ) : mode === "tools" ? (
             <TaskTools key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
           ) : mode === "collab" ? (

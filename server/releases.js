@@ -774,6 +774,20 @@ export const UPDATES = [
     // sends or connects a wallet; the explanation is an ordinary chat.
     released: false,
   },
+  {
+    id: "sheets",
+    title: "Local Sheets",
+    tagline: "Ask your spreadsheet. It never leaves your device.",
+    points: [
+      "Drop a CSV, TSV or JSON file; it's read in your browser only",
+      "By default the AI sees only column names and types, not your rows",
+      "Charts and tables calculated on your device, with CSV and image export",
+    ],
+    // The workspace's Sheets page (src/Sheets.jsx). Its model calls are
+    // /api/chat requests carrying `sheets` (server/sheets.js); nothing about
+    // them is stored, so there's nothing to erase or export.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1068,6 +1082,9 @@ export function featuresFor(req) {
   // kept with the reply's trail.
   if (p === "/api/chat" && post && body.veil_masked !== undefined)
     needed.push("trail");
+  // Local Sheets: a question about a spreadsheet (server/sheets.js). It's
+  // always off the record, so it needs Ephemeral Chats too (pushed below).
+  if (p === "/api/chat" && post && body.sheets !== undefined) needed.push("sheets");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

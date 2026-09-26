@@ -8,6 +8,8 @@ export default function DataControls() {
   const shares = !!config && isReleased(config, "sharelinks");
   // So are Routines.
   const routines = !!config && isReleased(config, "routines");
+  // And Sealed Share, which builds on Share a Chat.
+  const sealedShares = shares && isReleased(config, "sealedshare");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -70,6 +72,17 @@ export default function DataControls() {
             never listed publicly and ask search engines not to index them.
           </li>
         )}
+        {sealedShares && (
+          <li>
+            Sealed share links: your browser encrypts the snapshot before it’s
+            uploaded, so only the encrypted copy, its random address and its
+            dates are stored. The key stays in the link after the #, which
+            browsers never send to a server, so ANONYMA can’t read a sealed
+            link. A Device-only chat can be shared only this way; its encrypted
+            copy is deleted when the link expires, when you revoke it, and when
+            you close your account or use Panic Wipe.
+          </li>
+        )}
         {routines && (
           <li>
             Routines: each routine’s name, prompt, model, schedule and budget,
@@ -125,6 +138,12 @@ export default function DataControls() {
           The export also lists your live share links with their addresses,
           titles and dates. The shared text itself is a copy of the
           conversation’s own messages, which the export already includes.
+        </p>
+      )}
+      {sealedShares && (
+        <p>
+          Sealed links are exported as their addresses without keys, their
+          dates and the encrypted copy exactly as stored.
         </p>
       )}
       <p>

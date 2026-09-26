@@ -2,22 +2,25 @@ import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { uid, now, fail, transaction } from "../core.js";
+import { isReleased } from "../releases.js";
 import {
   MAX_ACTIVE_SHARES,
   MAX_SHARES_PER_CONVERSATION,
-  MAX_SHARE_MESSAGES,
-  MAX_SHARE_CHARS,
-  MAX_SHARE_TITLE,
+  MAX_SEALED_BYTES,
+  MAX_SEALED_TOTAL_BYTES,
+  SEALED_IV_BYTES,
+  SEALED_TAG_BYTES,
   SHAREABLE_MODES,
   SHARE_BLOCK_MESSAGES,
   SHARE_TOKEN,
   SHARE_TOKEN_BYTES,
-  attachmentNames,
+  SNAPSHOT_PROBLEMS,
   buildSnapshot,
   parseShareDays,
+  publishedTitle,
   shareExpiry,
   sharePath,
-  shareTitle,
+  snapshotProblem,
   snapshotSummary,
 } from "../../src/share-links.js";
 
@@ -28,6 +31,13 @@ import {
 // moment it's revoked, when it expires, when its conversation is deleted or
 // auto-deleted, and when the account closes; each of those looks exactly like
 // a token that never existed. Share links are never listed anywhere public.
+//
+// Sealed Share (update "sealedshare") adds links the server can't read: the
+// browser seals the snapshot with a key that stays in the link's #fragment
+// and uploads only the ciphertext (sealed_shares). The same lifetimes,
+// limits and revocation apply. A Device-only chat can be shared this way
+// only, with no conversation on the server at all.
+const MB = 1024 * 1024;
 export function shareRoutes(ctx) {
   const { app, db, cfg, limit, requireUser } = ctx;
   const base = () => String(cfg.publicUrl || cfg.origin).replace(/\/+$/, "");
@@ -41,17 +51,7 @@ export function shareRoutes(ctx) {
     });
   // Viewing is public and needs no sign-in, so it's limited per address.
   const viewLimit = limit("share_view", 120, 60000);
-  // The page's title: the one asked for, else the conversation's. Never an
-  // attachment's name (a chat that began with only a document is titled
-  // after it), since attachments aren't published.
-  function title(asked, conversationTitle, rows) {
-    const chosen = shareTitle(asked, conversationTitle);
-    // A conversation title keeps only its first 70 characters.
-    const named = [...attachmentNames(rows)].some(
-      (n) => n === chosen || n.slice(0, MAX_SHARE_TITLE).trim() === chosen,
-    );
-    return named ? "Shared conversation" : chosen;
-  }
+  const sealedLive = () => isReleased(cfg, "sealedshare");
   // Unknown, revoked, expired and deleted all look the same.
   const missing = () =>
     fail(404, "This shared conversation isn't available.", "share_not_found");
@@ -60,14 +60,23 @@ export function shareRoutes(ctx) {
   // else), and its account is open.
   const LIVE = `(s.expires IS NULL OR s.expires>?) AND (c.expires IS NULL OR c.expires>=?) AND c.collab_id IS NULL AND u.deleted IS NULL`;
   const FROM = `FROM share_links s JOIN conversations c ON c.id=s.conversation_id JOIN users u ON u.id=s.user_id`;
+  // A sealed link goes by the same rules; a Device-only one has no
+  // conversation, so only its own expiry and its account apply.
+  const SEALED_LIVE = `(s.expires IS NULL OR s.expires>?) AND (s.conversation_id IS NULL OR (c.id IS NOT NULL AND (c.expires IS NULL OR c.expires>=?) AND c.collab_id IS NULL)) AND u.deleted IS NULL`;
+  const SEALED_FROM = `FROM sealed_shares s LEFT JOIN conversations c ON c.id=s.conversation_id JOIN users u ON u.id=s.user_id`;
   function published(token) {
     if (typeof token !== "string" || !SHARE_TOKEN.test(token)) return null;
     const t = now();
-    return (
-      db
-        .prepare(`SELECT s.title,s.snapshot,s.created ${FROM} WHERE s.token=? AND ${LIVE}`)
-        .get(token, t, t) || null
-    );
+    const open = db
+      .prepare(`SELECT s.title,s.snapshot,s.message_count,s.created ${FROM} WHERE s.token=? AND ${LIVE}`)
+      .get(token, t, t);
+    if (open) return open;
+    // Sealed links open only while Sealed Share is released.
+    if (!sealedLive()) return null;
+    const sealed = db
+      .prepare(`SELECT s.ciphertext,s.created ${SEALED_FROM} WHERE s.token=? AND ${SEALED_LIVE}`)
+      .get(token, t, t);
+    return sealed ? { ...sealed, sealed: true } : null;
   }
   const view = (s) => ({
     id: s.id,
@@ -83,15 +92,106 @@ export function shareRoutes(ctx) {
     ends_with_conversation:
       s.conversation_expires != null && s.expires === s.conversation_expires,
   });
+  // A sealed link as its owner sees it: no title and no message count (both
+  // are inside the ciphertext), and an address without its key, which only
+  // the link made when it was shared holds.
+  const sealedView = (s) => ({
+    ...view({ ...s, title: null, message_count: null }),
+    sealed: true,
+    device_only: s.conversation_id == null,
+    bytes: s.bytes,
+  });
   const owned = (user, extra = "", ...args) => {
     const t = now();
-    return db
+    const open = db
       .prepare(
         `SELECT s.id,s.token,s.title,s.conversation_id,s.message_count,s.created,s.expires,c.title conversation_title,c.expires conversation_expires ${FROM} WHERE s.user_id=? AND ${LIVE} ${extra} ORDER BY s.created DESC,s.rowid DESC`,
       )
       .all(user, t, t, ...args)
       .map(view);
+    const sealed = db
+      .prepare(
+        `SELECT s.id,s.token,s.conversation_id,length(s.ciphertext) bytes,s.created,s.expires,c.title conversation_title,c.expires conversation_expires ${SEALED_FROM} WHERE s.user_id=? AND ${SEALED_LIVE} ${extra} ORDER BY s.created DESC,s.rowid DESC`,
+      )
+      .all(user, t, t, ...args)
+      .map(sealedView);
+    return [...open, ...sealed].sort((a, b) => b.created - a.created);
   };
+  // Live links, sealed or not, for an account or a conversation.
+  const activeCount = (column, id, t) =>
+    db.prepare(`SELECT COUNT(*) n ${FROM} WHERE ${column}=? AND ${LIVE}`).get(id, t, t).n +
+    db.prepare(`SELECT COUNT(*) n ${SEALED_FROM} WHERE ${column}=? AND ${SEALED_LIVE}`).get(id, t, t).n;
+  function checkLimits(user, conversation, t) {
+    if (activeCount("s.user_id", user, t) >= MAX_ACTIVE_SHARES)
+      fail(
+        400,
+        `You can have up to ${MAX_ACTIVE_SHARES} active share links. Revoke one first.`,
+        "share_limit",
+      );
+    if (conversation && activeCount("s.conversation_id", conversation, t) >= MAX_SHARES_PER_CONVERSATION)
+      fail(
+        400,
+        `A conversation can have up to ${MAX_SHARES_PER_CONVERSATION} active share links. Revoke one first.`,
+        "share_limit",
+      );
+  }
+  // The snapshot of one of your own saved personal conversations, as a link
+  // publishes it, or the reason it can't be shared.
+  function snapshotOf(user, conversationId, askedTitle) {
+    // Your own saved conversation (404 for anyone else's, an expired one or
+    // one that doesn't exist).
+    const c = ctx.conversations.accessConversation(conversationId, user);
+    // Shared collab conversations hold other members' messages.
+    if (c.collab_id || c.user_id !== user)
+      fail(400, SHARE_BLOCK_MESSAGES.collab, "share_collab");
+    if (!SHAREABLE_MODES.includes(c.mode || "chat"))
+      fail(400, SHARE_BLOCK_MESSAGES.mode, "share_mode");
+    const rows = db
+      .prepare(
+        "SELECT role,content,model FROM messages WHERE conversation_id=? ORDER BY created,rowid",
+      )
+      .all(c.id);
+    const messages = buildSnapshot(rows, (id) => ctx.models.find(id)?.name || id);
+    const problem = snapshotProblem(messages);
+    if (problem) fail(400, SNAPSHOT_PROBLEMS[problem], problem);
+    return { c, messages, title: publishedTitle(askedTitle, c.title, rows) };
+  }
+  // Off the record and Private Mode are never saved, so there is no
+  // conversation to copy, whatever else the request says.
+  function excluded(body) {
+    if (body.private === true)
+      fail(400, SHARE_BLOCK_MESSAGES.private, "share_excluded");
+    if (body.ephemeral === true)
+      fail(400, SHARE_BLOCK_MESSAGES.off_record, "share_excluded");
+  }
+  // The uploaded ciphertext: canonical base64url of the IV, the AES-GCM
+  // ciphertext and its tag, within the size cap.
+  function ciphertextOf(value) {
+    if (
+      typeof value !== "string" ||
+      !/^[A-Za-z0-9_-]+$/.test(value) ||
+      value.length % 4 === 1
+    )
+      fail(400, "ciphertext must be base64url text.", "invalid_request");
+    if (value.length > Math.ceil((MAX_SEALED_BYTES * 4) / 3))
+      fail(
+        400,
+        `This conversation is too long to share as one sealed link (${MAX_SEALED_BYTES / MB} MB at most).`,
+        "share_too_large",
+      );
+    const bytes = Buffer.from(value, "base64url");
+    if (bytes.toString("base64url") !== value)
+      fail(400, "ciphertext must be base64url text.", "invalid_request");
+    if (bytes.length < SEALED_IV_BYTES + SEALED_TAG_BYTES + 1)
+      fail(400, "ciphertext is too short to be a sealed snapshot.", "invalid_request");
+    if (bytes.length > MAX_SEALED_BYTES)
+      fail(
+        400,
+        `This conversation is too long to share as one sealed link (${MAX_SEALED_BYTES / MB} MB at most).`,
+        "share_too_large",
+      );
+    return bytes;
+  }
 
   app.get("/api/shares", requireUser, (req, res) => {
     const conversation = req.query.conversation;
@@ -108,20 +208,53 @@ export function shareRoutes(ctx) {
     });
   });
 
+  // Sealed Share: the snapshot a sealed link of this conversation would hold,
+  // for the owner's browser to seal. Nothing is stored. (The server already
+  // holds this conversation; it's the copy behind the link it can't read.)
+  app.post(
+    "/api/shares/draft",
+    requireUser,
+    limit("share_draft", 60, 3600000),
+    (req, res) => {
+      const body = req.body;
+      excluded(body);
+      if (typeof body.conversationId !== "string" || !body.conversationId)
+        fail(400, "conversationId must be a conversation id.", "invalid_request");
+      if (body.title !== undefined && typeof body.title !== "string")
+        fail(400, "title must be text.", "invalid_request");
+      const { title, messages } = snapshotOf(req.user.id, body.conversationId, body.title);
+      const summary = snapshotSummary(messages);
+      res.json({ title, messages, withheld: summary.withheld, masked: summary.masked });
+    },
+  );
+
   app.post(
     "/api/shares",
     requireUser,
     limit("share_create", 30, 3600000),
     (req, res) => {
       const body = req.body;
-      // Off the record and Private Mode are never saved, so there is no
-      // conversation to copy, whatever else the request says.
-      if (body.private === true)
-        fail(400, SHARE_BLOCK_MESSAGES.private, "share_excluded");
-      if (body.ephemeral === true)
-        fail(400, SHARE_BLOCK_MESSAGES.off_record, "share_excluded");
-      if (typeof body.conversationId !== "string" || !body.conversationId)
-        fail(400, "conversationId must be a conversation id.", "invalid_request");
+      excluded(body);
+      if (body.sealed !== undefined && typeof body.sealed !== "boolean")
+        fail(400, "sealed must be true or false.", "invalid_request");
+      if (body.device !== undefined && typeof body.device !== "boolean")
+        fail(400, "device must be true or false.", "invalid_request");
+      const sealed = body.sealed === true,
+        device = body.device === true;
+      // A Device-only chat was never on the server, and never arrives here
+      // readable: it can only be shared sealed.
+      if (device && !sealed)
+        fail(400, SHARE_BLOCK_MESSAGES.device_unsealed, "share_device_sealed");
+      if (!sealed && body.ciphertext !== undefined)
+        fail(400, "ciphertext needs sealed: true.", "invalid_request");
+      if (device ? body.conversationId !== undefined : typeof body.conversationId !== "string" || !body.conversationId)
+        fail(
+          400,
+          device
+            ? "A Device-only share has no conversationId."
+            : "conversationId must be a conversation id.",
+          "invalid_request",
+        );
       const expiry = parseShareDays(body.expires_in_days);
       if (!expiry.ok)
         fail(
@@ -129,57 +262,56 @@ export function shareRoutes(ctx) {
           "expires_in_days must be 1, 7, 30 or null (never).",
           "invalid_request",
         );
-      if (body.title !== undefined && typeof body.title !== "string")
-        fail(400, "title must be text.", "invalid_request");
-      const created = transaction(db, () => {
-        // Your own saved conversation (404 for anyone else's, an expired
-        // one or one that doesn't exist).
-        const c = ctx.conversations.accessConversation(
-          body.conversationId,
-          req.user.id,
+      if (body.title !== undefined && (sealed || typeof body.title !== "string"))
+        fail(
+          400,
+          sealed
+            ? "A sealed link's title is sealed inside it: don't send it."
+            : "title must be text.",
+          "invalid_request",
         );
-        // Shared collab conversations hold other members' messages.
-        if (c.collab_id || c.user_id !== req.user.id)
-          fail(400, SHARE_BLOCK_MESSAGES.collab, "share_collab");
-        if (!SHAREABLE_MODES.includes(c.mode || "chat"))
-          fail(400, SHARE_BLOCK_MESSAGES.mode, "share_mode");
-        const rows = db
-          .prepare(
-            "SELECT role,content,model FROM messages WHERE conversation_id=? ORDER BY created,rowid",
-          )
-          .all(c.id);
-        const messages = buildSnapshot(
-          rows,
-          (id) => ctx.models.find(id)?.name || id,
-        );
-        if (!messages.length)
-          fail(400, "There's nothing to share in this conversation yet.", "share_empty");
-        const snapshot = JSON.stringify(messages);
-        if (messages.length > MAX_SHARE_MESSAGES || snapshot.length > MAX_SHARE_CHARS)
-          fail(
-            400,
-            "This conversation is too long to share as one link.",
-            "share_too_large",
-          );
-        const t = now();
-        const active = (where, id) =>
-          db
+      if (sealed) {
+        const bytes = ciphertextOf(body.ciphertext);
+        const id = transaction(db, () => {
+          const t = now();
+          let conversation = null;
+          if (!device) {
+            // The same checks as an open link: your own saved personal chat,
+            // code or uncensored conversation with something in it.
+            const c = snapshotOf(req.user.id, body.conversationId).c;
+            conversation = c;
+          }
+          checkLimits(req.user.id, conversation?.id, t);
+          const held = db
             .prepare(
-              `SELECT COUNT(*) n ${FROM} WHERE ${where}=? AND ${LIVE}`,
+              `SELECT COALESCE(SUM(length(s.ciphertext)),0) n ${SEALED_FROM} WHERE s.user_id=? AND ${SEALED_LIVE}`,
             )
-            .get(id, t, t).n;
-        if (active("s.user_id", req.user.id) >= MAX_ACTIVE_SHARES)
-          fail(
-            400,
-            `You can have up to ${MAX_ACTIVE_SHARES} active share links. Revoke one first.`,
-            "share_limit",
-          );
-        if (active("s.conversation_id", c.id) >= MAX_SHARES_PER_CONVERSATION)
-          fail(
-            400,
-            `A conversation can have up to ${MAX_SHARES_PER_CONVERSATION} active share links. Revoke one first.`,
-            "share_limit",
-          );
+            .get(req.user.id, t, t).n;
+          if (held + bytes.length > MAX_SEALED_TOTAL_BYTES)
+            fail(
+              400,
+              `Your sealed links can hold up to ${MAX_SEALED_TOTAL_BYTES / MB} MB in all. Revoke one first.`,
+              "share_limit",
+            );
+          const { expires } = shareExpiry(expiry.days, t, conversation?.expires ?? null);
+          const id = uid("share_"),
+            token = randomBytes(SHARE_TOKEN_BYTES).toString("base64url");
+          db.prepare(
+            "INSERT INTO sealed_shares(id,user_id,conversation_id,token,ciphertext,created,expires) VALUES(?,?,?,?,?,?,?)",
+          ).run(id, req.user.id, conversation?.id ?? null, token, bytes, t, expires);
+          return id;
+        });
+        const [link] = owned(req.user.id, "AND s.id=?", id);
+        return res.status(201).json(link);
+      }
+      const created = transaction(db, () => {
+        const { c, messages, title } = snapshotOf(
+          req.user.id,
+          body.conversationId,
+          body.title,
+        );
+        const t = now();
+        checkLimits(req.user.id, c.id, t);
         const { expires } = shareExpiry(expiry.days, t, c.expires);
         const id = uid("share_"),
           token = randomBytes(SHARE_TOKEN_BYTES).toString("base64url");
@@ -190,8 +322,8 @@ export function shareRoutes(ctx) {
           req.user.id,
           c.id,
           token,
-          title(body.title, c.title, rows),
-          snapshot,
+          title,
+          JSON.stringify(messages),
           messages.length,
           t,
           expires,
@@ -207,20 +339,34 @@ export function shareRoutes(ctx) {
     },
   );
 
-  // Revoking deletes the snapshot: the link stops working at once.
+  // Revoking deletes the snapshot (or its ciphertext): the link stops
+  // working at once.
   app.delete("/api/shares/:id", requireUser, (req, res) => {
     const r = db
       .prepare("DELETE FROM share_links WHERE id=? AND user_id=?")
       .run(req.params.id, req.user.id);
-    if (!r.changes) fail(404, "Share link not found.", "not_found");
+    const sealed = r.changes
+      ? r
+      : db
+          .prepare("DELETE FROM sealed_shares WHERE id=? AND user_id=?")
+          .run(req.params.id, req.user.id);
+    if (!sealed.changes) fail(404, "Share link not found.", "not_found");
     res.json({ ok: true });
   });
 
-  // The public snapshot. No sign-in; nothing about its owner.
+  // The public snapshot. No sign-in; nothing about its owner. A sealed one
+  // is only its ciphertext and date: the page opens it with the key from its
+  // link, which this request never carries.
   app.get("/api/s/:token", viewLimit, (req, res) => {
     privatePage(res);
     const s = published(req.params.token);
     if (!s) missing();
+    if (s.sealed)
+      return res.json({
+        sealed: true,
+        created: s.created,
+        ciphertext: Buffer.from(s.ciphertext).toString("base64url"),
+      });
     res.json({
       title: s.title,
       created: s.created,
@@ -229,7 +375,9 @@ export function shareRoutes(ctx) {
   });
 
   // The shared page itself: the web app, with the same headers, and the
-  // same 404 for every link that isn't live.
+  // same 404 for every link that isn't live. The page is the same generic
+  // app shell for every link, sealed or not: nothing from a snapshot (not
+  // even its title) goes into what link previews read.
   app.get("/s/:token", viewLimit, (req, res) => {
     privatePage(res);
     const status = published(req.params.token) ? 200 : 404;

@@ -1087,6 +1087,9 @@ const shareLink = object({
   created: integer,
   expires: { type: ["integer", "null"], description: "null: until revoked or the conversation is deleted" },
   ends_with_conversation: { ...bool, description: "The conversation's auto-delete is the deadline that applies" },
+  sealed: { ...bool, description: "Sealed Share: the snapshot is ciphertext only. title and messages are null (they're sealed inside it) and url has no key: only the link made when it was shared can open it." },
+  device_only: { ...bool, description: "Sealed Share: a sealed copy of a Device-only chat, with no conversation on the server (conversation_id null)" },
+  bytes: { ...integer, description: "Sealed Share: the stored ciphertext's size" },
 });
 const sharedMessage = object({
   role: { enum: ["user", "assistant"] },
@@ -1104,15 +1107,29 @@ route("get", "/api/shares", "Your live share links", {
   }),
   description: "Newest first. Revoked and expired links, and links whose conversation is gone, aren't listed.",
 });
+route("post", "/api/shares/draft", "The snapshot a sealed link would hold, for your browser to seal", {
+  body: object(
+    {
+      conversationId: string,
+      title: { ...string, maxLength: 70, description: "Defaults to the conversation's title" },
+    },
+    ["conversationId"],
+  ),
+  response: object({ title: string, messages: array(sharedMessage), withheld: integer, masked: integer }),
+  description:
+    "Sealed Share (needs sharelinks and sealedshare released). Builds the same snapshot an open link publishes and stores nothing. The browser seals { format: \"anonyma-sealed-share\", version: 1, title, messages } as UTF-8 JSON with AES-256-GCM (a random key and 12-byte IV, additional data \"anonyma-sealed-share:v1\") and uploads IV + ciphertext + tag with POST /api/shares. The same refusals as POST /api/shares.",
+});
 route("post", "/api/shares", "Share a saved conversation as a read-only snapshot link", {
   status: 201,
   body: object(
     {
-      conversationId: string,
+      conversationId: { ...string, description: "Required, except for a Device-only share (device: true), which must not send one" },
       expires_in_days: { type: ["integer", "null"], enum: [1, 7, 30, null], default: 7, description: "null: never (until revoked). Never later than the conversation's own auto-delete." },
-      title: { ...string, maxLength: 70, description: "Shown on the shared page; defaults to the conversation's title" },
+      title: { ...string, maxLength: 70, description: "Shown on the shared page; defaults to the conversation's title. Refused on a sealed link, whose title is sealed inside it." },
+      sealed: { ...bool, default: false, description: "Sealed Share (needs sealedshare released): upload ciphertext only. The link's key stays in its #k= fragment and never reaches the server." },
+      ciphertext: { ...string, description: "With sealed: base64url of the 12-byte IV, the AES-GCM ciphertext and its 16-byte tag, at most 3 MB (400 share_too_large); an account's live sealed links hold at most 32 MB in all (400 share_limit)." },
+      device: { ...bool, default: false, description: "With sealed: a Device-only chat, kept only in the browser and never on the server. Refused without sealed (400 share_device_sealed)." },
     },
-    ["conversationId"],
   ),
   response: object({ ...shareLink.properties, withheld: integer, masked: { ...integer, description: "Veil tags in the snapshot" } }),
   description:
@@ -1124,13 +1141,19 @@ route("delete", "/api/shares/{id}", "Revoke a share link", {
 });
 route("get", "/api/s/{token}", "A shared conversation snapshot (public)", {
   auth: null,
-  response: object({ title: string, created: { ...integer, description: "When the snapshot was taken" }, messages: array(sharedMessage) }),
+  response: object({
+    title: string,
+    created: { ...integer, description: "When the snapshot was taken" },
+    messages: array(sharedMessage),
+    sealed: { ...bool, description: "Sealed Share: only sealed, created and ciphertext are sent; the page opens the ciphertext with the key in its link" },
+    ciphertext: { ...string, description: "Sealed Share: base64url IV + AES-GCM ciphertext + tag" },
+  }),
   description:
     "No sign-in. Rate-limited per address. Unknown, revoked, expired and deleted links all return the same 404 share_not_found. Sent with X-Robots-Tag: noindex, nofollow and Referrer-Policy: no-referrer.",
 });
 route("get", "/s/{token}", "The shared conversation page (public)", {
   auth: null,
-  description: "The web app's page for a share link, with the same headers and the same 404 as /api/s/{token}.",
+  description: "The web app's page for a share link, with the same headers and the same 404 as /api/s/{token}. The page is the same generic app shell for every link, sealed or not: link previews never show a snapshot's title or text.",
 });
 // Routines (update "routines").
 const routineSchedule = object(

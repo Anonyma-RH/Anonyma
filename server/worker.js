@@ -242,6 +242,9 @@ export function createWorker(ctx) {
       db.prepare(
         "DELETE FROM share_links WHERE expires IS NOT NULL AND expires<=?",
       ).run(now());
+      db.prepare(
+        "DELETE FROM sealed_shares WHERE expires IS NOT NULL AND expires<=?",
+      ).run(now());
       recoverExpiredHolds();
       if (cfg.rpc && cfg.token) {
         // About daily: each read schedules the next 12 to 36 hours on, at a

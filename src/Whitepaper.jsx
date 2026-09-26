@@ -466,6 +466,13 @@ export default function Whitepaper() {
                 revoke it, or the conversation or account is deleted.
               </p>
             )}
+            {live("sharelinks") && live("sealedshare") && (
+              <p>
+                A sealed link is encrypted in your browser first: we store only
+                the encrypted copy, and the key stays in the link, so we can't
+                read it.
+              </p>
+            )}
             <h3>What providers receive</h3>
             <p>
               The model ID, the recent messages of the conversation (up to the

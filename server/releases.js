@@ -528,6 +528,19 @@ export const UPDATES = [
     ],
     released: true,
   },
+  {
+    id: "sealedshare",
+    title: "Sealed Share",
+    tagline: "Share a chat we can't read.",
+    points: [
+      "Encrypted in your browser before it's uploaded",
+      "The key stays in the link, never on our servers",
+      "Share Device-only chats too, sealed",
+    ],
+    // Builds on Share a Chat: every Sealed Share route needs both released
+    // (featuresFor). Encryption and decryption happen only in the browser.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -708,6 +721,17 @@ export function featuresFor(req) {
     return ["limits"];
   // Live Preview's sandboxed frame document (server/routes/preview.js).
   if (p === "/preview-frame.html") return ["preview"];
+  // Sealed Share: the browser seals a snapshot before uploading it, so the
+  // draft it seals and a sealed create need both updates.
+  if (p === "/api/shares/draft") return ["sharelinks", "sealedshare"];
+  if (
+    p === "/api/shares" &&
+    post &&
+    (body.sealed === true ||
+      body.ciphertext !== undefined ||
+      body.device !== undefined)
+  )
+    return ["sharelinks", "sealedshare"];
   // Share a Chat: managing links, and the public snapshot page and its data.
   if (
     p === "/api/shares" ||

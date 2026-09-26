@@ -81,7 +81,7 @@ import { parseDocumentBlocks } from "./documents.js";
 import Symposium from "./Symposium.jsx";
 import { ScrollsPanel, ScrollFillForm } from "./Scrolls.jsx";
 import { MemoryPanel, MemoryUsedNote, useMemory } from "./Memory.jsx";
-import { ShareDialog } from "./ShareLinks.jsx";
+import { ShareDialog, sealedShareLive } from "./ShareLinks.jsx";
 import { shareBlocked } from "./share-links.js";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import { MEMORY_MODES, MAX_FACT_LENGTH } from "./memory.js";
@@ -438,20 +438,33 @@ export default function Workspace() {
   // the record, Private Mode and collab chats say why they can't be shared
   // (the server refuses them too; see server/routes/shares.js).
   const sharesLive = !demo && !!user && isReleased(config, "sharelinks");
+  // Sealed Share: links sealed in this browser, and the only way to share a
+  // Device-only chat (never one that ran in Private Mode).
+  const sealedLive = sharesLive && sealedShareLive(config);
+  const shareModelName = (id) => models.find((m) => m.id === id)?.name || id;
   function openShare() {
     const saved = all.find((c) => c.id === current);
+    const blocked = shareBlocked({
+      saved: deviceOnly ? !!vaultChatId : !!current,
+      ephemeral,
+      privateMode,
+      deviceOnly,
+      collab: !!shared,
+      mode,
+      sealed: sealedLive,
+    });
     setShare({
-      conversation: current
-        ? { id: current, title: saved?.title || "", expires: saved?.expires ?? null }
-        : null,
-      blocked: shareBlocked({
-        saved: !!current,
-        ephemeral,
-        privateMode,
-        deviceOnly,
-        collab: !!shared,
-        mode,
-      }),
+      conversation:
+        current && !deviceOnly
+          ? { id: current, title: saved?.title || "", expires: saved?.expires ?? null }
+          : null,
+      // What this browser holds of a Device-only chat: sealed here, never
+      // sent readable.
+      device:
+        deviceOnly && !blocked
+          ? { messages: messages.filter((m) => !m.sample) }
+          : null,
+      blocked,
     });
   }
   const memoryExcluded = !memoryLive
@@ -3332,9 +3345,11 @@ export default function Workspace() {
       )}
       {share && sharesLive && (
         <ShareDialog
-          key={share.conversation?.id || share.blocked}
+          key={share.conversation?.id || (share.device ? "device" : share.blocked)}
           conversation={share.conversation}
+          device={share.device}
           blocked={share.blocked}
+          modelName={shareModelName}
           onClose={() => setShare(null)}
         />
       )}

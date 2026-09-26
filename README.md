@@ -106,6 +106,12 @@ encrypted in your browser with your passphrase. Includes its launch film.
 [Routines](docs/releases/routines.md): saved prompts that run daily, on weekdays or weekly, each with
 a per-run maximum and a monthly budget. Includes its launch film.
 
+[Sealed Share](docs/releases/sealed-share.md): share links encrypted in your browser; the key sits after
+the # and never reaches our servers. Includes its launch film.
+
+[Projects](docs/releases/projects.md): related chats, pinned files and instructions in one place, with a
+default model and privacy mode. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

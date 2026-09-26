@@ -77,8 +77,34 @@ export function hostOf(url) {
   }
 }
 
+// HTML entities left in a provider's page titles ("Questions &amp; Answers"),
+// decoded to plain text. The result is only ever shown as text (React
+// escapes it) or sent as prompt text, never parsed as HTML. Named entities
+// that titles use, and decimal or hex character references; anything else,
+// or a reference to a control or surrogate code point, is left as written.
+// Two passes cover a title that was escaped twice ("&amp;amp;").
+const NAMED = {
+  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0",
+  ndash: "–", mdash: "—", hellip: "…", lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”",
+  laquo: "«", raquo: "»", middot: "·", bull: "•", copy: "©", reg: "®", trade: "™",
+};
+const ENTITY = /&(?:#(\d{1,7})|#[xX]([0-9a-fA-F]{1,6})|([a-zA-Z]{2,8}));/g;
+const decodeOnce = (text) =>
+  text.replace(ENTITY, (whole, dec, hex, name) => {
+    if (name) return Object.hasOwn(NAMED, name) ? NAMED[name] : whole;
+    const cp = dec ? Number(dec) : parseInt(hex, 16);
+    const control = cp < 0x20 || (cp >= 0x7f && cp < 0xa0);
+    const surrogate = cp >= 0xd800 && cp <= 0xdfff;
+    return control || surrogate || cp > 0x10ffff ? whole : String.fromCodePoint(cp);
+  });
+export function decodeEntities(text) {
+  const s = String(text ?? "");
+  const once = decodeOnce(s);
+  return once === s ? s : decodeOnce(once);
+}
+
 // One step's sources as the provider cited them: valid http(s) URLs only,
-// de-duplicated, capped.
+// de-duplicated, capped, with titles decoded to plain text.
 export function stepSources(list) {
   const out = [];
   const seen = new Set();
@@ -88,7 +114,7 @@ export function stepSources(list) {
     seen.add(key);
     out.push({
       url: s.url.slice(0, 2000),
-      title: typeof s.title === "string" ? tidy(s.title).slice(0, 300) : "",
+      title: typeof s.title === "string" ? tidy(decodeEntities(s.title)).slice(0, 300) : "",
     });
     if (out.length >= MAX_STEP_SOURCES) break;
   }

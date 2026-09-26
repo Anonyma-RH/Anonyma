@@ -19,6 +19,7 @@ import {
   MAX_SOURCES,
   cleanReport,
   collectSources,
+  decodeEntities,
   parsePlan,
   partialReport,
   stepSources,
@@ -262,6 +263,22 @@ test("sources are numbered once, round-robin, and capped", () => {
     stepSources([{ url: "javascript:alert(1)" }, { url: "https://u:p@x.org/" }, { url: "ftp://x.org" }, SOURCE(1), SOURCE(1)]),
     [SOURCE(1)],
   );
+});
+
+test("source titles are decoded to plain text when sources are collected", () => {
+  const title = "General-Purpose AI Models in the AI Act &#8211; Questions &amp; Answers";
+  const [s] = stepSources([{ url: "https://digital-strategy.ec.europa.eu/en/faqs/general-purpose-ai-models-ai-act-questions-answers", title }]);
+  assert.equal(s.title, "General-Purpose AI Models in the AI Act – Questions & Answers");
+  // Escaped twice, as one live provider sent it.
+  assert.equal(stepSources([{ url: "https://x.org/a", title: "Questions &amp;amp; Answers" }])[0].title, "Questions & Answers");
+  assert.equal(
+    decodeEntities("&lt;b&gt; &quot;q&quot; it&#39;s&nbsp;here &#8211; &#x2013; &#X2014; &ndash;"),
+    '<b> "q" it\'s\u00a0here – – — –',
+  );
+  // Unknown names, control and surrogate code points stay as written.
+  assert.equal(decodeEntities("&bogus; &#0; &#x7; &#xD800; &#1114112; & plain"), "&bogus; &#0; &#x7; &#xD800; &#1114112; & plain");
+  // The whitespace from &nbsp; folds like any other.
+  assert.equal(stepSources([{ url: "https://x.org/b", title: "A&nbsp;&nbsp; B" }])[0].title, "A B");
 });
 
 test("citations map only to real sources; invented links and numbers are removed", () => {
@@ -694,6 +711,14 @@ test("the UI: gated on the release, live progress and numbered sources, model te
     }),
   );
   assert.match(cut, /3 sources · cut short/);
+  const tagged = renderToStaticMarkup(
+    createElement(ui.ResearchDetails, {
+      research: { status: "done", steps: [], credits_charged: 1 },
+      citations: [{ url: "https://x.org/", title: '<img src=x onerror="alert(1)"> & more' }],
+    }),
+  );
+  assert.ok(!/<img/.test(tagged));
+  assert.match(tagged, /&lt;img src=x onerror=&quot;alert\(1\)&quot;&gt; &amp; more/);
   // Only a web address is ever a link, and the numbering never shifts.
   const unsafe = renderToStaticMarkup(
     createElement(ui.ResearchDetails, {

@@ -830,6 +830,20 @@ export const UPDATES = [
     // server/passkeys.js passkeysAvailable.
     released: false,
   },
+  {
+    id: "privacyscreen",
+    title: "Privacy Screen",
+    tagline: "One key and your screen goes blank.",
+    points: [
+      "Press Esc twice or tap Hide, and your chats leave the screen",
+      "Optional: hide when you switch away, lock when you're idle",
+      "Unlock with your password; a reply in progress keeps going",
+    ],
+    // Browser only (src/privacy-screen.js), apart from the idle lock's
+    // unlock check (server/routes/unlock.js), which re-verifies the account's
+    // password, email code or wallet signature without touching the session.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1006,6 +1020,10 @@ export function featuresFor(req) {
     return ["passkeys"];
   if (p === "/api/account/passkeys" || p.startsWith("/api/account/passkeys/"))
     return ["passkeys", "twostep"];
+  // Privacy Screen: unlocking the screen after idle re-checks the account's
+  // password (or an email code or wallet signature). Nothing else is served.
+  if (p === "/api/auth/unlock" || p.startsWith("/api/auth/unlock/"))
+    return ["privacyscreen"];
   // Two-Step Sign-in's settings. The sign-in step itself, /api/auth/two-step,
   // is never gated (see the UPDATES entry).
   if (p === "/api/account/two-step" || p.startsWith("/api/account/two-step/"))

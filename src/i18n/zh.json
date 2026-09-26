@@ -4128,7 +4128,44 @@
     "Passkeys need this service on a domain name over HTTPS.": "通行密钥要求本服务使用域名并通过 HTTPS 访问。",
     "Your passkeys, so you can still sign in": "你的通行密钥，确保你仍能登录",
     "Passkeys: each passkey’s public key, credential id, sign counter, name, dates and whether it’s synced, plus a random account handle the passkey stores instead of your username, email or wallet. Your face, fingerprint and PIN never leave your device. A sign-in or setup waiting for your device lasts 5 minutes. Your export lists each passkey’s name and dates, not its keys. Removing a passkey or closing your account deletes it; Panic Wipe keeps your passkeys so you can still sign in.": "通行密钥：每个通行密钥的公钥、凭据 ID、签名计数器、名称、日期以及是否已同步，外加一个随机账户标识——通行密钥里存的是它，而不是你的用户名、邮箱或钱包。你的面容、指纹和 PIN 码不会离开你的设备。等待设备响应的登录或设置会保留 5 分钟。导出内容会列出每个通行密钥的名称和日期，但不包含其密钥。移除通行密钥或关闭账户会将其删除；紧急清除会保留你的通行密钥，确保你仍能登录。",
-    "The export also lists your passkeys: each one’s name, when it was added and last used, and whether it’s synced. Public keys and credential ids are left out: only ANONYMA’s sign-in check uses them.": "导出内容还会列出你的通行密钥：每个通行密钥的名称、添加时间、上次使用时间以及是否已同步。公钥和凭据 ID 不包含在内：只有 ANONYMA 的登录校验会用到它们。"
+    "The export also lists your passkeys: each one’s name, when it was added and last used, and whether it’s synced. Public keys and credential ids are left out: only ANONYMA’s sign-in check uses them.": "导出内容还会列出你的通行密钥：每个通行密钥的名称、添加时间、上次使用时间以及是否已同步。公钥和凭据 ID 不包含在内：只有 ANONYMA 的登录校验会用到它们。",
+    "Privacy Screen": "隐私屏",
+    "One key and your screen goes blank.": "按一下键，屏幕即刻清空。",
+    "Press Esc twice or tap Hide, and your chats leave the screen": "按两下 Esc 或点按“隐藏”，会话即刻离开屏幕",
+    "Optional: hide when you switch away, lock when you're idle": "可选：切换离开时隐藏，闲置时锁定",
+    "Unlock with your password; a reply in progress keeps going": "用密码解锁；正在生成的回复不会中断",
+    "Hidden — press any key or tap to return": "已隐藏——按任意键或轻触屏幕即可返回",
+    "PRIVACY SCREEN": "隐私屏",
+    "Locked.": "已锁定。",
+    "Locked while you were away. Your chats are still here; unlock to see them.": "你离开期间屏幕已锁定。你的会话都还在，解锁后即可查看。",
+    "Checking how to unlock…": "正在确认解锁方式……",
+    "The wallet signs a one-time message. It authorizes no transaction and can’t be used to sign in.": "钱包会签署一条一次性消息。它不授权任何交易，也不能用于登录。",
+    "Sign out instead": "改为退出登录",
+    "Signing out…": "正在退出登录……",
+    "You’re signed out. Sign in again to continue.": "你已退出登录。请重新登录后继续。",
+    "Too many incorrect attempts. Try again in 1 minute, or sign out instead.": "错误次数过多。请在 1 分钟后重试，或改为退出登录。",
+    "This code expired. Send a new one.": "此验证码已过期。请重新发送。",
+    "This wallet request expired. Try again.": "此钱包请求已过期。请重试。",
+    "Unlock with your password.": "请用你的密码解锁。",
+    "Unlock with a code sent to your email or a signature from your linked wallet.": "请用发送到你邮箱的验证码或你关联钱包的签名解锁。",
+    "Choose how to unlock.": "请选择解锁方式。",
+    "Enter your password.": "请输入你的密码。",
+    "Hide": "隐藏",
+    "Hide the screen": "隐藏屏幕",
+    "Hide the screen (Esc twice)": "隐藏屏幕（按两下 Esc）",
+    "Shortcut: press Esc twice": "快捷键：按两下 Esc",
+    "Privacy Screen.": "隐私屏。",
+    "Press Esc twice, or Hide at the top of the page, and your chats leave the screen until you press a key or tap. These choices apply to this browser only.": "按两下 Esc，或点按页面顶部的“隐藏”，你的会话就会离开屏幕，直到你按任意键或轻触屏幕。这些选项仅对此浏览器生效。",
+    "Hide when I switch away": "切换离开时隐藏",
+    "Covers the screen when you switch to another tab or app, and keeps your chats out of app-switcher previews where the browser allows.": "切换到其他标签页或应用时遮住屏幕；在浏览器允许的情况下，应用切换器的预览中也不会出现你的会话。",
+    "Lock after idle": "闲置后锁定",
+    "After no typing, clicking or scrolling for this long. Locking doesn’t sign you out: unlock with your password, or with an email code or wallet signature if your account has no password.": "在这段时间内没有输入、点击或滚动时锁定。锁定不会让你退出登录：用密码解锁；如果你的账户没有密码，则用邮箱验证码或钱包签名解锁。",
+    "After 5 minutes": "5 分钟后",
+    "After 15 minutes": "15 分钟后",
+    "After 1 hour": "1 小时后",
+    "Privacy Screen hides your screen from people nearby. It isn't encryption; for chats that never leave this device, use Device Vault.": "隐私屏能让身边的人看不到你的屏幕，但它不是加密；若要让会话始终不离开此设备，请使用本机保险库。",
+    "Privacy Screen hides your screen from people nearby. It isn't encryption.": "隐私屏能让身边的人看不到你的屏幕，但它不是加密。",
+    "Privacy Screen: its choices and whether the screen is locked are kept only in this browser. Unlocking checks your password (or an email code or wallet signature) on the server, which keeps nothing but a count of wrong attempts, under a one-way key, for up to 15 minutes. Hiding takes your chats off the screen, not out of this browser’s memory.": "隐私屏：它的选项以及屏幕是否已锁定，只保存在此浏览器中。解锁时，服务器会核对你的密码（或邮箱验证码、钱包签名），除错误次数外不保存任何内容；错误次数以单向密钥记录，最长保留 15 分钟。隐藏只是让会话离开屏幕，并不会将其从此浏览器的内存中清除。"
   },
   "patterns": [
     {
@@ -6530,6 +6567,10 @@
     {
       "en": "Added {0} · Not used yet",
       "zh": "添加于 {0} · 尚未使用"
+    },
+    {
+      "en": "Too many incorrect attempts. Try again in {0} minutes, or sign out instead.",
+      "zh": "错误次数过多。请在 {0} 分钟后重试，或改为退出登录。"
     }
   ]
 }

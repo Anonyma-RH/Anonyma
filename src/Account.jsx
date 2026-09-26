@@ -55,6 +55,12 @@ import { holdersReleased } from "./holders.js";
 import { ReferralRate } from "./ReferralBoost.jsx";
 import { ownPercent } from "./referral-boost.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
+import {
+  PrivacyScreen,
+  HideScreenButton,
+  PrivacyScreenSettings,
+  hideScreen,
+} from "./PrivacyScreen.jsx";
 import { paletteReleased, paletteActions, recentStoreKey } from "./command-palette.js";
 import { useLanguage, setLanguage } from "./i18n.js";
 // Ledger entry kinds as readable labels; an unknown kind reads as words.
@@ -112,6 +118,7 @@ export default function Account() {
   const language = useLanguage();
   function runPaletteItem(item) {
     if (item.id === "language") return setLanguage(language === "zh" ? "en" : "zh");
+    if (item.id === "privacy-screen") return hideScreen();
     if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
   }
   const q = demo ? "?demo=1" : "";
@@ -312,6 +319,8 @@ export default function Account() {
   ];
   return (
     <main id="main" className="app-shell">
+      {/* Privacy Screen: Esc twice or Hide covers the page (and idle locks it). */}
+      <PrivacyScreen config={config} user={user} />
       {alertsLive && <BalanceAlertWatch config={config} user={user} demo={demo} />}
       <AppSidebar
         demo={demo}
@@ -342,6 +351,7 @@ export default function Account() {
           {paletteLive && (
             <PaletteButton onOpen={() => palette.setOpen(true)} apple={palette.apple} />
           )}
+          <HideScreenButton config={config} user={user} />
           <Link to={"/workspace" + q} className="small-button">
             Back to workspace <Icon name="arrow" size={15} />
           </Link>
@@ -978,6 +988,8 @@ export default function Account() {
               />
               <LanguageSettings config={config} />
               <ShieldSettings config={config} />
+              {/* Privacy Screen: this browser's hide and lock choices. */}
+              {!demo && <PrivacyScreenSettings config={config} user={user} />}
               <section>
                 <div>
                   <h2>Active sessions.</h2>

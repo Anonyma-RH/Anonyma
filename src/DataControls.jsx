@@ -29,6 +29,8 @@ export default function DataControls() {
   const blind = !!config && isReleased(config, "blind");
   // Passkeys: listed once that update is live.
   const passkeys = !!config && isReleased(config, "passkeys");
+  // And the Privacy Screen.
+  const privacyScreen = !!config && isReleased(config, "privacyscreen");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -178,6 +180,16 @@ export default function DataControls() {
             date, for Your rankings. Never the prompt or the replies, and
             nothing about a comparison before you vote. Reset them from Your
             rankings; Panic Wipe and closing your account delete them.
+          </li>
+        )}
+        {privacyScreen && (
+          <li>
+            Privacy Screen: its choices and whether the screen is locked are
+            kept only in this browser. Unlocking checks your password (or an
+            email code or wallet signature) on the server, which keeps nothing
+            but a count of wrong attempts, under a one-way key, for up to 15
+            minutes. Hiding takes your chats off the screen, not out of this
+            browser’s memory.
           </li>
         )}
         {nyma && (

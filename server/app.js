@@ -47,6 +47,7 @@ import { wipeRoutes } from "./routes/wipe.js";
 import { twoStepRoutes } from "./routes/two-step.js";
 import { passkeyRoutes } from "./routes/passkeys.js";
 import { createPasskeys } from "./passkeys.js";
+import { unlockRoutes } from "./routes/unlock.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { apiBoostRoutes } from "./routes/api-boost.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
@@ -163,6 +164,8 @@ export function createApp(overrides = {}) {
   twoStepRoutes(ctx);
   // Passkeys: sign-in, passwordless sign-up and Account → Security's list.
   passkeyRoutes(ctx);
+  // Privacy Screen: the idle lock's unlock check (never touches the session).
+  unlockRoutes(ctx);
   allowanceRoutes(ctx);
   // API Boost: the account's own API rate limit (the limits are applied by
   // the /v1 and /mcp routes, server/api-boost.js).

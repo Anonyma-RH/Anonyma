@@ -3100,19 +3100,19 @@
     "Routines: each routine's prompt and settings, and the newest 50 runs per routine (answer, charge and receipt), until you delete them.": "定时任务：每个定时任务的提示词和设置，以及每个定时任务最新 50 次运行（回答、扣费和收据），保留到你将其删除为止。",
     "Panic Wipe (Account → Settings, type WIPE) erases your conversations, media files, uploads, memory, Scrolls, routines, collabs you own and support requests, revokes keys and connected apps, and signs out everywhere; your balance, ledger, deposits, receipts and settings remain, and backups are separate copies.": "紧急清除（账户 → 设置，输入 WIPE）会清除你的会话、媒体文件、上传内容、记忆、卷轴、定时任务、你拥有的协作空间和支持请求，撤销密钥和已连接的应用，并在所有设备上退出登录；你的余额、账本、充值记录、收据和设置会保留，备份是单独的副本。",
     "Sealed Share": "密封分享",
-    "Share a chat we can't read.": "分享一段我们也读不了的对话。",
+    "Share a chat we can't read.": "分享一段连我们都无法读取的会话。",
     "Encrypted in your browser before it's uploaded": "上传前先在你的浏览器中加密",
     "The key stays in the link, never on our servers": "密钥只在链接中，绝不存放在我们的服务器上",
     "Share Device-only chats too, sealed": "仅存本机的会话也能密封分享",
-    "Anyone with the full link can read it. ANONYMA can't: the key never reaches our servers.": "任何拥有完整链接的人都能阅读。ANONYMA 不能：密钥从不会到达我们的服务器。",
+    "Anyone with the full link can read it. ANONYMA can't: the key never reaches our servers.": "任何拥有完整链接的人都能阅读，但 ANONYMA 无法阅读：密钥从不会发送到我们的服务器。",
     "Lose the link and it can't be recovered.": "链接一旦丢失，就无法找回。",
-    "No link preview: apps you paste it into can't show what's inside.": "没有链接预览：你把它粘贴到哪个应用，都无法显示其中的内容。",
+    "No link preview: apps you paste it into can't show what's inside.": "没有链接预览：无论粘贴到哪个应用，都无法显示其中的内容。",
     "This browser can't seal or open a sealed link.": "此浏览器无法创建或打开密封链接。",
     "This conversation is too long to share as one sealed link.": "这个会话太长，无法通过一个密封链接分享。",
     "This link is missing its key. Ask for the full link: everything after the # is part of it.": "此链接缺少密钥。请向对方索要完整链接：# 之后的所有内容都是链接的一部分。",
     "This link's key doesn't open this conversation. Check that you copied the whole link.": "此链接的密钥无法打开这个会话。请检查是否复制了完整链接。",
     "This sealed conversation couldn't be read. It may be damaged.": "无法读取这个密封会话，它可能已损坏。",
-    "Private Mode chats are never stored on our servers, so they can't be shared by link, even from Device Vault.": "隐私模式的对话从不存储在我们的服务器上，因此无法通过链接分享，即使保存在本机保险库中也不行。",
+    "Private Mode chats are never stored on our servers, so they can't be shared by link, even from Device Vault.": "隐私模式的会话从不存储在我们的服务器上，因此无法通过链接分享，即使保存在本机保险库中也不行。",
     "A Device-only chat can only be shared as a sealed link.": "仅存本机的会话只能以密封链接分享。",
     "Device-only chat": "仅存本机的会话",
     "Sealed": "密封",
@@ -3139,7 +3139,8 @@
     "This sealed conversation can't be opened.": "无法打开这个密封会话。",
     "Sealed share links: your browser encrypts the snapshot before it’s uploaded, so only the encrypted copy, its random address and its dates are stored. The key stays in the link after the #, which browsers never send to a server, so ANONYMA can’t read a sealed link. A Device-only chat can be shared only this way; its encrypted copy is deleted when the link expires, when you revoke it, and when you close your account or use Panic Wipe.": "密封分享链接：你的浏览器会在上传前加密快照，因此服务器只存储加密副本、其随机地址和日期。密钥保留在链接的 # 之后，浏览器从不会把这部分发送给服务器，因此 ANONYMA 无法读取密封链接。仅存本机的会话只能以这种方式分享；链接到期、你将其撤销，以及你关闭账户或使用紧急清除时，其加密副本都会被删除。",
     "Sealed links are exported as their addresses without keys, their dates and the encrypted copy exactly as stored.": "密封链接会以不含密钥的地址、日期，以及与存储时完全相同的加密副本导出。",
-    "A sealed link is encrypted in your browser first: we store only the encrypted copy, and the key stays in the link, so we can't read it.": "密封链接会先在你的浏览器中加密：我们只存储加密副本，密钥保留在链接中，因此我们无法读取。"
+    "A sealed link is encrypted in your browser first: we store only the encrypted copy, and the key stays in the link, so we can't read it.": "密封链接会先在你的浏览器中加密：我们只存储加密副本，密钥保留在链接中，因此我们无法读取。",
+    "Export account data": "导出账户数据"
   },
   "patterns": [
     {
@@ -3252,11 +3253,11 @@
     },
     {
       "en": "{0} active session",
-      "zh": "{0}个活跃会话"
+      "zh": "{0} 个活跃会话"
     },
     {
       "en": "{0} active sessions",
-      "zh": "{0}个活跃会话"
+      "zh": "{0} 个活跃会话"
     },
     {
       "en": "{0} availability unknown",
@@ -4877,6 +4878,10 @@
     {
       "en": "This conversation is too long to share as one sealed link ({0} MB at most).",
       "zh": "这个会话太长，无法通过一个密封链接分享（最多 {0} MB）。"
+    },
+    {
+      "en": "Created {0} ·",
+      "zh": "创建于 {0} ·"
     }
   ]
 }

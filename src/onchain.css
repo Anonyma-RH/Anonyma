@@ -1,0 +1,371 @@
+/* Onchain Explainer: the composer chip and the Chain facts card. Flat cobalt
+   and white like Seed Guard's notice: a cobalt tile with the brand-yellow
+   glyph, hairline borders, square flat buttons, tabular numbers. */
+.onchain-chip,
+.onchain-card {
+  color: #142343;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+.onchain-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+}
+.onchain-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: #0135df;
+  color: #ffb21c;
+}
+.onchain-chip-body {
+  flex: 1;
+  min-width: 0;
+}
+.onchain-chip p,
+.onchain-card p {
+  margin: 0;
+}
+.onchain-eyebrow {
+  margin-bottom: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #0135df;
+}
+.onchain-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+.onchain-chip-what {
+  font-weight: 600;
+}
+.onchain-chip code,
+.onchain-card code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #0b2a8f;
+  background: none;
+  padding: 0;
+}
+.onchain-chain select {
+  appearance: auto;
+  min-height: 0;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid #c9d3e6;
+  border-radius: 2px;
+  background: #fff;
+  color: #142343;
+  font: inherit;
+  font-size: 12px;
+}
+.onchain-button {
+  appearance: none;
+  min-height: 0;
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: none;
+  color: #0135df;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.onchain-button.solid {
+  background: #0135df;
+  color: #fff;
+}
+.onchain-button.solid:hover {
+  background: #0029b8;
+}
+.onchain-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.onchain-button:focus-visible,
+.onchain-dismiss:focus-visible,
+.onchain-card a:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: 2px;
+}
+.onchain-dismiss {
+  appearance: none;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  box-shadow: none;
+  color: #68748a;
+  cursor: pointer;
+}
+.onchain-dismiss:hover {
+  background: #edf2ff;
+  color: #0135df;
+}
+.onchain-note {
+  margin-top: 6px !important;
+  font-size: 12px;
+  color: #68748a;
+}
+.onchain-note > span + span {
+  margin-left: 0.3em;
+}
+.onchain-error {
+  margin-top: 6px !important;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b42318;
+}
+
+/* The card, under the user's message. A pasted hash or link above it
+   wraps instead of running out of the bubble. */
+.message.user:has(.onchain-card) .document-prompt {
+  overflow-wrap: anywhere;
+}
+/* And an explanation that quotes a full hash or address. */
+.message.user:has(.onchain-card) + .message.assistant .markdown {
+  overflow-wrap: break-word;
+}
+.onchain-cards {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+.onchain-card {
+  max-width: 640px;
+  background: #fff;
+  border: 1px solid #dfe5f0;
+  border-top: 3px solid #0135df;
+  border-radius: 2px;
+}
+.onchain-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #edf1f7;
+}
+.onchain-card-title {
+  flex: 1;
+  min-width: 0;
+}
+.onchain-card-name {
+  font-weight: 700;
+  font-size: 14px;
+}
+.onchain-status {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  background: #edf2ff;
+  color: #0135df;
+}
+.onchain-status.success {
+  background: #0135df;
+  color: #fff;
+}
+.onchain-status.failed {
+  background: #fdecea;
+  color: #b42318;
+}
+.onchain-rows {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 7px 12px;
+  margin: 0;
+  padding: 12px 14px;
+}
+.onchain-rows dt {
+  color: #68748a;
+  font-size: 12px;
+}
+.onchain-rows dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.onchain-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.onchain-party {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+}
+.onchain-party-name {
+  font-weight: 600;
+}
+.onchain-card a {
+  color: #0135df;
+  text-decoration: none;
+}
+.onchain-card a:hover {
+  text-decoration: underline;
+}
+.onchain-tag {
+  display: inline-block;
+  padding: 0 5px;
+  border: 1px solid #d5ddec;
+  border-radius: 2px;
+  color: #4a5670;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+.onchain-tag.warn {
+  border-color: #ffb21c;
+  background: #fff6e0;
+  color: #7a4b00;
+}
+.onchain-section {
+  padding: 10px 14px 12px;
+  border-top: 1px solid #edf1f7;
+}
+.onchain-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px !important;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: #0135df;
+}
+.onchain-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.onchain-list li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed #edf1f7;
+}
+.onchain-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.onchain-list.compact {
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px 16px;
+}
+.onchain-list.compact li {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.onchain-move {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.onchain-route {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  color: #68748a;
+  font-size: 12px;
+  min-width: 0;
+}
+.onchain-route > svg {
+  flex: none;
+  color: #9aa6bd;
+}
+.onchain-muted {
+  color: #68748a;
+  font-size: 12px;
+}
+.onchain-section .onchain-muted,
+.onchain-card > .onchain-muted {
+  margin-top: 6px !important;
+}
+.onchain-card > .onchain-muted {
+  padding: 0 14px 10px;
+}
+.onchain-worth {
+  margin: 0 14px 12px;
+  padding: 10px 12px;
+  background: #fffaf0;
+  border-left: 3px solid #ffb21c;
+}
+.onchain-worth .onchain-label {
+  color: #7a4b00;
+}
+.onchain-worth ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.onchain-worth li + li {
+  margin-top: 4px;
+}
+.onchain-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 9px 14px;
+  border-top: 1px solid #edf1f7;
+  background: #f7f9fc;
+  color: #68748a;
+  font-size: 11px;
+}
+.onchain-card-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 12px;
+}
+@media (max-width: 560px) {
+  .onchain-chip {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .onchain-chip .onchain-tile {
+    display: none;
+  }
+  .onchain-rows {
+    grid-template-columns: 78px minmax(0, 1fr);
+  }
+  /* Narrow screens: who sent what to whom, without the kind tags. */
+  .onchain-route .onchain-tag {
+    display: none;
+  }
+}

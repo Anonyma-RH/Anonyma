@@ -35,8 +35,10 @@ const Tile = () => (
 );
 
 // The soft notice for 64-hex: one click on "It's not a key, send" goes
-// straight on, with no second confirm. Stateless on purpose.
-export function SeedGuardSoftNotice({ hit, onProceed, verb = "send", busy = false }) {
+// straight on, with no second confirm. Stateless on purpose. With Onchain
+// Explainer released and a 0x transaction hash in the message, `onExplain`
+// adds "Explain this transaction", which also says it isn't a key.
+export function SeedGuardSoftNotice({ hit, onProceed, onExplain, verb = "send", busy = false }) {
   const words = VERBS[verb] || VERBS.send;
   return (
     <div className="seed-guard soft" role="status">
@@ -44,16 +46,28 @@ export function SeedGuardSoftNotice({ hit, onProceed, verb = "send", busy = fals
       <div className="seed-guard-body">
         <p className="seed-guard-eyebrow">SEED GUARD</p>
         <p className="seed-guard-message">{seedGuardMessage(hit)}</p>
-        {onProceed && (
+        {(onProceed || onExplain) && (
           <div className="seed-guard-actions">
-            <button
-              type="button"
-              className="seed-guard-button"
-              disabled={busy}
-              onClick={onProceed}
-            >
-              {words.notKey}
-            </button>
+            {onExplain && (
+              <button
+                type="button"
+                className="seed-guard-button solid"
+                disabled={busy}
+                onClick={onExplain}
+              >
+                Explain this transaction
+              </button>
+            )}
+            {onProceed && (
+              <button
+                type="button"
+                className="seed-guard-button"
+                disabled={busy}
+                onClick={onProceed}
+              >
+                {words.notKey}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -68,6 +82,7 @@ export function SeedGuardSoftNotice({ hit, onProceed, verb = "send", busy = fals
 export function SeedGuardNotice({
   hit,
   onProceed,
+  onExplain,
   verb = "send",
   busy = false,
   hardOverride = true,
@@ -79,7 +94,9 @@ export function SeedGuardNotice({
   }, [hit]);
   if (!hit) return null;
   if (isSoft(hit))
-    return <SeedGuardSoftNotice hit={hit} onProceed={onProceed} verb={verb} busy={busy} />;
+    return (
+      <SeedGuardSoftNotice hit={hit} onProceed={onProceed} onExplain={onExplain} verb={verb} busy={busy} />
+    );
   const words = VERBS[verb] || VERBS.send;
   const override = hardOverride ? onProceed : null;
   return (

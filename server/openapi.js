@@ -2288,6 +2288,35 @@ for (const method of ["get", "delete"]) paths["/mcp"][method].responses = {
     content: { "application/json": { schema: ref("Error") } },
   },
 };
+// Onchain Explainer (update "onchain"; server/onchain.js).
+route("post", "/api/onchain/lookup", "Look up a transaction or address", {
+  body: object(
+    {
+      value: {
+        ...string,
+        pattern: "^0x([0-9a-fA-F]{64}|[0-9a-fA-F]{40})$",
+        description: "A transaction hash (0x and 64 hex) or an address (0x and 40 hex). Sent in the body so no access log records it.",
+      },
+      kind: { enum: ["transaction", "address"], description: "Optional; must match the value's shape" },
+      chain: {
+        oneOf: [{ const: "auto" }, { enum: [4663, 1, 8453, 42161, 10] }],
+        default: "auto",
+        description: "A chain id, or auto: Robinhood Chain, Ethereum, Base, Arbitrum, then Optimism, stopping at the first that has it (for an address, the first with any activity)",
+      },
+    },
+    ["value"],
+  ),
+  response: object({
+    facts: object({
+      kind: { enum: ["transaction", "address"] },
+      chain: object({ id: integer, name: string }),
+      source: { ...string, description: "Where the facts were read" },
+      hints: array(object({ code: { enum: ["unlimited_approval", "approval_for_all", "approval_to_wallet", "unverified_contract", "flagged", "new_recipient", "never_sent"] } })),
+    }),
+  }),
+  description:
+    "Free and read only: nothing is signed, sent or connected. Read on the server from fixed public sources (Robinhood Chain's JSON-RPC node; Blockscout's API for the others), so the user's IP never reaches them; no redirects, JSON only, 8 seconds and 1 MB at most, kept in memory for 60 seconds, never stored or logged. A transaction's facts: status, time, block, from/to with explorer names, the call, value, fee, token transfers, approvals and a created contract; an address's: kind, name and labels, balance, activity counts, tokens held and token details. Hints appear only when the facts show them. 400 invalid_request; 400 onchain_chain_unsupported; 404 onchain_not_found; 502 onchain_unavailable. 20 a minute and 200 an hour per account.",
+});
 // Seed Guard's opt-out header for API clients (server/seed-guard.js).
 const seedGuardHeader = {
   name: "X-Anonyma-Seed-Guard",

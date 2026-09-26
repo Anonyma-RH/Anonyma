@@ -861,6 +861,7 @@ const featureIcons = {
   shield: "shield",
   redact: "redact",
   linkreader: "link",
+  onchain: "chain",
 };
 const launch = {
   id: "mvp",

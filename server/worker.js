@@ -17,10 +17,10 @@ import { sweepOAuth } from "./oauth.js";
 import { settleHolderCycles, monthOf } from "./holders.js";
 import { issueMediaReceipt } from "./receipts.js";
 
-// Background maintenance: video completion, payment status checks, expired
-// media and reservations, token holdings and table cleanup.
+// Background maintenance: due routines, video completion, payment status
+// checks, expired media and reservations, token holdings and table cleanup.
 export function createWorker(ctx) {
-  const { db, cfg, inflight } = ctx;
+  const { db, cfg, inflight, routines } = ctx;
   const { mediaJSON, saveMedia, deleteMedia, assignCosts } = ctx.media;
   const workerController = new AbortController();
   let workerPromise = null;
@@ -54,6 +54,9 @@ export function createWorker(ctx) {
     if (working || closed) return;
     working = true;
     try {
+      // Routines (server/routines.js): start the runs that are due. They go
+      // on alongside the rest of maintenance rather than holding it up.
+      routines?.startDue();
       const jobs = db
         .prepare(
           "SELECT * FROM videos WHERE status IN ('pending','processing') ORDER BY updated ASC,created ASC LIMIT 20",
@@ -288,12 +291,17 @@ export function createWorker(ctx) {
     "UPDATE deposits SET status='reconciliation',updated=? WHERE status IN ('creating','error') AND provider_id IS NULL",
   ).run(now());
   recoverExpiredHolds();
+  // Settles once this round of maintenance and the routine runs due by
+  // then have finished (a routine that came due during a round still starts).
   function tick() {
-    if (workerPromise) return workerPromise;
-    workerPromise = runTick().finally(() => {
+    workerPromise ||= runTick().finally(() => {
       workerPromise = null;
     });
-    return workerPromise;
+    if (!routines) return workerPromise;
+    return workerPromise.then(() => {
+      if (!closed) routines.startDue();
+      return routines.idle();
+    });
   }
   const timer = setInterval(
     () => {
@@ -311,11 +319,13 @@ export function createWorker(ctx) {
       clearInterval(timer);
       workerController.abort();
       await workerPromise?.catch(() => {});
+      await routines?.stop();
     },
     close() {
       closed = true;
       clearInterval(timer);
       workerController.abort();
+      routines?.stop();
     },
   };
 }

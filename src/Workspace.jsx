@@ -34,6 +34,7 @@ import SignedReceipt from "./SignedReceipt.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
 import WorkspaceHome from "./WorkspaceHome.jsx";
 import TaskTools from "./TaskTools.jsx";
+import Routines from "./Routines.jsx";
 import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import CollabHub from "./Collab.jsx";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
@@ -198,6 +199,7 @@ export function AppSidebar({
           ["audio", "Voice & audio"],
           ["collab", "Collab"],
           ["tools", "Task tools"],
+          ["routines", "Routines"],
           ["library", "Your library"],
         ].map(([id, t]) =>
           modeReleased(config, id) ? (
@@ -382,6 +384,7 @@ export default function Workspace() {
     "collab",
     "library",
     "tools",
+    "routines",
   ].includes(mode);
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
@@ -1911,6 +1914,7 @@ export default function Workspace() {
                 collab: "Collab",
                 library: "Your library",
                 tools: "Research, Writing & Calculators",
+                routines: "Routines",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -2044,6 +2048,8 @@ export default function Workspace() {
                 </Empty>
               )}
             </div>
+          ) : mode === "routines" ? (
+            <Routines key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} />
           ) : mode === "tools" ? (
             <TaskTools key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
           ) : mode === "collab" ? (

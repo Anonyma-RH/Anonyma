@@ -129,6 +129,8 @@ const pixels = {
   collab: [".##..##", "#..##..", "#..##..", ".##..##", ".......", "###.###", "###.###"],
   // Rising columns: several voices answering the same question, compared side by side.
   symposium: [".....#.", ".....#.", "...#.#.", "...#.#.", ".#.#.#.", ".#.#.#.", ".#.#.#."],
+  // A clock face: a prompt that runs on a schedule.
+  routines: [".#####.", "#.....#", "#..#..#", "#..##.#", "#.....#", "#.....#", ".#####."],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

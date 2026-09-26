@@ -2,6 +2,7 @@ import { sessionCookieOptions } from "../auth.js";
 import { exportConversations } from "./conversations.js";
 import { HOLDER_RESET } from "../holders.js";
 import { limitsView } from "../spending-limits.js";
+import { exportRoutines, forgetRoutines } from "../routines.js";
 import { isReleased } from "../releases.js";
 import {
   uid,
@@ -408,6 +409,8 @@ export function accountRoutes(ctx) {
           .map((f) => ({ ...f, enabled: !!f.enabled })),
       },
       spendingLimits: exportLimits(req.user.id),
+      // Routines: each routine and its inbox (answers, charges, receipts).
+      routines: exportRoutines(db, req.user.id),
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {
@@ -458,6 +461,9 @@ export function accountRoutes(ctx) {
       ).run(now(), req.user.id);
       db.prepare("DELETE FROM memory_settings WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM spending_limits WHERE user_id=?").run(req.user.id);
+      // Routines stop with the account: a run already picked up is refused
+      // by its reservation, which finds the routine gone.
+      forgetRoutines(db, req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.
       db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);
       db.prepare(

@@ -599,6 +599,44 @@ export const MIGRATIONS = [
       hold_id TEXT PRIMARY KEY REFERENCES holds(id),
       feature TEXT NOT NULL,
       model TEXT);`),
+  // Routines (server/routines.js): saved prompts that run on a schedule with
+  // a per-run maximum and a monthly budget, in integer subcredits. minute is
+  // minutes past midnight in the IANA timezone; weekday (0 = Sunday) is set
+  // for weekly routines only. next_run is the next slot (NULL while off);
+  // running_since marks the one run in flight. At most ten per account, also
+  // enforced here. Runs are the Routines inbox: the answer, charge and signed
+  // receipt of each run, the newest 50 per routine, going with the routine.
+  additive(`
+      CREATE TABLE IF NOT EXISTS routines(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),
+        name TEXT NOT NULL,prompt TEXT NOT NULL,model TEXT NOT NULL,
+        web_search INTEGER NOT NULL DEFAULT 0 CHECK(web_search IN (0,1)),
+        private_only INTEGER NOT NULL DEFAULT 0 CHECK(private_only IN (0,1)),
+        repeat TEXT NOT NULL CHECK(repeat IN ('daily','weekdays','weekly')),
+        minute INTEGER NOT NULL CHECK(minute BETWEEN 0 AND 1439),
+        weekday INTEGER CHECK(weekday IS NULL OR weekday BETWEEN 0 AND 6),
+        timezone TEXT NOT NULL,
+        run_cap INTEGER NOT NULL CHECK(typeof(run_cap)='integer' AND run_cap>0),
+        monthly_budget INTEGER NOT NULL CHECK(typeof(monthly_budget)='integer' AND monthly_budget>0),
+        enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
+        next_run INTEGER,running_since INTEGER,last_run INTEGER,last_status TEXT,
+        created INTEGER NOT NULL,updated INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS routines_user ON routines(user_id,created);
+      CREATE INDEX IF NOT EXISTS routines_due ON routines(next_run) WHERE enabled=1;
+      CREATE TRIGGER IF NOT EXISTS routines_per_account BEFORE INSERT ON routines
+        WHEN (SELECT COUNT(*) FROM routines WHERE user_id=NEW.user_id)>=10
+        BEGIN SELECT RAISE(ABORT,'routine_limit'); END;
+      CREATE TABLE IF NOT EXISTS routine_runs(id TEXT PRIMARY KEY,
+        routine_id TEXT NOT NULL REFERENCES routines(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        slot INTEGER NOT NULL,started INTEGER NOT NULL,finished INTEGER,
+        status TEXT NOT NULL CHECK(status IN ('running','done','refused','failed')),
+        skipped INTEGER NOT NULL DEFAULT 0,model TEXT,
+        web_search INTEGER NOT NULL DEFAULT 0,private_only INTEGER NOT NULL DEFAULT 0,
+        request_id TEXT,charged INTEGER NOT NULL DEFAULT 0,reply_budget INTEGER,finish_reason TEXT,
+        answer TEXT,citations TEXT,receipt TEXT,code TEXT,message TEXT);
+      CREATE INDEX IF NOT EXISTS routine_runs_routine ON routine_runs(routine_id,started);
+      CREATE INDEX IF NOT EXISTS routine_runs_user ON routine_runs(user_id,started);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

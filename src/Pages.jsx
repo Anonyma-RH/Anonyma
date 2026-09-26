@@ -842,6 +842,7 @@ const featureIcons = {
   cleanuploads: "eraser",
   wipe: "delete",
   vault: "lock",
+  routines: "history",
 };
 const launch = {
   id: "mvp",

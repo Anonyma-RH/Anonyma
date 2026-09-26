@@ -33,6 +33,7 @@ import { retentionRoutes } from "./routes/retention.js";
 import { scrollsRoutes } from "./routes/scrolls.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { shareRoutes } from "./routes/shares.js";
+import { routineRoutes } from "./routes/routines.js";
 import { accountRoutes } from "./routes/account.js";
 import { wipeRoutes } from "./routes/wipe.js";
 import { allowanceRoutes } from "./routes/allowances.js";
@@ -106,6 +107,8 @@ export function createApp(overrides = {}) {
   Object.assign(ctx, memoryRoutes(ctx));
   shareRoutes(ctx);
   holderRoutes(ctx);
+  // Routines run from the worker, through runChat (registered above).
+  ctx.routines = routineRoutes(ctx);
   const worker = createWorker(ctx);
   accountRoutes(ctx);
   // Panic Wipe: erases the account's content, keeps its credits.
@@ -124,6 +127,8 @@ export function createApp(overrides = {}) {
     db,
     cfg,
     tick: worker.tick,
+    // The Routines runner (server/routines.js), for tests and tooling.
+    routines: ctx.routines,
     stopWork: async () => {
       for (const c of ctx.inflight.controllers)
         c.abort(new Error("Service restarting"));

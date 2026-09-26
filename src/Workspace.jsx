@@ -2,6 +2,7 @@ import { CONTINUE_PROMPT, replyBudgetFor, replyBudgets, completionNotice } from 
 import { chatFailureMessage } from "./chat-control.js";
 import { useReadingPosition, useRequestCharge, ChargeStatus } from "./ChatControl.jsx";
 import HistoryLibrary from "./HistoryLibrary.jsx";
+import { useBookmarks, bookmarksReleased } from "./Bookmarks.jsx";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { VoiceAssist, ReadAloud } from "./VoiceAssist.jsx";
 import {
@@ -851,6 +852,32 @@ export default function Workspace() {
       live = false;
     };
   }, [project?.id, current, pinsBlocked, freshKey]);
+  // A bookmark's link (?c=…&m=…): once that chat has loaded, scroll its
+  // message into view and mark it for a moment, however long the chat is.
+  const jumpTo = params.get("m");
+  const jumped = useRef(null),
+    highlightTimer = useRef();
+  const [highlight, setHighlight] = useState(null);
+  useEffect(() => {
+    if (!jumpTo || !linked || !textMode || demo || !user || !bookmarksReleased(config)) return;
+    if (current !== linked || !messages.some((m) => m.id)) return;
+    const key = linked + ":" + jumpTo;
+    if (jumped.current === key) return;
+    jumped.current = key;
+    if (!messages.some((m) => m.id === jumpTo)) {
+      setInfo("That bookmarked message is no longer in this chat.");
+      return;
+    }
+    // Its start just below the top: the composer covers the bottom of the view.
+    const target = document.querySelector(`[data-message-id="${CSS.escape(jumpTo)}"]`);
+    if (target) {
+      target.style.scrollMarginTop = "24px";
+      target.scrollIntoView({ block: "start" });
+    }
+    setHighlight(jumpTo);
+    clearTimeout(highlightTimer.current);
+    highlightTimer.current = setTimeout(() => setHighlight(null), 4000);
+  }, [jumpTo, linked, current, messages, textMode, demo, user?.id]);
   // A vault chat opened from another section arrives here after the section
   // reset above. Its id travels in navigation state, never in the URL.
   const vaultRequest = location.state?.vaultChat;
@@ -1222,6 +1249,17 @@ export default function Workspace() {
   // Privacy Trail: the chip under a reply, from the server's anonyma.privacy
   // (never in the demo, which sends nothing anywhere).
   const trailLive = !demo && privacyTrailReleased(config);
+  // Bookmarks (src/Bookmarks.jsx): a star under each saved message of the
+  // open chat, and links (?c=…&m=…) that open a chat at one message. Never
+  // for a chat that isn't saved on the server.
+  const bookmarksLive = !demo && !!user && bookmarksReleased(config);
+  const bookmarks = useBookmarks({
+    enabled: bookmarksLive && textMode && !ephemeral && !privateMode && !deviceOnly,
+    account: user?.id,
+    conversation: current,
+    config,
+    context: { mode, ephemeral, privateMode, deviceOnly, demo, busy: busy || branching },
+  });
   // A check leaves the browser under the same Veil policy as a chat turn
   // (Private Mode forces Veil on): the question and answer are masked with
   // this conversation's map and the always-veil words, even when they were
@@ -2322,7 +2360,7 @@ export default function Workspace() {
               onOpen={openChat}
             />
           ) : mode === "library" && isReleased(config, "historylibrary") ? (
-            <HistoryLibrary key={`${user?.id || "guest"}:${demo}`} user={user} demo={demo} config={config} projects={projectsLive ? projects.list : []} media={media} Grid={MediaGrid} request={paletteLive && location.state?.libraryTab ? { tab: location.state.libraryTab, query: location.state.historyQuery, key: location.key } : null} onOpen={openChat} onExport={exportLive ? exportSaved : null} onDelete={(item) => setDialog({ type: "media", item })} refreshMedia={async () => { const r = await api("/api/media"); setMedia(r.data); refresh(); }} />
+            <HistoryLibrary key={`${user?.id || "guest"}:${demo}`} user={user} demo={demo} config={config} projects={projectsLive ? projects.list : []} media={media} Grid={MediaGrid} request={paletteLive && location.state?.libraryTab ? { tab: location.state.libraryTab, query: location.state.historyQuery, key: location.key } : bookmarksLive && location.state?.libraryTab === "bookmarks" ? { tab: "bookmarks", key: location.key } : null} bookmarks={bookmarksLive} models={models} onOpen={openChat} onExport={exportLive ? exportSaved : null} onDelete={(item) => setDialog({ type: "media", item })} refreshMedia={async () => { const r = await api("/api/media"); setMedia(r.data); refresh(); }} />
           ) : mode === "library" ? (
             <div className="library-page">
               <div className="page-heading-inline">
@@ -2472,6 +2510,7 @@ export default function Workspace() {
                       return (
                       <article
                         key={i}
+                        data-message-id={m.id || undefined}
                         className={
                           "message " +
                           m.role +
@@ -2479,7 +2518,8 @@ export default function Workspace() {
                           i === messages.length - 1 &&
                           m.role === "assistant"
                             ? " streaming"
-                            : "")
+                            : "") +
+                          (highlight && m.id === highlight ? " bookmark-target" : "")
                         }
                       >
                         <div className="message-avatar">
@@ -2603,7 +2643,12 @@ export default function Workspace() {
                             </button>
                           )}
                           {!(branchesLive && !busy && !branching && editing?.index !== i && !m.sample) &&
-                            rememberButton(m) && <div className="turn-actions">{rememberButton(m)}</div>}
+                            (rememberButton(m) || bookmarks.actions(m, i, messages)) && (
+                              <div className="turn-actions">
+                                {bookmarks.actions(m, i, messages)}
+                                {rememberButton(m)}
+                              </div>
+                            )}
                           {branchesLive && editing?.index === i && (
                             <form
                               className="edit-turn"
@@ -2645,6 +2690,7 @@ export default function Workspace() {
                           )}
                           {branchesLive && !busy && !branching && editing?.index !== i && !m.sample && (
                             <div className="turn-actions">
+                              {bookmarks.actions(m, i, messages)}
                               {m.role === "user" && m.content !== undefined && (
                                 <button
                                   type="button"
@@ -2668,6 +2714,7 @@ export default function Workspace() {
                               )}
                             </div>
                           )}
+                          {bookmarks.details(m, i)}
                           {branchesLive && branchesAt(lineage.branches, m.id).length > 0 && (
                             <div className="branch-chips">
                               <span>Branches</span>

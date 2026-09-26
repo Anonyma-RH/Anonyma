@@ -517,6 +517,16 @@ export function paletteActions(ctx = {}) {
       to: "/workspace/library" + q,
       state: { libraryTab: "history" },
     });
+  // Bookmarks: Your library's Bookmarks tab.
+  if (live && signedIn && on("bookmarks") && on("historylibrary") && modeReleased(config, "library"))
+    add("goto", {
+      id: "bookmarks",
+      label: "Open bookmarks",
+      icon: "star",
+      keywords: ["bookmarks", "starred", "saved messages", "favorites", "notes"],
+      to: "/workspace/library" + q,
+      state: { libraryTab: "bookmarks" },
+    });
   const account = (id, label, sec, keywords, extra = {}) =>
     !(page === "account" && section === sec) &&
     add("goto", { id, label, keywords, to: "/account" + (sec === "overview" ? "" : "/" + sec) + q, ...extra });

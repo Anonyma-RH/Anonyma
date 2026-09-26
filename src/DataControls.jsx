@@ -16,6 +16,8 @@ export default function DataControls() {
   const twoStep = !!config && isReleased(config, "twostep");
   // And Low-Balance Alerts.
   const alerts = !!config && isReleased(config, "balancealerts");
+  // And Bookmarks.
+  const bookmarks = !!config && isReleased(config, "bookmarks");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -133,6 +135,15 @@ export default function DataControls() {
             Panic Wipe keeps it with your other settings.
           </li>
         )}
+        {bookmarks && (
+          <li>
+            Bookmarks: which messages you starred and your private notes, up to
+            1,000 per account, visible only to you. A bookmark stores no copy of
+            the message: it goes when you remove it, when its chat is deleted or
+            auto-deleted, when you leave the collab it belongs to, and when you
+            wipe or close your account.
+          </li>
+        )}
         <li>
           Temporary API-generated media expires after 24 hours when created with
           an expiry. Access stops at expiry; background maintenance removes the
@@ -179,6 +190,13 @@ export default function DataControls() {
       )}
       {alerts && (
         <p>The export also includes your low-balance alert setting.</p>
+      )}
+      {bookmarks && (
+        <p>
+          The export also lists your bookmarks: each one’s message and
+          conversation ids and your note. The messages themselves are already
+          in the export.
+        </p>
       )}
       {shares && (
         <p>

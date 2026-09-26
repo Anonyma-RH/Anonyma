@@ -605,6 +605,17 @@ export const UPDATES = [
     // from what's on screen, so there's no route to gate in featuresFor.
     released: false,
   },
+  {
+    id: "bookmarks",
+    title: "Bookmarks",
+    tagline: "Keep the good parts.",
+    points: [
+      "Star any saved message, with a private note",
+      "Search your bookmarks and jump straight back",
+      "Yours alone, even in shared Collab chats",
+    ],
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -732,6 +743,8 @@ export function featuresFor(req) {
     }
     return needed;
   }
+  // Bookmarks: stars on saved messages, with private notes.
+  if (p === "/api/bookmarks" || p.startsWith("/api/bookmarks/")) return ["bookmarks"];
   // Panic Wipe: the one route that erases an account's content at once.
   if (/^\/api\/account\/wipe\/?$/.test(p)) return ["wipe"];
   // Two-Step Sign-in's settings. The sign-in step itself, /api/auth/two-step,

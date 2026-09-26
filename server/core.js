@@ -772,6 +772,32 @@ export const MIGRATIONS = [
       threshold INTEGER NOT NULL CHECK(typeof(threshold)='integer' AND threshold>0),
       notify INTEGER NOT NULL DEFAULT 0 CHECK(notify IN (0,1)),
       updated INTEGER NOT NULL);`),
+  // Bookmarks (server/routes/bookmarks.js): a star on one saved message,
+  // with an optional private note, for its owner only. It points at the
+  // message and never copies its text, so it goes with the message whatever
+  // deletes it (conversation delete, delete all, cap pruning, auto-delete
+  // cleanup, a branch's parent stays as it is). Leaving a collab, or being
+  // removed from one, deletes that member's bookmarks in its conversations.
+  // At most 1,000 per account, also enforced here.
+  additive(`
+      CREATE TABLE IF NOT EXISTS bookmarks(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+        note TEXT NOT NULL DEFAULT '' CHECK(length(note)<=140),
+        created INTEGER NOT NULL,updated INTEGER NOT NULL,
+        UNIQUE(user_id,message_id));
+      CREATE INDEX IF NOT EXISTS bookmarks_user ON bookmarks(user_id,created);
+      CREATE INDEX IF NOT EXISTS bookmarks_message ON bookmarks(message_id);
+      CREATE TRIGGER IF NOT EXISTS bookmarks_per_account BEFORE INSERT ON bookmarks
+        WHEN (SELECT COUNT(*) FROM bookmarks WHERE user_id=NEW.user_id)>=1000
+        BEGIN SELECT RAISE(ABORT,'bookmark_limit'); END;
+      CREATE TRIGGER IF NOT EXISTS bookmarks_member_removed AFTER DELETE ON collab_members
+        BEGIN
+          DELETE FROM bookmarks WHERE user_id=OLD.user_id AND message_id IN
+            (SELECT m.id FROM messages m JOIN conversations c ON c.id=m.conversation_id
+             WHERE c.collab_id=OLD.collab_id);
+        END;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

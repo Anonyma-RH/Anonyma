@@ -34,6 +34,7 @@ import { scrollsRoutes } from "./routes/scrolls.js";
 import { projectRoutes } from "./routes/projects.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
+import { bookmarkRoutes } from "./routes/bookmarks.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { accountRoutes } from "./routes/account.js";
@@ -113,6 +114,9 @@ export function createApp(overrides = {}) {
   Object.assign(ctx, memoryRoutes(ctx));
   // Cost Compare: one message's estimate on several models (reads only).
   costCompareRoutes(ctx);
+  // Bookmarks: stars on saved messages (after conversations, whose access
+  // rules it uses).
+  bookmarkRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { api, isReleased, messageFromServer } from "./lib.js";
 import { Icon, Notice } from "./ui.jsx";
 import { ProjectPicker, ProjectSwatch } from "./Projects.jsx";
+import BookmarksPanel from "./Bookmarks.jsx";
 import "./history-library.css";
 
 export default function HistoryLibrary({
@@ -19,10 +20,14 @@ export default function HistoryLibrary({
   refreshMedia,
   // From the Command Palette: { tab: "history", query, key }. Opens the
   // search tab with the words typed there; searching stays a press of Search.
+  // { tab: "bookmarks", key } opens Bookmarks (from the palette or a star).
   request = null,
   // Projects: the account's projects, to narrow a search to one (empty
   // until the update is released).
   projects = [],
+  // Bookmarks (src/Bookmarks.jsx): its tab, once the update is live.
+  bookmarks = false,
+  models = [],
 }) {
   const [tab, setTab] = useState("media"),
     [filter, setFilter] = useState("all"),
@@ -56,6 +61,7 @@ export default function HistoryLibrary({
     };
   }, []);
   useEffect(() => {
+    if (request?.tab === "bookmarks" && bookmarks) return setTab("bookmarks");
     if (request?.tab !== "history") return;
     setTab("history");
     if (typeof request.query === "string") setQuery(request.query.slice(0, 160));
@@ -228,14 +234,14 @@ export default function HistoryLibrary({
       <p className="eyebrow">YOURS TO COME BACK TO</p>
       <h1>History & library.</h1>
       <div className="filter-tabs">
-        {["media", "history"].map((t) => (
+        {["media", "history", ...(bookmarks ? ["bookmarks"] : [])].map((t) => (
           <button
             key={t}
             className={tab === t ? "active" : ""}
             aria-pressed={tab === t}
             onClick={() => setTab(t)}
           >
-            {t === "media" ? "Saved media" : "Search conversations"}
+            {t === "media" ? "Saved media" : t === "history" ? "Search conversations" : "Bookmarks"}
           </button>
         ))}
       </div>
@@ -293,7 +299,9 @@ export default function HistoryLibrary({
           ))}
         </section>
       )}
-      {tab === "history" ? (
+      {tab === "bookmarks" && bookmarks ? (
+        <BookmarksPanel user={user} demo={demo} config={config} models={models} />
+      ) : tab === "history" ? (
         <>
           <p>
             Search the titles and messages of saved chats you can access.

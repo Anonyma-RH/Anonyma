@@ -5,6 +5,7 @@ import { limitsView } from "../spending-limits.js";
 import { exportRoutines, forgetRoutines } from "../routines.js";
 import { exportProjects } from "./projects.js";
 import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
+import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
 import { isReleased } from "../releases.js";
 import {
   uid,
@@ -41,7 +42,7 @@ import {
 // - projects, with their filed chats and pinned files (the chats go with
 //   the conversations above);
 // - support requests, video jobs, saved uploads, Scrolls, standing
-//   instructions and memory facts;
+//   instructions, memory facts, routines and bookmarks;
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -85,6 +86,8 @@ export function eraseAccountContent(db, user) {
   // Routines and their inbox. A run already picked up is refused by its
   // reservation, which finds the routine gone.
   forgetRoutines(db, id);
+  // Bookmarks and their notes, including those in other people's collabs.
+  forgetBookmarks(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
 }
 
@@ -152,6 +155,10 @@ export function accountRoutes(ctx) {
     return enabled || isReleased(cfg, "twostep")
       ? { twoStep: { enabled } }
       : {};
+  }
+  function bookmarksExport(user) {
+    const list = exportBookmarks(db, user);
+    return list.length || isReleased(cfg, "bookmarks") ? { bookmarks: list } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -474,6 +481,10 @@ export function accountRoutes(ctx) {
       ...projectsExport(req.user.id),
       ...twoStepExport(req.user.id),
       ...balanceAlertExport(req.user.id),
+      // Bookmarks: message ids and notes (once the update is live, or while
+      // any exist). The messages are already exported with their
+      // conversations above, so their text isn't repeated here.
+      ...bookmarksExport(req.user.id),
     }),
   );
   app.delete("/api/account", requireUser, (req, res) => {

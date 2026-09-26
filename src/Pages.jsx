@@ -848,6 +848,7 @@ const featureIcons = {
   projects: "folder",
   costcompare: "coins",
   chatexport: "download",
+  bookmarks: "star",
 };
 const launch = {
   id: "mvp",

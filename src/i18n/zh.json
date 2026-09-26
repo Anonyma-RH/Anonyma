@@ -3438,7 +3438,52 @@
     "Times are local": "时间为本地时间",
     "its text isn't included in this export": "其文本不包含在此导出中",
     "not included in this export": "不包含在此导出中",
-    "Receipt · copied from the original conversation, charged there": "收据 · 复制自原会话，已在原会话中扣费"
+    "Receipt · copied from the original conversation, charged there": "收据 · 复制自原会话，已在原会话中扣费",
+    "Bookmarks": "书签",
+    "Keep the good parts.": "留住最好的部分。",
+    "Star any saved message, with a private note": "为任何已保存的消息加上书签，并附上私人备注",
+    "Search your bookmarks and jump straight back": "搜索你的书签，一键跳回原处",
+    "Yours alone, even in shared Collab chats": "只有你能看到，即使在共享的协作会话中也是如此",
+    "Bookmark": "加书签",
+    "Bookmarked": "已加书签",
+    "Bookmark this message": "为这条消息加书签",
+    "Remove this bookmark": "移除这个书签",
+    "Add note": "添加备注",
+    "Edit note": "编辑备注",
+    "Private note": "私人备注",
+    "Why this one matters…": "为什么值得留下……",
+    "Save note": "保存备注",
+    "Saved to your bookmarks.": "已保存到你的书签。",
+    "See all bookmarks": "查看全部书签",
+    "Reopen this chat to bookmark this message.": "请重新打开此会话后再为这条消息加书签。",
+    "That bookmarked message is no longer in this chat.": "这条加了书签的消息已不在此会话中。",
+    "Open bookmarks": "打开书签",
+    "Search bookmarks": "搜索书签",
+    "A word from the message, the chat or your note…": "消息、会话或备注中的一个词……",
+    "All": "全部",
+    "Answers": "回答",
+    "Prompts": "提示词",
+    "With notes": "有备注",
+    "Answer": "回答",
+    "Prompt by": "提示词作者",
+    "Note": "备注",
+    "In": "位于",
+    "Open at message": "打开并定位到消息",
+    "Load more bookmarks": "加载更多书签",
+    "No bookmarks match.": "没有匹配的书签。",
+    "No bookmarks yet. Star a message in any saved chat and it will wait for you here.": "还没有书签。在任何已保存的会话中为消息加上书签，它就会在这里等你。",
+    "An image or attachment, without text.": "图像或附件，没有文字。",
+    "Star any message in a saved chat to keep it here. Only you see your bookmarks and notes, even in shared Collab chats. Off-the-record and Private chats aren’t saved, so they can’t be bookmarked.": "为已保存会话中的任何消息加上书签，就能把它留在这里。只有你能看到自己的书签和备注，即使在共享的协作会话中也是如此。不留记录的会话和隐私模式会话不会被保存，因此无法加书签。",
+    "Sign in to bookmark messages. Bookmarks are kept with your account, and only you can see them.": "登录后即可为消息加书签。书签随你的账户保存，只有你能看到。",
+    "Keep a note to 140 characters.": "备注请不要超过 140 个字符。",
+    "Message not found.": "未找到消息。",
+    "Bookmark not found.": "未找到书签。",
+    "You can keep up to 1,000 bookmarks. Remove one to add another.": "你最多可以保留 1,000 个书签。请先移除一个再添加。",
+    "Only messages in saved chat, code and Uncensored conversations can be bookmarked.": "只有已保存的对话、代码和无审查会话中的消息才能加书签。",
+    "A note must be text.": "备注必须是文字。",
+    "Your bookmarks and their notes, in every chat": "你在所有会话中的书签及其备注",
+    "Bookmarks: which messages you starred and your private notes, up to 1,000 per account, visible only to you. A bookmark stores no copy of the message: it goes when you remove it, when its chat is deleted or auto-deleted, when you leave the collab it belongs to, and when you wipe or close your account.": "书签：你加了书签的消息以及你的私人备注，每个账户最多 1,000 个，只有你能看到。书签不会保存消息的副本：当你移除它、它所在的会话被删除或自动删除、你离开它所属的协作，或者你清除或注销账户时，书签都会随之删除。",
+    "The export also lists your bookmarks: each one’s message and conversation ids and your note. The messages themselves are already in the export.": "导出内容还会列出你的书签：每个书签对应的消息和会话 ID 以及你的备注。消息本身已包含在导出内容中。"
   },
   "patterns": [
     {
@@ -5332,6 +5377,18 @@
     {
       "en": "{0} attachments appear as placeholders with their names; their contents aren't included.",
       "zh": "{0} 个附件显示为带名称的占位符；其内容不包含在内。"
+    },
+    {
+      "en": "Auto-deletes with its chat on {0}",
+      "zh": "将于 {0} 随所在会话自动删除"
+    },
+    {
+      "en": "{0} bookmarks · up to {1}",
+      "zh": "{0} 个书签 · 最多 {1} 个"
+    },
+    {
+      "en": "1 bookmark · up to {0}",
+      "zh": "1 个书签 · 最多 {0} 个"
     }
   ]
 }

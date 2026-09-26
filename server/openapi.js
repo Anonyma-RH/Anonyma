@@ -1583,6 +1583,65 @@ route("delete", "/api/projects/{id}/chats/{conversation}", "Take a chat out of a
   description: "The chat stays saved, in no project. 404 not_in_project when it isn't in this one.",
 });
 paths["/s/{token}"].get.responses[200].content = { "text/html": { schema: string } };
+// Bookmarks (update "bookmarks").
+const bookmark = object({
+  id: string,
+  message_id: string,
+  conversation_id: string,
+  conversation_title: string,
+  conversation_mode: { enum: ["chat", "code", "uncensored"] },
+  collab: { type: ["object", "null"], properties: { id: string, name: string }, description: "The shared workspace, for a message in a collab conversation" },
+  expires: { type: ["integer", "null"], description: "The conversation's auto-delete time; the bookmark goes with it" },
+  role: { enum: ["user", "assistant"] },
+  model: { type: ["string", "null"], description: "The model that wrote a reply" },
+  author: { type: ["string", "null"], description: "Who wrote a prompt in a shared conversation, when it wasn't you" },
+  message_created: integer,
+  excerpt: { ...string, description: "Up to 280 characters of the message as one line (a prompt without its attached documents); empty for an image- or attachment-only message" },
+  more: { ...bool, description: "The message goes on past the excerpt" },
+  note: { ...string, maxLength: 140, description: "Your private note; empty when there is none" },
+  created: integer,
+  updated: integer,
+});
+route("get", "/api/bookmarks", "Your bookmarks", {
+  query: [
+    { name: "q", in: "query", required: false, schema: { ...string, maxLength: 160 }, description: "Only bookmarks whose note, conversation title or message text contains this" },
+    { name: "role", in: "query", required: false, schema: { enum: ["all", "user", "assistant"], default: "all" }, description: "user: prompts; assistant: answers" },
+    { name: "noted", in: "query", required: false, schema: bool, description: "Only bookmarks with a note" },
+    { name: "conversation", in: "query", required: false, schema: string, description: "Only bookmarks in this conversation" },
+    { name: "limit", in: "query", required: false, schema: { ...integer, minimum: 1, maximum: 1000, default: 50 } },
+    { name: "offset", in: "query", required: false, schema: { ...integer, minimum: 0, maximum: 1000, default: 0 } },
+  ],
+  response: object({
+    data: array(bookmark),
+    nextOffset: { type: ["integer", "null"] },
+    total: { ...integer, description: "Every bookmark you can see, whatever the filter" },
+    limit: { ...integer, description: "Bookmarks an account can keep (1,000)" },
+  }),
+  description:
+    "Newest first. Only your own bookmarks, and only on messages you can still read: a conversation that was deleted, is past its auto-delete time, or belongs to a collab you left is never listed, and its bookmarks are deleted with it. 400 invalid_request.",
+});
+route("post", "/api/bookmarks", "Bookmark a saved message", {
+  status: 201,
+  body: object(
+    {
+      message_id: string,
+      note: { ...string, maxLength: 140, description: "Optional private note, one line. With Seed Guard live, a seed phrase is refused (400 seed_phrase_blocked)." },
+    },
+    ["message_id"],
+  ),
+  response: bookmark,
+  description:
+    "A message of a saved chat, code or Uncensored conversation you can open: your own, or a shared one in a collab you belong to. Other members never see your bookmarks. Messages you can't read return the same 404 bookmark_message_not_found as missing ones; Symposium runs return 400 bookmark_excluded (off-the-record and Private chats are never saved). Bookmarking a message again returns its bookmark unchanged (200). At most 1,000 per account (409 bookmark_limit). A bookmark stays on its message: branching copies the conversation's messages without it.",
+});
+route("patch", "/api/bookmarks/{id}", "Change a bookmark's note", {
+  body: object({ note: { ...string, maxLength: 140, description: "An empty note clears it" } }, ["note"]),
+  response: bookmark,
+  description: "404 bookmark_not_found for another account's bookmark or one whose message you can no longer read.",
+});
+route("delete", "/api/bookmarks/{id}", "Remove a bookmark", {
+  response: ref("Ok"),
+  description: "The message itself is unchanged.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(
@@ -1982,7 +2041,7 @@ route(
   "Download account JSON with explicit monetary units",
   {
     description:
-      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs), once Projects is released or while any exists, projects (each project's settings, the ids of the chats and Symposium runs filed in it, and its pinned files), and whether two-step sign-in is on (twoStep: { enabled }, once that update is live or while it's on; never its secret or recovery codes). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
+      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs), once Projects is released or while any exists, projects (each project's settings, the ids of the chats and Symposium runs filed in it, and its pinned files), and whether two-step sign-in is on (twoStep: { enabled }, once that update is live or while it's on; never its secret or recovery codes), and, once Bookmarks is released or while any exist, bookmarks (bookmarks: id, message_id, conversation_id, note, created and updated; the message text is already in its conversation). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
   },
 );
 route("delete", "/api/account", "Close account and forfeit unused credits", {

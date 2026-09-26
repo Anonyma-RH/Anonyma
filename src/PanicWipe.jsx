@@ -7,6 +7,7 @@ import {
   WIPE_WORD,
   WIPE_GOES,
   WIPE_GOES_PROJECTS,
+  WIPE_BOOKMARKS,
   WIPE_STAYS,
   WIPED_PATH,
   clearBrowserData,
@@ -22,6 +23,8 @@ import "./panic-wipe.css";
 export function PanicWipe({ user }) {
   const { config } = useApp() || {};
   const projectsLive = !!config && isReleased(config, "projects");
+  // Bookmarks are listed once that update is live.
+  const bookmarksLive = isReleased(useApp()?.config, "bookmarks");
   const [open, setOpen] = useState(false),
     [typed, setTyped] = useState(""),
     [busy, setBusy] = useState(false),
@@ -87,6 +90,7 @@ export function PanicWipe({ user }) {
                     <li key={t}>{t}</li>
                   ))}
                   {projectsLive && <li>{WIPE_GOES_PROJECTS}</li>}
+                  {bookmarksLive && <li>{WIPE_BOOKMARKS}</li>}
                 </ul>
               </div>
               <div>

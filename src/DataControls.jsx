@@ -10,6 +10,8 @@ export default function DataControls() {
   const routines = !!config && isReleased(config, "routines");
   // And Sealed Share, which builds on Share a Chat.
   const sealedShares = shares && isReleased(config, "sealedshare");
+  // And Projects.
+  const projects = !!config && isReleased(config, "projects");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -95,6 +97,20 @@ export default function DataControls() {
             after that.
           </li>
         )}
+        {projects && (
+          <li>
+            Projects: each project’s name, colour, instructions, default model
+            and how its new chats start, which saved chats and Symposium runs
+            are in it, and which saved files are pinned to it. Its instructions
+            are sent with each chat by your browser and aren’t saved with the
+            chat. Off the record, Private Mode and Device only chats are never
+            saved, so never listed in a project here; a Device only default and
+            its chats stay in this browser, grouped by project inside its
+            encrypted vault. Deleting a project keeps its chats; a pin goes when
+            its saved file expires or is deleted. Closing your account or Panic
+            Wipe deletes every project.
+          </li>
+        )}
         <li>
           Temporary API-generated media expires after 24 hours when created with
           an expiry. Access stops at expiry; background maintenance removes the
@@ -128,6 +144,12 @@ export default function DataControls() {
         contributions to shared conversations. Another member’s private spending
         details are excluded.
       </p>
+      {projects && (
+        <p>
+          The export also includes your projects: their settings, the chats
+          and Symposium runs in each, and their pinned files.
+        </p>
+      )}
       {routines && (
         <p>
           The export also includes your routines and their inbox runs.

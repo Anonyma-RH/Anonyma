@@ -10,6 +10,7 @@ import {
   assertPricedImageOption,
 } from "./core.js";
 import { videoOptions } from "./video-options.js";
+import { isReleased } from "./releases.js";
 
 export const recipeHash = (value) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -261,21 +262,37 @@ export function historyLibrary(ctx) {
       )
         fail(400, "Search for 2–160 characters; use a page size of 1–50.");
       const needle = "%" + q.replace(/[\\%_]/g, "\\$&") + "%";
+      // Projects: only chats filed in one of this account's projects (the
+      // release gate asks for Projects when `project` is sent). Someone
+      // else's project is not found, exactly like a missing one.
+      const projects = isReleased(cfg, "projects");
+      const project = req.query.project;
+      if (project !== undefined) {
+        if (
+          typeof project !== "string" ||
+          !db.prepare("SELECT 1 FROM projects WHERE id=? AND user_id=?").get(project, req.user.id)
+        )
+          fail(404, "Project not found.", "project_not_found");
+      }
       const rows = db
         .prepare(
           `SELECT c.id,c.title,c.mode,c.updated,c.collab_id,
       (SELECT substr(m.content,1,420) FROM messages m WHERE m.conversation_id=c.id AND m.content LIKE ? ESCAPE '\\' ORDER BY m.created,m.rowid LIMIT 1) snippet
+      ${projects ? ",(SELECT pc.project_id FROM project_chats pc WHERE pc.conversation_id=c.id AND pc.user_id=?) project_id" : ""}
       FROM conversations c WHERE c.expires IS NULL AND coalesce(c.mode,'chat') NOT IN ('private','ephemeral')
       AND ((c.collab_id IS NULL AND c.user_id=?) OR EXISTS(SELECT 1 FROM collab_members cm WHERE cm.collab_id=c.collab_id AND cm.user_id=?))
       AND (c.title LIKE ? ESCAPE '\\' OR EXISTS(SELECT 1 FROM messages m WHERE m.conversation_id=c.id AND m.content LIKE ? ESCAPE '\\'))
+      ${project !== undefined ? "AND EXISTS(SELECT 1 FROM project_chats pc WHERE pc.conversation_id=c.id AND pc.project_id=? AND pc.user_id=?)" : ""}
       ORDER BY c.updated DESC,c.id DESC LIMIT ? OFFSET ?`,
         )
         .all(
           needle,
+          ...(projects ? [req.user.id] : []),
           req.user.id,
           req.user.id,
           needle,
           needle,
+          ...(project !== undefined ? [project, req.user.id] : []),
           take + 1,
           offset,
         );

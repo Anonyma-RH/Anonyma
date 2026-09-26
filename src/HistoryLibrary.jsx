@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import React, { useEffect, useRef, useState } from "react";
 import { api, isReleased, messageFromServer } from "./lib.js";
 import { Notice } from "./ui.jsx";
+import { ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import "./history-library.css";
 
 export default function HistoryLibrary({
@@ -17,6 +18,9 @@ export default function HistoryLibrary({
   // From the Command Palette: { tab: "history", query, key }. Opens the
   // search tab with the words typed there; searching stays a press of Search.
   request = null,
+  // Projects: the account's projects, to narrow a search to one (empty
+  // until the update is released).
+  projects = [],
 }) {
   const [tab, setTab] = useState("media"),
     [filter, setFilter] = useState("all"),
@@ -31,7 +35,8 @@ export default function HistoryLibrary({
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(""),
     [savedPreview, setSavedPreview] = useState(null),
-    [focusQuery, setFocusQuery] = useState(0);
+    [focusQuery, setFocusQuery] = useState(0),
+    [inProject, setInProject] = useState(null);
   const searchCtl = useRef(null),
     detailCtl = useRef(null),
     generation = useRef(null),
@@ -63,7 +68,9 @@ export default function HistoryLibrary({
     setHits([]);
     setNext(null);
     setSearching(false);
-  }, [query]);
+  }, [query, inProject]);
+  // A project deleted since it was chosen stops narrowing the search.
+  const projectFilter = projects.some((p) => p.id === inProject) ? inProject : null;
   const signedIn = !demo && user;
   async function search(offset = 0) {
     if (!signedIn) {
@@ -77,7 +84,8 @@ export default function HistoryLibrary({
     setError("");
     try {
       const r = await api(
-        `/api/history/search?q=${encodeURIComponent(query.trim())}&offset=${offset}&limit=20`,
+        `/api/history/search?q=${encodeURIComponent(query.trim())}&offset=${offset}&limit=20` +
+          (projectFilter ? `&project=${encodeURIComponent(projectFilter)}` : ""),
         { signal: ctl.signal },
       );
       if (!ctl.signal.aborted && mounted.current) {
@@ -304,6 +312,16 @@ export default function HistoryLibrary({
                 Search saved chats
               </button>
             </div>
+            {projects.length > 0 && (
+              <ProjectPicker
+                className="inline history-project"
+                label="In project"
+                none="Any project"
+                projects={projects}
+                value={projectFilter}
+                onChange={setInProject}
+              />
+            )}
           </form>
           <div className="history-results" aria-live="polite">
             {hits.map((h) => (
@@ -312,12 +330,18 @@ export default function HistoryLibrary({
                 className="history-hit"
                 onClick={() => openSaved(h)}
               >
-                <strong>{h.title || "Untitled"}</strong>
+                <strong data-i18n={h.title ? "off" : undefined}>{h.title || "Untitled"}</strong>
                 <span>
                   {h.collab_id ? "Shared workspace" : "Personal chat"} ·{" "}
                   {new Date(h.updated).toLocaleDateString()}
+                  {projects.some((p) => p.id === h.project_id) && (
+                    <b className="history-hit-project">
+                      <ProjectSwatch color={projects.find((p) => p.id === h.project_id).color} />
+                      <i data-i18n="off">{projects.find((p) => p.id === h.project_id).name}</i>
+                    </b>
+                  )}
                 </span>
-                <p>{h.snippet || "Title match"}</p>
+                <p data-i18n={h.snippet ? "off" : undefined}>{h.snippet || "Title match"}</p>
               </button>
             ))}
             {!searching && !hits.length && query.trim().length >= 2 && (

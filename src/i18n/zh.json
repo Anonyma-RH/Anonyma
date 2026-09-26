@@ -3140,7 +3140,109 @@
     "Sealed share links: your browser encrypts the snapshot before it’s uploaded, so only the encrypted copy, its random address and its dates are stored. The key stays in the link after the #, which browsers never send to a server, so ANONYMA can’t read a sealed link. A Device-only chat can be shared only this way; its encrypted copy is deleted when the link expires, when you revoke it, and when you close your account or use Panic Wipe.": "密封分享链接：你的浏览器会在上传前加密快照，因此服务器只存储加密副本、其随机地址和日期。密钥保留在链接的 # 之后，浏览器从不会把这部分发送给服务器，因此 ANONYMA 无法读取密封链接。仅存本机的会话只能以这种方式分享；链接到期、你将其撤销，以及你关闭账户或使用紧急清除时，其加密副本都会被删除。",
     "Sealed links are exported as their addresses without keys, their dates and the encrypted copy exactly as stored.": "密封链接会以不含密钥的地址、日期，以及与存储时完全相同的加密副本导出。",
     "A sealed link is encrypted in your browser first: we store only the encrypted copy, and the key stays in the link, so we can't read it.": "密封链接会先在你的浏览器中加密：我们只存储加密副本，密钥保留在链接中，因此我们无法读取。",
-    "Export account data": "导出账户数据"
+    "Export account data": "导出账户数据",
+    "Projects": "项目",
+    "Keep related chats, files and instructions together.": "相关的会话、文件和指令，集中在一处。",
+    "Group chats and Symposium runs by project": "按项目归类会话和模型圆桌运行",
+    "Instructions and pinned files go with every new chat": "指令和固定文件随每个新会话一起发送",
+    "A default model and privacy mode for each project": "每个项目都有自己的默认模型和隐私模式",
+    "Go to project": "前往项目",
+    "New chat in project": "在项目中新建会话",
+    "PROJECTS": "项目",
+    "New": "新建",
+    "New project": "新建项目",
+    "All projects": "全部项目",
+    "Group related chats in a project": "把相关会话归入一个项目",
+    "Show chats from": "按项目筛选会话",
+    "All chats": "全部会话",
+    "No project": "无项目",
+    "Every saved chat is in a project.": "所有已保存的会话都已归入项目。",
+    "No saved chats in this project yet.": "此项目中还没有已保存的会话。",
+    "None here for this filter.": "此筛选下没有会话。",
+    "In project": "所属项目",
+    "New chat in": "新会话所属项目：",
+    "Instructions on": "指令已启用",
+    "Leave project": "离开项目",
+    "Pinned files aren't attached in Private Mode, off the record or with Veil on, like Saved files.": "与已保存的文件一样，固定文件不会在隐私模式、不留记录或开启 Veil 时附加。",
+    "Device only: grouped with this project in Device Vault": "仅存本机：在本机保险库中归入此项目",
+    "Not saved, so not listed in the project": "不会保存，因此不会列入项目",
+    "A pinned file couldn't be attached. Its saved file may have expired.": "有一个固定文件无法附加，对应的已保存文件可能已过期。",
+    "Project": "项目",
+    "Any project": "任意项目",
+    "Edit project": "编辑项目",
+    "Launch plan": "发布计划",
+    "Color": "颜色",
+    "Cobalt": "钴蓝",
+    "Navy": "藏青",
+    "Amber": "琥珀",
+    "Ink": "墨色",
+    "Slate": "石板灰",
+    "Mist": "雾蓝",
+    "Instructions": "指令",
+    "Standing context for every chat in this project.": "此项目中每个会话都会带上的背景信息。",
+    "Sent with every chat in this project, after your standing instructions. With Veil on, they're masked in your browser before sending.": "随此项目中的每个会话发送，位于你的常驻指令之后。开启 Veil 时，会先在你的浏览器中遮盖再发送。",
+    "New chats start": "新会话的开始方式",
+    "Normal": "普通",
+    "New chats are saved to your account and listed in the project.": "新会话保存到你的账户，并列入此项目。",
+    "New chats are never saved, so they're never listed.": "新会话从不保存，因此不会列出。",
+    "New chats are kept encrypted in this browser's Device Vault, never on our servers. This choice stays in this browser; elsewhere they start off the record.": "新会话加密保存在此浏览器的本机保险库中，绝不存到我们的服务器。此选择只保存在此浏览器中；在其他地方，新会话以不留记录方式开始。",
+    "New chats use zero-data-retention models only and are never saved.": "新会话只使用零数据保留模型，且从不保存。",
+    "Default model": "默认模型",
+    "No default": "无默认",
+    "No saved text files yet. Save one with Saved files in the composer, then pin it here.": "还没有已保存的文本文件。先在输入框的“已保存的文件”中保存一个，再在这里固定。",
+    "Their text is attached to each new chat in this project. A pin goes when its saved file expires or is deleted.": "它们的文本会附加到此项目的每个新会话中。已保存的文件过期或被删除时，固定也随之取消。",
+    "Delete this project? Its chats stay saved, in no project.": "删除此项目？其中的会话仍会保存，只是不再属于任何项目。",
+    "Delete project": "删除项目",
+    "Save project": "保存项目",
+    "Create project": "创建项目",
+    "Project instructions cannot exceed 4000 characters.": "项目指令不能超过 4000 个字符。",
+    "Give the project a name.": "给项目起个名字。",
+    "Use up to 60 characters.": "最多 60 个字符。",
+    "Symposium run": "模型圆桌运行",
+    "Symposium runs": "模型圆桌运行",
+    "Move out": "移出项目",
+    "Projects group your saved chats with shared instructions and pinned files. Sign in to create one; they aren't part of the demo.": "项目把你已保存的会话与共享的指令和固定文件组织在一起。登录后即可创建；演示中不提供项目。",
+    "Sign in to create projects.": "登录后即可创建项目。",
+    "That project wasn't found.": "未找到该项目。",
+    "PROJECT": "项目",
+    "New chats here start Device only: they're kept encrypted in this browser and listed below while Device Vault is unlocked, never on our servers.": "此项目的新会话以仅存本机方式开始：它们加密保存在此浏览器中，本机保险库解锁时列在下方，绝不存到我们的服务器。",
+    "New chats here start in Private Mode: zero-data-retention models only, never saved, so never listed here.": "此项目的新会话以隐私模式开始：只使用零数据保留模型，从不保存，因此不会列在这里。",
+    "New chats here start off the record: never saved, so never listed here.": "此项目的新会话以不留记录方式开始：从不保存，因此不会列在这里。",
+    "No instructions yet. Add some to send them with every chat in this project.": "还没有指令。添加后，它们会随此项目中的每个会话发送。",
+    "Pinned files": "固定文件",
+    "No pinned files. Pin saved text files to attach them to each new chat.": "没有固定文件。固定已保存的文本文件，即可附加到每个新会话。",
+    "Pinned files arrive with Files & Reusable Uploads.": "固定文件将随“文件与可复用上传”一同推出。",
+    "Attached to each new chat here, except in Private Mode, off the record or with Veil on, like Saved files.": "会附加到此项目的每个新会话；与已保存的文件一样，隐私模式、不留记录或开启 Veil 时除外。",
+    "No saved chats yet. Start one here, or move a chat in from its details (··· in the chat list).": "还没有已保存的会话。在这里开始一个，或在会话详情（会话列表中的 ···）中把会话移入。",
+    "Device only chats": "仅存本机的会话",
+    "Device only chats in this project are kept in this browser's Device Vault, which isn't set up yet.": "此项目中仅存本机的会话保存在此浏览器的本机保险库中，但保险库尚未设置。",
+    "Unlock Device Vault to see this project's device-only chats. They're kept only in this browser.": "解锁本机保险库，即可查看此项目中仅存本机的会话。它们只保存在此浏览器中。",
+    "None yet. Device only chats started in this project are grouped here, in this browser only.": "暂无。在此项目中开始的仅存本机会话会归在这里，仅限此浏览器。",
+    "KEEP RELATED WORK TOGETHER": "相关工作，集中一处",
+    "Group chats and Symposium runs. A project's instructions and pinned files go with every new chat in it, with its own default model and privacy mode.": "归类会话和模型圆桌运行。项目的指令和固定文件会随其中的每个新会话发送，并使用项目自己的默认模型和隐私模式。",
+    "No projects yet.": "还没有项目。",
+    "A project keeps related chats together, with instructions and pinned files that go with every new chat in it.": "项目把相关会话集中在一起，其指令和固定文件会随其中的每个新会话发送。",
+    "This run goes in the project": "本次运行归入项目",
+    ", with its instructions.": "，并附带项目指令。",
+    "Projects: each project’s name, colour, instructions, default model and how its new chats start, which saved chats and Symposium runs are in it, and which saved files are pinned to it. Its instructions are sent with each chat by your browser and aren’t saved with the chat. Off the record, Private Mode and Device only chats are never saved, so never listed in a project here; a Device only default and its chats stay in this browser, grouped by project inside its encrypted vault. Deleting a project keeps its chats; a pin goes when its saved file expires or is deleted. Closing your account or Panic Wipe deletes every project.": "项目：每个项目的名称、颜色、指令、默认模型和新会话的开始方式，其中有哪些已保存的会话和模型圆桌运行，以及固定了哪些已保存的文件。项目指令由你的浏览器随每个会话发送，不会随会话保存。不留记录、隐私模式和仅存本机的会话从不保存，因此不会在这里列入项目；仅存本机的默认设置及其会话留在此浏览器中，并在其加密保险库内按项目归类。删除项目会保留其中的会话；已保存的文件过期或被删除时，固定也随之取消。关闭账户或使用紧急清除会删除所有项目。",
+    "The export also includes your projects: their settings, the chats and Symposium runs in each, and their pinned files.": "导出内容还包括你的项目：项目设置、每个项目中的会话和模型圆桌运行，以及固定文件。",
+    "Projects, with their instructions and pinned files": "项目，包括其指令和固定文件",
+    "Project not found.": "未找到项目。",
+    "Give the project a name of 1–60 characters.": "请给项目起一个 1–60 个字符的名字。",
+    "Choose one of the project colors.": "请选择一种项目颜色。",
+    "Choose Normal, Off the record or Private Mode.": "请选择普通、不留记录或隐私模式。",
+    "Choose a chat model, or no default.": "请选择一个对话模型，或不设默认。",
+    "Pin up to 5 files to a project.": "每个项目最多固定 5 个文件。",
+    "Pin saved text and Office files. Audio needs transcribing first.": "请固定已保存的文本和 Office 文件。音频需要先转写。",
+    "You can have up to 50 projects. Delete one to add another.": "你最多可以有 50 个项目。删除一个后才能新增。",
+    "This chat isn't in the project.": "此会话不在该项目中。",
+    "A collab's shared chats stay in the collab; they can't join a project.": "协作空间中的共享会话只属于该协作空间，不能加入项目。",
+    "This looks like a wallet seed phrase. A project's instructions are saved and sent with every chat in it, so ANONYMA won't save one. Remove it to continue.": "这看起来像钱包助记词。项目指令会被保存，并随其中的每个会话发送，因此 ANONYMA 不会保存它。请删除后再继续。",
+    "Off-the-record and Private chats are never saved, so they aren't filed in a project.": "不留记录和隐私模式的会话从不保存，因此不会归入项目。",
+    "A saved chat moves between projects from its details, not with a new message.": "已保存的会话要在其详情中移到其他项目，而不是通过新消息。",
+    "Personal chat": "个人会话",
+    "This browser can't keep a Device Vault, so this chat is off the record instead.": "此浏览器无法使用本机保险库，因此此会话改为不留记录。",
+    "projects": "项目"
   },
   "patterns": [
     {
@@ -4882,6 +4984,50 @@
     {
       "en": "Created {0} ·",
       "zh": "创建于 {0} ·"
+    },
+    {
+      "en": "{0} pinned file attached",
+      "zh": "已附加 {0} 个固定文件"
+    },
+    {
+      "en": "{0} pinned files attached",
+      "zh": "已附加 {0} 个固定文件"
+    },
+    {
+      "en": "{0} pinned file",
+      "zh": "{0} 个固定文件"
+    },
+    {
+      "en": "{0} pinned files",
+      "zh": "{0} 个固定文件"
+    },
+    {
+      "en": "{0} saved chat",
+      "zh": "{0} 个已保存会话"
+    },
+    {
+      "en": "{0} saved chats",
+      "zh": "{0} 个已保存会话"
+    },
+    {
+      "en": "{0} Symposium run",
+      "zh": "{0} 次模型圆桌运行"
+    },
+    {
+      "en": "{0} Symposium runs",
+      "zh": "{0} 次模型圆桌运行"
+    },
+    {
+      "en": "All {0} projects",
+      "zh": "全部 {0} 个项目"
+    },
+    {
+      "en": "Pinned files ({0}/{1})",
+      "zh": "固定文件（{0}/{1}）"
+    },
+    {
+      "en": "You have the most projects an account can keep ({0}). Delete one to add another.",
+      "zh": "你的项目数量已达账户上限（{0}）。删除一个后才能新增。"
     }
   ]
 }

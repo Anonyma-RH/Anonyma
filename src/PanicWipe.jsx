@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon, Button, Modal, Notice } from "./ui.jsx";
-import { api } from "./lib.js";
+import { api, isReleased } from "./lib.js";
+import { useApp } from "./context.jsx";
 import {
   WIPE_WORD,
   WIPE_GOES,
+  WIPE_GOES_PROJECTS,
   WIPE_STAYS,
   WIPED_PATH,
   clearBrowserData,
@@ -18,6 +20,8 @@ import "./panic-wipe.css";
 // succeeds, then a full page load lands on the Wiped page so nothing from
 // this session stays in memory either.
 export function PanicWipe({ user }) {
+  const { config } = useApp() || {};
+  const projectsLive = !!config && isReleased(config, "projects");
   const [open, setOpen] = useState(false),
     [typed, setTyped] = useState(""),
     [busy, setBusy] = useState(false),
@@ -82,6 +86,7 @@ export function PanicWipe({ user }) {
                   {WIPE_GOES.map((t) => (
                     <li key={t}>{t}</li>
                   ))}
+                  {projectsLive && <li>{WIPE_GOES_PROJECTS}</li>}
                 </ul>
               </div>
               <div>

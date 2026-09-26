@@ -409,6 +409,7 @@ export const releaseUpdate = (config, id) =>
 export const MODE_FEATURES = {
   tools: "tasktools",
   routines: "routines",
+  projects: "projects",
   code: "code",
   image: "images",
   video: "video",

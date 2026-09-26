@@ -3620,7 +3620,25 @@
     "Rates only: your balance, key caps, allowances and spending limits still set what's spent.": "只影响速率：实际花费仍由你的余额、密钥上限、额度和支出限额决定。",
     "API Boost: NYMA holders get more. It follows your current holder tier, with a balance check from the last 48 hours. Connected apps get your limit but are never told your tier.": "API 提速：NYMA 持有者可获得更高上限。它取决于你当前的持有者等级，并需要过去 48 小时内的余额检查。已连接的应用会使用你的上限，但永远不会得知你的等级。",
     "429 — rate limit or key_cap_exceeded. See the rate limits above; each key can also have a rolling 24-hour credit cap.": "429 ——速率限制或 key_cap_exceeded。请参阅上方的速率上限；每个密钥还可能有滚动 24 小时积分上限。",
-    "Your current tier sets it, with the same fresh balance check as every perk. Rates only: your balance, key caps, allowances and spending limits still set what's spent.": "它由你当前的等级决定，并和其他权益一样需要近期的余额检查。只影响速率：实际花费仍由你的余额、密钥上限、额度和支出限额决定。"
+    "Your current tier sets it, with the same fresh balance check as every perk. Rates only: your balance, key caps, allowances and spending limits still set what's spent.": "它由你当前的等级决定，并和其他权益一样需要近期的余额检查。只影响速率：实际花费仍由你的余额、密钥上限、额度和支出限额决定。",
+    "Math & Diagrams": "数学公式与图表",
+    "Equations and diagrams, rendered right in the chat.": "公式和图表，直接在会话中呈现。",
+    "LaTeX equations in replies, typeset with KaTeX": "回复中的 LaTeX 公式，由 KaTeX 排版",
+    "Mermaid flowcharts, sequences and charts, drawn in your browser": "Mermaid 流程图、时序图和各类图表，在你的浏览器中绘制",
+    "Copy either as SVG, or download a diagram as PNG": "公式和图表都可复制为 SVG，图表还可下载为 PNG",
+    "Show source": "显示源码",
+    "Hide source": "隐藏源码",
+    "Copy SVG": "复制 SVG",
+    "Download PNG": "下载 PNG",
+    "Couldn't copy this equation.": "无法复制这个公式。",
+    "Couldn't copy this diagram.": "无法复制这张图表。",
+    "Couldn't make a PNG in this browser.": "无法在此浏览器中生成 PNG。",
+    "Couldn't typeset this equation.": "无法排版这个公式。",
+    "Couldn't draw this diagram.": "无法绘制这张图表。",
+    "Drawing the diagram…": "正在绘制图表……",
+    "This diagram is too long to draw here.": "这张图表太长，无法在此绘制。",
+    "Equation source": "公式源码",
+    "Diagram": "图表"
   },
   "patterns": [
     {

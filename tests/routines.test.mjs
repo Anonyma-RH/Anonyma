@@ -990,12 +990,17 @@ async function pageModule() {
     `export default ({ children }) => React.createElement("div", null, children);`,
   );
   const gfm = stub("gfm.mjs", "export default () => {};");
+  const rich = stub(
+    "rich.mjs",
+    `export const ReplyMarkdown = ({ children }) => React.createElement("div", null, children);`,
+  );
   const out = code
     .replace(/^import "\.\/routines\.css";$/m, "")
     .replace(/from "\.\/ui\.jsx"/g, `from "${ui}"`)
     .replace(/from "\.\/SignedReceipt\.jsx"/g, `from "${receipt}"`)
     .replace(/from "react-router-dom"/g, `from "${router}"`)
     .replace(/from "react-markdown"/g, `from "${markdown}"`)
+    .replace(/from "\.\/RichMarkdown\.jsx"/g, `from "${rich}"`)
     .replace(/from "remark-gfm"/g, `from "${gfm}"`)
     .replace(/from "\.\/lib\.js"/g, `from "${new URL("../src/lib.js", import.meta.url)}"`)
     .replace(/from "\.\/routines\.js"/g, `from "${new URL("../src/routines.js", import.meta.url)}"`)

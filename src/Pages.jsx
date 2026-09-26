@@ -857,6 +857,7 @@ const featureIcons = {
   paynyma: "coins",
   findinchat: "search",
   earlymodels: "models",
+  diagrams: "sigma",
 };
 const launch = {
   id: "mvp",

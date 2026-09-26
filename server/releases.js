@@ -704,6 +704,21 @@ export const UPDATES = [
     // keep the standard per-IP limit and the account's limit route refuses.
     released: true,
   },
+  {
+    id: "diagrams",
+    title: "Math & Diagrams",
+    tagline: "Equations and diagrams, rendered right in the chat.",
+    points: [
+      "LaTeX equations in replies, typeset with KaTeX",
+      "Mermaid flowcharts, sequences and charts, drawn in your browser",
+      "Copy either as SVG, or download a diagram as PNG",
+    ],
+    // Browser only: replies are typeset and drawn in the page (src/
+    // RichMarkdown.jsx), so there's no route to gate in featuresFor. The one
+    // server change is the Bookmarks excerpt, which leaves a reply's diagram
+    // source out once this is released (routes/bookmarks.js).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

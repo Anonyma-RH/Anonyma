@@ -1668,6 +1668,7 @@ const bookmark = object({
   message_created: integer,
   excerpt: { ...string, description: "Up to 280 characters of the message as one line (a prompt without its attached documents); empty for an image- or attachment-only message" },
   more: { ...bool, description: "The message goes on past the excerpt" },
+  diagram: { ...bool, description: "Math & Diagrams: present (true) once that update is released, on an answer whose Mermaid diagram was left out of the excerpt" },
   note: { ...string, maxLength: 140, description: "Your private note; empty when there is none" },
   created: integer,
   updated: integer,

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import { Notice } from "./ui.jsx";
 import { api, streamChat, uid } from "./lib.js";
@@ -260,14 +260,15 @@ export default function DoubleCheck({
               </div>
               <p className="fine-print">{`On the answer from ${result.sourceName}.`}</p>
               <div className="markdown" data-i18n="off">
-                <ReactMarkdown
+                <ReplyMarkdown
+                  rich={!!result.text}
                   remarkPlugins={[
                     remarkGfm,
                     [veilRemarkPlugin, { map: veilMap }],
                   ]}
                 >
                   {result.text || (running ? "Reviewing…" : "")}
-                </ReactMarkdown>
+                </ReplyMarkdown>
               </div>
               {result.receipt?.credits_charged != null && (
                 <p className="fine-print">

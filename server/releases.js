@@ -702,7 +702,7 @@ export const UPDATES = [
     // Rates only (server/api-boost.js): HOLDER_API_MULTIPLIERS per tier,
     // from the Holder Program's current tier. Before release, /v1 and /mcp
     // keep the standard per-IP limit and the account's limit route refuses.
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

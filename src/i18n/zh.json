@@ -3105,7 +3105,7 @@
     "Instructions and pinned files go with every new chat": "指令和固定文件随每个新会话一起发送",
     "A default model and privacy mode for each project": "每个项目都有自己的默认模型和隐私模式",
     "Go to project": "前往项目",
-    "New chat in project": "在项目中开始新对话",
+    "New chat in project": "在项目中新建会话",
     "PROJECTS": "项目",
     "New": "新建",
     "New project": "新建项目",
@@ -3118,7 +3118,7 @@
     "No saved chats in this project yet.": "此项目中还没有已保存的会话。",
     "None here for this filter.": "此筛选下没有会话。",
     "In project": "所属项目",
-    "New chat in": "项目中的新对话：",
+    "New chat in": "新会话所属项目：",
     "Instructions on": "指令已启用",
     "Leave project": "离开项目",
     "Pinned files aren't attached in Private Mode, off the record or with Veil on, like Saved files.": "与已保存的文件一样，固定文件不会在隐私模式、不留记录或开启 Veil 时附加。",
@@ -3194,12 +3194,13 @@
     "Pin saved text and Office files. Audio needs transcribing first.": "请固定已保存的文本和 Office 文件。音频需要先转写。",
     "You can have up to 50 projects. Delete one to add another.": "你最多可以有 50 个项目。删除一个后才能新增。",
     "This chat isn't in the project.": "此会话不在该项目中。",
-    "A collab's shared chats stay in the collab; they can't join a project.": "协作中的共享会话只属于该协作，不能加入项目。",
+    "A collab's shared chats stay in the collab; they can't join a project.": "协作空间中的共享会话只属于该协作空间，不能加入项目。",
     "This looks like a wallet seed phrase. A project's instructions are saved and sent with every chat in it, so ANONYMA won't save one. Remove it to continue.": "这看起来像钱包助记词。项目指令会被保存，并随其中的每个会话发送，因此 ANONYMA 不会保存它。请删除后再继续。",
     "Off-the-record and Private chats are never saved, so they aren't filed in a project.": "不留记录和隐私模式的会话从不保存，因此不会归入项目。",
     "A saved chat moves between projects from its details, not with a new message.": "已保存的会话要在其详情中移到其他项目，而不是通过新消息。",
     "Personal chat": "个人会话",
-    "This browser can't keep a Device Vault, so this chat is off the record instead.": "此浏览器无法使用本机保险库，因此这次对话改为不留记录。"
+    "This browser can't keep a Device Vault, so this chat is off the record instead.": "此浏览器无法使用本机保险库，因此此会话改为不留记录。",
+    "projects": "项目"
   },
   "patterns": [
     {

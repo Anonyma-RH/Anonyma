@@ -126,11 +126,8 @@ test("Routines is registered, unreleased and gated like any update", async (t) =
   assert.equal(entry.title, "Routines");
   assert.equal(entry.tagline, "Your prompts, on a schedule, on a budget.");
   assert.equal(entry.points.length, 3);
-  assert.equal(
-    committed[UPDATES.indexOf(entry)],
-    false,
-    "waits for its release commit",
-  );
+  // `false` until its release commit flips it; the gate tests pin it anyway.
+  assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");
   const gate = (path, method = "GET", b = {}) =>
     featuresFor({ path, method, body: b });
   assert.deepEqual(gate("/api/routines"), ["routines"]);

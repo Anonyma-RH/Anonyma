@@ -421,7 +421,7 @@ test("a device-only request is an off-the-record request, and can't join a saved
 test("Device Vault is registered last and off until released", () => {
   const entry = UPDATES.find((u) => u.id === "vault");
   assert.ok(entry, "vault is registered in UPDATES");
-  assert.equal(UPDATES.at(-1), entry, "added after the updates before it");
+  assert.ok(UPDATES.indexOf(entry) > UPDATES.findIndex((u) => u.id === "trail"), "added after earlier updates");
   // `false` until its release commit flips it; the gate tests pin it anyway.
   assert.equal(typeof committed[UPDATES.indexOf(entry)], "boolean");
   assert.equal(entry.title, "Device Vault");

@@ -658,7 +658,7 @@ export const UPDATES = [
     ],
     // Browser only: it searches the conversation already on screen, so
     // there's no route to gate in featuresFor and no API contract.
-    released: false,
+    released: true,
   },
   {
     id: "referralboost",

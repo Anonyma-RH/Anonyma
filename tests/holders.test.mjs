@@ -912,7 +912,10 @@ test("public surfaces are identical for holders, non-holders and signed-out visi
   assert.doesNotMatch(JSON.stringify(cfg), /earlyAccess":\[|eligible/);
   // The summary is totals and counts only, with nothing about an account.
   const summary = (await anon.get("/api/holders/summary")).body;
-  assert.deepEqual(Object.keys(summary).sort(), ["rewards", "vote"]);
+  // Early Model Access (live here) adds the models open to Insiders first:
+  // the same list for everyone, none right now.
+  assert.deepEqual(Object.keys(summary).sort(), ["earlyModels", "rewards", "vote"]);
+  assert.deepEqual(summary.earlyModels, { days: 14, models: [] });
   assert.deepEqual(Object.keys(summary.rewards).sort(), ["credits", "holders", "since", "until"]);
   for (const c of summary.vote.candidates) assert.deepEqual(Object.keys(c).sort(), ["id", "title", "votes"]);
   const text = JSON.stringify(summary);

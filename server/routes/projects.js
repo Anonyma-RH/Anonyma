@@ -1,5 +1,6 @@
 import { uid, now, fail, transaction } from "../core.js";
 import { isReleased } from "../releases.js";
+import { viewerOf } from "../early-models.js";
 import { findSeedPhrase } from "../../src/seed-guard.js";
 import {
   MAX_PROJECTS,
@@ -191,6 +192,8 @@ export function projectRoutes(ctx) {
   );
   app.post("/api/projects", requireUser, write, (req, res) => {
     const { next, files } = input(req.body || {}, req.user.id);
+    // A default model in its early days needs Insider tier and up.
+    if (next.model) ctx.earlyModels.check(viewerOf(req), "models", next.model);
     const id = uid("prj_");
     transaction(db, () => {
       const n = db
@@ -216,6 +219,8 @@ export function projectRoutes(ctx) {
   app.patch("/api/projects/:id", requireUser, write, (req, res) => {
     const row = owned(req.params.id, req.user.id);
     const { next, files } = input(req.body || {}, req.user.id, row);
+    if (next.model && Object.hasOwn(req.body || {}, "model"))
+      ctx.earlyModels.check(viewerOf(req), "models", next.model);
     transaction(db, () => {
       db.prepare(
         "UPDATE projects SET name=?,color=?,instructions=?,starts=?,model=?,updated=? WHERE id=? AND user_id=?",

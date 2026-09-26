@@ -9,6 +9,7 @@ import { releaseGuard } from "./releases.js";
 import { requestHolder } from "./holders.js";
 import { holderRoutes } from "./routes/holders.js";
 import { createModels } from "./models.js";
+import { createEarlyModels } from "./early-models.js";
 import { createMediaStore } from "./media.js";
 import { createAudioCatalog } from "./audio.js";
 import { createFallback } from "./fallback.js";
@@ -69,6 +70,9 @@ export function createApp(overrides = {}) {
       writeFileSync(secretFile, uid() + uid(), { mode: 0o600 });
     cfg.secret = readFileSync(secretFile, "utf8");
   }
+  // Early Model Access: every catalog is recorded before it's used, so a
+  // model is known as new from the first moment it can be offered.
+  const earlyModels = createEarlyModels(db, cfg);
   // Shared by every route module. Requests register their abort controller
   // and reservation here so shutdown can cancel them and maintenance never
   // releases a reservation that is still being worked on.
@@ -77,13 +81,21 @@ export function createApp(overrides = {}) {
     db,
     cfg,
     limit: createLimiter(db, cfg),
-    models: createModels(cfg),
+    models: createModels(cfg, {
+      onCatalog: (next) => earlyModels.recordCatalog(next),
+    }),
+    earlyModels,
     media: createMediaStore(db, cfg),
-    audio: createAudioCatalog(cfg),
+    audio: createAudioCatalog(cfg, {
+      onLoad: (next, live) => earlyModels.recordAudio(next, live),
+    }),
     fallback: createFallback(cfg),
     receipts: createReceiptSigner(db, cfg),
     inflight: { controllers: new Set(), holds: new Set() },
   };
+  // The catalog this process starts with. On a new or just-upgraded
+  // database it becomes the baseline: nothing already listed is new.
+  earlyModels.recordCatalog(ctx.models.snapshot);
   applyMiddleware(app, cfg);
   // Features not yet released are refused before any route runs, except an
   // early update for an early-access holder (Insider tier and up in the

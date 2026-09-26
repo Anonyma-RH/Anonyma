@@ -1,6 +1,7 @@
 import { hash, now, fail, balance, credits, callable } from "../core.js";
 import { isReleased } from "../releases.js";
 import { apiTrainingFields, liveIds } from "../training.js";
+import { viewerOf } from "../early-models.js";
 
 const bearerKey = (db, req) => {
   const secret = req.headers.authorization?.match(/^Bearer (\S+)$/)?.[1];
@@ -12,7 +13,7 @@ const bearerKey = (db, req) => {
 };
 
 // OpenAI-compatible connection, model list and balance endpoints.
-export function apiRoutes({ app, db, cfg, models }) {
+export function apiRoutes({ app, db, cfg, models, earlyModels }) {
   function apiAuth(req, res, next) {
     const key = bearerKey(db, req);
     if (!key)
@@ -37,6 +38,8 @@ export function apiRoutes({ app, db, cfg, models }) {
           .prepare("SELECT * FROM users WHERE id=? AND deleted IS NULL")
           .get(key.user_id)
       : null;
+    // Counted as the key's account sees them (Early Model Access).
+    const early = earlyModels.view({ user: account, app: false });
     const msg = {
       service: "Anonyma",
       status: "ok",
@@ -57,7 +60,7 @@ export function apiRoutes({ app, db, cfg, models }) {
       credits_charged: 0,
       authenticated: !!account,
       models: models.snapshot.data.filter(
-        (m) => m.type === "chat" && callable(m, cfg),
+        (m) => m.type === "chat" && callable(m, cfg) && !early.hides(m.id),
       ).length,
       ...(account
         ? {
@@ -80,8 +83,14 @@ export function apiRoutes({ app, db, cfg, models }) {
     else res.json(msg);
   });
   app.get("/v1/models", apiAuth, (req, res) => {
+    // A key follows its account: a model in its early days is listed only
+    // when the account is at the Insider tier or above (Early Model Access).
+    const early = earlyModels.view(viewerOf(req));
     const listed = models.snapshot.data.filter(
-      (m) => callable(m, cfg) && ["chat", "image"].includes(m.type),
+      (m) =>
+        callable(m, cfg) &&
+        ["chat", "image"].includes(m.type) &&
+        !early.hides(m.id),
     );
     // Training Labels (see server/training.js), once released.
     const offered = isReleased(cfg, "training") ? liveIds(listed) : null;

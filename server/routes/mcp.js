@@ -3,6 +3,7 @@ import { isPrivateModel } from "../private-mode.js";
 import { connectLive } from "../releases.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { SEED_GUARD_HEADER } from "../seed-guard.js";
+import { viewerOf } from "../early-models.js";
 import {
   ACCESS_PREFIX,
   authenticateAccessToken,
@@ -177,8 +178,12 @@ function toolBalance(ctx, req) {
 }
 function toolListModels(ctx, req) {
   const privateOnly = !!req.appConnection?.private_only;
+  // Early Model Access: the account's own key follows the account; a
+  // connected app never sees a model in its early days.
+  const early = ctx.earlyModels.view(viewerOf(req));
   const data = ctx.models.snapshot.data
     .filter((m) => m.type === "chat" && callable(m, ctx.cfg))
+    .filter((m) => !early.hides(m.id))
     .filter((m) => !privateOnly || isPrivateModel(m, ctx.cfg))
     .map((m) => ({
       id: m.id,

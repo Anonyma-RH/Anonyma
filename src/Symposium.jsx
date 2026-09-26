@@ -7,6 +7,7 @@ import { api, streamChat, uid, isReleased } from "./lib.js";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
 import { createVeilState } from "./veil.js";
 import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
+import { EarlyModelTag } from "./early-models.js";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { scanSecrets } from "./seed-guard.js";
@@ -630,6 +631,7 @@ export default function Symposium({
                   onChange={() => toggleModel(m.id)}
                 />
                 <span data-i18n="off">{m.name}</span>
+                <EarlyModelTag model={m} />
                 {trainingLive && m.trainsOnPrompts && (
                   <TrainingTag model={m} models={visibleModels} />
                 )}

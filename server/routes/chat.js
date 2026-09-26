@@ -29,6 +29,7 @@ import { withMemory } from "../../src/memory.js";
 import { tagUsage, chatFeature } from "../usage-insights.js";
 import { privacyTrail, storageFor, trailLive, veilMaskedFrom } from "../privacy-trail.js";
 import { refuseSeedPhrase } from "../seed-guard.js";
+import { viewerOf } from "../early-models.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -63,6 +64,10 @@ export function chatRoutes(ctx) {
     refuseSeedPhrase(cfg, req, api);
     if (!api) validateTaskRequest(req.body);
     const m = getModel(req.body.model);
+    // Early Model Access: a model in its first days is for Insiders and up
+    // (never a connected app), refused here before anything is reserved.
+    // Covers the workspace, /v1, MCP ask and Routines, which all run here.
+    ctx.earlyModels.check(viewerOf(req), "models", m.id);
     // Dedicated image models are priced per option and served by
     // /v1/images/generations; through chat they would be held at the
     // cheapest variant while the provider chooses the quality.

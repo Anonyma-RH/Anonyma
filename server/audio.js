@@ -36,12 +36,21 @@ const FIXTURE = {
 const STT_MODELS = new Set(["nova-3", "nova-2"]);
 export const MAX_TRANSCRIPTION_MINUTES = 10;
 
-export function createAudioCatalog(cfg) {
+// `onLoad(catalog, live)` sees each catalog before it's used (Early Model
+// Access records the ids it lists); if it throws, that catalog isn't used.
+export function createAudioCatalog(cfg, { onLoad } = {}) {
   let cached = null,
     fetchedAt = 0,
-    pending = null;
+    pending = null,
+    fixtureSeen = false;
   async function load() {
-    if (cfg.testMode) return FIXTURE;
+    if (cfg.testMode) {
+      if (!fixtureSeen) {
+        onLoad?.(FIXTURE, false);
+        fixtureSeen = true;
+      }
+      return FIXTURE;
+    }
     if (!cfg.gatewayKey) return { tts: [], stt: [] };
     if (cached && Date.now() - fetchedAt < REFRESH_MS) return cached;
     pending ||= fetch(cfg.gateway.replace(/\/$/, "") + "/v1/audio/models", {
@@ -53,12 +62,14 @@ export function createAudioCatalog(cfg) {
         const j = await r.json();
         const priced = (m) =>
           Number.isFinite(m.pricing?.api_price) && m.pricing.api_price > 0;
-        cached = {
+        const next = {
           tts: (j.data?.tts || []).filter(priced),
           stt: (j.data?.stt || []).filter(
             (m) => priced(m) && STT_MODELS.has(m.id),
           ),
         };
+        onLoad?.(next, true);
+        cached = next;
         fetchedAt = Date.now();
         return cached;
       })

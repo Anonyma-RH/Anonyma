@@ -20,6 +20,7 @@ import {
   MAX_TRANSCRIPTION_MINUTES,
 } from "../audio.js";
 import { requestIdentifier } from "../middleware.js";
+import { viewerOf } from "../early-models.js";
 import { issueMediaReceipt } from "../receipts.js";
 import { submitVideoJob } from "./videos.js";
 import { seedGuardMiddleware } from "../seed-guard.js";
@@ -147,6 +148,7 @@ export function v1MediaRoutes(ctx) {
     async (req, res) => {
       const m = getModel(req.body.model, "image"),
         prompt = String(req.body.prompt || "");
+      ctx.earlyModels.check(viewerOf(req), "models", m.id);
       if (!prompt.trim() || prompt.length > 48000)
         fail(400, "Enter a prompt up to 48,000 characters.");
       const n = req.body.n ?? 1;
@@ -279,6 +281,7 @@ export function v1MediaRoutes(ctx) {
     ...guard,
     async (req, res) => {
       const m = await ctx.audio.model("tts", String(req.body.model || ""));
+      ctx.earlyModels.check(viewerOf(req), "tts", m.id);
       const text =
         typeof req.body.input === "string" ? req.body.input.trim() : "";
       const maxChars = m.char_limit || 5000;
@@ -372,6 +375,7 @@ export function v1MediaRoutes(ctx) {
         fail(400, 'Send the recording as multipart/form-data under "file".');
       if (!/^audio\//.test(file.mime)) fail(400, "Upload must be an audio file.");
       const m = await ctx.audio.model("stt", String(fields.model || "nova-3"));
+      ctx.earlyModels.check(viewerOf(req), "stt", m.id);
       const language = fields.language == null ? "" : String(fields.language);
       if (language && !/^[a-z]{2}(-[A-Z]{2})?$|^multi$/.test(language))
         fail(400, "Language must be an ISO 639-1 code.");

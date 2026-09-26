@@ -16,6 +16,7 @@ import {
 } from "./documents.js";
 import { CleanNote, KeepOriginal } from "./CleanUploads.jsx";
 import "./reusable-uploads.css";
+import { earlyModelSuffix } from "./early-models.js";
 const ACCEPT =
   ".txt,.md,.csv,.json,.js,.ts,.jsx,.tsx,.py,.go,.rs,.java,.rb,.php,.c,.cpp,.h,.cs,.swift,.kt,.sql,.html,.css,.yaml,.yml,.toml,.sh,.docx,.xlsx,.pptx,.wav,.mp3,.flac,.ogg,.webm,.m4a";
 const asBase64 = (blob) =>
@@ -479,6 +480,7 @@ export default function ReusableUploads({
                     {models.map((m) => (
                       <option key={m.id} value={m.id}>
                         {m.name}
+                        {earlyModelSuffix(m)}
                       </option>
                     ))}
                   </select>

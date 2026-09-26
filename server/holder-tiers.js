@@ -162,3 +162,35 @@ export const BASE_CAPS = Object.freeze({
 export const HOLDER_CAPS = Object.freeze(
   Object.fromEntries(Object.entries(BASE_CAPS).map(([k, v]) => [k, v * 2])),
 );
+
+// Early Model Access (server/early-models.js): for how many days a newly
+// added model is open to Insiders and up before everyone else. 0 turns it
+// off; at most 90.
+export const DEFAULT_EARLY_MODEL_DAYS = 14;
+export const MAX_EARLY_MODEL_DAYS = 90;
+export function parseEarlyModelDays(value) {
+  if (typeof value === "number") {
+    if (Number.isInteger(value) && value >= 0 && value <= MAX_EARLY_MODEL_DAYS)
+      return value;
+  } else {
+    const text = String(value ?? "").trim();
+    if (!text) return DEFAULT_EARLY_MODEL_DAYS;
+    if (/^\d+$/.test(text) && Number(text) <= MAX_EARLY_MODEL_DAYS)
+      return Number(text);
+  }
+  throw Error(
+    `EARLY_MODEL_DAYS must be a whole number of days from 0 to ${MAX_EARLY_MODEL_DAYS} (0 turns early model access off), e.g. "${DEFAULT_EARLY_MODEL_DAYS}".`,
+  );
+}
+// A comma-separated list of model ids, e.g. EARLY_MODEL_EXEMPT.
+export const parseModelList = (value) =>
+  Array.isArray(value)
+    ? [...new Set(value.map((v) => String(v).trim()).filter(Boolean))]
+    : [
+        ...new Set(
+          String(value ?? "")
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean),
+        ),
+      ];

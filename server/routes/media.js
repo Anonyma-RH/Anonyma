@@ -15,6 +15,7 @@ import {
 import { generateImages } from "../provider.js";
 import { mediaRecipe } from "../history-library.js";
 import { requestIdentifier } from "../middleware.js";
+import { viewerOf } from "../early-models.js";
 
 // The private media library and image generation.
 export function mediaRoutes(ctx) {
@@ -65,6 +66,7 @@ export function mediaRoutes(ctx) {
       await ctx.library.validateReplay(req, "image");
       const m = getModel(req.body.model, "image"),
         prompt = String(req.body.prompt || "");
+      ctx.earlyModels.check(viewerOf(req), "models", m.id);
       if (!prompt.trim() || prompt.length > 48000)
         fail(400, "Enter a prompt up to 48,000 characters.");
       const n = req.body.n ?? 1;

@@ -675,6 +675,21 @@ export const UPDATES = [
     // does nothing unless that program is released too.
     released: false,
   },
+  {
+    id: "earlymodels",
+    title: "Early Model Access",
+    tagline: "New models open to NYMA Insiders first.",
+    points: [
+      "Newly added models, 14 days before everyone else",
+      "For the Insider tier and up, tagged Early",
+      "No staking or locking: your NYMA stays in your wallet",
+    ],
+    // The Insider perk for new models (server/early-models.js). It works
+    // only while the NYMA Holder Program is live with balance checks on;
+    // otherwise, or with EARLY_MODEL_DAYS=0, every model opens to everyone
+    // as soon as it's added. No routes of its own to gate.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -746,10 +761,10 @@ export const isReleased = (cfg, id) =>
   UPDATES.some((u) => u.id === id && u.released === true);
 export const connectLive = (cfg) =>
   CONNECT_UPDATES.every((id) => isReleased(cfg, id));
-// Never early: the Holder Program itself, and Connect an App, whose OAuth
-// flow is driven by the outside app, which would learn from it whether the
-// account holds NYMA.
-const NEVER_EARLY = ["connect", "holders"];
+// Never early: the Holder Program itself, Early Model Access (a holder perk
+// already), and Connect an App, whose OAuth flow is driven by the outside
+// app, which would learn from it whether the account holds NYMA.
+const NEVER_EARLY = ["connect", "holders", "earlymodels"];
 // An update open to early-access holders right now: marked `early`, not yet
 // released, and the Holder Program itself is live. Global, never per user.
 export const earlyOpen = (cfg, id) =>

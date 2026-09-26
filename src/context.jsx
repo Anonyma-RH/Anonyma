@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { api, normalizeModel, sortModels } from "./lib.js";
 import { withEarlyAccess } from "./holders.js";
+import { withEarlyModels } from "./early-models.js";
 import { models as fallbackModels } from "./data.js";
 import { useInstallAppGate } from "./InstallApp.jsx";
 const Context = createContext(null);
@@ -62,13 +63,20 @@ export function AppProvider({ children }) {
     () => withEarlyAccess(config, user),
     [config, user],
   );
+  // Early Model Access: a model in its first days is offered only to an
+  // account whose session says it's eligible (Insider tier and up). Every
+  // picker, Model Finder, Cost Compare, @mentions and Symposium read this.
+  const offered = useMemo(
+    () => withEarlyModels(models, user),
+    [models, user],
+  );
   // Adds the installable-app shell once config confirms it's released.
   useInstallAppGate(config);
   return (
     <Context.Provider
       value={{
         config: effective,
-        models,
+        models: offered,
         user,
         setUser,
         connected,

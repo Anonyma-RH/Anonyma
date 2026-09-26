@@ -10,6 +10,7 @@ import {
 import { createVideo, PROVIDER_REFUSALS } from "../provider.js";
 import { videoOptions } from "../video-options.js";
 import { requestIdentifier } from "../middleware.js";
+import { viewerOf } from "../early-models.js";
 
 // Submit a video job: hold funds, persist the row and kick off the provider
 // job. Completion is handled by the background worker. Shared by the
@@ -23,6 +24,8 @@ export async function submitVideoJob(ctx, req, { key, api = false } = {}) {
   if (!api) await ctx.library.validateReplay(req, "video");
   const m = getModel(req.body.model, "video"),
     prompt = String(req.body.prompt || "");
+  // Early Model Access, before anything is reserved (workspace and /v1).
+  ctx.earlyModels.check(viewerOf(req), "models", m.id);
   if (!prompt.trim() || prompt.length > 2000)
     fail(400, "Video prompt must contain 1–2,000 characters.");
   const { ratio, duration, quality, price } = videoOptions(m, req.body);

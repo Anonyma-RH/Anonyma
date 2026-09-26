@@ -19,6 +19,7 @@ import {
 } from "./holders.js";
 import { referralBoost, boostPerk, tierList, percentText } from "./referral-boost.js";
 import "./referral-boost.css";
+import { EarlyModelList } from "./Holders.jsx";
 import "./holders.css";
 
 // /token: what NYMA is and what holding it does in ANONYMA: the NYMA Holder
@@ -60,6 +61,10 @@ export default function Token() {
   const creditsOn = tiers.some((t) => t.credits > 0);
   const early = earlyUpdates(config);
   const votes = summary?.vote?.candidates;
+  // Early Model Access: whether a new model is open to Insiders first now.
+  const earlyModelsNow = (summary?.earlyModels?.models || []).some(
+    (m) => m.opensAt > Date.now(),
+  );
   return (
     <main id="main" className="token-page">
       <PageIntro
@@ -218,12 +223,18 @@ export default function Token() {
                     </li>
                   ))}
                 </ul>
-              ) : (
+              ) : !earlyModelsNow ? (
                 <p className="token-none">
                   Nothing is in early access right now. The next one opens
                   here.
                 </p>
-              )}
+              ) : null}
+              {/* Early Model Access, once it's live: the same list for
+                  everyone, from the public summary. */}
+              <EarlyModelList
+                early={summary?.earlyModels}
+                eligible={user?.holder?.eligible === true}
+              />
             </dd>
             <dt>
               Roadmap vote <small>Inner Circle</small>

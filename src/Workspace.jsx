@@ -151,6 +151,7 @@ import { InstallAppEntry } from "./InstallApp.jsx";
 import { LivePreview, CodePanelTabs, useHtmlPreview } from "./LivePreview.jsx";
 import { projectFiles, previewPages, PREVIEW_DEMO_REPLY } from "./live-preview.js";
 import { EarlyTag } from "./Holders.jsx";
+import { EarlyModelTag, earlyModelSuffix } from "./early-models.js";
 import { isEarlyAccess } from "./holders.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
 import {
@@ -3284,6 +3285,7 @@ export default function Workspace() {
                         >
                           <b>{m.name}</b>
                           {!demo && m.private && <PrivateModelTag />}
+                          <EarlyModelTag model={m} />
                           {trainingLive && m.trainsOnPrompts && (
                             <TrainingTag model={m} models={visibleModels} />
                           )}
@@ -3384,6 +3386,7 @@ export default function Workspace() {
                             >
                               {m.name}
                               {!demo && m.private ? " · Private" : ""}
+                              {earlyModelSuffix(m)}
                               {trainingLive && m.trainsOnPrompts
                                 ? " · Trains on prompts"
                                 : ""}
@@ -3738,6 +3741,7 @@ export default function Workspace() {
                             }
                           />
                           {m.name}
+                          <EarlyModelTag model={m} />
                         </label>
                       ))}
                     </details>

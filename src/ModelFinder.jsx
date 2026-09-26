@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Icon } from "./ui.jsx";
+import { EarlyModelTag } from "./early-models.js";
 import { formatCredits } from "./estimate.js";
 import {
   PRESETS,
@@ -121,6 +122,7 @@ export default function ModelFinder({
       >
         {preset && <small>{PRESETS.find((p) => p.id === preset).label}</small>}
         <b data-i18n="off">{current?.name || "Choose a model"}</b>
+        {current && <EarlyModelTag model={current} />}
         <Icon name="down" size={14} />
       </button>
       {resolved?.fallback && (
@@ -202,6 +204,7 @@ export default function ModelFinder({
                 <span className="mf-meta">
                   <span data-i18n="off">{m.provider}</span>
                   {!demo && m.private && <span className="mf-tag">Private</span>}
+                  <EarlyModelTag model={m} />
                   {m.vision && <span className="mf-tag">Sees images</span>}
                   {trainingLive && m.trainsOnPrompts && <span className="mf-tag warn">Trains on prompts</span>}
                 </span>

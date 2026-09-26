@@ -10,6 +10,7 @@ import {
   scheduleOf,
 } from "../routines.js";
 import { nextRunAfter } from "../../src/routines.js";
+import { viewerOf } from "../early-models.js";
 
 // Routines: saved prompts on a schedule with their own budget, and the
 // inbox their runs land in (server/routines.js). The release gate in
@@ -41,6 +42,9 @@ export function routineRoutes(ctx) {
   );
   app.post("/api/routines", requireUser, write, (req, res) => {
     const r = routineInput(ctx, req.body);
+    // Early Model Access: a model in its early days needs Insider tier and
+    // up to be chosen (and again at every run, in runChat).
+    ctx.earlyModels.check(viewerOf(req), "models", r.model);
     const id = uid("rt_");
     transaction(db, () => {
       const n = db
@@ -84,6 +88,8 @@ export function routineRoutes(ctx) {
   app.patch("/api/routines/:id", requireUser, write, (req, res) => {
     const row = owned(req.params.id, req.user.id);
     const r = routineInput(ctx, req.body, row);
+    if (Object.hasOwn(req.body || {}, "model"))
+      ctx.earlyModels.check(viewerOf(req), "models", r.model);
     const reschedule =
       Object.hasOwn(req.body, "schedule") || !!r.enabled !== !!row.enabled;
     db.prepare(

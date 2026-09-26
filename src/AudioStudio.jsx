@@ -4,6 +4,7 @@ import AsciiField from "./AsciiField.jsx";
 import { api, uid } from "./lib.js";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { LowBalanceRefusal } from "./BalanceAlerts.jsx";
+import { earlyModelSuffix } from "./early-models.js";
 
 const MAX_RECORDING_SECONDS = 10 * 60;
 
@@ -148,6 +149,7 @@ export default function AudioStudio({
                 {catalog?.tts.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.name}
+                    {earlyModelSuffix(m)}
                   </option>
                 ))}
               </select>

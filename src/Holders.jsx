@@ -13,6 +13,7 @@ import {
 } from "./holders.js";
 import { HoldingsBoost } from "./ReferralBoost.jsx";
 import { referralBoost, boostPerk } from "./referral-boost.js";
+import { opensLabel } from "./early-models.js";
 import "./holders.css";
 
 // The small tag on a feature a holder is using before its public release.
@@ -26,6 +27,38 @@ export function EarlyTag() {
     >
       Early access
     </span>
+  );
+}
+
+
+// Early Model Access in Holdings and on /token: the models open to Insiders
+// first right now, and when each opens to everyone. The same list for
+// everyone (the server sends it only while the feature is live).
+export function EarlyModelList({ early, eligible }) {
+  if (!early) return null;
+  const models = (early.models || []).filter((m) => m.opensAt > Date.now());
+  return (
+    <div className="holdings-early-models">
+      <h3>New models open to Insiders first</h3>
+      <p>
+        {`For their first ${early.days} ${early.days === 1 ? "day" : "days"}, newly added models are open to the Insider tier and up, then to everyone.`}
+      </p>
+      {eligible && <p>They're in your model pickers now, tagged Early.</p>}
+      {models.length ? (
+        <ul>
+          {models.map((m) => (
+            <li key={m.type + ":" + m.id}>
+              <strong data-i18n="off">{m.name}</strong>
+              <span>{`Opens to everyone ${opensLabel(m.opensAt)}`}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="holdings-hint">
+          No new models in early access right now. The next ones show here.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -200,6 +233,7 @@ export function HoldingsSettings({ config, user, demo, refresh, onNotice, onErro
           </p>
         )}
         <HoldingsBoost config={config} tierId={state?.tier?.id} />
+        <EarlyModelList early={state?.earlyModels} eligible={on} />
         {vote && (
           <div className="holdings-vote">
             <h3>Roadmap vote</h3>

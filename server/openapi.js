@@ -671,6 +671,12 @@ route("post", "/api/account/wallet/unlink", "Unlink the account's wallet", {
   description:
     "NYMA Holder Program. Removes the linked wallet, its recorded holdings and its open cycle. 409 wallet_sign_in_only when the wallet is the account's only sign-in method.",
 });
+const earlyModelsSchema = object({
+  days: integer,
+  models: array(
+    object({ id: string, name: string, type: string, opensAt: integer }),
+  ),
+});
 route("get", "/api/account/holdings", "The account's NYMA Holder Program state", {
   response: object({
     checks: bool,
@@ -703,9 +709,10 @@ route("get", "/api/account/holdings", "The account's NYMA Holder Program state",
     },
     caps: ref("RetentionCaps"),
     vote: ref("HolderVote"),
+    earlyModels: earlyModelsSchema,
   }),
   description:
-    "The current tier is set by the lowest balance successful reads saw in the open 30-day cycle, with a read in the last 48 hours. cycle.due is what the cycle pays at its end at the current tier; waiting means it is due but needs a fresh read first.",
+    "The current tier is set by the lowest balance successful reads saw in the open 30-day cycle, with a read in the last 48 hours. cycle.due is what the cycle pays at its end at the current tier; waiting means it is due but needs a fresh read first. Once Early Model Access is released (with the Holder Program live and balance checks on), earlyModels lists the models open to Insiders and up first right now (days is the early window; opensAt is when each opens to everyone, epoch ms), the same list for every account.",
 });
 route("put", "/api/holders/vote", "Cast or change this month's roadmap vote", {
   body: object({ update: string }, ["update"]),
@@ -726,9 +733,10 @@ route("get", "/api/holders/summary", "Holder Program transparency: aggregates on
       month: string,
       candidates: array(object({ id: string, title: string, votes: integer })),
     }),
+    earlyModels: earlyModelsSchema,
   }),
   description:
-    "Credits paid and accounts rewarded over the 30 whole UTC days before today, and this month's roadmap vote counts per candidate. Never names or identifies an account.",
+    "Credits paid and accounts rewarded over the 30 whole UTC days before today, and this month's roadmap vote counts per candidate. Once Early Model Access is released, earlyModels lists the models open to Insiders first right now, as in GET /api/account/holdings. Never names or identifies an account.",
 });
 for (const [path, summary] of [
   [
@@ -737,7 +745,7 @@ for (const [path, summary] of [
   ],
   [
     "/api/models",
-    "Model catalog including capability, pricing, private-mode and training metadata",
+    "Model catalog including capability, pricing, private-mode and training metadata. Once Early Model Access is released, a model in its first days carries earlyUntil (epoch ms, when it opens to everyone); only NYMA Insiders and up can use it until then (403 early_model otherwise)",
   ],
   ["/api/market", "Public cryptocurrency market feed"],
   ["/api/rates", "Crypto units per USD; validated rates cached for 60 seconds"],
@@ -2186,7 +2194,7 @@ route("get", "/v1", "Free API connection check", {
 route("get", "/v1/models", "List API-callable models", {
   auth: "bearer",
   description:
-    "Returns {object: list, data: [{id, object: model, owned_by, created}]}. Includes callable chat and image entries; chat completions accepts chat models only. Use /api/models type metadata to choose a chat model. Once the Training Labels update is released, a model whose provider says it uses what you send to improve its products carries trains_on_prompts: true, plus untrained_alternative (the id of the listed version that isn't used that way) when there is one; /api/models carries the same as trainsOnPrompts and untrainedAlternative.",
+    "Returns {object: list, data: [{id, object: model, owned_by, created}]}. Includes callable chat and image entries; chat completions accepts chat models only. Use /api/models type metadata to choose a chat model. Once Early Model Access is released, a model in its first days is listed only when the key's account is at the NYMA Insider tier or above. Once the Training Labels update is released, a model whose provider says it uses what you send to improve its products carries trains_on_prompts: true, plus untrained_alternative (the id of the listed version that isn't used that way) when there is one; /api/models carries the same as trainsOnPrompts and untrainedAlternative.",
 });
 route("get", "/v1/balance", "API key balance", {
   auth: "bearer",
@@ -2199,7 +2207,7 @@ route("post", "/v1/chat/completions", "OpenAI-style chat completion", {
   body: ref("ApiChatRequest"),
   response: ref("ChatCompletion"),
   description:
-    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Other optional parameters such as temperature, tools and response_format are ignored. Tool calling, audio, embeddings and Responses are not implemented. web_search=true or plugins: [{id: web}] requests web search and its fee. Idempotency-Key (1–200 characters) overrides requestId; repeats return 409 duplicate_request without replaying output or charging again. Missing IDs generate a new request, so transport retries without an ID can create another charge. Errors use {error: {message, code, type, param}}. 402 spending_limit (with a spending_limit object) means the account's own daily or monthly spending limit would be exceeded; it is returned before anything is reserved. SSE errors may occur after HTTP 200; inspect every event through [DONE]. Timeouts and unreadable provider responses can charge the base estimate; see /docs/billing. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged. Once Privacy Trail is released they also carry anonyma.privacy (see PrivacyTrail): the model, provider, gateway route, retention, storage (not_saved over the API) and signed receipt id.",
+    "stream=true returns SSE; false/default returns JSON. Retains latest 40 usable string-content messages; array content is skipped. Maximum total text 120,000 characters; body 256 KB. Other optional parameters such as temperature, tools and response_format are ignored. Tool calling, audio, embeddings and Responses are not implemented. web_search=true or plugins: [{id: web}] requests web search and its fee. Idempotency-Key (1–200 characters) overrides requestId; repeats return 409 duplicate_request without replaying output or charging again. Missing IDs generate a new request, so transport retries without an ID can create another charge. Errors use {error: {message, code, type, param}}. 402 spending_limit (with a spending_limit object) means the account's own daily or monthly spending limit would be exceeded; it is returned before anything is reserved. Once Early Model Access is released, a model in its first days needs the key's account at the NYMA Insider tier or above: otherwise 403 early_model, with early_model: {model, opens_at}, before anything is reserved. The same applies to image, speech, transcription and video models on the /v1 media routes and the workspace routes. SSE errors may occur after HTTP 200; inspect every event through [DONE]. Timeouts and unreadable provider responses can charge the base estimate; see /docs/billing. Final SSE usage and JSON include askr.credits_charged and anonyma.credits_charged. Once Privacy Trail is released they also carry anonyma.privacy (see PrivacyTrail): the model, provider, gateway route, retention, storage (not_saved over the API) and signed receipt id.",
 });
 paths["/v1/chat/completions"].post.parameters = [
   { name: "Idempotency-Key", in: "header", required: false, schema: requestId },

@@ -14,6 +14,7 @@ import {
 } from "../audio.js";
 import { mediaRecipe } from "../history-library.js";
 import { requestIdentifier } from "../middleware.js";
+import { viewerOf } from "../early-models.js";
 
 const RECORDING =
   /^data:(audio\/(?:webm|ogg|mp4|mpeg|wav|x-wav|aac|flac))(?:;codecs=[\w.,-]+)?;base64,([A-Za-z0-9+/=]+)$/;
@@ -27,8 +28,16 @@ export function audioRoutes(ctx) {
   app.get("/api/audio/models", async (req, res) => {
     const catalog = await audio.load();
     const factor = req.user ? markupFactor(req.user, cfg) : 1;
+    // Early Model Access. This list is already the account's own (priced at
+    // its rate), so a speech model in its first days is listed, with its
+    // earlyUntil, only for an eligible signed-in account. The routes below
+    // check every request too.
+    const tts = ctx.earlyModels.view(viewerOf(req), "tts"),
+      stt = ctx.earlyModels.view(viewerOf(req), "stt");
+    const early = (view, id) =>
+      view.earlyUntil(id) ? { earlyUntil: view.earlyUntil(id) } : {};
     res.json({
-      tts: catalog.tts.map((m) => ({
+      tts: catalog.tts.filter((m) => !tts.hides(m.id)).map((m) => ({
         id: m.id,
         name: m.name,
         provider: m.provider,
@@ -42,12 +51,14 @@ export function audioRoutes(ctx) {
           language: v.language,
           preview_url: v.preview_url,
         })),
+        ...early(tts, m.id),
       })),
-      stt: catalog.stt.map((m) => ({
+      stt: catalog.stt.filter((m) => !stt.hides(m.id)).map((m) => ({
         id: m.id,
         name: m.name,
         credits_per_minute: credits(usdUnits(m.pricing.api_price * factor)),
         max_minutes: MAX_TRANSCRIPTION_MINUTES,
+        ...early(stt, m.id),
       })),
     });
   });
@@ -82,6 +93,7 @@ export function audioRoutes(ctx) {
     async (req, res) => {
       await ctx.library.validateReplay(req, "audio");
       const m = await audio.model("tts", String(req.body.model || ""));
+      ctx.earlyModels.check(viewerOf(req), "tts", m.id);
       const text =
         typeof req.body.text === "string" ? req.body.text.trim() : "";
       const maxChars = m.char_limit || 5000;
@@ -138,6 +150,7 @@ export function audioRoutes(ctx) {
     limit("transcribe", 20, 60000),
     async (req, res) => {
       const m = await audio.model("stt", String(req.body.model || "nova-3"));
+      ctx.earlyModels.check(viewerOf(req), "stt", m.id);
       const match =
         typeof req.body.audio === "string"
           ? req.body.audio.match(RECORDING)

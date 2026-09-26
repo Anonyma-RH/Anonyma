@@ -13,6 +13,7 @@ import { nymaPaymentInfo } from "./nyma.js";
 import { modelReleased, releaseInfo, isReleased } from "../releases.js";
 import { isPrivateModel } from "../private-mode.js";
 import { sealedLive } from "../sealed.js";
+import { viewerOf } from "../early-models.js";
 import { withMemory } from "../../src/memory.js";
 import { trainingFields, liveIds } from "../training.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
@@ -95,6 +96,12 @@ export function catalogRoutes(ctx) {
     // Training Labels: models whose provider trains on prompts, and the
     // listed version that doesn't (see server/training.js).
     const trainingFlagged = isReleased(cfg, "training");
+    // Early Model Access: a model in its first days carries earlyUntil, when
+    // it opens to everyone. Product information, the same for everyone like
+    // the rest of this list: the workspace shows such a model only to an
+    // account whose session says it's eligible (src/early-models.js), and
+    // every request naming one is checked on the server.
+    const early = ctx.earlyModels.inWindow("models");
     const listed = current.data.filter((m) => modelReleased(m, cfg));
     const offered = trainingFlagged ? liveIds(listed) : null;
     res.json({
@@ -113,6 +120,7 @@ export function catalogRoutes(ctx) {
         ...(trainingFlagged ? trainingFields(m, offered) : {}),
         // Sealed Mode's open-weight enclave models (routes/sealed.js).
         ...(ctx.sealedFields?.(m) || {}),
+        ...(early.has(m.id) ? { earlyUntil: early.get(m.id) } : {}),
       })),
     });
   });
@@ -133,6 +141,7 @@ export function catalogRoutes(ctx) {
   // debounced, so the limit leaves room for that and for Symposium's columns.
   app.post("/api/quote", requireUser, limit("quote", 120, 60000), (req, res) => {
     const m = getModel(req.body.model);
+    ctx.earlyModels.check(viewerOf(req), "models", m.id);
     const teamPaid = req.body.treasury === true;
     if (teamPaid && m.type !== "chat") fail(400, "Team pays supports chat requests only.");
     const team = teamPaid ? ctx.treasury.forQuote(req.user.id, req.body.conversationId) : null;

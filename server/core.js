@@ -17,6 +17,8 @@ import {
   parseHolderRewards,
   parseHolderLoyalty,
   parseHolderReferralPercents,
+  parseEarlyModelDays,
+  parseModelList,
 } from "./holder-tiers.js";
 
 export const uid = (prefix = "") => prefix + randomBytes(16).toString("hex");
@@ -96,6 +98,11 @@ export function config(overrides = {}) {
     // opens from the second tier (Insider).
     holderRewards: e.HOLDER_REWARDS || "",
     holderLoyalty: e.HOLDER_LOYALTY || "",
+    // Early Model Access (server/early-models.js): the days a new model is
+    // open to Insiders and up first (default 14, 0 turns it off), and model
+    // ids that open to everyone at once.
+    earlyModelDays: e.EARLY_MODEL_DAYS ?? "",
+    earlyModelExempt: e.EARLY_MODEL_EXEMPT ?? "",
     walletChain: Number(e.WALLET_CHAIN_ID || 1),
     markup: Number(e.PLATFORM_MARKUP_PERCENT || 0),
     catalogPath: e.CATALOG_PATH || "runtime/models.cache.json",
@@ -315,6 +322,8 @@ export function config(overrides = {}) {
     cfg.holderRewards = parseHolderRewards(cfg.holderRewards);
   if (typeof cfg.holderLoyalty !== "object" || cfg.holderLoyalty === null)
     cfg.holderLoyalty = parseHolderLoyalty(cfg.holderLoyalty);
+  cfg.earlyModelDays = parseEarlyModelDays(cfg.earlyModelDays);
+  cfg.earlyModelExempt = parseModelList(cfg.earlyModelExempt);
   if (
     !Number.isFinite(cfg.gatewayFeePercent) ||
     cfg.gatewayFeePercent < 0 ||
@@ -918,6 +927,25 @@ export const MIGRATIONS = [
       CREATE TABLE IF NOT EXISTS nyma_claims(chain INTEGER NOT NULL,tx_hash TEXT NOT NULL,
         log_index INTEGER NOT NULL,deposit_id TEXT NOT NULL REFERENCES deposits(id),
         PRIMARY KEY(chain,tx_hash,log_index));
+  `),
+  // Early Model Access (server/early-models.js): when this installation
+  // first saw each model id, per catalog ("models" for chat, image and
+  // video; "tts" and "stt" for speech). first_seen 0 means known before
+  // the catalog's baseline, so never early. The first live catalog each
+  // catalog records is its baseline: every model in it counts as known, so
+  // nothing already public becomes restricted by this upgrade. Rows are
+  // never updated or pruned, so a model that leaves the catalog and comes
+  // back isn't new again.
+  additive(`
+      CREATE TABLE IF NOT EXISTS model_first_seen(
+        catalog TEXT NOT NULL CHECK(catalog IN ('models','tts','stt')),
+        id TEXT NOT NULL CHECK(length(id) BETWEEN 1 AND 250),
+        first_seen INTEGER NOT NULL CHECK(typeof(first_seen)='integer' AND first_seen>=0),
+        PRIMARY KEY(catalog,id));
+      CREATE INDEX IF NOT EXISTS model_first_seen_recent ON model_first_seen(catalog,first_seen);
+      CREATE TABLE IF NOT EXISTS model_catalog_baselines(
+        catalog TEXT PRIMARY KEY CHECK(catalog IN ('models','tts','stt')),
+        taken INTEGER NOT NULL);
   `),
 ];
 // The schema versions whose migrations were recorded as additive.

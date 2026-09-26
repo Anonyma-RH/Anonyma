@@ -170,6 +170,8 @@ export function errorHandler(cfg) {
       ...(e.billing ? { billing: e.billing } : {}),
       // Spending Limits: which limit refused the request and when room frees.
       ...(e.spendingLimit ? { spending_limit: e.spendingLimit } : {}),
+      // Early Model Access: the model and when it opens to everyone.
+      ...(e.earlyModel ? { early_model: e.earlyModel } : {}),
       ...(e.receipt
         ? {
             askr: { credits_charged: e.receipt.credits_charged },

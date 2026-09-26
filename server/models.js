@@ -11,8 +11,11 @@ import {
 } from "./core.js";
 
 // The model catalog (refreshed from the gateway when AUTO_SYNC_MODELS is on)
-// and validation of what a request may send to a model.
-export function createModels(cfg) {
+// and validation of what a request may send to a model. `onCatalog` sees
+// every refreshed catalog before it's used (Early Model Access records the
+// ids it lists); if it throws, the refresh is dropped and the previous
+// catalog stays, so no model is ever offered unrecorded.
+export function createModels(cfg, { onCatalog } = {}) {
   let models = loadCatalog(cfg.catalogPath);
   let catalogRefresh = null;
   let catalogAttempt = 0;
@@ -21,6 +24,7 @@ export function createModels(cfg) {
       catalogAttempt = now();
       catalogRefresh = syncCatalog(cfg, models)
         .then((next) => {
+          onCatalog?.(next);
           models = next;
         })
         .catch((e) => {

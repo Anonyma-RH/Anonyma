@@ -31,6 +31,7 @@ import ReleaseStatus from "./ReleaseStatus.jsx";
 import BillingRules from "./BillingRules.jsx";
 import { featureEnabled, featureLabel, guideReleaseLabel, releaseCopy, modelAvailability } from "./release-copy.js";
 import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
+import { EarlyModelTag } from "./early-models.js";
 import "./mcp.css";
 import V1Media from "./V1Media.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
@@ -168,7 +169,10 @@ export function Catalog() {
                 </div>
                 <p className="model-api-status">{availability.api}</p>
                 <p className="eyebrow">{m.provider || m.id.split("/")[0]}</p>
-                <h2>{m.name}</h2>
+                <h2>
+                  {m.name}
+                  <EarlyModelTag model={m} />
+                </h2>
                 <p>
                   {m.description ||
                     "Explore the model’s documented capabilities."}
@@ -852,6 +856,7 @@ const featureIcons = {
   sealed: "lock",
   paynyma: "coins",
   findinchat: "search",
+  earlymodels: "models",
 };
 const launch = {
   id: "mvp",

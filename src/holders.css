@@ -108,6 +108,69 @@
   flex-basis: 100%;
   margin-top: 0;
 }
+/* Early Model Access: the models open to Insiders first, in Holdings and
+   on /token. */
+.holdings-early-models {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.holdings-early-models h3 {
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+.settings-stack .holdings-early-models p {
+  margin-top: 6px;
+}
+.holdings-early-models ul {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+.holdings-early-models li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 14px;
+  padding: 9px 12px;
+  background: #fff;
+  min-width: 0;
+}
+.holdings-early-models li strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+.holdings-early-models li strong::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: #ffb21c;
+  box-shadow: 0 0 0 2px #0135df;
+}
+.holdings-early-models li span {
+  color: #5d6b8a;
+  font-size: 12px;
+}
+/* The tag beside a model's name in pickers and lists. */
+.early-tag.early-model {
+  margin-left: 6px;
+}
+/* The @mention menu mutes its spans; the tag keeps its own colours. */
+.app-shell .mention-menu .early-tag.early-model {
+  color: #fff;
+  font-size: 10px;
+  margin-right: auto;
+}
 .holdings-state {
   display: inline-flex;
   align-items: center;

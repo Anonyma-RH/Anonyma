@@ -3597,7 +3597,17 @@
     "Your tier when each top-up is confirmed sets its rate, with the same fresh balance check as every perk.": "每笔充值确认时你的等级决定它的返还比例；与所有权益一样，需要近期的余额检查。",
     "More back in credits when a friend you invited tops up and the payment is confirmed. Your tier when each top-up is confirmed sets its rate.": "你邀请的好友充值且付款确认后，返还更多积分。每笔充值确认时你的等级决定它的返还比例。",
     "Without a tier": "无等级",
-    "Referral reward reinstated": "推荐奖励已恢复"
+    "Referral reward reinstated": "推荐奖励已恢复",
+    "Early": "抢先",
+    "· Early": "· 抢先",
+    "Early Model Access": "新模型抢先体验",
+    "New models open to NYMA Insiders first.": "新模型优先向 NYMA 资深持有者开放。",
+    "Newly added models, 14 days before everyone else": "新上线的模型，比其他人早 14 天",
+    "For the Insider tier and up, tagged Early": "面向资深持有者及以上等级，并标有“抢先”标签",
+    "New models open to Insiders first": "新模型优先向资深持有者开放",
+    "They're in your model pickers now, tagged Early.": "它们现在已出现在你的模型选择器中，并标有“抢先”标签。",
+    "No new models in early access right now. The next ones show here.": "目前没有新模型处于抢先体验阶段。下一批将显示在这里。",
+    "Open to NYMA Insiders first": "优先向 NYMA 资深持有者开放"
   },
   "patterns": [
     {
@@ -5651,6 +5661,26 @@
     {
       "en": "Bigger library, Early access, Roadmap vote, Referral boost: {0}",
       "zh": "更大的媒体库、抢先体验、路线图投票、推荐加成：{0}"
+    },
+    {
+      "en": "For their first {0} days, newly added models are open to the Insider tier and up, then to everyone.",
+      "zh": "新上线的模型在最初 {0} 天内向资深持有者及以上等级开放，之后向所有人开放。"
+    },
+    {
+      "en": "For their first {0} day, newly added models are open to the Insider tier and up, then to everyone.",
+      "zh": "新上线的模型在最初 {0} 天内向资深持有者及以上等级开放，之后向所有人开放。"
+    },
+    {
+      "en": "Opens to everyone {0}",
+      "zh": "{0} 起向所有人开放"
+    },
+    {
+      "en": "New model: open to NYMA Insiders and up first. Opens to everyone {0}.",
+      "zh": "新模型：优先向 NYMA 资深持有者及以上等级开放。{0} 起向所有人开放。"
+    },
+    {
+      "en": "This model is new and open to NYMA Insiders first. It opens to everyone on {0}. Nothing was sent or charged.",
+      "zh": "此模型为新模型，优先向 NYMA 资深持有者开放。它将于 {0} 向所有人开放。未发送任何内容，也未扣费。"
     }
   ]
 }

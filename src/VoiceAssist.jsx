@@ -8,6 +8,7 @@ import {
   mergeTranscriptionReceipt,
 } from "./voice-session.js";
 import "./voice-assist.css";
+import { earlyModelSuffix } from "./early-models.js";
 const toData = (blob) =>
   new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -225,6 +226,7 @@ export function VoiceAssist({ onText, onClose, refresh, ephemeral, disabled }) {
               {models?.map((m) => (
                 <option value={m.id} key={m.id}>
                   {m.name}
+                  {earlyModelSuffix(m)}
                 </option>
               ))}
             </select>

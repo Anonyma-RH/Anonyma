@@ -36,6 +36,8 @@ import "./mcp.css";
 import V1Media from "./V1Media.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { TwoStepPrompt } from "./TwoStep.jsx";
+import { PasskeyAuth } from "./Passkeys.jsx";
+import { passkeysReleased } from "./passkeys.js";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -865,6 +867,7 @@ const featureIcons = {
   sheets: "sheet",
   blind: "scale",
   deepresearch: "research",
+  passkeys: "fingerprint",
 };
 const launch = {
   id: "mvp",
@@ -1154,6 +1157,9 @@ export function Auth({ register = false }) {
     [recover, setRecover] = useState(false),
     // Two-Step Sign-in: the first step succeeded and a code is needed.
     [twoStep, setTwoStep] = useState(null);
+  // Passkeys: a tab of their own, once released.
+  const passkeysOn = passkeysReleased(config);
+  const methods = ["password", ...(passkeysOn ? ["passkey"] : []), "email", "wallet"];
   async function finish() {
     await refresh();
     done();
@@ -1237,7 +1243,9 @@ export function Auth({ register = false }) {
         </h1>
         <p>
           {register
-            ? "Start with a username and password."
+            ? method === "passkey"
+              ? "Start with a username and a passkey."
+              : "Start with a username and password."
             : "Pick up where your last idea left off."}
         </p>
         {next && (
@@ -1259,7 +1267,7 @@ export function Auth({ register = false }) {
         ) : (
         <>
         <div className="filter-tabs">
-          {["password", "email", "wallet"].map((m) => (
+          {methods.map((m) => (
             <button
               key={m}
               aria-pressed={m === method}
@@ -1275,7 +1283,13 @@ export function Auth({ register = false }) {
             </button>
           ))}
         </div>
-        {method === "wallet" ? (
+        {method === "passkey" && passkeysOn ? (
+          <PasskeyAuth
+            register={register}
+            connected={connected}
+            onSignedIn={finish}
+          />
+        ) : method === "wallet" ? (
           <>
             <Notice>
               Sign a one-time message to prove you control a wallet. No

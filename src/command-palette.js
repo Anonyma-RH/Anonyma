@@ -548,7 +548,11 @@ export function paletteActions(ctx = {}) {
   account("top-up", "Add credits", "credits", ["top up", "buy credits", "deposit", "fund", "balance", "pay"], { icon: "credits" });
   if (on("api")) account("api-keys", "API keys", "keys", ["developer", "api", "keys", "cli", "tokens"], { icon: "key" });
   if (on("twostep"))
-    account("security", "Security", "security", ["two-step", "2fa", "authenticator", "one-time code", "recovery codes", "sign-in"], { icon: "shield" });
+    account("security", "Security", "security", [
+      "two-step", "2fa", "authenticator", "one-time code", "recovery codes", "sign-in",
+      // Passkeys live in Security too, once released.
+      ...(on("passkeys") ? ["passkey", "passkeys", "face id", "fingerprint", "webauthn"] : []),
+    ], { icon: "shield" });
   account("settings", "Account settings", "settings", ["preferences", "sessions", "export", "sign out"], { icon: "settings" });
   add("goto", {
     id: "models",

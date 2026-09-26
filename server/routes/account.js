@@ -39,7 +39,7 @@ import {
 //   conversations and their messages (Symposium runs, branches and
 //   Double-checks are conversations too);
 // - every session and pending sign-in code (and sign-in waiting for a
-//   two-step code);
+//   two-step code, and passkey ceremonies it started);
 // - connected apps' tokens and pending codes;
 // - projects, with their filed chats and pinned files (the chats go with
 //   the conversations above);
@@ -69,6 +69,11 @@ export function eraseAccountContent(db, user) {
   // or delete (closure).
   db.prepare("DELETE FROM two_step_pending WHERE user_id=?").run(id);
   db.prepare("DELETE FROM two_step_reauth WHERE user_id=?").run(id);
+  // Passkeys: ceremonies this account started and sessions' passkey "confirm
+  // it's you" marks. The passkeys themselves are sign-in methods, like the
+  // password: the caller keeps them (Panic Wipe) or deletes them (closure).
+  db.prepare("DELETE FROM passkey_challenges WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM passkey_reauth WHERE user_id=?").run(id);
   db.prepare(
     "DELETE FROM oauth_tokens WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
   ).run(id);
@@ -166,6 +171,15 @@ export function accountRoutes(ctx) {
     return enabled || isReleased(cfg, "twostep")
       ? { twoStep: { enabled } }
       : {};
+  }
+  // Passkeys: each one's name, dates and whether it's synced (once the
+  // update is live, or while any exist). Never the credential id or public
+  // key: they're only useful to ANONYMA's own sign-in check.
+  function passkeysExport(user) {
+    const list = ctx.passkeys
+      .list(user)
+      .map(({ name, created, lastUsed, synced }) => ({ name, created, lastUsed, synced }));
+    return list.length || isReleased(cfg, "passkeys") ? { passkeys: list } : {};
   }
   function bookmarksExport(user) {
     const list = exportBookmarks(db, user);
@@ -498,6 +512,7 @@ export function accountRoutes(ctx) {
       // the update is live, or while any project exists).
       ...projectsExport(req.user.id),
       ...twoStepExport(req.user.id),
+      ...passkeysExport(req.user.id),
       ...balanceAlertExport(req.user.id),
       // Bookmarks: message ids and notes (once the update is live, or while
       // any exist). The messages are already exported with their
@@ -579,6 +594,8 @@ export function accountRoutes(ctx) {
       // Two-Step Sign-in: the sealed secret and the recovery code hashes.
       db.prepare("DELETE FROM two_step_recovery WHERE user_id=?").run(req.user.id);
       db.prepare("DELETE FROM two_step WHERE user_id=?").run(req.user.id);
+      // Passkeys: every credential and its public key.
+      db.prepare("DELETE FROM passkeys WHERE user_id=?").run(req.user.id);
       forgetAlert(db, req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.
       db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);

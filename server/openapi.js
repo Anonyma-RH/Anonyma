@@ -649,6 +649,103 @@ route("post", "/api/account/two-step/disable", "Turn off two-step sign-in", {
   description:
     "Needs a current authenticator code or an unused recovery code. Deletes the secret and recovery codes and signs out every other session. Wrong codes count towards the account's lock (429 two_step_locked).",
 });
+// Passkeys (update "passkeys"). WebAuthn with user verification required,
+// resident (discoverable) credentials and "none" attestation. The RP ID is
+// APP_ORIGIN's host and responses must come from exactly APP_ORIGIN.
+const webauthnOptions = {
+  type: "object",
+  description: "WebAuthn options for navigator.credentials (JSON form, base64url fields). The challenge is single-use and expires after 5 minutes.",
+};
+const webauthnResponse = {
+  type: "object",
+  description: "The browser's PublicKeyCredential as JSON (base64url fields), e.g. from @simplewebauthn/browser",
+};
+const passkeyEntry = object({
+  id: string,
+  name: string,
+  created: integer,
+  lastUsed: { type: ["integer", "null"] },
+  synced: { ...bool, description: "Backed up to a passkey manager (multi-device)" },
+});
+const passkeyStatus = {
+  data: array(passkeyEntry),
+  max: integer,
+  available: { ...bool, description: "False when APP_ORIGIN is an IP address or plain HTTP other than localhost" },
+  methods: object({ password: bool, email: bool, wallet: bool, passkeys: integer }),
+  reauthMethods: array({ enum: ["password", "email", "wallet", "passkey"] }),
+  reauthUntil: { type: ["integer", "null"] },
+};
+const passkeyReauth =
+  " Needs this session to have confirmed it's you within the last 10 minutes (POST /api/account/two-step/reauth, or POST /api/account/passkeys/reauth), otherwise 403 passkey_reauth_required.";
+const passkeyCommon =
+  " 400 passkey_invalid_response for a malformed response; 400 passkey_expired for an unknown, expired or already used challenge (every challenge is deleted when answered); 401 passkey_invalid when the origin, RP ID, challenge, signature or user verification is wrong; 503 passkeys_unavailable when APP_ORIGIN can't be a WebAuthn RP.";
+route("post", "/api/auth/passkey/options", "Start signing in with a passkey", {
+  auth: null,
+  body: object(),
+  response: object({ options: webauthnOptions }),
+  description:
+    "Usernameless: no allowCredentials, so the browser offers any passkey for this site. Sets a short-lived HttpOnly, SameSite=Strict pending cookie (path /api/auth/passkey) that the answer must come back with. 30 per 15 minutes per IP.",
+});
+route("post", "/api/auth/passkey/verify", "Finish signing in with a passkey", {
+  auth: null,
+  body: object({ response: webauthnResponse }, ["response"]),
+  response: object({ user: ref("User"), passkey: object({ name: string }) }),
+  description:
+    "Sets the HttpOnly session cookie. User verification is required, so this counts as both steps of Two-Step Sign-in: no code is asked. The user handle must match the passkey's account, and the sign counter must go up (0 stays allowed for synced passkeys; 401 passkey_counter otherwise). 401 passkey_unknown for a passkey this service doesn't know. Five failed answers from one passkey within 15 minutes lock it for 15 minutes (429 passkey_locked with Retry-After). 20 per 15 minutes per IP." + passkeyCommon,
+});
+route("post", "/api/auth/passkey/signup/options", "Start creating an account with a passkey", {
+  auth: null,
+  body: object({ username: { ...string, pattern: "^\\w[\\w.-]{2,31}$" } }, ["username"]),
+  response: object({ options: webauthnOptions }),
+  description:
+    "No password and no email. The authenticator stores the username and a random user handle, never an email or wallet address. 409 when the username is taken. Sets the pending cookie. 20 an hour per IP.",
+});
+route("post", "/api/auth/passkey/signup/verify", "Finish creating an account with a passkey", {
+  auth: null,
+  body: object({ response: webauthnResponse, name: { ...string, maxLength: 40 } }, ["response"]),
+  status: 201,
+  response: object({ user: ref("User"), passkey: object({ name: string }) }),
+  description:
+    "Creates the account with the passkey as its only sign-in method and sets the session cookie. 409 when the username was taken meanwhile. Shares the password sign-up's 10 accounts an hour per IP." + passkeyCommon,
+});
+route("get", "/api/account/passkeys", "Your passkeys", {
+  response: object(passkeyStatus),
+  description: "Names, dates and whether each is synced; never credential ids or public keys.",
+});
+route("post", "/api/account/passkeys/reauth/options", "Start confirming it's you with a passkey", {
+  body: object(),
+  response: object({ options: webauthnOptions }),
+  description: "Offers only this account's passkeys; bound to this session. 400 passkey_none without any. 10 per 15 minutes.",
+});
+route("post", "/api/account/passkeys/reauth", "Confirm it's you with a passkey", {
+  body: object({ response: webauthnResponse }, ["response"]),
+  response: object({ reauthUntil: integer }),
+  description:
+    "Marks this session, and only this session, as confirmed for 10 minutes, for adding and removing passkeys. 10 per 15 minutes." + passkeyCommon,
+});
+route("post", "/api/account/passkeys/options", "Start adding a passkey", {
+  body: object(),
+  response: object({ options: webauthnOptions }),
+  description:
+    "Excludes the account's existing passkeys. 409 passkey_limit at 10. 10 an hour." + passkeyReauth,
+});
+route("post", "/api/account/passkeys", "Add a passkey", {
+  body: object({ response: webauthnResponse, name: { ...string, maxLength: 40 } }, ["response"]),
+  status: 201,
+  response: object({ id: string, ...passkeyStatus }),
+  description:
+    "Stores the credential id, public key, sign counter and name. 400 passkey_name; 400 passkey_not_discoverable when the browser reports a key that can't sign in on its own; 409 passkey_exists." + passkeyCommon + passkeyReauth,
+});
+route("patch", "/api/account/passkeys/{id}", "Rename a passkey", {
+  body: object({ name: { ...string, maxLength: 40 } }, ["name"]),
+  response: object(passkeyStatus),
+  description: "1 to 40 characters. 404 passkey_not_found.",
+});
+route("delete", "/api/account/passkeys/{id}", "Remove a passkey", {
+  response: object(passkeyStatus),
+  description:
+    "409 passkey_last_method when it's the account's only way to sign in (no password, email or wallet, and no other passkey). The passkey stays on the device until removed there. 404 passkey_not_found." + passkeyReauth,
+});
 for (const path of ["/api/auth/logout", "/api/auth/logout-all"])
   route(
     "post",

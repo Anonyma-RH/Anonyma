@@ -45,6 +45,8 @@ import { sealedRoutes } from "./routes/sealed.js";
 import { accountRoutes } from "./routes/account.js";
 import { wipeRoutes } from "./routes/wipe.js";
 import { twoStepRoutes } from "./routes/two-step.js";
+import { passkeyRoutes } from "./routes/passkeys.js";
+import { createPasskeys } from "./passkeys.js";
 import { allowanceRoutes } from "./routes/allowances.js";
 import { apiBoostRoutes } from "./routes/api-boost.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
@@ -152,11 +154,15 @@ export function createApp(overrides = {}) {
   // Routines run from the worker, through runChat (registered above).
   ctx.routines = routineRoutes(ctx);
   const worker = createWorker(ctx);
+  // Passkeys' store, for the account export (routes are registered below).
+  ctx.passkeys = createPasskeys(db, cfg);
   accountRoutes(ctx);
   // Panic Wipe: erases the account's content, keeps its credits.
   wipeRoutes(ctx);
   // Two-Step Sign-in's settings (its sign-in step is in authRoutes).
   twoStepRoutes(ctx);
+  // Passkeys: sign-in, passwordless sign-up and Account → Security's list.
+  passkeyRoutes(ctx);
   allowanceRoutes(ctx);
   // API Boost: the account's own API rate limit (the limits are applied by
   // the /v1 and /mcp routes, server/api-boost.js).

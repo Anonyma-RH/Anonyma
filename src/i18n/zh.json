@@ -4069,7 +4069,66 @@
     "Deep research stopped.": "深度研究已停止。",
     "The connection ended before the report arrived.": "报告送达前连接已中断。",
     "Only this question is sent, not earlier messages.": "只发送这个问题，不发送之前的消息。",
-    "cut short": "已截断"
+    "cut short": "已截断",
+    "Passkeys": "通行密钥",
+    "Passkey": "通行密钥",
+    "Sign in with Face ID or your fingerprint.": "用面容 ID 或指纹登录。",
+    "No password to leak, no email needed": "没有可泄露的密码，也无需邮箱",
+    "Counts as both steps of two-step sign-in": "一次即满足两步登录的两个步骤",
+    "Your device keeps the private key; we store only the public one": "私钥留在你的设备上；我们只保存公钥",
+    "Start with a username and a passkey.": "从用户名和通行密钥开始。",
+    "Pick a username. Your device’s Face ID, fingerprint or PIN is your sign-in: no password, no email.": "选一个用户名。你设备上的面容 ID、指纹或 PIN 码就是你的登录方式：无需密码，也无需邮箱。",
+    "Use Face ID, your fingerprint or your device’s PIN. No username or password to type.": "使用面容 ID、指纹或设备 PIN 码登录，无需输入用户名或密码。",
+    "Create an account with a passkey": "用通行密钥注册",
+    "Sign in with a passkey": "用通行密钥登录",
+    "Waiting for your device…": "正在等待你的设备……",
+    "Your passkey is saved on this device or in your passkey manager. Keep it: without a password or email, it’s how you get back in.": "你的通行密钥会保存在这台设备或你的密码管理器中。请妥善保留：没有密码和邮箱时，它就是你重新登录的方式。",
+    "Your face or fingerprint never leaves your device. ANONYMA only checks a signature.": "你的面容或指纹不会离开你的设备。ANONYMA 只验证一个签名。",
+    "This browser can’t use passkeys. Try a current browser, or your phone.": "此浏览器无法使用通行密钥。请换用较新的浏览器，或使用你的手机。",
+    "Passkeys.": "通行密钥。",
+    "Sign in with Face ID, your fingerprint or your device’s PIN. Your device keeps the private key and ANONYMA stores only the public one, so there’s no password to leak and no email needed.": "使用面容 ID、指纹或设备 PIN 码登录。私钥留在你的设备上，ANONYMA 只保存公钥，因此没有可泄露的密码，也无需邮箱。",
+    "A passkey sign-in counts as both steps of two-step sign-in: your device already checked it’s you, so ANONYMA doesn’t ask for an authenticator code.": "通行密钥登录同时满足两步登录的两个步骤：你的设备已经确认是你本人，因此 ANONYMA 不会再要求输入身份验证器验证码。",
+    "Adding or removing one asks you to confirm it’s you first. Your data export lists each passkey’s name and dates, never its keys.": "添加或移除通行密钥前，需要先确认是你本人。数据导出只列出每个通行密钥的名称和日期，绝不包含其密钥。",
+    "No passkeys yet. Add one and sign in with Face ID, your fingerprint or your device’s PIN.": "还没有通行密钥。添加一个，即可用面容 ID、指纹或设备 PIN 码登录。",
+    "This passkey is your only way to sign in, so it can’t be removed. Add another passkey, link an email or link a wallet first.": "这个通行密钥是你唯一的登录方式，因此无法移除。请先添加另一个通行密钥、关联邮箱或关联钱包。",
+    "Sign in to a real account to add a passkey.": "登录真实账户后，即可添加通行密钥。",
+    "Passkeys need this site on a domain name over HTTPS.": "通行密钥要求本站使用域名并通过 HTTPS 访问。",
+    "Name this passkey": "为这个通行密钥命名",
+    "Passkey name": "通行密钥名称",
+    "e.g. iPhone": "例如 iPhone",
+    "Add a passkey": "添加通行密钥",
+    "Synced": "已同步",
+    "This device only": "仅限此设备",
+    "Rename": "重命名",
+    "Remove passkey": "移除通行密钥",
+    "You won’t be able to sign in with this passkey. It stays saved on the device until you delete it there too.": "你将无法再用这个通行密钥登录。在你从设备上删除它之前，它仍会保存在设备上。",
+    "Passkey added. Next time, sign in with it: no password needed.": "通行密钥已添加。下次直接用它登录，无需密码。",
+    "Passkey removed.": "通行密钥已移除。",
+    "Confirmed. Now add your passkey.": "已确认。现在添加你的通行密钥。",
+    "Adding or removing a passkey needs a fresh confirmation from this session.": "添加或移除通行密钥，需要在当前会话中重新确认是你本人。",
+    "Use a passkey": "使用通行密钥",
+    "This account signs in only with passkeys, which already check it’s you twice. Two-step sign-in applies once you link an email or a wallet.": "此账户只用通行密钥登录，通行密钥本身已经两次确认是你本人。关联邮箱或钱包后，两步登录才会生效。",
+    "The passkey prompt was closed or timed out. Nothing changed.": "通行密钥窗口已关闭或超时，没有任何更改。",
+    "This device already has a passkey for this account.": "这台设备上已有此账户的通行密钥。",
+    "This authenticator can’t check it’s you or store a passkey. Try your phone or computer’s built-in passkeys.": "此身份验证器无法确认是你本人，或无法存储通行密钥。请改用手机或电脑内置的通行密钥。",
+    "Your browser couldn’t use a passkey here. Try again, or sign in another way.": "你的浏览器无法在此使用通行密钥。请重试，或改用其他方式登录。",
+    "That passkey couldn’t be verified. Try again.": "无法验证该通行密钥。请重试。",
+    "This passkey request expired or was already used. Try again.": "此通行密钥请求已过期或已被使用。请重试。",
+    "This passkey isn’t registered with ANONYMA. It may have been removed.": "此通行密钥未在 ANONYMA 注册，可能已被移除。",
+    "This passkey’s use count went backwards, which can mean it was copied. Sign in another way, then remove it and add it again.": "此通行密钥的使用计数出现倒退，这可能意味着它被复制过。请改用其他方式登录，然后移除它并重新添加。",
+    "This passkey is locked after too many failed tries. Try again in 1 minute.": "失败次数过多，此通行密钥已被锁定。请在 1 分钟后重试。",
+    "That passkey response wasn’t readable. Try again.": "无法读取该通行密钥响应。请重试。",
+    "This authenticator couldn’t save a passkey that signs in on its own. Try your phone or computer’s built-in passkeys.": "此身份验证器无法保存可独立登录的通行密钥。请改用手机或电脑内置的通行密钥。",
+    "This passkey is already added.": "此通行密钥已经添加过了。",
+    "Name your passkey in 1 to 40 characters.": "请用 1 到 40 个字符为通行密钥命名。",
+    "Passkey not found.": "找不到该通行密钥。",
+    "This passkey is your only way to sign in. Add another passkey, link an email or link a wallet first.": "这个通行密钥是你唯一的登录方式。请先添加另一个通行密钥、关联邮箱或关联钱包。",
+    "Confirm it’s you first. Adding or removing a passkey needs your password, a passkey (or a fresh email code or wallet signature) from the last 10 minutes.": "请先确认是你本人。添加或移除通行密钥，需要你在最近 10 分钟内输入密码或使用通行密钥（或提供新的邮箱验证码、钱包签名）。",
+    "This account has no passkeys yet.": "此账户还没有通行密钥。",
+    "Passkeys need this service on a domain name over HTTPS.": "通行密钥要求本服务使用域名并通过 HTTPS 访问。",
+    "Your passkeys, so you can still sign in": "你的通行密钥，确保你仍能登录",
+    "Passkeys: each passkey’s public key, credential id, sign counter, name, dates and whether it’s synced, plus a random account handle the passkey stores instead of your username, email or wallet. Your face, fingerprint and PIN never leave your device. A sign-in or setup waiting for your device lasts 5 minutes. Your export lists each passkey’s name and dates, not its keys. Removing a passkey or closing your account deletes it; Panic Wipe keeps your passkeys so you can still sign in.": "通行密钥：每个通行密钥的公钥、凭据 ID、签名计数器、名称、日期以及是否已同步，外加一个随机账户标识——通行密钥里存的是它，而不是你的用户名、邮箱或钱包。你的面容、指纹和 PIN 码不会离开你的设备。等待设备响应的登录或设置会保留 5 分钟。导出内容会列出每个通行密钥的名称和日期，但不包含其密钥。移除通行密钥或关闭账户会将其删除；紧急清除会保留你的通行密钥，确保你仍能登录。",
+    "The export also lists your passkeys: each one’s name, when it was added and last used, and whether it’s synced. Public keys and credential ids are left out: only ANONYMA’s sign-in check uses them.": "导出内容还会列出你的通行密钥：每个通行密钥的名称、添加时间、上次使用时间以及是否已同步。公钥和凭据 ID 不包含在内：只有 ANONYMA 的登录校验会用到它们。"
   },
   "patterns": [
     {
@@ -6443,6 +6502,34 @@
     {
       "en": "Stopped. Only finished steps were charged: {0} credits.",
       "zh": "已停止。只对完成的步骤计费：{0} 积分。"
+    },
+    {
+      "en": "Added {0}",
+      "zh": "添加于 {0}"
+    },
+    {
+      "en": "{0} of {1} passkeys",
+      "zh": "已添加 {0} 个通行密钥，最多 {1} 个"
+    },
+    {
+      "en": "You have {0} of {1} passkeys. Remove one to add another.",
+      "zh": "你已添加 {0} 个通行密钥，上限为 {1} 个。移除一个后才能再添加。"
+    },
+    {
+      "en": "This passkey is locked after too many failed tries. Try again in {0} minutes.",
+      "zh": "失败次数过多，此通行密钥已被锁定。请在 {0} 分钟后重试。"
+    },
+    {
+      "en": "You can add up to {0} passkeys. Remove one to add another.",
+      "zh": "你最多可以添加 {0} 个通行密钥。移除一个后才能再添加。"
+    },
+    {
+      "en": "Added {0} · Last used {1}",
+      "zh": "添加于 {0} · 上次使用 {1}"
+    },
+    {
+      "en": "Added {0} · Not used yet",
+      "zh": "添加于 {0} · 尚未使用"
     }
   ]
 }

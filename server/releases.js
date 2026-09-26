@@ -828,7 +828,7 @@ export const UPDATES = [
     // an account made with a passkey has no other way to sign in. Needs
     // APP_ORIGIN on a domain over HTTPS (the WebAuthn RP ID is its host);
     // server/passkeys.js passkeysAvailable.
-    released: false,
+    released: true,
   },
   {
     id: "privacyscreen",

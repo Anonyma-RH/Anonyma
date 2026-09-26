@@ -589,7 +589,7 @@ export const UPDATES = [
       "A banner in the workspace with a Top up button",
       "An optional browser notification while ANONYMA is open",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "chatexport",

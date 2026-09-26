@@ -20,6 +20,8 @@ export default function DataControls() {
   const bookmarks = !!config && isReleased(config, "bookmarks");
   // And Pay with NYMA.
   const nyma = !!config && isReleased(config, "paynyma");
+  // Passkeys: listed once that update is live.
+  const passkeys = !!config && isReleased(config, "passkeys");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -129,6 +131,18 @@ export default function DataControls() {
             your account deletes the key and codes; Panic Wipe leaves it on.
           </li>
         )}
+        {passkeys && (
+          <li>
+            Passkeys: each passkey’s public key, credential id, sign counter,
+            name, dates and whether it’s synced, plus a random account handle
+            the passkey stores instead of your username, email or wallet. Your
+            face, fingerprint and PIN never leave your device. A sign-in or
+            setup waiting for your device lasts 5 minutes. Your export lists
+            each passkey’s name and dates, not its keys. Removing a passkey or
+            closing your account deletes it; Panic Wipe keeps your passkeys so
+            you can still sign in.
+          </li>
+        )}
         {alerts && (
           <li>
             Low-balance alerts: your alert level and whether you asked for
@@ -210,6 +224,13 @@ export default function DataControls() {
         </p>
       )}
       {nyma && <p>The export also includes your Pay with NYMA quotes.</p>}
+      {passkeys && (
+        <p>
+          The export also lists your passkeys: each one’s name, when it was
+          added and last used, and whether it’s synced. Public keys and
+          credential ids are left out: only ANONYMA’s sign-in check uses them.
+        </p>
+      )}
       {shares && (
         <p>
           The export also lists your live share links with their addresses,

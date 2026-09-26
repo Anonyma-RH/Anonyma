@@ -13,6 +13,7 @@ import { nymaPaymentInfo } from "./nyma.js";
 import { modelReleased, releaseInfo, isReleased } from "../releases.js";
 import { isPrivateModel } from "../private-mode.js";
 import { sealedLive } from "../sealed.js";
+import { passkeysLive } from "../passkeys.js";
 import { withMemory } from "../../src/memory.js";
 import { trainingFields, liveIds } from "../training.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
@@ -62,6 +63,8 @@ export function catalogRoutes(ctx) {
         // Sealed Mode: released, with its billing mode configured.
         sealed: sealedLive(cfg),
         nymaPayments: !!nymaPaymentInfo(cfg),
+        // Passkeys: released, on a domain the browser accepts as an RP ID.
+        passkeys: passkeysLive(cfg),
       },
       walletPayments: walletPaymentInfo(cfg),
       // Pay with NYMA's public settings, once it's released (null before).

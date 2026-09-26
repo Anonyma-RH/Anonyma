@@ -47,6 +47,8 @@ import { ShareLinksManager } from "./ShareLinks.jsx";
 import { PanicWipe } from "./PanicWipe.jsx";
 import { TwoStepSettings } from "./TwoStep.jsx";
 import { twoStepReleased } from "./two-step.js";
+import { PasskeySettings } from "./Passkeys.jsx";
+import { passkeysReleased } from "./passkeys.js";
 import { holdersReleased } from "./holders.js";
 import CommandPalette, { PaletteButton, usePalette } from "./CommandPalette.jsx";
 import { paletteReleased, paletteActions, recentStoreKey } from "./command-palette.js";
@@ -289,8 +291,10 @@ export default function Account() {
   const limitsOn = isReleased(config, "limits");
   // Usage Insights & Export shows only once it's released.
   const insightsOn = isReleased(config, "insights");
-  // Security (Two-Step Sign-in) shows only once it's released.
+  // Security (Two-Step Sign-in) shows only once it's released; Passkeys
+  // join it once they are too (their "confirm it's you" is Two-Step's).
   const securityOn = twoStepReleased(config);
+  const passkeysOn = securityOn && passkeysReleased(config);
   // Low-Balance Alerts: its panel, and the optional notification's watch.
   const alertsLive = alertsReleased(config);
   const tabs = [
@@ -734,7 +738,12 @@ export default function Account() {
             <ComingSoon update={releaseUpdate(config, "twostep")} />
           )}
           {section === "security" && securityOn && (demo || user) && (
-            <TwoStepSettings user={user} demo={demo} config={config} />
+            <>
+              {passkeysOn && (
+                <PasskeySettings user={user} demo={demo} config={config} />
+              )}
+              <TwoStepSettings user={user} demo={demo} config={config} />
+            </>
           )}
           {section === "usage" && !insightsOn && (
             <ComingSoon update={releaseUpdate(config, "insights")} />

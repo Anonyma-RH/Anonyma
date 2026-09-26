@@ -646,6 +646,21 @@ export const UPDATES = [
     // Needs WALLET_PAYMENT_ADDRESS on chain 4663 (server/routes/nyma.js).
     released: true,
   },
+  {
+    id: "passkeys",
+    title: "Passkeys",
+    tagline: "Sign in with Face ID or your fingerprint.",
+    points: [
+      "No password to leak, no email needed",
+      "Counts as both steps of two-step sign-in",
+      "Your device keeps the private key; we store only the public one",
+    ],
+    // Every route is gated (featuresFor). Once released, keep it released:
+    // an account made with a passkey has no other way to sign in. Needs
+    // APP_ORIGIN on a domain over HTTPS (the WebAuthn RP ID is its host);
+    // server/passkeys.js passkeysAvailable.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -781,6 +796,12 @@ export function featuresFor(req) {
   if (p === "/api/sealed" || p.startsWith("/api/sealed/")) return ["sealed"];
   // Panic Wipe: the one route that erases an account's content at once.
   if (/^\/api\/account\/wipe\/?$/.test(p)) return ["wipe"];
+  // Passkeys: signing in and signing up with one, and Account → Security's
+  // passkeys, whose "confirm it's you" also takes Two-Step Sign-in's.
+  if (p === "/api/auth/passkey" || p.startsWith("/api/auth/passkey/"))
+    return ["passkeys"];
+  if (p === "/api/account/passkeys" || p.startsWith("/api/account/passkeys/"))
+    return ["passkeys", "twostep"];
   // Two-Step Sign-in's settings. The sign-in step itself, /api/auth/two-step,
   // is never gated (see the UPDATES entry).
   if (p === "/api/account/two-step" || p.startsWith("/api/account/two-step/"))

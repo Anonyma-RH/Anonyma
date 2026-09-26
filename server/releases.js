@@ -842,7 +842,7 @@ export const UPDATES = [
     // Browser only (src/privacy-screen.js), apart from the idle lock's
     // unlock check (server/routes/unlock.js), which re-verifies the account's
     // password, email code or wallet signature without touching the session.
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

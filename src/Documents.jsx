@@ -7,6 +7,8 @@ import { unveil } from "./veil.js";
 import { CleanNote } from "./CleanUploads.jsx";
 import { ShieldChip, SentAsDataTag } from "./Shield.jsx";
 import { pdfHiddenText } from "./shield.js";
+import { pdfText } from "./pdf-text.js";
+import { LinkCard } from "./LinkReader.jsx";
 import {
   MAX_DOCUMENTS,
   MAX_FILE_BYTES,
@@ -19,47 +21,11 @@ import {
 } from "./documents.js";
 import "./documents.css";
 
-// pdfjs-dist is only fetched once someone actually attaches a PDF, so it
-// never lands in the main bundle. The worker URL is resolved the Vite way:
-// a `?url` import hands back the hashed asset path to assign as workerSrc.
-async function loadPdfjs() {
-  const [pdfjs, workerUrl] = await Promise.all([
-    import("pdfjs-dist"),
-    import("pdfjs-dist/build/pdf.worker.min.mjs?url"),
-  ]);
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl.default;
-  return pdfjs;
-}
+// PDF text extraction lives in pdf-text.js (shared with Link Reader), which
+// fetches pdfjs-dist only once a PDF is actually attached. With Injection
+// Shield on, it also lists text too small to see or off the page.
 async function extractPdfText(file, withDetails = false, withHidden = false) {
-  const pdfjs = await loadPdfjs();
-  const data = await file.arrayBuffer();
-  const doc = await pdfjs.getDocument({ data }).promise;
-  // Clean Uploads: only the text below is sent, so the PDF's author,
-  // software and dates never leave; the chip says which were there.
-  let hidden = null;
-  if (withDetails) {
-    try {
-      const { pdfDetails } = await import("./clean-uploads.js");
-      hidden = pdfDetails(await doc.getMetadata());
-    } catch {
-      hidden = null;
-    }
-  }
-  const pages = [],
-    hiddenText = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    // Injection Shield: text too small to see or off the page.
-    if (withHidden) hiddenText.push(...pdfHiddenText(content.items, page.view, i));
-    pages.push(
-      content.items
-        .map((item) => item.str || "")
-        .join(" ")
-        .trim(),
-    );
-  }
-  return { text: pages.join("\n\n").trim(), pages: doc.numPages, hidden, hiddenText };
+  return pdfText(await file.arrayBuffer(), withDetails, withHidden ? pdfHiddenText : null);
 }
 
 // One document, attached in the composer or recovered from a saved message.
@@ -273,24 +239,24 @@ export function DocumentChips({ documents, setDocuments, prompt = "", shield = n
   const budget = fitDocuments(prompt, documents, undefined, shield?.asData ? { asData: true } : {});
   return (
     <div className="document-list">
-      {documents.map((doc, i) => (
-        <DocumentChip
-          key={doc.id}
-          doc={doc}
-          onRemove={() =>
-            setDocuments((prev) => prev.filter((_, j) => j !== i))
-          }
-          shield={
-            shield?.results?.get(doc.id)
-              ? {
-                  result: shield.results.get(doc.id),
-                  asData: shield.asData,
-                  onOpen: () => shield.onOpen(doc.id),
-                }
-              : null
-          }
-        />
-      ))}
+      {documents.map((doc, i) => {
+        const remove = () => setDocuments((prev) => prev.filter((_, j) => j !== i));
+        const scan = shield?.results?.get(doc.id);
+        const shieldFor = scan
+          ? { result: scan, asData: shield.asData, onOpen: () => shield.onOpen(doc.id) }
+          : null;
+        // A page read by Link Reader (src/LinkReader.jsx) shows as its card;
+        // its text is external content, so Injection Shield scans it too.
+        return doc.source === "link" ? (
+          <LinkCard key={doc.id} doc={doc} onRemove={remove}>
+            {shieldFor && (
+              <ShieldChip result={shieldFor.result} asData={shieldFor.asData} onOpen={shieldFor.onOpen} />
+            )}
+          </LinkCard>
+        ) : (
+          <DocumentChip key={doc.id} doc={doc} onRemove={remove} shield={shieldFor} />
+        );
+      })}
       {budget.truncated && (
         <Notice>
           Attached documents total {formatChars(budget.totalChars)}; only the
@@ -306,19 +272,27 @@ export function DocumentChips({ documents, setDocuments, prompt = "", shield = n
 // With Veil on, the saved text holds [TAG_n] placeholders; veilMap (this
 // browser's tag -> value map) restores the real values on screen only.
 // `asData`: they went with Injection Shield's "treat as data" notice.
-export function MessageDocuments({ documents, veilMap, asData = false }) {
+// A page read by Link Reader shows as its card when `linkCards` is on (the
+// update is released); Veil never masked its text, so there's nothing to
+// restore in it.
+export function MessageDocuments({ documents, veilMap, asData = false, linkCards = false }) {
   if (!documents?.length) return null;
   const shown = veilMap
     ? documents.map((doc) => {
+        if (linkCards && doc.source === "link") return doc;
         const text = unveil(doc.text, veilMap);
         return { ...doc, name: unveil(doc.name, veilMap), text, chars: text.length };
       })
     : documents;
   return (
     <div className="document-list document-list-history">
-      {shown.map((doc, i) => (
-        <DocumentChip key={i} doc={doc} />
-      ))}
+      {shown.map((doc, i) =>
+        linkCards && doc.source === "link" ? (
+          <LinkCard key={i} doc={doc} />
+        ) : (
+          <DocumentChip key={i} doc={doc} />
+        ),
+      )}
       {asData && <SentAsDataTag />}
     </div>
   );

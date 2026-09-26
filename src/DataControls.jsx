@@ -22,6 +22,9 @@ export default function DataControls() {
   const nyma = !!config && isReleased(config, "paynyma");
   // And Redact Before You Send.
   const redact = !!config && isReleased(config, "redact");
+  // And Link Reader, which needs Documents.
+  const linkReader =
+    !!config && isReleased(config, "linkreader") && isReleased(config, "documents");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -160,6 +163,15 @@ export default function DataControls() {
             account deletes them. A credited NYMA top-up stays as a deposit
             record with its transaction hash, sending wallet and rate, like any
             other payment.
+          </li>
+        )}
+        {linkReader && (
+          <li>
+            Link Reader: a page you ask it to read is fetched by ANONYMA’s
+            server with no cookies and no referrer, so the site sees our server,
+            not you. The link and the page are never logged or stored on their
+            own; the page’s text is kept only inside your message, like an
+            attached document, when the chat is saved.
           </li>
         )}
         <li>

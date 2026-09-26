@@ -860,6 +860,7 @@ const featureIcons = {
   diagrams: "sigma",
   shield: "shield",
   redact: "redact",
+  linkreader: "link",
 };
 const launch = {
   id: "mvp",

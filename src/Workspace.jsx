@@ -146,6 +146,7 @@ import { buildChatRequest, cloneVeilState, quoteBody, REPLY_BUDGET } from "./est
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
 import CostCompare from "./CostCompare.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
+import { LinkReaderChips } from "./LinkReader.jsx";
 import { scanSecrets } from "./seed-guard.js";
 import ModelFinder from "./ModelFinder.jsx";
 import { STORAGE_KEY as MODEL_CHOICES, loadChoices, resolveChoice, withChoice, requestNeedsVision } from "./model-finder.js";
@@ -491,6 +492,11 @@ export default function Workspace() {
   const sealedAvailable =
     !demo && !!user && sealedLiveFor(config) && ["chat", "code"].includes(mode);
   const sealedOn = sealedAvailable && sealed;
+  // Link Reader (src/LinkReader.jsx): "Read this page" for a link in the
+  // prompt, in every text mode, once it and Documents (whose attach format
+  // it uses) are released. Signed in only: the server does the fetching.
+  const linkCardsLive = isReleased(config, "linkreader") && isReleased(config, "documents");
+  const linkLive = !demo && !!user && textMode && linkCardsLive;
   const sealedModels = useMemo(
     () => models.filter((m) => m.type === "chat" && m.sealed),
     [models],
@@ -1491,7 +1497,13 @@ export default function Workspace() {
   // browser. A find blocks Send, and the estimate too, since a quote posts
   // the same text, until the user removes it or confirms "Send anyway".
   const seedLive = seedGuardLive(config) && !demo;
-  const documentTexts = useMemo(() => sentDocuments.map((d) => d.text || ""), [sentDocuments]);
+  // A page read by Link Reader is public text our server fetched, not the
+  // user's own, so it isn't scanned (the server skips it too). The rest are
+  // the documents as they'll be sent (after Injection Shield's clean-up).
+  const documentTexts = useMemo(
+    () => sentDocuments.filter((d) => d.source !== "link").map((d) => d.text || ""),
+    [sentDocuments],
+  );
   const promptSeed = useSeedScan(seedLive, sendText);
   const documentSeed = useSeedScan(seedLive && textMode, documentTexts);
   const instructionsSeed = useSeedScan(
@@ -2906,6 +2918,7 @@ export default function Workspace() {
                                 documents={parsed.documents}
                                 veilMap={veilStateRef.current.map}
                                 asData={shieldReleased(config) && parsed.asData}
+                                linkCards={linkCardsLive}
                               />
                             )}
                             {m.images?.map((url, j) => (
@@ -3350,6 +3363,17 @@ export default function Workspace() {
                           ? { results: shieldScans, asData: sendAsData, onOpen: (id) => setShieldOpen({ doc: id }) }
                           : null
                       }
+                    />
+                  )}
+                  {linkLive && (
+                    <LinkReaderChips
+                      prompt={prompt}
+                      documents={documents}
+                      setDocuments={setDocuments}
+                      disabled={busy}
+                      sealed={sealedOn}
+                      shieldHidden={shieldOn}
+                      onError={setError}
                     />
                   )}
                   <textarea

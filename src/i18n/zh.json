@@ -3751,7 +3751,38 @@
     "The redacted image is over 1.5 MiB. Crop it smaller, then apply again.": "打码后的图片超过 1.5 MiB。请裁剪得更小，然后再次应用。",
     "The redacted image couldn't be checked.": "无法检查打码后的图片。",
     "Metadata couldn't be removed from an image. Redact it to send a redrawn copy, tick Keep original to send it as it is, or remove it.": "有一张图片的元数据无法移除。你可以为它打码以发送重新绘制的副本，勾选“保留原文件”按原样发送，或将其移除。",
-    "Redact Before You Send: the boxes you draw on an image are applied in your browser. Only the redacted copy is sent, and only it is kept in a saved chat. The original isn't uploaded, and ANONYMA isn't told that an image was redacted.": "发送前打码：你在图片上画的框会在你的浏览器中应用。只有打码后的副本会被发送，已保存的会话中也只保留这份副本。原图不会上传，ANONYMA 也不会得知图片经过打码。"
+    "Redact Before You Send: the boxes you draw on an image are applied in your browser. Only the redacted copy is sent, and only it is kept in a saved chat. The original isn't uploaded, and ANONYMA isn't told that an image was redacted.": "发送前打码：你在图片上画的框会在你的浏览器中应用。只有打码后的副本会被发送，已保存的会话中也只保留这份副本。原图不会上传，ANONYMA 也不会得知图片经过打码。",
+    "Link Reader": "链接阅读器",
+    "Paste a link and ask about the page. The site sees our server, not you.": "粘贴链接，就网页内容提问。网站看到的是我们的服务器，而不是你。",
+    "Read this page on any link in your message": "消息里的任何链接，都能一键“读取此页”",
+    "Fetched by our server: no cookies, no referrer, never your IP": "由我们的服务器抓取：不带 Cookie，不带来源页，绝不暴露你的 IP",
+    "The page goes with your question; reading it is free": "网页内容随你的问题一起发送；读取本身免费",
+    "Read this page": "读取此页",
+    "Reading…": "读取中……",
+    "Link Reader is off in Sealed Mode": "密封模式下不可使用链接阅读器",
+    "Link Reader fetches pages through our server, which would see the link, so it's off in Sealed Mode.": "链接阅读器通过我们的服务器抓取网页，服务器会看到链接，因此在密封模式下关闭。",
+    "ANONYMA's server fetches the page, so the site sees our server, not you. Free.": "由 ANONYMA 的服务器抓取网页，网站看到的是我们的服务器，而不是你。免费。",
+    "Fetched by ANONYMA, not your browser": "由 ANONYMA 抓取，而非你的浏览器",
+    "Only a little text came back. Pages that need JavaScript to show their text can't be read.": "只取回了很少的文字。需要 JavaScript 才能显示内容的网页无法读取。",
+    "View text": "查看文字",
+    "Hide text": "隐藏文字",
+    "Remove this page": "移除此网页",
+    "Paste a full link that starts with http or https.": "请粘贴以 http 或 https 开头的完整链接。",
+    "Links with a username or password in them can't be read.": "含有用户名或密码的链接无法读取。",
+    "Only links on the standard web ports (80 and 443) can be read.": "只能读取使用标准网页端口（80 和 443）的链接。",
+    "That link points to a private or local address, so ANONYMA won't read it.": "该链接指向私有或本地地址，ANONYMA 不会读取。",
+    "Couldn't reach that page. Check the link and try again.": "无法访问该网页。请检查链接后重试。",
+    "That page took longer than 10 seconds to load.": "该网页加载超过了 10 秒。",
+    "That page is larger than 5 MB.": "该网页超过 5 MB。",
+    "Only web pages, plain text and PDFs can be read.": "只能读取网页、纯文本和 PDF。",
+    "That link redirected more than 3 times.": "该链接重定向超过了 3 次。",
+    "The site didn't return the page.": "网站没有返回该网页。",
+    "That page took too long to read.": "读取该网页耗时过长。",
+    "Couldn't find readable text on that page.": "在该网页上找不到可读的文字。",
+    "Another page is still being read. Try again in a moment.": "另一个网页仍在读取中，请稍后再试。",
+    "Couldn't read that page.": "无法读取该网页。",
+    "No readable text was found in that PDF. It may be a scanned image.": "该 PDF 中没有可读的文字，可能是扫描图像。",
+    "Link Reader: a page you ask it to read is fetched by ANONYMA’s server with no cookies and no referrer, so the site sees our server, not you. The link and the page are never logged or stored on their own; the page’s text is kept only inside your message, like an attached document, when the chat is saved.": "链接阅读器：你让它读取的网页由 ANONYMA 的服务器抓取，不带 Cookie，也不带来源页，因此网站看到的是我们的服务器，而不是你。链接和网页本身从不单独记录或存储；只有在会话被保存时，网页文字才会像附加文档一样，作为你消息的一部分保存。"
   },
   "patterns": [
     {
@@ -5933,6 +5964,22 @@
     {
       "en": "Redact {0}",
       "zh": "为 {0} 打码"
+    },
+    {
+      "en": "{0} word",
+      "zh": "{0} 个词"
+    },
+    {
+      "en": "{0} words",
+      "zh": "{0} 个词"
+    },
+    {
+      "en": "A long page: only the first {0} words are attached.",
+      "zh": "网页较长：只附上前 {0} 个词。"
+    },
+    {
+      "en": "The site answered {0} instead of the page.",
+      "zh": "网站返回了 {0}，而不是该网页。"
     }
   ]
 }

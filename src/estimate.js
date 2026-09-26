@@ -5,6 +5,7 @@
 import { toRequestMessage } from "./lib.js";
 import { historyLimit, withStanding } from "./scrolls.js";
 import { fitDocuments, composeMessageWithDocuments } from "./documents.js";
+import { maskOutsideLinks } from "./link-reader.js";
 import { veil } from "./veil.js";
 import { factsToSend } from "./memory.js";
 
@@ -63,9 +64,11 @@ export function buildChatRequest({
     return r.text;
   };
   if (standing) standing = mask(standing);
+  // A page read by Link Reader is public text, not the user's: Veil masks
+  // the typed question around it and leaves the page as it is.
   const payload = rawNext
     .slice(-history)
-    .map((m) => ({ ...m, content: mask(m.content || "") }));
+    .map((m) => ({ ...m, content: maskOutsideLinks(m.content || "", mask) }));
   return {
     // The just-sent message is displayed the way the server saw it.
     next: [...messages, payload[payload.length - 1]],

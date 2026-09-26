@@ -1713,6 +1713,29 @@ route("delete", "/api/bookmarks/{id}", "Remove a bookmark", {
   response: ref("Ok"),
   description: "The message itself is unchanged.",
 });
+// Link Reader (update "linkreader", which also needs "documents").
+route("post", "/api/read", "Read a web page for a message", {
+  body: object(
+    { url: { ...string, maxLength: 2048, description: "An http:// or https:// link on port 80 or 443, without a username or password" } },
+    ["url"],
+  ),
+  response: object({
+    kind: { enum: ["html", "text", "pdf"] },
+    url: { ...string, description: "The page's final address, after redirects, without tracking parameters (utm_*, fbclid, gclid, ...)" },
+    host: string,
+    redirected: bool,
+    title: string,
+    site_name: { ...string, description: "The site's own name when the page gives one; may be empty" },
+    byline: { ...string, description: "The author line when the page gives one; may be empty" },
+    words: { ...integer, description: "Words in text (html and text only)" },
+    truncated: { ...bool, description: "The page was longer than 30,000 words and text is its start (html and text only)" },
+    text: { ...string, description: "The readable text: scripts, styles, forms, navigation and link URLs removed (html and text only)" },
+    bytes: { ...integer, description: "The PDF's size (pdf only)" },
+    pdf: { ...string, description: "The PDF, base64-encoded, for the browser's own text extraction (pdf only)" },
+  }),
+  description:
+    "Fetched by the server, so the site never sees your browser or IP: no cookies, no Referer, a generic User-Agent. Only public addresses are fetched: the name is resolved once per hop and every address must be public (loopback, private, link-local, CGNAT, multicast, reserved, IPv6 ULA and link-local, their IPv4-mapped forms and cloud metadata addresses are refused, 400 link_blocked), and the connection goes to the checked address. At most 3 redirects, each checked again (502 link_redirects); 10 seconds (504 link_timeout); 5 MB (413 link_too_large); text/html, text/plain and application/pdf only (415 link_type). Other refusals: 400 link_invalid, link_userinfo, link_port; 502 link_unreachable, link_status; 422 link_unreadable; 429 link_busy (2 at once per account) or rate_limit (60 an hour). Free: nothing is charged or stored, and the link is never logged. The browser attaches the text to your message as a document.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

@@ -36,6 +36,7 @@ import { projectRoutes } from "./routes/projects.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
+import { linkReaderRoutes } from "./routes/link-reader.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { sealedRoutes } from "./routes/sealed.js";
@@ -134,6 +135,8 @@ export function createApp(overrides = {}) {
   // Bookmarks: stars on saved messages (after conversations, whose access
   // rules it uses).
   bookmarkRoutes(ctx);
+  // Link Reader: fetches one public page for a message (reads only).
+  linkReaderRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

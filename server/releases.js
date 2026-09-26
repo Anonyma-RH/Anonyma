@@ -578,7 +578,7 @@ export const UPDATES = [
       "The same quote as Send, with context fit and image support shown",
       "Switch models in one click; nothing is sent or charged",
     ],
-    released: false,
+    released: true,
   },
   {
     id: "balancealerts",

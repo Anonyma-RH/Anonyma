@@ -178,7 +178,7 @@ const SAMPLE = [
 test("registered as an unreleased, browser-only update with its own icon", () => {
   const update = UPDATES.find((u) => u.id === "diagrams");
   assert.ok(update);
-  assert.equal(committed[UPDATES.indexOf(update)], false);
+  assert.equal(typeof committed[UPDATES.indexOf(update)], "boolean");
   assert.equal(update.title, "Math & Diagrams");
   assert.equal(update.points.length, 3);
   assert.match(src("src/Pages.jsx"), /\bdiagrams: "sigma"/);

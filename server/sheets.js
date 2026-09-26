@@ -1,4 +1,5 @@
 import { fail, wantsWebSearch } from "./core.js";
+import { chatLimits, contextEstimate } from "../data/chat-limits.js";
 import {
   QUERY_SYSTEM,
   EXPLAIN_SYSTEM,
@@ -16,7 +17,8 @@ import {
 // profile, plus the sample rows or the result table the user chose to send.
 //
 // Runs before anything else in runChat (Seed Guard then reads the built
-// messages). Requests without `sheets` are untouched.
+// messages), and returns the task ("query", "repair" or "explain"), or
+// undefined for a request without `sheets`, which is left untouched.
 const REFUSED = [
   "conversationId",
   "project",
@@ -46,6 +48,21 @@ export function prepareSheetsRequest(body) {
   body.messages = sheetsMessages(payload);
   body.max_tokens = SHEETS_MAX_TOKENS[payload.task];
   body.mode = "chat";
+  return payload.task;
+}
+
+// A task's reply budget for the chosen model: SHEETS_MAX_TOKENS, lowered to
+// the model's output cap and to what its context has left after the prompt,
+// the limits chat's own max_tokens check (server/models.js) would otherwise
+// refuse the request over. Only the hold depends on it; the charge is the
+// actual usage.
+export function sheetsBudget(task, model, messages) {
+  const limits = chatLimits(model);
+  const room = (limits.contextTokens || 32768) - contextEstimate(messages);
+  return Math.max(
+    1,
+    Math.min(SHEETS_MAX_TOKENS[task], limits.maxOutputTokens, room),
+  );
 }
 
 // LOCAL_TEST_MODE only (server/provider.js): a deterministic stand-in for a

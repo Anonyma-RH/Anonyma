@@ -28,6 +28,7 @@ import {
   sampleSheetCSV,
   sheetKind,
   toCSV,
+  TRUNCATED_MESSAGE,
 } from "./sheets.js";
 import { createSheetEngine, tooLarge } from "./sheets-engine.js";
 import "./sheets.css";
@@ -220,7 +221,7 @@ export default function Sheets({
       signal,
     );
     if (failure) throw Error(failure.message || "The model request failed.");
-    return { text, receipt };
+    return { text, receipt, finishReason: receipt?.finish_reason ?? null };
   }
   const unmask = (s) =>
     typeof s === "string" ? unveil(s, veilState.current.map) : s;
@@ -286,6 +287,16 @@ export default function Sheets({
         update(id, {
           status: "refused",
           refusal: unmask(plan.refusal),
+          spent: [...spent],
+        });
+        return;
+      }
+      // Cut off at its reply budget: said plainly, not retried, not run.
+      if (plan.truncated) {
+        update(id, {
+          status: "failed",
+          error: TRUNCATED_MESSAGE,
+          reply: unmask(plan.text),
           spent: [...spent],
         });
         return;
@@ -677,7 +688,7 @@ export default function Sheets({
                   )}
                   <small>
                     {live
-                      ? "Each question is one short message on your balance, two if the first plan needs fixing. Nothing is saved."
+                      ? "Each question is billed as a message, two if the first plan needs fixing. You pay only what the model uses, including any reasoning. Nothing is saved."
                       : "Sign in to ask questions. Opening and reading a sheet works without an account."}
                   </small>
                 </div>

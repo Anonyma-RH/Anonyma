@@ -3604,7 +3604,6 @@
     "Ask": "提问",
     "Also share 1 sample row": "同时分享 1 行示例",
     "Off by default. When on, exactly these rows go with each question, so the model can see what values look like.": "默认关闭。开启后，每次提问都会附带这几行，让模型了解数据的样子。",
-    "Each question is one short message on your balance, two if the first plan needs fixing. Nothing is saved.": "每次提问按一条简短消息从余额中扣费；若首个计划需要修正，则为两条。不会保存任何内容。",
     "Sign in to ask questions. Opening and reading a sheet works without an account.": "登录后即可提问。打开和读取表格无需账户。",
     "What the AI sees": "AI 看到的内容",
     "Exactly this goes with each question, plus ANONYMA's fixed instructions for the plan format. Nothing else from your file.": "每次提问只发送以下内容，外加 ANONYMA 关于计划格式的固定说明。不会发送文件中的其他任何内容。",
@@ -3650,7 +3649,9 @@
     "Opening Sheets…": "正在打开表格……",
     "Sheets questions are never saved: send them off the record.": "表格提问从不保存：请以不留记录的方式发送。",
     "A sheets question can't be combined with other chat options.": "表格提问不能与其他对话选项同时使用。",
-    "The sheets request is too large.": "表格请求过大。"
+    "The sheets request is too large.": "表格请求过大。",
+    "The model ran out of room while planning. Try again, or pick a faster model.": "模型在规划时用完了回复空间。请重试，或换一个更快的模型。",
+    "Each question is billed as a message, two if the first plan needs fixing. You pay only what the model uses, including any reasoning. Nothing is saved.": "每次提问按一条消息计费；若首个计划需要修正，则为两条。你只需为模型实际使用的部分付费，包括推理。不会保存任何内容。"
   },
   "patterns": [
     {

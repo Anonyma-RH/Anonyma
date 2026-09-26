@@ -2,12 +2,13 @@ import test, { before, after } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createApp } from "../server/app.js";
-import { balance, now, uid } from "../server/core.js";
+import { addCredit, balance, now, uid } from "../server/core.js";
 import { UPDATES, featuresFor } from "../server/releases.js";
-import { prepareSheetsRequest, sheetsTestReply } from "../server/sheets.js";
+import { prepareSheetsRequest, sheetsBudget, sheetsTestReply } from "../server/sheets.js";
 import { knownPage } from "../src/site-routes.js";
 import { paletteActions } from "../src/command-palette.js";
 import { modeReleased } from "../src/lib.js";
@@ -17,6 +18,7 @@ import {
   QUERY_SYSTEM,
   EXPLAIN_SYSTEM,
   LIMITS,
+  SHEETS_MAX_TOKENS,
   checkSheetsPayload,
   queryText,
   sheetsMessages,
@@ -46,6 +48,7 @@ import {
   sheetProfile,
   toCSV,
   validateSpec,
+  TRUNCATED_MESSAGE,
 } from "../src/sheets.js";
 import { handleSheetMessage } from "../src/sheets-engine.js";
 
@@ -57,7 +60,7 @@ before(() => UPDATES.forEach((u) => (u.released = false)));
 after(() => UPDATES.forEach((u, i) => (u.released = committed[i])));
 
 const MODEL = "google/gemini-2.5-flash";
-function fixture(t, released) {
+function fixture(t, released, extra = {}) {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-sheets-"));
   const svc = createApp({
     testMode: true,
@@ -66,6 +69,7 @@ function fixture(t, released) {
     mediaPath: join(dir, "media"),
     origin: "http://localhost:5175",
     ...(released && released !== "all" ? { mvpModels: [MODEL] } : {}),
+    ...extra,
   });
   t.after(() => {
     svc.close();
@@ -315,7 +319,7 @@ test("the server builds exactly the documented messages, and nothing else", () =
   assert.equal(body.messages[0].role, "system");
   assert.equal(body.messages[0].content, QUERY_SYSTEM);
   assert.equal(body.messages[1].content, queryText(checkSheetsPayload(body.sheets)));
-  assert.equal(body.max_tokens, 2000);
+  assert.equal(body.max_tokens, 8000);
   assert.equal(body.mode, "chat");
   assert.equal(
     body.messages[1].content,
@@ -344,6 +348,121 @@ test("the server builds exactly the documented messages, and nothing else", () =
   const plain = { messages: [{ role: "user", content: "hi" }] };
   prepareSheetsRequest(plain);
   assert.deepEqual(plain, { messages: [{ role: "user", content: "hi" }] });
+});
+
+// ---- Reply budgets: room for reasoning, and a plan cut off at the limit ----
+
+test("reply budgets leave room for hidden reasoning and are fitted to the model", () => {
+  assert.deepEqual(SHEETS_MAX_TOKENS, { query: 8000, repair: 8000, explain: 3000 });
+  const messages = sheetsMessages(checkSheetsPayload(PROFILE));
+  // A model with room keeps the full budget.
+  assert.equal(sheetsBudget("query", { id: "google/gemini-2.5-flash", context_length: 1048576 }, messages), 8000);
+  assert.equal(sheetsBudget("explain", { id: "google/gemini-2.5-flash", context_length: 1048576 }, messages), 3000);
+  // Lowered to a smaller output cap, as chat's own max_tokens check would demand.
+  assert.equal(sheetsBudget("query", { id: "m", max_output_tokens: 4096, context_length: 128000 }, messages), 4096);
+  // An unknown output cap uses the service's conservative 8,192.
+  assert.equal(sheetsBudget("repair", { id: "m" }, messages), 8000);
+  // And to what the context has left after the prompt.
+  const small = { id: "m", context_length: 4096, max_output_tokens: 4096 };
+  const budget = sheetsBudget("query", small, messages);
+  assert.ok(budget < 4096 && budget > 1000, String(budget));
+  assert.ok(budget + messages.reduce((n, m) => n + m.content.length, 0) <= 4096 + 64);
+});
+
+async function mockGateway(t, handler) {
+  const server = createServer(handler);
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  t.after(() => new Promise((r) => server.close(r)));
+  return "http://127.0.0.1:" + server.address().port;
+}
+test("the budgets reach the provider, and a reply cut off at the limit is reported and still charged", async (t) => {
+  const seen = [];
+  const gateway = await mockGateway(t, async (req, res) => {
+    let raw = "";
+    for await (const b of req) raw += b;
+    const body = JSON.parse(raw);
+    seen.push({ max_tokens: body.max_tokens, messages: body.messages.length });
+    res.writeHead(200, { "content-type": "text/event-stream" });
+    // What the live test saw: the plan cut off mid-string, hidden reasoning
+    // having used most of the budget.
+    const send = (p) => res.write("data: " + JSON.stringify(p) + "\n\n");
+    send({ choices: [{ index: 0, delta: { content: '{"filters":[{"col":"Order date","op":"in","value":["2023-04-01","2023-' } }] });
+    send({ choices: [{ index: 0, delta: {}, finish_reason: "length" }] });
+    send({ choices: [], usage: { prompt_tokens: 583, completion_tokens: 1996, completion_tokens_details: { reasoning_tokens: 1919 } } });
+    res.end("data: [DONE]\n\n");
+  });
+  const s = fixture(t, "all", { testMode: false, gateway, gatewayKey: "fixture" });
+  const { agent, user } = await person(s.app);
+  addCredit(s.db, user.id, 10000000, "sheets-fund", "test_credit");
+  const before = balance(s.db, user.id).total;
+  const query = await ask(agent, PROFILE).expect(200);
+  const done = events(query.text).find((e) => e.anonyma);
+  assert.equal(done.anonyma.finish_reason, "length", "the browser learns the reply was cut off");
+  assert.ok(done.anonyma.credits_charged > 0, "the call happened, so it's charged");
+  assert.ok(balance(s.db, user.id).total < before);
+  assert.equal(balance(s.db, user.id).held, 0, "only actual usage settles; the hold is released");
+  await ask(agent, { ...PROFILE, task: "repair", previous: "{", problems: ["x"] }).expect(200);
+  await ask(agent, {
+    task: "explain",
+    question: "Why?",
+    result: { columns: ["Region", "Total"], rows: [["North", 1]], total: 1 },
+  }).expect(200);
+  assert.deepEqual(seen, [
+    { max_tokens: 8000, messages: 2 },
+    { max_tokens: 8000, messages: 4 },
+    { max_tokens: 3000, messages: 2 },
+  ]);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM messages").get().n, 0, "still nothing stored");
+});
+
+test("a plan cut off at the limit isn't sent for repair or run, and says so plainly", async () => {
+  const sheet = loaded();
+  const { payload, columns } = queryPayload(sheetProfile(sheet), "Sales in April?");
+  const truncated = '{"filters":[{"col":"Date","op":"in","value":["2023-04-01","2023-';
+  const calls = [];
+  const send = (...replies) => async (p) => {
+    calls.push(p);
+    return replies[calls.length - 1];
+  };
+  const receipt = (finish_reason) => ({ credits_charged: 2, finish_reason });
+  // Cut off: one call, no repair.
+  let r = await planQuery({ payload, columns, send: send({ text: truncated, receipt: receipt("length"), finishReason: "length" }) });
+  assert.equal(calls.length, 1);
+  assert.equal(r.truncated, true);
+  assert.equal(r.spec, undefined);
+  assert.deepEqual(r.calls, [receipt("length")], "the charge stands");
+  // The receipt alone is enough to tell.
+  calls.length = 0;
+  r = await planQuery({ payload, columns, send: send({ text: truncated, receipt: receipt("length") }) });
+  assert.equal(calls.length, 1);
+  assert.equal(r.truncated, true);
+  // An ordinary bad plan still gets its one repair, and a repair cut off
+  // at the limit says so too.
+  calls.length = 0;
+  r = await planQuery({
+    payload,
+    columns,
+    send: send({ text: "not json", receipt: receipt("stop") }, { text: truncated, receipt: receipt("length") }),
+  });
+  assert.equal(calls.length, 2);
+  assert.equal(r.truncated, true);
+  // A plan that parses is used even at the limit.
+  calls.length = 0;
+  r = await planQuery({
+    payload,
+    columns,
+    send: send({ text: '{"aggregates":[{"fn":"count"}]}', receipt: receipt("length"), finishReason: "length" }),
+  });
+  assert.equal(calls.length, 1);
+  assert.ok(r.spec);
+  // The page shows the message for it, as a failed answer with nothing run.
+  assert.equal(TRUNCATED_MESSAGE, "The model ran out of room while planning. Try again, or pick a faster model.");
+  const page = readFileSync(new URL("../src/Sheets.jsx", import.meta.url), "utf8");
+  assert.match(page, /if \(plan\.truncated\) \{\s*update\(id, \{\s*status: "failed",\s*error: TRUNCATED_MESSAGE,/);
+  assert.ok(page.indexOf("plan.truncated") < page.indexOf("engine.current.run(spec)"), "returns before running anything");
+  assert.match(page, /finishReason: receipt\?\.finish_reason/);
+  const zh = JSON.parse(readFileSync(new URL("../src/i18n/zh.json", import.meta.url), "utf8")).strings[TRUNCATED_MESSAGE];
+  assert.match(zh, /\p{Script=Han}/u);
 });
 
 // ---- Reading files ----

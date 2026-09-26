@@ -48,8 +48,12 @@ export const LIMITS = {
   alias: 60,
   payload: 120000,
 };
-// Replies are a small JSON object or one paragraph.
-export const SHEETS_MAX_TOKENS = { query: 2000, repair: 2000, explain: 800 };
+// Replies are a small JSON object or one paragraph, but reasoning models
+// spend hidden reasoning tokens from the same budget first (a live plan on
+// Gemini 2.5 Flash used 1,919 of them), so the budgets leave room for that.
+// They only size the hold: billing settles on actual usage. The server
+// lowers them to fit the chosen model (server/sheets.js, sheetsBudget).
+export const SHEETS_MAX_TOKENS = { query: 8000, repair: 8000, explain: 3000 };
 
 export const QUERY_SYSTEM = [
   "You plan calculations for ANONYMA Sheets. The user's spreadsheet stays on their device: you see only its column names, types, row count, how many different values each text column has and, if the user chose to share them, a few sample rows. Their browser runs your plan on the whole sheet.",

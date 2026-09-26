@@ -1586,16 +1586,27 @@ export function explainPayload(
     payload.title = clip(clean(mask(title)).trim());
   return payload;
 }
+// Shown when a plan was cut off because the model used its whole reply
+// budget (often on hidden reasoning). A repair would hit the same wall.
+export const TRUNCATED_MESSAGE =
+  "The model ran out of room while planning. Try again, or pick a faster model.";
+// Whether a call's reply was cut off at its token budget.
+const cutOff = (call) =>
+  (call.finishReason ?? call.receipt?.finish_reason) === "length";
+
 // Asks for a plan and checks it, with one repair attempt. `send(payload)`
-// makes the model call and resolves to { text, receipt }. Resolves to
-// { spec } | { refusal } | { problems }, plus `calls` (each call's receipt)
-// and `text` (the last reply, as the model wrote it).
+// makes the model call and resolves to { text, receipt, finishReason }.
+// Resolves to { spec } | { refusal } | { problems } | { truncated: true },
+// plus `calls` (each call's receipt) and `text` (the last reply, as the
+// model wrote it). A plan that doesn't parse because the reply ran out of
+// room (finish_reason "length") isn't sent for repair: nothing is run.
 export async function planQuery({ send, payload, columns }) {
   const calls = [];
   const first = await send(payload);
   calls.push(first.receipt);
   let text = first.text,
     reply = interpretReply(text, columns);
+  if (reply.problems && cutOff(first)) return { truncated: true, calls, text };
   if (reply.problems) {
     const second = await send({
       ...payload,
@@ -1609,6 +1620,8 @@ export async function planQuery({ send, payload, columns }) {
     calls.push(second.receipt);
     text = second.text;
     reply = interpretReply(text, columns);
+    if (reply.problems && cutOff(second))
+      return { truncated: true, calls, text };
   }
   return { ...reply, calls, text };
 }

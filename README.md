@@ -94,6 +94,18 @@ route, retention, Veil, storage and receipt. Includes its launch film.
 [Seed Guard](docs/releases/seed-guard.md): seed phrases, WIF and xprv keys are stopped in your browser
 before anything is sent. Includes its launch film.
 
+[Clean Uploads](docs/releases/clean-uploads.md): location, camera and author details are removed
+in your browser before photos, Office files and audio leave your device. Includes its launch film.
+
+[Panic Wipe](docs/releases/panic-wipe.md): erase chats, files, memory and keys in one step and sign out
+everywhere; the account and its credits stay. Includes its launch film.
+
+[Device Vault](docs/releases/device-vault.md): Device only chats are sent off the record and kept
+encrypted in your browser with your passphrase. Includes its launch film.
+
+[Routines](docs/releases/routines.md): saved prompts that run daily, on weekdays or weekly, each with
+a per-run maximum and a monthly budget. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

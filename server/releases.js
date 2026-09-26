@@ -644,7 +644,7 @@ export const UPDATES = [
       "Bonus credits on every NYMA top-up",
     ],
     // Needs WALLET_PAYMENT_ADDRESS on chain 4663 (server/routes/nyma.js).
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

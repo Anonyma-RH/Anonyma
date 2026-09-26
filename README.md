@@ -112,6 +112,12 @@ the # and never reaches our servers. Includes its launch film.
 [Projects](docs/releases/projects.md): related chats, pinned files and instructions in one place, with a
 default model and privacy mode. Includes its launch film.
 
+[Sealed Mode](docs/releases/sealed-mode.md): messages encrypted in your browser for a verified hardware
+enclave; open-weight private models only, with the honest limits. Includes its launch film.
+
+[Pay with NYMA](docs/releases/pay-with-nyma.md): top up credits by sending NYMA from your own wallet,
+with a 10% credit bonus. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

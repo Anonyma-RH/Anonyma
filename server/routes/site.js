@@ -67,11 +67,14 @@ export function siteRoutes({ app, db, cfg }) {
         // The service worker file itself should always be revalidated, so a
         // new deploy's worker is never served stale from an intermediate
         // cache. Vite fingerprints every /assets file name, so a changed file
-        // always gets a new URL and browsers can keep the old one. Every other
-        // static file keeps express.static's defaults.
+        // always gets a new URL and browsers can keep the old one. Local
+        // OCR's files under /ocr/ sit in versioned directories that are
+        // never reused for other contents (src/ocr-assets.js), so they're
+        // cached the same way. Every other static file keeps
+        // express.static's defaults.
         setHeaders(res, path) {
           if (path.endsWith("/sw.js")) res.set("Cache-Control", "no-cache");
-          else if (path.includes("/dist/client/assets/"))
+          else if (path.includes("/dist/client/assets/") || path.includes("/dist/client/ocr/"))
             res.set("Cache-Control", "public, max-age=31536000, immutable");
         },
       }),

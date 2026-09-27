@@ -844,6 +844,22 @@ export const UPDATES = [
     // password, email code or wallet signature without touching the session.
     released: true,
   },
+  {
+    id: "ocr",
+    title: "Local OCR",
+    tagline: "Send the words, not the picture.",
+    points: [
+      "Text only reads the words in an attached image, right in your browser",
+      "Only the text you keep is sent: no image, no faces, no hidden details",
+      "Fewer tokens than an image; check the text, since OCR can misread",
+    ],
+    // Browser only: tesseract.js reads the image in the page (src/ocr.js,
+    // src/ocr-engine.js) and the text goes as a Documents attachment, so it
+    // needs "documents" too. The one thing served is the text reader itself
+    // (worker, WebAssembly core and English/Chinese language data) under
+    // /ocr/, gated here (featuresFor) and cached for a year.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -973,6 +989,9 @@ export function featuresFor(req) {
   }
   // Bookmarks: stars on saved messages, with private notes.
   if (p === "/api/bookmarks" || p.startsWith("/api/bookmarks/")) return ["bookmarks"];
+  // Local OCR: the text reader's files (src/ocr-assets.js). What it reads
+  // goes as a Documents attachment, so it needs Documents too.
+  if (p === "/ocr" || p.startsWith("/ocr/")) return ["ocr", "documents"];
   // Link Reader: the server-side fetch of one public page. The page rides
   // with the message as a Documents block, so it needs Documents too.
   if (p === "/api/read" || p.startsWith("/api/read/")) return ["linkreader", "documents"];

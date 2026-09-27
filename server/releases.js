@@ -1067,7 +1067,7 @@ export const UPDATES = [
     // account's opt-in (server/routes/arena.js). The aggregate has no
     // account id, so it stays when an account is erased; the opt-in is
     // erased and exported with the account (server/arena.js).
-    released: false,
+    released: true,
   },
   {
     id: "vaultsync",

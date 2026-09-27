@@ -1157,7 +1157,7 @@ export const UPDATES = [
     // held and settled on the ordinary billing path. Nothing is stored, so
     // there's nothing to erase or export; saving a translation to Files is
     // an ordinary upload the person chooses.
-    released: false,
+    released: true,
   },
   {
     id: "meetingnotes",

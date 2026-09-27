@@ -999,7 +999,7 @@ export const UPDATES = [
     // its link and carried summary (chat_continuations), which go with the
     // conversation and are in the account export. Off the record, Private
     // Mode and Device Vault chats continue in the browser only.
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

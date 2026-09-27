@@ -30,6 +30,7 @@ import { audioRoutes } from "./routes/audio.js";
 import { audioOverviewRoutes } from "./routes/audio-overview.js";
 import { v1MediaRoutes } from "./routes/v1-media.js";
 import { creditRoutes } from "./routes/credits.js";
+import { giftRoutes } from "./routes/gifts.js";
 import { collabRoutes } from "./routes/collabs.js";
 import { treasuryRoutes } from "./routes/treasury.js";
 import { retentionRoutes } from "./routes/retention.js";
@@ -145,6 +146,9 @@ export function createApp(overrides = {}) {
   // voices and kept in the library like other audio.
   audioOverviewRoutes(ctx);
   creditRoutes(ctx);
+  // Gift Links: credits held for a link anyone can claim once; the worker
+  // returns the unclaimed ones after 30 days (ctx.gifts.expire).
+  ctx.gifts = giftRoutes(ctx);
   collabRoutes(ctx);
   retentionRoutes(ctx);
   scrollsRoutes(ctx);
@@ -228,6 +232,8 @@ export function createApp(overrides = {}) {
     sealed: ctx.sealed,
     // Model Status' in-memory window (server/model-status.js), for tests.
     modelStatus: ctx.modelStatus,
+    // Gift Links' expiry (server/routes/gifts.js), for tests and tooling.
+    gifts: ctx.gifts,
     stopWork: async () => {
       for (const c of ctx.inflight.controllers)
         c.abort(new Error("Service restarting"));

@@ -1092,6 +1092,37 @@ export const MIGRATIONS = [
     addColumn(db, "page_watches", "unreadable", "INTEGER NOT NULL DEFAULT 0");
     additive("")(db);
   },
+  // Gift Links (server/routes/gifts.js): credits held for a link anyone can
+  // claim once. Only a hash of the code is kept, never the code; the amount
+  // is in integer subcredits and left the giver's balance when the gift was
+  // made (ledger gift_out). A gift ends once, from open to claimed, revoked
+  // or expired, and the trigger refuses any other change to it. Who claimed
+  // it isn't kept here. At most 25 open per account, also enforced here.
+  // gift_lockouts counts wrong codes per HMAC'd account or network address
+  // for an hour (no account id or address is stored).
+  additive(`
+      CREATE TABLE IF NOT EXISTS gifts(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        code_hash TEXT NOT NULL UNIQUE CHECK(length(code_hash)=64),
+        amount INTEGER NOT NULL CHECK(typeof(amount)='integer' AND amount>0),
+        note TEXT NOT NULL DEFAULT '' CHECK(length(note)<=140),
+        status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','claimed','revoked','expired')),
+        request_id TEXT,
+        created INTEGER NOT NULL,expires INTEGER NOT NULL,settled INTEGER,
+        UNIQUE(user_id,request_id));
+      CREATE INDEX IF NOT EXISTS gifts_user ON gifts(user_id,created);
+      CREATE INDEX IF NOT EXISTS gifts_open ON gifts(expires) WHERE status='open';
+      CREATE TRIGGER IF NOT EXISTS gifts_end_once BEFORE UPDATE ON gifts
+        WHEN OLD.status<>'open' OR NEW.status='open'
+          OR NEW.amount IS NOT OLD.amount OR NEW.user_id IS NOT OLD.user_id
+          OR NEW.code_hash IS NOT OLD.code_hash OR NEW.note IS NOT OLD.note
+        BEGIN SELECT RAISE(ABORT,'gift_ended'); END;
+      CREATE TRIGGER IF NOT EXISTS gifts_open_per_account BEFORE INSERT ON gifts
+        WHEN (SELECT COUNT(*) FROM gifts WHERE user_id=NEW.user_id AND status='open')>=25
+        BEGIN SELECT RAISE(ABORT,'gift_limit'); END;
+      CREATE TABLE IF NOT EXISTS gift_lockouts(key TEXT PRIMARY KEY,
+        failures INTEGER NOT NULL,window_end INTEGER NOT NULL);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

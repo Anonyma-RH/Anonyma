@@ -50,6 +50,11 @@ export function applyMiddleware(app, cfg) {
     // (and, on the way back, the code) in their URLs: never send them on.
     if (path === "/connect" || path.startsWith("/oauth/"))
       res.set("Referrer-Policy", "no-referrer");
+    // Gift Links' claim page: its code rides in the #fragment, which no
+    // request or referrer carries; the page is still never indexed and
+    // sends no referrer on.
+    if ((path === "/gift" || path === "/gift/") && isReleased(cfg, "giftlinks"))
+      res.set({ "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow" });
     if (PUBLIC_OAUTH_PATHS.includes(path))
       res.set({
         "Access-Control-Allow-Origin": "*",

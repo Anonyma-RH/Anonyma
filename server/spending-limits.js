@@ -26,7 +26,9 @@ export const WINDOWS = { daily: DAY, monthly: 30 * DAY };
 export const RAISE_DELAY = DAY;
 export const MAX_LIMIT_CREDITS = 1_000_000_000;
 // Ledger kinds that spend the personal balance without a hold.
-export const TRANSFER_KINDS = ["transfer_out", "treasury_contribution"];
+// A gift (Gift Links) counts when it is made, like credits sent; getting it
+// back (cancelled or unclaimed) is a refund, which never counts.
+export const TRANSFER_KINDS = ["transfer_out", "treasury_contribution", "gift_out"];
 
 export const limitsLive = (cfg) => isReleased(cfg, "limits");
 

@@ -47,6 +47,7 @@ import { ConnectedApps, connectReleased } from "./Connect.jsx";
 import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
 import { ApiRateLimit } from "./ApiBoost.jsx";
 import { ShareLinksManager } from "./ShareLinks.jsx";
+import { GiftLinks, giftLinksReleased } from "./GiftLinks.jsx";
 import { PanicWipe } from "./PanicWipe.jsx";
 import { TwoStepSettings } from "./TwoStep.jsx";
 import { twoStepReleased } from "./two-step.js";
@@ -80,6 +81,9 @@ const LEDGER_KINDS = {
   holder_reward: "NYMA holder reward",
   nyma_topup: "NYMA top-up",
   nyma_bonus: "NYMA top-up bonus",
+  gift_out: "Gift made",
+  gift_in: "Gift claimed",
+  gift_return: "Gift returned",
 };
 const ledgerKind = (kind) =>
   LEDGER_KINDS[kind] ||
@@ -309,6 +313,8 @@ export default function Account() {
   const passkeysOn = securityOn && passkeysReleased(config);
   // Low-Balance Alerts: its panel, and the optional notification's watch.
   const alertsLive = alertsReleased(config);
+  // Gift Links shows only once it's released.
+  const giftsOn = giftLinksReleased(config);
   const tabs = [
     ["overview", "Overview"],
     ...(insightsOn ? [["usage", "Usage"]] : []),
@@ -742,6 +748,20 @@ export default function Account() {
                 )}
               </div>
             </div>
+          )}
+          {/* Gift Links: credits as a link anyone can claim once. */}
+          {section === "credits" && giftsOn && (demo || user) && (
+            <GiftLinks
+              user={user}
+              demo={demo}
+              config={config}
+              onChanged={() => {
+                refresh();
+                api("/api/account/ledger")
+                  .then((l) => setLedger(l.data))
+                  .catch(() => {});
+              }}
+            />
           )}
           {section === "limits" && !limitsOn && (
             <ComingSoon update={releaseUpdate(config, "limits")} />
@@ -1215,6 +1235,14 @@ export default function Account() {
                 {demo
                   ? "This removes the demo conversations, media references and sample key metadata from this browser."
                   : "Unused credits are forfeited. Unresolved holds or invoices block closure. Personal content and owned shared workspaces are deleted; financial records, other workspaces’ shared content and external copies remain. Review the data-controls guide before confirming."}
+                {!demo && giftsOn && (
+                  <>
+                    {" "}
+                    Gifts nobody has claimed yet are cancelled first: their
+                    links stop working and their credits are forfeited with
+                    the rest.
+                  </>
+                )}
               </p>
               <label>
                 Type DELETE to confirm

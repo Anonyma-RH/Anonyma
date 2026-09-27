@@ -40,6 +40,8 @@ export default function DataControls() {
   const ocr = !!config && isReleased(config, "ocr") && isReleased(config, "documents");
   // And Study Mode.
   const study = !!config && isReleased(config, "study");
+  // And Gift Links.
+  const gifts = !!config && isReleased(config, "giftlinks");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -201,6 +203,16 @@ export default function DataControls() {
             wipe or close your account.
           </li>
         )}
+        {gifts && (
+          <li>
+            Gift Links: each gift you make (its amount, note, dates and
+            whether it was claimed or returned) and a fingerprint of its code,
+            never the code itself. Who claimed a gift isn't kept with it and
+            is never shown to you. Panic Wipe and closing your account cancel
+            your unclaimed gifts, return their credits to your balance, then
+            delete the list; the ledger keeps its entries.
+          </li>
+        )}
         {blind && (
           <li>
             Blind Compare votes: the two models compared, your vote and its
@@ -316,6 +328,12 @@ export default function DataControls() {
         </p>
       )}
       {nyma && <p>The export also includes your Pay with NYMA quotes.</p>}
+      {gifts && (
+        <p>
+          The export also lists the gifts you made: amount, note, dates and
+          state. Codes aren't kept, so they can't be exported.
+        </p>
+      )}
       {blind && (
         <p>The export also lists your Blind Compare votes: the two models, the outcome and the date.</p>
       )}

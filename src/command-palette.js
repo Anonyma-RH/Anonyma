@@ -564,6 +564,15 @@ export function paletteActions(ctx = {}) {
     add("goto", { id, label, keywords, to: "/account" + (sec === "overview" ? "" : "/" + sec) + q, ...extra });
   account("account", "Account", "overview", ["profile", "balance", "usage", "overview"], { icon: "settings" });
   account("top-up", "Add credits", "credits", ["top up", "buy credits", "deposit", "fund", "balance", "pay"], { icon: "credits" });
+  // Gift Links: its panel in Credits & funding (signed in; not in the demo).
+  if (live && signedIn && on("giftlinks"))
+    add("goto", {
+      id: "gift-links",
+      label: "Gift credits with a link",
+      icon: "gift",
+      keywords: ["gift", "gift link", "gift card", "give credits", "present", "claim a gift", "redeem"],
+      to: "/account/credits#gift-links",
+    });
   if (on("api")) account("api-keys", "API keys", "keys", ["developer", "api", "keys", "cli", "tokens"], { icon: "key" });
   if (on("twostep"))
     account("security", "Security", "security", [

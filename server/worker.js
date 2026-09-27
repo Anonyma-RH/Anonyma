@@ -259,6 +259,9 @@ export function createWorker(ctx) {
         "DELETE FROM sealed_shares WHERE expires IS NOT NULL AND expires<=?",
       ).run(now());
       recoverExpiredHolds();
+      // Gift Links: unclaimed gifts past their 30 days go back to their
+      // givers, each once, on the ledger (server/routes/gifts.js).
+      ctx.gifts?.expire();
       if (cfg.rpc && cfg.token) {
         // About daily: each read schedules the next 12 to 36 hours on, at a
         // random time (token_due, server/holders.js). A failed read is

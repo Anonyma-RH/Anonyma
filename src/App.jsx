@@ -30,6 +30,8 @@ const Connect = lazy(() => import("./Connect.jsx"));
 const SharedChat = lazy(() => import("./SharedChat.jsx"));
 const Wiped = lazy(() => import("./Wiped.jsx"));
 const ModelStatus = lazy(() => import("./ModelStatus.jsx"));
+// Gift Links' claim page (a 404 until the update is released).
+const GiftClaim = lazy(() => import("./GiftClaim.jsx"));
 // Pages that exist only once their update is live: until then no link to
 // them shows at all (the NYMA page ships with the NYMA Holder Program, the
 // model status page with Model Status).
@@ -349,7 +351,9 @@ function Shell() {
     location.pathname.startsWith("/workspace") ||
     location.pathname.startsWith("/account") ||
     location.pathname === "/connect" ||
-    location.pathname.startsWith("/s/");
+    location.pathname.startsWith("/s/") ||
+    // Gift Links' claim page, once released (a plain 404 before).
+    (location.pathname.replace(/\/$/, "") === "/gift" && isReleased(config, "giftlinks"));
   return (
     <>
       <a className="skip-link" href="#main">
@@ -385,6 +389,7 @@ function Shell() {
           <Route path="/connect" element={<Connect />} />
           <Route path="/s/:token" element={<SharedChat />} />
           <Route path="/wiped" element={<Wiped />} />
+          <Route path="/gift" element={<GiftClaim />} />
           <Route
             path="/workspace/:mode?"
             element={

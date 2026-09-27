@@ -874,6 +874,21 @@ export const UPDATES = [
     // /ocr/, gated here (featuresFor) and cached for a year.
     released: false,
   },
+  {
+    id: "sharpen",
+    title: "Prompt Sharpen",
+    tagline: "One tap turns a rough prompt into a clear one.",
+    points: [
+      "Rewrites your prompt so the goal, context and format are clear",
+      "See every change side by side; use it, edit it or keep yours",
+      "Off the record, and billed as a tiny message",
+    ],
+    // POST /api/sharpen and /api/sharpen/quote (server/routes/sharpen.js):
+    // one small model call on the ordinary hold/settle path, sent only the
+    // prompt and never stored. In Private Mode it needs "private" too
+    // (featuresFor). Nothing is kept per account, so nothing to erase.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1047,6 +1062,10 @@ export function featuresFor(req) {
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.
   if (p === "/api/sealed" || p.startsWith("/api/sealed/")) return ["sealed"];
+  // Prompt Sharpen: one small model call that rewrites a prompt. Private
+  // Mode sends it to a zero-data-retention model, so that needs its update.
+  if (p === "/api/sharpen" || p.startsWith("/api/sharpen/"))
+    return post && body.private === true ? ["sharpen", "private"] : ["sharpen"];
   // Panic Wipe: the one route that erases an account's content at once.
   if (/^\/api\/account\/wipe\/?$/.test(p)) return ["wipe"];
   // Passkeys: signing in and signing up with one, and Account → Security's

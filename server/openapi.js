@@ -1985,6 +1985,52 @@ route("post", "/api/research", "Run Deep research", {
   description:
     "Workspace only (session). Plans up to 3 or 6 sub-questions (strict JSON; invalid output falls back to the question itself), runs one web search per sub-question and writes a Markdown report whose [n] citations map only to the pages those searches returned; other URLs and out-of-range numbers are removed. Before anything runs, every step is held at its maximum (402 insufficient_credits or spending_limit, 409 research_running for a second run, with nothing charged). Each step settles on its own usage as it finishes; a step that fails, is stopped (closing the stream) or never starts is released, so only finished steps are charged. SSE events: research.stage planning, planned (questions), searching / searched (index, status, sources, credits), writing, then done with message { text, citations, research } and anonyma { credits_charged, request_id, private?, privacy?, memory? }, or error with whatever finished. A saved run adds the question and the report to the conversation as ordinary messages.",
 });
+// Prompt Sharpen (update "sharpen"; Private Mode needs "private" too).
+route("post", "/api/sharpen/quote", "What sharpening a prompt costs", {
+  body: object(
+    {
+      model: { ...string, description: "A callable text model" },
+      chars: { ...integer, minimum: 0, maximum: 7000, description: "The prompt's length (plus any answers) in characters. The prompt itself is never sent to a quote." },
+      private: { ...bool, description: "Private Mode: a zero-data-retention model only" },
+    },
+    ["model", "chars"],
+  ),
+  response: object({
+    credits: { ...number, description: "About what a sharpen of this length costs (an estimate)" },
+    max: { ...number, description: "The most it can cost: what is held while it runs" },
+    available: number,
+    spending_limit: object({ remaining: number }),
+    model: string,
+    estimate: bool,
+  }),
+  description: "Reserves, charges, stores and sends nothing.",
+});
+route("post", "/api/sharpen", "Sharpen a prompt", {
+  body: object(
+    {
+      model: { ...string, description: "A callable text model" },
+      prompt: { ...string, minLength: 12, maxLength: 6000, description: "The prompt, as Veil masked it in the browser" },
+      answers: { ...array(object({ question: string, answer: string }, ["question", "answer"])), maxItems: 2, description: "Answers to the sharpener's own questions (each up to 500 characters); the prompt is sharpened again with them" },
+      private: { ...bool, description: "Private Mode: a zero-data-retention model with ZDR routing (needs private)" },
+      requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+    },
+    ["model", "prompt"],
+  ),
+  response: object({
+    prompt: { ...string, description: "The improved prompt" },
+    notes: { ...array(string), maxItems: 3, description: "What changed and why" },
+    questions: { ...array(string), maxItems: 2, description: "Clarifying questions; answering them sharpens again" },
+    unchanged: bool,
+    model: string,
+    credits_charged: number,
+    finish_reason: string,
+    request_id: string,
+    private: object({ privacy: string, stored: bool }),
+    stored: bool,
+  }),
+  description:
+    "Workspace only (session). Sends only the prompt (and answers) with the sharpener's instructions: never a conversation, files, memory, standing or project instructions (400 invalid_request if any are passed). Always off the record: nothing is stored or logged. The most it can cost is held first (402 insufficient_credits or spending_limit, nothing charged) and a usable result settles on actual usage. The model must answer in strict JSON with up to 8,000 tokens of room; every Veil placeholder sent ([EMAIL_1] and the like) must come back exactly, with none added. An unreadable reply (502 sharpen_unreadable), one cut short by its room (502 sharpen_length), one that lost or changed a placeholder (502 sharpen_placeholders), a provider failure or Stop charges nothing. Seed Guard refuses a seed phrase with no override (400 seed_phrase_blocked).",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

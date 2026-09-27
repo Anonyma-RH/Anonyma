@@ -872,6 +872,7 @@ const featureIcons = {
   privacyscreen: "eyeoff",
   status: "activity",
   ocr: "scantext",
+  sharpen: "sharpen",
 };
 const launch = {
   id: "mvp",

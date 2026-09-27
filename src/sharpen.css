@@ -1,0 +1,413 @@
+/* Prompt Sharpen: the composer button reuses .attachment-control; this file
+   covers its estimate, the panel above the composer (styled like Deep
+   Research's: white, a cobalt edge, 2px corners and hairlines, the brand
+   yellow as the only accent) and Account → Settings. */
+.app-shell .sharpen-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.app-shell .sharpen-button:not(:disabled):hover {
+  color: #0135df;
+  border-color: #0135df;
+}
+.app-shell .sharpen-button.running {
+  color: #0135df;
+  border-color: #0135df;
+}
+.app-shell .sharpen-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+  padding-left: 7px;
+  border-left: 1px solid var(--work-line, #e3e8f0);
+  color: #24498b;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.app-shell .sharpen-panel {
+  margin: 0 0 12px;
+  padding: 14px 16px 12px;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+  color: #142343;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+}
+.app-shell .sharpen-panel p {
+  margin: 0;
+}
+.app-shell .sharpen-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.app-shell .sharpen-head > div:not(.sharpen-model) {
+  flex: 1;
+  min-width: 0;
+}
+.app-shell .sharpen-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background: #0135df;
+  color: #ffb21c;
+}
+.app-shell .sharpen-eyebrow {
+  margin: 0 0 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #0135df;
+}
+.app-shell .sharpen-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  color: #24498b;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell .sharpen-dot {
+  color: #68748a;
+}
+.app-shell .sharpen-model {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font-size: 11px;
+  color: #68748a;
+}
+.app-shell .sharpen-model select {
+  max-width: 260px;
+  padding: 5px 8px;
+  font-size: 12px;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+  background: #fff;
+  color: #142343;
+}
+.app-shell .sharpen-x {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 2px;
+  color: #68748a;
+  cursor: pointer;
+}
+.app-shell .sharpen-x:hover {
+  color: #0135df;
+  background: #edf2ff;
+}
+
+/* Running: a thin cobalt bar, still under reduced motion. */
+.app-shell .sharpen-running {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+.app-shell .sharpen-bar {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  overflow: hidden;
+  background: #e3e8f0;
+}
+.app-shell .sharpen-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 35%;
+  background: #0135df;
+  animation: sharpen-slide 1.1s ease-in-out infinite;
+}
+@keyframes sharpen-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(290%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .sharpen-bar::after {
+    animation: none;
+    width: 100%;
+    opacity: 0.35;
+  }
+}
+
+.app-shell .sharpen-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  background: #fff6e8;
+  border: 1px solid #ffd9a0;
+  border-radius: 2px;
+  color: #8a4b00;
+  font-size: 12px;
+}
+.app-shell .sharpen-error svg {
+  flex: none;
+  margin-top: 2px;
+}
+.app-shell .sharpen-error span {
+  flex: 1;
+}
+.app-shell .sharpen-error .small-button {
+  flex: none;
+}
+
+/* Before | After */
+.app-shell .sharpen-diff {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+.app-shell .sharpen-col {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+}
+.app-shell .sharpen-col.before {
+  background: #f7f9fc;
+}
+.app-shell .sharpen-col.after {
+  border-color: #0135df;
+}
+.app-shell .sharpen-label {
+  margin: 0 0 6px !important;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #68748a;
+}
+.app-shell .sharpen-col.after .sharpen-label {
+  color: #0135df;
+}
+.app-shell .sharpen-text {
+  max-height: 260px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.app-shell .sharpen-text del {
+  color: #68748a;
+  text-decoration: line-through;
+  text-decoration-color: #68748a;
+}
+.app-shell .sharpen-text ins {
+  text-decoration: none;
+  background: #edf2ff;
+  color: #0135df;
+}
+.app-shell .sharpen-col textarea {
+  display: block;
+  width: 100%;
+  min-height: 160px;
+  padding: 6px 8px;
+  resize: vertical;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #142343;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+}
+.app-shell .sharpen-col textarea:focus {
+  outline: 2px solid #0135df;
+  outline-offset: -1px;
+}
+
+.app-shell .sharpen-notes {
+  margin-top: 12px;
+}
+.app-shell .sharpen-notes ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.app-shell .sharpen-notes li {
+  position: relative;
+  padding-left: 14px;
+  font-size: 12px;
+  color: #24498b;
+}
+.app-shell .sharpen-notes li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 6px;
+  height: 6px;
+  background: #ffb21c;
+}
+
+.app-shell .sharpen-questions {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e3e8f0;
+}
+.app-shell .sharpen-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.app-shell .sharpen-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  background: #fff;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  color: #0135df;
+  font-size: 12px;
+  cursor: pointer;
+}
+.app-shell .sharpen-chip.on {
+  background: #0135df;
+  color: #fff;
+}
+.app-shell .sharpen-chip.on svg {
+  color: #ffb21c;
+}
+.app-shell .sharpen-chip:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: 1px;
+}
+.app-shell .sharpen-answer {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.app-shell .sharpen-answer input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  font-size: 13px;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+}
+.app-shell .sharpen-answer input:focus {
+  outline: 2px solid #0135df;
+  outline-offset: -1px;
+}
+
+.app-shell .sharpen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.app-shell .sharpen-use {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #0135df;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.app-shell .sharpen-use svg {
+  color: #ffb21c;
+}
+.app-shell .sharpen-use:hover:not(:disabled) {
+  background: #061b69;
+}
+.app-shell .sharpen-use:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.app-shell .sharpen-use:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: 2px;
+}
+.app-shell .sharpen-panel .small-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.app-shell .sharpen-fine {
+  margin-top: 8px !important;
+  font-size: 11px;
+  color: #68748a;
+}
+.app-shell .sharpen-warn {
+  color: #8a4b00;
+}
+
+/* After Use this: one line with Undo. */
+.app-shell .sharpen-used {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 6px 8px 6px 12px;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+  color: #24498b;
+  font-size: 12px;
+}
+.app-shell .sharpen-used > svg {
+  color: #0135df;
+}
+.app-shell .sharpen-used span {
+  flex: 1;
+}
+.app-shell .sharpen-used .small-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+@media (max-width: 720px) {
+  .app-shell .sharpen-head {
+    flex-wrap: wrap;
+  }
+  .app-shell .sharpen-head .sharpen-x {
+    order: 2;
+  }
+  .app-shell .sharpen-model {
+    order: 3;
+    width: 100%;
+  }
+  .app-shell .sharpen-model select {
+    flex: 1;
+    max-width: none;
+  }
+  .app-shell .sharpen-diff {
+    grid-template-columns: 1fr;
+  }
+  .app-shell .sharpen-text {
+    max-height: 180px;
+  }
+}

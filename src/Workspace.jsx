@@ -214,6 +214,17 @@ import {
 } from "./DeepResearch.jsx";
 import { statusByModel, statusReleased, useModelStatus } from "./model-status.js";
 import { ModelDownNotice } from "./StatusDot.jsx";
+import {
+  SharpenButton,
+  SharpenPanel,
+  loadSharpenModel,
+  saveSharpenModel,
+  sharpenBlock,
+  sharpenLive,
+  useSharpen,
+  useSharpenEstimate,
+} from "./Sharpen.jsx";
+import { pickSharpener, sharpenPool } from "./sharpen.js";
 const initial = [
   {
     id: "welcome",
@@ -1615,6 +1626,60 @@ export default function Workspace() {
   );
   const seedHit = promptSeed || documentSeed || instructionsSeed;
   const editSeed = useSeedScan(seedLive, editing?.text || "");
+  // Prompt Sharpen (src/Sharpen.jsx): rewrites the typed prompt with a fast
+  // model, off the record. Only the prompt goes (never an @mention, the
+  // chat, files, memory or instructions). Text modes, signed in, never the
+  // demo or Sealed Mode.
+  const sharpenAvailable =
+    !demo && !!user && textMode && sharpenLive(config) && !sealedOn && !sealedThread;
+  const [sharpenChoice, setSharpenChoice] = useState(loadSharpenModel);
+  const sharpenPrivate = textMode && privateMode && privateModeReleased(config);
+  const sharpenModels = useMemo(
+    () => (sharpenAvailable ? sharpenPool(models, { privateMode: sharpenPrivate, inSection }) : []),
+    // inSection depends only on the mode and the Uncensored list.
+    [sharpenAvailable, models, sharpenPrivate, mode, uncensoredIds.join(",")],
+  );
+  const sharpenModel = pickSharpener(sharpenModels, sharpenChoice);
+  const sharpen = useSharpen();
+  const sharpenBlocked = sharpenBlock({
+    length: sendText.length,
+    seed: promptSeed,
+    model: sharpenModel,
+    privateMode: sharpenPrivate,
+  });
+  const sharpenEstimate = useSharpenEstimate({
+    enabled: sharpenAvailable && !busy && !sharpenBlocked,
+    model: sharpenModel?.id,
+    chars: sendText.length,
+    privateMode: sharpenPrivate,
+  });
+  // A new sharpen of what's typed, or the last one again (Try again, or
+  // with answers to its questions). Veil masks with a copy of this chat's
+  // map, so the same detail gets the same tag and nothing is recorded.
+  function runSharpen(again = null) {
+    if (!sharpenModel) return;
+    const veiling = veilOn && isReleased(config, "veil");
+    sharpen.run({
+      text: again ? sharpen.state.original : sendText,
+      prefix: again ? sharpen.state.prefix : mentioned ? "@" + mentioned.id + " " : "",
+      answers: again?.answers || [],
+      model: sharpenModel.id,
+      modelName: sharpenModel.name,
+      privateMode: sharpenPrivate,
+      veilWith: veiling ? { state: cloneVeilState(veilStateRef.current), words: veilWords } : null,
+    });
+  }
+  function chooseSharpener(id) {
+    saveSharpenModel(id);
+    setSharpenChoice(id);
+  }
+  // Sending, another chat or mode, or Sealed Mode closes it.
+  useEffect(() => {
+    if (busy || !sharpenAvailable) sharpen.reset();
+  }, [busy, sharpenAvailable]);
+  useEffect(() => {
+    sharpen.reset();
+  }, [current, mode]);
   // Deep Research (src/DeepResearch.jsx): offered where Web is (chat and
   // code, signed in, never the demo or Sealed Mode).
   const researchAvailable =
@@ -3918,6 +3983,28 @@ export default function Workspace() {
                     noModels={!sealedModels.length}
                   />
                 )}
+                {sharpenAvailable && (
+                  <SharpenPanel
+                    sharpen={sharpen}
+                    pool={sharpenModels}
+                    model={sharpenModel}
+                    onModel={chooseSharpener}
+                    estimate={sharpenEstimate}
+                    onUse={(text) => {
+                      setPrompt(sharpen.state.prefix + text);
+                      sharpen.used(text);
+                      promptBox.current?.focus();
+                    }}
+                    onUndo={() => {
+                      setPrompt(sharpen.state.prefix + sharpen.state.original);
+                      sharpen.reset();
+                      promptBox.current?.focus();
+                    }}
+                    onAnswer={(answers) => runSharpen({ answers })}
+                    onRetry={() => runSharpen({ answers: sharpen.state.answers })}
+                    teamPays={teamPays.on}
+                  />
+                )}
                 {info && <Notice>{info}</Notice>}
                 {error && (
                   <Notice type="error">
@@ -4444,6 +4531,15 @@ export default function Workspace() {
                             <span className="instructions-dot" aria-hidden="true" />
                           )}
                         </button>
+                      )}
+                      {sharpenAvailable && (
+                        <SharpenButton
+                          block={busy ? "Wait for the reply to finish." : sharpenBlocked}
+                          estimate={sharpenEstimate}
+                          running={sharpen.state.status === "running"}
+                          onSharpen={() => runSharpen()}
+                          onStop={sharpen.stop}
+                        />
                       )}
                       {longAnswersLive && textMode && !demo && !sealedOn && !researchOn && (
                         <label className="fine-print">

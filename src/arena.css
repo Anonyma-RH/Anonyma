@@ -1,0 +1,411 @@
+/* Blind Arena: the /arena leaderboard, the question after a Blind vote, the
+   picker badge and the Account setting. Cobalt and white, flat, in the
+   Model Status page's measures. */
+
+/* The /arena page. */
+.arena-page .arena-body {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 24px 110px;
+}
+.arena-page .arena-test {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  background: #fff6e8;
+  color: #8a4b00;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.arena-page .arena-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+  padding: 18px 0;
+  border-top: 1px solid #e3e8f0;
+  font-size: 14px;
+  color: #142343;
+}
+.arena-page .arena-count {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.arena-page .arena-checked {
+  margin-left: auto;
+  font-size: 12px;
+  color: #68748a;
+  font-variant-numeric: tabular-nums;
+}
+.arena-page .arena-board {
+  border-top: 2px solid #0135df;
+}
+.arena-page .arena-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.arena-page .arena-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1.7fr) 80px minmax(0, 1.6fr) 80px 80px;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 14px;
+  border-bottom: 1px solid #e3e8f0;
+  font-variant-numeric: tabular-nums;
+}
+.arena-page .arena-head {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  background: #f7f9fc;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #68748a;
+}
+.arena-page .arena-rank {
+  font-family: var(--serif);
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  color: #0135df;
+}
+.arena-page .arena-list > li:nth-child(-n + 3) .arena-rank {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+  color: #fff;
+  background: #0135df;
+}
+.arena-page .arena-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 18px;
+  color: #142343;
+}
+.arena-page .arena-score {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0135df;
+}
+.arena-page .arena-votes,
+.arena-page .arena-win {
+  font-size: 15px;
+  color: #3e5070;
+}
+.arena-page .arena-row small {
+  display: none;
+}
+/* Every row's track is the same width, so the dots share one scale. */
+.arena-page .arena-range {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.arena-page .arena-bar {
+  position: relative;
+  height: 14px;
+}
+.arena-page .arena-bar::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #eef2ff;
+}
+.arena-page .arena-bar-span {
+  position: absolute;
+  top: 4px;
+  height: 6px;
+  background: #b9c9f5;
+}
+.arena-page .arena-bar-dot {
+  position: absolute;
+  top: 1px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #0135df;
+}
+.arena-page .arena-range-text {
+  font-size: 12px;
+  color: #68748a;
+  text-align: right;
+  white-space: nowrap;
+}
+.arena-page .arena-empty {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 26px 14px;
+  border-bottom: 1px solid #e3e8f0;
+  color: #0135df;
+}
+.arena-page .arena-empty b {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #142343;
+}
+.arena-page .arena-empty p {
+  max-width: 640px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #68748a;
+}
+.arena-page .arena-waiting {
+  margin: 0;
+  padding: 14px;
+  border-bottom: 1px solid #e3e8f0;
+  font-size: 13px;
+  color: #68748a;
+}
+.arena-page .arena-method {
+  margin-top: 56px;
+}
+.arena-page .arena-method h2 {
+  margin: 0 0 12px;
+  font-size: 34px;
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+  color: #142343;
+}
+.arena-page .arena-method ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.arena-page .arena-method li {
+  padding: 18px 0;
+  border-top: 1px solid #e3e8f0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #3e5070;
+}
+.arena-page .arena-method b {
+  color: #142343;
+}
+.arena-page .arena-join {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  background: #f3f6ff;
+  border-left: 3px solid #0135df;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #142343;
+}
+.arena-page .arena-join > svg {
+  flex: none;
+  color: #0135df;
+}
+.arena-page .arena-join > span {
+  flex: 1 1 320px;
+}
+.arena-page .arena-join a {
+  padding: 8px 14px;
+  color: #fff;
+  background: #0135df;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.arena-page .arena-join a:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .arena-page .page-intro h1 {
+    font-size: 44px;
+    letter-spacing: -1px;
+  }
+  .arena-page .arena-body {
+    padding: 0 16px 80px;
+  }
+  .arena-page .arena-checked {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+  .arena-page .arena-head {
+    display: none;
+  }
+  .arena-page .arena-row {
+    grid-template-columns: 40px repeat(3, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding: 16px 4px;
+  }
+  .arena-page .arena-rank {
+    grid-row: 1 / 3;
+    align-self: start;
+  }
+  .arena-page .arena-name {
+    grid-column: 2 / 5;
+    font-size: 17px;
+  }
+  .arena-page .arena-range {
+    grid-column: 2 / 5;
+    grid-row: 3;
+    grid-template-columns: auto minmax(0, 1fr) 72px;
+  }
+  .arena-page .arena-score,
+  .arena-page .arena-votes,
+  .arena-page .arena-win {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 16px;
+  }
+  .arena-page .arena-row small {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.3;
+    color: #68748a;
+  }
+  .arena-page .arena-range small {
+    font-size: 10px;
+  }
+  .arena-page .arena-method ul {
+    grid-template-columns: 1fr;
+  }
+  .arena-page .arena-method h2 {
+    font-size: 28px;
+  }
+}
+
+/* After a Blind vote: asked once, in the shared dialog. */
+.arena-ask {
+  display: grid;
+  gap: 14px;
+  width: min(640px, 80vw);
+  font-size: 13px;
+  color: #142343;
+}
+.arena-ask-lead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.arena-ask-lead p {
+  margin: 0;
+  line-height: 1.55;
+}
+.arena-ask-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  color: #fff;
+  background: #0135df;
+}
+.arena-ask-points {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 12px 14px;
+  list-style: none;
+  background: #f3f6ff;
+  border-left: 3px solid #0135df;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #3e5070;
+}
+.arena-ask-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.arena-ask-actions .small-button {
+  flex: 1 1 160px;
+  justify-content: center;
+  border-radius: 2px;
+  background: #fff;
+}
+.arena-ask-actions .small-button.primary {
+  color: #fff;
+  background: #0135df;
+  border-color: #0135df;
+}
+
+/* The picker badge: "Arena #3". */
+.app-shell .mf-tag.arena {
+  flex: none;
+  background: #eef2ff;
+  color: #0135df;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Account → Settings. */
+.arena-settings-options {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.arena-settings-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  color: #142343;
+}
+.arena-settings-row input[type="checkbox"] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #0135df;
+}
+.arena-settings-row > span {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.arena-settings-row b {
+  font-weight: 600;
+}
+.arena-settings-row small,
+.arena-settings-note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #68748a;
+}
+.arena-settings-note {
+  margin: 0;
+  padding-left: 28px;
+}
+.arena-settings-note a {
+  color: #0135df;
+}
+.arena-settings-saved,
+.arena-settings-error {
+  margin: 0;
+  padding-left: 28px;
+  font-size: 12px;
+}
+.arena-settings-saved {
+  color: #0a7a3e;
+}
+.arena-settings-error {
+  color: #b42318;
+}

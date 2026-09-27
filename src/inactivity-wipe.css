@@ -1,0 +1,198 @@
+/* Inactivity Wipe: the Account section (InactivityWipeSettings) and the
+   workspace notice (InactivityNotice) in src/InactivityWipe.jsx. Builds on
+   .settings-stack, .identity-rows, .notice, .button, .modal and Panic Wipe's
+   .panic-wipe-lists and .panic-wipe-confirm. Cobalt and white, flat. */
+.inactivity-wipe-body {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.inactivity-wipe-body > .notice {
+  margin: 0;
+}
+.inactivity-field {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--work-ink, #142343);
+}
+.inactivity-field select {
+  font-size: 13px;
+}
+.inactivity-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--work-ink, #142343);
+  cursor: pointer;
+}
+.inactivity-check input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #0135df;
+}
+.inactivity-check input:disabled + span {
+  opacity: 0.55;
+}
+.settings-stack .inactivity-hint,
+.inactivity-hint {
+  margin: -6px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--work-muted, #68748a);
+}
+.inactivity-wipe-body .inline-actions {
+  margin-top: 0;
+}
+.inactivity-wipe-body .button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.inactivity-status {
+  margin: 4px 0 0;
+  padding: 16px 18px 2px;
+  border: 1px solid var(--line);
+  border-left: 3px solid #0135df;
+  background: #fff;
+}
+.inactivity-status > div > span {
+  width: 130px;
+}
+.inactivity-status b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.inactivity-status b svg {
+  color: #0135df;
+}
+.inactivity-lists {
+  font-size: 12px;
+}
+.inactivity-lists summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #0135df;
+}
+.inactivity-lists .panic-wipe-lists {
+  margin: 14px 0 0;
+}
+.inactivity-notes {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+}
+.inactivity-notes li + li {
+  margin-top: 4px;
+}
+.inactivity-notes a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.inactivity-confirm > p:first-child {
+  font-size: 13px;
+  color: var(--work-ink, #142343);
+}
+.inactivity-confirm .inactivity-hint {
+  margin: 0 0 18px;
+}
+@media (max-width: 640px) {
+  .inactivity-status > div > span {
+    width: auto;
+    min-width: 96px;
+  }
+}
+
+/* The workspace notice: a cobalt-ruled white strip under the workspace
+   notice, the same shape as the low-balance banner. */
+.inactivity-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 36px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid #0135df;
+  color: #1c2a55;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.inactivity-banner-mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: #0135df;
+  color: #fff;
+}
+.inactivity-banner p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.inactivity-banner b {
+  font-weight: 700;
+}
+.inactivity-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+.inactivity-banner-actions a {
+  color: #0135df;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.inactivity-banner-dismiss {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.inactivity-banner-dismiss:hover,
+.inactivity-banner-dismiss:focus-visible {
+  opacity: 1;
+}
+@media (max-width: 700px) {
+  .inactivity-banner {
+    flex-wrap: wrap;
+    padding: 10px 18px;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .inactivity-banner p {
+    flex-basis: calc(100% - 40px);
+  }
+  .inactivity-banner-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .inactivity-banner-dismiss {
+    margin-left: auto;
+  }
+}

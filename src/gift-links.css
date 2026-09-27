@@ -1,0 +1,636 @@
+/* Gift Links: the Account panel (Credits & funding), the gift card (on
+   screen, printed, and on the claim page) and the /gift claim page.
+   Cobalt and white, flat, with the gold accent the brand already uses. */
+
+/* ---- Account → Credits & funding ---- */
+.gift-links {
+  margin-top: 48px;
+  padding-top: 40px;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+}
+.gift-links-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.gift-links-head > div {
+  flex: 1;
+  min-width: 0;
+}
+.gift-links-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  background: #0135df;
+  color: #ffb21c;
+}
+.app-shell .gift-links-head h2 {
+  font-family: inherit;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+  margin: 0 0 6px;
+}
+.gift-links-head p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--work-muted, #68748a);
+  max-width: 620px;
+}
+.gift-have-code {
+  flex: none;
+  white-space: nowrap;
+}
+.gift-links-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 35px;
+  align-items: start;
+}
+.gift-form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.gift-form legend {
+  font-size: 12px;
+  color: #4d5d78;
+  margin-bottom: 9px;
+  padding: 0;
+}
+.gift-form .amount-shortcuts {
+  margin: 0 0 23px;
+}
+.gift-form .amount-shortcuts button {
+  font-variant-numeric: tabular-nums;
+}
+.gift-note-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.gift-note-label small {
+  color: var(--work-muted, #68748a);
+  font-variant-numeric: tabular-nums;
+}
+.gift-form .gift-estimate {
+  margin: 4px 0 22px;
+  font-size: 13px;
+}
+.gift-form .gift-estimate b {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.gift-form .notice {
+  margin-bottom: 16px;
+}
+.gift-back {
+  margin-top: 10px;
+}
+.gift-fine {
+  margin: 14px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+}
+.gift-made {
+  display: grid;
+  gap: 16px;
+}
+.gift-made-link {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+  background: #f6f8fd;
+  border: 1px solid var(--work-line, #e3e8f0);
+  padding: 10px 12px;
+  color: #142343;
+}
+.gift-made-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gift-links-side h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: inherit;
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+.gift-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0135df;
+  background: #edf2ff;
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.gift-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+}
+.gift-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--work-line, #e3e8f0);
+}
+.gift-row > b {
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+}
+.gift-row-text {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.gift-row-note {
+  font-size: 13px;
+  color: #142343;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gift-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.gift-row-meta small {
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+}
+.gift-row-confirm {
+  display: flex;
+  gap: 6px;
+}
+.gift-status {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: #f3f5f9;
+  color: #68748a;
+  white-space: nowrap;
+}
+.gift-status.open {
+  background: #edf2ff;
+  color: #0135df;
+}
+.gift-status.claimed {
+  background: #0135df;
+  color: #fff;
+}
+
+/* The honest small print, on both sides. */
+.gift-facts {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+  display: grid;
+  gap: 10px;
+}
+.gift-facts li {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+}
+.gift-facts svg {
+  flex: none;
+  margin-top: 2px;
+  color: #0135df;
+}
+
+/* ---- The gift card ---- */
+.gift-card {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+  max-width: 520px;
+  padding: 24px 26px 22px;
+  background: #0135df;
+  color: #fff;
+  border-radius: 2px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+.gift-card::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 34%;
+  height: 6px;
+  background: #ffb21c;
+}
+.gift-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.gift-card-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--serif);
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: -0.4px;
+}
+.gift-card-brand .brand-mark {
+  width: 30px;
+  height: 30px;
+}
+.gift-card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffb21c;
+  color: #0135df;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+}
+.gift-card-amount {
+  display: grid;
+  gap: 2px;
+  margin-top: 6px;
+}
+.gift-card-amount b {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 60px;
+  line-height: 0.95;
+  letter-spacing: -1.5px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.gift-card-amount span {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #dfe7ff;
+}
+.gift-card-note {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.gift-card-note.muted {
+  color: #c9d6ff;
+  font-size: 13px;
+}
+.gift-card-claim {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid #ffffff33;
+}
+.gift-qr {
+  flex: none;
+  width: 92px;
+  height: 92px;
+  display: block;
+}
+.gift-card-claim > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.gift-card-claim small,
+.gift-card-by {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #dfe7ff;
+  margin: 0;
+}
+.gift-card-claim code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: none;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+/* On the claim page's cobalt hero, the card turns white. */
+.gift-hero .gift-card {
+  background: #fff;
+  color: #0e1a3a;
+}
+.gift-hero .gift-card-amount b {
+  color: #0135df;
+}
+.gift-hero .gift-card-amount span,
+.gift-hero .gift-card-by {
+  color: #68748a;
+}
+.gift-hero .gift-card-note.muted {
+  color: #68748a;
+}
+.gift-hero .gift-card-brand {
+  color: #0135df;
+}
+.gift-hero .gift-card-by {
+  padding-top: 12px;
+  border-top: 1px solid #e3e8f0;
+}
+
+/* Print card: only the card, at card size, colours kept. */
+.gift-print-root {
+  display: none;
+}
+@media print {
+  html.gift-printing body > *:not(.gift-print-root) {
+    display: none !important;
+  }
+  html.gift-printing .gift-print-root {
+    display: block;
+    padding: 12mm 0 0;
+  }
+  html.gift-printing .gift-print-root .gift-card {
+    width: 150mm;
+    max-width: none;
+    margin: 0 auto;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    break-inside: avoid;
+  }
+}
+
+/* ---- The claim page (/gift) ---- */
+.gift-page {
+  min-height: 100dvh;
+  background: #fff;
+  color: #142343;
+}
+.gift-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 32px;
+  border-bottom: 1px solid #e3e8f0;
+}
+.gift-top .logo {
+  margin-right: auto;
+  font-family: var(--serif);
+  font-weight: 300;
+}
+.gift-top-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0135df;
+  border: 1px solid #c9d6f7;
+  padding: 6px 10px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.gift-hero {
+  --gutter: max(48px, calc((100% - 1120px) / 2));
+  background: #0135df;
+  color: #fff;
+  padding: 64px var(--gutter) 60px;
+  display: grid;
+  gap: 56px;
+  align-items: center;
+}
+.gift-hero.with-card {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+}
+.gift-hero .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #dfe7ff;
+  font-size: 11px;
+  letter-spacing: 1.3px;
+  margin: 0 0 18px;
+}
+.gift-hero .eyebrow::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: #ffb21c;
+  flex: none;
+}
+.gift-hero h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.04;
+  letter-spacing: -1.2px;
+  margin: 0 0 22px;
+  color: #fff;
+  overflow-wrap: anywhere;
+  /* Chinese breaks at the spaces around the number, not inside 积分. */
+  word-break: keep-all;
+}
+.gift-hero-note {
+  margin: 0 0 20px;
+  padding-left: 16px;
+  border-left: 3px solid #ffb21c;
+  font-size: 19px;
+  line-height: 1.5;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+.gift-hero-lede {
+  margin: 0;
+  max-width: 540px;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #dfe7ff;
+}
+.gift-hero-card {
+  display: flex;
+  justify-content: flex-end;
+}
+.gift-panel {
+  padding: 44px max(48px, calc((100% - 1120px) / 2)) 72px;
+}
+.gift-panel > h2 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: 32px;
+  letter-spacing: -0.6px;
+  margin: 0 0 10px;
+}
+.gift-panel > p {
+  margin: 0 0 22px;
+  max-width: 620px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #68748a;
+}
+.gift-signed-in {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+}
+.gift-signed-in b {
+  color: #142343;
+}
+.gift-panel > .notice {
+  max-width: 620px;
+  margin-bottom: 18px;
+}
+.gift-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.gift-page .gift-facts {
+  margin-top: 40px;
+  max-width: 820px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 32px;
+}
+.gift-page .gift-facts li {
+  font-size: 13px;
+}
+.gift-page .small-button {
+  font-size: 12px;
+  color: #3e5070;
+  border-color: #e3e8f0;
+  border-radius: 2px;
+  background: #fff;
+}
+.gift-page .small-button:hover {
+  background: #f3f6fc;
+}
+.gift-code-form {
+  max-width: 560px;
+}
+.gift-code-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 12px;
+  color: #4d5d78;
+  margin-bottom: 18px;
+}
+.gift-code-form input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #d7dfea;
+  border-radius: 2px;
+  color: #142343;
+  background: #fff;
+}
+.gift-code-form input::placeholder {
+  color: #b3bdcf;
+}
+.gift-code-form .notice {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 900px) {
+  .gift-links-grid {
+    grid-template-columns: 1fr;
+  }
+  .gift-hero.with-card {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .gift-hero-card {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 700px) {
+  .gift-links-head {
+    flex-wrap: wrap;
+  }
+  .gift-links-head > div {
+    flex-basis: calc(100% - 56px);
+  }
+  .gift-have-code {
+    margin-left: 56px;
+  }
+  .gift-row {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+  .gift-row > button,
+  .gift-row-confirm {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .gift-card {
+    padding: 20px 18px 18px;
+  }
+  .gift-card-amount b {
+    font-size: 48px;
+  }
+  .gift-qr {
+    width: 76px;
+    height: 76px;
+  }
+  .gift-card-claim code {
+    font-size: 12px;
+  }
+  .gift-top {
+    padding: 14px 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .gift-top-tag {
+    display: none;
+  }
+  .gift-hero {
+    padding: 36px 16px 32px;
+  }
+  /* On a phone the headline carries the amount and note; the claim comes
+     first, not a second copy of the card. */
+  .gift-hero-card {
+    display: none;
+  }
+  .gift-hero-note {
+    font-size: 17px;
+  }
+  .gift-hero-lede {
+    font-size: 15px;
+  }
+  .gift-panel {
+    padding: 32px 16px 56px;
+  }
+  .gift-panel > h2 {
+    font-size: 26px;
+  }
+  .gift-actions > .button {
+    flex: 1 1 100%;
+  }
+  .gift-page .gift-facts {
+    grid-template-columns: 1fr;
+  }
+}

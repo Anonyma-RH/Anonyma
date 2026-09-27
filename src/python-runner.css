@@ -1,0 +1,298 @@
+/* Python Runner: Run under a Python block in a reply, and the output panel. */
+.python-block {
+  position: relative;
+  min-width: 0;
+}
+.python-block > pre {
+  margin-bottom: 8px;
+}
+.python-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0 0 12px;
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.message .python-tools .small-button,
+.python-tools .small-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  min-height: 28px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+.python-tools .python-run,
+.python-confirm .python-run.primary {
+  color: #fff;
+  background: #0135df;
+  border: 1px solid #0135df;
+}
+.python-tools .python-run:hover:not(:disabled),
+.python-confirm .python-run.primary:hover {
+  background: #0029b8;
+  border-color: #0029b8;
+}
+.python-tools .python-run:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.python-tools .python-stop {
+  color: #9c3d2a;
+  background: #fff;
+  border: 1px solid #f3d4c6;
+}
+.python-tools .python-stop:hover {
+  background: #fff3ee;
+}
+.python-run:focus-visible,
+.python-stop:focus-visible,
+.python-limit select:focus-visible,
+.python-file input:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 1px;
+}
+.python-limit,
+.python-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  white-space: nowrap;
+}
+.python-limit select {
+  font: inherit;
+  font-size: 11px;
+  color: var(--work-ink, #142343);
+  background: #fff;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  padding: 3px 6px;
+}
+.python-file {
+  padding: 2px 10px 2px 8px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  background: #fff;
+  max-width: 100%;
+  cursor: pointer;
+}
+.python-file.on {
+  border-color: #0135df;
+  background: #edf2ff;
+  color: #0135df;
+}
+.python-file input {
+  margin: 0;
+  accent-color: #0135df;
+}
+.python-file-name {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  color: var(--work-ink, #142343);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.python-file-cut {
+  font-size: 10px;
+  color: #8a4b00;
+}
+.python-panel {
+  margin: -6px 0 16px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-top: 2px solid #0135df;
+  background: #fff;
+  padding: 6px 14px 8px;
+  min-width: 0;
+}
+.python-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+}
+.python-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0135df;
+  white-space: nowrap;
+}
+.python-status {
+  font-size: 12px;
+  color: var(--work-ink, #142343);
+  min-width: 0;
+}
+.python-status.bad {
+  color: #9c3d2a;
+}
+.python-close {
+  margin-left: auto;
+  color: var(--work-muted, #68748a);
+  min-width: 28px;
+  min-height: 28px;
+}
+.python-output {
+  margin: 6px 0 0;
+  padding: 8px 12px;
+  max-height: 360px;
+  overflow: auto;
+  background: #f5f7fb;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-radius: 2px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #142343;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.app-shell .markdown .python-output {
+  background: #f5f7fb;
+  color: #142343;
+}
+.python-output .python-stderr {
+  color: #9c3d2a;
+}
+.python-value::before {
+  content: "→ ";
+  color: #0135df;
+}
+.python-figures {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+.python-figures figure {
+  margin: 0;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+  min-width: 0;
+}
+.python-figures img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 360px;
+  margin: 6px auto 0;
+}
+.python-figures figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 0 10px;
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.message .python-figures .small-button.python-save,
+.python-figures .python-save {
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 0;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0135df;
+  text-decoration: none;
+  background: none;
+}
+.python-figures .python-save:hover {
+  background: #edf2ff;
+}
+.python-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--work-ink, #142343);
+}
+.python-note::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  vertical-align: 1px;
+  background: #ffb21c;
+}
+.python-given {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 1px 8px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: #0135df;
+  background: #edf2ff;
+  border-radius: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.python-fine {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--work-muted, #68748a);
+}
+.python-honest {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+}
+.python-confirm p {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--work-ink, #142343);
+}
+.python-confirm .python-confirm-title {
+  font-weight: 600;
+}
+.python-confirm .python-fine {
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.python-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.python-confirm-actions .small-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 4px 14px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+@media (max-width: 700px) {
+  .python-panel {
+    padding: 8px 10px 10px;
+  }
+  .python-output {
+    max-height: 280px;
+    font-size: 11px;
+  }
+  .python-eyebrow {
+    display: none;
+  }
+}
+/* Chat Export's print view is a document: no buttons or runs in it. */
+.chat-print-page .python-tools,
+.chat-print-page .python-panel {
+  display: none;
+}

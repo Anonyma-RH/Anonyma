@@ -1,10 +1,10 @@
 # Canvas
 
-**Code release · 27 September 2026 · hosted deployment pending CI**
+**Code release · 27 September 2026 · hosted release live**
 
 Edit a document alongside AI and review suggestions as tracked changes.
 
-[Public release commit](https://github.com/Anonyma-RH/Anonyma/commit/3d106bd07794d8477f42083786192260c65af68b). The release code is published. The hosted rollout is pending GitHub Actions billing recovery; do not treat the local footage as proof that the hosted feature is live.
+[Public release commit](https://github.com/Anonyma-RH/Anonyma/commit/3d106bd07794d8477f42083786192260c65af68b). The release code is published and deployed at [askanonyma.com](https://askanonyma.com). Production health, exact build revision and all ten feature flags were verified on 2026-09-27T20:16:08.130Z. Deployment used the locally verified application after the owner authorized manual deployment without GitHub Actions. The film remains local demonstration footage.
 
 [![Canvas launch film](../assets/releases/canvas.png)](../assets/releases/canvas.mp4)
 

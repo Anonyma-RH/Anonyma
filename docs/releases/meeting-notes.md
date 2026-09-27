@@ -1,10 +1,10 @@
 # Meeting Notes
 
-**Code release · 27 September 2026 · hosted deployment pending CI**
+**Code release · 27 September 2026 · hosted release live**
 
 Turn a recording into a transcript, decisions, action items and open questions.
 
-[Public release commit](https://github.com/Anonyma-RH/Anonyma/commit/ec0bd6e65f13b2b4f34c9a685e14b29a77d9db5a). The release code is published. The hosted rollout is pending GitHub Actions billing recovery; do not treat the local footage as proof that the hosted feature is live.
+[Public release commit](https://github.com/Anonyma-RH/Anonyma/commit/ec0bd6e65f13b2b4f34c9a685e14b29a77d9db5a). The release code is published and deployed at [askanonyma.com](https://askanonyma.com). Production health, exact build revision and all ten feature flags were verified on 2026-09-27T20:16:08.130Z. Deployment used the locally verified application after the owner authorized manual deployment without GitHub Actions. The film remains local demonstration footage.
 
 [![Meeting Notes launch film](../assets/releases/meeting-notes.png)](../assets/releases/meeting-notes.mp4)
 

@@ -204,9 +204,9 @@ the picture. Includes its launch film.
 [Model Status](docs/releases/model-status.md): which models are up and how fast, measured from ANONYMA's
 own traffic. Includes its launch film.
 
-### Batch 7 code release — hosted deployment pending CI
+### Batch 7 release — live
 
-The following code releases include short films made from real local UI captures. The hosted rollout is pending GitHub Actions billing recovery; see each release note for demonstrated behavior and limits.
+The following releases are live at askanonyma.com. They include short films made from real local UI captures; see each release note for demonstrated behavior and limits. The application passed 1,606 local tests before manual deployment.
 
 - [Gift Links](docs/releases/gift-links.md)
 - [Auto Model](docs/releases/auto-model.md)

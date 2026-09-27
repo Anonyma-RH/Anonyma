@@ -1,10 +1,10 @@
 # Slides
 
-**Code release · 27 September 2026 · hosted deployment pending CI**
+**Code release · 27 September 2026 · hosted release live**
 
 Turn a prompt, document or chat into an editable deck.
 
-[Public release commit](https://github.com/Anonyma-RH/Anonyma/commit/07963b4fcad60aeb420bfe542624115025bed37e). The release code is published. The hosted rollout is pending GitHub Actions billing recovery; do not treat the local footage as proof that the hosted feature is live.
+[Public release commit](https://github.com/Anonyma-RH/Anonyma/commit/07963b4fcad60aeb420bfe542624115025bed37e). The release code is published and deployed at [askanonyma.com](https://askanonyma.com). Production health, exact build revision and all ten feature flags were verified on 2026-09-27T20:16:08.130Z. Deployment used the locally verified application after the owner authorized manual deployment without GitHub Actions. The film remains local demonstration footage.
 
 [![Slides launch film](../assets/releases/slides.png)](../assets/releases/slides.mp4)
 

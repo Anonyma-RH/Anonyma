@@ -221,7 +221,9 @@ export function v1MediaRoutes(ctx) {
         return { receipt, signed };
       };
       try {
-        await generateImages(
+        // Model Status: the batch's outcome, and how long it took when it
+        // was a single image.
+        await ctx.modelStatus.timed(m.id, () => generateImages(
           cfg,
           m,
           prompt,
@@ -257,7 +259,7 @@ export function v1MediaRoutes(ctx) {
               );
             }
           },
-        );
+        ), { signal: controller.signal, timed: n === 1 });
         if (!data.length)
           fail(502, "Provider returned no image. No credits were charged.");
         respond(finish());

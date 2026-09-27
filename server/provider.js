@@ -32,6 +32,22 @@ export const PROVIDER_REFUSALS = new Set([
 // at fault and 429 means the gateway is throttling us; neither is the
 // user's request, so they are reported as a temporary service condition.
 export function providerFailure(status, detail, label = "Provider") {
+  try {
+    refuse(status, detail, label);
+  } catch (e) {
+    // Model Status (server/model-status.js) tells a request the provider
+    // turned down (400, 413, 422) from a model that's down.
+    e.upstreamStatus = status;
+    throw e;
+  }
+}
+// A provider's refusal of a media request, keeping its upstream status.
+function mediaRejected(status, message) {
+  const e = new Error(message);
+  Object.assign(e, { status: 502, code: "provider_rejected", upstreamStatus: status });
+  throw e;
+}
+function refuse(status, detail, label) {
   if ([401, 402, 403].includes(status)) {
     console.error(
       `${label} refused the gateway account (${status}). Check the gateway key and its funding.`,
@@ -289,11 +305,7 @@ export async function generateImages(
     if (!r.ok) {
       if ([401, 402, 403, 429].includes(r.status))
         providerFailure(r.status, null, "Image provider");
-      fail(
-        502,
-        `Image provider rejected the request (${r.status}).`,
-        "provider_rejected",
-      );
+      mediaRejected(r.status, `Image provider rejected the request (${r.status}).`);
     }
     const j = await r.json();
     let images = dedicated
@@ -349,7 +361,7 @@ export async function createVideo(cfg, body) {
       );
     if ([401, 402, 403, 429].includes(r.status))
       providerFailure(r.status, null, "Video provider");
-    fail(502, `Video submission rejected (${r.status}).`, "provider_rejected");
+    mediaRejected(r.status, `Video submission rejected (${r.status}).`);
   }
   return r.json();
 }

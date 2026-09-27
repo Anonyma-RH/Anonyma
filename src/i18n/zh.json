@@ -4172,7 +4172,46 @@
     "Confirm with your passkey again.": "请再次用你的通行密钥确认。",
     "A passkey works too.": "也可以用通行密钥。",
     "Blind can't be combined with Deep research or Sheets.": "盲测对比不能与深度研究或表格同时使用。",
-    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。"
+    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。",
+    "Model Status": "模型状态",
+    "See which models are up, and how fast they are, before you spend a credit.": "花积分之前，先看看哪些模型在线、速度如何。",
+    "Up, Degraded or Down for every model family, from the last 15 minutes": "每个模型系列的在线、降级或宕机状态，依据过去 15 分钟",
+    "How fast replies start over the last hour: typical, and the slow end": "过去一小时内回复多快开始：典型值与慢端值",
+    "A status dot in the model picker, from our own traffic, never who sent it": "模型选择器中的状态圆点，来自我们自己的流量，从不记录是谁发送的",
+    "MODEL STATUS": "模型状态",
+    "Which models are up,": "哪些模型在线，",
+    "right now.": "此刻一目了然。",
+    "Measured from ANONYMA's own traffic in the last hour. It isn't a promise from the provider.": "基于 ANONYMA 过去一小时的自身流量测得。这并非提供商的承诺。",
+    "Local test installation: these numbers come from its test traffic, not from live models.": "本地测试安装：这些数字来自其测试流量，而非真实模型。",
+    "1 family up": "1 个系列在线",
+    "1 family degraded": "1 个系列降级",
+    "1 family down": "1 个系列宕机",
+    "Status couldn't be loaded. It will try again in 30 seconds.": "无法加载状态，将在 30 秒后重试。",
+    "Loading status…": "正在加载状态……",
+    "Model families": "模型系列",
+    "Model family": "模型系列",
+    "Status, last 15 minutes": "状态（过去 15 分钟）",
+    "First token, median": "首个 Token，中位数",
+    "First token, p90": "首个 Token，p90",
+    "Full response, median": "完整回复，中位数",
+    "Up": "在线",
+    "Degraded": "降级",
+    "Down": "宕机",
+    "Not enough data": "数据不足",
+    "Not enough data yet": "暂无足够数据",
+    "How it's measured": "测量方式",
+    "Real traffic only.": "只看真实流量。",
+    "Every chat, image and video request through ANONYMA counts once it's sent to the provider. Off-the-record and Private requests count the same way. Sealed Mode requests aren't measured.": "通过 ANONYMA 发出的每个对话、图像和视频请求，一旦发送给提供商即计入。不留记录和隐私模式的请求同样计入。密封模式的请求不参与测量。",
+    "is the share of requests that failed or timed out in the last 15 minutes: Degraded from 20%, Down from 50%. Requests we refused before sending, requests you stopped, and requests the provider turned down as invalid don't count.": "指过去 15 分钟内失败或超时的请求占比：达到 20% 为降级，达到 50% 为宕机。我们在发送前拒绝的请求、你停止的请求，以及提供商判定无效而拒绝的请求都不计入。",
+    "Speed": "速度",
+    "is the time from sending a request to its first token, over the last hour: the median, and p90 (9 in 10 started faster). Full response is the median time until the reply or image is complete.": "指过去一小时内从发送请求到收到首个 Token 的时间：取中位数和 p90（10 个请求中有 9 个开始得更快）。完整回复是回复或图像完成所需时间的中位数。",
+    "Never who.": "从不记录是谁。",
+    "Model status": "模型状态",
+    "status": "模型状态",
+    "Up: requests went through in the last 15 minutes.": "在线：过去 15 分钟内请求正常完成。",
+    "Degraded: some requests failed or timed out in the last 15 minutes.": "降级：过去 15 分钟内有部分请求失败或超时。",
+    "Down: most requests failed or timed out in the last 15 minutes.": "宕机：过去 15 分钟内大多数请求失败或超时。",
+    "looks down: most requests to it failed or timed out in the last 15 minutes. You can still send, or pick another model.": "似乎已宕机：过去 15 分钟内发往它的大多数请求失败或超时。你仍可发送，或换一个模型。"
   },
   "patterns": [
     {
@@ -6578,6 +6617,46 @@
     {
       "en": "Too many incorrect attempts. Try again in {0} minutes, or sign out instead.",
       "zh": "错误次数过多。请在 {0} 分钟后重试，或改为退出登录。"
+    },
+    {
+      "en": "{0} families up",
+      "zh": "{0} 个系列在线"
+    },
+    {
+      "en": "{0} families degraded",
+      "zh": "{0} 个系列降级"
+    },
+    {
+      "en": "{0} families down",
+      "zh": "{0} 个系列宕机"
+    },
+    {
+      "en": "Checked at {0} · refreshes every 30 seconds",
+      "zh": "检查于 {0} · 每 30 秒刷新"
+    },
+    {
+      "en": "No model has had enough requests in the last hour to show yet. Numbers appear once a model has at least {0} requests.",
+      "zh": "过去一小时内还没有哪个模型的请求量足以显示。模型至少有 {0} 个请求后才会显示数字。"
+    },
+    {
+      "en": "Fewer than {0} requests in the window. We don't send test requests to fill the gaps, so a quiet model stays here until people use it.",
+      "zh": "统计窗口内的请求少于 {0} 个。我们不会发送测试请求来填补空白，所以冷门模型会一直留在这里，直到有人使用。"
+    },
+    {
+      "en": "Only the model, the outcome and the timings are kept, in memory for an hour. No account, prompt or reply, and a restart clears it. Numbers appear only once there are at least {0} requests, so no one person's use can be picked out.",
+      "zh": "只保留模型、结果和耗时，在内存中存放一小时。不含账户、提示词或回复，重启即清空。至少有 {0} 个请求后才显示数字，因此无法从中辨认出任何一个人的使用情况。"
+    },
+    {
+      "en": "Up: requests went through in the last 15 minutes. Typical first token: {0} s.",
+      "zh": "在线：过去 15 分钟内请求正常完成。首个 Token 典型用时：{0} 秒。"
+    },
+    {
+      "en": "Degraded: some requests failed or timed out in the last 15 minutes. Typical first token: {0} s.",
+      "zh": "降级：过去 15 分钟内有部分请求失败或超时。首个 Token 典型用时：{0} 秒。"
+    },
+    {
+      "en": "Down: most requests failed or timed out in the last 15 minutes. Typical first token: {0} s.",
+      "zh": "宕机：过去 15 分钟内大多数请求失败或超时。首个 Token 典型用时：{0} 秒。"
     }
   ]
 }

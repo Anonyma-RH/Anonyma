@@ -1,0 +1,306 @@
+/* Model Status: the picker dot, the workspace notice and the /status page. */
+.ms-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d2d9e5;
+  vertical-align: middle;
+}
+.ms-dot.up {
+  background: #0a7a3e;
+}
+.ms-dot.degraded {
+  background: #ffb21c;
+}
+.ms-dot.down {
+  background: #b42318;
+}
+
+/* In the model picker: before the model's name, and after it on the button. */
+.app-shell .mf-name .ms-dot {
+  margin: -2px 7px 0 0;
+}
+.app-shell .mf-trigger .ms-dot {
+  margin-left: -2px;
+}
+
+/* Under the model picker when the chosen model is down (never blocks Send). */
+.ms-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 14px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid #e3e8f0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #3e5070;
+}
+.ms-notice > .ms-dot {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+.ms-notice p {
+  flex: 1 1 260px;
+  min-width: 0;
+  margin: 0;
+}
+.ms-notice b {
+  font-weight: 600;
+  color: #142343;
+}
+.ms-notice .ms-notice-link {
+  padding: 5px 8px;
+  color: #0135df;
+  white-space: nowrap;
+  text-decoration: none;
+  border-radius: 2px;
+}
+.ms-notice .ms-notice-link:hover {
+  background: #edf2ff;
+}
+.ms-notice .ms-notice-link:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 1px;
+}
+
+/* The /status page. */
+.status-page .ms-body {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 24px 110px;
+}
+.status-page .ms-test {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  background: #fff6e8;
+  color: #8a4b00;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.status-page .ms-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+  padding: 18px 0;
+  border-top: 1px solid #e3e8f0;
+  font-size: 14px;
+  color: #142343;
+}
+.status-page .ms-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.status-page .ms-checked {
+  margin-left: auto;
+  font-size: 12px;
+  color: #68748a;
+  font-variant-numeric: tabular-nums;
+}
+.status-page .ms-board {
+  border-top: 2px solid #0135df;
+}
+.status-page .ms-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr) repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 12px;
+  padding: 16px 14px;
+  border-bottom: 1px solid #e3e8f0;
+  font-variant-numeric: tabular-nums;
+}
+.status-page .ms-head {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  background: #f7f9fc;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #68748a;
+}
+.status-page .ms-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 18px;
+  color: #142343;
+}
+.status-page .ms-name > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.status-page .ms-family .ms-name {
+  font-family: var(--serif);
+  font-size: 24px;
+  letter-spacing: -0.3px;
+}
+.status-page .ms-model {
+  padding-top: 11px;
+  padding-bottom: 11px;
+  background: #fdfdff;
+}
+.status-page .ms-model .ms-name {
+  padding-left: 18px;
+  font-size: 14px;
+  color: #3e5070;
+}
+.status-page .ms-model .ms-dot {
+  width: 6px;
+  height: 6px;
+}
+.status-page .ms-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  background: #f1f3f8;
+  color: #4d5d78;
+}
+.status-page .ms-tag.up {
+  background: #f3f7eb;
+  color: #0a7a3e;
+}
+.status-page .ms-tag.degraded {
+  background: #fff6e8;
+  color: #8a4b00;
+}
+.status-page .ms-tag.down {
+  background: #fdecea;
+  color: #b42318;
+}
+.status-page .ms-metric {
+  font-size: 18px;
+  color: #0135df;
+}
+.status-page .ms-model .ms-metric {
+  font-size: 14px;
+}
+.status-page .ms-metric small {
+  display: none;
+}
+.status-page .ms-empty {
+  margin: 0;
+  padding: 26px 14px;
+  border-bottom: 1px solid #e3e8f0;
+  color: #68748a;
+  font-size: 14px;
+}
+.status-page .ms-quiet,
+.status-page .ms-method {
+  margin-top: 56px;
+}
+.status-page .ms-quiet h2,
+.status-page .ms-method h2 {
+  margin: 0 0 12px;
+  font-size: 34px;
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+  color: #142343;
+}
+.status-page .ms-quiet p {
+  max-width: 640px;
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #68748a;
+}
+.status-page .ms-quiet ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.status-page .ms-quiet li {
+  padding: 4px 9px;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  font-size: 12px;
+  color: #4d5d78;
+}
+.status-page .ms-method ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.status-page .ms-method li {
+  padding: 18px 0;
+  border-top: 1px solid #e3e8f0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #3e5070;
+}
+.status-page .ms-method b {
+  color: #142343;
+}
+
+@media (max-width: 760px) {
+  /* Room for the title's lines in Chinese at phone width. */
+  .status-page .page-intro h1 {
+    font-size: 46px;
+    letter-spacing: -1px;
+  }
+  .status-page .ms-body {
+    padding: 0 16px 80px;
+  }
+  .status-page .ms-checked {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+  .status-page .ms-head {
+    display: none;
+  }
+  .status-page .ms-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding: 16px 4px;
+  }
+  .status-page .ms-name {
+    grid-column: 1 / 3;
+  }
+  .status-page .ms-state {
+    grid-column: 3;
+    justify-self: end;
+  }
+  .status-page .ms-model .ms-name {
+    padding-left: 12px;
+  }
+  .status-page .ms-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 16px;
+  }
+  .status-page .ms-metric small {
+    display: block;
+    font-size: 10px;
+    line-height: 1.3;
+    color: #68748a;
+  }
+  .status-page .ms-family .ms-name {
+    font-size: 22px;
+  }
+  .status-page .ms-method ul {
+    grid-template-columns: 1fr;
+  }
+  .status-page .ms-quiet h2,
+  .status-page .ms-method h2 {
+    font-size: 28px;
+  }
+}

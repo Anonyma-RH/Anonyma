@@ -844,6 +844,20 @@ export const UPDATES = [
     // password, email code or wallet signature without touching the session.
     released: true,
   },
+  {
+    id: "status",
+    title: "Model Status",
+    tagline: "See which models are up, and how fast they are, before you spend a credit.",
+    points: [
+      "Up, Degraded or Down for every model family, from the last 15 minutes",
+      "How fast replies start over the last hour: typical, and the slow end",
+      "A status dot in the model picker, from our own traffic, never who sent it",
+    ],
+    // GET /api/status (server/routes/status.js) and the public /status page.
+    // Aggregates only, kept in memory for an hour (server/model-status.js):
+    // nothing per account, nothing stored, so nothing to erase or export.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -971,6 +985,8 @@ export function featuresFor(req) {
     }
     return needed;
   }
+  // Model Status: the public, aggregated status of each model family.
+  if (p === "/api/status" || p.startsWith("/api/status/")) return ["status"];
   // Bookmarks: stars on saved messages, with private notes.
   if (p === "/api/bookmarks" || p.startsWith("/api/bookmarks/")) return ["bookmarks"];
   // Link Reader: the server-side fetch of one public page. The page rides

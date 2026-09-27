@@ -1001,6 +1001,22 @@ export const UPDATES = [
     // Mode and Device Vault chats continue in the browser only.
     released: true,
   },
+  {
+    id: "meetingnotes",
+    title: "Meeting Notes",
+    tagline: "Drop a recording. Get a timestamped transcript, the decisions, and the action items.",
+    points: [
+      "Audio or video up to 3 hours, read in your browser; only the sound is sent",
+      "Owners only when the transcript names them, and every item links to its moment",
+      "See the most it can cost first; a piece that fails costs nothing",
+    ],
+    // /api/meeting-notes (server/routes/meeting-notes.js). Transcribed with
+    // Voice & Audio's speech models, so it needs "audio" released too
+    // (featuresFor). Saved notes are one ordinary conversation (the notes
+    // and the timed transcript); off the record keeps nothing, and the
+    // recording itself is never stored. The page is /workspace/notes.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1180,6 +1196,20 @@ export function featuresFor(req) {
       if (body.private === true) needed.push("private", "ephemeral");
       else if (body.ephemeral === true) needed.push("ephemeral");
       if (body.veil_masked !== undefined) needed.push("veil");
+    }
+    return needed;
+  }
+  // Meeting Notes: transcribed with Voice & Audio's speech models. What a
+  // run turns on needs its own update, as a chat would: off the record, a
+  // project and Privacy Trail's Veil count. Private Mode is refused (no
+  // transcription model offers zero data retention), but gated like a chat's.
+  if (p === "/api/meeting-notes" || p.startsWith("/api/meeting-notes/")) {
+    const needed = ["meetingnotes", "audio"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      else if (body.ephemeral === true) needed.push("ephemeral");
+      if (body.project !== undefined) needed.push("projects");
+      if (body.veil_masked !== undefined) needed.push("trail");
     }
     return needed;
   }

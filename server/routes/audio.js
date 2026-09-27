@@ -56,6 +56,8 @@ export function audioRoutes(ctx) {
       stt: catalog.stt.filter((m) => !stt.hides(m.id)).map((m) => ({
         id: m.id,
         name: m.name,
+        // Who receives the audio (Meeting Notes says so before it's sent).
+        provider: m.provider,
         credits_per_minute: credits(usdUnits(m.pricing.api_price * factor)),
         max_minutes: MAX_TRANSCRIPTION_MINUTES,
         ...early(stt, m.id),

@@ -4841,7 +4841,143 @@
     "The model's reply couldn't be read, so nothing was charged. Try another model for this watch.": "无法读取模型的回复，因此未扣费。请为此监测换一个模型。",
     "Paused after 3 replies in a row that couldn't be read. Nothing was charged. Choose another model for this watch, then switch it back on.": "连续 3 次无法读取模型的回复，已暂停。未扣费。请为此监测选择另一个模型，然后重新开启。",
     "The model couldn't make a summary this time. Nothing was charged.": "模型这次未能生成摘要。未扣费。",
-    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。"
+    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。",
+    "Meeting Notes": "会议纪要",
+    "Drop a recording. Get a timestamped transcript, the decisions, and the action items.": "拖入一段录音，即可获得带时间戳的文字稿、会议决定和待办事项。",
+    "Audio or video up to 3 hours, read in your browser; only the sound is sent": "最长 3 小时的音频或视频，在你的浏览器中读取；只发送声音",
+    "Owners only when the transcript names them, and every item links to its moment": "只有文字稿中点名的人才会被列为负责人，每一项都能跳到对应时刻",
+    "See the most it can cost first; a piece that fails costs nothing": "先看最高费用；失败的片段不收费",
+    "MEETING NOTES": "会议纪要",
+    "Meeting notes": "会议纪要",
+    "Drop a recording. Get a timestamped transcript, the decisions and the action items.": "拖入一段录音，即可获得带时间戳的文字稿、会议决定和待办事项。",
+    "New recording": "新录音",
+    "Reading the recording on this device…": "正在此设备上读取录音……",
+    "Drop a recording here": "将录音拖到这里",
+    "MP3, M4A, WAV, WebM or OGG, or an MP4 or MOV video. Up to 3 hours.": "支持 MP3、M4A、WAV、WebM 或 OGG，也支持 MP4 或 MOV 视频。最长 3 小时。",
+    "Choose a recording": "选择录音",
+    "Only the sound goes out": "只发送声音",
+    "The file is read in this browser. Its sound goes to the transcription provider in pieces of up to five minutes; the file, its name, tags and any video stay here.": "文件在此浏览器中读取。只有声音会以最长 5 分钟的片段发送给转录提供商；文件本身、文件名、标签和视频画面都留在这里。",
+    "Nothing kept you didn't ask for": "不保存你没要求保存的内容",
+    "ANONYMA doesn't store the recording. The transcript and notes are saved to History, to this device, or nowhere.": "ANONYMA 不存储录音。文字稿和纪要可以保存到历史记录、此设备，或完全不保存。",
+    "The maximum, first": "先看最高费用",
+    "See the most it can cost before you start; that's exactly what's held. A piece that fails costs nothing.": "开始前先看到最高费用，冻结的正是这个金额。失败的片段不收费。",
+    "The demo doesn't transcribe recordings. Sign in to make meeting notes.": "演示模式不会转录录音。登录后即可生成会议纪要。",
+    "Sign in to make meeting notes.": "登录后即可生成会议纪要。",
+    "This recording couldn't be read in this browser. Try MP3, M4A or WAV.": "此浏览器无法读取这段录音。请尝试 MP3、M4A 或 WAV。",
+    "Only its sound is read. The picture never leaves this device.": "只读取声音，画面不会离开此设备。",
+    "Sent as 1 piece of plain sound": "作为 1 段纯声音发送",
+    "Choose another": "另选一个",
+    "Spoken language": "说话语言",
+    "Several languages": "多种语言",
+    "Transcribed by": "转录模型",
+    "No transcription models right now": "目前没有可用的转录模型",
+    "Notes written by": "纪要撰写模型",
+    "Notes in": "纪要语言",
+    "Same as the recording": "与录音相同",
+    "Keep the notes": "纪要保存位置",
+    "In History": "历史记录",
+    "On this device only (Device Vault)": "仅此设备（本机保险库）",
+    "Nowhere (off the record)": "不保存（不留记录）",
+    "Set up Device Vault to keep the notes on this device.": "设置本机保险库后，才能将纪要保存在此设备上。",
+    "Unlock Device Vault to keep the notes on this device.": "解锁本机保险库后，才能将纪要保存在此设备上。",
+    "Set up": "设置",
+    "Veil masks emails, numbers and keys in the transcript before the notes model sees it, and puts them back here.": "Veil 会在纪要模型读取之前遮盖文字稿中的邮箱、号码和密钥，并在这里还原。",
+    "Veil is off: the notes model sees the transcript as it was heard.": "Veil 已关闭：纪要模型会看到原样的文字稿。",
+    "Meeting Notes isn't available in Private Mode: no transcription model offers zero data retention.": "会议纪要不支持隐私模式：没有任何转录模型提供零数据保留。",
+    "Transcribe and write notes": "转录并撰写纪要",
+    "WRITING THE NOTES": "正在撰写纪要",
+    "SAVING THE TRANSCRIPT": "正在保存文字稿",
+    "PAUSED": "已暂停",
+    "Pieces": "片段",
+    "It was heard in this recording, so the transcript won't go to a model or be saved. Export it below, or discard it.": "录音中出现了它，因此文字稿不会发送给模型，也不会保存。你可以在下方导出，或将其丢弃。",
+    "Retry this piece": "重试此片段",
+    "Make notes from what's transcribed": "用已转录的部分生成纪要",
+    "Try the notes again": "重新生成纪要",
+    "Save the transcript without notes": "只保存文字稿，不生成纪要",
+    "Discard": "丢弃",
+    "Transcript so far": "目前的文字稿",
+    "Transcript (.txt)": "文字稿（.txt）",
+    "Subtitles (.srt)": "字幕（.srt）",
+    "Stopped. Pieces already transcribed are charged; nothing else is.": "已停止。只对已转录的片段扣费，其余不收费。",
+    "Stopped. The notes weren't made, and nothing was charged for them.": "已停止。纪要没有生成，也没有为此扣费。",
+    "Discarded. Pieces already transcribed are charged; the rest was released.": "已丢弃。已转录的片段照常扣费，其余冻结已释放。",
+    "No speech was found in this recording, so there's nothing to make notes from.": "这段录音中没有找到语音，因此无法生成纪要。",
+    "Opening the notes…": "正在打开纪要……",
+    "These notes aren't in your History any more.": "这份纪要已不在你的历史记录中。",
+    "Start a new one": "新建一份",
+    "TRANSCRIPT": "文字稿",
+    "Markdown": "Markdown 文件",
+    "Ask about it in chat": "在对话中继续提问",
+    "Open from Device Vault": "从本机保险库打开",
+    "Notes": "纪要",
+    "Summary": "摘要",
+    "Nothing to summarise.": "没有可总结的内容。",
+    "No decisions were said.": "会上没有提到任何决定。",
+    "Action items": "待办事项",
+    "No owner named": "未指明负责人",
+    "No action items were said.": "会上没有提到待办事项。",
+    "No open questions.": "没有待解决问题。",
+    "1 line": "1 行",
+    "The recording isn't kept, so it can't be played here. The times still match it.": "录音不会保存，因此无法在这里播放。时间戳仍与原录音对应。",
+    "1 decision": "1 项决定",
+    "1 action item": "1 项待办",
+    "1 open question": "1 个待解决问题",
+    "Saved to History as a chat with its transcript. Deleting the chat deletes both.": "已连同文字稿作为一个会话保存到历史记录。删除该会话会同时删除两者。",
+    "Kept in Device Vault on this device only. ANONYMA didn't save it.": "仅保存在此设备的本机保险库中。ANONYMA 没有保存。",
+    "Off the record: nothing was saved. Export it before you leave this page.": "不留记录：没有保存任何内容。离开此页面前请先导出。",
+    "The notes couldn't be kept in Device Vault. Export them before you leave.": "纪要无法保存到本机保险库。离开前请先导出。",
+    "1 owner the model gave was left out: the transcript doesn't name them.": "模型给出的 1 位负责人已被略去：文字稿中没有提到此人。",
+    "Written by a model from the transcript only. An owner shows only when the transcript names them. Check anything important against the recording.": "纪要由模型仅根据文字稿撰写。只有文字稿中点名的人才会显示为负责人。重要内容请对照录音核实。",
+    "Veil masked 1 detail before the notes model saw the transcript.": "在纪要模型读取文字稿之前，Veil 遮盖了 1 处细节。",
+    "Recording": "录音",
+    "What the notes model saw": "纪要模型看到的内容",
+    "Its instructions, then the transcript exactly as sent, with Veil's placeholders. Nothing else about the recording: not its name, date or sound.": "先是给它的指令，然后是原样发送的文字稿（含 Veil 占位符）。录音的其他信息一概不发送：不含文件名、日期或声音。",
+    "Its instructions, then the transcript exactly as sent. Nothing else about the recording: not its name, date or sound.": "先是给它的指令，然后是原样发送的文字稿。录音的其他信息一概不发送：不含文件名、日期或声音。",
+    "Opening Meeting notes…": "正在打开会议纪要……",
+    "This file isn't a recording this page can read. Use MP3, M4A, WAV, WebM or OGG, or an MP4 or MOV video.": "此页面无法读取这个文件。请使用 MP3、M4A、WAV、WebM 或 OGG，或 MP4、MOV 视频。",
+    "This recording looks damaged, so it can't be read.": "这段录音似乎已损坏，无法读取。",
+    "This file is larger than 200 MB. Export the sound at a lower bitrate, or split it.": "此文件大于 200 MB。请以更低的码率导出声音，或将其拆分。",
+    "This video is larger than 2 GB. Export its sound as M4A or MP3 first.": "此视频大于 2 GB。请先将声音导出为 M4A 或 MP3。",
+    "This recording is longer than 3 hours. Split it, then make notes from each part.": "这段录音超过 3 小时。请拆分后分别生成纪要。",
+    "This recording is too short to transcribe.": "这段录音太短，无法转录。",
+    "This video has no sound track.": "此视频没有音轨。",
+    "This browser couldn't decode the recording. Try MP3, M4A or WAV.": "此浏览器无法解码这段录音。请尝试 MP3、M4A 或 WAV。",
+    "OGG, WebM, FLAC and similar recordings up to an hour can be read here. Convert a longer one to M4A, MP3 or WAV.": "OGG、WebM、FLAC 等格式的录音在这里最长可读取 1 小时。更长的录音请转换为 M4A、MP3 或 WAV。",
+    "This browser can't decode audio.": "此浏览器无法解码音频。",
+    "The model ran out of room before the notes were finished, so nothing was charged for them. Try again, or pick another model. Your transcript is kept here.": "模型在纪要写完之前就用完了回复空间，因此纪要不收费。请重试，或换一个模型。你的文字稿保留在这里。",
+    "The model's notes weren't in the expected format, so nothing was charged for them. Try again, or pick another model. Your transcript is kept here.": "模型返回的纪要格式不符合要求，因此纪要不收费。请重试，或换一个模型。你的文字稿保留在这里。",
+    "This transcription has ended. Start again from the recording.": "此次转录已结束。请从录音重新开始。",
+    "A step of this transcription is still running. Wait for it to finish.": "此次转录仍有步骤在运行。请等待其完成。",
+    "Stopped. Nothing was charged for this piece.": "已停止。此片段不收费。",
+    "The transcription provider couldn't be reached.": "无法连接转录提供商。",
+    "This piece isn't the length the recording was planned with. Start again from the recording.": "此片段的长度与录音计划不符。请从录音重新开始。",
+    "No part of the recording was transcribed, so there's nothing to make notes from. Nothing more was charged.": "录音中没有任何部分完成转录，因此无法生成纪要。不会再收取任何费用。",
+    "The notes stopped unexpectedly. Nothing was charged for them.": "纪要意外中止，没有为此扣费。",
+    "The notes model couldn't be reached.": "无法连接纪要模型。",
+    "The notes couldn't be saved to History. They're here to export.": "纪要无法保存到历史记录。你可以在这里导出。",
+    "Meeting notes are paid from your own balance, not a team treasury.": "会议纪要从你自己的余额付费，不使用团队金库。",
+    "Choose a spoken language from the list.": "请从列表中选择说话语言。",
+    "Choose a language for the notes from the list.": "请从列表中选择纪要语言。",
+    "The notes need a text model.": "纪要需要文本模型。",
+    "Off-the-record notes are never saved, so they aren't filed in a project.": "不留记录的纪要从不保存，因此不会归入项目。",
+    "A transcription is already running. Wait for it, or stop it first.": "已有转录在运行。请等待其完成，或先停止它。",
+    "Recordings can be up to 3 hours long. Split a longer one.": "录音最长 3 小时。更长的录音请拆分。",
+    "Send the recording's pieces as a list of their lengths in seconds.": "请以秒为单位列出录音各片段的长度。",
+    "Each piece is at most 5 minutes long.": "每个片段最长 5 分钟。",
+    "Only the last piece can be shorter than 4 minutes 45 seconds.": "只有最后一个片段可以短于 4 分 45 秒。",
+    "The pieces must add up to the recording's length.": "各片段长度之和必须等于录音时长。",
+    "Send the transcript as a list of timed lines.": "请以带时间的行列表形式发送文字稿。",
+    "Each transcript line has a start, an end and its text.": "文字稿的每一行都要有开始时间、结束时间和文字。",
+    "Each transcript line has up to 4,000 characters of text.": "文字稿每行最多 4,000 个字符。",
+    "Each transcript line's times must be inside the recording.": "文字稿每行的时间必须在录音范围内。",
+    "Meeting notes are unavailable right now.": "会议纪要暂不可用。",
+    "The notes stopped.": "纪要已中止。",
+    "The connection ended before the notes arrived.": "纪要送达之前连接已断开。",
+    "This piece is already transcribed.": "此片段已转录。",
+    "Send the piece as a base64 WAV data URL.": "请以 base64 WAV 数据 URL 的形式发送片段。",
+    "Each piece must be under 10 MB.": "每个片段必须小于 10 MB。",
+    "Send each piece as a WAV file.": "请以 WAV 文件发送每个片段。",
+    "Send each piece as mono 16-bit PCM at 16 kHz.": "请以 16 kHz 单声道 16 位 PCM 发送每个片段。"
   },
   "patterns": [
     {
@@ -7871,6 +8007,118 @@
     {
       "en": "Made {0}; the rest weren't usable and were left out.",
       "zh": "生成了 {0}；其余内容无法使用，已略去。"
+    },
+    {
+      "en": "Sent as {0} pieces of plain sound, cut at quiet moments",
+      "zh": "分成 {0} 段纯声音发送，在安静处切分"
+    },
+    {
+      "en": "· transcription up to {0} ({1} min at {2} / min), notes up to {3}",
+      "zh": "· 转录最多 {0}（{1} 分钟，每分钟 {2}），纪要最多 {3}"
+    },
+    {
+      "en": "This model can read about the first {0} of the transcript. Pick a model with a longer context to cover all of it.",
+      "zh": "此模型大约只能读取文字稿的前 {0}。请选择上下文更长的模型以覆盖全部内容。"
+    },
+    {
+      "en": "{0} h {1} min",
+      "zh": "{0} 小时 {1} 分钟"
+    },
+    {
+      "en": "The recording's sound goes to {0} ({1}) to be transcribed. ANONYMA doesn't keep it. The transcript then goes to the notes model.",
+      "zh": "录音的声音会发送给 {0}（{1}）进行转录，ANONYMA 不会保存。随后文字稿会发送给纪要模型。"
+    },
+    {
+      "en": "The recording's sound goes to the transcription provider ({0}). ANONYMA doesn't keep it. The transcript then goes to the notes model.",
+      "zh": "录音的声音会发送给转录提供商（{0}），ANONYMA 不会保存。随后文字稿会发送给纪要模型。"
+    },
+    {
+      "en": "TRANSCRIBING · PIECE {0} OF {1}",
+      "zh": "正在转录 · 第 {0} 段，共 {1} 段"
+    },
+    {
+      "en": "{0} of {1} transcribed",
+      "zh": "已转录 {0} / {1}"
+    },
+    {
+      "en": "Charged so far: {0} credits · held up to {1}",
+      "zh": "目前已扣除：{0} 积分 · 最多冻结 {1}"
+    },
+    {
+      "en": "Piece {0} was transcribed, but its text didn't arrive, so that part is missing from the transcript.",
+      "zh": "第 {0} 段已转录，但文字没有传回，因此文字稿缺少这一部分。"
+    },
+    {
+      "en": "{0} pieces were transcribed, but their text didn't arrive, so those parts are missing from the transcript.",
+      "zh": "有 {0} 段已转录，但文字没有传回，因此文字稿缺少这些部分。"
+    },
+    {
+      "en": "Piece {0} of {1} didn't go through: {2}",
+      "zh": "第 {0} 段（共 {1} 段）未能完成：{2}"
+    },
+    {
+      "en": "{0} lines",
+      "zh": "{0} 行"
+    },
+    {
+      "en": "Go to {0} in the transcript",
+      "zh": "跳到文字稿中的 {0}"
+    },
+    {
+      "en": "Play from {0}",
+      "zh": "从 {0} 开始播放"
+    },
+    {
+      "en": "{0} decisions",
+      "zh": "{0} 项决定"
+    },
+    {
+      "en": "{0} action items",
+      "zh": "{0} 项待办"
+    },
+    {
+      "en": "{0} open questions",
+      "zh": "{0} 个待解决问题"
+    },
+    {
+      "en": "The notes cover the transcript up to {0}: the rest was longer than the notes model can read at once.",
+      "zh": "纪要只涵盖文字稿 {0} 之前的部分：其余部分超出了纪要模型一次能读取的长度。"
+    },
+    {
+      "en": "{0} owners the model gave were left out: the transcript doesn't name them.",
+      "zh": "模型给出的 {0} 位负责人已被略去：文字稿中没有提到这些人。"
+    },
+    {
+      "en": "Veil masked {0} details before the notes model saw the transcript.",
+      "zh": "在纪要模型读取文字稿之前，Veil 遮盖了 {0} 处细节。"
+    },
+    {
+      "en": "Test receipt · {0} credits charged · transcription {1}, notes {2}",
+      "zh": "测试收据 · 已扣除 {0} 积分 · 转录 {1}，纪要 {2}"
+    },
+    {
+      "en": "Receipt · {0} credits charged · transcription {1}, notes {2}",
+      "zh": "收据 · 已扣除 {0} 积分 · 转录 {1}，纪要 {2}"
+    },
+    {
+      "en": "Charged {0} credits",
+      "zh": "已扣除 {0} 积分"
+    },
+    {
+      "en": "{0} Nothing was charged for this piece.",
+      "zh": "{0} 此片段不收费。"
+    },
+    {
+      "en": "{0} Your transcript is kept here for export; no notes were made.",
+      "zh": "{0} 你的文字稿保留在这里，可供导出；未生成纪要。"
+    },
+    {
+      "en": "{0} Nothing was charged for the notes. Your transcript is kept here.",
+      "zh": "{0} 纪要不收费。你的文字稿保留在这里。"
+    },
+    {
+      "en": "{0} can't take a meeting transcript. Pick a model with a longer context.",
+      "zh": "{0} 无法读取会议文字稿。请选择上下文更长的模型。"
     }
   ]
 }

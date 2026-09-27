@@ -41,6 +41,8 @@ export function wipeRoutes(ctx) {
       if (req.body?.confirm !== "WIPE")
         fail(400, "Type WIPE to confirm the wipe.", "confirmation_required");
       const user = req.user.id;
+      // Meeting Notes: a run between steps releases what it holds.
+      ctx.meetingNotes?.endFor(user);
       assertIdle(user);
       // Files first: a file can't join the transaction. A file that can't be
       // removed stops the wipe before anything else changes, and a retry

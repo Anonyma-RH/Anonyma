@@ -144,11 +144,12 @@ test("the header's chat tools compact to icons when crowded, and the sidebar fit
   // tools together; the command palette lists places in the same order.
   const order = [...ws.matchAll(/^\s+\["(\w+)", "[^"]+"\],$/gm)].map((m) => m[1]);
   const nav = order.slice(order.indexOf("home"), order.indexOf("library") + 1);
-  assert.deepEqual(nav, ["home", "chat", "uncensored", "symposium", "device", "code", "image", "video", "audio", "collab", "tools", "sheets", "compare", "study", "routines", "projects", "library"]);
+  // Meeting Notes (batch 7) joins the document tools, after Study.
+  assert.deepEqual(nav, ["home", "chat", "uncensored", "symposium", "device", "code", "image", "video", "audio", "collab", "tools", "sheets", "compare", "study", "notes", "routines", "projects", "library"]);
   const palette = source("command-palette.js");
   const at = (id) => palette.indexOf(`["${id}", `);
   assert.ok(at("symposium") < at("device") && at("device") < at("code"));
-  assert.ok(at("sheets") < at("compare") && at("compare") < at("study"));
+  assert.ok(at("sheets") < at("compare") && at("compare") < at("study") && at("study") < at("notes"));
 });
 
 test("every string the integration added has Chinese", async () => {

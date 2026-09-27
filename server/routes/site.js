@@ -31,6 +31,8 @@ export function siteRoutes({ app, db, cfg }) {
     ondevice: isReleased(cfg, "ondevice"),
     study: isReleased(cfg, "study"),
     compare: isReleased(cfg, "doccompare"),
+    // Meeting Notes' page, which transcribes with Voice & Audio's models.
+    notes: isReleased(cfg, "meetingnotes") && isReleased(cfg, "audio"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

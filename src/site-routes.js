@@ -77,6 +77,8 @@ export function knownPage(path, served = {}) {
     (served.study === true && path === "/workspace/study") ||
     // Document Compare's page, likewise.
     (served.compare === true && path === "/workspace/compare") ||
+    // Meeting Notes' page, likewise.
+    (served.notes === true && path === "/workspace/notes") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

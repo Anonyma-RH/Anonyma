@@ -569,6 +569,8 @@ export function accountRoutes(ctx) {
         400,
         "Type DELETE to confirm closure and forfeiture of unused credits.",
       );
+    // Meeting Notes: a run between steps releases what it holds.
+    ctx.meetingNotes?.endFor(req.user.id);
     if (
       db
         .prepare("SELECT id FROM holds WHERE user_id=? AND status='held'")

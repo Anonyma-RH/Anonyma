@@ -2209,6 +2209,92 @@ route("get", "/api/audio/overview/{id}", "One saved audio overview with its scri
   }),
   description: "The script as voiced, with each turn's start in seconds, for the transcript and chapter jumps. 404 not_found for anyone else's.",
 });
+// Meeting Notes (update "meetingnotes", which also needs "audio").
+const meetingRequest = object(
+  {
+    duration: { ...number, description: "The recording's length in seconds (2 to 10,800), as read in the browser" },
+    chunks: {
+      ...array(number),
+      description: "Each piece's length in seconds, at most 300 (only the last may be under 285), adding up to duration; at most 39 pieces",
+    },
+    stt: { ...string, description: "A transcription model from /api/audio/models (stt); default nova-3" },
+    language: { ...string, description: "The spoken language for the transcription model: en, zh, es, fr, de, pt, it, nl, ja, ko, hi, ru or multi; omit for the model's default" },
+    model: { ...string, description: "A callable text model; it writes the notes" },
+    notes_language: { ...string, description: "The notes' language, or auto (the transcript's own); the same list as Audio Overview's" },
+    ephemeral: { ...bool, description: "Off the record: nothing is saved (needs ephemeral)" },
+    project: { ...string, description: "File the saved notes in this project (needs projects)" },
+    private: { ...bool, description: "Always refused with 400 meeting_private_unavailable: no transcription model offers zero data retention" },
+    requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+  },
+  ["duration", "chunks", "model"],
+);
+const meetingSteps = object({ transcription: number, notes: number });
+route("post", "/api/meeting-notes/quote", "The most meeting notes can cost", {
+  body: meetingRequest,
+  response: object({
+    credits: { ...number, description: "The maximum, and exactly what a run holds: every piece at the transcription model's per-minute price, plus the notes (the prompt with the longest transcript this recording can have and the whole reply budget)" },
+    usd: number,
+    available: number,
+    spending_limit: object({ remaining: number }),
+    steps: meetingSteps,
+    pieces: integer,
+    minutes: number,
+    credits_per_minute: number,
+    stt: object({ id: string, name: string, provider: { type: ["string", "null"] } }),
+    model: string,
+    reply_budget: integer,
+    max_transcript_characters: integer,
+    covers_seconds: { type: ["integer", "null"], description: "About how much of the recording the notes can cover when the model can't take the longest transcript; null for all of it" },
+    estimate: bool,
+  }),
+  description: "Reserves and charges nothing. The same checks as a start (plan, models, Private Mode, context), so a quote that succeeds describes exactly what a start would hold.",
+});
+route("post", "/api/meeting-notes", "Start meeting notes", {
+  body: meetingRequest,
+  status: 201,
+  response: object({
+    id: string,
+    pieces: array(object({ index: integer, start: number, seconds: number })),
+    reserved: number,
+    steps: meetingSteps,
+    stt: object({ id: string, name: string, provider: { type: ["string", "null"] } }),
+    idle_minutes: integer,
+  }),
+  description:
+    "Workspace only (session). Holds exactly the quote's maximum, one hold per piece and one for the notes, with no extra margin (402 insufficient_credits or spending_limit with nothing held). One run per account: a new one ends the last, releasing what it still held. A run nobody touches for 30 minutes ends the same way. Nothing about the recording is stored; the run keeps only its plan and holds, in memory.",
+});
+route("post", "/api/meeting-notes/{id}/pieces/{index}", "Transcribe one piece", {
+  body: object(
+    { audio: { ...string, description: "data:audio/wav;base64,… mono 16-bit PCM at 16 kHz, under 10 MB, exactly the planned length (±0.05 s). Only its format and samples are forwarded" } },
+    ["audio"],
+  ),
+  response: object({
+    index: integer,
+    segments: array(object({ start: number, end: number, text: string, speaker: string })),
+    seconds: number,
+    credits: number,
+    charged: number,
+    done: integer,
+    of: integer,
+  }),
+  description:
+    "Sends the piece to the transcription model and settles its hold on its length (or the provider's, if shorter). Segment times are in the whole recording; speaker appears only when the provider returns one. A failed piece is charged nothing and stays open for a retry (409 piece_done once it's transcribed, 409 meeting_busy while another step runs, 404 meeting_not_found once the run ended).",
+});
+route("post", "/api/meeting-notes/{id}/finish", "Write and save the notes", {
+  body: object({
+    segments: { ...array(object({ start: number, end: number, text: string, speaker: string })), description: "The transcript, Veil-masked in the browser when Veil is on" },
+    veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for the transcript (needs trail)" },
+    skip_notes: { ...bool, description: "Save the transcript alone: no model call, and the notes' hold is released" },
+    headings: { enum: ["en", "zh"], description: "The saved document's headings" },
+  }),
+  stream: true,
+  description:
+    "Ends transcription (pieces not transcribed are released), then sends the transcript to the notes model as one data-only document, cut at the length that was held for. The notes come back as strict JSON (read tolerantly); an owner is kept only when the transcript names them. Usable notes settle on their usage; notes that fail, are unusable (notes_invalid) or cut short (notes_length) are charged nothing, and error.retry says whether another try is left (three in all). Seed Guard refuses a transcript with a seed phrase or private key (seed_phrase_blocked) and ends the run. Unless off the record, the notes and the timed transcript are saved as one conversation. SSE events: meeting.stage writing, then done with result { title, notes { title, summary, decisions, actions, questions }, saved, conversationId, cut_at, lines_sent, owners_dropped } and anonyma { credits_charged, steps { transcription, notes }, privacy? { transcription, notes } }, or error.",
+});
+route("delete", "/api/meeting-notes/{id}", "Discard meeting notes", {
+  response: object({ ended: bool, credits_charged: number }),
+  description: "Releases everything the run still holds; pieces already transcribed stay charged. Answers the same for a run that already ended.",
+});
 // Highlight & Ask's fact-check (update "highlight", which also needs "search").
 const factCheckRequest = object(
   {

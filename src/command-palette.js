@@ -372,6 +372,7 @@ export const MODE_LABELS = {
   device: "On-device",
   study: "Study",
   compare: "Compare docs",
+  notes: "Meeting notes",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -395,6 +396,8 @@ const PLACES = [
   ["compare", "Compare docs", ["compare documents", "diff", "redline", "track changes", "versions", "contract", "changes"]],
   // Study Mode: only once released, like Sheets.
   ["study", "Study", ["flashcards", "quiz", "revise", "revision", "learn", "anki", "spaced repetition", "cards"]],
+  // Meeting Notes: only once released, with Voice & Audio.
+  ["notes", "Meeting notes", ["meeting", "recording", "transcribe", "transcript", "minutes", "action items", "call notes", "decisions"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

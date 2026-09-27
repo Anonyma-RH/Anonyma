@@ -919,7 +919,7 @@ export const UPDATES = [
     // priced first by /api/quote with the same payload; decks and progress
     // are kept only in the browser (IndexedDB), so there's nothing to erase
     // or export on the server.
-    released: false,
+    released: true,
   },
   {
     id: "doccompare",

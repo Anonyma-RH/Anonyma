@@ -1085,7 +1085,7 @@ export const UPDATES = [
     // exported as an importable vault file. Every route needs Device Vault
     // released too (featuresFor), and the app also needs Ephemeral Chats,
     // like Device Vault itself (vaultSyncReleased in src/vault-sync.js).
-    released: false,
+    released: true,
   },
   {
     id: "automodel",

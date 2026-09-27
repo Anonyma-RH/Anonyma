@@ -903,7 +903,7 @@ export const UPDATES = [
     // page, /workspace/device, is unknown (a 404) until release. It needs
     // WebGPU; the model files come straight from Hugging Face and GitHub at
     // pinned revisions, checked against pinned hashes.
-    released: false,
+    released: true,
   },
   {
     id: "study",

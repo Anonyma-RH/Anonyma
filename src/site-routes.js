@@ -53,8 +53,9 @@ const MODES = [
 // Public pages that exist only once their update is live, by the `served`
 // flag that names them: /token, the NYMA page, ships with Holder Early
 // Access. Until then it's an unknown page and stays out of the sitemap.
-// /status, Model Status, is public (and in the sitemap) once released.
-export const GATED_PUBLIC_PAGES = { token: "/token", status: "/status" };
+// /status, Model Status, is public (and in the sitemap) once released, and
+// so is /arena, Blind Arena's leaderboard.
+export const GATED_PUBLIC_PAGES = { token: "/token", status: "/status", arena: "/arena" };
 const gatedPages = (served = {}) =>
   Object.entries(GATED_PUBLIC_PAGES)
     .filter(([flag]) => served[flag] === true)

@@ -30,12 +30,15 @@ const Connect = lazy(() => import("./Connect.jsx"));
 const SharedChat = lazy(() => import("./SharedChat.jsx"));
 const Wiped = lazy(() => import("./Wiped.jsx"));
 const ModelStatus = lazy(() => import("./ModelStatus.jsx"));
+const Arena = lazy(() => import("./Arena.jsx"));
 // Pages that exist only once their update is live: until then no link to
 // them shows at all (the NYMA page ships with the NYMA Holder Program, the
 // model status page with Model Status).
 const unpublished = (config, to) =>
   (to === "/token" && !featureEnabled(config, "holders")) ||
-  (to === "/status" && !featureEnabled(config, "status"));
+  (to === "/status" && !featureEnabled(config, "status")) ||
+  // Blind Arena is built on Blind Compare's votes.
+  (to === "/arena" && !(featureEnabled(config, "arena") && featureEnabled(config, "blind")));
 // Links into updates that aren't released yet lead to the roadmap, tagged "Soon".
 function locked(config, to) {
   if (to.startsWith("/workspace/")) return !config?.releases ? to !== "/workspace/chat" : !modeReleased(config, to.slice(11));
@@ -98,6 +101,7 @@ function Navigation() {
             links: [
               ["/models", "Explore models"],
               ["/status", "Model status"],
+              ["/arena", "Blind Arena"],
               ["/pricing", "Credits & pricing"],
               ["/docs/billing", "Billing rules"],
               ["/developers", "Developer API"],
@@ -239,6 +243,7 @@ function Footer() {
                   ["Explore the platform", "/#platform"],
                   ["Compare models", "/models"],
                   ["Model status", "/status"],
+                  ["Blind Arena", "/arena"],
                   ["Credits & pricing", "/pricing"],
                   ["Billing rules", "/docs/billing"],
                   ["Savings calculator", "/pricing#calculator"],
@@ -373,6 +378,7 @@ function Shell() {
           <Route path="/whitepaper" element={<Whitepaper />} />
           <Route path="/token" element={<Token />} />
           <Route path="/status" element={<ModelStatus />} />
+          <Route path="/arena" element={<Arena />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/developers" element={<Developers />} />
           <Route path="/guides/:slug" element={<Article />} />

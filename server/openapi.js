@@ -2015,9 +2015,14 @@ route("post", "/api/blind/votes", "Vote on a blind round, then reveal it", {
     reveal: blindReveal,
     counted: { ...bool, description: "false when this round was already voted on; the first vote stands" },
     message_id: { type: ["string", "null"] },
+    arena: object({
+      ask: { ...bool, description: "The first vote once Blind Arena is live: ask whether to add votes to it (PUT /api/arena/consent)" },
+      contributing: bool,
+      added: { ...bool, description: "Whether this vote was added to the Arena's anonymous aggregate" },
+    }),
   }),
   description:
-    "Stores the two model ids, the outcome and the date for your rankings, and nothing else. Only the account that ran the round can vote (404 blind_round_not_found otherwise, or for a token that isn't valid). Rounds can be voted on for 30 days (410 blind_vote_closed).",
+    "arena is present once Blind Arena is released. Stores the two model ids, the outcome and the date for your rankings, and nothing else. Only the account that ran the round can vote (404 blind_round_not_found otherwise, or for a token that isn't valid). Rounds can be voted on for 30 days (410 blind_vote_closed).",
 });
 route("get", "/api/blind/rankings", "Your Blind Compare rankings", {
   response: object({
@@ -2040,6 +2045,56 @@ route("get", "/api/blind/rankings", "Your Blind Compare rankings", {
 route("delete", "/api/blind/rankings", "Reset your Blind Compare rankings", {
   response: object({ deleted: integer }),
   description: "Deletes every vote. Saved chats keep their reveals.",
+});
+// Blind Arena (update "arena", which also needs "blind"; server/arena.js).
+const arenaChoiceView = {
+  contribute: { ...bool, description: "Whether this account's Blind votes are added to the Arena. Off unless the account said yes" },
+  asked: { ...bool, description: "Whether the account has been asked (after its first vote once the Arena is live)" },
+};
+route("get", "/api/arena", "The Blind Arena leaderboard", {
+  auth: null,
+  response: object({
+    computedAt: { ...integer, description: "When the leaderboard was computed (epoch ms)" },
+    nextUpdate: { ...integer, description: "The earliest it's recomputed (epoch ms)" },
+    votes: { ...integer, description: "All contributed votes" },
+    minVotes: { ...integer, description: "Votes a model needs before it's listed" },
+    waiting: { ...integer, description: "Models with votes but fewer than minVotes; not named" },
+    models: array(
+      object({
+        rank: integer,
+        id: string,
+        name: string,
+        score: { ...integer, description: "Bradley–Terry score on an Elo-like scale; the average model is 1000, and 400 points is 10-to-1 odds" },
+        ci: { ...array(integer), minItems: 2, maxItems: 2, description: "The 95% interval for the score, from a bootstrap" },
+        votes: integer,
+        win_rate: { ...number, description: "(wins + ties / 2) / votes, 0 to 1; both bad counts as a tie" },
+      }),
+    ),
+    method: object({
+      model: { enum: ["bradley-terry"] },
+      ties: { enum: ["half"] },
+      bothBad: { enum: ["tie"] },
+      prior: { ...number, description: "Virtual ties each model has with an average model" },
+      interval: object({ confidence: number, bootstrap: integer }),
+    }),
+  }),
+  description:
+    "Public and the same for everyone; recomputed at most once an hour (Cache-Control: public, max-age up to 3600). From the anonymous aggregate only: votes from accounts that opted in, counted per UTC day and model pair, with no account id. Only saved chat and code rounds are added; off-the-record (device-only chats included), Private Mode and Uncensored rounds never are. A model is listed once at least minVotes votes involve it.",
+});
+route("get", "/api/arena/consent", "Your Blind Arena choice", {
+  response: object(arenaChoiceView),
+});
+route("put", "/api/arena/consent", "Add your Blind votes to the Arena, or stop", {
+  body: object(
+    {
+      contribute: bool,
+      round: { ...string, description: "With a yes to the question asked after a vote: that vote's round token, so it's added too" },
+    },
+    ["contribute"],
+  ),
+  response: object({ ...arenaChoiceView, added: { ...bool, description: "Whether the vote in round was added" } }),
+  description:
+    "Yes adds your future Blind votes (saved chat and code rounds) to the anonymous aggregate: the two model ids, the outcome and the UTC day, never the account. No stops future ones; votes already added stay, since nothing in the aggregate says whose they were. round adds that one vote only when answering the question asked after it. Panic Wipe and closing the account erase the choice.",
 });
 // Deep Research (update "deepresearch", which also needs "search").
 const researchRequest = object(

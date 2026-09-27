@@ -8,6 +8,7 @@ import { exportProjects } from "./projects.js";
 import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
 import { exportBlindVotes, forgetBlindVotes } from "./blind.js";
+import { exportArenaChoice, forgetArenaChoice } from "../arena.js";
 import { exportAudioOverviews, forgetAudioOverviews } from "./audio-overview.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
@@ -48,8 +49,9 @@ import {
 // - support requests, video jobs, saved uploads, Scrolls, standing
 //   instructions, memory facts, routines, page watches (with the last
 //   version of each page and their reports), bookmarks, Blind Compare votes,
-//   Audio Overview scripts and NYMA top-up quotes (a credited top-up stays
-//   as its deposit);
+//   the Blind Arena choice, Audio Overview scripts and NYMA top-up quotes (a
+//   credited top-up stays as its deposit). Votes already added to the Blind
+//   Arena stay: its aggregate has no account id, so none of it is theirs;
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -110,6 +112,8 @@ export function eraseAccountContent(db, user) {
   forgetBookmarks(db, id);
   // Blind Compare: the votes behind "Your rankings".
   forgetBlindVotes(db, id);
+  // Blind Arena: whether this account adds its votes (the aggregate stays).
+  forgetArenaChoice(db, id);
   // Audio Overview: saved overviews' scripts (their audio is media, below).
   forgetAudioOverviews(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
@@ -212,6 +216,15 @@ export function accountRoutes(ctx) {
   function blindExport(user) {
     const list = exportBlindVotes(db, user);
     return list.length || isReleased(cfg, "blind") ? { blindVotes: list } : {};
+  }
+  // Blind Arena: whether the account adds its votes and was asked (once the
+  // update is live, or while a choice is kept). Never anything from the
+  // aggregate: none of it is tied to an account.
+  function arenaExport(user) {
+    const choice = exportArenaChoice(db, user);
+    return choice || isReleased(cfg, "arena")
+      ? { blindArena: choice || { contributing: false, asked: false } }
+      : {};
   }
   // Audio Overview: each saved overview's title, script and date (once the
   // update is live, or while any exist). The audio files are under media.
@@ -548,6 +561,8 @@ export function accountRoutes(ctx) {
       ...bookmarksExport(req.user.id),
       // Blind Compare: the votes behind "Your rankings".
       ...blindExport(req.user.id),
+      // Blind Arena: the account's choice only.
+      ...arenaExport(req.user.id),
       // Audio Overview: saved overviews' scripts.
       ...audioOverviewExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never

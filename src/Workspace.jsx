@@ -227,6 +227,8 @@ import {
   useResearchEstimate,
 } from "./DeepResearch.jsx";
 import { statusByModel, statusReleased, useModelStatus } from "./model-status.js";
+import { ArenaAsk } from "./Arena.jsx";
+import { arenaRanks, arenaReleased, saveArenaChoice, useArena } from "./arena.js";
 import { ModelDownNotice } from "./StatusDot.jsx";
 import {
   SharpenButton,
@@ -470,6 +472,10 @@ export default function Workspace() {
     [blindSurprise, setBlindSurprise] = useState(false),
     [blindRankings, setBlindRankings] = useState(false),
     [blindVoting, setBlindVoting] = useState(null),
+    // Blind Arena: the question asked once after a vote ({ round }), and
+    // whether its answer is being saved.
+    [arenaAsk, setArenaAsk] = useState(null),
+    [arenaSaving, setArenaSaving] = useState(false),
     [voiceOpen, setVoiceOpen] = useState(false),
     [readAloud, setReadAloud] = useState(null),
     // Double-check This: the index of the answer whose second-opinion panel is open.
@@ -858,6 +864,14 @@ export default function Workspace() {
   const { report: statusReport } = useModelStatus(statusLive);
   const modelStatus = useMemo(() => (statusLive ? statusByModel(statusReport) : null), [statusLive, statusReport]);
   const selectedDown = modelStatus && selected && modelStatus[selected.id]?.status === "down" ? selected : null;
+  // Blind Arena: an "Arena #3" badge beside ranked models in the picker, and
+  // the question after a Blind vote. The board is public (GET /api/arena);
+  // never in the demo.
+  const arenaLive = !demo && arenaReleased(config);
+  const { board: arenaBoard } = useArena(arenaLive);
+  const arenaRank = useMemo(() => (arenaLive ? arenaRanks(arenaBoard) : null), [arenaLive, arenaBoard]);
+  // Another chat on screen: the question goes (unanswered, it stays at no).
+  useEffect(() => setArenaAsk(null), [current]);
   // Training Labels: flag models whose provider trains on prompts, and
   // offer the listed version that doesn't. Private mode never lists them.
   const trainingSelected =
@@ -2221,6 +2235,9 @@ export default function Workspace() {
       setError("This chat was sealed. Turn on Sealed Mode to continue it, or start a new chat.");
       return;
     }
+    // Blind Arena: a new message without an answer leaves the choice at no
+    // (the question was recorded when it was asked).
+    setArenaAsk(null);
     // Blind Compare: the thread goes on once the last comparison is voted
     // on, and a new message with Blind on goes to both models.
     if (!redo && blindAwaiting) {
@@ -2788,12 +2805,36 @@ export default function Workspace() {
         prev.map((x, j) => (j === index && x.blind ? revealTurn(x, r.reveal) : x)),
       );
       if (!r.counted) setInfo("This comparison already had a vote. The first one stands.");
+      // Blind Arena: the first vote once it's live asks, once, whether to
+      // add votes to it. Yes also adds this one (its round).
+      if (arenaLive && r.arena?.ask) setArenaAsk({ round: m.blind.token });
     } catch (e) {
       if (["blind_vote_closed", "blind_round_not_found"].includes(e.code))
         setMessages((prev) => prev.map((x, j) => (j === index && x.blind ? closeTurn(x) : x)));
       setError(e.message);
     } finally {
       setBlindVoting(null);
+    }
+  }
+  // Blind Arena: the answer to the question after a vote.
+  async function answerArena(yes) {
+    if (!arenaAsk || arenaSaving) return;
+    setArenaSaving(true);
+    setError("");
+    try {
+      const r = await saveArenaChoice(yes, arenaAsk.round);
+      setArenaAsk(null);
+      setInfo(
+        !yes
+          ? "Your Blind votes stay yours. You can change this in Account settings."
+          : r.added
+            ? "Added. This vote and your next Blind votes go to the Arena, with no account attached."
+            : "Your next Blind votes go to the Arena, with no account attached.",
+      );
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setArenaSaving(false);
     }
   }
   // After the reveal: go on with one model (Blind off), or keep comparing
@@ -4726,6 +4767,7 @@ export default function Workspace() {
                           trainingLive={trainingLive}
                           demo={demo}
                           status={modelStatus}
+                          arena={arenaRank}
                           // On-Device Model: in Chat, a way to its page.
                           onDevice={
                             mode === "chat" && isReleased(config, "ondevice")
@@ -5420,7 +5462,11 @@ export default function Workspace() {
           )}
         </Modal>
       )}
-      {blindRankings && blindLive && <BlindRankings onClose={() => setBlindRankings(false)} />}
+      {/* Blind Arena: asked once, right after the vote that prompted it. */}
+      {arenaLive && arenaAsk && (
+        <ArenaAsk busy={arenaSaving} onAnswer={answerArena} onClose={() => setArenaAsk(null)} />
+      )}
+      {blindRankings && blindLive && <BlindRankings onClose={() => setBlindRankings(false)} arena={arenaLive ? <Link to="/arena">See the public Blind Arena</Link> : null} />}
       {scrollsPanel && (
         <ScrollsPanel
           scrolls={scrolls}

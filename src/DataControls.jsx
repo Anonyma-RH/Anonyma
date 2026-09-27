@@ -29,6 +29,8 @@ export default function DataControls() {
     !!config && isReleased(config, "linkreader") && isReleased(config, "documents");
   // And Blind Compare.
   const blind = !!config && isReleased(config, "blind");
+  // And Blind Arena, built on it.
+  const arena = blind && isReleased(config, "arena");
   // And Audio Overview, which needs Voice & Audio.
   const overviews =
     !!config && isReleased(config, "audiooverview") && isReleased(config, "audio");
@@ -209,6 +211,15 @@ export default function DataControls() {
             rankings; Panic Wipe and closing your account delete them.
           </li>
         )}
+        {arena && (
+          <li>
+            Blind Arena: only whether you add your Blind votes to the public
+            leaderboard. It's off unless you say yes. A vote you add goes into
+            a count per day and model pair with no account attached, so it
+            stays when you switch this off, wipe or close your account. Panic
+            Wipe and closing your account delete the choice.
+          </li>
+        )}
         {overviews && (
           <li>
             Audio overviews: a saved overview is one audio file in your library
@@ -319,6 +330,7 @@ export default function DataControls() {
       {blind && (
         <p>The export also lists your Blind Compare votes: the two models, the outcome and the date.</p>
       )}
+      {arena && <p>It also says whether you add your votes to the Blind Arena.</p>}
       {overviews && (
         <p>The export also lists your audio overviews’ scripts. Their audio files are listed with your media.</p>
       )}

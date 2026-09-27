@@ -63,6 +63,7 @@ import {
   hideScreen,
 } from "./PrivacyScreen.jsx";
 import { paletteReleased, paletteActions, recentStoreKey } from "./command-palette.js";
+import { ArenaSettings } from "./Arena.jsx";
 import { useLanguage, setLanguage } from "./i18n.js";
 // Ledger entry kinds as readable labels; an unknown kind reads as words.
 const LEDGER_KINDS = {
@@ -993,6 +994,8 @@ export default function Account() {
               {!demo && <SharpenSettings config={config} />}
               {/* Privacy Screen: this browser's hide and lock choices. */}
               {!demo && <PrivacyScreenSettings config={config} user={user} />}
+              {/* Blind Arena: whether this account adds its Blind votes. */}
+              {!demo && <ArenaSettings config={config} user={user} />}
               <section>
                 <div>
                   <h2>Active sessions.</h2>

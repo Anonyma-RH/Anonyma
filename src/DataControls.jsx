@@ -193,9 +193,10 @@ export default function DataControls() {
             While it’s on, we keep the period, whether API and connected-app
             use counts, when you were last active (updated at most once an
             hour), the reminder’s state and when it last erased. Past the
-            deadline it erases what Panic Wipe erases; a reminder goes 7 days
-            before, only to a verified email. Turning it off or closing your
-            account deletes the setting; Panic Wipe keeps it.
+            deadline it erases what Panic Wipe erases. A reminder email goes 7
+            days before, only if email is set up and only to a verified email.
+            Turning it off or closing your account deletes the setting; Panic
+            Wipe keeps it.
           </li>
         )}
         {alerts && (

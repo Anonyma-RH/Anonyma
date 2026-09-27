@@ -1008,7 +1008,7 @@ export const UPDATES = [
     points: [
       "Off until you choose: 30, 90, 180 or 365 days without a sign-in",
       "Erases what Panic Wipe erases; your account and credits stay",
-      "A reminder 7 days before, by email if you've added one",
+      "A reminder email 7 days before, if email is set up and you've added one",
     ],
     // server/inactivity-wipe.js: the setting (/api/inactivity-wipe), the
     // activity clock (sign-ins, signed-in requests and, if the account

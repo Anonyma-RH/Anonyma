@@ -4846,12 +4846,9 @@
     "Stop signing in, and your history erases itself.": "不再登录，你的历史记录便会自行清除。",
     "Off until you choose: 30, 90, 180 or 365 days without a sign-in": "默认关闭，由你选择：连续 30、90、180 或 365 天未登录",
     "Erases what Panic Wipe erases; your account and credits stay": "清除范围与紧急清除相同；你的账户和积分会保留",
-    "A reminder 7 days before, by email if you've added one": "提前 7 天提醒；如已添加邮箱，会通过邮件提醒",
     "Every sign-in, on every device": "所有设备上的登录状态",
     "Your settings, including this one": "你的设置，包括这一项",
     "Anything kept in your browsers, such as Device Vault chats": "保存在你浏览器中的内容，例如本机保险库会话",
-    "We can only remind you by email if you’ve added one.": "只有在你添加了邮箱后，我们才能通过邮件提醒你。",
-    "Email isn’t set up on this server, so no reminder can be sent.": "此服务器尚未配置邮件，因此无法发送提醒。",
     "Last active": "上次活动",
     "Erases after": "清除时间",
     "Time left": "剩余时间",
@@ -4878,7 +4875,6 @@
     "Backups are separate copies.": "备份是独立的副本。",
     "Off. Nothing will be erased for inactivity, and your last-active time is deleted.": "已关闭。不会因闲置而清除任何内容，你的上次活动时间也已删除。",
     "Turn on Inactivity Wipe?": "开启闲置清除？",
-    "We’ll email you 7 days before.": "我们会提前 7 天给你发邮件。",
     "Shorten it": "缩短期限",
     "Inactivity Wipe was due.": "闲置清除原本已到期。",
     "Signing in reset the clock.": "你这次登录已重新计时。",
@@ -4890,7 +4886,14 @@
     "Send days, api_counts or both.": "请发送 days、api_counts 或两者。",
     "Choose a period to turn Inactivity Wipe on.": "请选择一个期限以开启闲置清除。",
     "Send api_counts as true or false.": "api_counts 须为 true 或 false。",
-    "Inactivity Wipe: off until you choose 30, 90, 180 or 365 days. While it’s on, we keep the period, whether API and connected-app use counts, when you were last active (updated at most once an hour), the reminder’s state and when it last erased. Past the deadline it erases what Panic Wipe erases; a reminder goes 7 days before, only to a verified email. Turning it off or closing your account deletes the setting; Panic Wipe keeps it.": "闲置清除：在你选择 30、90、180 或 365 天之前保持关闭。开启期间，我们会保存所选期限、API 和已连接应用的使用是否算作活动、你上次活动的时间（最多每小时更新一次）、提醒状态，以及上次清除的时间。超过期限后，它会清除紧急清除所清除的内容；提前 7 天发送一次提醒，且只发往已验证的邮箱。关闭它或关闭账户会删除该设置；紧急清除会保留它。"
+    "A reminder email 7 days before, if email is set up and you've added one": "提前 7 天发送提醒邮件，前提是已配置邮件服务且你已添加邮箱",
+    "None, since email reminders aren’t available": "无，邮件提醒暂不可用",
+    "None: add a verified email in Account": "无：请在账户中添加已验证的邮箱",
+    "No reminder email: email reminders aren’t available.": "不会发送提醒邮件：邮件提醒暂不可用。",
+    "No reminder email: add a verified email in Account to get one.": "不会发送提醒邮件：请在账户中添加已验证的邮箱以接收提醒。",
+    "We’ll email you a reminder 7 days before.": "我们会提前 7 天给你发送提醒邮件。",
+    "We’ll email a reminder 7 days before, if email is set up and you’ve added one.": "如果已配置邮件服务且你已添加邮箱，我们会提前 7 天发送提醒邮件。",
+    "Inactivity Wipe: off until you choose 30, 90, 180 or 365 days. While it’s on, we keep the period, whether API and connected-app use counts, when you were last active (updated at most once an hour), the reminder’s state and when it last erased. Past the deadline it erases what Panic Wipe erases. A reminder email goes 7 days before, only if email is set up and only to a verified email. Turning it off or closing your account deletes the setting; Panic Wipe keeps it.": "闲置清除：在你选择 30、90、180 或 365 天之前保持关闭。开启期间，我们会保存所选期限、API 和已连接应用的使用是否算作活动、你上次活动的时间（最多每小时更新一次）、提醒状态，以及上次清除的时间。超过期限后，它会清除紧急清除所清除的内容。提前 7 天会发送一封提醒邮件，前提是已配置邮件服务，且只发往已验证的邮箱。关闭它或关闭账户会删除该设置；紧急清除会保留它。"
   },
   "patterns": [
     {

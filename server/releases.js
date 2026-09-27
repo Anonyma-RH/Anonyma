@@ -850,7 +850,7 @@ export const UPDATES = [
     tagline: "A model that runs entirely on your device.",
     points: [
       "Download a small model once; it runs in your browser",
-      "Free, and it keeps answering with no connection",
+      "Free, and it keeps answering with the connection off once the page is open",
       "Nothing you type is sent to ANONYMA or anyone else",
     ],
     // Browser only (src/OnDevice.jsx, src/on-device.js): no server routes,

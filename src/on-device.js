@@ -40,6 +40,16 @@ export const CACHES = { model: "webllm/model", config: "webllm/config", wasm: "w
 const TOKENIZER_LLAMA = "sha256-eePlImNfMXEwCRO7QhRkqH3mIiGCoFcLmyzLoqlksrQ=";
 const TOKENIZER_QWEN = "sha256-wDghF+oynN8JcEETL21zWSS2l5JNb2/DlFcT6WzodTk=";
 
+// Each model's licence, shown on its cards with a link. The Llama 3.2
+// Community License asks for a prominent "Built with Llama" on products that
+// use it; that mark stays in English in every language.
+const LLAMA_LICENCE = {
+  licence: "Llama 3.2 Community License",
+  licenceUrl: "https://www.llama.com/llama3_2/license/",
+  licenceLine: "Llama 3.2 is licensed under the Llama 3.2 Community License.",
+  mark: "Built with Llama",
+};
+
 // Each model has two builds of the same 4-bit weights: f16 for GPUs with the
 // WebGPU "shader-f16" feature (most recent ones), f32 for the rest. The
 // download is the same size either way.
@@ -48,7 +58,7 @@ export const ONDEVICE_MODELS = [
     key: "llama-3.2-1b",
     name: "Llama 3.2 1B",
     maker: "Meta",
-    licence: "Llama 3.2 Community License",
+    ...LLAMA_LICENCE,
     note: "Fastest. Quick questions, rewrites and short drafts.",
     shards: 22,
     variants: {
@@ -83,6 +93,8 @@ export const ONDEVICE_MODELS = [
     name: "Qwen 2.5 1.5B",
     maker: "Qwen (Alibaba)",
     licence: "Apache 2.0",
+    licenceUrl: "https://www.apache.org/licenses/LICENSE-2.0",
+    licenceLine: "Qwen 2.5 is licensed under the Apache License 2.0.",
     note: "Balanced. Better at reasoning, and at Chinese and other languages.",
     shards: 30,
     variants: {
@@ -116,7 +128,7 @@ export const ONDEVICE_MODELS = [
     key: "llama-3.2-3b",
     name: "Llama 3.2 3B",
     maker: "Meta",
-    licence: "Llama 3.2 Community License",
+    ...LLAMA_LICENCE,
     note: "The most capable of the three. Slower, and needs more memory.",
     shards: 58,
     variants: {

@@ -4176,14 +4176,12 @@
     "On-Device Model": "本机模型",
     "A model that runs entirely on your device.": "完全在你的设备上运行的模型。",
     "Download a small model once; it runs in your browser": "只需下载一次小模型，它就在你的浏览器中运行",
-    "Free, and it keeps answering with no connection": "免费，断网后也能继续回答",
     "Nothing you type is sent to ANONYMA or anyone else": "你输入的内容不会发送给 ANONYMA 或任何人",
     "On-device": "本机模型",
     "On-device model": "本机模型",
     "Opening the on-device model…": "正在打开本机模型……",
     "Runs in your browser · free · nothing sent": "在浏览器中运行 · 免费 · 不外传",
     "RUNS ON THIS DEVICE": "在本设备上运行",
-    "Chat with a small model that runs in your browser. Free, it keeps answering offline, and nothing you type is sent anywhere.": "与在你浏览器中运行的小模型对话。免费，离线也能继续回答，你输入的内容不会发送到任何地方。",
     "Checking this browser for WebGPU…": "正在检查此浏览器是否支持 WebGPU……",
     "Your browser doesn't support this yet": "你的浏览器暂不支持此功能",
     "This browser doesn't have WebGPU, which the on-device model needs.": "此浏览器不支持 WebGPU，而本机模型需要它。",
@@ -4244,7 +4242,11 @@
     "The download stopped. Check your connection and try again; the parts already downloaded are kept.": "下载已中断。请检查网络后重试；已下载的部分会保留。",
     "The model couldn't start on this device. Reload the page and try again, or pick a smaller model.": "模型无法在此设备上启动。请刷新页面后重试，或选择更小的模型。",
     "The on-device model stopped before finishing. Try again, or start a new chat.": "本机模型在完成前停止了。请重试，或开始新对话。",
-    "Downloading…": "正在下载……"
+    "Downloading…": "正在下载……",
+    "Chat with a small model that runs in your browser. It's free, it keeps answering with the connection off once the page is open, and nothing you type is sent anywhere.": "与在你浏览器中运行的小模型对话。免费；页面打开后，即使断网也能继续回答；你输入的内容不会发送到任何地方。",
+    "Free, and it keeps answering with the connection off once the page is open": "免费，页面打开后即使断网也能继续回答",
+    "Llama 3.2 is licensed under the Llama 3.2 Community License.": "Llama 3.2 依据 Llama 3.2 Community License（社区许可协议）授权。",
+    "Qwen 2.5 is licensed under the Apache License 2.0.": "Qwen 2.5 依据 Apache License 2.0 授权。"
   },
   "patterns": [
     {

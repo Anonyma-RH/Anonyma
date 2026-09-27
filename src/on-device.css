@@ -359,6 +359,30 @@
   font-size: 11px;
   color: var(--work-muted, #68748a);
 }
+.od-licence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.od-page .od-licence a {
+  color: var(--work-muted, #68748a);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.od-page .od-licence a:hover {
+  color: var(--brand-blue, #0135df);
+}
+.od-page .od-licence .od-mark {
+  color: var(--brand-blue, #0135df);
+  font-weight: 600;
+}
+.od-start .od-licence {
+  font-size: 12px;
+}
 .od-model-state {
   display: flex;
   justify-content: space-between;

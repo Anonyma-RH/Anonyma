@@ -202,6 +202,32 @@ test("only the three pinned models load, from fixed revisions, with hashes WebLL
   assert.equal(formatBytes(0), "0 bytes");
 });
 
+test("licences: Built with Llama and the licence line on Llama cards, Qwen's licence line, all linked safely", () => {
+  const [llama1, qwen, llama3] = ONDEVICE_MODELS;
+  for (const m of [llama1, llama3]) {
+    assert.equal(m.mark, "Built with Llama");
+    assert.equal(m.licenceUrl, "https://www.llama.com/llama3_2/license/");
+    assert.equal(m.licenceLine, "Llama 3.2 is licensed under the Llama 3.2 Community License.");
+    assert.equal(m.licence, "Llama 3.2 Community License");
+  }
+  assert.equal(qwen.mark, undefined);
+  assert.equal(qwen.licenceUrl, "https://www.apache.org/licenses/LICENSE-2.0");
+  assert.equal(qwen.licenceLine, "Qwen 2.5 is licensed under the Apache License 2.0.");
+  const page = read("../src/OnDevice.jsx");
+  // Both the side-panel card and the start card show it.
+  assert.equal(page.match(/<Licence model=\{/g)?.length, 2);
+  // Opened in a new tab, with no opener or referrer.
+  assert.match(page, /const link = \{ href: model\.licenceUrl, target: "_blank", rel: "noopener noreferrer" \};/);
+  assert.match(page, /\{model\.mark && \(\s*<a \{\.\.\.link\} className="od-mark" data-i18n="off">\s*\{model\.mark\}/);
+  assert.match(page, /<a \{\.\.\.link\}>\{model\.licenceLine\}<\/a>/);
+  // The side card's link sits outside the card's button (no link in a button).
+  assert.match(page, /<\/button>\s*<Licence model=\{m\} \/>/);
+  // The honest offline claim.
+  assert.match(page, /keeps answering with the connection off once the page is open/);
+  assert.doesNotMatch(page, /answering offline/);
+  assert.match(UPDATES.find((u) => u.id === "ondevice").points[1], /connection off once the page is open/);
+});
+
 // ---- Storage ----
 
 // A stand-in for window.caches: named caches of url → Content-Length.
@@ -541,7 +567,9 @@ test("every visible string has Chinese, and user and model text stays untranslat
     "Opening the on-device model…",
     "Runs in your browser · free · nothing sent",
     "RUNS ON THIS DEVICE",
-    "Chat with a small model that runs in your browser. Free, it keeps answering offline, and nothing you type is sent anywhere.",
+    "Chat with a small model that runs in your browser. It's free, it keeps answering with the connection off once the page is open, and nothing you type is sent anywhere.",
+    "Llama 3.2 is licensed under the Llama 3.2 Community License.",
+    "Qwen 2.5 is licensed under the Apache License 2.0.",
     "Checking this browser for WebGPU…",
     "Your browser doesn't support this yet",
     "It works in:",
@@ -622,6 +650,9 @@ test("every visible string has Chinese, and user and model text stays untranslat
     assert.match(translateText(text, zh) ?? "", han, text);
   }
   assert.equal(translateText("Device Vault", zh), "本机保险库");
+  // "Built with Llama" is a required mark: never translated.
+  assert.equal(translateText("Built with Llama", zh), undefined);
+  assert.match(page, /className="od-mark" data-i18n="off"/);
   // Model names, licences and every message stay as written.
   assert.match(page, /<b data-i18n="off">\{m\.name\}<\/b>/);
   assert.match(page, /<dd data-i18n="off">\{model\.licence\}<\/dd>/);

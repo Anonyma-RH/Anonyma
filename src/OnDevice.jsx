@@ -323,8 +323,9 @@ export default function OnDevice({ user, demo, vault, vaultLive, onUnlockVault }
           <p className="eyebrow">RUNS ON THIS DEVICE</p>
           <h1>On-device model</h1>
           <p>
-            Chat with a small model that runs in your browser. Free, it keeps
-            answering offline, and nothing you type is sent anywhere.
+            Chat with a small model that runs in your browser. It's free, it
+            keeps answering with the connection off once the page is open, and
+            nothing you type is sent anywhere.
           </p>
         </div>
         {phase === "ready" && messages.length > 0 && (
@@ -538,6 +539,7 @@ export default function OnDevice({ user, demo, vault, vaultLive, onUnlockVault }
                       <span>{`About ${formatBytes(v.vramMB * 1e6)} of graphics memory`}</span>
                     </span>
                   </button>
+                  <Licence model={m} />
                   <span className="od-model-state">
                     {inUse ? (
                       <span className="od-state on">In use</span>
@@ -609,6 +611,22 @@ export default function OnDevice({ user, demo, vault, vaultLive, onUnlockVault }
   );
 }
 
+// A model's licence, linked: "Built with Llama" (a required mark, kept in
+// English) on Llama models, and the licence line on every model.
+function Licence({ model }) {
+  const link = { href: model.licenceUrl, target: "_blank", rel: "noopener noreferrer" };
+  return (
+    <p className="od-licence">
+      {model.mark && (
+        <a {...link} className="od-mark" data-i18n="off">
+          {model.mark}
+        </a>
+      )}
+      <a {...link}>{model.licenceLine}</a>
+    </p>
+  );
+}
+
 function StartCard({ model, variant, state, onStart }) {
   if (!model || !variant) return null;
   const ready = !!state?.complete;
@@ -619,6 +637,7 @@ function StartCard({ model, variant, state, onStart }) {
       </span>
       <h2 data-i18n="off">{model.name}</h2>
       <p>{model.note}</p>
+      <Licence model={model} />
       <dl className="od-facts">
         <div>
           <dt>Download</dt>

@@ -63,13 +63,13 @@ export function chatRoutes(ctx) {
   const validTokenCount = (value, fallback) =>
     Number.isSafeInteger(value) && value >= 0 ? value : fallback;
   async function runChat(req, res, api) {
+    // Study Mode: making a deck, whose messages are built here from its
+    // checked `study` payload (server/study.js). It runs first, so a request
+    // carrying `sheets` too is refused as a study request.
+    const study = api ? undefined : prepareStudyRequest(req.body);
     // Local Sheets: a workspace sheets question's messages are built here
     // from its checked `sheets` payload (server/sheets.js), before Seed
     // Guard reads them. Its release gate is in featuresFor.
-    // Study Mode: making a deck, built the same way from its checked
-    // `study` payload (server/study.js). It runs first, so a request
-    // carrying both is refused as a study request.
-    const study = api ? undefined : prepareStudyRequest(req.body);
     const sheetsTask = api ? undefined : prepareSheetsRequest(req.body);
     // Seed Guard: refused before anything is validated, reserved or stored.
     refuseSeedPhrase(cfg, req, api);

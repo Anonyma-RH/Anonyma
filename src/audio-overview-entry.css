@@ -1,0 +1,121 @@
+/* Audio Overview's ways in: the Voice studio's shelf and the button under a
+   Deep Research report, plus the tile and eyebrow the dialog shares. Loaded
+   with the workspace; the dialog's own styles are in audio-overview.css,
+   loaded only when it opens. */
+.app-shell .small-button.overview-listen {
+  margin-left: 6px;
+}
+.overview-eyebrow {
+  margin: 0 0 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #0135df;
+}
+.overview-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  background: #0135df;
+  color: #ffb21c;
+}
+/* ---- Voice studio shelf, below the speech composer ---- */
+.app-shell .overview-shelf-zone {
+  width: 100%;
+  max-width: 944px;
+  margin: 0 auto 36px;
+  padding: 0 32px;
+}
+.app-shell .overview-shelf-zone.above-results {
+  margin: 28px auto 0;
+}
+.overview-shelf-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.overview-shelf-head > div {
+  flex: 1;
+  min-width: 0;
+}
+.overview-shelf {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+  color: #142343;
+  text-align: left;
+}
+.overview-shelf p {
+  margin: 0;
+}
+.overview-shelf-lede {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.overview-shelf-head .button {
+  flex: none;
+  min-height: 40px;
+  padding: 10px 16px;
+}
+.overview-shelf-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.overview-shelf-list button {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 9px 11px;
+  background: #fbfcff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  color: #142343;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.overview-shelf-list button:hover {
+  border-color: #0135df;
+}
+.overview-shelf-list svg {
+  color: #0135df;
+}
+.overview-shelf-list b {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overview-shelf-list small {
+  grid-column: 2;
+  font-size: 11px;
+  color: #68748a;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+  .app-shell .overview-shelf-zone {
+    padding: 0 18px;
+  }
+  .overview-shelf-head {
+    flex-wrap: wrap;
+  }
+  .overview-shelf-head .button {
+    width: 100%;
+  }
+}

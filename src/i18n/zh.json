@@ -4172,7 +4172,84 @@
     "Confirm with your passkey again.": "请再次用你的通行密钥确认。",
     "A passkey works too.": "也可以用通行密钥。",
     "Blind can't be combined with Deep research or Sheets.": "盲测对比不能与深度研究或表格同时使用。",
-    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。"
+    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。",
+    "Audio Overview": "音频概览",
+    "Hear your documents and chats as a two-voice briefing.": "把文档和对话变成双人语音简报，随时收听。",
+    "Made from a document, a saved chat or a Deep Research report": "可由文档、已保存的会话或深度研究报告生成",
+    "About 3 or 8 minutes, with a transcript and chapter jumps": "约 3 或 8 分钟，附文字稿和章节跳转",
+    "See the most it can cost first; pay only for what's made": "先看最高费用；只为生成的部分付费",
+    "Audio overview": "音频概览",
+    "AUDIO OVERVIEW": "音频概览",
+    "Audio overviews": "音频概览",
+    "Turn a document, a saved chat or a research report into a two-voice briefing.": "把文档、已保存的会话或研究报告变成双人语音简报。",
+    "Make an audio overview": "制作音频概览",
+    "Make audio overview": "制作音频概览",
+    "Listen": "收听",
+    "Listen as an audio overview": "以音频概览收听",
+    "Make an audio overview of this chat": "为这个会话制作音频概览",
+    "Audio overview: a two-voice briefing of this chat": "音频概览：这个会话的双人语音简报",
+    "A short two-voice briefing of one source, with a transcript. The hosts use only what the source says.": "一段简短的双人语音简报，附文字稿。主持人只使用来源中的内容。",
+    "Made from": "内容来源",
+    "Choose a chat…": "选择一个会话……",
+    "No saved chats yet": "还没有已保存的会话",
+    "Reading the file…": "正在读取文件……",
+    "Choose another file": "选择其他文件",
+    "PDF, text, Markdown or code, DOCX, XLSX or PPTX. Read in this browser.": "PDF、文本、Markdown 或代码，以及 DOCX、XLSX 或 PPTX。在此浏览器中读取。",
+    "PDF, text, Markdown or code. Read in this browser.": "PDF、文本、Markdown 或代码。在此浏览器中读取。",
+    "Long source: only the first 120,000 characters are used.": "来源较长：只使用前 120,000 个字符。",
+    "Length": "时长",
+    "Same as the source": "与来源相同",
+    "Host A": "主持人 A",
+    "Host B": "主持人 B",
+    "Script written by": "撰写脚本的模型",
+    "Off the record: it plays and downloads here only, and nothing is saved.": "不留记录：只在这里播放和下载，不保存任何内容。",
+    "This chat is off the record, so its overview is too.": "这个会话不留记录，所以它的概览也不留记录。",
+    "This chat is kept only on this device, so its overview isn't saved anywhere either.": "这个会话只保存在此设备上，所以它的概览也不会保存在任何地方。",
+    "It's not a key, continue": "这不是密钥，继续",
+    "Choose a source to see the most it can cost.": "选择一个来源，查看最高费用。",
+    "Working out the most it can cost…": "正在计算最高费用……",
+    "Only this source is sent: to the script model, then the script to the voice model. You pay only for what's made, and Stop ends the rest.": "只发送这个来源：先发给撰写脚本的模型，再把脚本发给语音模型。你只为生成的部分付费，点击停止会结束其余步骤。",
+    "Writing the script…": "正在撰写脚本……",
+    "Script written": "脚本已完成",
+    "Voices": "配音",
+    "Loading the overview…": "正在加载概览……",
+    "1 chapter": "1 个章节",
+    "Joining the clips…": "正在合并音频片段……",
+    "Copy transcript": "复制文字稿",
+    "Saved to your library with its transcript. Deleting it there deletes both.": "已连同文字稿保存到你的媒体库。在媒体库中删除它，会同时删除两者。",
+    "This voice model's audio can't be joined on our server, so it plays here turn by turn and isn't saved. Download joins it in this browser.": "这个语音模型的音频无法在我们的服务器上合并，所以会在这里逐段播放，且不会保存。下载时会在此浏览器中合并。",
+    "Off the record: nothing was saved. Download it before you close this.": "不留记录：没有保存任何内容。请在关闭前下载。",
+    "Stopped early: only the turns above were voiced and charged.": "提前停止：只有上面的段落已配音并扣费。",
+    "Stopped before the end: only the turns above were voiced and charged.": "在结束前停止：只有上面的段落已配音并扣费。",
+    "Written by a model from your source only. Check anything important against the source.": "由模型仅根据你的来源撰写。重要内容请与来源核对。",
+    "Stopped early": "提前停止",
+    "Chapters": "章节",
+    "Transcript": "文字稿",
+    "Stopped. Off the record, nothing was kept. Only finished steps were charged.": "已停止。不留记录，没有保留任何内容。只对已完成的步骤扣费。",
+    "Stopped. Anything already voiced is saved to your library. Only finished steps were charged.": "已停止。已配音的部分已保存到你的媒体库。只对已完成的步骤扣费。",
+    "Veil masked details in this source, and the voices would read the placeholders aloud, so this overview won't be made. Remove the details, or turn Veil off for this source.": "Veil 遮盖了这个来源中的细节，语音会把占位符读出来，所以不会制作这个概览。请删除这些细节，或针对这个来源关闭 Veil。",
+    "Audio Overview isn't available in Private Mode: no voice model offers zero data retention.": "隐私模式下无法使用音频概览：没有语音模型提供零数据保留。",
+    "The model ran out of room while writing the script, so nothing was voiced. Only the script step was charged. Try the shorter length, or another model.": "模型在撰写脚本时用完了回复空间，所以没有配音。只对脚本步骤扣费。请尝试较短的时长，或换一个模型。",
+    "The model's script wasn't in the expected format, so nothing was voiced. Only the script step was charged. Try again, or pick another model.": "模型返回的脚本格式不符合要求，所以没有配音。只对脚本步骤扣费。请重试，或换一个模型。",
+    "The audio overview stopped unexpectedly. Only finished steps were charged.": "音频概览意外停止。只对已完成的步骤扣费。",
+    "An audio overview is already being made. Wait for it, or stop it first.": "已有一个音频概览正在制作。请等它完成，或先停止它。",
+    "This source is too short for an overview. Use one with at least 200 characters.": "这个来源太短，无法制作概览。请使用至少 200 个字符的来源。",
+    "This source is longer than 120,000 characters. Use a shorter one, or part of it.": "这个来源超过 120,000 个字符。请使用较短的来源，或只用其中一部分。",
+    "Audio overviews are paid from your own balance, not a team treasury.": "音频概览从你自己的余额付费，而不是团队金库。",
+    "Choose a different voice for each host.": "请为每位主持人选择不同的声音。",
+    "Choose two of this voice model's voices.": "请从这个语音模型的声音中选择两个。",
+    "This voice model has no voices to choose from.": "这个语音模型没有可选的声音。",
+    "The script needs a text model.": "撰写脚本需要文本模型。",
+    "Choose about 3 or about 8 minutes.": "请选择约 3 分钟或约 8 分钟。",
+    "Choose a language from the list.": "请从列表中选择一种语言。",
+    "Choose a document, a saved chat or a research report.": "请选择文档、已保存的会话或研究报告。",
+    "Audio overviews are unavailable right now.": "音频概览暂不可用。",
+    "The connection ended before the audio arrived.": "音频送达前连接已断开。",
+    "No text was found in this file. A scanned PDF has none to read.": "这个文件中没有找到文字。扫描版 PDF 没有可读取的文字。",
+    "Audio overview not found.": "未找到音频概览。",
+    "Audio overviews: a saved overview is one audio file in your library plus its script (the title, the chapters and what each host says), never the document or chat it was made from. Deleting the file deletes its script; Panic Wipe and closing your account delete both. Off the record, nothing is kept.": "音频概览：保存的概览是你媒体库中的一个音频文件及其脚本（标题、章节和每位主持人说的话），绝不包括用来制作它的文档或会话。删除该文件会同时删除它的脚本；紧急清除和关闭账户会删除两者。不留记录时，不会保留任何内容。",
+    "The export also lists your audio overviews’ scripts. Their audio files are listed with your media.": "导出内容还会列出你的音频概览脚本。它们的音频文件会与你的媒体一起列出。",
+    "No voice models are available right now.": "暂时没有可用的语音模型。"
   },
   "patterns": [
     {
@@ -6578,6 +6655,54 @@
     {
       "en": "Too many incorrect attempts. Try again in {0} minutes, or sign out instead.",
       "zh": "错误次数过多。请在 {0} 分钟后重试，或改为退出登录。"
+    },
+    {
+      "en": "Document · {0} characters",
+      "zh": "文档 · {0} 个字符"
+    },
+    {
+      "en": "Chat · {0} characters",
+      "zh": "会话 · {0} 个字符"
+    },
+    {
+      "en": "Research report · {0} characters",
+      "zh": "研究报告 · {0} 个字符"
+    },
+    {
+      "en": "AUDIO OVERVIEW · ABOUT {0} MIN",
+      "zh": "音频概览 · 约 {0} 分钟"
+    },
+    {
+      "en": "About {0} min",
+      "zh": "约 {0} 分钟"
+    },
+    {
+      "en": "Voicing {0}/{1}",
+      "zh": "正在配音 {0}/{1}"
+    },
+    {
+      "en": "{0} chapters",
+      "zh": "{0} 个章节"
+    },
+    {
+      "en": "Charged: {0} credits.",
+      "zh": "已扣除：{0} 积分。"
+    },
+    {
+      "en": "script up to {0}, voices up to {1} for at most {2} characters",
+      "zh": "脚本最多 {0}，配音最多 {1}（按最多 {2} 个字符计）"
+    },
+    {
+      "en": "script {0}, voices {1}",
+      "zh": "脚本 {0}，配音 {1}"
+    },
+    {
+      "en": "Play from turn {0}",
+      "zh": "从第 {0} 段开始播放"
+    },
+    {
+      "en": "The voice model failed on turn {0} of {1}, so the overview stopped there. What was voiced is kept; nothing further was charged.",
+      "zh": "语音模型在第 {0} 段（共 {1} 段）失败，概览就此停止。已配音的部分会保留；不会再扣费。"
     }
   ]
 }

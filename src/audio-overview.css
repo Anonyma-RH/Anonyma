@@ -1,0 +1,543 @@
+/* Audio Overview: the dialog that makes one, its progress, and the player
+   with chapters and transcript (loaded with the dialog; the Voice studio's
+   shelf and the shared tile are in audio-overview-entry.css). Flat cobalt
+   and white with the brand yellow as the only accent, 2px corners and
+   hairlines, like Deep Research and Chat Export. */
+.overview {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  color: #142343;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.overview p {
+  margin: 0;
+}
+.overview-lede {
+  color: #4a5872;
+}
+.overview-fine {
+  font-size: 11px;
+  color: #68748a;
+}
+.overview fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.overview legend,
+.modal .overview label > span:first-child {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #68748a;
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+/* ---- Sources ---- */
+.overview-sources {
+  display: grid;
+  gap: 8px;
+}
+.modal .overview-source {
+  position: relative;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+.modal .overview-source.active {
+  border-color: #0135df;
+  background: #f5f8ff;
+  box-shadow: inset 0 0 0 1px #0135df;
+}
+.modal .overview-source input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.modal .overview-source:has(input:focus-visible) {
+  outline: 2px solid #0135df;
+  outline-offset: 2px;
+}
+.overview-source svg {
+  color: #0135df;
+}
+.overview-source b {
+  font-weight: 600;
+  color: #061b69;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overview-source small {
+  grid-column: 2;
+  font-size: 11px;
+  color: #68748a;
+}
+.modal .overview-file {
+  position: relative;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: center;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed #b9c6e0;
+  border-radius: 2px;
+  background: #fbfcff;
+  color: #0135df;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modal .overview-file > span:first-of-type {
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #0135df;
+  margin: 0;
+}
+.overview-file small {
+  grid-column: 2;
+  font-size: 11px;
+  font-weight: 400;
+  color: #68748a;
+}
+.modal .overview-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+}
+.overview-file.busy {
+  opacity: 0.7;
+  cursor: progress;
+}
+.modal .overview-file:has(input:focus-visible) {
+  outline: 2px solid #0135df;
+  outline-offset: 2px;
+}
+.overview-chat-pick {
+  display: grid;
+  gap: 6px;
+}
+.overview-chat-pick .overview-fine {
+  margin-top: 2px;
+}
+
+/* ---- Settings ---- */
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+.modal .overview-grid label,
+.modal .overview-chat-pick label {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  min-width: 0;
+}
+.overview select {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #cbd4e5;
+  border-radius: 2px;
+  background: #fff;
+  color: #142343;
+  font: inherit;
+  font-size: 13px;
+}
+.overview select:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 1px;
+}
+.overview-length [role="radiogroup"] {
+  display: flex;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+}
+.overview-length button {
+  flex: 1;
+  height: 36px;
+  padding: 0 8px;
+  background: #fff;
+  color: #0135df;
+  border: 0;
+  border-left: 1px solid #0135df;
+  border-radius: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.overview-length button:first-child {
+  border-left: 0;
+}
+.overview-length button.on {
+  background: #0135df;
+  color: #fff;
+}
+.overview-length button:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: -2px;
+}
+.modal .overview-check {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin: 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+.modal .overview-check > span:first-child,
+.modal .overview-check > span {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #142343;
+  margin: 0;
+}
+.modal .overview-check input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #0135df;
+}
+.overview-check small {
+  display: block;
+  font-size: 12px;
+  color: #68748a;
+}
+.overview-cost {
+  padding-top: 10px;
+  border-top: 1px solid #e3e8f0;
+  color: #24498b;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.overview-cost b {
+  color: #0135df;
+}
+.overview-cost .overview-short {
+  color: #a33a00;
+}
+.overview-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 10px;
+  background: #fff6e8;
+  border: 1px solid #ffd9a0;
+  border-radius: 2px;
+  color: #8a4b00;
+  font-size: 12px;
+}
+.overview-block > span {
+  flex: 1;
+  min-width: 200px;
+}
+.overview-block svg {
+  flex: none;
+  margin-top: 2px;
+}
+.overview .inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.overview .inline-actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 11px 18px;
+}
+.overview .inline-actions .button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---- Progress ---- */
+.overview-progress {
+  display: grid;
+  gap: 10px;
+}
+.overview-progress h3,
+.overview-player h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: #061b69;
+  overflow-wrap: anywhere;
+}
+.overview-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: #68748a;
+}
+.overview-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.overview-steps li::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border: 1px solid #b9c6e0;
+  background: #fff;
+}
+.overview-steps li.active {
+  color: #0135df;
+  font-weight: 600;
+}
+.overview-steps li.active::before {
+  border-color: #0135df;
+  background: #ffb21c;
+}
+.overview-steps li.done {
+  color: #142343;
+}
+.overview-steps li.done::before {
+  border-color: #0135df;
+  background: #0135df;
+}
+.overview-bar {
+  height: 4px;
+  background: #e3e8f0;
+}
+.overview-bar span {
+  display: block;
+  height: 100%;
+  background: #0135df;
+  transition: width 0.4s ease;
+}
+
+/* ---- Player ---- */
+.overview-player {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.overview-player-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.overview-player-head > div {
+  flex: 1;
+  min-width: 0;
+}
+.overview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  margin-top: 4px !important;
+  font-size: 12px;
+  color: #4a5872;
+  font-variant-numeric: tabular-nums;
+}
+.overview-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.overview-player audio {
+  width: 100%;
+  height: 40px;
+}
+.overview-host {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+.overview-host.host-A {
+  background: #0135df;
+  color: #fff;
+}
+.overview-host.host-B {
+  background: #ffb21c;
+  color: #061b69;
+}
+.overview-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.overview-chapters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  color: #142343;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.overview-chapters button > span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overview-chapters button:hover {
+  border-color: #0135df;
+}
+.overview-chapters button.on {
+  border-color: #0135df;
+  background: #0135df;
+  color: #fff;
+}
+.overview-chapter-n {
+  font-weight: 700;
+  color: #0135df;
+  font-variant-numeric: tabular-nums;
+}
+.overview-chapters button.on .overview-chapter-n {
+  color: #ffb21c;
+}
+.overview-chapter-t {
+  color: #68748a;
+  font-variant-numeric: tabular-nums;
+}
+.overview-chapters button.on .overview-chapter-t {
+  color: #d7e1ff;
+}
+.overview-transcript {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 300px;
+  overflow-y: auto;
+  list-style: none;
+  border-top: 1px solid #e3e8f0;
+  border-bottom: 1px solid #e3e8f0;
+}
+.overview-transcript li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 7px 8px;
+  border-left: 3px solid transparent;
+}
+.overview-transcript li p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #24324d;
+}
+.overview-transcript li.current {
+  border-left-color: #0135df;
+  background: #f5f8ff;
+}
+.overview-transcript li.current p {
+  color: #061b69;
+}
+.overview-transcript button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.overview-transcript button:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 1px;
+}
+.overview-transcript.compact {
+  max-height: 210px;
+}
+.overview-transcript.compact li {
+  grid-template-columns: 20px minmax(0, 1fr);
+  opacity: 0.55;
+}
+.overview-transcript.compact li.voiced {
+  opacity: 1;
+}
+.overview-transcript.compact li.current {
+  opacity: 1;
+}
+.overview-notes {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.overview-notes li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  font-size: 12px;
+  color: #4a5872;
+}
+.overview-notes svg {
+  margin-top: 3px;
+  color: #0135df;
+}
+.overview .receipt {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .overview-grid .overview-length {
+    grid-column: 1 / -1;
+  }
+  .overview-transcript {
+    max-height: 240px;
+  }
+}
+@media (max-width: 420px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

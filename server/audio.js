@@ -19,6 +19,13 @@ const FIXTURE = {
           gender: "neutral",
           language: "multi",
         },
+        // A second voice, so Audio Overview's two hosts can differ.
+        {
+          id: "fixture-2",
+          name: "Fixture two",
+          gender: "neutral",
+          language: "multi",
+        },
       ],
     },
   ],
@@ -129,7 +136,13 @@ export async function synthesizeSpeech(
   { model, input, voice, language },
   signal,
 ) {
-  if (cfg.testMode) return { bytes: silentWav(), mime: "audio/wav" };
+  // Silence about as long as the text would take to say (15 characters a
+  // second), so players and overviews show realistic lengths.
+  if (cfg.testMode)
+    return {
+      bytes: silentWav(Math.min(60, Math.max(0.5, input.length / 15))),
+      mime: "audio/wav",
+    };
   const r = await fetch(cfg.gateway.replace(/\/$/, "") + "/v1/audio/speech", {
     method: "POST",
     headers: {

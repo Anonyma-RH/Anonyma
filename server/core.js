@@ -1011,6 +1011,20 @@ export const MIGRATIONS = [
         user_id TEXT NOT NULL REFERENCES users(id),
         at INTEGER NOT NULL);
   `),
+  // Audio Overview (server/routes/audio-overview.js): a saved overview's
+  // script (its title, chapters, the turns as voiced with their start times,
+  // and the voices' names) beside its audio file in media. Never the source
+  // it was made from. Deleted with the file (ON DELETE CASCADE, and the
+  // library's cap), and erased with the account's content (closure, Panic
+  // Wipe).
+  additive(`
+      CREATE TABLE IF NOT EXISTS audio_overviews(media_id TEXT PRIMARY KEY REFERENCES media(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        title TEXT NOT NULL,
+        script TEXT NOT NULL,
+        created INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS audio_overviews_user ON audio_overviews(user_id,created);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

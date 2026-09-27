@@ -27,6 +27,9 @@ export default function DataControls() {
     !!config && isReleased(config, "linkreader") && isReleased(config, "documents");
   // And Blind Compare.
   const blind = !!config && isReleased(config, "blind");
+  // And Audio Overview, which needs Voice & Audio.
+  const overviews =
+    !!config && isReleased(config, "audiooverview") && isReleased(config, "audio");
   // Passkeys: listed once that update is live.
   const passkeys = !!config && isReleased(config, "passkeys");
   // And the Privacy Screen.
@@ -182,6 +185,15 @@ export default function DataControls() {
             rankings; Panic Wipe and closing your account delete them.
           </li>
         )}
+        {overviews && (
+          <li>
+            Audio overviews: a saved overview is one audio file in your library
+            plus its script (the title, the chapters and what each host says),
+            never the document or chat it was made from. Deleting the file
+            deletes its script; Panic Wipe and closing your account delete
+            both. Off the record, nothing is kept.
+          </li>
+        )}
         {privacyScreen && (
           <li>
             Privacy Screen: its choices and whether the screen is locked are
@@ -267,6 +279,9 @@ export default function DataControls() {
       {nyma && <p>The export also includes your Pay with NYMA quotes.</p>}
       {blind && (
         <p>The export also lists your Blind Compare votes: the two models, the outcome and the date.</p>
+      )}
+      {overviews && (
+        <p>The export also lists your audio overviews’ scripts. Their audio files are listed with your media.</p>
       )}
       {passkeys && (
         <p>

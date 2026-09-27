@@ -26,6 +26,7 @@ import { usageInsightRoutes } from "./routes/usage-insights.js";
 import { videoRoutes } from "./routes/videos.js";
 import { fileRoutes } from "./files.js";
 import { audioRoutes } from "./routes/audio.js";
+import { audioOverviewRoutes } from "./routes/audio-overview.js";
 import { v1MediaRoutes } from "./routes/v1-media.js";
 import { creditRoutes } from "./routes/credits.js";
 import { collabRoutes } from "./routes/collabs.js";
@@ -128,6 +129,9 @@ export function createApp(overrides = {}) {
   mediaRoutes(ctx);
   videoRoutes(ctx);
   audioRoutes(ctx);
+  // Audio Overview: a script from a text model, voiced with two speech
+  // voices and kept in the library like other audio.
+  audioOverviewRoutes(ctx);
   creditRoutes(ctx);
   collabRoutes(ctx);
   retentionRoutes(ctx);

@@ -1985,6 +1985,84 @@ route("post", "/api/research", "Run Deep research", {
   description:
     "Workspace only (session). Plans up to 3 or 6 sub-questions (strict JSON; invalid output falls back to the question itself), runs one web search per sub-question and writes a Markdown report whose [n] citations map only to the pages those searches returned; other URLs and out-of-range numbers are removed. Before anything runs, every step is held at its maximum (402 insufficient_credits or spending_limit, 409 research_running for a second run, with nothing charged). Each step settles on its own usage as it finishes; a step that fails, is stopped (closing the stream) or never starts is released, so only finished steps are charged. SSE events: research.stage planning, planned (questions), searching / searched (index, status, sources, credits), writing, then done with message { text, citations, research } and anonyma { credits_charged, request_id, private?, privacy?, memory? }, or error with whatever finished. A saved run adds the question and the report to the conversation as ordinary messages.",
 });
+// Audio Overview (update "audiooverview", which also needs "audio").
+const overviewRequest = object(
+  {
+    model: { ...string, description: "A callable text model; it writes the script" },
+    tts: { ...string, description: "A speech model from /api/audio/models" },
+    voices: object({ A: string, B: string }, ["A", "B"]),
+    length: { enum: ["short", "long"], description: "About 3 minutes (at most 4,500 characters voiced) or about 8 (at most 11,000)" },
+    language: { enum: ["auto", "en", "zh", "es", "fr", "de", "pt", "it", "nl", "pl", "tr", "ru", "ja", "ko", "hi", "ar"], default: "auto", description: "The script's language; auto follows the source" },
+    source: object(
+      {
+        kind: { enum: ["document", "chat", "research"] },
+        title: { ...string, maxLength: 120 },
+        text: { ...string, minLength: 200, maxLength: 120000 },
+      },
+      ["kind", "text"],
+    ),
+    ephemeral: { ...bool, description: "Off the record: nothing is saved; the audio comes back in the response only (needs ephemeral)" },
+    private: { ...bool, description: "Always refused with 400 overview_private_unavailable: no voice model offers zero data retention" },
+    veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for the source (needs veil); above 0, or Veil placeholders left in the source, is refused with 400 overview_veiled" },
+    requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+  },
+  ["model", "tts", "voices", "length", "source"],
+);
+route("post", "/api/audio/overview/quote", "The most an audio overview can cost", {
+  body: overviewRequest,
+  response: object({
+    credits: { ...number, description: "The maximum: the script (prompt plus its whole reply budget) and the voices for the length's character cap" },
+    usd: number,
+    available: number,
+    spending_limit: object({ remaining: number }),
+    model: string,
+    tts: string,
+    length: string,
+    max_characters: integer,
+    source_characters: integer,
+    steps: object({ script: number, voices: number }),
+    estimate: bool,
+  }),
+  description:
+    "Reserves and charges nothing. The same checks as a run (Seed Guard with no override, Veil, Private Mode, voices, context allowance), so a quote that succeeds describes exactly what a run would hold.",
+});
+route("post", "/api/audio/overview", "Make an audio overview", {
+  body: overviewRequest,
+  stream: true,
+  description:
+    "Workspace only (session). The source goes to the text model as one data-only document; the model writes a two-host script as strict JSON ({ title, chapters: [{ title, turn }], turns: [{ speaker: A|B, text }] }), cut at the length's character cap. Each turn is then voiced with the chosen voice, and the clips are joined into one file (MP3 or WAV) and saved to the library with its script, unless off the record. Before anything runs, the script's and the voices' maximums are held (402 insufficient_credits or spending_limit, 409 overview_running for a second run, with nothing charged). The script settles on its usage once written; a script cut off by its budget (overview_script_length) or not in the expected shape (overview_script_invalid) stops the run with only the script charged. The voices settle once, on the characters voiced; a failed turn stops the run, keeps what was voiced and charges nothing further. SSE events: overview.stage writing, script (title, chapters, turns), voiced (index, of, credits), then done with result { title, chapters, turns (with start seconds), duration, status complete|partial|stopped, saved, media? | audio? { mime, data base64 } | clips? } and anonyma { credits_charged, steps { script, voices }, request_id }, or error with whatever was made.",
+});
+route("get", "/api/audio/overview", "List saved audio overviews", {
+  response: object({
+    data: array(
+      object({
+        id: { ...string, description: "The audio file's media id" },
+        title: string,
+        created: integer,
+        duration: { type: ["number", "null"] },
+        chapters: integer,
+        turns: integer,
+        status: { enum: ["complete", "partial", "stopped"] },
+        url: string,
+        cost: number,
+      }),
+    ),
+  }),
+  description: "The newest first. Deleting the audio file (DELETE /api/media/{id}) deletes its overview too.",
+});
+route("get", "/api/audio/overview/{id}", "One saved audio overview with its script", {
+  response: object({
+    id: string,
+    title: string,
+    chapters: array(object({ title: string, turn: integer })),
+    turns: array(object({ speaker: { enum: ["A", "B"] }, text: string, start: { type: ["number", "null"] } })),
+    duration: { type: ["number", "null"] },
+    status: string,
+    voices: object({ A: string, B: string }),
+    media: ref("Media"),
+  }),
+  description: "The script as voiced, with each turn's start in seconds, for the transcript and chapter jumps. 404 not_found for anyone else's.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

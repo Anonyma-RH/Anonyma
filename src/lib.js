@@ -506,10 +506,13 @@ export const MODE_FEATURES = {
   canvas: "canvas",
   slides: "slides",
   translate: "doctranslate",
+  // Meeting Notes' page (src/MeetingNotes.jsx), which needs Voice & Audio too.
+  notes: "meetingnotes",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")
     return ["images", "video", "audio"].some((id) => isReleased(config, id));
+  if (mode === "notes") return isReleased(config, "meetingnotes") && isReleased(config, "audio");
   return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
 }
 

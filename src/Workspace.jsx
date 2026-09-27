@@ -41,6 +41,8 @@ const Sheets = lazy(() => import("./Sheets.jsx"));
 const OnDevice = lazy(() => import("./OnDevice.jsx"));
 // Study Mode: its reviewer, parser and deck storage load only on its page.
 const Study = lazy(() => import("./Study.jsx"));
+// Meeting Notes: its recording reader and notes view load only on its page.
+const MeetingNotes = lazy(() => import("./MeetingNotes.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
@@ -329,6 +331,7 @@ export function AppSidebar({
           ["translate", "Translate docs"],
           ["study", "Study"],
           ["slides", "Slides"],
+          ["notes", "Meeting notes"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
@@ -342,6 +345,7 @@ export function AppSidebar({
           .filter(([id]) => id !== "study" || isReleased(config, "study"))
           .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
           .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
+          .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
           .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
@@ -590,7 +594,9 @@ export default function Workspace() {
     // And Slides'.
     (mode === "slides" && (!config || isReleased(config, "slides"))) ||
     // Translate Documents' page, likewise.
-    (mode === "translate" && (!config || isReleased(config, "doctranslate")));
+    (mode === "translate" && (!config || isReleased(config, "doctranslate"))) ||
+    // Meeting Notes' page, the same way (it needs Voice & Audio too).
+    (mode === "notes" && (!config || modeReleased(config, "notes")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3779,6 +3785,7 @@ export default function Workspace() {
                 canvas: "Canvas",
                 slides: "Slides",
                 translate: "Translate docs",
+                notes: "Meeting notes",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4033,6 +4040,26 @@ export default function Workspace() {
             isReleased(config, "doccompare") && (
               <Suspense fallback={<p className="compare-loading">Opening Compare docs…</p>}>
                 <Compare key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
+          ) : mode === "notes" ? (
+            modeReleased(config, "notes") && (
+              <Suspense fallback={<p className="meeting-loading">Opening Meeting notes…</p>}>
+                <MeetingNotes
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  models={models}
+                  config={config}
+                  refresh={refresh}
+                  veilOn={veilOn}
+                  setVeilOn={setVeilOn}
+                  veilWords={veilWords}
+                  vault={vault}
+                  vaultLive={vaultLive}
+                  onUnlockVault={() => setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })}
+                  projects={projectsLive ? projects.list : []}
+                />
               </Suspense>
             )
           ) : mode === "canvas" ? (

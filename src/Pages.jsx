@@ -890,6 +890,7 @@ const featureIcons = {
   canvas: "canvas",
   slides: "present",
   doctranslate: "languages",
+  meetingnotes: "meeting",
 };
 const launch = {
   id: "mvp",

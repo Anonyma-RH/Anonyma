@@ -11,6 +11,7 @@ import { catchupTestReply } from "./catchup.js";
 import { autoHelperTestReply } from "./auto-model-test.js";
 import { canvasTestReply } from "./canvas.js";
 import { slidesTestReply } from "./slides.js";
+import { meetingNotesTestReply } from "./meeting-notes.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -216,6 +217,9 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
     // Overview's script writer (server/audio-overview.js), Prompt Sharpen's
     // sharpener (server/sharpen.js), Auto Model's helper
     // (server/auto-model-test.js) and Highlight & Ask's fact-check: a
+    // Overview's script writer (server/audio-overview.js), Meeting Notes'
+    // notes (server/meeting-notes.js), Prompt Sharpen's
+    // sharpener (server/sharpen.js) and Highlight & Ask's fact-check: a
     // verdict in its JSON shape, with no pages (no search runs here), so the
     // card says it couldn't be verified. Each returns null otherwise.
     // Page Watch's summaries, Summarize & Continue's summary and Canvas's
@@ -245,6 +249,7 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
           studyTestReply(body.messages) ??
           compareTestReply(body.messages) ??
           overviewTestReply(body.messages) ??
+          meetingNotesTestReply(body.messages) ??
           sharpenTestReply(body.messages) ??
           autoHelperTestReply(body.messages) ??
           factCheck;

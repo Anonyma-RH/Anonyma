@@ -1,5 +1,6 @@
 import { fail } from "./core.js";
 import { providerFailure } from "./provider.js";
+import { transcriptSegments } from "./meeting-notes.js";
 
 // Speech models come from the gateway's audio catalog. Its `api_price` already
 // includes the gateway fee (PPQ: base price x 1.055).
@@ -214,5 +215,8 @@ export async function transcribeAudio(
   return {
     text,
     duration: Number.isFinite(duration) && duration >= 0 ? duration : null,
+    // The reply's timed lines (with speaker labels only where it has
+    // them), for Meeting Notes' timestamps; [] when it has none.
+    segments: transcriptSegments(j),
   };
 }

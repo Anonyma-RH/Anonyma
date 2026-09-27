@@ -25,7 +25,7 @@ import {
 // Background maintenance: due routines, video completion, payment status
 // checks, expired media and reservations, token holdings and table cleanup.
 export function createWorker(ctx) {
-  const { db, cfg, inflight, routines, sealed, pageWatch } = ctx;
+  const { db, cfg, inflight, routines, sealed, pageWatch, meetingNotes } = ctx;
   const { mediaJSON, saveMedia, deleteMedia, assignCosts } = ctx.media;
   const workerController = new AbortController();
   let workerPromise = null;
@@ -70,6 +70,8 @@ export function createWorker(ctx) {
       // Sealed Mode: settle held sealed requests from PPQ's query history
       // (only with SEALED_RECONCILE on), alongside the rest.
       sealed?.tick();
+      // Meeting Notes: runs left idle (a closed tab) release what they hold.
+      meetingNotes?.sweep();
       const jobs = db
         .prepare(
           "SELECT * FROM videos WHERE status IN ('pending','processing') ORDER BY updated ASC,created ASC LIMIT 20",

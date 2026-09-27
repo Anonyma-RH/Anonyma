@@ -28,6 +28,7 @@ import { videoRoutes } from "./routes/videos.js";
 import { fileRoutes } from "./files.js";
 import { audioRoutes } from "./routes/audio.js";
 import { audioOverviewRoutes } from "./routes/audio-overview.js";
+import { meetingNotesRoutes } from "./routes/meeting-notes.js";
 import { v1MediaRoutes } from "./routes/v1-media.js";
 import { creditRoutes } from "./routes/credits.js";
 import { giftRoutes } from "./routes/gifts.js";
@@ -152,6 +153,10 @@ export function createApp(overrides = {}) {
   // Audio Overview: a script from a text model, voiced with two speech
   // voices and kept in the library like other audio.
   audioOverviewRoutes(ctx);
+  // Meeting Notes: a recording transcribed piece by piece, then notes from
+  // a text model; each step held and settled on the ordinary billing path.
+  // The worker ends runs left idle (ctx.meetingNotes.sweep).
+  ctx.meetingNotes = meetingNotesRoutes(ctx);
   creditRoutes(ctx);
   // Gift Links: credits held for a link anyone can claim once; the worker
   // returns the unclaimed ones after 30 days (ctx.gifts.expire).

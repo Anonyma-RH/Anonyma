@@ -73,6 +73,8 @@ import {
 // the caller's to keep or change.
 export function eraseAccountContent(db, user) {
   const id = user.id;
+  // Return open gifts before removing any account content.
+  forgetGifts(db, id);
   db.prepare("DELETE FROM collabs WHERE owner_id=?").run(id);
   db.prepare("DELETE FROM collab_members WHERE user_id=?").run(id);
   db.prepare("DELETE FROM share_links WHERE user_id=?").run(id);
@@ -131,8 +133,6 @@ export function eraseAccountContent(db, user) {
   forgetArenaChoice(db, id);
   // Audio Overview: saved overviews' scripts (their audio is media, below).
   forgetAudioOverviews(db, id);
-  // Gift Links: unclaimed gifts come back to the balance, then the list goes.
-  forgetGifts(db, id);
   // Vault Sync: the synced ciphertext, its tombstones and settings. Each
   // device keeps its own copy and stops syncing when it next checks.
   forgetVaultSync(db, id);
@@ -653,6 +653,8 @@ export function accountRoutes(ctx) {
         400,
         "Type DELETE to confirm closure and forfeiture of unused credits.",
       );
+    // Meeting Notes: a run between steps releases what it holds.
+    ctx.meetingNotes?.endFor(req.user.id);
     if (
       db
         .prepare("SELECT id FROM holds WHERE user_id=? AND status='held'")

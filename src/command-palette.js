@@ -375,6 +375,7 @@ export const MODE_LABELS = {
   canvas: "Canvas",
   slides: "Slides",
   translate: "Translate docs",
+  notes: "Meeting notes",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -404,6 +405,8 @@ const PLACES = [
   ["canvas", "Canvas", ["write", "writing", "document", "editor", "draft", "rewrite", "tracked changes", "docx"]],
   // Slides: only once released, like Study.
   ["slides", "Slides", ["slide deck", "presentation", "deck", "powerpoint", "keynote", "present", "pitch"]],
+  // Meeting Notes: only once released, with Voice & Audio.
+  ["notes", "Meeting notes", ["meeting", "recording", "transcribe", "transcript", "minutes", "action items", "call notes", "decisions"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

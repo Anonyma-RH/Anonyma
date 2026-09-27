@@ -296,28 +296,28 @@ export function AppSidebar({
           ["chat", "Chat & reason"],
           ["uncensored", "Uncensored"],
           ["symposium", "Symposium"],
+          // On-Device Model: a chat mode, with the others.
+          ["device", "On-device"],
           ["code", "Code & build"],
           ["image", "Images"],
           ["video", "Video"],
           ["audio", "Voice & audio"],
           ["collab", "Collab"],
+          // Tools for your own documents and data.
           ["tools", "Task tools"],
           ["sheets", "Sheets"],
-          ["device", "On-device"],
-          ["study", "Study"],
           ["compare", "Compare docs"],
+          ["study", "Study"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
         ]
-          // Local Sheets and Study Mode stay out of sight entirely until
-          // they're released.
+          // Local Sheets, On-Device Model, Document Compare and Study Mode
+          // stay out of sight entirely until they're released.
           .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
-          // So does On-Device Model.
           .filter(([id]) => id !== "device" || isReleased(config, "ondevice"))
-          .filter(([id]) => id !== "study" || isReleased(config, "study"))
-          // Document Compare likewise.
           .filter(([id]) => id !== "compare" || isReleased(config, "doccompare"))
+          .filter(([id]) => id !== "study" || isReleased(config, "study"))
           .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
@@ -2093,6 +2093,10 @@ export default function Workspace() {
   // A quote goes after whatever is already in the composer, to edit first.
   function quoteIntoComposer(text, { clipped } = {}) {
     if (!text) return;
+    // Prompt Sharpen: an open result (and its Undo) is for the prompt before
+    // this quote, so it closes rather than let Use this or Undo drop the
+    // quote. Sharpen again to include it.
+    if (sharpen.state.status !== "idle") sharpen.reset();
     setPrompt((p) => insertIntoPrompt(p, text).slice(0, 48000));
     setInfo(clipped ? "Long selection: only the first 6,000 characters were quoted." : "");
     requestAnimationFrame(() => {
@@ -3367,6 +3371,18 @@ export default function Workspace() {
         </Empty>
       </main>
     );
+  // The header's chat tools. A long saved chat can show up to six (Find,
+  // Catch me up, Share, Study, Export, Listen); with more than the header
+  // has room for, they compact to icons (workspace.css, .tools-5 and
+  // .tools-4), so the header never scrolls sideways. These mirror the
+  // conditions each tool is shown with in the header below.
+  const shareShown = sharesLive && textMode && messages.length > 0;
+  const studyShown =
+    studyLive && textMode && current && !deviceOnly && !ephemeral && !privateMode &&
+    !sealedOn && !sealedThread && messages.length > 0;
+  const exportShown = exportLive && textMode && messages.length > 0;
+  const listenShown = overviewOn && textMode && messages.some((m) => !m.sample);
+  const headerTools = [!!find.button, catchupOn, shareShown, studyShown, exportShown, listenShown].filter(Boolean).length;
   return (
     <main id="main" className="app-shell">
       {/* Privacy Screen: Esc twice or Hide covers the page (and idle locks it). */}
@@ -3489,7 +3505,11 @@ export default function Workspace() {
       )}
       {chatControlLive && reading.away && messages.length > 0 && <button type="button" className="jump-latest" onClick={reading.jump}>Jump to latest ↓</button>}
       <div className="workspace-main">
-        <header className="workspace-header">
+        <header
+          className={
+            "workspace-header" + (headerTools >= 5 ? " tools-5" : "") + (headerTools >= 4 ? " tools-4" : "")
+          }
+        >
           <button
             className="icon-button mobile-only"
             aria-label="Open workspace menu"
@@ -3533,6 +3553,7 @@ export default function Workspace() {
                 type="button"
                 className="share-open-button"
                 aria-label="Share this chat"
+                title="Share this chat"
                 onClick={openShare}
               >
                 <Icon name="share" size={15} />
@@ -3546,6 +3567,7 @@ export default function Workspace() {
               <Link
                 className="chat-export-open"
                 aria-label="Make a study deck from this chat"
+                title="Make a study deck from this chat"
                 to={"/workspace/study?chat=" + encodeURIComponent(current)}
               >
                 <Icon name="study" size={15} />
@@ -3557,7 +3579,7 @@ export default function Workspace() {
                 type="button"
                 className="chat-export-open"
                 aria-label="Export this chat"
-                title={busy ? "Wait for the reply to finish" : undefined}
+                title={busy ? "Wait for the reply to finish" : "Export this chat"}
                 disabled={busy}
                 onClick={openExport}
               >

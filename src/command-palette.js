@@ -379,6 +379,8 @@ const PLACES = [
   ["chat", "Chat & reason", ["conversation", "talk", "ask", "reasoning"]],
   ["uncensored", "Uncensored", ["unfiltered", "uncensored models"]],
   ["symposium", "Symposium", ["compare models", "several models", "side by side", "council"]],
+  // On-Device Model: only once released (MODE_FEATURES maps it to "ondevice").
+  ["device", "On-device model", ["on device", "local model", "offline", "webgpu", "free", "private", "llama", "qwen"]],
   ["code", "Code & Build", ["programming", "coding", "developer"]],
   ["image", "Image Studio", ["images", "picture", "generate an image", "art"]],
   ["video", "Video Studio", ["video", "movie", "clip", "animation"]],
@@ -389,12 +391,10 @@ const PLACES = [
   ["projects", "Projects", ["project", "folders", "group chats", "pinned files"]],
   // Local Sheets: only once released (modeReleased checks MODE_FEATURES).
   ["sheets", "Sheets", ["spreadsheet", "csv", "tsv", "excel", "analyse", "analyze", "chart", "table", "data"]],
-  // On-Device Model: only once released (MODE_FEATURES maps it to "ondevice").
-  ["device", "On-device model", ["on device", "local model", "offline", "webgpu", "free", "private", "llama", "qwen"]],
-  // Study Mode: only once released, like Sheets.
-  ["study", "Study", ["flashcards", "quiz", "revise", "revision", "learn", "anki", "spaced repetition", "cards"]],
   // Document Compare: likewise only once released.
   ["compare", "Compare docs", ["compare documents", "diff", "redline", "track changes", "versions", "contract", "changes"]],
+  // Study Mode: only once released, like Sheets.
+  ["study", "Study", ["flashcards", "quiz", "revise", "revision", "learn", "anki", "spaced repetition", "cards"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

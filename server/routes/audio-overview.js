@@ -255,6 +255,11 @@ export function audioOverviewRoutes(ctx) {
         partUsage = null,
         upstreamCost = null,
         finish = null;
+      // Model Status (server/model-status.js): the script call's outcome and
+      // timings, counted like a chat's. Only the model id. (The voices go
+      // through the speech path, which Model Status doesn't measure.)
+      const probe = ctx.modelStatus.start(m.id);
+      probe.sent();
       try {
         for await (const part of stream()) {
           if (part.error) fail(502, part.error.message || "Provider error", "provider_rejected");
@@ -264,9 +269,14 @@ export function audioOverviewRoutes(ctx) {
           if (typeof delta.content === "string") text += delta.content;
           if (typeof delta.reasoning === "string" || typeof delta.reasoning_content === "string")
             reasoning += delta.reasoning || delta.reasoning_content;
+          if (delta.content || delta.reasoning || delta.reasoning_content) probe.first();
           if (part.usage) partUsage = part.usage;
           if (Number.isFinite(part.cost)) upstreamCost = part.cost;
         }
+        probe.done(!!(text || reasoning));
+      } catch (e) {
+        probe.fail(e, step.signal);
+        throw e;
       } finally {
         clearTimeout(timer);
         controller.signal.removeEventListener("abort", onStop);

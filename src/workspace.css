@@ -6,6 +6,9 @@
 .app-sidebar .sidebar-brand .brand-mark{width:35px;height:35px}
 .app-sidebar .sidebar-group-label{color:#c3d0ff;font-size:10px;letter-spacing:1.2px;padding:26px 13px 12px}
 .app-sidebar nav a{font-size:13px;min-height:46px;padding:12px 13px;color:#d9e3ff;border-radius:6px;gap:12px;transition:background .2s,color .2s}
+/* With fifteen places or more (Sheets, On-device, Compare docs and Study all
+   released), the rows tighten so every place fits at 1440x900 and on a phone. */
+.app-sidebar nav:has(>a:nth-child(15)){gap:2px}.app-sidebar nav:has(>a:nth-child(15)) a{min-height:38px;padding-block:5px}
 .app-sidebar nav a:hover,.app-sidebar nav a.active{background:#ffffff16;color:white}
 .app-sidebar nav a.active{box-shadow:inset 2px 0 #ffb21c}
 .app-sidebar .nav-active-dot{background:#ffb21c}
@@ -28,6 +31,12 @@
 .app-shell .workspace-header .balance-chip{font-size:11px;border-color:var(--work-line);background:var(--work-surface);padding:10px 12px;border-radius:6px;color:var(--work-ink)}
 /* Phones: the balance alone, so the chat's header actions still fit in 390 px. */
 @media(max-width:480px){.app-shell .workspace-header .balance-detail{display:none}}
+/* The header's chat tools (Find, Catch me up, Share, Study, Export, Listen):
+   with five or more, icons below 1680px (each keeps its label for screen
+   readers, and a tooltip); on phones with four or more, the page's name and
+   the balance chip's icon make room too. So the header never scrolls sideways. */
+@media(max-width:1680px){.app-shell .workspace-header.tools-5 :is(.find-open,.catchup-open,.share-open-button,.chat-export-open){padding:8px}.app-shell .workspace-header.tools-5 :is(.find-open,.catchup-open,.share-open-button,.chat-export-open)>span{display:none}}
+@media(max-width:480px){.app-shell .workspace-header.tools-4>span{display:none}.app-shell .workspace-header.tools-4 .balance-chip>svg{display:none}}
 .app-shell .workspace-header .icon-button{color:var(--work-muted);width:38px;height:38px;border-radius:6px}
 .app-shell .workspace-header .icon-button:hover{background:var(--work-surface);color:#0135df}
 .app-shell .workspace-notice{min-height:34px;background:var(--work-surface);color:var(--work-muted);font-size:11px;padding:9px 36px;border-bottom:1px solid var(--work-line);line-height:1.5}

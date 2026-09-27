@@ -351,6 +351,17 @@ const RICH_PARTS = {
   "rich-diagram": DiagramBlock,
 };
 
+// A Markdown table scrolls sideways inside its own box, so a wide one never
+// widens the page (a phone at 390 px). A caller's own `table` still wins.
+function ReplyTable({ node: _node, ...props }) {
+  return (
+    <div className="table-scroll reply-table-scroll">
+      <table {...props} />
+    </div>
+  );
+}
+const TABLE_PARTS = { table: ReplyTable };
+
 // A reply's Markdown. `rich` says this text is a reply (a model's), not what
 // someone typed; `live` overrides the release check (it defaults to the
 // "diagrams" update in the app's config). Anything else goes to
@@ -375,7 +386,7 @@ export function ReplyMarkdown({
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
         rehypePlugins={rehypePlugins}
-        components={components}
+        components={{ ...TABLE_PARTS, ...components }}
         {...rest}
       >
         {children}
@@ -390,7 +401,7 @@ export function ReplyMarkdown({
         ...(kit ? [[kit.rehypeKatex, KATEX_OPTIONS]] : []),
         rehypeRichRemember,
       ]}
-      components={{ ...components, ...RICH_PARTS }}
+      components={{ ...TABLE_PARTS, ...components, ...RICH_PARTS }}
       {...rest}
     >
       {ready.text}

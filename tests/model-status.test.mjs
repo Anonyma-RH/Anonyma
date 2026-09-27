@@ -416,6 +416,46 @@ test("chats, images and video submissions are measured, served cached for 30 sec
   assert.deepEqual((await other.agent.get("/api/status").expect(200)).body, report);
 });
 
+// Batch 6's model calls that don't go through /api/chat are measured the
+// same way (Study, Document Compare, Summarize & Continue and Page Watch run
+// through runChat, so they're counted as chats).
+test("Prompt Sharpen, fact-checks and Audio Overview's script are measured like chats", async (t) => {
+  const s = fixture(t);
+  const p = await person(s.app, "measured-tools");
+  addCredit(s.db, p.user.id, 100000000, "status-fund-tools");
+  await p.agent
+    .post("/api/sharpen")
+    .send({ model: MODEL, prompt: "write a short note to my landlord about the heating" })
+    .expect(200);
+  assert.equal(s.modelStatus.events().length, 1);
+  await p.agent
+    .post("/api/factcheck")
+    .send({ model: MODEL, claim: "The Eiffel Tower is in Paris.", ephemeral: true })
+    .expect(200);
+  assert.equal(s.modelStatus.events().length, 2);
+  const overview = await p.agent
+    .post("/api/audio/overview")
+    .send({
+      model: MODEL,
+      tts: "fixture-voice",
+      voices: { A: "fixture-1", B: "fixture-2" },
+      length: "short",
+      ephemeral: true,
+      source: {
+        kind: "document",
+        title: "Night bus briefing.md",
+        text: "Starting 3 March, four night lines replace six late-night routes, every 20 minutes from midnight to 5 a.m. ".repeat(4),
+      },
+    });
+  assert.ok(overview.status < 400, "overview " + overview.status);
+  // The script call counts once; the voices go through the speech path,
+  // which Model Status doesn't measure.
+  const events = s.modelStatus.events();
+  assert.equal(events.length, 3);
+  assert.ok(events.every((e) => e.outcome === "ok"));
+  for (const e of events) assert.deepEqual(Object.keys(e).sort(), ["outcome", "t", "total", "ttft"]);
+});
+
 test("provider failures and timeouts count; stops, refusals and invalid requests don't", async (t) => {
   // Five 500s: down.
   {

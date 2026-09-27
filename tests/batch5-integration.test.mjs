@@ -123,7 +123,8 @@ test("replies render with Math & Diagrams and Injection Shield wherever they're 
   // Mermaid diagrams are drawn by RichMarkdown's own element, never an
   // <img>, so Shield's remote-image placeholder doesn't touch them.
   const rich = source("RichMarkdown.jsx");
-  assert.match(rich, /components=\{\{ \.\.\.components, \.\.\.RICH_PARTS \}\}/);
+  // (Batch 6: a table scrolls in its own box first; a caller's own table wins.)
+  assert.match(rich, /components=\{\{ \.\.\.TABLE_PARTS, \.\.\.components, \.\.\.RICH_PARTS \}\}/);
   assert.match(rich, /"rich-diagram": DiagramBlock/);
 });
 

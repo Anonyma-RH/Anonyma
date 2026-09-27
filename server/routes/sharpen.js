@@ -199,16 +199,27 @@ export function sharpenRoutes(ctx) {
         usage = null,
         upstreamCost = null,
         finish = null;
-      for await (const part of stream()) {
-        if (part.error) fail(502, part.error.message || "Provider error", "provider_rejected");
-        const choice = part.choices?.[0];
-        if (typeof choice?.finish_reason === "string") finish = choice.finish_reason;
-        const delta = choice?.delta || {};
-        if (typeof delta.content === "string") text += delta.content;
-        if (typeof delta.reasoning === "string" || typeof delta.reasoning_content === "string")
-          reasoning += delta.reasoning || delta.reasoning_content;
-        if (part.usage) usage = part.usage;
-        if (Number.isFinite(part.cost)) upstreamCost = part.cost;
+      // Model Status (server/model-status.js): this call's outcome and
+      // timings, counted like a chat's. Only the model id.
+      const probe = ctx.modelStatus.start(m.id);
+      probe.sent();
+      try {
+        for await (const part of stream()) {
+          if (part.error) fail(502, part.error.message || "Provider error", "provider_rejected");
+          const choice = part.choices?.[0];
+          if (typeof choice?.finish_reason === "string") finish = choice.finish_reason;
+          const delta = choice?.delta || {};
+          if (typeof delta.content === "string") text += delta.content;
+          if (typeof delta.reasoning === "string" || typeof delta.reasoning_content === "string")
+            reasoning += delta.reasoning || delta.reasoning_content;
+          if (delta.content || delta.reasoning || delta.reasoning_content) probe.first();
+          if (part.usage) usage = part.usage;
+          if (Number.isFinite(part.cost)) upstreamCost = part.cost;
+        }
+        probe.done(!!(text || reasoning));
+      } catch (e) {
+        probe.fail(e, controller.signal);
+        throw e;
       }
       if (controller.signal.aborted) throw controller.signal.reason;
 

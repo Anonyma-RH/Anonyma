@@ -194,6 +194,8 @@ import { STORAGE_KEY as MODEL_CHOICES, loadChoices, resolveChoice, withChoice, r
 import { useShareTargetPrefill } from "./share-target.js";
 import { InstallAppEntry } from "./InstallApp.jsx";
 import { LivePreview, CodePanelTabs, useHtmlPreview } from "./LivePreview.jsx";
+import { usePythonRunner, pythonReleased } from "./PythonRunner.jsx";
+import { attachedFiles } from "./python-runner.js";
 import { projectFiles, previewPages, PREVIEW_DEMO_REPLY } from "./live-preview.js";
 import { EarlyTag } from "./Holders.jsx";
 import { EarlyModelTag, earlyModelSuffix } from "./early-models.js";
@@ -1579,6 +1581,24 @@ export default function Workspace() {
   const previewLive = isReleased(config, "preview");
   const [codeTab, setCodeTab] = useState(null);
   const htmlPreview = useHtmlPreview(previewLive && textMode);
+  // Python Runner (src/PythonRunner.jsx): a Run button on Python blocks in
+  // replies. The code runs in this browser with no network; the files it can
+  // be given are the text files attached earlier in this conversation (with
+  // Veil's placeholders restored in this browser), and only when ticked.
+  const pythonLive = pythonReleased(config) && textMode;
+  const pythonFiles = useMemo(
+    () =>
+      pythonLive
+        ? attachedFiles(
+            messages
+              .filter((m) => m.role === "user" && typeof m.content === "string")
+              .flatMap((m) => parseDocumentBlocks(m.content).documents)
+              .map((d) => ({ ...d, text: unveil(d.text, veilStateRef.current.map) })),
+          )
+        : [],
+    [pythonLive, messages],
+  );
+  const python = usePythonRunner({ enabled: pythonLive, base: htmlPreview.components, files: pythonFiles });
   if (!branchFlight.current) branchFlight.current = singleFlight();
   // Uses Symposium's orchestration, so both updates must be live; never in the demo.
   const doubleCheckLive =
@@ -3883,6 +3903,14 @@ export default function Workspace() {
                         : parsed.documents;
                       const shown =
                         parsed.text || (hasDocuments ? "" : m.interrupted && chatControlLive ? "Reply interrupted. Check charge status below." : "Preparing…");
+                      // Reply parts: Live Preview's and Python Runner's code
+                      // block tools; Run waits until the reply has finished.
+                      const replyParts =
+                        m.role !== "assistant"
+                          ? undefined
+                          : busy && i === messages.length - 1
+                            ? python.streamingComponents
+                            : python.components;
                       const body = (
                         <ReplyMarkdown
                           // Math & Diagrams: only replies are typeset or drawn.
@@ -3895,10 +3923,8 @@ export default function Workspace() {
                           ]}
                           components={
                             shieldView
-                              ? shieldMarkdown(m.role === "assistant" ? htmlPreview.components : null)
-                              : m.role === "assistant"
-                                ? htmlPreview.components
-                                : undefined
+                              ? shieldMarkdown(replyParts)
+                              : replyParts
                           }
                         >
                           {shown}

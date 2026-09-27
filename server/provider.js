@@ -108,6 +108,67 @@ const TEST_DIAGRAM_ANSWER = [
   "Nothing is charged for a refused or failed request.",
 ].join("\n");
 
+// Local test mode's fixed reply to a request for Python that plots or
+// reads data: a runnable sample for Python Runner. With a CSV attached it
+// reads that file by name; otherwise it plots made-up numbers. "Write a
+// python function" still gets the JavaScript fixture above.
+export function pythonTestReply(text) {
+  const ask = String(text || "").split("\n\n<document ")[0];
+  if (!/python/i.test(ask) || !/\b(plot|chart|graph|matplotlib|pandas|numpy|csv|data)\b|图表|画图|绘图|曲线|数据/i.test(ask))
+    return null;
+  const csv = /<document name="([^"]+\.csv)"/i.exec(String(text))?.[1]?.replace(/[^\w .()-]/g, "_");
+  const intro = "**Local test provider** — a fixed sample reply, not a live model.";
+  if (csv)
+    return [
+      intro,
+      "",
+      `This reads \`${csv}\`, totals its number columns and charts them by the first column:`,
+      "",
+      "```python",
+      "import pandas as pd",
+      "import matplotlib.pyplot as plt",
+      "",
+      `df = pd.read_csv("${csv}")`,
+      "label = df.columns[0]",
+      "numbers = [c for c in df.select_dtypes(\"number\").columns if c != label]",
+      "",
+      "print(f\"{len(df)} rows. Totals:\", \", \".join(f\"{c} {df[c].sum():,}\" for c in numbers))",
+      "",
+      "ax = df.plot(x=label, y=numbers, kind=\"bar\", figsize=(8.6, 2.9), rot=0,",
+      "             color=[\"#0135df\", \"#ffb21c\", \"#7f9bff\"][: len(numbers)])",
+      `ax.set_title("${csv}")`,
+      "ax.set_xlabel(\"\")",
+      "ax.spines[[\"top\", \"right\"]].set_visible(False)",
+      "plt.tight_layout()",
+      "plt.show()",
+      "```",
+      "",
+      "Tick **Use my attached CSV** before you run it, so the code can read the file.",
+    ].join("\n");
+  return [
+    intro,
+    "",
+    "Here's a plot of two waves, with the peak printed underneath:",
+    "",
+    "```python",
+    "import numpy as np",
+    "import matplotlib.pyplot as plt",
+    "",
+    "x = np.linspace(0, 4 * np.pi, 400)",
+    "plt.figure(figsize=(8.6, 2.9))",
+    "plt.plot(x, np.sin(x), label=\"sin(x)\", color=\"#0135df\", linewidth=2)",
+    "plt.plot(x, np.cos(x), label=\"cos(x)\", color=\"#ffb21c\", linewidth=2)",
+    "plt.title(\"Sine and cosine\")",
+    "plt.legend(frameon=False)",
+    "plt.gca().spines[[\"top\", \"right\"]].set_visible(False)",
+    "plt.tight_layout()",
+    "plt.show()",
+    "",
+    "print(\"Peak of sin(x):\", round(float(np.sin(x).max()), 3))",
+    "```",
+  ].join("\n");
+}
+
 export async function* chatStream(cfg, body, signal, onAccepted) {
   if (cfg.testMode) {
     onAccepted?.();
@@ -165,7 +226,8 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
           overviewTestReply(body.messages) ??
           sharpenTestReply(body.messages) ??
           factCheck;
-    const answer = standIn !== null ? standIn : /code|function|javascript|python/i.test(text)
+    const python = standIn === null ? pythonTestReply(text) : null;
+    const answer = standIn !== null ? standIn : python !== null ? python : /code|function|javascript|python/i.test(text)
       ? "**Local test provider** — this is a deterministic integration fixture, not a live model.\n\n```javascript filename=hello.js\nexport function greet(name) {\n  return `Hello, ${name}!`;\n}\n```\n\nThe file is available in the code panel."
       : /\b(diagram|equation|formula)s?\b|图表|公式|流程图/i.test(text)
       ? TEST_DIAGRAM_ANSWER

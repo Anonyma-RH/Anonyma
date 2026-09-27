@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { fail } from "../core.js";
 import { connectLive, isReleased } from "../releases.js";
 import { configurationStatus } from "../readiness.js";
+import { PYTHON_WORKER_FILE, pythonWorkerCsp } from "../../src/python-assets.js";
 import {
   publicDocumentation,
   publicDiscovery,
@@ -74,14 +75,28 @@ export function siteRoutes({ app, db, cfg }) {
         // new deploy's worker is never served stale from an intermediate
         // cache. Vite fingerprints every /assets file name, so a changed file
         // always gets a new URL and browsers can keep the old one. Local
-        // OCR's files under /ocr/ sit in versioned directories that are
-        // never reused for other contents (src/ocr-assets.js), so they're
-        // cached the same way. Every other static file keeps
-        // express.static's defaults.
+        // OCR's files under /ocr/ and Python Runner's under /pyodide/ sit
+        // in versioned directories that are never reused for other contents
+        // (src/ocr-assets.js, src/python-assets.js), so they're cached the
+        // same way. Every other static file keeps express.static's
+        // defaults.
         setHeaders(res, path) {
           if (path.endsWith("/sw.js")) res.set("Cache-Control", "no-cache");
-          else if (path.includes("/dist/client/assets/") || path.includes("/dist/client/ocr/"))
+          else if (
+            path.includes("/dist/client/assets/") ||
+            path.includes("/dist/client/ocr/") ||
+            path.includes("/dist/client/pyodide/")
+          )
             res.set("Cache-Control", "public, max-age=31536000, immutable");
+          // Python's files are for this site's own Python worker only.
+          if (path.includes("/dist/client/pyodide/")) {
+            res.set("Cross-Origin-Resource-Policy", "same-origin");
+            if (path.endsWith(".whl")) res.set("Content-Type", "application/octet-stream");
+          }
+          // Python Runner's worker gets its own, stricter policy: it may
+          // load and fetch Pyodide's files and nothing else.
+          if (PYTHON_WORKER_FILE.test(path))
+            res.set("Content-Security-Policy", pythonWorkerCsp(cfg.origin));
         },
       }),
     );

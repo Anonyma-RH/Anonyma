@@ -54,6 +54,7 @@
     "mermaid": "11.17.2",
     "opentype.js": "2.0.0",
     "prettier": "3.9.8",
+    "pyodide": "314.0.7",
     "rehype-katex": "7.0.1",
     "remark-math": "6.0.0",
     "remark-parse": "11.0.0",

@@ -1001,6 +1001,23 @@ export const UPDATES = [
     // Mode and Device Vault chats continue in the browser only.
     released: true,
   },
+  {
+    id: "python",
+    title: "Python Runner",
+    tagline: "Run the Python it writes, right in the chat, on your device.",
+    points: [
+      "A Run button on Python code in replies, with the output and charts below it",
+      "It runs in your browser with no network; nothing runs on our servers",
+      "numpy, pandas and matplotlib included, and your attached CSV only if you choose",
+    ],
+    // Browser only: Pyodide runs the code in a locked-down Web Worker
+    // (src/python.worker.js, src/python-runner.js). The one thing served is
+    // Python itself (the interpreter, its standard library and the numpy,
+    // pandas and matplotlib wheels) under /pyodide/, gated here
+    // (featuresFor) and cached for a year. No routes, nothing charged,
+    // nothing stored per account, so nothing to erase or export.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1135,6 +1152,9 @@ export function featuresFor(req) {
   // Local OCR: the text reader's files (src/ocr-assets.js). What it reads
   // goes as a Documents attachment, so it needs Documents too.
   if (p === "/ocr" || p.startsWith("/ocr/")) return ["ocr", "documents"];
+  // Python Runner: Python's files (src/python-assets.js), fetched only by
+  // the runner's worker in the browser.
+  if (p === "/pyodide" || p.startsWith("/pyodide/")) return ["python"];
   // Link Reader: the server-side fetch of one public page. The page rides
   // with the message as a Documents block, so it needs Documents too.
   if (p === "/api/read" || p.startsWith("/api/read/")) return ["linkreader", "documents"];

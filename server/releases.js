@@ -1051,7 +1051,7 @@ export const UPDATES = [
     // expired gifts whether or not this is released, so switching it off
     // never strands credits. Gift rows are exported and erased with the
     // account's content (unclaimed ones are returned first).
-    released: false,
+    released: true,
   },
   {
     id: "arena",

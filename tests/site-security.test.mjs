@@ -95,9 +95,12 @@ test("sitemap and robots publish canonical public routes without private account
   const urls = [...map.text.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   assert.equal(urls.length, new Set(urls).size);
   // Gated public pages join once their update is live: /token with the
-  // NYMA Holder Program.
+  // NYMA Holder Program, /status with Model Status.
   const features = (await get("/api/config").expect(200)).body.releases.features;
-  const served = features.holders ? [GATED_PUBLIC_PAGES.token] : [];
+  const served = [
+    ...(features.holders ? [GATED_PUBLIC_PAGES.token] : []),
+    ...(features.status ? [GATED_PUBLIC_PAGES.status] : []),
+  ];
   assert.deepEqual(
     urls,
     [...PUBLIC_PAGES, ...served].map((path) => "https://example.test" + path),

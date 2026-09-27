@@ -70,6 +70,8 @@ export function knownPage(path, served = {}) {
     (served.wipe === true && path === "/wiped") ||
     // Local Sheets' page exists only once that update is live.
     (served.sheets === true && path === "/workspace/sheets") ||
+    // Document Compare's page, likewise.
+    (served.compare === true && path === "/workspace/compare") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

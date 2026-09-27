@@ -72,6 +72,8 @@ import {
   Trophy,
   Telescope,
   FingerprintPattern,
+  FileDiff,
+  ChevronUp,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -139,6 +141,8 @@ const icons = {
   link: Link2,
   chain: Link2,
   sheet: Sheet,
+  diff: FileDiff,
+  up: ChevronUp,
   scale: Scale,
   shuffle: Shuffle,
   trophy: Trophy,
@@ -172,6 +176,8 @@ const pixels = {
   projects: ["###.###", "#.#.#.#", "###.###", ".......", "###.###", "#.#.#.#", "###.###"],
   // A ruled grid: a spreadsheet read on this device.
   sheets: ["#######", "#..#..#", "#######", "#..#..#", "#######", "#..#..#", "#######"],
+  // Two pages side by side: two versions of a document.
+  compare: ["###.###", "#.#.#.#", "###.###", "#.#.#.#", "#.#.###", "#.#.#.#", "###.###"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

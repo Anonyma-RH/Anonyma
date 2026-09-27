@@ -224,14 +224,16 @@ const all = (node, name) =>
         ...node.children.flatMap((n) => all(n, name)),
       ];
 // Stop collecting text at the output bound instead of joining expanded trees.
-const contents = (node) => {
+// `textUpTo` takes at most `limit` characters (extractOffice's own limit).
+const contents = (node) => textUpTo(node, EXTRACTED_LIMIT);
+function textUpTo(node, limit) {
   const pending = [node],
     pieces = [];
   let size = 0;
-  while (pending.length && size <= EXTRACTED_LIMIT) {
+  while (pending.length && size <= limit) {
     const value = pending.pop();
     if (typeof value === "string") {
-      const part = value.slice(0, EXTRACTED_LIMIT + 1 - size);
+      const part = value.slice(0, limit + 1 - size);
       pieces.push(part);
       size += part.length;
     } else
@@ -239,7 +241,7 @@ const contents = (node) => {
         pending.push(value.children[i]);
   }
   return pieces.join("");
-};
+}
 // DOCX text a reader wouldn't see: runs marked hidden (w:vanish), set under
 // 2 pt, or white on an unshaded page outside tables. Only the browser asks
 // for it (Injection Shield, src/shield.js); the text itself is unchanged.
@@ -305,7 +307,8 @@ export function docxHidden(tree) {
     .map((h) => ({ ...h, text: h.text.replace(/\s+/g, " ").trim().slice(0, 2000) }))
     .filter((h) => h.text);
 }
-export async function extractOffice(input, extension, inflate, { hidden = false } = {}) {
+// `limit`: the most text to extract (Document Compare reads longer ones).
+export async function extractOffice(input, extension, inflate, { hidden = false, limit = EXTRACTED_LIMIT } = {}) {
   if (!OFFICE_EXTENSIONS.includes(extension))
     bad(
       "Choose DOCX, XLSX or PPTX. Legacy and macro-enabled Office files are not supported.",
@@ -331,7 +334,7 @@ export async function extractOffice(input, extension, inflate, { hidden = false 
   let size = 0,
     overflow = false;
   const add = (value) => {
-    const remaining = EXTRACTED_LIMIT + 1 - size;
+    const remaining = limit + 1 - size;
     if (value.length > remaining) overflow = true;
     if (remaining > 0) {
       const part = value.slice(0, remaining);
@@ -339,13 +342,13 @@ export async function extractOffice(input, extension, inflate, { hidden = false 
       size += part.length;
     }
   };
-  const full = () => size > EXTRACTED_LIMIT;
+  const full = () => size > limit;
   const paragraphs = (tree) => {
     for (const p of all(tree, "p")) {
       if (full()) break;
       add("\n");
       for (const t of all(p, "t")) {
-        add(contents(t));
+        add(textUpTo(t, limit));
         if (full()) break;
       }
     }
@@ -371,7 +374,7 @@ export async function extractOffice(input, extension, inflate, { hidden = false 
     let sharedSize = 0;
     if (entries.has("xl/sharedStrings.xml"))
       for (const si of all(await read("xl/sharedStrings.xml"), "si")) {
-        const value = contents(si);
+        const value = textUpTo(si, limit);
         sharedSize += value.length;
         if (sharedSize > XML_LIMIT)
           bad("Shared string text exceeds the extraction limit.");
@@ -394,21 +397,21 @@ export async function extractOffice(input, extension, inflate, { hidden = false 
           add(`${c.attrs.r || "cell"}: `);
           const v = all(c, "v")[0];
           if (c.attrs.t === "s")
-            add(shared[Number(v ? contents(v) : NaN)] ?? "");
+            add(shared[Number(v ? textUpTo(v, limit) : NaN)] ?? "");
           else if (c.attrs.t === "inlineStr") {
             for (const t of all(c, "t")) {
-              add(contents(t));
+              add(textUpTo(t, limit));
               if (full()) break;
             }
-          } else if (v) add(contents(v));
+          } else if (v) add(textUpTo(v, limit));
         }
       }
     }
   }
   const raw = chunks.join("").trim();
   return {
-    text: raw.slice(0, EXTRACTED_LIMIT),
-    truncated: overflow || size > EXTRACTED_LIMIT,
+    text: raw.slice(0, limit),
+    truncated: overflow || size > limit,
     warning:
       "Text only. Layout, comments, embedded objects and formula calculation are not included.",
     ...(hidden ? { hidden: hiddenText } : {}),

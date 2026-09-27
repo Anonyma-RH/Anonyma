@@ -32,6 +32,8 @@ import { refuseSeedPhrase } from "../seed-guard.js";
 import { viewerOf } from "../early-models.js";
 import { apiRateLimit } from "../api-boost.js";
 import { prepareSheetsRequest, sheetsBudget } from "../sheets.js";
+import { prepareCompareRequest } from "../compare.js";
+import { compareBudget } from "../../src/compare-spec.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -62,6 +64,10 @@ export function chatRoutes(ctx) {
   const validTokenCount = (value, fallback) =>
     Number.isSafeInteger(value) && value >= 0 ? value : fallback;
   async function runChat(req, res, api) {
+    // Document Compare: "Summarize changes" builds its messages here from
+    // its checked `compare` payload (server/compare.js), first, so Sheets and
+    // Seed Guard then read them. Its release gate is in featuresFor.
+    const compareTask = api ? undefined : prepareCompareRequest(req.body);
     // Local Sheets: a workspace sheets question's messages are built here
     // from its checked `sheets` payload (server/sheets.js), before Seed
     // Guard reads them. Its release gate is in featuresFor.
@@ -77,6 +83,9 @@ export function chatRoutes(ctx) {
     // A sheets reply budget fitted to the chosen model (server/sheets.js).
     if (sheetsTask && m.type === "chat")
       req.body.max_tokens = sheetsBudget(sheetsTask, m, req.body.messages);
+    // A summary's reply budget fitted to the chosen model (src/compare-spec.js).
+    if (compareTask && m.type === "chat")
+      req.body.max_tokens = compareBudget(m, req.body.messages);
     // Dedicated image models are priced per option and served by
     // /v1/images/generations; through chat they would be held at the
     // cheapest variant while the provider chooses the quality.

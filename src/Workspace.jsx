@@ -37,6 +37,8 @@ import WorkspaceHome from "./WorkspaceHome.jsx";
 import TaskTools from "./TaskTools.jsx";
 // Local Sheets: its parser, planner checks and charts load only on its page.
 const Sheets = lazy(() => import("./Sheets.jsx"));
+// Document Compare: its reader, diff worker and redline load only on its page.
+const Compare = lazy(() => import("./Compare.jsx"));
 import Routines from "./Routines.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import {
@@ -271,12 +273,15 @@ export function AppSidebar({
           ["collab", "Collab"],
           ["tools", "Task tools"],
           ["sheets", "Sheets"],
+          ["compare", "Compare"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
         ]
           // Local Sheets stays out of sight entirely until it's released.
           .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
+          // Document Compare likewise.
+          .filter(([id]) => id !== "compare" || isReleased(config, "doccompare"))
           .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
@@ -485,7 +490,9 @@ export default function Workspace() {
   ].includes(mode) ||
     // Local Sheets' page: unknown until it's released (config still loading
     // counts as known, so it doesn't flash "not found").
-    (mode === "sheets" && (!config || isReleased(config, "sheets")));
+    (mode === "sheets" && (!config || isReleased(config, "sheets"))) ||
+    // Document Compare's page, the same way.
+    (mode === "compare" && (!config || isReleased(config, "doccompare")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3150,6 +3157,7 @@ export default function Workspace() {
                 routines: "Routines",
                 projects: "Projects",
                 sheets: "Sheets",
+                compare: "Compare",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -3325,6 +3333,12 @@ export default function Workspace() {
             isReleased(config, "sheets") && (
               <Suspense fallback={<p className="sheets-loading">Opening Sheets…</p>}>
                 <Sheets key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
+          ) : mode === "compare" ? (
+            isReleased(config, "doccompare") && (
+              <Suspense fallback={<p className="compare-loading">Opening Compare…</p>}>
+                <Compare key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
               </Suspense>
             )
           ) : mode === "tools" ? (

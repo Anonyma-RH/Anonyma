@@ -844,6 +844,21 @@ export const UPDATES = [
     // password, email code or wallet signature without touching the session.
     released: true,
   },
+  {
+    id: "doccompare",
+    title: "Document Compare",
+    tagline: "See every change. Only the changes go to the AI.",
+    points: [
+      "Drop two versions of a PDF, DOCX or text file; they're compared in your browser",
+      "A word-level redline with a change list, and HTML and Markdown exports",
+      "Optional AI summary of the changed passages only, off the record",
+    ],
+    // The workspace's Compare page (src/Compare.jsx). The documents never
+    // leave the browser; its one model call is an /api/chat request carrying
+    // `compare` (server/compare.js), always off the record, so nothing is
+    // stored and there's nothing to erase or export.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1187,6 +1202,9 @@ export function featuresFor(req) {
   // Local Sheets: a question about a spreadsheet (server/sheets.js). It's
   // always off the record, so it needs Ephemeral Chats too (pushed below).
   if (p === "/api/chat" && post && body.sheets !== undefined) needed.push("sheets");
+  // Document Compare: a summary of changed passages (server/compare.js).
+  // It's always off the record, so it needs Ephemeral Chats too (below).
+  if (p === "/api/chat" && post && body.compare !== undefined) needed.push("doccompare");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

@@ -866,6 +866,7 @@ const featureIcons = {
   linkreader: "link",
   onchain: "chain",
   sheets: "sheet",
+  doccompare: "diff",
   blind: "scale",
   deepresearch: "research",
   passkeys: "fingerprint",

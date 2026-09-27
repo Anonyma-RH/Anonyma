@@ -965,7 +965,7 @@ export const UPDATES = [
     // "audio" released too (featuresFor). A saved overview is one audio file
     // in the library plus its script (audio_overviews, erased and exported
     // with the account); off the record keeps nothing.
-    released: false,
+    released: true,
   },
   {
     id: "highlight",

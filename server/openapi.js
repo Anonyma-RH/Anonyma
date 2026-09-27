@@ -2258,6 +2258,31 @@ route("post", "/api/factcheck", "Fact-check selected text against the web", {
   description:
     "Workspace only (session). One web search through Live Web Search's plugin and fee, with a reply budget of 8,000 tokens (within the model's output limit) for a strict JSON verdict. Only the claim is sent, as delimited data, never the rest of the chat. Sources are 1 to 3 pages the search returned; an address the search didn't return is never shown, and a search that returned no pages is always unverified. The maximum is held first (402 insufficient_credits or spending_limit with nothing charged) and settled on actual usage once a verdict is read. A failed, stopped or unreadable check is released and charges nothing: 502 factcheck_cut_short when the model ran out of room, factcheck_unreadable for any other answer that isn't the verdict JSON, factcheck_failed when the provider failed. A saved check adds two ordinary messages to the conversation (the quote, then the card's text with its sources as citations) or starts a new one; off the record and Private Mode store nothing.",
 });
+// Summarize & Continue (update "catchup"). Catch me up is an /api/chat
+// request (and /api/quote estimate) carrying `catchup`, documented there.
+route("post", "/api/catchup/continue", "Continue a saved chat fresh from its summary", {
+  body: object(
+    {
+      from: { ...string, description: "The saved chat, code or Uncensored conversation to continue from (one you can open)" },
+      summary: { ...string, minLength: 1, maxLength: 12000, description: "The summary the new chat carries, as the user edited it" },
+      title: { ...string, maxLength: 70, description: "The new chat's title; default \"Continued · \" and the source's title" },
+    },
+    ["from", "summary"],
+  ),
+  status: 201,
+  response: object({
+    id: string,
+    title: string,
+    mode: string,
+    continued: object({
+      from: object({ id: string, title: string, mode: string }),
+      summary: string,
+      created: integer,
+    }),
+  }),
+  description:
+    "Creates an empty conversation linked to the source, in the source's mode, collab and project, and never outliving an auto-deleting source. Nothing is copied from the source and it isn't changed. The summary is stored with the new conversation only (GET /api/conversations/{id} returns it as continued, with from null once the source can't be opened) and the browser sends it as the leading system context of every message in it. A seed phrase in the summary is refused with 400 seed_phrase_blocked (no override). Free: messages in the new chat bill as usual. Catch me up itself is a POST /api/chat with ephemeral: true and catchup: { transcript: [{ role: user | assistant, text }] } (2 to 400 turns, at least 8 or about 6,000 tokens of text, at most 200,000 characters; 400 catchup_too_short or invalid_catchup), whose messages and reply budget (8,000 tokens, lowered to the model's limits; 400 catchup_too_long when the transcript leaves too little room) the server builds; POST /api/quote prices the same body.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

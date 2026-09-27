@@ -1066,6 +1066,23 @@ export const MIGRATIONS = [
         created INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS audio_overviews_user ON audio_overviews(user_id,created);
   `),
+  // Summarize & Continue (server/routes/catchup.js): a saved chat continued
+  // fresh from another one's summary. One row per continued conversation:
+  // the chat it came from (an id only; that chat may be deleted later), who
+  // started it, and the summary it carries, which the browser sends as the
+  // leading context of every message in it. The row goes with its
+  // conversation (delete, delete all, cap pruning, auto-delete, closure and
+  // Panic Wipe); the source chat is never changed.
+  additive(`
+      CREATE TABLE IF NOT EXISTS chat_continuations(
+        conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,
+        source_id TEXT NOT NULL,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        summary TEXT NOT NULL CHECK(length(summary) BETWEEN 1 AND 12000),
+        created INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS chat_continuations_user ON chat_continuations(user_id);
+      CREATE INDEX IF NOT EXISTS chat_continuations_source ON chat_continuations(source_id);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

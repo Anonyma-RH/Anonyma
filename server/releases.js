@@ -983,6 +983,24 @@ export const UPDATES = [
     // new is stored: a saved check is two ordinary conversation turns.
     released: false,
   },
+  {
+    id: "catchup",
+    title: "Summarize & Continue",
+    tagline: "Catch up on a long chat, then continue it fresh for fewer tokens.",
+    points: [
+      "Catch me up: key points, decisions, open questions and where you left off",
+      "Continue fresh: a new chat that carries the summary, not the whole history",
+      "See the estimate first, and about how many fewer tokens each message sends",
+    ],
+    // Catch me up is an /api/chat request carrying `catchup` (its messages
+    // are built by server/catchup.js), always off the record, so it needs
+    // Ephemeral Chats too; /api/quote prices it the same way. Continue fresh
+    // of a saved chat is POST /api/catchup/continue: a new conversation plus
+    // its link and carried summary (chat_continuations), which go with the
+    // conversation and are in the account export. Off the record, Private
+    // Mode and Device Vault chats continue in the browser only.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1179,6 +1197,8 @@ export function featuresFor(req) {
     }
     return needed;
   }
+  // Summarize & Continue: a fresh chat that carries a saved chat's summary.
+  if (p === "/api/catchup" || p.startsWith("/api/catchup/")) return ["catchup"];
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.
@@ -1378,6 +1398,10 @@ export function featuresFor(req) {
   // Document Compare: a summary of changed passages (server/compare.js).
   // It's always off the record, so it needs Ephemeral Chats too (below).
   if (p === "/api/chat" && post && body.compare !== undefined) needed.push("doccompare");
+  // Summarize & Continue: Catch me up's summary request, and its estimate
+  // (server/catchup.js). The request is always off the record (pushed below).
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.catchup !== undefined)
+    needed.push("catchup");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

@@ -35,6 +35,7 @@ import { prepareSheetsRequest, sheetsBudget } from "../sheets.js";
 import { prepareStudyRequest, studyBudget } from "../study.js";
 import { prepareCompareRequest } from "../compare.js";
 import { compareBudget } from "../../src/compare-spec.js";
+import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -79,6 +80,10 @@ export function chatRoutes(ctx) {
     // from its checked `sheets` payload (server/sheets.js), before Seed
     // Guard reads them. Its release gate is in featuresFor.
     const sheetsTask = api ? undefined : prepareSheetsRequest(req.body);
+    // Summarize & Continue: a Catch me up request's messages are built the
+    // same way from its checked transcript (server/catchup.js). Its release
+    // gate is in featuresFor.
+    const catchupTask = !api && prepareCatchupRequest(req.body);
     // Seed Guard: refused before anything is validated, reserved or stored.
     refuseSeedPhrase(cfg, req, api);
     if (!api) validateTaskRequest(req.body);
@@ -96,6 +101,11 @@ export function chatRoutes(ctx) {
     // A summary's reply budget fitted to the chosen model (src/compare-spec.js).
     if (compareTask && m.type === "chat")
       req.body.max_tokens = compareBudget(m, req.body.messages);
+    // The summary's reply room, fitted to the model (server/catchup.js).
+    if (catchupTask && m.type === "chat") {
+      if (imageCallable(m)) fail(400, "Catch me up needs a text model.", "unsupported_model");
+      req.body.max_tokens = catchupBudget(m, req.body.messages);
+    }
     // Dedicated image models are priced per option and served by
     // /v1/images/generations; through chat they would be held at the
     // cheapest variant while the provider chooses the quality.

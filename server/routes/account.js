@@ -60,6 +60,11 @@ export function eraseAccountContent(db, user) {
   db.prepare("DELETE FROM collab_members WHERE user_id=?").run(id);
   db.prepare("DELETE FROM share_links WHERE user_id=?").run(id);
   db.prepare("DELETE FROM sealed_shares WHERE user_id=?").run(id);
+  // Summarize & Continue: the summary a personal continued chat carries
+  // (it also goes with its conversation, just below).
+  db.prepare(
+    "DELETE FROM chat_continuations WHERE conversation_id IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL)",
+  ).run(id);
   db.prepare(
     "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
   ).run(id);

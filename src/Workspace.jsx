@@ -45,6 +45,8 @@ const Study = lazy(() => import("./Study.jsx"));
 const Compare = lazy(() => import("./Compare.jsx"));
 // Audio Overview's dialog and player, loaded only when opened.
 const AudioOverviewDialog = lazy(() => import("./AudioOverview.jsx"));
+// Summarize & Continue's dialog, loaded when Catch me up is first opened.
+const CatchUpDialog = lazy(() => import("./CatchUpDialog.jsx"));
 import Routines from "./Routines.jsx";
 import { WatchBadge } from "./PageWatch.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
@@ -79,7 +81,7 @@ import {
   useDeviceVault,
   vaultReleased,
 } from "./DeviceVault.jsx";
-import { vaultChat } from "./device-vault.js";
+import { vaultChat, vaultTitle } from "./device-vault.js";
 import {
   SealedToggle,
   SealedPanel,
@@ -177,13 +179,14 @@ import {
   saveVeilOn,
   createVeilState,
   forgetVeilState,
+  unveil,
 } from "./veil.js";
 import { buildChatRequest, cloneVeilState, formatCredits, quoteBody, REPLY_BUDGET } from "./estimate.js";
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
 import CostCompare from "./CostCompare.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { LinkReaderChips } from "./LinkReader.jsx";
-import { scanSecrets, isSoft } from "./seed-guard.js";
+import { scanSecrets, isSoft, findSeedPhrase, SEED_MESSAGE } from "./seed-guard.js";
 import { OnchainChip, MessageChainFacts, onchainReleased } from "./Onchain.jsx";
 import { detectOnchain, chainFactsDocument, isChainFactsDocument } from "./onchain.js";
 import ModelFinder from "./ModelFinder.jsx";
@@ -208,7 +211,9 @@ import {
   recentStoreKey,
   MODEL_MODES,
 } from "./command-palette.js";
-import { useLanguage, setLanguage, getLanguage } from "./i18n.js";
+import { useLanguage, setLanguage, getLanguage, t } from "./i18n.js";
+import { CatchUpButton, CatchUpNudge, ContinuedBanner, CarriedSummary, catchupLive } from "./CatchUp.jsx";
+import { catchupEligible, withCarriedSummary, checkCarriedSummary } from "./catchup.js";
 import {
   ResearchDetails,
   ResearchEstimate,
@@ -446,6 +451,10 @@ export default function Workspace() {
     // Edit, Regenerate & Branch Chats: where this conversation came from, the
     // branches cut from it, and the user message being edited in place.
     [lineage, setLineage] = useState({ parent: null, branches: [] }),
+    // Summarize & Continue: the summary this chat carries, and where it came
+    // from ({ summary, from, kind }), or null; and whether Catch me up is open.
+    [carried, setCarried] = useState(null),
+    [catchupOpen, setCatchupOpen] = useState(false),
     [editing, setEditing] = useState(null),
     // True while a branch is being made and its resend runs (see branchFlight).
     [branching, setBranching] = useState(false),
@@ -505,7 +514,9 @@ export default function Workspace() {
     // The open device-only chat's vault id and creation time, and the last
     // messages written to the vault (so reopening a chat doesn't rewrite it).
     vaultChatRef = useRef(null),
-    vaultSavedRef = useRef("");
+    vaultSavedRef = useRef(""),
+    // Catch me up's last summary per chat, for this visit only (never stored).
+    catchupResults = useRef(new Map());
   const teamPays = useTeamPays(config, shared, demo, current);
   // Device Vault (src/DeviceVault.jsx): for signed-in accounts once it and
   // Ephemeral Chats are released; never in the demo. Locking it (Lock, the
@@ -665,9 +676,11 @@ export default function Workspace() {
     scrollsLive && instructions.enabled && !!instructions.body.trim();
   // Standing instructions (Scrolls), then the project's own: the one leading
   // system message on every request in this chat, masked by Veil like the rest.
-  const sentInstructions = withProjectInstructions(
-    instructionsActive ? instructions.body.trim() : "",
-    project,
+  // A chat continued fresh (Summarize & Continue) leads with the summary it
+  // carries, in the same system message, so Veil masks it with the rest.
+  const sentInstructions = withCarriedSummary(
+    withProjectInstructions(instructionsActive ? instructions.body.trim() : "", project),
+    carried?.summary,
   );
   // Memory Across Models goes with chat, code and Uncensored messages once
   // switched on, never off the record, in Private Mode or in a shared chat
@@ -1170,6 +1183,8 @@ export default function Workspace() {
           veil: veilStateRef.current,
           // Projects: grouped with its project inside the vault only.
           project: project?.id || null,
+          // Summarize & Continue: the summary it carries, if continued fresh.
+          carried: carried?.summary ? { summary: carried.summary, from: carried.from || null } : null,
         }),
       )
       .then(() => forgetVeilState(veilKey))
@@ -1223,6 +1238,8 @@ export default function Workspace() {
     if (linked) navigate("/workspace/" + mode + (demo ? "?demo=1" : ""));
     setShared(null);
     setLineage({ parent: null, branches: [] });
+    setCarried(null);
+    setCatchupOpen(false);
     setEditing(null);
     branchFlight.current?.reset();
     controller.current?.abort();
@@ -1357,6 +1374,9 @@ export default function Workspace() {
     if (wasPrivate) setVeilOn(true);
     // A sealed chat reopens sealed (and can only go on sealed; see send).
     setSealed(!!chat.sealed);
+    // Summarize & Continue: a vault chat continued fresh keeps its summary
+    // in the vault too.
+    setCarried(chat.carried?.summary ? { ...chat.carried, kind: "vault" } : null);
     setMessages(chat.messages);
     setMenu(false);
   }
@@ -1434,6 +1454,8 @@ export default function Workspace() {
     setProjectId(c.project_id ?? null);
     setMessages(c.messages || []);
     setLineage({ parent: null, branches: [] });
+    setCarried(null);
+    setCatchupOpen(false);
     setEditing(null);
     branchFlight.current?.reset();
     if (!demo) {
@@ -1443,6 +1465,7 @@ export default function Workspace() {
         setShared(r.collab || null);
         setProjectId(r.project_id ?? null);
         setLineage({ parent: r.parent || null, branches: r.branches || [] });
+        setCarried(r.continued?.summary ? { ...r.continued, kind: "saved" } : null);
         setMessages(r.messages.map(messageFromServer));
       } catch (e) {
         setError(e.message);
@@ -1679,6 +1702,60 @@ export default function Workspace() {
   // browser. A find blocks Send, and the estimate too, since a quote posts
   // the same text, until the user removes it or confirms "Send anyway".
   const seedLive = seedGuardLive(config) && !demo;
+  // Summarize & Continue (src/CatchUp.jsx): "Catch me up" in the header of
+  // a chat, code or Uncensored chat long enough to need it (8 turns, or about
+  // 6,000 tokens), never in Sealed Mode. A saved chat needs its id: it's what
+  // a fresh chat links back to. The count isn't redone while a reply streams.
+  const catchupReleased = !demo && !!user && catchupLive(config);
+  const catchupFitRef = useRef(null);
+  if (!busy) catchupFitRef.current = catchupReleased && textMode ? catchupEligible(messages) : null;
+  const catchupStorage = deviceOnly ? "vault" : privateMode ? "private" : ephemeral ? "ephemeral" : "saved";
+  const catchupOn =
+    catchupReleased &&
+    textMode &&
+    !sealedOn &&
+    !sealedThread &&
+    !!catchupFitRef.current?.eligible &&
+    (catchupStorage !== "saved" || !!current) &&
+    (catchupStorage !== "vault" || vault.unlocked);
+  const catchupKey = deviceOnly ? "vault:" + (vaultChatId || veilKeyRef.current) : current || veilKeyRef.current;
+  // Continue fresh: a new chat, in the same place as this one (saved, Device
+  // Vault, off the record or Private Mode) and the same project, whose
+  // leading context is the summary as edited. With Veil on, the summary is
+  // masked with this chat's map before it's kept or sent, and the new chat
+  // gets a copy of that map so it's restored on screen. The original chat is
+  // never changed.
+  async function continueFresh(text) {
+    const veiling = veilOn && !demo && isReleased(config, "veil");
+    const state = cloneVeilState(veilStateRef.current);
+    const summary = checkCarriedSummary(veiling ? veil(text, state, veilWords).text : text);
+    if (seedLive && findSeedPhrase(summary)) throw new Error(SEED_MESSAGE);
+    const saved = all.find((c) => c.id === current);
+    if (catchupStorage === "saved") {
+      // A shared chat isn't in this list: the server titles it from the source.
+      const title = saved?.title ? `${t("Continued")} · ${saved.title}`.slice(0, 70) : undefined;
+      const r = await api("/api/catchup/continue", {
+        method: "POST",
+        body: { from: current, summary, ...(title ? { title } : {}) },
+      });
+      if (Object.keys(state.map).length) saveVeilState(r.id, state);
+      await openChat({ id: r.id, mode: r.mode || mode, title: r.title, messages: [] });
+      api("/api/conversations")
+        .then((list) => setAll(recentConversations(list.data)))
+        .catch(() => {});
+      if (project) projects.reload();
+      return;
+    }
+    // Device Vault, off the record and Private Mode: in this browser only.
+    // A vault chat is sealed into the vault with its first message.
+    const from =
+      catchupStorage === "vault" && vaultChatId
+        ? { id: vaultChatId, title: vaultTitle(messages, veilStateRef.current.map) }
+        : null;
+    newChat();
+    veilStateRef.current = state;
+    setCarried({ summary, from, kind: catchupStorage });
+  }
   // A page read by Link Reader is public text our server fetched, not the
   // user's own, so it isn't scanned (the server skips it too). The rest are
   // the documents as they'll be sent (after Injection Shield's clean-up).
@@ -3448,6 +3525,9 @@ export default function Workspace() {
           </span>
           <div>
             {find.button}
+            {catchupOn && (
+              <CatchUpButton disabled={busy} onOpen={() => setCatchupOpen(true)} />
+            )}
             {sharesLive && textMode && messages.length > 0 && (
               <button
                 type="button"
@@ -3514,7 +3594,9 @@ export default function Workspace() {
               ) : user ? (
                 <>
                   <b>{Number(user.available || 0).toLocaleString()}</b>{" "}
-                  available · {Number(user.held || 0).toLocaleString()} held
+                  <span className="balance-detail">
+                    available · {Number(user.held || 0).toLocaleString()} held
+                  </span>
                 </>
               ) : (
                 "Credits"
@@ -3554,7 +3636,7 @@ export default function Workspace() {
           key={mode}
           className={
             "workspace-body " +
-            (!messages.length ? "workspace-start " : "") +
+            (!messages.length && !carried ? "workspace-start " : "") +
             (mode === "home" ? "workspace-home " : "") +
             (hasResults ? "with-results " : "") +
             (mode === "code" && files.length ? "with-code" : "") +
@@ -3734,8 +3816,28 @@ export default function Workspace() {
                     factCheck={factCheck}
                   />
                 )}
-                {messages.length && textMode ? (
+                {carried && textMode && (
+                  <ContinuedBanner
+                    carried={carried}
+                    onOpen={
+                      carried.kind === "saved" && carried.from?.id
+                        ? () => openChat({ mode, ...carried.from })
+                        : carried.kind === "vault" && vault.chats.some((c) => c.id === carried.from?.id)
+                          ? () => openVaultChat(vault.chats.find((c) => c.id === carried.from.id))
+                          : null
+                    }
+                  />
+                )}
+                {(messages.length || carried) && textMode ? (
                   <div className={"messages" + (highlightLive ? " highlight-live" : "")} ref={threadRef}>
+                    {carried && (
+                      <CarriedSummary
+                        key={current || vaultChatId || "carried"}
+                        summary={carried.summary}
+                        restore={(s) => unveil(s, veilStateRef.current.map)}
+                        started={messages.length > 0}
+                      />
+                    )}
                     {messages.map((m, i) => {
                       // A saved user message may carry <document> blocks after
                       // the typed prompt; render those as collapsed chips
@@ -4106,6 +4208,7 @@ export default function Workspace() {
                       </article>
                       );
                     })}
+                    {catchupOn && !busy && <CatchUpNudge onOpen={() => setCatchupOpen(true)} />}
                     <div ref={streamEnd} />
                   </div>
                 ) : (
@@ -5039,7 +5142,7 @@ export default function Workspace() {
                     </details>
                   )}
                 </form>
-                {!messages.length && (
+                {!messages.length && !carried && (
                   <div className="prompt-suggestions">
                     {(mode === "chat"
                       ? [
@@ -5350,6 +5453,34 @@ export default function Workspace() {
             if (d.then === "deviceOnly") startDeviceOnly();
           }}
         />
+      )}
+      {catchupOpen && catchupOn && (
+        <Suspense fallback={null}>
+        <CatchUpDialog
+          key={catchupKey}
+          messages={messages}
+          carried={carried?.summary || ""}
+          models={visibleModels}
+          current={selected}
+          mode={mode}
+          storage={catchupStorage}
+          privateMode={privateMode}
+          preserveHistory={longAnswersLive}
+          veilWith={veilOn && isReleased(config, "veil") ? { state: veilStateRef.current, words: veilWords } : null}
+          onVeilUsed={() => {
+            // A device-only chat keeps its map in the vault instead.
+            if (!deviceOnly) saveVeilState(veilKeyRef.current, veilStateRef.current);
+          }}
+          restore={(s) => unveil(s, veilStateRef.current.map)}
+          trail={trailLive}
+          seedGuard={seedLive}
+          cached={catchupResults.current.get(catchupKey) || null}
+          onResult={(r) => catchupResults.current.set(catchupKey, r)}
+          onContinue={continueFresh}
+          onClose={() => setCatchupOpen(false)}
+          refresh={refresh}
+        />
+        </Suspense>
       )}
       {exporting && exportLive && (
         <ExportDialog

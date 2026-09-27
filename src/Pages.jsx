@@ -879,6 +879,7 @@ const featureIcons = {
   pagewatch: "watch",
   audiooverview: "audio",
   highlight: "highlight",
+  catchup: "catchup",
 };
 const launch = {
   id: "mvp",

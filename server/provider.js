@@ -6,6 +6,7 @@ import { studyTestReply } from "./study.js";
 import { compareTestReply } from "./compare.js";
 import { pageWatchTestReply } from "./page-watch-test.js";
 import { overviewTestReply } from "./audio-overview.js";
+import { catchupTestReply } from "./catchup.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -144,20 +145,20 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
         ? last
         : last?.find((p) => p.type === "text")?.text || "";
     // Deterministic stand-ins for the features that parse a model's reply:
-    // Page Watch's summaries (with a finish reason when cut off), Local
-    // Sheets' planner and explainer, Study Mode's decks, Document Compare's
-    // summary, Audio Overview's script writer (server/audio-overview.js),
-    // Prompt Sharpen's sharpener (server/sharpen.js) and Highlight & Ask's
-    // fact-check: a verdict in its JSON shape, with no pages (no search runs
-    // here), so the card says it couldn't be verified. Each returns null
-    // otherwise.
+    // Page Watch's summaries and Summarize & Continue's summary (each with a
+    // finish reason, "length" when cut off), Local Sheets' planner and
+    // explainer, Study Mode's decks, Document Compare's summary, Audio
+    // Overview's script writer (server/audio-overview.js), Prompt Sharpen's
+    // sharpener (server/sharpen.js) and Highlight & Ask's fact-check: a
+    // verdict in its JSON shape, with no pages (no search runs here), so the
+    // card says it couldn't be verified. Each returns null otherwise.
     const factCheck = String(body.messages?.[0]?.content || "").startsWith("You fact-check one claim against the live web.")
       ? JSON.stringify({ verdict: "unverified", reason: "Local test provider: no web search was run.", sources: [] })
       : null;
-    const watch = pageWatchTestReply(body.messages);
+    const finishing = pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages);
     const standIn =
-      watch !== null
-        ? watch.text
+      finishing !== null
+        ? finishing.text
         : sheetsTestReply(body.messages) ??
           studyTestReply(body.messages) ??
           compareTestReply(body.messages) ??
@@ -176,8 +177,8 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       await new Promise((r) => setTimeout(r, 12));
       yield { choices: [{ delta: { content: part }, index: 0 }] };
     }
-    if (watch?.finish)
-      yield { choices: [{ delta: {}, index: 0, finish_reason: watch.finish }] };
+    if (finishing?.finish)
+      yield { choices: [{ delta: {}, index: 0, finish_reason: finishing.finish }] };
     yield {
       choices: [],
       usage: {

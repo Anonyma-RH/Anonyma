@@ -26,6 +26,8 @@
 .app-shell .workspace-header small{font-size:12px;color:var(--work-muted)}
 .app-shell .workspace-slash{color:#ccd3df;margin:0 15px}
 .app-shell .workspace-header .balance-chip{font-size:11px;border-color:var(--work-line);background:var(--work-surface);padding:10px 12px;border-radius:6px;color:var(--work-ink)}
+/* Phones: the balance alone, so the chat's header actions still fit in 390 px. */
+@media(max-width:480px){.app-shell .workspace-header .balance-detail{display:none}}
 .app-shell .workspace-header .icon-button{color:var(--work-muted);width:38px;height:38px;border-radius:6px}
 .app-shell .workspace-header .icon-button:hover{background:var(--work-surface);color:#0135df}
 .app-shell .workspace-notice{min-height:34px;background:var(--work-surface);color:var(--work-muted);font-size:11px;padding:9px 36px;border-bottom:1px solid var(--work-line);line-height:1.5}

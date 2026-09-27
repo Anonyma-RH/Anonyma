@@ -2,6 +2,7 @@ import { uid, now, fail, credits, transaction } from "../core.js";
 import { capsFor } from "../holders.js";
 import { BASE_CAPS, HOLDER_CAPS } from "../holder-tiers.js";
 import { isReleased } from "../releases.js";
+import { continuationOf } from "./catchup.js";
 
 // Use the same membership boundary as conversation reads. A removed member
 // cannot export other members' messages from a shared conversation they created.
@@ -27,7 +28,16 @@ export function exportConversations(db, user) {
           content: JSON.parse(m.content),
           cost: c.collab_id && m.author_id !== user ? null : m.cost,
         })),
+      // Summarize & Continue: the chat it continues (its id) and the summary
+      // it carries, when it was continued fresh from another.
+      ...continuedExport(db, c.id),
     }));
+}
+function continuedExport(db, id) {
+  const row = db
+    .prepare("SELECT source_id,summary,created FROM chat_continuations WHERE conversation_id=?")
+    .get(id);
+  return row ? { continued: { from: row.source_id, summary: row.summary, created: row.created } } : {};
 }
 
 // Personal conversations kept per account, newest first. Symposium runs have
@@ -179,11 +189,15 @@ export function conversationRoutes({ app, db, cfg, requireUser }) {
         created: b.created,
       }));
     const { branch_key, branch_cut, ...rest } = c;
+    // Summarize & Continue: where this chat was continued from, and the
+    // summary the browser sends as its leading context (routes/catchup.js).
+    const continued = continuationOf(db, c.id, visible);
     res.json({
       ...rest,
       ...(isReleased(cfg, "projects") && !c.collab_id ? { project_id: projectOf(c.id) } : {}),
       parent: parent ? { id: parent.id, title: parent.title, mode: parent.mode } : null,
       branches,
+      ...(continued ? { continued } : {}),
       ...(c.collab_id
         ? {
             collab: {

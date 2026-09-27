@@ -20,6 +20,7 @@ import { trainingFields, liveIds } from "../training.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { apiBoostInfo } from "../api-boost.js";
 import { prepareStudyRequest, studyBudget } from "../study.js";
+import { prepareSlidesRequest, slidesBudget } from "../slides.js";
 import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
 import {
   fail,
@@ -151,6 +152,10 @@ export function catalogRoutes(ctx) {
     // Study Mode: a deck's estimate prices the messages and reply budget the
     // same request to /api/chat would carry (server/study.js).
     const study = prepareStudyRequest(req.body, { quote: true });
+    // Slides: a deck's (or a slide's) estimate prices the messages and reply
+    // budget the same /api/chat request carries, which holds exactly this
+    // (server/slides.js). After Study, so a quote carrying both is refused.
+    const slidesTask = prepareSlidesRequest(req.body, { quote: true });
     // Summarize & Continue: a catch-up estimate prices the messages and reply
     // room the request itself will send (server/catchup.js). After Study, so
     // a quote carrying both is refused (each refuses ready-made `messages`).
@@ -159,6 +164,10 @@ export function catalogRoutes(ctx) {
     ctx.earlyModels.check(viewerOf(req), "models", m.id);
     if (study && m.type !== "chat") fail(400, "Choose a chat model to make a deck.", "unsupported_model");
     if (study) req.body.max_tokens = studyBudget(study, m, req.body.messages);
+    if (slidesTask) {
+      if (m.type !== "chat" || imageCallable(m)) fail(400, "Slides need a text model.", "unsupported_model");
+      req.body.max_tokens = slidesBudget(slidesTask, m, req.body.messages);
+    }
     if (catchupTask) {
       if (m.type !== "chat" || imageCallable(m)) fail(400, "Catch me up needs a text model.", "unsupported_model");
       req.body.max_tokens = catchupBudget(m, req.body.messages);

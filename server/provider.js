@@ -7,6 +7,7 @@ import { compareTestReply } from "./compare.js";
 import { pageWatchTestReply } from "./page-watch-test.js";
 import { overviewTestReply } from "./audio-overview.js";
 import { catchupTestReply } from "./catchup.js";
+import { slidesTestReply } from "./slides.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -155,7 +156,9 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
     const factCheck = String(body.messages?.[0]?.content || "").startsWith("You fact-check one claim against the live web.")
       ? JSON.stringify({ verdict: "unverified", reason: "Local test provider: no web search was run.", sources: [] })
       : null;
-    const finishing = pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages);
+    // Slides' deck and slide writer (server/slides.js) finishes the same way.
+    const finishing =
+      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? slidesTestReply(body.messages);
     const standIn =
       finishing !== null
         ? finishing.text

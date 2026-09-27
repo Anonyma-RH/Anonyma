@@ -36,6 +36,7 @@ import { prepareStudyRequest, studyBudget } from "../study.js";
 import { prepareCompareRequest } from "../compare.js";
 import { compareBudget } from "../../src/compare-spec.js";
 import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
+import { prepareSlidesRequest, slidesBudget, slidesAcceptor, streamedSlides } from "../slides.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -70,6 +71,13 @@ export function chatRoutes(ctx) {
     // checked `study` payload (server/study.js). It runs first, so a request
     // carrying `sheets` too is refused as a study request.
     const study = api ? undefined : prepareStudyRequest(req.body);
+    // Slides: making a deck or regenerating one slide, built the same way
+    // from its checked `slides` payload (server/slides.js), right after
+    // Study, so a request carrying both is refused (each refuses ready-made
+    // `messages`). Its release gate is in featuresFor. Only a reply that
+    // reads as slides is paid for, and nothing else of it is sent (below).
+    const slidesTask = api ? undefined : prepareSlidesRequest(req.body);
+    if (slidesTask) req.acceptOutput = slidesAcceptor(slidesTask);
     // Document Compare: "Summarize changes" builds its messages here from
     // its checked `compare` payload (server/compare.js), before Sheets and
     // Seed Guard read them; after Study, so a request carrying both is
@@ -98,6 +106,11 @@ export function chatRoutes(ctx) {
     // A deck's reply budget fitted to the chosen model (server/study.js).
     if (study && m.type === "chat")
       req.body.max_tokens = studyBudget(study, m, req.body.messages);
+    // A deck's (or a slide's) reply budget fitted to the model (server/slides.js).
+    if (slidesTask && m.type === "chat") {
+      if (imageCallable(m)) fail(400, "Slides need a text model.", "unsupported_model");
+      req.body.max_tokens = slidesBudget(slidesTask, m, req.body.messages);
+    }
     // A summary's reply budget fitted to the chosen model (src/compare-spec.js).
     if (compareTask && m.type === "chat")
       req.body.max_tokens = compareBudget(m, req.body.messages);
@@ -265,7 +278,9 @@ export function chatRoutes(ctx) {
         // from the request body.
         guard: team?.guard ?? req.reserveGuard,
       });
-    const headroom = Math.ceil(amount * cfg.holdMargin);
+    // Slides hold exactly the quoted maximum (server/slides.js): the "up to"
+    // figure shown, the balance and limit checks and the hold are one number.
+    const headroom = slidesTask ? amount : Math.ceil(amount * cfg.holdMargin);
     try {
       reservation(headroom);
     } catch (e) {
@@ -375,6 +390,7 @@ export function chatRoutes(ctx) {
     });
     const images = [];
     const citations = [];
+    let slidesStarted = 0;
     // Sources the provider cited for a web search, deduplicated and capped.
     const addCitation = (url, title) => {
       if (
@@ -513,7 +529,12 @@ export function chatRoutes(ctx) {
         for (const url of part.citations || []) addCitation(url);
         if (part.usage) usage = part.usage;
         if (Number.isFinite(part.cost)) upstreamCost = part.cost;
-        if (part.choices?.length) {
+        // Slides: the reply is held back until it reads as slides (sent
+        // whole below); meanwhile only how many slides have started.
+        if (slidesTask) {
+          const started = streamedSlides(output);
+          if (started !== slidesStarted) send({ slides: { started: (slidesStarted = started) } });
+        } else if (part.choices?.length) {
           const { images: upstreamImages, ...normalizedDelta } = delta;
           send(
             chunk({
@@ -593,6 +614,9 @@ export function chatRoutes(ctx) {
         finish_reason: finishReason || "stop",
       });
       attributeMediaCost(receipt);
+      // Slides: the reply, whole, once it's known to be usable and is paid for.
+      if (slidesTask)
+        send(chunk({ choices: [{ index: 0, delta: { content: output }, finish_reason: finishReason || "stop" }] }));
       // An Ed25519-signed, independently verifiable copy of this receipt.
       // The signed id is the requestId alone, never the user-prefixed hold.
       let signedReceipt = null;

@@ -2284,6 +2284,74 @@ route("post", "/api/catchup/continue", "Continue a saved chat fresh from its sum
   description:
     "Creates an empty conversation linked to the source, in the source's mode, collab and project, and never outliving an auto-deleting source. Nothing is copied from the source and it isn't changed. The summary is stored with the new conversation only (GET /api/conversations/{id} returns it as continued, with from null once the source can't be opened) and the browser sends it as the leading system context of every message in it. A seed phrase in the summary is refused with 400 seed_phrase_blocked (no override). Free: messages in the new chat bill as usual. Catch me up itself is a POST /api/chat with ephemeral: true and catchup: { transcript: [{ role: user | assistant, text }] } (2 to 400 turns, at least 8 or about 6,000 tokens of text, at most 200,000 characters; 400 catchup_too_short or invalid_catchup), whose messages and reply budget (8,000 tokens, lowered to the model's limits; 400 catchup_too_long when the transcript leaves too little room) the server builds; POST /api/quote prices the same body.",
 });
+// Slides (update "slides"). Making a deck, or regenerating one slide, is an
+// /api/chat request (and /api/quote estimate) carrying `slides`, described
+// on POST /api/slides below.
+const slideColumn = object({ heading: { ...string, maxLength: 80 }, bullets: array({ ...string, maxLength: 200 }) });
+const slide = object(
+  {
+    id: { ...string, pattern: "^[A-Za-z0-9_-]{1,40}$" },
+    layout: { enum: ["title", "section", "bullets", "two-column", "quote", "big-number"] },
+    title: { ...string, maxLength: 140, description: "title, section, bullets, two-column and big-number" },
+    subtitle: { ...string, maxLength: 240, description: "title and section" },
+    bullets: { ...array({ ...string, maxLength: 200 }), maxItems: 6, description: "bullets" },
+    left: { ...slideColumn, description: "two-column (up to 6 bullets)" },
+    right: { ...slideColumn, description: "two-column (up to 6 bullets)" },
+    quote: { ...string, maxLength: 400, description: "quote" },
+    attribution: { ...string, maxLength: 120, description: "quote" },
+    number: { ...string, maxLength: 24, description: "big-number" },
+    label: { ...string, maxLength: 160, description: "big-number" },
+    notes: { ...string, maxLength: 1500, description: "Speaker notes; line breaks allowed" },
+  },
+  ["id", "layout"],
+);
+const deck = object({
+  id: string,
+  title: string,
+  theme: { enum: ["cobalt", "white", "dark"] },
+  slide_count: integer,
+  slides: array(slide),
+  created: integer,
+  updated: integer,
+});
+const deckBody = (required) =>
+  object(
+    {
+      title: { ...string, minLength: 1, maxLength: 120 },
+      theme: { enum: ["cobalt", "white", "dark"] },
+      slides: { ...array(slide), minItems: 1, maxItems: 40, description: "Only the fields of each slide's layout, plus id, layout and notes; at most 256 KB as JSON" },
+    },
+    required,
+  );
+route("get", "/api/slides", "Your saved decks", {
+  response: object({
+    data: array(
+      object({ id: string, title: string, theme: string, slide_count: integer, first: { ...slide, description: "The first slide, for a thumbnail" }, created: integer, updated: integer }),
+    ),
+    limit: { ...integer, description: "Decks an account can keep (200)" },
+  }),
+  description: "Newest edit first. Only decks saved on the account: decks made off the record or in Private Mode stay in the browser that made them and never reach the server.",
+});
+route("post", "/api/slides", "Save a deck", {
+  status: 201,
+  body: deckBody(["title", "theme", "slides"]),
+  response: deck,
+  description:
+    "Stores the deck's title, theme and slides (text and speaker notes) with its dates; never the source it was made from or the model that made it. Text made with Veil keeps its placeholders; the values stay in the browser. A seed phrase anywhere in it is refused (400 seed_phrase_blocked, no override) once Seed Guard is live. 400 invalid_deck; at most 200 decks (409 slides_limit). Erased by account closure and Panic Wipe, and in the account export as slideDecks. Making a deck is a POST /api/chat with ephemeral: true and slides: { task: \"deck\", count (3 to 20), source: { kind: prompt | document | chat, name, text } } (a prompt of 8 to 4,000 characters, a document or chat of 40 to 40,000); regenerating one slide is slides: { task: \"slide\", deck: { title, outline: [slide titles] }, index, slide, instruction (up to 300 characters) }. The server builds the messages (the source as delimited data) and a reply budget of 8,000 tokens plus 300 per slide, lowered to the model's limits (400 slides_too_long when the context leaves too little room); POST /api/quote prices the same body, and the request holds exactly that price. The reply is sent only once it reads as slides (JSON in the layouts above, read tolerantly); until then the stream carries { slides: { started } } counts. A reply that doesn't read as slides releases the hold and charges nothing: 502 slides_cut_short (out of room), slides_refused (the model said the source had nothing for slides) or slides_unreadable. 400 invalid_slides for a malformed payload or one combined with other chat options (a conversation, project, memory, web search, another task or Seed Guard's override).",
+});
+route("get", "/api/slides/{id}", "One saved deck", {
+  response: deck,
+  description: "404 deck_not_found for another account's deck or one that was deleted.",
+});
+route("patch", "/api/slides/{id}", "Rename a deck, change its theme or save its slides", {
+  body: deckBody([]),
+  response: deck,
+  description: "Any of title, theme and slides; slides replace the deck's slides whole. The same checks as POST /api/slides. The last save wins.",
+});
+route("delete", "/api/slides/{id}", "Delete a saved deck", {
+  response: ref("Ok"),
+  description: "Deletes it from the server. A copy exported as a PDF or HTML file is yours and isn't affected.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

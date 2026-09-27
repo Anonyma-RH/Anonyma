@@ -10,6 +10,7 @@ import {
   WIPE_BOOKMARKS,
   WIPE_BLIND,
   WIPE_STUDY,
+  WIPE_SLIDES,
   WIPE_WATCHES,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
@@ -33,6 +34,8 @@ export function PanicWipe({ user }) {
   const blindLive = isReleased(useApp()?.config, "blind");
   // And Study Mode's decks in this browser.
   const studyLive = !!config && isReleased(config, "study");
+  // And Slides' decks.
+  const slidesLive = !!config && isReleased(config, "slides");
   // And Page Watch's watches.
   const watchesLive = isReleased(config, "pagewatch");
   // Passkeys stay, like the password: listed once that update is live.
@@ -105,6 +108,7 @@ export function PanicWipe({ user }) {
                   {bookmarksLive && <li>{WIPE_BOOKMARKS}</li>}
                   {blindLive && <li>{WIPE_BLIND}</li>}
                   {studyLive && <li>{WIPE_STUDY}</li>}
+                  {slidesLive && <li>{WIPE_SLIDES}</li>}
                   {watchesLive && <li>{WIPE_WATCHES}</li>}
                 </ul>
               </div>

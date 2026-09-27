@@ -40,6 +40,8 @@ export default function DataControls() {
   const ocr = !!config && isReleased(config, "ocr") && isReleased(config, "documents");
   // And Study Mode.
   const study = !!config && isReleased(config, "study");
+  // And Slides.
+  const slides = !!config && isReleased(config, "slides");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -235,6 +237,17 @@ export default function DataControls() {
             Making a deck is an off-the-record chat: the source you chose is
             sent to the model once and not saved. Panic Wipe clears the decks
             in the browser you use it in.
+          </li>
+        )}
+        {slides && (
+          <li>
+            Slides: a deck you save is kept on your account (its title, theme,
+            the text on its slides and the speaker notes) until you delete it,
+            and it is in your data export. Never the source it was made from or
+            the model that made it: making a deck is an off-the-record chat.
+            Decks made off the record or in Private Mode are kept only in this
+            browser, unencrypted. Panic Wipe erases both; closing the account
+            erases the saved ones.
           </li>
         )}
         {nyma && (

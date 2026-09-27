@@ -44,6 +44,7 @@ import { researchRoutes } from "./routes/research.js";
 import { sharpenRoutes } from "./routes/sharpen.js";
 import { factCheckRoutes } from "./routes/factcheck.js";
 import { catchupRoutes } from "./routes/catchup.js";
+import { slideRoutes } from "./routes/slides.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { pageWatchRoutes } from "./routes/page-watch.js";
@@ -176,6 +177,8 @@ export function createApp(overrides = {}) {
   // Summarize & Continue: Continue fresh for a saved chat (Catch me up
   // itself runs through runChat, registered above).
   catchupRoutes(ctx);
+  // Slides: saved decks (making one runs through runChat, registered above).
+  slideRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

@@ -497,6 +497,7 @@ export const MODE_FEATURES = {
   device: "ondevice",
   study: "study",
   compare: "doccompare",
+  slides: "slides",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

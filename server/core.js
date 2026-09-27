@@ -1092,6 +1092,23 @@ export const MIGRATIONS = [
     addColumn(db, "page_watches", "unreadable", "INTEGER NOT NULL DEFAULT 0");
     additive("")(db);
   },
+  // Slides (server/routes/slides.js): a deck the account keeps. Its title,
+  // theme and slides (the text on them and the speaker notes, as JSON, at
+  // most 256 KB), with its dates. Never the source it was made from or the
+  // model that made it. At most 200 per account, also enforced here. Erased
+  // with the account's content (closure, Panic Wipe) and in its export.
+  additive(`
+      CREATE TABLE IF NOT EXISTS slide_decks(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        title TEXT NOT NULL CHECK(length(title) BETWEEN 1 AND 120),
+        theme TEXT NOT NULL CHECK(theme IN ('cobalt','white','dark')),
+        slides TEXT NOT NULL CHECK(length(slides) <= 262144),
+        created INTEGER NOT NULL,updated INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS slide_decks_user ON slide_decks(user_id,updated);
+      CREATE TRIGGER IF NOT EXISTS slide_decks_per_account BEFORE INSERT ON slide_decks
+        WHEN (SELECT COUNT(*) FROM slide_decks WHERE user_id=NEW.user_id)>=200
+        BEGIN SELECT RAISE(ABORT,'slides_limit'); END;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

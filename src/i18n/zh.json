@@ -4841,7 +4841,131 @@
     "The model's reply couldn't be read, so nothing was charged. Try another model for this watch.": "无法读取模型的回复，因此未扣费。请为此监测换一个模型。",
     "Paused after 3 replies in a row that couldn't be read. Nothing was charged. Choose another model for this watch, then switch it back on.": "连续 3 次无法读取模型的回复，已暂停。未扣费。请为此监测选择另一个模型，然后重新开启。",
     "The model couldn't make a summary this time. Nothing was charged.": "模型这次未能生成摘要。未扣费。",
-    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。"
+    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。",
+    "Turn a chat, a document or a prompt into a clean slide deck.": "把会话、文档或提示词变成一份简洁的演示稿。",
+    "Six layouts in Cobalt, White or Dark; edit any text or regenerate one slide": "六种版式，钴蓝、白色或深色主题；可修改任何文字，或只重新生成一页",
+    "Present full screen with speaker notes, or export a PDF or an HTML file": "带演讲者备注全屏演示，或导出为 PDF 或 HTML 文件",
+    "See the most it can cost first; a reply that isn't usable costs nothing": "先看到最多花费；无法使用的回复不扣费",
+    "Slides": "幻灯片",
+    "PRESENTATIONS": "演示",
+    "Turn a chat, a document or a prompt into a clean slide deck. Edit it here, present it full screen, or export it as a PDF or an HTML file.": "把会话、文档或提示词变成一份简洁的演示稿。在这里编辑，全屏演示，或导出为 PDF 或 HTML 文件。",
+    "Opening Slides…": "正在打开幻灯片……",
+    "Opening the deck…": "正在打开演示稿……",
+    "No decks yet.": "还没有演示稿。",
+    "The sample is written by hand, not by a model. It costs nothing and stays in this browser.": "示例由人工撰写，而非模型生成。它不花费任何积分，只保存在此浏览器中。",
+    "Private · this browser": "隐私 · 此浏览器",
+    "This browser": "此浏览器",
+    "Veiled": "已遮盖",
+    "Saved decks are kept on your account with their text and speaker notes, and erased by Panic Wipe. Decks made off the record or in Private Mode stay in this browser only, unencrypted, like a downloaded file.": "已保存的演示稿连同文字和演讲者备注保存在你的账户中，紧急清除会将其删除。以不留记录或隐私模式制作的演示稿只以未加密形式保存在此浏览器中，就像下载的文件一样。",
+    "Slides source": "幻灯片来源",
+    "A prompt": "提示词",
+    "What the deck is about": "演示稿的主题",
+    "10 slides on how our onboarding works, for new customers…": "用 10 页幻灯片向新客户介绍我们的入门流程……",
+    "From a prompt, the model writes from what it knows, so check facts before you present.": "根据提示词制作时，模型依据它已有的知识撰写，演示前请核对事实。",
+    "Sign in to make slides from your saved chats.": "登录后即可用已保存的会话制作幻灯片。",
+    "Untitled chat": "未命名会话",
+    "Only chats saved on your account are listed. Off the record, Private Mode and Device Vault chats aren't.": "只列出保存在你账户中的会话。不留记录、隐私模式和本机保险库中的会话不会列出。",
+    "How many slides": "幻灯片数量",
+    "Theme": "主题",
+    "White": "白色",
+    "Dark": "深色",
+    "Off the record: the deck is kept in this browser only, never on ANONYMA's servers": "不留记录：演示稿只保存在此浏览器中，绝不存放在 ANONYMA 的服务器上",
+    "Off the record: the deck is kept in this browser only, never on ANONYMA's servers.": "不留记录：演示稿只保存在此浏览器中，绝不存放在 ANONYMA 的服务器上。",
+    "Private Mode: zero-data-retention models only, Veil on, and the deck is kept in this browser only.": "隐私模式：仅限零数据保留模型，Veil 开启，演示稿只保存在此浏览器中。",
+    "This source and Slides' fixed instructions, nothing else: no other chats, memory, project or standing instructions.": "只有这个来源和幻灯片的固定指令，别无其他：不含其他会话、记忆、项目或常驻指令。",
+    "Say a little more about the deck you want.": "请再多描述一下你想要的演示稿。",
+    "Add a few more sentences: the source is too short for slides.": "请再多写几句：来源太短，无法制作幻灯片。",
+    "Make slides": "制作幻灯片",
+    "The most this deck can cost, and exactly what's held while it's made: the source and a full reply budget at the model's published rates. You're charged only for what's used, and nothing if the reply isn't usable slides.": "这份演示稿最多花费的金额，也正是制作期间冻结的金额：按模型公布的价格计算来源和完整回复预算。只按实际用量扣费；如果回复不是可用的幻灯片，则不扣费。",
+    "Made off the record: billed like a message, and the request itself isn't saved. Only a reply that reads as slides is charged. The AI can get things wrong, so read the deck before you present it.": "以不留记录方式制作：像普通消息一样计费，请求本身不会保存。只有能读取为幻灯片的回复才会扣费。AI 也会出错，演示前请先通读一遍。",
+    "Sign in to make decks.": "登录后即可制作演示稿。",
+    "Sign in to make decks. The sample deck works without an account.": "登录后即可制作演示稿。示例演示稿无需账户即可使用。",
+    "The deck appears once it's complete and reads as slides.": "演示稿完整且能读取为幻灯片后才会显示。",
+    "No slides were made.": "没有制作任何幻灯片。",
+    "Stopped. Nothing was made, and nothing was charged.": "已停止。没有生成任何内容，也未扣费。",
+    "The model's reply wasn't slides this page can read.": "模型的回复不是此页面能读取的幻灯片。",
+    "The model's reply wasn't a slide this page can read.": "模型的回复不是此页面能读取的幻灯片。",
+    "The model ran out of room before the slides were finished, so nothing was made and nothing was charged. Try fewer slides, or another model.": "模型在幻灯片完成前用完了回复空间，因此没有生成任何内容，也未扣费。请减少幻灯片数量，或换一个模型。",
+    "The model's reply wasn't slides this page can read, so nothing was made and nothing was charged. Try again, or choose another model.": "模型的回复不是此页面能读取的幻灯片，因此没有生成任何内容，也未扣费。请重试，或选择其他模型。",
+    "The model's reply wasn't a slide this page can read, so the slide wasn't changed and nothing was charged. Try again, or choose another model.": "模型的回复不是此页面能读取的幻灯片，因此这页未作修改，也未扣费。请重试，或选择其他模型。",
+    "Slides are made off the record: send the request off the record.": "幻灯片以不留记录方式制作：请以不留记录方式发送请求。",
+    "Making slides can't be combined with other chat options.": "制作幻灯片不能与其他对话选项同时使用。",
+    "Choose a prompt, a document or a saved chat.": "请选择提示词、文档或已保存的会话。",
+    "The source is too short for slides.": "来源太短，无法制作幻灯片。",
+    "This source is too long for this model to turn into slides. Choose a model with a larger context, or a shorter source. Nothing was sent or charged.": "这个来源太长，此模型无法将其制作成幻灯片。请选择上下文更长的模型，或使用更短的来源。未发送任何内容，也未扣费。",
+    "Slides need a text model.": "幻灯片需要文本模型。",
+    "Deck not found.": "找不到这份演示稿。",
+    "That deck isn't in this browser.": "这份演示稿不在此浏览器中。",
+    "Sign in to open your saved decks.": "登录后即可打开你已保存的演示稿。",
+    "That deck couldn't be opened.": "无法打开这份演示稿。",
+    "Your saved decks couldn't be loaded.": "无法加载你已保存的演示稿。",
+    "This browser couldn't keep the deck.": "此浏览器无法保存这份演示稿。",
+    "The deck couldn't be saved to your account.": "无法将这份演示稿保存到你的账户。",
+    "The deck couldn't be saved.": "无法保存这份演示稿。",
+    "The deck needs a title.": "演示稿需要标题。",
+    "Choose Cobalt, White or Dark.": "请选择钴蓝、白色或深色。",
+    "A deck needs at least one slide.": "演示稿至少需要一页幻灯片。",
+    "This deck is too large to save.": "这份演示稿太大，无法保存。",
+    "Send a title, a theme or the slides to save.": "请发送要保存的标题、主题或幻灯片。",
+    "Choose what to make: a deck or one slide.": "请选择要制作的内容：整份演示稿或单页幻灯片。",
+    "Choose a slide of this deck.": "请选择这份演示稿中的一页幻灯片。",
+    "Deck title": "演示稿标题",
+    "Saved in this browser": "已保存在此浏览器中",
+    "Present": "演示",
+    "PDF (print, one slide per page)": "PDF（打印，每页一张幻灯片）",
+    "HTML file (works offline)": "HTML 文件（可离线使用）",
+    "Delete this deck": "删除这份演示稿",
+    "Delete this deck from this browser? This can't be undone.": "要从此浏览器中删除这份演示稿吗？此操作无法撤销。",
+    "Delete this deck from your account? This can't be undone.": "要从你的账户中删除这份演示稿吗？此操作无法撤销。",
+    "Add slide": "添加幻灯片",
+    "Layout": "版式",
+    "Section": "章节",
+    "Bullets": "要点",
+    "Two columns": "双栏",
+    "Quote": "引语",
+    "Big number": "大数字",
+    "Move slide up": "上移幻灯片",
+    "Move slide down": "下移幻灯片",
+    "Delete slide": "删除幻灯片",
+    "Regenerate this slide": "重新生成这一页",
+    "Speaker notes": "演讲者备注",
+    "What to say on this slide": "讲这一页时要说的话",
+    "This deck is kept in this browser only. Edits save as you go.": "这份演示稿只保存在此浏览器中。编辑会随时保存。",
+    "Edits save to your account as you go.": "编辑会随时保存到你的账户。",
+    "Veil's placeholders are shown with their values in this browser only.": "Veil 的占位符只在此浏览器中显示为原值。",
+    "Add a title": "添加标题",
+    "Add a subtitle": "添加副标题",
+    "Add a point": "添加要点",
+    "+ Add a point": "+ 添加要点",
+    "Add a heading": "添加小标题",
+    "Add a quote": "添加引语",
+    "Who said it": "说这句话的人",
+    "What the number means": "这个数字的含义",
+    "Optional: shorter, more formal, turn into two columns…": "可选：更简短、更正式、改成双栏……",
+    "The AI sees this deck's title, its slide titles and this slide, not the original source, so it can't add facts from it.": "AI 只看到这份演示稿的标题、各页标题和这一页，看不到原始来源，因此无法从中补充事实。",
+    "Rewriting the slide…": "正在重写这一页……",
+    "Stopped. The slide wasn't changed, and nothing was charged.": "已停止。这一页未作修改，也未扣费。",
+    "Presenting": "正在演示",
+    "Previous slide": "上一张幻灯片",
+    "Next slide": "下一张幻灯片",
+    "Exit": "退出",
+    "Your browser blocked the notes window. Allow pop-ups for this site to open it.": "你的浏览器拦截了备注窗口。请允许此网站弹出窗口后再打开。",
+    "No notes for this slide.": "这一页没有备注。",
+    "Notes": "备注",
+    "arrows to move, P to present, Esc to stop": "方向键翻页，按 P 开始演示，按 Esc 停止",
+    "Make slides from this chat": "用这个会话制作幻灯片",
+    "Slides decks, on your account and in this browser": "幻灯片演示稿，包括账户中和此浏览器中的",
+    "Slides: a deck you save is kept on your account (its title, theme, the text on its slides and the speaker notes) until you delete it, and it is in your data export. Never the source it was made from or the model that made it: making a deck is an off-the-record chat. Decks made off the record or in Private Mode are kept only in this browser, unencrypted. Panic Wipe erases both; closing the account erases the saved ones.": "幻灯片：你保存的演示稿（标题、主题、幻灯片上的文字和演讲者备注）会保存在你的账户中，直到你删除它，并包含在你的数据导出中。制作它所用的来源和模型绝不会保存：制作演示稿是一次不留记录的对话。以不留记录或隐私模式制作的演示稿只以未加密形式保存在此浏览器中。紧急清除会删除这两种演示稿；关闭账户会删除已保存的演示稿。",
+    "Make a slide deck": "制作演示稿",
+    "Your slide decks": "你的演示稿",
+    "Slide decks": "演示稿",
+    "Opening the slide deck…": "正在打开演示稿……",
+    "Opening your slide decks…": "正在打开你的演示稿……",
+    "Try a sample slide deck": "试用示例演示稿",
+    "This browser can't store slide decks.": "此浏览器无法保存演示稿。",
+    "The slide deck couldn't be deleted.": "无法删除这份演示稿。",
+    "It's kept in this browser instead.": "已改为保存在此浏览器中。",
+    "Export it before you leave this page.": "请在离开此页面前导出。"
   },
   "patterns": [
     {
@@ -7871,6 +7995,94 @@
     {
       "en": "Made {0}; the rest weren't usable and were left out.",
       "zh": "生成了 {0}；其余内容无法使用，已略去。"
+    },
+    {
+      "en": "{0} slides",
+      "zh": "{0} 张幻灯片"
+    },
+    {
+      "en": "{0} slide",
+      "zh": "{0} 张幻灯片"
+    },
+    {
+      "en": "Writing slide {0} of {1}…",
+      "zh": "正在撰写第 {0} 页，共 {1} 页……"
+    },
+    {
+      "en": "Writing {0} with {1}…",
+      "zh": "正在用 {1} 撰写 {0}……"
+    },
+    {
+      "en": "Made {0} with {1}.",
+      "zh": "已用 {1} 制作 {0}。"
+    },
+    {
+      "en": "Made {0} of the {1} asked for with {2}.",
+      "zh": "已用 {2} 制作 {0}（你要求 {1} 页）。"
+    },
+    {
+      "en": "The model didn't make slides from this: “{0}” Nothing was charged.",
+      "zh": "模型没有用这个来源制作幻灯片：“{0}”未扣费。"
+    },
+    {
+      "en": "Choose {0} to {1} slides.",
+      "zh": "请选择 {0} 到 {1} 页幻灯片。"
+    },
+    {
+      "en": "Keep the prompt to {0} characters, or use a document.",
+      "zh": "请将提示词控制在 {0} 个字符以内，或改用文档。"
+    },
+    {
+      "en": "Only the first {0} characters of the prompt are sent.",
+      "zh": "只发送提示词的前 {0} 个字符。"
+    },
+    {
+      "en": "Only the first {0} of {1} characters are sent. Use a shorter part to cover the rest.",
+      "zh": "只发送 {1} 个字符中的前 {0} 个。如需涵盖其余部分，请使用较短的一段。"
+    },
+    {
+      "en": "You can keep up to {0} decks. Delete one to save another.",
+      "zh": "你最多可以保存 {0} 份演示稿。删除一份后才能再保存。"
+    },
+    {
+      "en": "A deck can have up to {0} slides.",
+      "zh": "一份演示稿最多可有 {0} 页幻灯片。"
+    },
+    {
+      "en": "Keep the title to {0} characters.",
+      "zh": "请将标题控制在 {0} 个字符以内。"
+    },
+    {
+      "en": "Not saved: {0}",
+      "zh": "未保存：{0}"
+    },
+    {
+      "en": "Slide {0} deleted.",
+      "zh": "第 {0} 页已删除。"
+    },
+    {
+      "en": "Slide {0} regenerated.",
+      "zh": "第 {0} 页已重新生成。"
+    },
+    {
+      "en": "Regenerate slide {0}",
+      "zh": "重新生成第 {0} 页"
+    },
+    {
+      "en": "{0} pages, one slide each. In the print dialog, choose Save as PDF.",
+      "zh": "共 {0} 页，每页一张幻灯片。在打印对话框中选择“另存为 PDF”。"
+    },
+    {
+      "en": "Speaker notes · {0}",
+      "zh": "演讲者备注 · {0}"
+    },
+    {
+      "en": "Next: {0}",
+      "zh": "下一页：{0}"
+    },
+    {
+      "en": "{0} credits charged.",
+      "zh": "已扣除 {0} 积分。"
     }
   ]
 }

@@ -134,12 +134,15 @@ export function pageWatchRoutes(ctx) {
       ctx.earlyModels.check(viewerOf(req), "models", w.model);
     const at = now();
     const switchedOn = !!w.enabled && !row.enabled;
+    // Switching on, or choosing another model, starts afresh after replies
+    // that couldn't be read.
+    const fresh = switchedOn || w.model !== row.model;
     // Switching on (a paused watch too) or a new schedule: the next check is
     // one interval after the last one, and never sooner than a minute from
     // now. Nothing is ever checked more often than every 6 hours.
     const reschedule = switchedOn || (w.enabled && w.every !== row.every);
     db.prepare(
-      "UPDATE page_watches SET hint=?,model=?,private_only=?,every=?,monthly_budget=?,enabled=?,paused=?,failures=?,next_check=?,updated=? WHERE id=? AND user_id=?",
+      "UPDATE page_watches SET hint=?,model=?,private_only=?,every=?,monthly_budget=?,enabled=?,paused=?,failures=?,unreadable=?,next_check=?,updated=? WHERE id=? AND user_id=?",
     ).run(
       w.hint,
       w.model,
@@ -149,6 +152,7 @@ export function pageWatchRoutes(ctx) {
       w.enabled,
       w.enabled ? null : row.paused,
       switchedOn ? 0 : row.failures,
+      fresh ? 0 : row.unreadable,
       !w.enabled ? null : reschedule ? nextCheck({ ...row, every: w.every }, at) : row.next_check,
       at,
       row.id,

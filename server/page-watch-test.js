@@ -6,9 +6,12 @@ import { parseDocumentBlocks } from "../src/documents.js";
 // without a provider. It reads the changed lines back out of the diff and
 // says what was removed and added. With a hint it answers the JSON verdict:
 // "matters" when a changed line shares a word (4+ letters, first 4 letters
-// compared, a few filler words like "change" left out) with the hint. A
-// change containing PAGEWATCH-TEST-LENGTH comes back cut off with
-// finish_reason "length". Never used live.
+// compared, a few filler words like "change" left out) with the hint.
+// Markers in the changed text pick other shapes real models give:
+// PAGEWATCH-TEST-LENGTH comes back cut off (finish_reason "length"),
+// PAGEWATCH-TEST-ARRAY answers with "summary" as a list of strings inside a
+// code fence (as Claude Haiku 4.5 does), and PAGEWATCH-TEST-GARBLE answers in
+// prose instead of JSON. Never used live.
 const clip = (s, max = 160) => (s.length > max ? s.slice(0, max - 1).trimEnd() + "…" : s);
 // "Pro plan price: **$39** (was $49)": the words that differ between an old
 // and a new line, with a few words before them; the whole new line when
@@ -45,6 +48,15 @@ export function pageWatchTestReply(messages) {
   const hint = /told only about this: "([^"]*)"/.exec(ask)?.[1];
   if (diff.includes("PAGEWATCH-TEST-LENGTH"))
     return { text: hint != null ? '{"matters": true, "summary": "- The pri' : summary.slice(0, 40), finish: "length" };
+  if (hint != null && diff.includes("PAGEWATCH-TEST-ARRAY"))
+    return {
+      text:
+        "```json\n" +
+        JSON.stringify({ matters: true, summary: bullets.map((b) => b.replace(/^- /, "")) }, null, 2) +
+        "\n```",
+    };
+  if (hint != null && diff.includes("PAGEWATCH-TEST-GARBLE"))
+    return { text: "The page changed, and yes, it looks like the part you asked about moved." };
   if (hint == null) return { text: summary };
   const skip = new Set(["change", "changes", "changed", "when", "that", "this", "what", "with", "about", "there", "their", "tell"]);
   const words = (hint.toLowerCase().match(/[a-z]{4,}/g) || []).filter((w) => !skip.has(w));

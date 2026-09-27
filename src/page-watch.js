@@ -243,28 +243,72 @@ export function failureDelay(every, failures) {
 
 // ---- The model's answer ----
 
+// A watch is paused after this many model replies in a row that couldn't be
+// used (none of them is charged).
+export const MAX_UNREADABLE = 3;
+
+const BULLET = /^\s*(?:[-*•]|\d+[.)])\s+/;
+const FENCES = /```(?:json|javascript|js)?\s*|```/gi;
+// A summary however a model shapes it: a string; a list of strings (or of
+// { text } items), one bullet each; or an object with a text field.
+function summaryText(value, depth = 0) {
+  if (typeof value === "string") return value.trim();
+  if (depth > 2 || value == null) return "";
+  if (Array.isArray(value))
+    return value
+      .map((item) => summaryText(item, depth + 1))
+      .filter(Boolean)
+      .map((line) => (BULLET.test(line) || line.includes("\n") ? line : "- " + line))
+      .join("\n");
+  if (typeof value === "object")
+    for (const key of ["text", "summary", "content", "bullets", "points"])
+      if (value[key] != null) return summaryText(value[key], depth + 1);
+  return "";
+}
+// true, false, "yes", "no", "true" or "false"; null for anything else.
+function yesNo(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value !== "string") return null;
+  const v = value.trim().toLowerCase().replace(/[.!]$/, "");
+  return v === "yes" || v === "true" ? true : v === "no" || v === "false" ? false : null;
+}
+// The first JSON object in a reply, fenced or not, or null.
+function jsonObject(text) {
+  const body = String(text ?? "").replace(FENCES, "").trim();
+  const start = body.indexOf("{"),
+    end = body.lastIndexOf("}");
+  if (start < 0 || end <= start) return null;
+  try {
+    const value = JSON.parse(body.slice(start, end + 1));
+    return value && typeof value === "object" && !Array.isArray(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 // With an "only tell me if…" hint the model answers in JSON:
-// { "matters": true|false, "summary": "…" }. Returns { matters, summary }, or
+// { "matters": true|false, "summary": "…" }. Models vary the shape, so
+// "matters" may also be "yes" or "no", and "summary" a list of bullet
+// strings or an object with a text field. Returns { matters, summary }, or
 // { error: "length" | "unreadable" } when the answer can't be used ("length":
 // the model ran out of room before it finished).
 export function parseVerdict(text, finishReason) {
-  const raw = String(text ?? "").trim();
-  const body = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  const start = body.indexOf("{"),
-    end = body.lastIndexOf("}");
-  let value = null;
-  if (start >= 0 && end > start)
-    try {
-      value = JSON.parse(body.slice(start, end + 1));
-    } catch {
-      value = null;
-    }
-  if (!value || typeof value !== "object" || typeof value.matters !== "boolean")
-    return { error: finishReason === "length" ? "length" : "unreadable" };
-  const summary = typeof value.summary === "string" ? value.summary.trim() : "";
-  if (value.matters && !summary)
-    return { error: finishReason === "length" ? "length" : "unreadable" };
-  return { matters: value.matters, summary: value.matters ? summary.slice(0, 6000) : "" };
+  const unusable = { error: finishReason === "length" ? "length" : "unreadable" };
+  const value = jsonObject(text);
+  const matters = value ? yesNo(value.matters) : null;
+  if (matters === null) return unusable;
+  const summary = matters ? summaryText(value.summary) : "";
+  if (matters && !summary) return unusable;
+  return { matters, summary: summary.slice(0, 6000) };
+}
+// Any reply, with or without a hint: { matters, summary } when it can be
+// used, { error } when it can't. Without a hint every non-empty reply is the
+// summary (one cut short by the length limit is still shown, and marked).
+export function readReply(hint, text, finishReason) {
+  if (hint) return parseVerdict(text, finishReason);
+  const summary = String(text ?? "").trim();
+  if (!summary) return { error: finishReason === "length" ? "length" : "unreadable" };
+  return { matters: true, summary: summary.slice(0, 6000) };
 }
 
 // ---- Display ----

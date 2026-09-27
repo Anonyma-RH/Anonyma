@@ -4573,7 +4573,6 @@
     "Changed, but not what you asked about": "有变化，但不是你关心的内容",
     "Changed; the summary was refused": "有变化；摘要请求被拒绝",
     "Changed; the summary failed": "有变化；摘要生成失败",
-    "Changed; the model's answer couldn't be read": "有变化；无法读取模型的回答",
     "Couldn't read the page": "无法读取该网页",
     "Checked": "已检查",
     "Page changed": "网页有变化",
@@ -4592,8 +4591,6 @@
     "Your spending limits couldn't cover a summary. Nothing was charged.": "你的消费上限不足以支付一次摘要。未扣费。",
     "This watch's model isn't available right now. Nothing was charged.": "此监测的模型目前不可用。未扣费。",
     "The hint looks like a wallet seed phrase, so nothing was sent. Nothing was charged.": "提示看起来像钱包助记词，因此未发送任何内容。未扣费。",
-    "The model ran out of room before it finished, so no summary is shown. The charge stands; nothing was retried.": "模型在完成前用尽了输出空间，因此不显示摘要。费用照常计算；未自动重试。",
-    "The model's answer couldn't be read, so no summary is shown.": "无法读取模型的回答，因此不显示摘要。",
     "No summary was made.": "未生成摘要。",
     "Stop watching this page? Its kept copy and its reports are deleted. This can't be undone.": "停止监测此网页？其保存的副本和报告都会被删除。此操作无法撤销。",
     "Delete watch": "删除监测",
@@ -4837,7 +4834,14 @@
     "Only chat, code and Uncensored conversations can be continued fresh.": "只有对话、代码和无审查会话可以在新会话中继续。",
     "Add the summary the fresh chat should start from.": "请添加新会话开始时使用的总结。",
     "Keep the summary under 12,000 characters.": "总结请控制在 12,000 个字符以内。",
-    "This chat is getting long.": "此会话越来越长了。"
+    "This chat is getting long.": "此会话越来越长了。",
+    "Changed; the model's reply couldn't be read. Not charged": "有变化；无法读取模型的回复，未扣费",
+    "The model took too long to answer. Nothing was charged.": "模型响应超时。未扣费。",
+    "The model ran out of room before it finished, so nothing was charged. Try another model for this watch.": "模型在完成前用尽了输出空间，因此未扣费。请为此监测换一个模型。",
+    "The model's reply couldn't be read, so nothing was charged. Try another model for this watch.": "无法读取模型的回复，因此未扣费。请为此监测换一个模型。",
+    "Paused after 3 replies in a row that couldn't be read. Nothing was charged. Choose another model for this watch, then switch it back on.": "连续 3 次无法读取模型的回复，已暂停。未扣费。请为此监测选择另一个模型，然后重新开启。",
+    "The model couldn't make a summary this time. Nothing was charged.": "模型这次未能生成摘要。未扣费。",
+    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。"
   },
   "patterns": [
     {

@@ -1029,6 +1029,7 @@ export const MIGRATIONS = [
         monthly_budget INTEGER NOT NULL CHECK(typeof(monthly_budget)='integer' AND monthly_budget>0),
         enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
         paused TEXT,failures INTEGER NOT NULL DEFAULT 0,
+        unreadable INTEGER NOT NULL DEFAULT 0,
         next_check INTEGER,running_since INTEGER,
         last_check INTEGER,last_status TEXT,last_code TEXT,last_change INTEGER,
         snapshot TEXT,snapshot_hash TEXT,snapshot_at INTEGER,
@@ -1083,6 +1084,14 @@ export const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS chat_continuations_user ON chat_continuations(user_id);
       CREATE INDEX IF NOT EXISTS chat_continuations_source ON chat_continuations(source_id);
   `),
+  // Page Watch: model replies in a row that couldn't be read (the third
+  // pauses the watch). In the CREATE above for new databases; added here to
+  // ones made before it. Only a column with a default, on a table no earlier
+  // build reads, so it's recorded as additive.
+  (db) => {
+    addColumn(db, "page_watches", "unreadable", "INTEGER NOT NULL DEFAULT 0");
+    additive("")(db);
+  },
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

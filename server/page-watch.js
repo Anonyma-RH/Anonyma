@@ -30,6 +30,7 @@ import {
   SUMMARY_TOKENS,
   MAX_DIFF_CHARS,
   MAX_BUDGET_CREDITS,
+  MAX_UNREADABLE,
   WATCH_SYSTEM,
   comparableText,
   formatDiff,
@@ -37,7 +38,7 @@ import {
   capBytes,
   nextCheck,
   failureDelay,
-  parseVerdict,
+  readReply,
 } from "../src/page-watch.js";
 
 // Page Watch: the server checks a public page on a schedule and says what
@@ -69,6 +70,12 @@ import {
 // (failureDelay); the fifth in a row pauses the watch with a note. A
 // summary is refused, and nothing is charged, when the watch's monthly
 // budget, the balance or the spending limits can't cover its worst case.
+// A watch runs unattended, so only a reply it can use is paid for: one the
+// model got wrong (unreadable, or cut short with nothing usable), or a
+// request that failed or timed out, releases its hold (runChat's
+// acceptOutput) and leaves a note. An unreadable reply keeps the last
+// version, so the change is summarised again at the next check (with
+// another model, say); the third in a row pauses the watch.
 // Nothing here logs a URL, a host, page text, a hint or a summary.
 
 const MAX_CONCURRENT = 4;
@@ -257,6 +264,8 @@ export function watchView(db, row, at = now()) {
     enabled: !!row.enabled,
     paused: row.paused,
     failures: row.failures,
+    // Model replies in a row that couldn't be read (never charged).
+    unreadable: row.unreadable,
     next_check_at: row.enabled ? row.next_check : null,
     running: row.running_since != null,
     last_check_at: row.last_check,
@@ -437,7 +446,8 @@ export function createPageWatcher(ctx) {
       if (month.spent + month.held + held > alive.monthly_budget)
         fail(402, "This watch's monthly budget can't cover this summary.", "watch_budget");
     };
-    let captured = null;
+    let captured = null,
+      unusable = null;
     const fakeReq = {
       body: { model: m.id, messages, max_tokens: replyTokens(m), stream: false },
       user,
@@ -451,6 +461,13 @@ export function createPageWatcher(ctx) {
       privateOnly: !!w.private_only,
       discardMedia: true,
       reserveGuard,
+      // Paid for only when it can be read: runChat releases the hold
+      // otherwise (and for any failure).
+      acceptOutput: (text, finish) => {
+        const reply = readReply(w.hint, text, finish);
+        unusable = reply.error ? { code: reply.error, finish_reason: finish } : null;
+        return !reply.error;
+      },
     };
     const fakeRes = {
       set() {
@@ -469,13 +486,24 @@ export function createPageWatcher(ctx) {
       destroyed: false,
       writableEnded: false,
     };
-    await ctx.runChat(fakeReq, fakeRes, true);
+    try {
+      await ctx.runChat(fakeReq, fakeRes, true);
+    } catch (e) {
+      // The model's reply couldn't be used: nothing was charged.
+      if (e?.code === "unusable_output" && unusable)
+        throw Object.assign(refusal(502, "The model's reply couldn't be read.", unusable.code), {
+          unusable: true,
+          finish_reason: unusable.finish_reason,
+        });
+      throw e;
+    }
     const message = captured?.choices?.[0]?.message || {};
     const extension = captured?.anonyma || {};
+    const finish = extension.finish_reason || null;
     return {
-      answer: typeof message.content === "string" ? message.content.trim() : "",
+      reply: readReply(w.hint, typeof message.content === "string" ? message.content : "", finish),
       receipt: extension.signed_receipt || null,
-      finish_reason: extension.finish_reason || null,
+      finish_reason: finish,
     };
   }
 
@@ -548,6 +576,11 @@ export function createPageWatcher(ctx) {
             (SELECT id FROM page_watch_reports WHERE watch_id=? ORDER BY checked DESC,rowid DESC LIMIT ${KEEP_REPORTS})`,
         ).run(row.id, row.id);
       };
+      // A reply that could be used, or a page back to its kept version,
+      // ends a run of unreadable replies. (A failed fetch, a refusal or a
+      // provider failure asks nothing of the model, so it leaves the run.)
+      if (outcome.kind === "unchanged" || outcome.kind === "baseline" || (outcome.kind === "changed" && !outcome.error))
+        db.prepare("UPDATE page_watches SET unreadable=0 WHERE id=?").run(row.id);
       if (outcome.kind === "fetch_failed") {
         const failures = row.failures + 1;
         if (failures >= MAX_FAILURES) {
@@ -587,8 +620,7 @@ export function createPageWatcher(ctx) {
         keep("baseline");
         return;
       }
-      // A change. The new version is kept whatever the model said, so the
-      // same change is never summarised (or charged) twice.
+      // A change.
       const { charged, held } = chargeOf(row, at);
       const common = {
         model: row.model,
@@ -598,6 +630,28 @@ export function createPageWatcher(ctx) {
         removed: outcome.diff.removed,
         flagged: outcome.flagged,
       };
+      if (outcome.error?.unusable) {
+        // The model's reply couldn't be read: nothing was charged (the hold
+        // was released) and the last version stays, so the change is
+        // summarised again at the next check. The third in a row pauses the
+        // watch until its model is changed or it's switched back on.
+        const streak = row.unreadable + 1;
+        const code = outcome.error.code;
+        if (streak >= MAX_UNREADABLE) {
+          db.prepare(
+            "UPDATE page_watches SET unreadable=?,enabled=0,paused='unreadable',next_check=NULL,running_since=NULL,last_check=?,last_status='paused',last_code=?,last_change=? WHERE id=?",
+          ).run(streak, at, code, at, row.id);
+          report({ ...common, status: "paused", code, finish_reason: outcome.error.finish_reason });
+        } else {
+          db.prepare(
+            "UPDATE page_watches SET unreadable=?,failures=0,next_check=?,running_since=NULL,last_check=?,last_status='unreadable',last_code=?,last_change=? WHERE id=?",
+          ).run(streak, next(interval), at, code, at, row.id);
+          report({ ...common, status: "unreadable", code, finish_reason: outcome.error.finish_reason });
+        }
+        return;
+      }
+      // Otherwise the new version is kept whatever happened, so the same
+      // change is never summarised (or charged) twice.
       if (outcome.error) {
         const e = outcome.error;
         const status = held ? "failed" : "refused";
@@ -618,44 +672,16 @@ export function createPageWatcher(ctx) {
         });
         return;
       }
-      if (row.hint) {
-        const verdict = parseVerdict(outcome.answer, outcome.finish_reason);
-        if (verdict.error) {
-          keep("unreadable", verdict.error);
-          report({
-            ...common,
-            status: "unreadable",
-            code: verdict.error,
-            finish_reason: outcome.finish_reason,
-            receipt: outcome.receipt,
-          });
-          return;
-        }
-        if (!verdict.matters) {
-          // Not what the person asked about: no report, only the charge.
-          keep("not_relevant");
-          return;
-        }
-        keep("changed");
-        report({
-          ...common,
-          status: "changed",
-          summary: verdict.summary,
-          finish_reason: outcome.finish_reason,
-          receipt: outcome.receipt,
-        });
-        return;
-      }
-      if (!outcome.answer) {
-        keep("unreadable", "unreadable");
-        report({ ...common, status: "unreadable", code: "unreadable", finish_reason: outcome.finish_reason, receipt: outcome.receipt });
+      if (!outcome.reply.matters) {
+        // Not what the person asked about: no report, only the charge.
+        keep("not_relevant");
         return;
       }
       keep("changed");
       report({
         ...common,
         status: "changed",
-        summary: outcome.answer.slice(0, 6000),
+        summary: outcome.reply.summary,
         finish_reason: outcome.finish_reason,
         receipt: outcome.receipt,
       });

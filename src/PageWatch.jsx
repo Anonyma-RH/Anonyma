@@ -35,7 +35,7 @@ const LAST_STATUS = {
   not_relevant: "Changed, but not what you asked about",
   refused: "Changed; the summary was refused",
   failed: "Changed; the summary failed",
-  unreadable: "Changed; the model's answer couldn't be read",
+  unreadable: "Changed; the model's reply couldn't be read. Not charged",
   fetch_failed: "Couldn't read the page",
   paused: "Paused",
 };
@@ -70,13 +70,23 @@ const REASONS = {
   private_unavailable: "Private Mode isn't available right now. Nothing was charged.",
   payment_reconciliation_pending: "Spending is paused while a payment is checked. Nothing was charged.",
   seed_phrase_blocked: "The hint looks like a wallet seed phrase, so nothing was sent. Nothing was charged.",
-  length: "The model ran out of room before it finished, so no summary is shown. The charge stands; nothing was retried.",
-  unreadable: "The model's answer couldn't be read, so no summary is shown.",
+  provider_timeout: "The model took too long to answer. Nothing was charged.",
+  length: "The model ran out of room before it finished, so nothing was charged. Try another model for this watch.",
+  unreadable: "The model's reply couldn't be read, so nothing was charged. Try another model for this watch.",
 };
+// A model's own reply that couldn't be used (never charged).
+const MODEL_CODES = new Set(["length", "unreadable"]);
+const PAUSED_MODEL =
+  "Paused after 3 replies in a row that couldn't be read. Nothing was charged. Choose another model for this watch, then switch it back on.";
 const reportReason = (r) =>
   r.status === "paused"
-    ? `Paused after 5 failed checks in a row. ${readReason(r.code)} Switch the watch back on to try again.`
-    : REASONS[r.code] || r.message || "No summary was made.";
+    ? MODEL_CODES.has(r.code)
+      ? PAUSED_MODEL
+      : `Paused after 5 failed checks in a row. ${readReason(r.code)} Switch the watch back on to try again.`
+    : REASONS[r.code] ||
+      (r.status === "failed"
+        ? "The model couldn't make a summary this time. Nothing was charged."
+        : r.message || "No summary was made.");
 
 // The sample account's watches and reports (?demo=1): nothing is fetched.
 export function demoWatchState() {
@@ -370,6 +380,10 @@ export function WatchEditor({ draft, setDraft, models, config, busy, error, onSa
               <Icon name="check" size={15} />
               <span>Checking is free. No real change, no charge.</span>
             </p>
+            <p>
+              <Icon name="check" size={15} />
+              <span>A reply that can't be read, or a summary that fails, isn't charged.</span>
+            </p>
           </div>
           <p className="routine-help">
             A summary is refused, and nothing is charged, when your balance,
@@ -448,6 +462,7 @@ export function WatchCard({ w, modelName, busy, onEdit, onToggle, onDelete, onRe
           {`Paused after 5 failed checks in a row. ${readReason(w.last_code)} Switch it back on to try again.`}
         </p>
       )}
+      {w.paused === "unreadable" && <p className="watch-paused">{PAUSED_MODEL}</p>}
       <dl className="routine-facts">
         <div>
           <dt>Last check</dt>

@@ -19,6 +19,7 @@ import { withMemory } from "../../src/memory.js";
 import { trainingFields, liveIds } from "../training.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { apiBoostInfo } from "../api-boost.js";
+import { prepareStudyRequest, studyBudget } from "../study.js";
 import {
   fail,
   balance,
@@ -146,8 +147,13 @@ export function catalogRoutes(ctx) {
   // workspace asks automatically while a prompt is typed (Credit Estimates),
   // debounced, so the limit leaves room for that and for Symposium's columns.
   app.post("/api/quote", requireUser, limit("quote", 120, 60000), (req, res) => {
+    // Study Mode: a deck's estimate prices the messages and reply budget the
+    // same request to /api/chat would carry (server/study.js).
+    const study = prepareStudyRequest(req.body, { quote: true });
     const m = getModel(req.body.model);
     ctx.earlyModels.check(viewerOf(req), "models", m.id);
+    if (study && m.type !== "chat") fail(400, "Choose a chat model to make a deck.", "unsupported_model");
+    if (study) req.body.max_tokens = studyBudget(study, m, req.body.messages);
     const teamPaid = req.body.treasury === true;
     if (teamPaid && m.type !== "chat") fail(400, "Team pays supports chat requests only.");
     const team = teamPaid ? ctx.treasury.forQuote(req.user.id, req.body.conversationId) : null;

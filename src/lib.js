@@ -488,6 +488,7 @@ export const MODE_FEATURES = {
   uncensored: "uncensored",
   symposium: "symposium",
   sheets: "sheets",
+  study: "study",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

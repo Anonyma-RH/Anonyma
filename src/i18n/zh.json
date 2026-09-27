@@ -4172,7 +4172,126 @@
     "Confirm with your passkey again.": "请再次用你的通行密钥确认。",
     "A passkey works too.": "也可以用通行密钥。",
     "Blind can't be combined with Deep research or Sheets.": "盲测对比不能与深度研究或表格同时使用。",
-    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。"
+    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。",
+    "Study Mode": "学习模式",
+    "Turn any document or chat into flashcards and a quiz.": "把任何文档或会话变成抽认卡和测验。",
+    "Cards and quiz questions drawn only from your source, each with the words it came from": "卡片和测验题只取材于你的来源，每一项都附上出处原文",
+    "Review with spaced repetition: Again, Hard, Good or Easy, with due counts and streaks": "用间隔重复来复习：重来、困难、良好或简单，并显示待复习数量和连续天数",
+    "Your decks stay in this browser; export them as JSON or an Anki CSV": "你的卡组只保存在此浏览器中，可导出为 JSON 或 Anki CSV",
+    "Study": "学习",
+    "Opening Study…": "正在打开学习……",
+    "Make a study deck from this chat": "用这个会话制作学习卡组",
+    "YOUR DECKS STAY ON THIS DEVICE": "你的卡组只保存在本设备上",
+    "Turn a document, a saved chat or pasted text into flashcards and a quiz, then review with spaced repetition. Decks and progress are kept in this browser only.": "把文档、已保存的会话或粘贴的文本变成抽认卡和测验，再用间隔重复来复习。卡组和进度只保存在此浏览器中。",
+    "Your review": "你的复习",
+    "New cards": "新卡片",
+    "Day streak": "连续天数",
+    "Review now": "立即复习",
+    "Make a deck": "制作卡组",
+    "Study source": "学习来源",
+    "Paste text": "粘贴文本",
+    "A document": "文档",
+    "A saved chat": "已保存的会话",
+    "Text to study": "要学习的文本",
+    "Paste notes, an article or a chapter…": "粘贴笔记、文章或书中的一章……",
+    "Read in this browser": "在此浏览器中读取",
+    "PDF, Word, text or Markdown. The text is read in this browser; the file isn't uploaded.": "支持 PDF、Word、纯文本或 Markdown。文本在此浏览器中读取，文件不会上传。",
+    "Sign in to study your saved chats.": "登录后即可用已保存的会话来学习。",
+    "Loading your saved chats…": "正在加载你已保存的会话……",
+    "Saved chat": "已保存的会话",
+    "Choose a saved chat…": "选择一个已保存的会话……",
+    "Only chats saved on your account are listed. Off the record, Private Mode and Device Vault chats aren't: a deck is stored unencrypted in this browser.": "这里只列出保存在你账户中的会话。不留记录、隐私模式和本机保险库中的会话不会列出，因为卡组以未加密形式保存在此浏览器中。",
+    "Make": "生成",
+    "How many": "数量",
+    "Difficulty": "难度",
+    "Flashcards": "抽认卡",
+    "Quiz": "测验",
+    "Both": "两者都要",
+    "Easy": "简单",
+    "Medium": "中等",
+    "Hard": "困难",
+    "Again": "重来",
+    "Good": "良好",
+    "This source and Study Mode's fixed instructions, nothing else: no other chats, memory, project or standing instructions.": "只有这个来源和学习模式的固定指令，别无其他：不含其他会话、记忆、项目或常驻指令。",
+    "Add a few more sentences: the source is too short to study.": "请再添加几句话：来源太短，无法用来学习。",
+    "Make deck": "制作卡组",
+    "The most this deck can cost: the source and a full reply budget at the model's published rates. You're charged only for what's used.": "制作这个卡组的最高费用：按模型公布的价格计算来源和完整回复预算。实际只按用量扣费。",
+    "Off the record: billed like a message, and nothing about it is saved on ANONYMA's servers. The AI can still get things wrong, so check cards against the source.": "不留记录：按一条消息计费，ANONYMA 的服务器不会保存任何相关内容。AI 仍可能出错，请对照来源检查卡片。",
+    "Your decks": "你的卡组",
+    "Opening your decks…": "正在打开你的卡组……",
+    "No decks in this browser yet.": "此浏览器中还没有卡组。",
+    "Try a sample deck": "试用示例卡组",
+    "The sample is written by hand, not by a model. It costs nothing.": "示例由人工编写，不是模型生成的，不收取任何费用。",
+    "Stored in this browser only, unencrypted, like a downloaded file. ANONYMA's servers never see your decks.": "只以未加密形式保存在此浏览器中，就像下载的文件一样。ANONYMA 的服务器永远看不到你的卡组。",
+    "Delete all decks in this browser": "删除此浏览器中的所有卡组",
+    "Delete every deck and your review history in this browser? This can't be undone.": "要删除此浏览器中的所有卡组和复习记录吗？此操作无法撤销。",
+    "Delete this deck and its progress from this browser?": "要从此浏览器中删除此卡组及其进度吗？",
+    "This browser can't store decks.": "此浏览器无法保存卡组。",
+    "This deck couldn't be saved in this browser.": "无法在此浏览器中保存此卡组。",
+    "The deck couldn't be deleted.": "无法删除此卡组。",
+    "The decks couldn't be deleted.": "无法删除这些卡组。",
+    "That chat couldn't be opened.": "无法打开该会话。",
+    "Sign in to make decks. Reviewing a sample or an imported deck works without an account.": "登录后即可制作卡组。复习示例卡组或导入的卡组无需账户。",
+    "Nothing is due. New cards and cards you've reviewed come back when they're due.": "目前没有待复习的卡片。新卡片和复习过的卡片会在到期时再出现。",
+    "This file is too large for a deck (5 MB at most).": "此文件太大，无法作为卡组导入（最多 5 MB）。",
+    "This file isn't JSON. Choose a deck exported from Study Mode.": "此文件不是 JSON。请选择从学习模式导出的卡组。",
+    "This file isn't a Study Mode deck.": "此文件不是学习模式卡组。",
+    "This deck was made by a newer version of Study Mode.": "此卡组由更新版本的学习模式制作。",
+    "This deck's cards aren't a list.": "此卡组的卡片格式不是列表。",
+    "A deck can have at most 500 cards and 500 questions.": "一个卡组最多可包含 500 张卡片和 500 道题。",
+    "This deck has no usable cards or questions.": "此卡组中没有可用的卡片或题目。",
+    "Writing your deck…": "正在编写你的卡组……",
+    "Deck ready": "卡组已就绪",
+    "Start reviewing": "开始复习",
+    "See the deck": "查看卡组",
+    "From the source": "来源原文",
+    "Not found in the source": "来源中未找到",
+    "Back to decks": "返回卡组",
+    "Session done": "本轮复习完成",
+    "End session": "结束本轮",
+    "Answer shown": "已显示答案",
+    "Show answer": "显示答案",
+    "Question": "问题",
+    "Tap or press Space to show the answer": "点按或按空格键显示答案",
+    "Space": "空格",
+    "Space shows the answer · 1 Again · 2 Hard · 3 Good · 4 Easy · Esc ends the session": "空格键显示答案 · 1 重来 · 2 困难 · 3 良好 · 4 简单 · Esc 结束本轮",
+    "Back to the deck": "返回卡组",
+    "End quiz": "结束测验",
+    "Correct": "回答正确",
+    "Not quite": "不太对",
+    "Next question": "下一题",
+    "See your score": "查看得分",
+    "All decks": "所有卡组",
+    "Document": "文档",
+    "Imported: snippets weren't checked against a source.": "导入的卡组：原文摘录未与来源核对。",
+    "A sample written by hand, not by a model.": "人工编写的示例，不是模型生成的。",
+    "Nothing due": "暂无待复习",
+    "Take the quiz": "参加测验",
+    "Deck": "卡组",
+    "Delete this card": "删除这张卡片",
+    "Delete this question": "删除这道题",
+    "Study Mode decks and review progress in this browser": "此浏览器中的学习模式卡组和复习进度",
+    "Study Mode: decks and review progress are kept only in this browser, unencrypted, and ANONYMA's servers store none of them. Making a deck is an off-the-record chat: the source you chose is sent to the model once and not saved. Panic Wipe clears the decks in the browser you use it in.": "学习模式：卡组和复习进度只以未加密形式保存在此浏览器中，ANONYMA 的服务器不保存任何内容。制作卡组是一次不留记录的对话：你选择的来源只发送给模型一次，不会保存。紧急清除会清空你执行操作的那个浏览器中的卡组。",
+    "The model ran out of room while writing the deck. Nothing was saved. Try fewer cards, or pick a faster model.": "模型在编写卡组时用完了回复空间，没有保存任何内容。请减少卡片数量，或换一个更快的模型。",
+    "The model's reply wasn't a deck Study Mode can read. Nothing was saved. Try again, or choose another model.": "模型的回复不是学习模式能读取的卡组，没有保存任何内容。请重试，或选择其他模型。",
+    "Study decks are made off the record: send the request off the record.": "学习卡组以不留记录方式制作：请以不留记录方式发送请求。",
+    "Making a deck can't be combined with other chat options.": "制作卡组不能与其他对话选项同时使用。",
+    "The study request is malformed.": "学习请求格式有误。",
+    "The study request has an unexpected field.": "学习请求中有意外字段。",
+    "Choose flashcards, a quiz or both.": "请选择抽认卡、测验或两者都要。",
+    "Choose 10, 20 or 40.": "请选择 10、20 或 40。",
+    "Choose easy, medium or hard.": "请选择简单、中等或困难。",
+    "The source is missing.": "缺少来源。",
+    "The source has an unexpected field.": "来源中有意外字段。",
+    "Choose pasted text, a document or a saved chat.": "请选择粘贴的文本、文档或已保存的会话。",
+    "The source needs a name.": "来源需要一个名称。",
+    "The source's name is too long.": "来源名称太长。",
+    "The source's name has control characters.": "来源名称包含控制字符。",
+    "The source must be text.": "来源必须是文本。",
+    "The source is too short to study.": "来源太短，无法用来学习。",
+    "The source is too long. Cut it to 40,000 characters.": "来源太长。请缩减到 40,000 个字符以内。",
+    "The source has control characters.": "来源包含控制字符。",
+    "Choose a chat model to make a deck.": "请选择一个对话模型来制作卡组。"
   },
   "patterns": [
     {
@@ -6578,6 +6697,194 @@
     {
       "en": "Too many incorrect attempts. Try again in {0} minutes, or sign out instead.",
       "zh": "错误次数过多。请在 {0} 分钟后重试，或改为退出登录。"
+    },
+    {
+      "en": "{0} characters",
+      "zh": "{0} 个字符"
+    },
+    {
+      "en": "{0} character",
+      "zh": "{0} 个字符"
+    },
+    {
+      "en": "{0} characters from this chat: your messages, their attached documents and the replies.",
+      "zh": "来自这个会话的 {0} 个字符：你的消息、其中附带的文档和回复。"
+    },
+    {
+      "en": "Veil masked {0} details.",
+      "zh": "Veil 已遮盖 {0} 条详情。"
+    },
+    {
+      "en": "Veil masked {0} detail.",
+      "zh": "Veil 已遮盖 {0} 条详情。"
+    },
+    {
+      "en": "Only the first {0} of {1} characters are sent. Paste or pick a shorter part to study the rest.",
+      "zh": "只发送 {1} 个字符中的前 {0} 个。如需学习其余部分，请粘贴或选择较短的一段。"
+    },
+    {
+      "en": "Injection Shield found {0}. Invisible characters are removed, and the source is sent as data, not instructions.",
+      "zh": "注入防护发现了 {0}。不可见字符已移除，来源会作为数据而非指令发送。"
+    },
+    {
+      "en": "Charged {0} credits.",
+      "zh": "已扣除 {0} 积分。"
+    },
+    {
+      "en": "{0} card",
+      "zh": "{0} 张卡片"
+    },
+    {
+      "en": "{0} cards",
+      "zh": "{0} 张卡片"
+    },
+    {
+      "en": "{0} question",
+      "zh": "{0} 道题"
+    },
+    {
+      "en": "{0} questions",
+      "zh": "{0} 道题"
+    },
+    {
+      "en": "{0} due",
+      "zh": "{0} 张待复习"
+    },
+    {
+      "en": "{0} new",
+      "zh": "{0} 张新卡片"
+    },
+    {
+      "en": "Review {0}",
+      "zh": "复习 {0} 张"
+    },
+    {
+      "en": "{0} review today.",
+      "zh": "今天复习了 {0} 次。"
+    },
+    {
+      "en": "{0} reviews today.",
+      "zh": "今天复习了 {0} 次。"
+    },
+    {
+      "en": "{0} items' snippets weren't found in the source. They're marked; check them.",
+      "zh": "有 {0} 项的原文摘录未在来源中找到，已做标记，请检查。"
+    },
+    {
+      "en": "{0} item's snippet wasn't found in the source. It's marked; check it.",
+      "zh": "有 {0} 项的原文摘录未在来源中找到，已做标记，请检查。"
+    },
+    {
+      "en": "Imported “{0}”.",
+      "zh": "已导入“{0}”。"
+    },
+    {
+      "en": "Imported “{0}”. {1} item wasn't usable and was left out.",
+      "zh": "已导入“{0}”。有 {1} 项无法使用，已略去。"
+    },
+    {
+      "en": "Imported “{0}”. {1} items weren't usable and were left out.",
+      "zh": "已导入“{0}”。有 {1} 项无法使用，已略去。"
+    },
+    {
+      "en": "{0} card reviewed",
+      "zh": "复习了 {0} 张卡片"
+    },
+    {
+      "en": "{0} cards reviewed",
+      "zh": "复习了 {0} 张卡片"
+    },
+    {
+      "en": "{0}-day streak",
+      "zh": "连续 {0} 天"
+    },
+    {
+      "en": "Next card due in {0}.",
+      "zh": "下一张卡片将在 {0}后到期。"
+    },
+    {
+      "en": "{0} left",
+      "zh": "还剩 {0} 张"
+    },
+    {
+      "en": "{0} min",
+      "zh": "{0} 分钟"
+    },
+    {
+      "en": "{0} month",
+      "zh": "{0} 个月"
+    },
+    {
+      "en": "{0} months",
+      "zh": "{0} 个月"
+    },
+    {
+      "en": "{0} year",
+      "zh": "{0} 年"
+    },
+    {
+      "en": "{0} years",
+      "zh": "{0} 年"
+    },
+    {
+      "en": "You scored {0}%.",
+      "zh": "你的得分是 {0}%。"
+    },
+    {
+      "en": "Best: {0} / {1}",
+      "zh": "最佳：{0} / {1}"
+    },
+    {
+      "en": "Question {0} of {1}",
+      "zh": "第 {0} 题，共 {1} 题"
+    },
+    {
+      "en": "Score so far: {0} / {1} · A–D or 1–4 to answer · Enter for the next question",
+      "zh": "当前得分：{0} / {1} · 按 A–D 或 1–4 作答 · 按 Enter 进入下一题"
+    },
+    {
+      "en": "{0} card due",
+      "zh": "{0} 张卡片待复习"
+    },
+    {
+      "en": "{0} cards due",
+      "zh": "{0} 张卡片待复习"
+    },
+    {
+      "en": "{0} new card",
+      "zh": "{0} 张新卡片"
+    },
+    {
+      "en": "{0} new cards",
+      "zh": "{0} 张新卡片"
+    },
+    {
+      "en": "{0} card learned",
+      "zh": "已学会 {0} 张卡片"
+    },
+    {
+      "en": "{0} cards learned",
+      "zh": "已学会 {0} 张卡片"
+    },
+    {
+      "en": "Last quiz: {0} / {1}",
+      "zh": "上次测验：{0} / {1}"
+    },
+    {
+      "en": "Cards ({0})",
+      "zh": "卡片（{0}）"
+    },
+    {
+      "en": "Questions ({0})",
+      "zh": "题目（{0}）"
+    },
+    {
+      "en": "{0} hour",
+      "zh": "{0} 小时"
+    },
+    {
+      "en": "{0} hours",
+      "zh": "{0} 小时"
     }
   ]
 }

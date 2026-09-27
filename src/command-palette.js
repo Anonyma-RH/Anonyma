@@ -369,6 +369,7 @@ export const MODE_LABELS = {
   tools: "Research, Writing & Calculators",
   projects: "Projects",
   sheets: "Sheets",
+  study: "Study",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -386,6 +387,8 @@ const PLACES = [
   ["projects", "Projects", ["project", "folders", "group chats", "pinned files"]],
   // Local Sheets: only once released (modeReleased checks MODE_FEATURES).
   ["sheets", "Sheets", ["spreadsheet", "csv", "tsv", "excel", "analyse", "analyze", "chart", "table", "data"]],
+  // Study Mode: only once released, like Sheets.
+  ["study", "Study", ["flashcards", "quiz", "revise", "revision", "learn", "anki", "spaced repetition", "cards"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

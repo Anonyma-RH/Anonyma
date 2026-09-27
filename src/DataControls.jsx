@@ -31,6 +31,8 @@ export default function DataControls() {
   const passkeys = !!config && isReleased(config, "passkeys");
   // And the Privacy Screen.
   const privacyScreen = !!config && isReleased(config, "privacyscreen");
+  // And Study Mode.
+  const study = !!config && isReleased(config, "study");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -190,6 +192,15 @@ export default function DataControls() {
             but a count of wrong attempts, under a one-way key, for up to 15
             minutes. Hiding takes your chats off the screen, not out of this
             browser’s memory.
+          </li>
+        )}
+        {study && (
+          <li>
+            Study Mode: decks and review progress are kept only in this
+            browser, unencrypted, and ANONYMA's servers store none of them.
+            Making a deck is an off-the-record chat: the source you chose is
+            sent to the model once and not saved. Panic Wipe clears the decks
+            in the browser you use it in.
           </li>
         )}
         {nyma && (

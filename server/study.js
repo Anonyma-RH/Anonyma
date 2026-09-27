@@ -80,8 +80,8 @@ export function studyTestReply(messages) {
   const name = unescapeDocumentText(block[1]).replace(/\.[a-z0-9]{1,5}$/i, "");
   const source = unescapeDocumentText(block[2]);
   const task = /^Task: (.*)$/m.exec(user)?.[1] || "";
-  const cards = Number(/up to (\d+) flashcards/.exec(task)?.[1] || 0);
-  const quiz = Number(/up to (\d+) quiz questions/.exec(task)?.[1] || 0);
+  const cards = Number(/(\d+) flashcards/.exec(task)?.[1] || 0);
+  const quiz = Number(/(\d+) quiz questions/.exec(task)?.[1] || 0);
   const sentences = source
     .replace(/\s+/g, " ")
     .split(/(?<=[.!?])\s+/)

@@ -233,6 +233,26 @@ export function readDeck(text, { make, count, source, finishReason = null }) {
   };
 }
 
+// A plain line when a deck came back smaller than asked for: not an error.
+// The model writes fewer only when the source is too short (STUDY_SYSTEM),
+// unless some of what it wrote wasn't usable (`dropped`). Null when the deck
+// has as many as asked for.
+const count = (n, one, many) => `${n.toLocaleString("en-US")} ${n === 1 ? one : many}`;
+export function shortfallNote({ cards = 0, quiz = 0 }, { make, count: asked, dropped = 0 }) {
+  const wantCards = make !== "quiz",
+    wantQuiz = make !== "cards";
+  if (!(wantCards && cards < asked) && !(wantQuiz && quiz < asked)) return null;
+  const made = [
+    wantCards ? count(cards, "card", "cards") : null,
+    wantQuiz ? count(quiz, "question", "questions") : null,
+  ]
+    .filter(Boolean)
+    .join(" and ");
+  return dropped
+    ? `Made ${made}; the rest weren't usable and were left out.`
+    : `Made ${made}: the source had enough for that many.`;
+}
+
 // How many cards and questions a reply streamed so far has started, for
 // the progress line while a deck is written.
 export function streamedCount(text) {

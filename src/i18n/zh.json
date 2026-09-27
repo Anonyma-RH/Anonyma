@@ -6885,6 +6885,22 @@
     {
       "en": "{0} hours",
       "zh": "{0} 小时"
+    },
+    {
+      "en": "Made {0} and {1}: the source had enough for that many.",
+      "zh": "生成了 {0}和 {1}：来源的内容只够生成这么多。"
+    },
+    {
+      "en": "Made {0}: the source had enough for that many.",
+      "zh": "生成了 {0}：来源的内容只够生成这么多。"
+    },
+    {
+      "en": "Made {0} and {1}; the rest weren't usable and were left out.",
+      "zh": "生成了 {0}和 {1}；其余内容无法使用，已略去。"
+    },
+    {
+      "en": "Made {0}; the rest weren't usable and were left out.",
+      "zh": "生成了 {0}；其余内容无法使用，已略去。"
     }
   ]
 }

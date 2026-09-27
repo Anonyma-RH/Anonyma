@@ -57,6 +57,7 @@ import {
   reviewQueue,
   sampleDeck,
   schedule,
+  shortfallNote,
   streak,
   streamedCount,
   studyPayload,
@@ -340,7 +341,7 @@ test("the server builds exactly the documented messages from the chosen source, 
   assert.equal(
     body.messages[1].content,
     [
-      "Task: up to 10 flashcards and up to 10 quiz questions.",
+      "Task: exactly 10 flashcards and exactly 10 quiz questions.",
       "Difficulty: medium: the main ideas and the important details, and how they connect.",
       "Source: pasted text.",
       "",
@@ -522,6 +523,46 @@ test("the \"length\" path: a reply cut off at its budget stops with a plain mess
   assert.match(TRUNCATED_MESSAGE, /Nothing was saved/);
   // Progress while a deck is written counts the items started so far.
   assert.deepEqual(streamedCount('{"cards":[{"front":"a","back":"b"},{"front":'), { cards: 2, quiz: 0 });
+});
+
+test("a deck smaller than asked for gets a plain note, not an error; a full one gets none", () => {
+  // The prompt asks for exactly the count, and fewer only when the source is too short.
+  const text = studyText(checkStudyPayload(PAYLOAD));
+  assert.match(text, /^Task: exactly 10 flashcards and exactly 10 quiz questions\.$/m);
+  assert.match(STUDY_SYSTEM, /Write exactly as many cards and questions as the task asks for/);
+  assert.match(STUDY_SYSTEM, /Write fewer only when the source is too short/);
+  assert.match(studyText(checkStudyPayload({ ...PAYLOAD, make: "quiz", count: 40 })), /^Task: exactly 40 quiz questions\.$/m);
+  // What the filming run got: 8 cards and 7 questions of 10.
+  assert.equal(
+    shortfallNote({ cards: 8, quiz: 7 }, { make: "both", count: 10 }),
+    "Made 8 cards and 7 questions: the source had enough for that many.",
+  );
+  assert.equal(shortfallNote({ cards: 10, quiz: 10 }, { make: "both", count: 10 }), null);
+  assert.equal(shortfallNote({ cards: 10, quiz: 9 }, { make: "both", count: 10 }), "Made 10 cards and 9 questions: the source had enough for that many.");
+  assert.equal(shortfallNote({ cards: 1, quiz: 0 }, { make: "cards", count: 20 }), "Made 1 card: the source had enough for that many.");
+  assert.equal(shortfallNote({ cards: 0, quiz: 12 }, { make: "quiz", count: 20 }), "Made 12 questions: the source had enough for that many.");
+  // Only what was asked for counts: a cards-only deck has no questions to miss.
+  assert.equal(shortfallNote({ cards: 20, quiz: 0 }, { make: "cards", count: 20 }), null);
+  // When some items weren't usable, the note says that instead.
+  assert.equal(
+    shortfallNote({ cards: 8, quiz: 10 }, { make: "both", count: 10, dropped: 2 }),
+    "Made 8 cards and 10 questions; the rest weren't usable and were left out.",
+  );
+  // The whole path: a reply with fewer cards is a deck, and the note follows it.
+  const reply = JSON.stringify({
+    title: "Plants",
+    cards: Array.from({ length: 8 }, (_, i) => ({ front: `Q${i}`, back: `A${i}`, snippet: "Plants store extra glucose as starch" })),
+    quiz: Array.from({ length: 7 }, (_, i) => ({ question: `Q${i}`, options: ["a", "b", "c", "d"], answer: i % 4, snippet: "The Calvin cycle uses carbon dioxide" })),
+  });
+  const read = readDeck(reply, { make: "both", count: 10, source: NOTES, finishReason: "stop" });
+  assert.ok(read.deck && !read.problems && !read.truncated);
+  assert.equal(
+    shortfallNote({ cards: read.deck.cards.length, quiz: read.deck.quiz.length }, { make: "both", count: 10, dropped: read.dropped }),
+    "Made 8 cards and 7 questions: the source had enough for that many.",
+  );
+  // The page shows it as a plain line in the result, not an error notice.
+  const page = readFileSync(new URL("../src/Study.jsx", import.meta.url), "utf8");
+  assert.match(page, /\{gen\.note && <small>\{gen\.note\}<\/small>\}/);
 });
 
 test("snippets are matched without case, quote style or spacing, and shortened ones piece by piece", () => {
@@ -756,6 +797,10 @@ test("Chinese covers the update's copy and the page's strings", () => {
     "Question 3 of 10",
     "Imported “Biology”.",
     "Study Mode is coming soon.",
+    "Made 8 cards and 7 questions: the source had enough for that many.",
+    "Made 1 card: the source had enough for that many.",
+    "Made 12 questions: the source had enough for that many.",
+    "Made 8 cards and 10 questions; the rest weren't usable and were left out.",
     "Study Mode decks and review progress in this browser",
     TRUNCATED_MESSAGE,
   ])

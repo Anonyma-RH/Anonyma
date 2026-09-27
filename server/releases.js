@@ -934,7 +934,7 @@ export const UPDATES = [
     // leave the browser; its one model call is an /api/chat request carrying
     // `compare` (server/compare.js), always off the record, so nothing is
     // stored and there's nothing to erase or export.
-    released: false,
+    released: true,
   },
   {
     id: "pagewatch",

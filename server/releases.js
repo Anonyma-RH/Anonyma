@@ -1001,6 +1001,23 @@ export const UPDATES = [
     // Mode and Device Vault chats continue in the browser only.
     released: true,
   },
+  {
+    id: "deadswitch",
+    title: "Inactivity Wipe",
+    tagline: "Stop signing in, and your history erases itself.",
+    points: [
+      "Off until you choose: 30, 90, 180 or 365 days without a sign-in",
+      "Erases what Panic Wipe erases; your account and credits stay",
+      "A reminder 7 days before, by email if you've added one",
+    ],
+    // server/inactivity-wipe.js: the setting (/api/inactivity-wipe), the
+    // activity clock (sign-ins, signed-in requests and, if the account
+    // allows, API and connected-app use) and the worker's erase, which is
+    // Panic Wipe's own, so it needs "wipe" released too (featuresFor). One
+    // row per account that turned it on, kept by Panic Wipe, deleted by
+    // closure, in the account export.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1209,6 +1226,9 @@ export function featuresFor(req) {
     return post && body.private === true ? ["sharpen", "private"] : ["sharpen"];
   // Panic Wipe: the one route that erases an account's content at once.
   if (/^\/api\/account\/wipe\/?$/.test(p)) return ["wipe"];
+  // Inactivity Wipe: the setting and its notice. Its erase is Panic Wipe's.
+  if (p === "/api/inactivity-wipe" || p.startsWith("/api/inactivity-wipe/"))
+    return ["deadswitch", "wipe"];
   // Passkeys: signing in and signing up with one, and Account → Security's
   // passkeys, whose "confirm it's you" also takes Two-Step Sign-in's.
   if (p === "/api/auth/passkey" || p.startsWith("/api/auth/passkey/"))

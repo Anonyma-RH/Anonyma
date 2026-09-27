@@ -5,6 +5,7 @@ import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { SEED_GUARD_HEADER } from "../seed-guard.js";
 import { apiRateLimit } from "../api-boost.js";
 import { viewerOf } from "../early-models.js";
+import { recordActivity } from "../inactivity-wipe.js";
 import {
   ACCESS_PREFIX,
   authenticateAccessToken,
@@ -450,6 +451,9 @@ export function mcpRoutes(ctx) {
           now(),
           found.key.id,
         );
+        // Inactivity Wipe: a connected app using the account is activity,
+        // unless the account unticked that.
+        recordActivity(db, found.user.id, "api");
         return next();
       }
       apiAuth(req, res, next);

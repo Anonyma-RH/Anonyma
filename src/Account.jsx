@@ -48,6 +48,7 @@ import { HoldingsSettings, UnlinkWallet } from "./Holders.jsx";
 import { ApiRateLimit } from "./ApiBoost.jsx";
 import { ShareLinksManager } from "./ShareLinks.jsx";
 import { PanicWipe } from "./PanicWipe.jsx";
+import { InactivityWipeSettings } from "./InactivityWipe.jsx";
 import { TwoStepSettings } from "./TwoStep.jsx";
 import { twoStepReleased } from "./two-step.js";
 import { PasskeySettings } from "./Passkeys.jsx";
@@ -1077,6 +1078,11 @@ export default function Account() {
                     onChange={saveRetentionDefault}
                   />
                 </section>
+              )}
+              {/* Inactivity Wipe: Panic Wipe's erase, run for you after a
+                  period without sign-ins (off until chosen). */}
+              {!demo && user && (
+                <InactivityWipeSettings config={config} user={user} />
               )}
               {/* Panic Wipe: erase the content, keep the account and its credits. */}
               {!demo && user && isReleased(config, "wipe") && (

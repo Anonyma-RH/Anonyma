@@ -2,6 +2,7 @@ import { hash, now, fail, balance, credits, callable } from "../core.js";
 import { isReleased } from "../releases.js";
 import { apiTrainingFields, liveIds } from "../training.js";
 import { viewerOf } from "../early-models.js";
+import { recordActivity } from "../inactivity-wipe.js";
 
 const bearerKey = (db, req) => {
   const secret = req.headers.authorization?.match(/^Bearer (\S+)$/)?.[1];
@@ -29,6 +30,9 @@ export function apiRoutes({ app, db, cfg, models, earlyModels }) {
     req.user = user;
     req.apiKey = key;
     db.prepare("UPDATE api_keys SET last_used=? WHERE id=?").run(now(), key.id);
+    // Inactivity Wipe: an API key (or, from /mcp, a connected app) using the
+    // account is activity, unless the account unticked that.
+    recordActivity(db, user.id, "api");
     next();
   }
   app.get("/v1", (req, res) => {

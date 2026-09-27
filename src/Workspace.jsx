@@ -153,6 +153,7 @@ import { MEMORY_MODES, MAX_FACT_LENGTH } from "./memory.js";
 import { extractVariables } from "./scrolls.js";
 import { useTeamPays } from "./Treasury.jsx";
 import { LowBalanceBanner, LowBalanceRefusal } from "./BalanceAlerts.jsx";
+import { InactivityWipeBanner } from "./InactivityWipe.jsx";
 import {
   api,
   ApiError,
@@ -3656,6 +3657,8 @@ export default function Workspace() {
         </div>
         {/* Low-Balance Alerts: below the account's alert level, with Top up. */}
         <LowBalanceBanner config={config} user={user} demo={demo} />
+        {/* Inactivity Wipe: the clock was reset, or the content was erased. */}
+        <InactivityWipeBanner config={config} user={user} demo={demo} />
         {/* Find in Chat: sticks to the top of the chat while it's open. */}
         {find.bar}
         <div

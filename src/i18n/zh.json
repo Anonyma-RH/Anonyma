@@ -4841,7 +4841,56 @@
     "The model's reply couldn't be read, so nothing was charged. Try another model for this watch.": "无法读取模型的回复，因此未扣费。请为此监测换一个模型。",
     "Paused after 3 replies in a row that couldn't be read. Nothing was charged. Choose another model for this watch, then switch it back on.": "连续 3 次无法读取模型的回复，已暂停。未扣费。请为此监测选择另一个模型，然后重新开启。",
     "The model couldn't make a summary this time. Nothing was charged.": "模型这次未能生成摘要。未扣费。",
-    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。"
+    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。",
+    "Inactivity Wipe": "闲置清除",
+    "Stop signing in, and your history erases itself.": "不再登录，你的历史记录便会自行清除。",
+    "Off until you choose: 30, 90, 180 or 365 days without a sign-in": "默认关闭，由你选择：连续 30、90、180 或 365 天未登录",
+    "Erases what Panic Wipe erases; your account and credits stay": "清除范围与紧急清除相同；你的账户和积分会保留",
+    "A reminder 7 days before, by email if you've added one": "提前 7 天提醒；如已添加邮箱，会通过邮件提醒",
+    "Every sign-in, on every device": "所有设备上的登录状态",
+    "Your settings, including this one": "你的设置，包括这一项",
+    "Anything kept in your browsers, such as Device Vault chats": "保存在你浏览器中的内容，例如本机保险库会话",
+    "We can only remind you by email if you’ve added one.": "只有在你添加了邮箱后，我们才能通过邮件提醒你。",
+    "Email isn’t set up on this server, so no reminder can be sent.": "此服务器尚未配置邮件，因此无法发送提醒。",
+    "Last active": "上次活动",
+    "Erases after": "清除时间",
+    "Time left": "剩余时间",
+    "Reminder": "提醒",
+    "Offline time added": "已顺延的离线时间",
+    "Last erased": "上次清除",
+    "Inactivity wipe.": "闲置清除。",
+    "If you stop signing in, your content erases itself. Off until you choose a period.": "如果你不再登录，你的内容会自行清除。在你选择期限之前，它保持关闭。",
+    "Erase my content if I don’t sign in for": "连续未登录达到以下天数时，清除我的内容",
+    "API and connected-app use counts as activity": "API 和已连接应用的使用也算作活动",
+    "An agent using your API key keeps your content. Untick this so only you signing in counts.": "只要有智能体在使用你的 API 密钥，你的内容就会保留。取消勾选后，只有你本人登录才算作活动。",
+    "The erase is waiting.": "清除正在等待。",
+    "A request was still running on your account.": "你的账户上仍有请求正在运行。",
+    "A collab you own still holds Team Treasury credits.": "你拥有的协作空间中仍有团队金库积分。",
+    "A team-paid request was still running in a collab you own.": "你拥有的协作空间中仍有由团队付费的请求正在运行。",
+    "A saved file couldn’t be removed.": "有一个已保存的文件无法删除。",
+    "Something went wrong.": "出了点问题。",
+    "It tries again every hour.": "它会每小时重试一次。",
+    "What gets erased, and what stays": "哪些会被清除，哪些会保留",
+    "Signing in, or using ANONYMA while signed in, resets the clock. Scheduled Routines and Page Watch runs don’t.": "登录，或在登录状态下使用 ANONYMA，都会重新计时。定时任务和网页监测的自动运行不会。",
+    "It can’t reach your devices: Device Vault chats and anything else kept in a browser stay there.": "它无法触及你的设备：本机保险库会话以及保存在浏览器中的其他内容都会留在原处。",
+    "Like Panic Wipe, it waits while a request is running or a collab you own holds Team Treasury credits.": "与紧急清除一样，当有请求正在运行，或你拥有的协作空间中仍有团队金库积分时，它会等待。",
+    "While it’s on, we keep when you were last active, updated at most once an hour. Turning it off deletes that. Time ANONYMA is offline doesn’t count.": "开启期间，我们会保存你上次活动的时间，最多每小时更新一次。关闭后即删除该记录。ANONYMA 离线的时间不计入。",
+    "Backups are separate copies.": "备份是独立的副本。",
+    "Off. Nothing will be erased for inactivity, and your last-active time is deleted.": "已关闭。不会因闲置而清除任何内容，你的上次活动时间也已删除。",
+    "Turn on Inactivity Wipe?": "开启闲置清除？",
+    "We’ll email you 7 days before.": "我们会提前 7 天给你发邮件。",
+    "Shorten it": "缩短期限",
+    "Inactivity Wipe was due.": "闲置清除原本已到期。",
+    "Signing in reset the clock.": "你这次登录已重新计时。",
+    "Your account and credits are here.": "你的账户和积分都还在。",
+    "Inactivity settings": "闲置清除设置",
+    "Dismiss the Inactivity Wipe notice": "关闭闲置清除通知",
+    "Choose 30, 90, 180 or 365 days, or null to turn it off.": "请选择 30、90、180 或 365 天，或传入 null 以关闭。",
+    "Confirm to turn on Inactivity Wipe or shorten its period.": "开启闲置清除或缩短期限前，请先确认。",
+    "Send days, api_counts or both.": "请发送 days、api_counts 或两者。",
+    "Choose a period to turn Inactivity Wipe on.": "请选择一个期限以开启闲置清除。",
+    "Send api_counts as true or false.": "api_counts 须为 true 或 false。",
+    "Inactivity Wipe: off until you choose 30, 90, 180 or 365 days. While it’s on, we keep the period, whether API and connected-app use counts, when you were last active (updated at most once an hour), the reminder’s state and when it last erased. Past the deadline it erases what Panic Wipe erases; a reminder goes 7 days before, only to a verified email. Turning it off or closing your account deletes the setting; Panic Wipe keeps it.": "闲置清除：在你选择 30、90、180 或 365 天之前保持关闭。开启期间，我们会保存所选期限、API 和已连接应用的使用是否算作活动、你上次活动的时间（最多每小时更新一次）、提醒状态，以及上次清除的时间。超过期限后，它会清除紧急清除所清除的内容；提前 7 天发送一次提醒，且只发往已验证的邮箱。关闭它或关闭账户会删除该设置；紧急清除会保留它。"
   },
   "patterns": [
     {
@@ -7871,6 +7920,42 @@
     {
       "en": "Made {0}; the rest weren't usable and were left out.",
       "zh": "生成了 {0}；其余内容无法使用，已略去。"
+    },
+    {
+      "en": "Sent {0}",
+      "zh": "已于 {0} 发送"
+    },
+    {
+      "en": "By email, {0}",
+      "zh": "{0} 通过邮件提醒"
+    },
+    {
+      "en": "On · {0} days",
+      "zh": "已开启 · {0} 天"
+    },
+    {
+      "en": "On. If you don’t sign in before {0}, your content is erased.",
+      "zh": "已开启。如果你在 {0} 之前未登录，你的内容将被清除。"
+    },
+    {
+      "en": "If you don’t sign in for {0} days, your content will be erased. This can’t be undone.",
+      "zh": "如果你连续 {0} 天未登录，你的内容将被清除。此操作无法撤销。"
+    },
+    {
+      "en": "Inactivity Wipe was {0} away.",
+      "zh": "距离闲置清除原本只剩 {0}。"
+    },
+    {
+      "en": "If you stop signing in, it erases your content after {0}.",
+      "zh": "如果你不再登录，它会在 {0} 之后清除你的内容。"
+    },
+    {
+      "en": "Inactivity Wipe erased your content on {0}.",
+      "zh": "闲置清除已于 {0} 清除了你的内容。"
+    },
+    {
+      "en": "There was no activity for {0} days. Your account and credits are here.",
+      "zh": "你的账户已连续 {0} 天没有活动。你的账户和积分都还在。"
     }
   ]
 }

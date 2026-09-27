@@ -1092,6 +1092,33 @@ export const MIGRATIONS = [
     addColumn(db, "page_watches", "unreadable", "INTEGER NOT NULL DEFAULT 0");
     additive("")(db);
   },
+  // Inactivity Wipe (server/inactivity-wipe.js): one row per account that
+  // turned it on, and none otherwise, so an account that never did has no
+  // activity recorded at all. The period, whether API and connected-app use
+  // counts, the last activity (written at most once an hour), the reminder
+  // email's state, the last automatic erase, why one is waiting, and the
+  // one-time notice the workspace shows. Kept by Panic Wipe with the other
+  // settings; deleted by account closure; in the account export. `paused` is
+  // time the worker wasn't running (the service down, or the update switched
+  // off), added to the deadline so it never counts as inactivity;
+  // inactivity_clock holds when the worker last ran, to measure it.
+  additive(`CREATE TABLE IF NOT EXISTS inactivity_wipe(
+      user_id TEXT PRIMARY KEY REFERENCES users(id),
+      days INTEGER NOT NULL CHECK(days IN (30,90,180,365)),
+      api_counts INTEGER NOT NULL DEFAULT 1 CHECK(api_counts IN (0,1)),
+      last_active INTEGER NOT NULL,
+      paused INTEGER NOT NULL DEFAULT 0 CHECK(paused>=0),
+      updated INTEGER NOT NULL,
+      reminded INTEGER,
+      remind_tried INTEGER,
+      erased INTEGER,
+      blocked TEXT,
+      blocked_at INTEGER,
+      notice TEXT CHECK(notice IS NULL OR notice IN ('reset','erased')),
+      notice_deadline INTEGER);
+    CREATE TABLE IF NOT EXISTS inactivity_clock(
+      id INTEGER PRIMARY KEY CHECK(id=1),
+      last_sweep INTEGER NOT NULL);`),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

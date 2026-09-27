@@ -9,6 +9,8 @@ import {
   WIPE_GOES_PROJECTS,
   WIPE_BOOKMARKS,
   WIPE_BLIND,
+  WIPE_ARENA,
+  WIPE_ARENA_STAYS,
   WIPE_STUDY,
   WIPE_WATCHES,
   WIPE_GIFTS,
@@ -32,6 +34,8 @@ export function PanicWipe({ user }) {
   const bookmarksLive = isReleased(useApp()?.config, "bookmarks");
   // And Blind Compare's votes.
   const blindLive = isReleased(useApp()?.config, "blind");
+  // And Blind Arena's choice (the votes already added stay).
+  const arenaLive = blindLive && isReleased(config, "arena");
   // And Study Mode's decks in this browser.
   const studyLive = !!config && isReleased(config, "study");
   // And Page Watch's watches.
@@ -107,6 +111,7 @@ export function PanicWipe({ user }) {
                   {projectsLive && <li>{WIPE_GOES_PROJECTS}</li>}
                   {bookmarksLive && <li>{WIPE_BOOKMARKS}</li>}
                   {blindLive && <li>{WIPE_BLIND}</li>}
+                  {arenaLive && <li>{WIPE_ARENA}</li>}
                   {studyLive && <li>{WIPE_STUDY}</li>}
                   {watchesLive && <li>{WIPE_WATCHES}</li>}
                   {giftsLive && <li>{WIPE_GIFTS}</li>}
@@ -119,6 +124,7 @@ export function PanicWipe({ user }) {
                     <li key={t}>{t}</li>
                   ))}
                   {passkeysLive && <li>{WIPE_KEEPS_PASSKEYS}</li>}
+                  {arenaLive && <li>{WIPE_ARENA_STAYS}</li>}
                 </ul>
                 <p className="fine-print">
                   <Link to="/docs/privacy" onClick={close}>

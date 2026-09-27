@@ -21,7 +21,7 @@ export function siteRoutes({ app, db, cfg }) {
   // Gated pages this installation serves: the Connect an App consent page,
   // the public NYMA page (/token), Panic Wipe's "Wiped" page, the
   // workspace's Sheets, On-device, Study and Compare pages, Model Status'
-  // page and Gift Links' claim page exist only once their update is live.
+  // page, Gift Links claim page and Blind Arena exist only once released.
   const served = () => ({
     connect: connectLive(cfg),
     token: isReleased(cfg, "holders"),
@@ -29,6 +29,8 @@ export function siteRoutes({ app, db, cfg }) {
     sheets: isReleased(cfg, "sheets"),
     // Model Status' public page (/status).
     status: isReleased(cfg, "status"),
+    // Blind Arena's public leaderboard (/arena), built on Blind Compare.
+    arena: isReleased(cfg, "arena") && isReleased(cfg, "blind"),
     ondevice: isReleased(cfg, "ondevice"),
     study: isReleased(cfg, "study"),
     compare: isReleased(cfg, "doccompare"),

@@ -5027,7 +5027,60 @@
     "Paste the link or type the code": "粘贴链接或输入礼物码",
     "Gift credits with a link": "用链接赠送积分",
     "Gift Links: each gift you make (its amount, note, dates and whether it was claimed or returned) and a fingerprint of its code, never the code itself. Who claimed a gift isn't kept with it and is never shown to you. Panic Wipe and closing your account cancel your unclaimed gifts, return their credits to your balance, then delete the list; the ledger keeps its entries.": "礼物链接：你送出的每份礼物（金额、附言、日期，以及是否已被领取或退回）和礼物码的指纹，绝不保存礼物码本身。领取人不会与礼物一起保存，也永远不会显示给你。紧急清除和注销账户会先取消你尚未被领取的礼物，把积分退回你的余额，再删除礼物列表；账本会保留相应记录。",
-    "The export also lists the gifts you made: amount, note, dates and state. Codes aren't kept, so they can't be exported.": "导出内容还会列出你送出的礼物：金额、附言、日期和状态。礼物码不会被保存，因此无法导出。"
+    "The export also lists the gifts you made: amount, note, dates and state. Codes aren't kept, so they can't be exported.": "导出内容还会列出你送出的礼物：金额、附言、日期和状态。礼物码不会被保存，因此无法导出。",
+    "Blind Arena": "盲测竞技场",
+    "Which model wins when nobody knows the names?": "没人知道名字时，哪个模型会赢？",
+    "A public leaderboard of models, ranked from blind votes": "公开的模型排行榜，按盲测投票排名",
+    "Your Blind Compare votes count only if you opt in": "只有你选择加入，你的盲测对比投票才会计入",
+    "Aggregates only: the models, the vote and the day, never who voted": "只保存汇总：模型、投票结果和日期，从不记录谁投了票",
+    "Blind Arena is coming soon.": "盲测竞技场即将推出。",
+    "BLIND ARENA": "盲测竞技场",
+    "Which model wins when": "没人知道名字时，",
+    "nobody knows the names?": "哪个模型会赢？",
+    "Models ranked from blind votes in Blind Compare. Aggregates only: never who voted, and never what they asked.": "根据盲测对比中的盲投结果为模型排名。只使用汇总数据：从不记录谁投了票，也从不记录他们问了什么。",
+    "Local test installation: this board comes from its test votes, not from real people.": "本地测试安装：这个榜单来自其测试投票，而非真实用户。",
+    "1 blind vote": "1 次盲测投票",
+    "1 model ranked": "已排名 1 个模型",
+    "The Arena couldn't be loaded. Try again in a moment.": "无法加载竞技场，请稍后再试。",
+    "Loading the Arena…": "正在加载竞技场……",
+    "Score": "得分",
+    "95% range": "95% 区间",
+    "Votes": "投票数",
+    "Win rate": "胜率",
+    "Ranked models": "已排名的模型",
+    "Not enough votes yet.": "投票还不够多。",
+    "Blind votes only.": "只看盲投。",
+    "In Blind Compare two models answer the same message with their names hidden, and the person picks the better reply, a tie or both bad. Only accounts that opt in add their votes, and only from saved chat and code rounds: off-the-record, Private, Device Vault and Uncensored rounds never count.": "在盲测对比中，两个模型在隐藏名称的情况下回答同一条消息，由用户选出更好的回复、平局或都不好。只有选择加入的账户才会贡献投票，而且只来自已保存的对话和代码轮次：不留记录、隐私模式、本机保险库和无审查的轮次从不计入。",
+    "Score.": "得分。",
+    "A Bradley–Terry model fitted to every vote, on an Elo-like scale: the average model scores 1000, and 400 points means 10-to-1 odds of winning. A tie is half a win for each model, and so is both bad, since neither reply was better. Each model also starts with one tie against an average model, so a short perfect record can't run off the scale.": "对全部投票拟合 Bradley–Terry 模型，并换算成类似 Elo 的分数：平均水平的模型为 1000 分，相差 400 分代表 10 比 1 的获胜几率。平局对双方各记半场胜利，“都不好”也一样，因为两个回复都不比对方更好。每个模型还会预先计入一场与平均水平模型的平局，这样少量全胜记录也不会让分数失控。",
+    "95% range.": "95% 区间。",
+    "The scores refitted on 200 resamples of the votes. When two models' ranges overlap, the votes don't yet say which is better. Win rate is wins plus half the ties, over votes.": "对投票做 200 次重抽样并重新拟合得分后得到的区间。两个模型的区间重叠时，投票还无法说明哪个更好。胜率为胜场加上一半平局，再除以投票数。",
+    "To take part, turn on Blind in a chat, vote, and say yes when asked. You can switch it off any time in Account settings.": "想参与的话，在对话中开启盲测并投票，被询问时选择同意即可。你可以随时在账户设置中关闭。",
+    "Compare two models": "对比两个模型",
+    "Add your blind votes to the public Arena?": "把你的盲测投票加入公开竞技场？",
+    "Yes, add my votes": "好，加入我的投票",
+    "No thanks": "不用了",
+    "Your Blind votes stay yours. You can change this in Account settings.": "你的盲测投票只属于你。你可以在账户设置中更改。",
+    "Added. This vote and your next Blind votes go to the Arena, with no account attached.": "已加入。这次投票和你之后的盲测投票都会加入竞技场，不关联任何账户。",
+    "Your next Blind votes go to the Arena, with no account attached.": "你之后的盲测投票会加入竞技场，不关联任何账户。",
+    "See the public Blind Arena": "查看公开的盲测竞技场",
+    "Blind Arena.": "盲测竞技场。",
+    "Add your Blind Compare votes to the public leaderboard. Off unless you switch it on.": "把你的盲测对比投票加入公开排行榜。除非你开启，否则保持关闭。",
+    "Add my Blind votes to the Arena": "把我的盲测投票加入竞技场",
+    "Only the two models, your vote and the day, with no account attached. Off-the-record, Private, Device Vault and Uncensored rounds never are.": "只包含两个模型、你的投票结果和日期，不关联任何账户。不留记录、隐私模式、本机保险库和无审查的轮次从不加入。",
+    "Switching it off stops future votes. Votes already added stay in the Arena: nothing there says they were yours, so they can't be picked out to remove.": "关闭后，之后的投票不再加入。已加入的投票会留在竞技场中：那里没有任何信息表明它们来自你，因此无法挑出来删除。",
+    "See the Arena": "查看竞技场",
+    "Your next Blind votes will be added to the Arena.": "你之后的盲测投票将加入竞技场。",
+    "Stopped. Your next Blind votes stay yours.": "已停止。你之后的盲测投票只属于你。",
+    "Its rank on the public Blind Arena, from blind votes": "它在公开盲测竞技场中的排名，来自盲测投票",
+    "Your Blind Arena choice. You'll be asked again after your next vote.": "你的盲测竞技场选择。下次投票后会再次询问你。",
+    "Votes already added to the Blind Arena. They carry no account, so they can't be picked out.": "已加入盲测竞技场的投票。它们不关联任何账户，因此无法被挑出来。",
+    "Blind Arena: only whether you add your Blind votes to the public leaderboard. It's off unless you say yes. A vote you add goes into a count per day and model pair with no account attached, so it stays when you switch this off, wipe or close your account. Panic Wipe and closing your account delete the choice.": "盲测竞技场：只保存你是否把盲测投票加入公开排行榜。除非你同意，否则保持关闭。你加入的投票会计入按日期和模型组合统计的计数，不关联任何账户，因此在你关闭此选项、紧急清除或关闭账户后仍会保留。紧急清除和关闭账户会删除这项选择。",
+    "It also says whether you add your votes to the Blind Arena.": "导出内容还会注明你是否把投票加入盲测竞技场。",
+    "The Blind Arena ranks models from blind votes. Yes adds this vote and your next ones.": "盲测竞技场根据盲测投票为模型排名。选择同意后，这次投票和你之后的投票都会加入。",
+    "Only the two models, your vote and the day, with no account attached.": "只包含两个模型、你的投票结果和日期，不关联任何账户。",
+    "Off-the-record, Private, Device Vault and Uncensored rounds are never added.": "不留记录、隐私模式、本机保险库和无审查的轮次从不加入。",
+    "Change it any time in Account settings.": "你可以随时在账户设置中更改。"
   },
   "patterns": [
     {
@@ -8197,6 +8250,38 @@
     {
       "en": "Claim {0} credits",
       "zh": "领取 {0} 积分"
+    },
+    {
+      "en": "{0} blind votes",
+      "zh": "{0} 次盲测投票"
+    },
+    {
+      "en": "{0} models ranked",
+      "zh": "已排名 {0} 个模型"
+    },
+    {
+      "en": "Updated at {0} · once an hour",
+      "zh": "更新于 {0} · 每小时一次"
+    },
+    {
+      "en": "A model is listed once at least {0} blind votes involve it, so no one person's votes can be picked out. We don't add votes of our own to fill the board.",
+      "zh": "一个模型至少获得 {0} 次相关的盲测投票后才会上榜，这样任何人的投票都无法被单独辨认出来。我们不会自己添加投票来填充榜单。"
+    },
+    {
+      "en": "1 more model has votes but fewer than {0}, so it isn't listed yet.",
+      "zh": "还有 1 个模型已有投票但少于 {0} 次，因此暂未上榜。"
+    },
+    {
+      "en": "{0} more models have votes but fewer than {1}, so they aren't listed yet.",
+      "zh": "还有 {0} 个模型已有投票但少于 {1} 次，因此暂未上榜。"
+    },
+    {
+      "en": "The Arena keeps only counts: the two models, the vote and the day, with no account. A model appears once at least {0} votes involve it, and the board is recomputed once an hour.",
+      "zh": "竞技场只保存计数：两个模型、投票结果和日期，不关联任何账户。一个模型至少获得 {0} 次相关投票后才会出现，榜单每小时重新计算一次。"
+    },
+    {
+      "en": "Arena #{0}",
+      "zh": "竞技场第 {0} 名"
     }
   ]
 }

@@ -421,8 +421,9 @@ export function BlindTurn({
   );
 }
 
-// Your rankings: win rates from your own votes, and Reset.
-export function BlindRankings({ onClose }) {
+// Your rankings: win rates from your own votes, and Reset. `arena` is Blind
+// Arena's link, once released.
+export function BlindRankings({ onClose, arena = null }) {
   const [data, setData] = useState(null),
     [error, setError] = useState(""),
     [confirming, setConfirming] = useState(false),
@@ -485,6 +486,7 @@ export function BlindRankings({ onClose }) {
         <p className="blind-rankings-note">
           Only the two model names, your vote and its date are kept for this. Never your prompts or the replies.
         </p>
+        {arena && <p className="blind-rankings-note">{arena}</p>}
         {rows.length > 0 &&
           (confirming ? (
             <div className="blind-reset-confirm" role="group" aria-label="Reset rankings">

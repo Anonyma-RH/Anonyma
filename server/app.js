@@ -41,6 +41,7 @@ import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
 import { linkReaderRoutes } from "./routes/link-reader.js";
 import { blindRoutes } from "./routes/blind.js";
+import { arenaRoutes } from "./routes/arena.js";
 import { researchRoutes } from "./routes/research.js";
 import { sharpenRoutes } from "./routes/sharpen.js";
 import { factCheckRoutes } from "./routes/factcheck.js";
@@ -168,6 +169,8 @@ export function createApp(overrides = {}) {
   // Blind Compare: two chat replies through runChat, and the account's
   // votes (after projects, which a saved round can be filed in).
   blindRoutes(ctx);
+  // Blind Arena: the public leaderboard from contributed Blind votes.
+  arenaRoutes(ctx);
   // Deep Research: plan, web searches and a sourced report, each step held
   // and settled on the ordinary billing path (after Memory and Projects,
   // whose checks it uses).

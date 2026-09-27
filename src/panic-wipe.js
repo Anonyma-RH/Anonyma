@@ -25,6 +25,10 @@ export const WIPE_GOES_PROJECTS = "Projects, with their instructions and pinned 
 export const WIPE_BOOKMARKS = "Your bookmarks and their notes, in every chat";
 // Listed only once Blind Compare is released (PanicWipe.jsx).
 export const WIPE_BLIND = "Your Blind Compare votes and rankings";
+// Listed only once Blind Arena is released (PanicWipe.jsx): the choice goes,
+// and the votes already added stay, since none of them names the account.
+export const WIPE_ARENA = "Your Blind Arena choice. You'll be asked again after your next vote.";
+export const WIPE_ARENA_STAYS = "Votes already added to the Blind Arena. They carry no account, so they can't be picked out.";
 // Listed only once Study Mode is released (PanicWipe.jsx). Its decks live
 // only in the browser, so they go with this browser's data below.
 export const WIPE_STUDY = "Study Mode decks and review progress in this browser";

@@ -1053,6 +1053,22 @@ export const UPDATES = [
     // account's content (unclaimed ones are returned first).
     released: false,
   },
+  {
+    id: "arena",
+    title: "Blind Arena",
+    tagline: "Which model wins when nobody knows the names?",
+    points: [
+      "A public leaderboard of models, ranked from blind votes",
+      "Your Blind Compare votes count only if you opt in",
+      "Aggregates only: the models, the vote and the day, never who voted",
+    ],
+    // Built on Blind Compare's votes, so it needs "blind" released too
+    // (featuresFor). GET /api/arena and the public /arena page, plus the
+    // account's opt-in (server/routes/arena.js). The aggregate has no
+    // account id, so it stays when an account is erased; the opt-in is
+    // erased and exported with the account (server/arena.js).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1209,6 +1225,9 @@ export function featuresFor(req) {
     }
     return needed;
   }
+  // Blind Arena: the public leaderboard and the account's opt-in. Its
+  // votes come from Blind Compare, so it needs that update too.
+  if (p === "/api/arena" || p.startsWith("/api/arena/")) return ["arena", "blind"];
   // Deep Research: a plan, one web search per sub-question and a report, so
   // it needs Live Web Search too. What a run turns on needs its own update,
   // as the same chat would: Private Mode, off the record, a project, Memory,

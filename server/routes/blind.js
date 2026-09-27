@@ -11,6 +11,13 @@ import { isPrivateModel } from "../private-mode.js";
 import { requestIdentifier } from "../middleware.js";
 import { veilMaskedFrom } from "../privacy-trail.js";
 import { chatTitle } from "./chat.js";
+import { UNCENSORED_MODELS, isReleased } from "../releases.js";
+import {
+  addToTally,
+  arenaChoice,
+  arenaEligible,
+  setArenaChoice,
+} from "../arena.js";
 import {
   SIDES,
   OUTCOMES,
@@ -38,6 +45,12 @@ import {
 // - A saved chat keeps its user message and one reply holding both answers,
 //   and the reveal once voted, like any saved turn. Off the record, Private
 //   Mode and Device only rounds are never saved on the server.
+// - Blind Arena (server/arena.js), once released: a counted vote from an
+//   account that chose to contribute also adds one to the anonymous
+//   aggregate (the pair, the outcome and the day; never the account). The
+//   round token says whether the round can be (`ar`): only saved chats in
+//   chat or code, never off the record (device-only chats included),
+//   Private Mode or Uncensored.
 
 const MODES = ["chat", "code", "uncensored"];
 // A round can be voted on for 30 days after it ran.
@@ -218,6 +231,9 @@ export function blindRoutes(ctx) {
       project = ctx.projects.forChat(user, body.project);
     }
 
+    // Blind Arena: whether this round's vote may join the public Arena.
+    const arenaRound =
+      !ephemeral && mode !== "uncensored" && !pair.some((id) => UNCENSORED_MODELS.includes(id));
     const [first, second] = orderPair(models);
     const round = uid("br_");
     let started = false,
@@ -443,6 +459,7 @@ export function blindRoutes(ctx) {
       a: a.model.id,
       b: b.model.id,
       t: now(),
+      ar: arenaRound ? 1 : 0,
       d: Object.fromEntries(
         sides.map((s) => [
           s.label,
@@ -536,6 +553,20 @@ export function blindRoutes(ctx) {
           "DELETE FROM blind_votes WHERE user_id=? AND id NOT IN (SELECT id FROM blind_votes WHERE user_id=? ORDER BY created DESC,rowid DESC LIMIT ?)",
         ).run(req.user.id, req.user.id, MAX_VOTES);
       }
+      // Blind Arena, once released: a counted vote joins the aggregate when
+      // the account contributes and the round is eligible. The first vote
+      // after release asks the account once (the reply's `arena.ask`); until
+      // it answers, nothing is added.
+      let arena = null;
+      if (isReleased(cfg, "arena")) {
+        const choice = arenaChoice(db, req.user.id);
+        const added =
+          !kept && choice === "yes" && arenaEligible(p)
+            ? addToTally(db, { a: p.a, b: p.b, outcome, at: now() })
+            : false;
+        if (choice == null) setArenaChoice(db, req.user.id, "asked");
+        arena = { ask: choice == null, contributing: choice === "yes", added };
+      }
       const reveal = revealOf(p, kept?.outcome || outcome);
       // A saved reply (or a branch's copy of it) takes the reveal too.
       let updated = null;
@@ -560,12 +591,13 @@ export function blindRoutes(ctx) {
           updated = row.id;
         }
       }
-      return { reveal, counted: !kept, updated };
+      return { reveal, counted: !kept, updated, arena };
     });
     res.json({
       reveal: result.reveal,
       counted: result.counted,
       message_id: result.updated,
+      ...(result.arena ? { arena: result.arena } : {}),
     });
   });
 

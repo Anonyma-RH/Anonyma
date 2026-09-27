@@ -1150,6 +1150,27 @@ export const MIGRATIONS = [
       CREATE TABLE IF NOT EXISTS gift_lockouts(key TEXT PRIMARY KEY,
         failures INTEGER NOT NULL,window_end INTEGER NOT NULL);
   `),
+  // Blind Arena (server/arena.js). arena_consent: whether an account adds
+  // its Blind votes to the public Arena; only the choice ("asked" before an
+  // answer, then "yes" or "no"), erased with the account's content. No row
+  // means never asked, which is no. arena_tally: the anonymous aggregate,
+  // counts per UTC day and model pair (in id order) with no account id, no
+  // vote id and no rowid, so a count can't be traced to a vote or an
+  // account. It stays when an account is erased.
+  additive(`
+      CREATE TABLE IF NOT EXISTS arena_consent(user_id TEXT PRIMARY KEY REFERENCES users(id),
+        choice TEXT NOT NULL CHECK(choice IN ('asked','yes','no')));
+      CREATE TABLE IF NOT EXISTS arena_tally(
+        day TEXT NOT NULL CHECK(length(day)=10),
+        model_lo TEXT NOT NULL CHECK(length(model_lo) BETWEEN 1 AND 200),
+        model_hi TEXT NOT NULL CHECK(length(model_hi) BETWEEN 1 AND 200),
+        lo_wins INTEGER NOT NULL DEFAULT 0 CHECK(lo_wins>=0),
+        hi_wins INTEGER NOT NULL DEFAULT 0 CHECK(hi_wins>=0),
+        ties INTEGER NOT NULL DEFAULT 0 CHECK(ties>=0),
+        both_bad INTEGER NOT NULL DEFAULT 0 CHECK(both_bad>=0),
+        PRIMARY KEY(day,model_lo,model_hi),
+        CHECK(model_lo<model_hi)) WITHOUT ROWID;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

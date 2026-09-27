@@ -884,6 +884,7 @@ const featureIcons = {
   python: "terminal",
   deadswitch: "hourglass",
   giftlinks: "ticket",
+  arena: "podium",
 };
 const launch = {
   id: "mvp",

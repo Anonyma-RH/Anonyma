@@ -893,6 +893,7 @@ test("a database made before the unreadable count gets it", (t) => {
   t.after(() => db.close());
   assert.ok(db.prepare("PRAGMA table_info(page_watches)").all().some((col) => col.name === "unreadable"));
   assert.ok(db.prepare("SELECT 1 FROM schema_additive WHERE version=?").get(version), "recorded as additive");
+  assert.equal(db.prepare("PRAGMA user_version").get().user_version, MIGRATIONS.length);
 });
 
 test("SSRF: a watched page that starts redirecting to a private address is refused, and nothing private is dialled", async (t) => {

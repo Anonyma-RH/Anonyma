@@ -21,6 +21,15 @@ const PRICE_BASIS = {
   text: `a typical exchange (${TYPICAL.input.toLocaleString("en-US")} tokens in, ${TYPICAL.output.toLocaleString("en-US")} out)`,
 };
 
+// Blind Arena, once released: a ranked model's place on the public board.
+function ArenaTag({ rank }) {
+  return (
+    <span className="mf-tag arena" title="Its rank on the public Blind Arena, from blind votes">
+      {`Arena #${rank}`}
+    </span>
+  );
+}
+
 // Model Finder & Presets: the model choice beside the composer. A button
 // shows the model in use; it opens a panel with the three presets and a
 // searchable list (combobox + listbox, arrow keys, Enter, Escape).
@@ -36,6 +45,9 @@ export default function ModelFinder({
   demo = false,
   // Model Status, once released: model id → its status (src/model-status.js).
   status = null,
+  // Blind Arena, once released: model id → its rank on the public board
+  // (src/arena.js); only models with enough votes have one.
+  arena = null,
   // On-Device Model: opens its page, where a model runs in this browser.
   onDevice = null,
 }) {
@@ -129,6 +141,7 @@ export default function ModelFinder({
         {current && status && <StatusDot entry={status[current.id]} />}
         <b data-i18n="off">{current?.name || "Choose a model"}</b>
         {current && <EarlyModelTag model={current} />}
+        {current && arena?.[current.id] && <ArenaTag rank={arena[current.id]} />}
         <Icon name="down" size={14} />
       </button>
       {resolved?.fallback && (
@@ -229,6 +242,7 @@ export default function ModelFinder({
                   <span data-i18n="off">{m.provider}</span>
                   {!demo && m.private && <span className="mf-tag">Private</span>}
                   <EarlyModelTag model={m} />
+                  {arena?.[m.id] && <ArenaTag rank={arena[m.id]} />}
                   {m.vision && <span className="mf-tag">Sees images</span>}
                   {trainingLive && m.trainsOnPrompts && <span className="mf-tag warn">Trains on prompts</span>}
                 </span>

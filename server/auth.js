@@ -27,6 +27,7 @@ import {
 } from "./holders.js";
 import { createTwoStep } from "./two-step.js";
 import { isReleased } from "./releases.js";
+import { recordActivity } from "./inactivity-wipe.js";
 
 export function sessionCookieOptions(cfg) {
   return {
@@ -107,6 +108,9 @@ export function authRoutes(app, db, cfg, limit) {
     db.prepare(
       "INSERT INTO sessions(hash,user_id,expires,created) VALUES(?,?,?,?)",
     ).run(hash(token), user.id, now() + 30 * 86400000, now());
+    // Inactivity Wipe: every successful sign-in is activity (a no-op for
+    // accounts that haven't turned it on).
+    recordActivity(db, user.id, "sign-in");
     res.cookie("anonyma_session", token, cookieOptions);
     return publicUser(user);
   }
@@ -184,6 +188,9 @@ export function authRoutes(app, db, cfg, limit) {
         req.user = db
           .prepare("SELECT * FROM users WHERE id=? AND deleted IS NULL")
           .get(s.user_id);
+      // Inactivity Wipe: a signed-in session's request is activity, written
+      // at most once an hour (server/inactivity-wipe.js).
+      if (req.user) recordActivity(db, req.user.id, "session");
     }
     next();
   });

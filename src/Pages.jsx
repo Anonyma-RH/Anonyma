@@ -881,6 +881,7 @@ const featureIcons = {
   highlight: "highlight",
   catchup: "catchup",
   python: "terminal",
+  deadswitch: "hourglass",
 };
 const launch = {
   id: "mvp",

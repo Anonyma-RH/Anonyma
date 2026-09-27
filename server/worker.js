@@ -259,6 +259,15 @@ export function createWorker(ctx) {
         "DELETE FROM sealed_shares WHERE expires IS NOT NULL AND expires<=?",
       ).run(now());
       recoverExpiredHolds();
+      // Inactivity Wipe (server/inactivity-wipe.js): erase the accounts past
+      // their deadline, after expired holds are released so they don't hold
+      // it up, then send the reminders that are due.
+      try {
+        await ctx.inactivity?.sweep();
+      } catch {
+        console.error("Inactivity Wipe check failed; it will retry.");
+      }
+      if (closed) return;
       if (cfg.rpc && cfg.token) {
         // About daily: each read schedules the next 12 to 36 hours on, at a
         // random time (token_due, server/holders.js). A failed read is

@@ -9,6 +9,7 @@ import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
 import { exportBlindVotes, forgetBlindVotes } from "./blind.js";
 import { exportAudioOverviews, forgetAudioOverviews } from "./audio-overview.js";
+import { exportInactivity, forgetInactivity, inactivityLive } from "../inactivity-wipe.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -218,6 +219,13 @@ export function accountRoutes(ctx) {
   function audioOverviewExport(user) {
     const list = exportAudioOverviews(db, user);
     return list.length || isReleased(cfg, "audiooverview") ? { audioOverviews: list } : {};
+  }
+  // Inactivity Wipe: the period, whether API use counts, the last activity,
+  // the deadline, the reminder and the last automatic erase (once the update
+  // is live, or while it's on; null while it's off).
+  function inactivityExport(user) {
+    const setting = exportInactivity(db, user);
+    return setting || inactivityLive(cfg) ? { inactivityWipe: setting } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -550,6 +558,7 @@ export function accountRoutes(ctx) {
       ...blindExport(req.user.id),
       // Audio Overview: saved overviews' scripts.
       ...audioOverviewExport(req.user.id),
+      ...inactivityExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db
@@ -627,6 +636,8 @@ export function accountRoutes(ctx) {
       // Passkeys: every credential and its public key.
       db.prepare("DELETE FROM passkeys WHERE user_id=?").run(req.user.id);
       forgetAlert(db, req.user.id);
+      // Inactivity Wipe: the setting and its activity clock.
+      forgetInactivity(db, req.user.id);
       // NYMA Holder Program: votes go; paid cycles stay with the ledger.
       db.prepare("DELETE FROM roadmap_votes WHERE user_id=?").run(req.user.id);
       db.prepare(

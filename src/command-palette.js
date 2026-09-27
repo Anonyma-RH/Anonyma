@@ -571,7 +571,11 @@ export function paletteActions(ctx = {}) {
       // Passkeys live in Security too, once released.
       ...(on("passkeys") ? ["passkey", "passkeys", "face id", "fingerprint", "webauthn"] : []),
     ], { icon: "shield" });
-  account("settings", "Account settings", "settings", ["preferences", "sessions", "export", "sign out"], { icon: "settings" });
+  account("settings", "Account settings", "settings", [
+    "preferences", "sessions", "export", "sign out",
+    // Inactivity Wipe lives in Account settings, once released.
+    ...(on("deadswitch") && on("wipe") ? ["inactivity wipe", "auto erase", "dead man's switch"] : []),
+  ], { icon: "settings" });
   add("goto", {
     id: "models",
     label: "Explore models",

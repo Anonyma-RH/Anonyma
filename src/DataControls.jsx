@@ -42,6 +42,9 @@ export default function DataControls() {
   const study = !!config && isReleased(config, "study");
   // And Python Runner.
   const python = !!config && isReleased(config, "python");
+  // And Inactivity Wipe, whose erase is Panic Wipe's.
+  const inactivity =
+    !!config && isReleased(config, "deadswitch") && isReleased(config, "wipe");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -189,6 +192,18 @@ export default function DataControls() {
             each passkey’s name and dates, not its keys. Removing a passkey or
             closing your account deletes it; Panic Wipe keeps your passkeys so
             you can still sign in.
+          </li>
+        )}
+        {inactivity && (
+          <li>
+            Inactivity Wipe: off until you choose 30, 90, 180 or 365 days.
+            While it’s on, we keep the period, whether API and connected-app
+            use counts, when you were last active (updated at most once an
+            hour), the reminder’s state and when it last erased. Past the
+            deadline it erases what Panic Wipe erases. A reminder email goes 7
+            days before, only if email is set up and only to a verified email.
+            Turning it off or closing your account deletes the setting; Panic
+            Wipe keeps it.
           </li>
         )}
         {alerts && (

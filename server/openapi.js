@@ -2785,6 +2785,45 @@ route("post", "/api/account/wipe", "Panic Wipe: erase the account's content, kee
   description:
     "Needs the wipe update released (403 feature_unreleased otherwise). 400 confirmation_required unless confirm is WIPE. 409 requests_in_flight while a request reserved on the account, or a team-paid request it started, is in progress; 409 treasury_not_empty or treasury_busy while a collab it owns has Team Treasury credits or team-paid requests (the account-closure rule). Saved media files are removed first (503 media_delete_failed stops the wipe with nothing else changed; retry). Then one transaction deletes personal conversations and messages (Symposium runs, branches, Double-checks), share links, saved media and library entries, saved uploads, video jobs, memory facts, Scrolls, standing instructions, account-linked support tickets, owned collabs with their shared conversations, membership of other collabs (their shared messages stay), every session and pending sign-in code, and connected apps' tokens and codes; it revokes every API key and connected app, overwriting deleted rows in the database file. The account, balance, ledger, deposits, request records, receipts and settings (spending limits, auto-delete, the memory switch, two-step sign-in) are unchanged. Clears the session cookie. Safe to repeat: already-removed content is skipped and revocation times are kept. 10 requests an hour. Backups, exports and provider copies are not erased.",
 });
+// Inactivity Wipe (update "deadswitch", which also needs "wipe").
+const nullableInt = { type: ["integer", "null"] };
+const inactivityWipe = object({
+  enabled: { ...bool, description: "Off (false) until the account chooses a period" },
+  days: { type: ["integer", "null"], enum: [30, 90, 180, 365, null] },
+  apiCounts: { ...bool, description: "Whether API keys and connected apps using the account count as activity (true unless unticked)" },
+  lastActive: { ...nullableInt, description: "The last recorded activity: a sign-in, a signed-in request, or API use when apiCounts is on. Written at most once an hour, and only while the setting is on." },
+  deadline: { ...nullableInt, description: "lastActive + days × 24 h + 1 h (the most a recorded time can lag). From then on the worker erases the account's content." },
+  daysLeft: nullableInt,
+  email: { ...bool, description: "The account has a verified email (the address itself isn't returned)" },
+  emailReminders: { ...bool, description: "This server can send the reminder email: the same readiness as /api/config's services.email (test mode only records it). While false, no reminder is sent or recorded." },
+  remindAt: { ...nullableInt, description: "When the one reminder email is due: 7 days before the deadline. Null unless emailReminders is true and the account has a verified email." },
+  reminded: { ...nullableInt, description: "When this period's reminder was sent" },
+  erased: { ...nullableInt, description: "When Inactivity Wipe last erased the account's content" },
+  blocked: { type: ["object", "null"], properties: { code: { enum: ["requests_in_flight", "treasury_not_empty", "treasury_busy", "media_delete_failed", "failed"] }, at: integer }, description: "Why the last due erase is waiting; it's retried an hour later" },
+  notice: { type: ["object", "null"], description: "The workspace's one-time notice: { kind: reset, deadline } after coming back in the last 7 days, or { kind: erased, at, days } after an erase" },
+  options: array(integer),
+  remindDays: integer,
+  now: { ...integer, description: "The server's time for this answer" },
+});
+route("get", "/api/inactivity-wipe", "Your Inactivity Wipe setting", {
+  response: inactivityWipe,
+  description:
+    "Off until you choose a period. While it's on, the account's content is erased once it has gone the chosen number of days without a sign-in, a signed-in request or (if apiCounts) API or connected-app use. The erase is Panic Wipe's: the same content goes, API keys and connected apps are revoked, every session is signed out, and the account, balance, ledger, receipts and settings stay. It can't clear anything kept only in a browser. Scheduled Routines and Page Watch runs don't count as activity. While a request is running or a collab you own holds Team Treasury credits, the erase waits (blocked) and is retried hourly. Account export includes it as inactivityWipe; closing the account deletes it; Panic Wipe keeps it.",
+});
+route("put", "/api/inactivity-wipe", "Turn Inactivity Wipe on or off, or change it", {
+  body: object({
+    days: { type: ["integer", "null"], enum: [30, 90, 180, 365, null], description: "null turns it off and deletes the setting and its activity record" },
+    api_counts: bool,
+    confirm: { const: true, description: "Needed to turn it on or choose a shorter period (400 confirmation_required otherwise)" },
+  }),
+  response: inactivityWipe,
+  description:
+    "Omitted fields keep their value. Any change starts a new period from now and clears the reminder, a waiting erase and the notice. 400 invalid_days, invalid_api_counts, invalid_inactivity or confirmation_required. 60 changes an hour.",
+});
+route("delete", "/api/inactivity-wipe/notice", "Dismiss Inactivity Wipe's workspace notice", {
+  response: inactivityWipe,
+  description: "Clears the reset or erased notice; the setting is unchanged.",
+});
 route("get", "/v1", "Free API connection check", {
   auth: null,
   description:

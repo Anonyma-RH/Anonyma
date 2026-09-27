@@ -49,7 +49,9 @@ import { routineRoutes } from "./routes/routines.js";
 import { pageWatchRoutes } from "./routes/page-watch.js";
 import { sealedRoutes } from "./routes/sealed.js";
 import { accountRoutes } from "./routes/account.js";
-import { wipeRoutes } from "./routes/wipe.js";
+import { wipeRoutes, wipeAccountContent } from "./routes/wipe.js";
+import { inactivityWipeRoutes } from "./routes/inactivity-wipe.js";
+import { createInactivityWipe } from "./inactivity-wipe.js";
 import { twoStepRoutes } from "./routes/two-step.js";
 import { passkeyRoutes } from "./routes/passkeys.js";
 import { createPasskeys } from "./passkeys.js";
@@ -189,6 +191,12 @@ export function createApp(overrides = {}) {
   accountRoutes(ctx);
   // Panic Wipe: erases the account's content, keeps its credits.
   wipeRoutes(ctx);
+  // Inactivity Wipe: the setting's routes, and the worker's sweep that
+  // erases accounts past their deadline with Panic Wipe's erase.
+  ctx.inactivity = createInactivityWipe(ctx, {
+    erase: (user, steps) => wipeAccountContent(ctx, user, steps),
+  });
+  inactivityWipeRoutes(ctx);
   // Two-Step Sign-in's settings (its sign-in step is in authRoutes).
   twoStepRoutes(ctx);
   // Passkeys: sign-in, passwordless sign-up and Account → Security's list.
@@ -228,6 +236,8 @@ export function createApp(overrides = {}) {
     sealed: ctx.sealed,
     // Model Status' in-memory window (server/model-status.js), for tests.
     modelStatus: ctx.modelStatus,
+    // Inactivity Wipe's sweep and test-mode outbox, for tests and tooling.
+    inactivity: ctx.inactivity,
     stopWork: async () => {
       for (const c of ctx.inflight.controllers)
         c.abort(new Error("Service restarting"));

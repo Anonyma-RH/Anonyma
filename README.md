@@ -204,6 +204,21 @@ the picture. Includes its launch film.
 [Model Status](docs/releases/model-status.md): which models are up and how fast, measured from ANONYMA's
 own traffic. Includes its launch film.
 
+### Batch 7 code release — hosted deployment pending CI
+
+The following code releases include short films made from real local UI captures. The hosted rollout is pending GitHub Actions billing recovery; see each release note for demonstrated behavior and limits.
+
+- [Gift Links](docs/releases/gift-links.md)
+- [Auto Model](docs/releases/auto-model.md)
+- [Vault Sync](docs/releases/vault-sync.md)
+- [Canvas](docs/releases/canvas.md)
+- [Slides](docs/releases/slides.md)
+- [Meeting Notes](docs/releases/meeting-notes.md)
+- [Translate Documents](docs/releases/translate-documents.md)
+- [Inactivity Wipe](docs/releases/inactivity-wipe.md)
+- [Blind Arena](docs/releases/blind-arena.md)
+- [Python Runner](docs/releases/python-runner.md)
+
 ## How it works
 
 1. Create an account and choose an available model.

@@ -1105,7 +1105,7 @@ export const UPDATES = [
     // Mode routes in the browser, by rules only. Nothing new is stored: a
     // reply keeps its chip data with the message (erased and exported with
     // it); the settings live in the browser.
-    released: false,
+    released: true,
   },
   {
     id: "canvas",

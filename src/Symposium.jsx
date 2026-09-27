@@ -1,11 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import { Icon, Notice, Empty, BandLines, BandSteps } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { api, streamChat, uid, isReleased } from "./lib.js";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
-import { createVeilState } from "./veil.js";
+import { createVeilState, veil } from "./veil.js";
+import { HighlightToolbar, FactCheckCard, highlightReleased, factCheckReleased } from "./HighlightAsk.jsx";
+import { FACTCHECK_VEILED, MAX_CLAIM, hasVeilPlaceholder } from "./highlight-ask.js";
+import { insertIntoPrompt } from "./command-palette.js";
 import { TrainingTag, trainingLabelsReleased } from "./TrainingLabels.jsx";
 import { EarlyModelTag } from "./early-models.js";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
@@ -67,6 +71,9 @@ export default function Symposium({
   onResults,
 }) {
   const welcome = useRef();
+  // Highlight & Ask: the answers' container and the composer, for quotes.
+  const resultsRef = useRef(null);
+  const promptRef = useRef(null);
   // This run's tag -> value map. It lives only in this browser tab: runs have
   // no thread to reopen, so nothing needs to be stored or sent.
   const veilState = useRef(createVeilState());
@@ -109,6 +116,9 @@ export default function Symposium({
     [quoting, setQuoting] = useState(false),
     [error, setError] = useState(""),
     [pickerQuery, setPickerQuery] = useState("");
+  // Highlight & Ask's fact-checks on this run's answers: each is saved as a
+  // chat of its own (a run has no thread to add it to).
+  const [checks, setChecks] = useState([]);
   // Seed Guard: the question is scanned before it can go to any model.
   const seedLive = !demo && seedGuardLive(config);
   const seedHit = useSeedScan(seedLive, prompt);
@@ -283,6 +293,7 @@ export default function Symposium({
     );
     veilMasked.current = veilOn && veilLive ? count : null;
     setAskedQuestion(masked.text);
+    setChecks([]);
     setRunModels(selected);
     setFuseModel(selected[0]);
     setColumns(Object.fromEntries(selected.map((id) => [id, emptyColumn()])));
@@ -358,6 +369,74 @@ export default function Symposium({
   function stopFuse() {
     fuseController.current?.abort();
   }
+  // Highlight & Ask (src/HighlightAsk.jsx): select text in an answer to
+  // quote it in the question box, or to fact-check just that text against
+  // the web with the model that wrote it. A run has no thread and no
+  // Private Mode or off the record, so a check is saved as a chat of its
+  // own, in the run's project if it has one.
+  const highlightLive = !demo && highlightReleased(config);
+  const factLive = highlightLive && !!user && factCheckReleased(config);
+  const factVeiling = veilOn && veilLive;
+  const checking = checks.some((c) => c.status === "live");
+  function quoteIntoQuestion(text) {
+    if (!text) return;
+    setPrompt((p) => insertIntoPrompt(p, text).slice(0, 48000));
+    setQuotes({});
+    requestAnimationFrame(() => {
+      const el = promptRef.current;
+      if (!el) return;
+      el.focus();
+      el.selectionStart = el.selectionEnd = el.value.length;
+    });
+  }
+  function factCheckBlock(claim, id) {
+    if (checking) return "Wait for the fact-check in progress to finish.";
+    if (!visibleModels.some((m) => m.id === id) || !config?.services?.generation)
+      return "This model is not currently available for generation.";
+    if (claim.length > MAX_CLAIM) return "Select a shorter passage to fact-check: up to 1,000 characters.";
+    if (hasVeilPlaceholder(claim) || (factVeiling && veil(claim, createVeilState(), veilWords).count))
+      return FACTCHECK_VEILED;
+    return null;
+  }
+  const factCheckBody = (claim, id) => ({
+    model: id,
+    claim,
+    ...(trailLive ? { veil_masked: factVeiling ? 0 : null } : {}),
+    ...(runProject.current.id ? { project: runProject.current.id } : {}),
+  });
+  async function runFactCheck(claim, id) {
+    const block = factCheckBlock(claim, id);
+    if (block) return setError(block);
+    setError("");
+    const key = uid();
+    setChecks((list) => [...list, { key, claim, model: id, status: "live" }]);
+    try {
+      const r = await api("/api/factcheck", {
+        method: "POST",
+        body: { ...factCheckBody(claim, id), requestId: uid() },
+      });
+      setChecks((list) =>
+        list.map((c) =>
+          c.key === key ? { ...c, status: "done", conversationId: r.conversationId, message: r.message } : c,
+        ),
+      );
+      if (runProject.current.id) onFiled?.();
+    } catch (e) {
+      setChecks((list) => list.filter((c) => c.key !== key));
+      setError(e.message);
+    } finally {
+      refresh();
+    }
+  }
+  const factCheck = factLive
+    ? {
+        modelName: (id) => modelName(id),
+        block: factCheckBlock,
+        quote: (claim, id, signal) =>
+          api("/api/factcheck/quote", { method: "POST", body: factCheckBody(claim, id), signal }),
+        run: runFactCheck,
+      }
+    : null;
   if (demo || !user)
     return (
       <div className="library-page">
@@ -394,7 +473,7 @@ export default function Symposium({
           <BandSteps />
         </div>
         {runModels.length > 0 && (
-          <div className="symposium-results" style={{ "--symposium-cols": runModels.length }}>
+          <div className="symposium-results" ref={resultsRef} style={{ "--symposium-cols": runModels.length }}>
             {askedQuestion && (
               <p className="symposium-question" data-i18n="off">
                 {veilSegments(askedQuestion, veilState.current.map).map((part, i) =>
@@ -434,7 +513,14 @@ export default function Symposium({
                         </span>
                       )}
                     </header>
-                    <div className="markdown" data-i18n={col.text ? "off" : undefined}>
+                    <div
+                      className="markdown"
+                      data-i18n={col.text ? "off" : undefined}
+                      data-highlight-reply={
+                        highlightLive && col.text && !["pending", "streaming"].includes(col.status) ? "" : undefined
+                      }
+                      data-highlight-model={highlightLive ? id : undefined}
+                    >
                       <ReplyMarkdown rich={!!col.text} remarkPlugins={[remarkGfm, veilMarks]} components={shieldParts}>
                         {col.text || (col.status === "pending" ? "Preparing…" : "")}
                       </ReplyMarkdown>
@@ -508,7 +594,14 @@ export default function Symposium({
                         </span>
                       )}
                     </header>
-                    <div className="markdown" data-i18n={fusion.text ? "off" : undefined}>
+                    <div
+                      className="markdown"
+                      data-i18n={fusion.text ? "off" : undefined}
+                      data-highlight-reply={
+                        highlightLive && fusion.text && !["pending", "streaming"].includes(fusion.status) ? "" : undefined
+                      }
+                      data-highlight-model={highlightLive ? fuseModel : undefined}
+                    >
                       <ReplyMarkdown rich={!!fusion.text} remarkPlugins={[remarkGfm, veilMarks]} components={shieldParts}>
                         {fusion.text || (fusion.status === "pending" ? "Preparing…" : "")}
                       </ReplyMarkdown>
@@ -537,7 +630,34 @@ export default function Symposium({
                 )}
               </div>
             )}
+            {checks.length > 0 && (
+              <div className="symposium-checks">
+                {checks.map((c) => (
+                  <article className="symposium-check" key={c.key}>
+                    <blockquote data-i18n="off">{c.claim}</blockquote>
+                    <FactCheckCard
+                      factcheck={c.status === "live" ? { live: true } : c.message?.factcheck}
+                      citations={c.message?.citations}
+                    />
+                    {c.conversationId && (
+                      <Link className="small-button" to={"/workspace/chat?c=" + encodeURIComponent(c.conversationId)}>
+                        Open in chat
+                      </Link>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
+        )}
+        {highlightLive && (
+          <HighlightToolbar
+            key={askedQuestion}
+            root={resultsRef}
+            enabled={runModels.length > 0}
+            onQuote={quoteIntoQuestion}
+            factCheck={factCheck}
+          />
         )}
       </div>
       <div className="composer-zone">
@@ -568,6 +688,7 @@ export default function Symposium({
         />
         <form className="composer" onSubmit={send}>
           <textarea
+            ref={promptRef}
             aria-label="Your question"
             placeholder="Ask every model the same question…"
             value={prompt}

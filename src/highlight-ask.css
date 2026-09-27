@@ -1,0 +1,580 @@
+/* Highlight & Ask: the floating toolbar over a selection (a bottom sheet on
+   touch or narrow screens), its fact-check step, and the fact-check card in
+   the conversation. Flat cobalt and white, the brand yellow on icons only,
+   2px corners and hairlines, like Deep Research and Blind Compare. The
+   toolbar is portalled to <body>, so its rules aren't under .app-shell. */
+
+.hl-toolbar,
+.hl-sheet {
+  --hl-blue: #0135df;
+  --hl-deep: #061b69;
+  --hl-ink: #142343;
+  --hl-muted: #68748a;
+  --hl-line: #e3e8f0;
+  position: fixed;
+  z-index: 1200;
+  color: var(--hl-ink);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+}
+.hl-toolbar {
+  max-width: calc(100vw - 16px);
+  background: var(--hl-blue);
+  border: 1px solid var(--hl-blue);
+  border-radius: 2px;
+  box-shadow: 0 10px 28px rgba(1, 20, 90, 0.22);
+}
+.hl-toolbar.checking {
+  width: 360px;
+  background: #fff;
+  border-color: var(--hl-line);
+  border-top: 2px solid var(--hl-blue);
+}
+.hl-actions {
+  display: flex;
+  align-items: stretch;
+}
+.hl-toolbar .hl-actions > button,
+.hl-toolbar .hl-split > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 11px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.hl-toolbar .hl-actions > button + button,
+.hl-toolbar .hl-actions > .hl-split,
+.hl-toolbar .hl-actions > .hl-split + button {
+  border-left: 1px solid #ffffff2e;
+}
+.hl-toolbar .hl-actions svg {
+  color: #ffb21c;
+  flex: none;
+}
+.hl-toolbar .hl-actions button:hover:not(:disabled),
+.hl-toolbar .hl-actions button[aria-expanded="true"] {
+  background: var(--hl-deep);
+}
+.hl-toolbar button:focus-visible,
+.hl-sheet button:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: -2px;
+}
+.hl-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.hl-split {
+  display: inline-flex;
+}
+.hl-lang {
+  padding: 1px 5px;
+  background: #ffffff1f;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: normal;
+  white-space: nowrap;
+}
+.hl-toolbar .hl-split > .hl-more {
+  padding: 0 7px;
+  border-left: 1px solid #ffffff2e;
+}
+.hl-toolbar .hl-actions > .hl-check {
+  background: #fff;
+  color: var(--hl-blue);
+  border-left: 0;
+}
+.hl-toolbar .hl-actions > .hl-check svg {
+  color: var(--hl-blue);
+}
+.hl-toolbar .hl-actions > .hl-check:hover:not(:disabled) {
+  background: #eef2ff;
+}
+
+/* Translate's languages. */
+.hl-languages {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  background: #ffffff2e;
+  border-top: 1px solid #ffffff2e;
+}
+.hl-languages button {
+  letter-spacing: normal;
+  min-height: 32px;
+  padding: 0 8px;
+  background: var(--hl-blue);
+  border: 0;
+  border-radius: 0;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.hl-languages button:hover,
+.hl-languages button.on {
+  background: var(--hl-deep);
+}
+.hl-languages button.on {
+  box-shadow: inset 3px 0 0 #ffb21c;
+}
+/* Language names are in their own scripts, so they use the system font,
+   which has them all. */
+.hl-languages button span,
+.hl-lang {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* The fact-check step. */
+.hl-confirm {
+  padding: 12px 14px;
+  background: #fff;
+}
+.hl-confirm p {
+  margin: 0;
+}
+.hl-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: var(--hl-blue);
+}
+.hl-claim {
+  display: -webkit-box;
+  margin: 8px 0 10px;
+  padding: 2px 0 2px 10px;
+  border-left: 3px solid var(--hl-blue);
+  color: var(--hl-ink);
+  font-size: 13px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  white-space: pre-line;
+}
+.hl-cost {
+  padding-top: 9px;
+  border-top: 1px solid var(--hl-line);
+  color: #24498b;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.hl-cost b {
+  color: var(--hl-blue);
+}
+.hl-cost b.hl-over {
+  color: #9c3d2a;
+}
+.hl-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 8px 10px;
+  background: #fff6e8;
+  border: 1px solid #ffd9a0;
+  border-radius: 2px;
+  color: #8a4b00;
+  font-size: 12px;
+}
+.hl-block svg {
+  flex: none;
+  margin-top: 2px;
+}
+.hl-fine {
+  margin-top: 6px !important;
+  color: var(--hl-muted);
+  font-size: 11px;
+}
+.hl-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.hl-confirm-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--hl-blue);
+  border-radius: 2px;
+  background: #fff;
+  color: var(--hl-blue);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hl-confirm-actions .hl-go {
+  background: var(--hl-blue);
+  color: #fff;
+}
+.hl-confirm-actions .hl-go svg {
+  color: #ffb21c;
+}
+.hl-confirm-actions .hl-go:hover:not(:disabled) {
+  background: var(--hl-deep);
+  border-color: var(--hl-deep);
+}
+.hl-confirm-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* The bottom sheet, on touch or narrow screens. */
+.hl-sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 72vh;
+  max-height: 72dvh;
+  overflow: auto;
+  padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: #fff;
+  border-top: 2px solid var(--hl-blue);
+  box-shadow: 0 -12px 32px rgba(1, 20, 90, 0.18);
+}
+.hl-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.hl-close {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  background: transparent;
+  border: 0;
+  color: var(--hl-muted);
+  cursor: pointer;
+}
+.hl-excerpt {
+  display: -webkit-box;
+  margin: 6px 0 12px;
+  padding-left: 10px;
+  border-left: 3px solid var(--hl-blue);
+  color: var(--hl-ink);
+  font-size: 13px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  white-space: pre-line;
+}
+.hl-sheet .hl-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.hl-sheet .hl-actions > button,
+.hl-sheet .hl-split > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 12px;
+  background: #fff;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  color: var(--hl-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+.hl-sheet .hl-actions svg {
+  color: var(--hl-blue);
+  flex: none;
+}
+.hl-sheet .hl-split {
+  display: flex;
+}
+/* Ask and Translate get whole rows, so every label fits at 390px. */
+.hl-sheet .hl-actions > button:first-child,
+.hl-sheet .hl-split {
+  grid-column: 1 / -1;
+}
+.hl-sheet .hl-split > .hl-translate {
+  flex: 1;
+  min-width: 0;
+}
+.hl-sheet .hl-split > .hl-more {
+  padding: 0 10px;
+  border-left: 0;
+}
+.hl-sheet .hl-lang {
+  background: #eef2ff;
+  color: var(--hl-blue);
+}
+.hl-sheet .hl-actions > .hl-check {
+  grid-column: 1 / -1;
+  justify-content: center;
+  background: var(--hl-blue);
+  border-color: var(--hl-blue);
+  color: #fff;
+}
+.hl-sheet .hl-actions > .hl-check svg {
+  color: #ffb21c;
+}
+.hl-sheet .hl-languages {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.hl-sheet .hl-languages button {
+  min-height: 40px;
+  background: #fff;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  color: var(--hl-ink);
+  font-size: 13px;
+}
+.hl-sheet .hl-languages button.on {
+  border-color: var(--hl-blue);
+  color: var(--hl-blue);
+  box-shadow: inset 3px 0 0 var(--hl-blue);
+}
+.hl-sheet .hl-confirm {
+  padding: 8px 0 0;
+}
+.hl-sheet .hl-confirm .hl-eyebrow:first-child {
+  display: none;
+}
+.hl-sheet .hl-confirm-actions button {
+  flex: 1;
+  justify-content: center;
+  min-height: 44px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hl-toolbar {
+    animation: hl-in 0.12s ease-out;
+  }
+  .hl-sheet {
+    animation: hl-up 0.16s ease-out;
+  }
+}
+@keyframes hl-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hl-up {
+  from {
+    transform: translateY(24px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* A quote in your own message (what Ask, Explain, Simplify, Translate and
+   Fact-check put there), once the update is live. */
+.app-shell .messages.highlight-live .message.user .markdown blockquote {
+  margin: 0 0 12px;
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid #0135df;
+  color: #24498b;
+}
+
+/* The fact-check card in the conversation. */
+.app-shell .factcheck-card {
+  max-width: 620px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+  color: #142343;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.app-shell .factcheck-card p {
+  margin: 0;
+}
+.app-shell .factcheck-card.live {
+  background: #f7f9fc;
+}
+.app-shell .factcheck-card.verdict-disputed {
+  border-left-color: #9c3d2a;
+}
+.app-shell .factcheck-card.verdict-mixed {
+  border-left-color: #ffb21c;
+}
+.app-shell .factcheck-card.verdict-unverified {
+  border-left-color: #b3bccb;
+}
+.app-shell .factcheck-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+.app-shell .factcheck-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #0135df;
+}
+.app-shell .factcheck-verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.app-shell .factcheck-verdict.supported {
+  background: #0135df;
+  color: #fff;
+}
+.app-shell .factcheck-verdict.supported svg {
+  color: #ffb21c;
+}
+.app-shell .factcheck-verdict.disputed {
+  background: #fff;
+  border-color: #9c3d2a;
+  color: #9c3d2a;
+}
+.app-shell .factcheck-verdict.mixed {
+  background: #fff6e8;
+  border-color: #ffd9a0;
+  color: #8a4b00;
+}
+.app-shell .factcheck-verdict.unverified {
+  background: #f7f9fc;
+  border-color: #e3e8f0;
+  color: #68748a;
+}
+.app-shell .factcheck-note {
+  margin-top: 10px !important;
+  color: #68748a;
+  font-size: 12px;
+}
+.app-shell .factcheck-reason {
+  margin-top: 4px !important;
+}
+.app-shell .factcheck-sources {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid #e3e8f0;
+}
+.app-shell .factcheck-sources li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 3px 0;
+  font-size: 13px;
+}
+.app-shell .factcheck-n {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  background: #eaf0ff;
+  color: #0135df;
+  font-size: 11px;
+  font-weight: 700;
+}
+.app-shell .factcheck-sources a {
+  min-width: 0;
+  color: #0135df;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.app-shell .factcheck-host {
+  color: #68748a;
+  font-size: 12px;
+}
+.app-shell .factcheck-fine {
+  margin-top: 10px !important;
+  color: #68748a;
+  font-size: 11px;
+}
+.app-shell .factcheck-working {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px !important;
+  color: #24498b;
+  font-size: 13px;
+}
+.app-shell .factcheck-dot {
+  width: 8px;
+  height: 8px;
+  background: #0135df;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .app-shell .factcheck-dot {
+    animation: factcheck-pulse 1s ease-in-out infinite alternate;
+  }
+}
+@keyframes factcheck-pulse {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (max-width: 640px) {
+  .app-shell .factcheck-card {
+    padding: 12px;
+  }
+}
+
+/* Symposium: fact-checks on a run's answers, under the answers. */
+.app-shell .symposium-checks {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+.app-shell .symposium-check {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.app-shell .symposium-check blockquote {
+  margin: 0;
+  padding: 2px 0 2px 10px;
+  border-left: 3px solid #0135df;
+  color: #142343;
+  font-size: 13px;
+  white-space: pre-line;
+}
+.app-shell .symposium-check .factcheck-card {
+  width: 100%;
+}

@@ -202,6 +202,11 @@ export function messageFromServer(m) {
     ...(c?.research && typeof c.research === "object" && !Array.isArray(c.research)
       ? { research: { ...c.research, live: false } }
       : {}),
+    // Highlight & Ask: a fact-check's verdict, drawn as its card
+    // (src/HighlightAsk.jsx); its sources are the citations above.
+    ...(c?.factcheck && typeof c.factcheck === "object" && !Array.isArray(c.factcheck)
+      ? { factcheck: { ...c.factcheck, live: false } }
+      : {}),
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.

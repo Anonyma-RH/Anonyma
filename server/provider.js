@@ -124,7 +124,12 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
         : last?.find((p) => p.type === "text")?.text || "";
     // Local Sheets' planner and explainer get a deterministic stand-in.
     const sheets = sheetsTestReply(body.messages);
-    const answer = sheets !== null ? sheets : /code|function|javascript|python/i.test(text)
+    // Highlight & Ask's fact-check: a verdict in its JSON shape, with no
+    // pages (no search runs here), so the card says it couldn't be verified.
+    const factCheck = String(body.messages?.[0]?.content || "").startsWith("You fact-check one claim against the live web.")
+      ? JSON.stringify({ verdict: "unverified", reason: "Local test provider: no web search was run.", sources: [] })
+      : null;
+    const answer = sheets !== null ? sheets : factCheck !== null ? factCheck : /code|function|javascript|python/i.test(text)
       ? "**Local test provider** — this is a deterministic integration fixture, not a live model.\n\n```javascript filename=hello.js\nexport function greet(name) {\n  return `Hello, ${name}!`;\n}\n```\n\nThe file is available in the code panel."
       : /\b(diagram|equation|formula)s?\b|图表|公式|流程图/i.test(text)
       ? TEST_DIAGRAM_ANSWER

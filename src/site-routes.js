@@ -73,6 +73,8 @@ export function knownPage(path, served = {}) {
     (served.sheets === true && path === "/workspace/sheets") ||
     // So does On-Device Model's.
     (served.ondevice === true && path === "/workspace/device") ||
+    // Study Mode's page likewise.
+    (served.study === true && path === "/workspace/study") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

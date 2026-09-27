@@ -490,6 +490,7 @@ export const MODE_FEATURES = {
   sheets: "sheets",
   // On-Device Model's page (src/OnDevice.jsx).
   device: "ondevice",
+  study: "study",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

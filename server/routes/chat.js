@@ -32,6 +32,7 @@ import { refuseSeedPhrase } from "../seed-guard.js";
 import { viewerOf } from "../early-models.js";
 import { apiRateLimit } from "../api-boost.js";
 import { prepareSheetsRequest, sheetsBudget } from "../sheets.js";
+import { prepareStudyRequest, studyBudget } from "../study.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -62,6 +63,10 @@ export function chatRoutes(ctx) {
   const validTokenCount = (value, fallback) =>
     Number.isSafeInteger(value) && value >= 0 ? value : fallback;
   async function runChat(req, res, api) {
+    // Study Mode: making a deck, whose messages are built here from its
+    // checked `study` payload (server/study.js). It runs first, so a request
+    // carrying `sheets` too is refused as a study request.
+    const study = api ? undefined : prepareStudyRequest(req.body);
     // Local Sheets: a workspace sheets question's messages are built here
     // from its checked `sheets` payload (server/sheets.js), before Seed
     // Guard reads them. Its release gate is in featuresFor.
@@ -77,6 +82,9 @@ export function chatRoutes(ctx) {
     // A sheets reply budget fitted to the chosen model (server/sheets.js).
     if (sheetsTask && m.type === "chat")
       req.body.max_tokens = sheetsBudget(sheetsTask, m, req.body.messages);
+    // A deck's reply budget fitted to the chosen model (server/study.js).
+    if (study && m.type === "chat")
+      req.body.max_tokens = studyBudget(study, m, req.body.messages);
     // Dedicated image models are priced per option and served by
     // /v1/images/generations; through chat they would be held at the
     // cheapest variant while the provider chooses the quality.

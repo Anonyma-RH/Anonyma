@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { fail, generationPrice } from "./core.js";
 import { sheetsTestReply } from "./sheets.js";
 import { sharpenTestReply } from "./sharpen.js";
+import { studyTestReply } from "./study.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -139,11 +140,14 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       typeof last === "string"
         ? last
         : last?.find((p) => p.type === "text")?.text || "";
-    // Local Sheets' planner and explainer get a deterministic stand-in.
-    const sheets = sheetsTestReply(body.messages);
-    // Prompt Sharpen's sharpener gets one too (server/sharpen.js).
-    const sharpen = sheets === null ? sharpenTestReply(body.messages) : null;
-    const answer = sheets !== null ? sheets : sharpen !== null ? sharpen : /code|function|javascript|python/i.test(text)
+    // Deterministic stand-ins for the features that parse a model's reply:
+    // Local Sheets' planner and explainer, Study Mode's decks, and Prompt
+    // Sharpen's sharpener (server/sharpen.js). Each returns null otherwise.
+    const standIn =
+      sheetsTestReply(body.messages) ??
+      studyTestReply(body.messages) ??
+      sharpenTestReply(body.messages);
+    const answer = standIn !== null ? standIn : /code|function|javascript|python/i.test(text)
       ? "**Local test provider** — this is a deterministic integration fixture, not a live model.\n\n```javascript filename=hello.js\nexport function greet(name) {\n  return `Hello, ${name}!`;\n}\n```\n\nThe file is available in the code panel."
       : /\b(diagram|equation|formula)s?\b|图表|公式|流程图/i.test(text)
       ? TEST_DIAGRAM_ANSWER

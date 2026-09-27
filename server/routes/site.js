@@ -19,8 +19,8 @@ import {
 export function siteRoutes({ app, db, cfg }) {
   // Gated pages this installation serves: the Connect an App consent page,
   // the public NYMA page (/token), Panic Wipe's "Wiped" page and the
-  // workspace's Sheets and On-device pages and Model Status' page exist only
-  // once their update is live.
+  // workspace's Sheets, On-device and Study pages and Model Status' page
+  // exist only once their update is live.
   const served = () => ({
     connect: connectLive(cfg),
     token: isReleased(cfg, "holders"),
@@ -29,6 +29,7 @@ export function siteRoutes({ app, db, cfg }) {
     // Model Status' public page (/status).
     status: isReleased(cfg, "status"),
     ondevice: isReleased(cfg, "ondevice"),
+    study: isReleased(cfg, "study"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

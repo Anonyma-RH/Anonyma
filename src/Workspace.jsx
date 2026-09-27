@@ -39,6 +39,8 @@ import TaskTools from "./TaskTools.jsx";
 const Sheets = lazy(() => import("./Sheets.jsx"));
 // On-Device Model: its page, and the engine it starts, load only there.
 const OnDevice = lazy(() => import("./OnDevice.jsx"));
+// Study Mode: its reviewer, parser and deck storage load only on its page.
+const Study = lazy(() => import("./Study.jsx"));
 import Routines from "./Routines.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import {
@@ -289,14 +291,17 @@ export function AppSidebar({
           ["tools", "Task tools"],
           ["sheets", "Sheets"],
           ["device", "On-device"],
+          ["study", "Study"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
         ]
-          // Local Sheets stays out of sight entirely until it's released.
+          // Local Sheets and Study Mode stay out of sight entirely until
+          // they're released.
           .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
           // So does On-Device Model.
           .filter(([id]) => id !== "device" || isReleased(config, "ondevice"))
+          .filter(([id]) => id !== "study" || isReleased(config, "study"))
           .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
@@ -509,7 +514,9 @@ export default function Workspace() {
     // counts as known, so it doesn't flash "not found").
     (mode === "sheets" && (!config || isReleased(config, "sheets"))) ||
     // On-Device Model's page, likewise.
-    (mode === "device" && (!config || isReleased(config, "ondevice")));
+    (mode === "device" && (!config || isReleased(config, "ondevice"))) ||
+    // Study Mode's page likewise.
+    (mode === "study" && (!config || isReleased(config, "study")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -685,6 +692,8 @@ export default function Workspace() {
   // from the server; off the record, Private Mode, device-only and unsaved
   // chats are exported as they are on screen, with no request.
   const exportLive = !demo && !!user && chatExportReleased(config);
+  // Study Mode: the header's "Study" link for a saved chat.
+  const studyLive = !demo && !!user && isReleased(config, "study");
   const modelName = (id) => models.find((x) => x.id === id)?.name || id;
   function openExport() {
     const plan = exportPlan({ id: current, ephemeral, privateMode, deviceOnly });
@@ -3256,6 +3265,7 @@ export default function Workspace() {
                 projects: "Projects",
                 sheets: "Sheets",
                 device: "On-device",
+                study: "Study",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -3274,6 +3284,19 @@ export default function Workspace() {
                 <Icon name="share" size={15} />
                 <span>Share</span>
               </button>
+            )}
+            {/* Study Mode: make a deck from this saved chat (never an unsaved,
+                Private, Device Vault or sealed one). */}
+            {studyLive && textMode && current && !deviceOnly && !ephemeral && !privateMode &&
+              !sealedOn && !sealedThread && messages.length > 0 && (
+              <Link
+                className="chat-export-open"
+                aria-label="Make a study deck from this chat"
+                to={"/workspace/study?chat=" + encodeURIComponent(current)}
+              >
+                <Icon name="study" size={15} />
+                <span>Study</span>
+              </Link>
             )}
             {exportLive && textMode && messages.length > 0 && (
               <button
@@ -3444,6 +3467,12 @@ export default function Workspace() {
                   vaultLive={vaultLive}
                   onUnlockVault={() => setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })}
                 />
+              </Suspense>
+            )
+          ) : mode === "study" ? (
+            isReleased(config, "study") && (
+              <Suspense fallback={<p className="study-loading">Opening Study…</p>}>
+                <Study key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
               </Suspense>
             )
           ) : mode === "tools" ? (

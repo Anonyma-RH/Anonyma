@@ -370,6 +370,7 @@ export const MODE_LABELS = {
   projects: "Projects",
   sheets: "Sheets",
   device: "On-device",
+  study: "Study",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -389,6 +390,8 @@ const PLACES = [
   ["sheets", "Sheets", ["spreadsheet", "csv", "tsv", "excel", "analyse", "analyze", "chart", "table", "data"]],
   // On-Device Model: only once released (MODE_FEATURES maps it to "ondevice").
   ["device", "On-device model", ["on device", "local model", "offline", "webgpu", "free", "private", "llama", "qwen"]],
+  // Study Mode: only once released, like Sheets.
+  ["study", "Study", ["flashcards", "quiz", "revise", "revision", "learn", "anki", "spaced repetition", "cards"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

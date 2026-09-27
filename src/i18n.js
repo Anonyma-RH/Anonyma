@@ -456,6 +456,8 @@ const SCOPED = [
   [".training-switch", "Use", "改用"],
   [".training-switch", "instead", ""],
   [".privacy-chip span", "Privacy", "隐私轨迹"],
+  // Study Mode: a flashcard's back is its answer, not a reply.
+  [".study-face > small", "Answer", "答案"],
 ];
 const scopedFor = (el) => {
   const found = SCOPED.filter(([selector]) => el.matches(selector));

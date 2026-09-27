@@ -905,6 +905,22 @@ export const UPDATES = [
     // pinned revisions, checked against pinned hashes.
     released: false,
   },
+  {
+    id: "study",
+    title: "Study Mode",
+    tagline: "Turn any document or chat into flashcards and a quiz.",
+    points: [
+      "Cards and quiz questions drawn only from your source, each with the words it came from",
+      "Review with spaced repetition: Again, Hard, Good or Easy, with due counts and streaks",
+      "Your decks stay in this browser; export them as JSON or an Anki CSV",
+    ],
+    // The workspace's Study page (src/Study.jsx). Making a deck is an
+    // off-the-record /api/chat request carrying `study` (server/study.js),
+    // priced first by /api/quote with the same payload; decks and progress
+    // are kept only in the browser (IndexedDB), so there's nothing to erase
+    // or export on the server.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1257,6 +1273,11 @@ export function featuresFor(req) {
   // Local Sheets: a question about a spreadsheet (server/sheets.js). It's
   // always off the record, so it needs Ephemeral Chats too (pushed below).
   if (p === "/api/chat" && post && body.sheets !== undefined) needed.push("sheets");
+  // Study Mode: making a deck (server/study.js), and its estimate. Making
+  // one is always off the record, so it needs Ephemeral Chats too (pushed
+  // below).
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.study !== undefined)
+    needed.push("study");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

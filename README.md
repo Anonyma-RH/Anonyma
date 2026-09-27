@@ -148,6 +148,36 @@ the site sees us, not you. Includes its launch film.
 [Math & Diagrams](docs/releases/math-and-diagrams.md): LaTeX math and Mermaid diagrams render in replies,
 with Copy SVG. Includes its launch film.
 
+[Highlight & Ask](docs/releases/highlight-and-ask.md): select part of a reply to explain, simplify, translate
+or fact-check it against the web. Includes its launch film.
+
+[Summarize & Continue](docs/releases/summarize-and-continue.md): catch up on a long chat, then continue
+fresh with the summary for fewer tokens. Includes its launch film.
+
+[Document Compare](docs/releases/document-compare.md): a redline of two documents built in your browser;
+only the changed parts go to the AI. Includes its launch film.
+
+[Page Watch](docs/releases/page-watch.md): our server checks a page on a schedule and tells you what changed;
+no change, no charge. Includes its launch film.
+
+[Audio Overview](docs/releases/audio-overview.md): a document or chat becomes a short two-voice audio
+briefing with its transcript. Includes its launch film.
+
+[Study Mode](docs/releases/study-mode.md): flashcards and quizzes with spaced repetition; decks stay in
+your browser. Includes its launch film.
+
+[On-Device Model](docs/releases/on-device-model.md): a small model that runs in your browser: free, and
+nothing sent. Includes its launch film.
+
+[Prompt Sharpen](docs/releases/prompt-sharpen.md): one tap turns a rough prompt into a clearer one, with
+the changes shown. Includes its launch film.
+
+[Local OCR](docs/releases/local-ocr.md): read a screenshot's text on your device and send the words, not
+the picture. Includes its launch film.
+
+[Model Status](docs/releases/model-status.md): which models are up and how fast, measured from ANONYMA's
+own traffic. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

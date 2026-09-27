@@ -888,6 +888,7 @@ const featureIcons = {
   vaultsync: "devices",
   automodel: "auto",
   canvas: "canvas",
+  slides: "present",
 };
 const launch = {
   id: "mvp",

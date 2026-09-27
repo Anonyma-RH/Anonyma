@@ -53,6 +53,8 @@ export default function DataControls() {
   const vaultSync = !!config && isReleased(config, "vaultsync") && isReleased(config, "vault");
   // And Canvas.
   const canvas = !!config && isReleased(config, "canvas");
+  // And Slides.
+  const slides = !!config && isReleased(config, "slides");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -301,6 +303,17 @@ export default function DataControls() {
             them is saved. Canvases kept off the record stay in one browser
             tab; Device Vault canvases are encrypted in this browser. Panic
             Wipe and closing your account delete saved canvases.
+          </li>
+        )}
+        {slides && (
+          <li>
+            Slides: a deck you save is kept on your account (its title, theme,
+            the text on its slides and the speaker notes) until you delete it,
+            and it is in your data export. Never the source it was made from or
+            the model that made it: making a deck is an off-the-record chat.
+            Decks made off the record or in Private Mode are kept only in this
+            browser, unencrypted. Panic Wipe erases both; closing the account
+            erases the saved ones.
           </li>
         )}
         {nyma && (

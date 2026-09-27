@@ -45,6 +45,8 @@ const Study = lazy(() => import("./Study.jsx"));
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
 const Canvas = lazy(() => import("./Canvas.jsx"));
+// Slides: its editor, presenter, exports and deck storage load only on its page.
+const Slides = lazy(() => import("./Slides.jsx"));
 // Audio Overview's dialog and player, loaded only when opened.
 const AudioOverviewDialog = lazy(() => import("./AudioOverview.jsx"));
 // Summarize & Continue's dialog, loaded when Catch me up is first opened.
@@ -323,6 +325,7 @@ export function AppSidebar({
           ["compare", "Compare docs"],
           ["canvas", "Canvas"],
           ["study", "Study"],
+          ["slides", "Slides"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
@@ -334,6 +337,7 @@ export function AppSidebar({
           .filter(([id]) => id !== "compare" || isReleased(config, "doccompare"))
           .filter(([id]) => id !== "study" || isReleased(config, "study"))
           .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
+          .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
           .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
@@ -578,7 +582,9 @@ export default function Workspace() {
     // Document Compare's page, the same way.
     (mode === "compare" && (!config || isReleased(config, "doccompare"))) ||
     // And Canvas's.
-    (mode === "canvas" && (!config || isReleased(config, "canvas")));
+    (mode === "canvas" && (!config || isReleased(config, "canvas"))) ||
+    // And Slides'.
+    (mode === "slides" && (!config || isReleased(config, "slides")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -764,6 +770,8 @@ export default function Workspace() {
   const exportLive = !demo && !!user && chatExportReleased(config);
   // Study Mode: the header's "Study" link for a saved chat.
   const studyLive = !demo && !!user && isReleased(config, "study");
+  // Slides: the header's "Slides" link for a saved chat.
+  const slidesLive = !demo && !!user && isReleased(config, "slides");
   const modelName = (id) => models.find((x) => x.id === id)?.name || id;
   function openExport() {
     const plan = exportPlan({ id: current, ephemeral, privateMode, deviceOnly });
@@ -3592,8 +3600,8 @@ export default function Workspace() {
         </Empty>
       </main>
     );
-  // The header's chat tools. A long saved chat can show up to six (Find,
-  // Catch me up, Share, Study, Export, Listen); with more than the header
+  // The header's chat tools. A long saved chat can show up to seven (Find,
+  // Catch me up, Share, Study, Slides, Export, Listen); with more than the header
   // has room for, they compact to icons (workspace.css, .tools-5 and
   // .tools-4), so the header never scrolls sideways. These mirror the
   // conditions each tool is shown with in the header below.
@@ -3601,9 +3609,12 @@ export default function Workspace() {
   const studyShown =
     studyLive && textMode && current && !deviceOnly && !ephemeral && !privateMode &&
     !sealedOn && !sealedThread && messages.length > 0;
+  const slidesShown =
+    slidesLive && textMode && current && !deviceOnly && !ephemeral && !privateMode &&
+    !sealedOn && !sealedThread && messages.length > 0;
   const exportShown = exportLive && textMode && messages.length > 0;
   const listenShown = overviewOn && textMode && messages.some((m) => !m.sample);
-  const headerTools = [!!find.button, catchupOn, shareShown, studyShown, exportShown, listenShown].filter(Boolean).length;
+  const headerTools = [!!find.button, catchupOn, shareShown, studyShown, slidesShown, exportShown, listenShown].filter(Boolean).length;
   return (
     <main id="main" className="app-shell">
       {/* Privacy Screen: Esc twice or Hide covers the page (and idle locks it). */}
@@ -3760,6 +3771,7 @@ export default function Workspace() {
                 study: "Study",
                 compare: "Compare docs",
                 canvas: "Canvas",
+                slides: "Slides",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -3795,6 +3807,19 @@ export default function Workspace() {
               >
                 <Icon name="study" size={15} />
                 <span>Study</span>
+              </Link>
+            )}
+            {/* Slides: make a deck from this saved chat (never an unsaved,
+                Private, Device Vault or sealed one). */}
+            {slidesShown && (
+              <Link
+                className="chat-export-open"
+                aria-label="Make slides from this chat"
+                title="Make slides from this chat"
+                to={"/workspace/slides?chat=" + encodeURIComponent(current)}
+              >
+                <Icon name="present" size={15} />
+                <span>Slides</span>
               </Link>
             )}
             {exportLive && textMode && messages.length > 0 && (
@@ -3989,6 +4014,12 @@ export default function Workspace() {
             isReleased(config, "study") && (
               <Suspense fallback={<p className="study-loading">Opening Study…</p>}>
                 <Study key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
+          ) : mode === "slides" ? (
+            isReleased(config, "slides") && (
+              <Suspense fallback={<p className="slides-loading">Opening Slides…</p>}>
+                <Slides key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
               </Suspense>
             )
           ) : mode === "compare" ? (

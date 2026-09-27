@@ -373,6 +373,7 @@ export const MODE_LABELS = {
   study: "Study",
   compare: "Compare docs",
   canvas: "Canvas",
+  slides: "Slides",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -398,6 +399,8 @@ const PLACES = [
   ["study", "Study", ["flashcards", "quiz", "revise", "revision", "learn", "anki", "spaced repetition", "cards"]],
   // Canvas: likewise only once released.
   ["canvas", "Canvas", ["write", "writing", "document", "editor", "draft", "rewrite", "tracked changes", "docx"]],
+  // Slides: only once released, like Study.
+  ["slides", "Slides", ["slide deck", "presentation", "deck", "powerpoint", "keynote", "present", "pitch"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

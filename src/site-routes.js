@@ -82,6 +82,8 @@ export function knownPage(path, served = {}) {
     (served.gift === true && path === "/gift") ||
     // Canvas's page, likewise.
     (served.canvas === true && path === "/workspace/canvas") ||
+    // And Slides'.
+    (served.slides === true && path === "/workspace/slides") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

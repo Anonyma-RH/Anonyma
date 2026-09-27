@@ -23,6 +23,7 @@ export function siteRoutes({ app, db, cfg }) {
   // workspace's Sheets, On-device, Study and Compare pages, Model Status'
   // page, Gift Links claim page and Blind Arena exist only once released.
   // workspace's Sheets, On-device, Study, Compare and Canvas pages and Model
+  // workspace's Sheets, On-device, Study, Compare and Slides pages and Model
   // Status' page exist only once their update is live.
   const served = () => ({
     connect: connectLive(cfg),
@@ -39,6 +40,7 @@ export function siteRoutes({ app, db, cfg }) {
     // Gift Links' claim page (/gift), never in the sitemap.
     gift: isReleased(cfg, "giftlinks"),
     canvas: isReleased(cfg, "canvas"),
+    slides: isReleased(cfg, "slides"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

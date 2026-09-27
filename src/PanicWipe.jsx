@@ -12,6 +12,7 @@ import {
   WIPE_ARENA,
   WIPE_ARENA_STAYS,
   WIPE_STUDY,
+  WIPE_SLIDES,
   WIPE_WATCHES,
   WIPE_GIFTS,
   WIPE_VAULT_SYNC,
@@ -40,6 +41,8 @@ export function PanicWipe({ user }) {
   const arenaLive = blindLive && isReleased(config, "arena");
   // And Study Mode's decks in this browser.
   const studyLive = !!config && isReleased(config, "study");
+  // And Slides' decks.
+  const slidesLive = !!config && isReleased(config, "slides");
   // And Page Watch's watches.
   const watchesLive = isReleased(config, "pagewatch");
   // And Gift Links' gifts (unclaimed ones come back first).
@@ -119,6 +122,7 @@ export function PanicWipe({ user }) {
                   {blindLive && <li>{WIPE_BLIND}</li>}
                   {arenaLive && <li>{WIPE_ARENA}</li>}
                   {studyLive && <li>{WIPE_STUDY}</li>}
+                  {slidesLive && <li>{WIPE_SLIDES}</li>}
                   {watchesLive && <li>{WIPE_WATCHES}</li>}
                   {giftsLive && <li>{WIPE_GIFTS}</li>}
                   {vaultSyncLive && <li>{WIPE_VAULT_SYNC}</li>}

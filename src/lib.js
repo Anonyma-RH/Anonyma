@@ -504,6 +504,7 @@ export const MODE_FEATURES = {
   study: "study",
   compare: "doccompare",
   canvas: "canvas",
+  slides: "slides",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

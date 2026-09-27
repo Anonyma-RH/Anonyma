@@ -14,6 +14,7 @@ import { exportInactivity, forgetInactivity, inactivityLive } from "../inactivit
 import { exportGifts, forgetGifts } from "./gifts.js";
 import { exportVaultSync, forgetVaultSync } from "./vault-sync.js";
 import { exportCanvases, forgetCanvases } from "./canvas.js";
+import { exportSlideDecks, forgetSlideDecks } from "./slides.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -64,6 +65,8 @@ import {
 // - Vault Sync's ciphertext and its synced settings;
 //   Audio Overview scripts, Canvas canvases and NYMA top-up quotes (a
 //   credited top-up stays as its deposit);
+//   Audio Overview scripts, Slides decks and NYMA top-up quotes (a credited
+//   top-up stays as its deposit);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -135,6 +138,8 @@ export function eraseAccountContent(db, user) {
   forgetVaultSync(db, id);
   // Canvas: every canvas kept on the account.
   forgetCanvases(db, id);
+  // Slides: saved decks (those kept in a browser go with that browser).
+  forgetSlideDecks(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -278,6 +283,12 @@ export function accountRoutes(ctx) {
   function canvasExport(user) {
     const list = exportCanvases(db, user);
     return list.length || isReleased(cfg, "canvas") ? { canvases: list } : {};
+  }
+  // Slides: each saved deck, whole (once the update is live, or while any
+  // exist). Decks kept only in a browser aren't on the server to export.
+  function slidesExport(user) {
+    const list = exportSlideDecks(db, user);
+    return list.length || isReleased(cfg, "slides") ? { slideDecks: list } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -621,6 +632,8 @@ export function accountRoutes(ctx) {
       ...vaultSyncExport(req.user.id),
       // Canvas: canvases kept on the account, with their text.
       ...canvasExport(req.user.id),
+      // Slides: saved decks.
+      ...slidesExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

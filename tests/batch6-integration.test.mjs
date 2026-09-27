@@ -134,7 +134,7 @@ test("reply tables scroll inside their own box on a phone", () => {
 
 test("the header's chat tools compact to icons when crowded, and the sidebar fits its places", () => {
   const ws = source("Workspace.jsx");
-  assert.match(ws, /const headerTools = \[!!find\.button, catchupOn, shareShown, studyShown, exportShown, listenShown\]\.filter\(Boolean\)\.length;/);
+  assert.match(ws, /const headerTools = \[!!find\.button, catchupOn, shareShown, studyShown, slidesShown, exportShown, listenShown\]\.filter\(Boolean\)\.length;/);
   assert.match(ws, /"workspace-header" \+ \(headerTools >= 5 \? " tools-5" : ""\) \+ \(headerTools >= 4 \? " tools-4" : ""\)/);
   const css = source("workspace.css");
   assert.match(css, /@media\(max-width:1680px\)\{\.app-shell \.workspace-header\.tools-5 :is\(\.find-open,\.catchup-open,\.share-open-button,\.chat-export-open\)\{padding:8px\}/);
@@ -144,11 +144,11 @@ test("the header's chat tools compact to icons when crowded, and the sidebar fit
   // tools together; the command palette lists places in the same order.
   const order = [...ws.matchAll(/^\s+\["(\w+)", "[^"]+"\],$/gm)].map((m) => m[1]);
   const nav = order.slice(order.indexOf("home"), order.indexOf("library") + 1);
-  assert.deepEqual(nav, ["home", "chat", "uncensored", "symposium", "device", "code", "image", "video", "audio", "collab", "tools", "sheets", "compare", "canvas", "study", "routines", "projects", "library"]);
+  assert.deepEqual(nav, ["home", "chat", "uncensored", "symposium", "device", "code", "image", "video", "audio", "collab", "tools", "sheets", "compare", "canvas", "study", "slides", "routines", "projects", "library"]);
   const palette = source("command-palette.js");
   const at = (id) => palette.indexOf(`["${id}", `);
   assert.ok(at("symposium") < at("device") && at("device") < at("code"));
-  assert.ok(at("sheets") < at("compare") && at("compare") < at("study"));
+  assert.ok(at("sheets") < at("compare") && at("compare") < at("study") && at("study") < at("slides"));
 });
 
 test("every string the integration added has Chinese", async () => {

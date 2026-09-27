@@ -1124,6 +1124,24 @@ export const UPDATES = [
     // can be used (runChat's acceptOutput).
     released: false,
   },
+  {
+    id: "slides",
+    title: "Slides",
+    tagline: "Turn a chat, a document or a prompt into a clean slide deck.",
+    points: [
+      "Six layouts in Cobalt, White or Dark; edit any text or regenerate one slide",
+      "Present full screen with speaker notes, or export a PDF or an HTML file",
+      "See the most it can cost first; a reply that isn't usable costs nothing",
+    ],
+    // The workspace's Slides page (src/Slides.jsx). Making a deck, and
+    // regenerating one slide, is an off-the-record /api/chat request
+    // carrying `slides` (server/slides.js), priced first by /api/quote with
+    // the same payload and held at exactly that price. Saved decks are
+    // /api/slides (server/routes/slides.js): title, theme and slides only,
+    // erased and exported with the account. Off the record and Private Mode
+    // keep a deck in the browser only.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1332,6 +1350,9 @@ export function featuresFor(req) {
   if (p === "/api/vault-sync" || p.startsWith("/api/vault-sync/")) return ["vaultsync", "vault"];
   // Canvas: the canvases an account keeps on the server.
   if (p === "/api/canvas" || p.startsWith("/api/canvas/")) return ["canvas"];
+  // Slides: the decks an account keeps (making one is an /api/chat request,
+  // gated below).
+  if (p === "/api/slides" || p.startsWith("/api/slides/")) return ["slides"];
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.
@@ -1546,6 +1567,10 @@ export function featuresFor(req) {
   // (pushed below).
   if ((p === "/api/chat" || p === "/api/quote") && post && body.canvas !== undefined)
     needed.push("canvas");
+  // Slides: making a deck or regenerating a slide (server/slides.js), and
+  // its estimate. The request is always off the record (pushed below).
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.slides !== undefined)
+    needed.push("slides");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

@@ -43,6 +43,8 @@ const OnDevice = lazy(() => import("./OnDevice.jsx"));
 const Study = lazy(() => import("./Study.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
+// Audio Overview's dialog and player, loaded only when opened.
+const AudioOverviewDialog = lazy(() => import("./AudioOverview.jsx"));
 import Routines from "./Routines.jsx";
 import { WatchBadge } from "./PageWatch.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
@@ -232,6 +234,7 @@ import {
   useSharpenEstimate,
 } from "./Sharpen.jsx";
 import { pickSharpener, sharpenPool } from "./sharpen.js";
+import { overviewLive, chatSource, researchSource, documentSource } from "./audio-overview.js";
 const initial = [
   {
     id: "welcome",
@@ -471,6 +474,8 @@ export default function Workspace() {
     [share, setShare] = useState(null),
     // Chat Export: null, or what the Export dialog exports (see openExport).
     [exporting, setExporting] = useState(null),
+    // Audio Overview: null, or what its dialog offers (see openOverview).
+    [overview, setOverview] = useState(null),
     [scrollFill, setScrollFill] = useState(null),
     [slashDismissedFor, setSlashDismissedFor] = useState(null),
     [slashIndex, setSlashIndex] = useState(0),
@@ -717,6 +722,30 @@ export default function Workspace() {
       collab: shared ? { name: shared.name } : null,
       // A copy of this chat's Veil map, used only if restoring is chosen.
       veilMap: { ...veilStateRef.current.map },
+    });
+  }
+  // Audio Overview (src/AudioOverview.jsx): a two-voice audio briefing of
+  // this chat, a Deep Research report in it or an attached document, in
+  // every text mode, never in Sealed Mode (whose chats never leave the
+  // enclave unsealed). A chat that's never saved makes an overview that
+  // isn't either; Private Mode says it's unavailable.
+  const overviewOn = !demo && !!user && overviewLive(config) && !sealedOn && !sealedThread;
+  function openOverview(report = null) {
+    const shown = messages.filter((m) => !m.sample);
+    const reports = shown.filter((m) => m.role === "assistant" && m.research && !m.research.live && m.content);
+    const title = all.find((c) => c.id === current)?.title || "";
+    setOverview({
+      sources: [
+        ...(report ? [researchSource(report)] : []),
+        chatSource(shown, title),
+        ...reports.filter((m) => m !== report).map(researchSource),
+        ...documents.filter((d) => d.text?.trim()).map(documentSource),
+      ],
+      offRecord: deviceOnly
+        ? "This chat is kept only on this device, so its overview isn't saved anywhere either."
+        : ephemeral
+          ? "This chat is off the record, so its overview is too."
+          : null,
     });
   }
   // From History & library or a conversation's details: always a saved chat.
@@ -3095,10 +3124,14 @@ export default function Workspace() {
   const codePanelTab =
     codeTab || (previewLive && previewPages(files).length ? "preview" : "files");
   const previewing = previewLive && codePanelTab === "preview";
+  // The Voice studio's saved audio (Audio Overview's included) lays out
+  // like the image and video results, so the composer never covers it.
   const hasResults =
-    (mode === "image" || mode === "video") &&
-    (jobs.some((j) => j.status !== "completed") ||
-      media.some((m) => m.kind === mode));
+    mode === "audio"
+      ? media.some((m) => m.kind === "audio")
+      : (mode === "image" || mode === "video") &&
+        (jobs.some((j) => j.status !== "completed") ||
+          media.some((m) => m.kind === mode));
   async function exportZip() {
     const { default: JSZip } = await import("jszip");
     const zip = new JSZip();
@@ -3322,6 +3355,19 @@ export default function Workspace() {
               >
                 <Icon name="download" size={15} />
                 <span>Export</span>
+              </button>
+            )}
+            {overviewOn && textMode && messages.some((m) => !m.sample) && (
+              <button
+                type="button"
+                className="chat-export-open overview-open"
+                aria-label="Make an audio overview of this chat"
+                title={busy ? "Wait for the reply to finish" : "Audio overview: a two-voice briefing of this chat"}
+                disabled={busy}
+                onClick={() => openOverview()}
+              >
+                <Icon name="audio" size={15} />
+                <span>Listen</span>
               </button>
             )}
             {paletteLive && (
@@ -3770,6 +3816,11 @@ export default function Workspace() {
                             <button type="button" className="small-button"
                               onClick={() => setReadAloud(m.content)}>
                               Read aloud
+                            </button>
+                          )}
+                          {overviewOn && m.role === "assistant" && m.research && !m.research.live && m.content && !busy && (
+                            <button type="button" className="small-button overview-listen" onClick={() => openOverview(m)}>
+                              Listen as an audio overview
                             </button>
                           )}
                           {!(branchesLive && !busy && !branching && editing?.index !== i && !m.sample) &&
@@ -5156,6 +5207,22 @@ export default function Workspace() {
           testMode={!!config?.testMode}
           onClose={() => setExporting(null)}
         />
+      )}
+      {overview && overviewOn && (
+        <Suspense fallback={null}>
+          <AudioOverviewDialog
+            config={config}
+            user={user}
+            models={models}
+            sources={overview.sources}
+            offRecord={overview.offRecord}
+            privateMode={privateMode}
+            veilWords={veilOn && isReleased(config, "veil") ? veilWords : null}
+            office={isReleased(config, "files")}
+            onSaved={(r) => r.media && setMedia((prev) => [r.media, ...prev.filter((x) => x.id !== r.media.id)])}
+            onClose={() => setOverview(null)}
+          />
+        </Suspense>
       )}
       {share && sharesLive && (
         <ShareDialog

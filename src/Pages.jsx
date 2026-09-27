@@ -877,6 +877,7 @@ const featureIcons = {
   ondevice: "device",
   study: "study",
   pagewatch: "watch",
+  audiooverview: "audio",
 };
 const launch = {
   id: "mvp",

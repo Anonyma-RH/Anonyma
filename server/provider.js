@@ -5,6 +5,7 @@ import { sharpenTestReply } from "./sharpen.js";
 import { studyTestReply } from "./study.js";
 import { compareTestReply } from "./compare.js";
 import { pageWatchTestReply } from "./page-watch-test.js";
+import { overviewTestReply } from "./audio-overview.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -145,8 +146,9 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
     // Deterministic stand-ins for the features that parse a model's reply:
     // Page Watch's summaries (with a finish reason when cut off), Local
     // Sheets' planner and explainer, Study Mode's decks, Document Compare's
-    // summary and Prompt Sharpen's sharpener (server/sharpen.js). Each
-    // returns null otherwise.
+    // summary, Audio Overview's script writer (server/audio-overview.js) and
+    // Prompt Sharpen's sharpener (server/sharpen.js). Each returns null
+    // otherwise.
     const watch = pageWatchTestReply(body.messages);
     const standIn =
       watch !== null
@@ -154,6 +156,7 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
         : sheetsTestReply(body.messages) ??
           studyTestReply(body.messages) ??
           compareTestReply(body.messages) ??
+          overviewTestReply(body.messages) ??
           sharpenTestReply(body.messages);
     const answer = standIn !== null ? standIn : /code|function|javascript|python/i.test(text)
       ? "**Local test provider** — this is a deterministic integration fixture, not a live model.\n\n```javascript filename=hello.js\nexport function greet(name) {\n  return `Hello, ${name}!`;\n}\n```\n\nThe file is available in the code panel."

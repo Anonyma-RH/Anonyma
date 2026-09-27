@@ -8,6 +8,7 @@ import { exportProjects } from "./projects.js";
 import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
 import { exportBlindVotes, forgetBlindVotes } from "./blind.js";
+import { exportAudioOverviews, forgetAudioOverviews } from "./audio-overview.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -46,8 +47,9 @@ import {
 //   the conversations above);
 // - support requests, video jobs, saved uploads, Scrolls, standing
 //   instructions, memory facts, routines, page watches (with the last
-//   version of each page and their reports), bookmarks, Blind Compare votes
-//   and NYMA top-up quotes (a credited top-up stays as its deposit);
+//   version of each page and their reports), bookmarks, Blind Compare votes,
+//   Audio Overview scripts and NYMA top-up quotes (a credited top-up stays
+//   as its deposit);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -103,6 +105,8 @@ export function eraseAccountContent(db, user) {
   forgetBookmarks(db, id);
   // Blind Compare: the votes behind "Your rankings".
   forgetBlindVotes(db, id);
+  // Audio Overview: saved overviews' scripts (their audio is media, below).
+  forgetAudioOverviews(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -189,9 +193,6 @@ export function accountRoutes(ctx) {
     const list = exportBookmarks(db, user);
     return list.length || isReleased(cfg, "bookmarks") ? { bookmarks: list } : {};
   }
-  // Blind Compare: each vote (model ids, outcome, date), once the update is
-  // live or while any exist. Compared replies of saved chats are already in
-  // their conversations above.
   // Page Watch: each watch with the last version of its page, and its
   // reports (once the update is live, or while any exist).
   function watchesExport(user) {
@@ -200,9 +201,18 @@ export function accountRoutes(ctx) {
       ? { pageWatch: all }
       : {};
   }
+  // Blind Compare: each vote (model ids, outcome, date), once the update is
+  // live or while any exist. Compared replies of saved chats are already in
+  // their conversations above.
   function blindExport(user) {
     const list = exportBlindVotes(db, user);
     return list.length || isReleased(cfg, "blind") ? { blindVotes: list } : {};
+  }
+  // Audio Overview: each saved overview's title, script and date (once the
+  // update is live, or while any exist). The audio files are under media.
+  function audioOverviewExport(user) {
+    const list = exportAudioOverviews(db, user);
+    return list.length || isReleased(cfg, "audiooverview") ? { audioOverviews: list } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -533,6 +543,8 @@ export function accountRoutes(ctx) {
       ...bookmarksExport(req.user.id),
       // Blind Compare: the votes behind "Your rankings".
       ...blindExport(req.user.id),
+      // Audio Overview: saved overviews' scripts.
+      ...audioOverviewExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

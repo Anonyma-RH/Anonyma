@@ -1,12 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Icon, Notice, BandLines, BandSteps } from "./ui.jsx";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Icon, Notice, BandLines, BandSteps, Button } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
-import { api, uid } from "./lib.js";
+import { api, uid, isReleased } from "./lib.js";
+import { useApp } from "./context.jsx";
+import { loadVeilOn, loadVeilWords } from "./veil.js";
+import { formatClock, overviewLive } from "./audio-overview.js";
+import "./audio-overview-entry.css";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { LowBalanceRefusal } from "./BalanceAlerts.jsx";
 import { earlyModelSuffix } from "./early-models.js";
 
 const MAX_RECORDING_SECONDS = 10 * 60;
+// Audio Overview's dialog and player, loaded only when opened.
+const AudioOverviewDialog = lazy(() => import("./AudioOverview.jsx"));
 
 // Text to speech: pick a voice, write, and keep the result in the library.
 export default function AudioStudio({
@@ -30,6 +36,12 @@ export default function AudioStudio({
     preview = useRef(new Audio());
   // Seed Guard: the script is scanned before it goes to a voice provider.
   const seedHit = useSeedScan(!demo && seedGuardLive(config), text);
+  // Audio Overview: made here from a file or a saved chat, and the saved
+  // ones listed above the library (src/AudioOverview.jsx).
+  const { models } = useApp() || {};
+  const overviewOn = !demo && !!user && overviewLive(config);
+  const [overview, setOverview] = useState(null),
+    [shelfKey, setShelfKey] = useState(0);
   useEffect(() => {
     if (demo) return;
     api("/api/audio/models")
@@ -89,6 +101,17 @@ export default function AudioStudio({
     preview.current.play().catch(() => {});
   }
   const audio = media.filter((m) => m.kind === "audio");
+  // Above the saved audio when there is some (the page is laid out as
+  // results then), else below the composer, which overlaps the hero.
+  const shelf = overviewOn && (
+    <div className={"overview-shelf-zone" + (audio.length ? " above-results" : "")}>
+      <OverviewShelf
+        refreshKey={shelfKey}
+        onMake={() => setOverview({})}
+        onOpen={(id) => setOverview({ saved: id })}
+      />
+    </div>
+  );
   return (
     <>
       <div className="chat-area">
@@ -103,6 +126,7 @@ export default function AudioStudio({
           </p>
           <BandSteps />
         </div>
+        {audio.length > 0 && shelf}
         {audio.length > 0 && (
           <div className="generation-results">
             <Grid media={audio.slice(0, 8)} onDelete={onDelete} />
@@ -202,7 +226,77 @@ export default function AudioStudio({
           are served by the voice provider.
         </p>
       </div>
+      {!audio.length && shelf}
+      {overview && overviewOn && (
+        <Suspense fallback={null}>
+          <AudioOverviewDialog
+            config={config}
+            user={user}
+            models={models || []}
+            saved={overview.saved || null}
+            pickChats
+            veilWords={isReleased(config, "veil") && loadVeilOn() ? loadVeilWords() : null}
+            office={isReleased(config, "files")}
+            onSaved={(r) => {
+              if (r.media) setMedia((prev) => [r.media, ...prev.filter((x) => x.id !== r.media.id)]);
+              setShelfKey((k) => k + 1);
+            }}
+            onClose={() => setOverview(null)}
+          />
+        </Suspense>
+      )}
     </>
+  );
+}
+
+// Audio Overview's shelf in the Voice studio: the newest saved overviews,
+// and the button that makes a new one.
+function OverviewShelf({ refreshKey = 0, onMake, onOpen }) {
+  const [list, setList] = useState(null);
+  useEffect(() => {
+    const ctl = new AbortController();
+    api("/api/audio/overview", { signal: ctl.signal }).then(
+      (r) => setList(r.data || []),
+      () => !ctl.signal.aborted && setList([]),
+    );
+    return () => ctl.abort();
+  }, [refreshKey]);
+  return (
+    <section className="overview-shelf" aria-label="Audio overviews">
+      <div className="overview-shelf-head">
+        <span className="overview-tile" aria-hidden="true">
+          <Icon name="audio" size={18} />
+        </span>
+        <div>
+          <p className="overview-eyebrow">AUDIO OVERVIEW</p>
+          <p className="overview-shelf-lede">
+            Turn a document, a saved chat or a research report into a two-voice briefing.
+          </p>
+        </div>
+        <Button onClick={onMake}>Make an audio overview</Button>
+      </div>
+      {list?.length > 0 && (
+        <ul className="overview-shelf-list">
+          {list.slice(0, 6).map((o) => (
+            <li key={o.id}>
+              <button type="button" onClick={() => onOpen(o.id)}>
+                <Icon name="play" size={14} />
+                <b data-i18n="off">{o.title}</b>
+                <small>
+                  {[
+                    Number.isFinite(o.duration) ? formatClock(o.duration) : null,
+                    o.chapters === 1 ? "1 chapter" : `${o.chapters} chapters`,
+                    o.status === "complete" ? null : "Stopped early",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </small>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

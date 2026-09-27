@@ -952,6 +952,21 @@ export const UPDATES = [
     // SSRF-safe fetcher; summaries go through runChat's hold/settle path.
     released: false,
   },
+  {
+    id: "audiooverview",
+    title: "Audio Overview",
+    tagline: "Hear your documents and chats as a two-voice briefing.",
+    points: [
+      "Made from a document, a saved chat or a Deep Research report",
+      "About 3 or 8 minutes, with a transcript and chapter jumps",
+      "See the most it can cost first; pay only for what's made",
+    ],
+    // Voices the script with Voice & Audio's speech models, so it needs
+    // "audio" released too (featuresFor). A saved overview is one audio file
+    // in the library plus its script (audio_overviews, erased and exported
+    // with the account); off the record keeps nothing.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1118,6 +1133,19 @@ export function featuresFor(req) {
       if (body.memory != null) needed.push("memory");
       if (body.veil_masked !== undefined) needed.push("trail");
       if (body.mode === "code") needed.push("code");
+    }
+    return needed;
+  }
+  // Audio Overview: a two-voice audio briefing voiced with Voice & Audio's
+  // speech models. Off the record needs its own update, as a chat would;
+  // Private Mode is refused (no voice model offers zero data retention), but
+  // gated like a chat's; Veil's mask count needs Veil.
+  if (p === "/api/audio/overview" || p.startsWith("/api/audio/overview/")) {
+    const needed = ["audiooverview", "audio"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      else if (body.ephemeral === true) needed.push("ephemeral");
+      if (body.veil_masked !== undefined) needed.push("veil");
     }
     return needed;
   }

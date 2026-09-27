@@ -626,6 +626,12 @@ test("a run: quote first, then the script and each turn voiced, joined, charged 
   assert.equal(before - balance(s.db, p.user.id).total, -ledger[0].amount - ledger[1].amount);
   assert.equal(done.anonyma.credits_charged, (-ledger[0].amount - ledger[1].amount) / 10000);
   assert.deepEqual(holdsOf(s, p.user.id).sort(), ["settled", "settled"]);
+  // What was held is exactly the maximum shown: no hidden margin.
+  const held = s.db.prepare("SELECT id,amount FROM holds WHERE user_id=? ORDER BY id").all(p.user.id);
+  assert.equal(held.reduce((n, h) => n + h.amount, 0), Math.round(quote.credits * 10000));
+  assert.equal(held.find((h) => h.id.endsWith(":script")).amount, Math.round(quote.steps.script * 10000));
+  assert.equal(held.find((h) => h.id.endsWith(":voices")).amount, Math.round(quote.steps.voices * 10000));
+  assert.ok(s.cfg.holdMargin > 1, "chat's hold margin is on, and still not applied here");
   // Saved like other audio, with its script.
   const library = (await p.agent.get("/api/media").expect(200)).body.data;
   assert.equal(library.length, 1);
@@ -655,6 +661,14 @@ test("a run: quote first, then the script and each turn voiced, joined, charged 
   // Deleting the file deletes its script.
   await p.agent.delete("/api/media/" + list[0].id).expect(200);
   assert.equal(count(s, "audio_overviews"), 0);
+  // So a balance of exactly the maximum shown is enough, and one unit less isn't.
+  const exact = await person(s, "cyrus", Math.round(quote.credits * 10000));
+  assert.equal((await exact.agent.post("/api/audio/overview/quote").send(BODY()).expect(200)).body.credits, quote.credits);
+  assert.equal((await make(exact).expect(200)).body.at(-1).overview.status, "complete");
+  const short = await person(s, "czara", Math.round(quote.credits * 10000) - 1);
+  const refused = await short.agent.post("/api/audio/overview").send({ ...BODY(), requestId: "short-1" }).expect(402);
+  assert.equal(refused.body.error.code, "insufficient_credits");
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM holds WHERE user_id=?").get(short.user.id).n, 0);
 });
 
 test("a script cut off by its budget stops before any voice, with only the script charged", async (t) => {

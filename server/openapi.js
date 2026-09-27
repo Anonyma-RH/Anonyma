@@ -2011,7 +2011,7 @@ const overviewRequest = object(
 route("post", "/api/audio/overview/quote", "The most an audio overview can cost", {
   body: overviewRequest,
   response: object({
-    credits: { ...number, description: "The maximum: the script (prompt plus its whole reply budget) and the voices for the length's character cap" },
+    credits: { ...number, description: "The maximum, and exactly what a run holds: the script (prompt plus its whole reply budget) and the voices for the length's character cap" },
     usd: number,
     available: number,
     spending_limit: object({ remaining: number }),
@@ -2034,7 +2034,7 @@ route("post", "/api/audio/overview", "Make an audio overview", {
   body: overviewRequest,
   stream: true,
   description:
-    "Workspace only (session). The source goes to the text model as one data-only document; the model writes a two-host script as strict JSON ({ title, chapters: [{ title, turn }], turns: [{ speaker: A|B, text }] }), cut at the length's character cap. Each turn is then voiced with the chosen voice, and the clips are joined into one file (MP3 or WAV) and saved to the library with its script, unless off the record. Before anything runs, the script's and the voices' maximums are held (402 insufficient_credits or spending_limit, 409 overview_running for a second run, with nothing charged). The script settles on its usage once written; a script cut off by its budget (overview_script_length) or not in the expected shape (overview_script_invalid) stops the run with only the script charged. The voices settle once, on the characters voiced; a failed turn stops the run, keeps what was voiced and charges nothing further. SSE events: overview.stage writing, script (title, chapters, turns), voiced (index, of, credits), then done with result { title, chapters, turns (with start seconds), duration, status complete|partial|stopped, saved, media? | audio? { mime, data base64 } | clips? } and anonyma { credits_charged, steps { script, voices }, request_id }, or error with whatever was made.",
+    "Workspace only (session). The source goes to the text model as one data-only document; the model writes a two-host script as strict JSON ({ title, chapters: [{ title, turn }], turns: [{ speaker: A|B, text }] }), cut at the length's character cap. Each turn is then voiced with the chosen voice, and the clips are joined into one file (MP3 or WAV) and saved to the library with its script, unless off the record. Before anything runs, exactly the quote's maximum is held, the script's and the voices' parts with no extra margin (402 insufficient_credits or spending_limit, 409 overview_running for a second run, with nothing charged). The script settles on its usage once written; a script cut off by its budget (overview_script_length) or not in the expected shape (overview_script_invalid) stops the run with only the script charged. The voices settle once, on the characters voiced; a failed turn stops the run, keeps what was voiced and charges nothing further. SSE events: overview.stage writing, script (title, chapters, turns), voiced (index, of, credits), then done with result { title, chapters, turns (with start seconds), duration, status complete|partial|stopped, saved, media? | audio? { mime, data base64 } | clips? } and anonyma { credits_charged, steps { script, voices }, request_id }, or error with whatever was made.",
 });
 route("get", "/api/audio/overview", "List saved audio overviews", {
   response: object({

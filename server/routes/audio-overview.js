@@ -43,9 +43,10 @@ import { overviewCosts, scriptMessages, stitchClips, voiceCharge } from "../audi
 // two-host script (strict JSON, from a text model), each turn of it is
 // voiced with one of two voices, and the clips are joined into one file.
 //
-// Money: before anything runs, the script's maximum and the voices' maximum
-// (the length's character cap at the voice model's price) are held; a run
-// that can't hold both is refused with nothing charged. The script settles
+// Money: before anything runs, exactly the maximum the quote shows is held:
+// the script's (its prompt plus its whole reply budget) and the voices' (the
+// length's character cap at the voice model's price), with no extra margin;
+// a run that can't hold both is refused with nothing charged. The script settles
 // on its actual usage once the model has written it (it was run, whether or
 // not it turned out usable). The voices settle once, at the end, on the
 // characters actually voiced; a failed turn stops the run and nothing
@@ -58,7 +59,6 @@ import { overviewCosts, scriptMessages, stitchClips, voiceCharge } from "../audi
 // (media) plus its script (audio_overviews), erased and exported with the
 // account and deleted with the file. Off the record keeps nothing: the audio
 // comes back in the response only.
-const BUDGET_CODES = ["insufficient_credits", "spending_limit"];
 const DEFAULT_TITLES = { document: "Document", chat: "This chat", research: "Research report" };
 const validTokens = (value, fallback) =>
   Number.isSafeInteger(value) && value >= 0 ? value : fallback;
@@ -174,33 +174,20 @@ export function audioOverviewRoutes(ctx) {
       fail(409, "An audio overview is already being made. Wait for it, or stop it first.", "overview_running");
 
     // ---- Hold both maximums before anything runs ----
+    // Exactly the maximum the quote shows, and nothing more: the script at
+    // its prompt plus its whole reply budget, the voices at the length's
+    // character cap. So the balance and Spending Limits are checked against
+    // the number the person saw. (A script that somehow cost more than its
+    // hold is charged only the hold; settle() records the rest as the
+    // operator's.)
     const holdId = (step) => `${user}:${requestId}:${step}`;
-    const holdAll = (margin) => {
-      const made = [];
-      try {
-        reserve(db, {
-          id: holdId("script"),
-          user,
-          amount: margin ? Math.ceil(costs.amounts.script * cfg.holdMargin) : costs.amounts.script,
-          ttl: 45 * 60000,
-        });
-        made.push(holdId("script"));
-        reserve(db, { id: holdId("voices"), user, amount: costs.amounts.voices, kind: "audio", ttl: 45 * 60000 });
-        made.push(holdId("voices"));
-      } catch (e) {
-        // A partly held run is undone completely; none of it ever ran.
-        for (const id of made) db.prepare("DELETE FROM holds WHERE id=? AND status='held'").run(id);
-        throw e;
-      }
-    };
-    // Published token prices are a floor (see routes/chat.js): hold headroom
-    // for the script when the balance and limits allow, else exactly the
-    // maximum shown. The voices are priced exactly, per character.
+    reserve(db, { id: holdId("script"), user, amount: costs.amounts.script, ttl: 45 * 60000 });
     try {
-      holdAll(cfg.holdMargin > 1);
+      reserve(db, { id: holdId("voices"), user, amount: costs.amounts.voices, kind: "audio", ttl: 45 * 60000 });
     } catch (e) {
-      if (!(cfg.holdMargin > 1) || !BUDGET_CODES.includes(e.code)) throw e;
-      holdAll(false);
+      // A partly held run is undone completely; none of it ever ran.
+      db.prepare("DELETE FROM holds WHERE id=? AND status='held'").run(holdId("script"));
+      throw e;
     }
     // Only what billing needs: a chat request and a speech request.
     tagUsage(db, cfg, holdId("script"), { feature: "chat", model: m.id });

@@ -187,6 +187,8 @@ export function createEstimator({
                 : {}),
               model: r.model,
               ...(body.max_tokens ? { replyBudget: body.max_tokens } : {}),
+              // Auto Model: what Auto chose, or its candidates until it does.
+              ...(r.auto ? { auto: r.auto } : {}),
             });
           } catch (e) {
             if (id !== seq || e?.name === "AbortError") return;

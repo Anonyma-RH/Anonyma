@@ -24,6 +24,10 @@ import { trainingLabel } from "./training.js";
 //   count the browser reported for the request, or null when Veil was off.
 //   Absent when nothing was reported (the API never is).
 // - receipt_id: the signed receipt's id (the requestId), or null.
+// - helper: Auto Model only, when its rules were unsure and a small model
+//   was sent the newest message to choose the tier: that model's id and
+//   provider (server/auto-model.js). Sent with the same routing as the
+//   request, so the retention above applies to it too.
 export const STORAGE = ["saved", "off_the_record", "private", "not_saved"];
 export const TRAIL_FIELDS = [
   "model",
@@ -34,6 +38,7 @@ export const TRAIL_FIELDS = [
   "storage",
   "veil_masked",
   "receipt_id",
+  "helper",
 ];
 
 export const trailLive = (cfg) => isReleased(cfg, "trail");
@@ -55,11 +60,12 @@ export function veilMaskedFrom(body) {
   return v;
 }
 
-export function privacyTrail(cfg, { model, route, zeroDataRetention, storage, veilMasked, receiptId }) {
-  const provider =
-    typeof model.owned_by === "string" && model.owned_by.trim()
-      ? model.owned_by.trim().slice(0, 80)
-      : null;
+const providerOf = (model) =>
+  typeof model?.owned_by === "string" && model.owned_by.trim()
+    ? model.owned_by.trim().slice(0, 80)
+    : null;
+export function privacyTrail(cfg, { model, route, zeroDataRetention, storage, veilMasked, receiptId, helper = null }) {
+  const provider = providerOf(model);
   return {
     model: model.id,
     provider,
@@ -71,5 +77,6 @@ export function privacyTrail(cfg, { model, route, zeroDataRetention, storage, ve
     storage,
     ...(veilMasked !== undefined ? { veil_masked: veilMasked } : {}),
     receipt_id: typeof receiptId === "string" && receiptId ? receiptId : null,
+    ...(helper ? { helper: { model: helper.id, provider: providerOf(helper) } } : {}),
   };
 }

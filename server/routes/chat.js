@@ -36,6 +36,13 @@ import { prepareStudyRequest, studyBudget } from "../study.js";
 import { prepareCompareRequest } from "../compare.js";
 import { compareBudget } from "../../src/compare-spec.js";
 import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
+import {
+  askHelper,
+  helperCharge,
+  planAutoRequest,
+  refuseAutoTask,
+  requestSettings,
+} from "../auto-model.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -87,29 +94,43 @@ export function chatRoutes(ctx) {
     // Seed Guard: refused before anything is validated, reserved or stored.
     refuseSeedPhrase(cfg, req, api);
     if (!api) validateTaskRequest(req.body);
-    const m = getModel(req.body.model);
+    // Auto Model (server/auto-model.js): a workspace chat, code or Uncensored
+    // message that sends `auto` (and no model) has its model chosen below,
+    // from the models that request may use; everything that picks its own
+    // model is refused. Its release gate is in featuresFor. Never the API.
+    const autoAsked = !api && req.body.auto !== undefined;
+    if (autoAsked)
+      refuseAutoTask(req.body, {
+        task: !!(study || compareTask || sheetsTask || catchupTask),
+        blind: !!req.blind,
+      });
+    const autoSettings = autoAsked ? requestSettings(req.body) : null;
+    // Chosen once Auto has decided (at once by its rules, or after its
+    // helper, once the most it can cost is held).
+    let m = autoAsked ? null : getModel(req.body.model);
     // Early Model Access: a model in its first days is for Insiders and up
     // (never a connected app), refused here before anything is reserved.
     // Covers the workspace, /v1, MCP ask and Routines, which all run here.
-    ctx.earlyModels.check(viewerOf(req), "models", m.id);
+    // Auto never offers such a model to an account that can't use it.
+    if (m) ctx.earlyModels.check(viewerOf(req), "models", m.id);
     // A sheets reply budget fitted to the chosen model (server/sheets.js).
-    if (sheetsTask && m.type === "chat")
+    if (sheetsTask && m?.type === "chat")
       req.body.max_tokens = sheetsBudget(sheetsTask, m, req.body.messages);
     // A deck's reply budget fitted to the chosen model (server/study.js).
-    if (study && m.type === "chat")
+    if (study && m?.type === "chat")
       req.body.max_tokens = studyBudget(study, m, req.body.messages);
     // A summary's reply budget fitted to the chosen model (src/compare-spec.js).
-    if (compareTask && m.type === "chat")
+    if (compareTask && m?.type === "chat")
       req.body.max_tokens = compareBudget(m, req.body.messages);
     // The summary's reply room, fitted to the model (server/catchup.js).
-    if (catchupTask && m.type === "chat") {
+    if (catchupTask && m?.type === "chat") {
       if (imageCallable(m)) fail(400, "Catch me up needs a text model.", "unsupported_model");
       req.body.max_tokens = catchupBudget(m, req.body.messages);
     }
     // Dedicated image models are priced per option and served by
     // /v1/images/generations; through chat they would be held at the
     // cheapest variant while the provider chooses the quality.
-    if (m.type !== "chat")
+    if (m && m.type !== "chat")
       fail(
         400,
         m.type === "image"
@@ -124,7 +145,7 @@ export function chatRoutes(ctx) {
     const isPrivate = api
       ? req.privateOnly === true
       : req.body.private === true;
-    if (isPrivate && !isPrivateModel(m, cfg))
+    if (m && isPrivate && !isPrivateModel(m, cfg))
       fail(
         400,
         "Private mode needs a model with zero data retention.",
@@ -177,8 +198,11 @@ export function chatRoutes(ctx) {
           "invalid_request",
         );
     }
-    const messages = validateMessages(ctx.files.expandMessages(req, req.body.messages), m, api),
-      max = maxTokens(req.body.max_tokens, m);
+    // Auto checks the messages without a model; which models can read their
+    // images and fit them is part of its choice.
+    const expanded = ctx.files.expandMessages(req, req.body.messages);
+    const messages = m ? validateMessages(expanded, m, api) : ctx.models.checkMessages(expanded, api).messages;
+    let max = m ? maxTokens(req.body.max_tokens, m) : 0;
     // Optional Memory Across Models (routes/memory.js): only this user's own
     // stored, enabled facts, and never over the API, off the record, in
     // Private Mode, in Symposium or Double-check, or in a shared
@@ -187,7 +211,6 @@ export function chatRoutes(ctx) {
     // conversation.
     const memory = api ? null : ctx.memory.forRequest(req.user.id, req.body);
     const sent = withMemory(messages, memory?.message);
-    ctx.models.validateContext(sent, m, max);
     const requestId = requestIdentifier(req);
     const hold = req.user.id + ":" + requestId;
     // Team Treasury "Team pays": held on the collab's treasury (see below).
@@ -202,7 +225,38 @@ export function chatRoutes(ctx) {
     // Web search is a PPQ plugin with its own per-request fee.
     const webSearch = wantsWebSearch(req.body);
     const searchFee = webSearch ? cfg.webSearchPrice : 0;
-    const amount = chatPrice(m, sent, max, searchFee, factor);
+    // Auto's plan: decided by its rules (a model now), or pending its helper,
+    // in which case the most it can cost (the dearest model it could land
+    // on, plus the helper) is what's held, exactly as /api/quote shows it.
+    const auto = autoAsked
+      ? planAutoRequest(ctx, req, {
+          sent,
+          isPrivate,
+          mode: req.body.mode ?? "chat",
+          settings: autoSettings,
+          factor,
+          searchFee,
+        })
+      : null;
+    // What the reply's chip says: ids and codes only (src/auto-model.js).
+    let autoInfo = null,
+      helperCharged = 0,
+      helperAsked = false;
+    const chooseAuto = ({ tier, reason, model }, via) => {
+      m = model;
+      max = auto.budget(m);
+      autoInfo = {
+        model: m.id,
+        tier,
+        reason,
+        via,
+        prefer: auto.settings.prefer,
+        helper: helperAsked ? { model: auto.helper.id, credits: credits(helperCharged) } : null,
+      };
+    };
+    if (auto?.chosen) chooseAuto(auto.chosen, "rules");
+    if (m) ctx.models.validateContext(sent, m, max);
+    let amount = m ? chatPrice(m, sent, max, searchFee, factor) : auto.amount;
     // Off the record: nothing about the chat is written to storage, not even
     // the user's message. Billing is unaffected — only persistence changes.
     // Private Mode always takes this path too, so nothing it sends is saved.
@@ -247,7 +301,7 @@ export function chatRoutes(ctx) {
     // Team Treasury: with "Team pays" on, a collab conversation's request is
     // held on the collab's treasury account, within the member's limits.
     const team = teamPaid
-      ? ctx.treasury.forChat(req.user.id, conversation, m.id, hold)
+      ? ctx.treasury.forChat(req.user.id, conversation, m?.id ?? "auto", hold)
       : null;
     // Published token prices are a floor: the gateway may route to a pricier
     // provider (a live Llama request cost about 3x its listed rate). Hold
@@ -285,6 +339,50 @@ export function chatRoutes(ctx) {
       )
         throw e;
       reservation(amount);
+    }
+    // Auto's helper, when its rules were unsure: one small call on this same
+    // hold, sent only the newest message's typed text and a few counts. A
+    // usable answer picks the tier and is charged with the message; anything
+    // else (a failure, a timeout, an unusable answer) leaves the message on
+    // Balanced and costs nothing. Leaving now releases the hold.
+    if (auto?.pending) {
+      helperAsked = true;
+      const helperStop = new AbortController();
+      const leave = () => {
+        if (!res.writableEnded) helperStop.abort(new Error("Client disconnected"));
+      };
+      res.on("close", leave);
+      inflight.controllers.add(helperStop);
+      inflight.holds.add(hold);
+      let asked;
+      try {
+        asked = await askHelper(ctx, {
+          model: auto.helper,
+          messages: auto.helperSent,
+          budget: auto.helperRoom,
+          isPrivate,
+          signal: helperStop.signal,
+        });
+      } finally {
+        res.off("close", leave);
+        inflight.controllers.delete(helperStop);
+        inflight.holds.delete(hold);
+      }
+      if (helperStop.signal.aborted) {
+        release(db, hold);
+        return;
+      }
+      const choice = asked.choice;
+      if (choice) helperCharged = helperCharge(asked.usd, factor, auto.helperMax);
+      const tier = choice?.tier || "balanced";
+      chooseAuto(
+        { tier, reason: choice ? choice.reason : "general", model: auto.row(auto.plan.tiers[tier] || auto.plan.tiers.balanced) },
+        choice ? "helper" : "fallback",
+      );
+      // After the choice, a failure-policy charge is the chosen model's
+      // estimate plus the helper's actual cost; settlement is on actuals.
+      amount = chatPrice(m, sent, max, searchFee, factor) + helperCharged;
+      if (team) db.prepare("UPDATE treasury_spends SET model=? WHERE hold_id=?").run(m.id, hold);
     }
     // Usage Insights: what this spend is filed under, without content.
     tagUsage(db, cfg, hold, {
@@ -415,6 +513,8 @@ export function chatRoutes(ctx) {
     };
     const showBilling = !api && !req.blind && isReleased(cfg, "chatcontrol");
     if (showBilling) send({ billing: billingFor(req.user.id, requestId), conversationId: conversation });
+    // Auto Model: which model is answering and why, before the reply starts.
+    if (autoInfo) send({ auto: autoInfo });
     // Serve from the primary gateway, or from the backup when the primary
     // refuses before accepting; never after, so nothing is paid twice.
     let servedBy = "primary";
@@ -430,6 +530,8 @@ export function chatRoutes(ctx) {
             storage,
             veilMasked,
             receiptId,
+            // Auto's helper read the newest message too.
+            helper: helperAsked ? auto.helper : null,
           })
         : null;
     const upstreamBody = {
@@ -587,7 +689,7 @@ export function chatRoutes(ctx) {
         completion_tokens: out,
         total_tokens: input + out,
       };
-      receipt = settle(db, hold, usdUnits(Number(dollars) * factor), m.name, {
+      receipt = settle(db, hold, usdUnits(Number(dollars) * factor) + helperCharged, m.name, {
         model: m.id,
         usage,
         finish_reason: finishReason || "stop",
@@ -635,6 +737,7 @@ export function chatRoutes(ctx) {
           : {}),
         ...(signedReceipt ? { signed_receipt: signedReceipt } : {}),
         ...(privacy ? { privacy } : {}),
+        ...(autoInfo ? { auto: autoInfo } : {}),
         // Exactly which facts went with this request, as sent.
         ...(req.body.memory != null && memory
           ? {
@@ -666,6 +769,7 @@ export function chatRoutes(ctx) {
             request_id: requestId,
             ...(citations.length ? { citations } : {}),
             ...(privacy ? { privacy } : {}),
+            ...(autoInfo ? { auto: autoInfo } : {}),
           }),
           m.id,
           receipt.charged,
@@ -763,7 +867,7 @@ export function chatRoutes(ctx) {
               : (reportedProviderCost(usage, upstreamCost, feePercent()) ??
                   tokenCost(m, tokenCounts().input, tokenCounts().out)) +
                 (accepted ? searchFee : 0)) * factor,
-          ),
+          ) + helperCharged,
           "Interrupted: " + m.name,
         );
         e.receipt = receipt;
@@ -771,7 +875,7 @@ export function chatRoutes(ctx) {
         receipt = settle(
           db,
           hold,
-          usdUnits((tokenCost(m, tokenCounts().input, 0) + searchFee) * factor),
+          usdUnits((tokenCost(m, tokenCounts().input, 0) + searchFee) * factor) + helperCharged,
           "Stopped before output: " + m.name,
         );
         e.receipt = receipt;
@@ -800,6 +904,7 @@ export function chatRoutes(ctx) {
               finish_reason: timedOut ? "timeout" : "interrupted",
               request_id: requestId,
               ...(privacy ? { privacy } : {}),
+              ...(autoInfo ? { auto: autoInfo } : {}),
             }),
             m.id,
             receipt.charged,
@@ -823,6 +928,7 @@ export function chatRoutes(ctx) {
                 request_id: requestId,
                 finish_reason: timedOut ? "timeout" : "interrupted",
                 ...(privacy ? { privacy } : {}),
+                ...(autoInfo ? { auto: autoInfo } : {}),
               }
             : undefined,
           ...(showBilling ? { billing: billingFor(req.user.id, requestId) } : {}),

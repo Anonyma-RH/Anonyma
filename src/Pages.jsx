@@ -880,6 +880,7 @@ const featureIcons = {
   audiooverview: "audio",
   highlight: "highlight",
   catchup: "catchup",
+  automodel: "auto",
 };
 const launch = {
   id: "mvp",

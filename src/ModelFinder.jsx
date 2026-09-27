@@ -12,7 +12,9 @@ import {
   qualityGuidance,
   searchModels,
 } from "./model-finder.js";
+import { TIER_LABELS } from "./auto-model.js";
 import "./model-finder.css";
+import "./auto-model.css";
 
 // What a price in this mode is for, said once under the list.
 const PRICE_BASIS = {
@@ -38,6 +40,8 @@ export default function ModelFinder({
   status = null,
   // On-Device Model: opens its page, where a model runs in this browser.
   onDevice = null,
+  // Auto Model, once released: { on, tiers, onChoose, note } (src/AutoModel.jsx).
+  auto = null,
 }) {
   const [open, setOpen] = useState(false),
     [query, setQuery] = useState(""),
@@ -57,7 +61,8 @@ export default function ModelFinder({
   const current = resolved?.model || null;
   const recommended = presets.find(p => p.id === "best")?.model;
   const guidance = qualityGuidance(recommended, mode);
-  const preset = resolved?.via === "preset" && !resolved.fallback ? resolved.preset : null;
+  const autoOn = !!auto?.on;
+  const preset = !autoOn && resolved?.via === "preset" && !resolved.fallback ? resolved.preset : null;
   const price = (m) => {
     const c = creditPrice(m, mode, markup);
     return c == null ? "No published price" : `≈${formatCredits(c)} credits`;
@@ -119,19 +124,33 @@ export default function ModelFinder({
       <button
         ref={trigger}
         type="button"
-        className="mf-trigger"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Model: ${current?.name || "none"}${preset ? `, ${PRESETS.find((p) => p.id === preset).label} preset` : ""}. Change model`}
+        aria-label={
+          autoOn
+            ? "Model: Auto, picks a model for each message. Change model"
+            : `Model: ${current?.name || "none"}${preset ? `, ${PRESETS.find((p) => p.id === preset).label} preset` : ""}. Change model`
+        }
+        className={"mf-trigger" + (autoOn ? " auto-on" : "")}
         onClick={() => (open ? close() : openPanel())}
       >
-        {preset && <small>{PRESETS.find((p) => p.id === preset).label}</small>}
-        {current && status && <StatusDot entry={status[current.id]} />}
-        <b data-i18n="off">{current?.name || "Choose a model"}</b>
-        {current && <EarlyModelTag model={current} />}
+        {autoOn ? (
+          <>
+            <Icon name="auto" size={14} />
+            <b>Auto</b>
+          </>
+        ) : (
+          <>
+            {preset && <small>{PRESETS.find((p) => p.id === preset).label}</small>}
+            {current && status && <StatusDot entry={status[current.id]} />}
+            <b data-i18n="off">{current?.name || "Choose a model"}</b>
+            {current && <EarlyModelTag model={current} />}
+          </>
+        )}
         <Icon name="down" size={14} />
       </button>
-      {resolved?.fallback && (
+      {autoOn && auto.note && <p className="auto-paused">{auto.note}</p>}
+      {!autoOn && resolved?.fallback && (
         <p className="mf-fallback" role="status">
           <span data-i18n="off">{resolved.fallback.wanted}</span> {resolved.fallback.reason}
           {current ? (
@@ -155,6 +174,34 @@ export default function ModelFinder({
             if (e.relatedTarget && !panel.current?.contains(e.relatedTarget) && e.relatedTarget !== trigger.current) close(false);
           }}
         >
+          {auto && (
+            <button
+              type="button"
+              className="auto-entry"
+              aria-pressed={autoOn}
+              title="Fast for simple, strong for hard, a code model for code. Each reply says which model answered and why."
+              onClick={() => {
+                auto.onChoose();
+                close();
+              }}
+            >
+              <span className="auto-entry-head">
+                <Icon name="auto" size={16} />
+                <b>Auto</b>
+                <small>Picks a model for each message</small>
+              </span>
+              {auto.tiers?.length > 0 && (
+                <span className="auto-entry-tiers">
+                  {auto.tiers.map((t) => (
+                    <span key={t.tier}>
+                      <em>{TIER_LABELS[t.tier]}</em>
+                      <span data-i18n="off">{t.model.name}</span>
+                    </span>
+                  ))}
+                </span>
+              )}
+            </button>
+          )}
           <div className="mf-presets" role="group" aria-label="Presets">
             {presets.map((p) => (
               <button
@@ -215,7 +262,7 @@ export default function ModelFinder({
                 id={`${id}-opt-${i}`}
                 role="option"
                 data-index={i}
-                aria-selected={m.id === current?.id}
+                aria-selected={!autoOn && m.id === current?.id}
                 className={i === active ? "active" : undefined}
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseMove={() => i !== active && setActive(i)}

@@ -21,6 +21,7 @@ import { RetentionSelect } from "./Ephemeral.jsx";
 import { LanguageSettings } from "./LanguageSwitch.jsx";
 import { ShieldSettings } from "./Shield.jsx";
 import { SharpenSettings } from "./Sharpen.jsx";
+import { AutoSettings } from "./AutoModel.jsx";
 import {
   api,
   readStore,
@@ -991,6 +992,8 @@ export default function Account() {
               <ShieldSettings config={config} />
               {/* Prompt Sharpen: this browser's sharpener model. */}
               {!demo && <SharpenSettings config={config} />}
+              {/* Auto Model: how Auto picks, in this browser. */}
+              <AutoSettings config={config} demo={demo} />
               {/* Privacy Screen: this browser's hide and lock choices. */}
               {!demo && <PrivacyScreenSettings config={config} user={user} />}
               <section>

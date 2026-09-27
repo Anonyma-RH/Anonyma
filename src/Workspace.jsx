@@ -190,6 +190,9 @@ import { scanSecrets, isSoft, findSeedPhrase, SEED_MESSAGE } from "./seed-guard.
 import { OnchainChip, MessageChainFacts, onchainReleased } from "./Onchain.jsx";
 import { detectOnchain, chainFactsDocument, isChainFactsDocument } from "./onchain.js";
 import ModelFinder from "./ModelFinder.jsx";
+import { AUTO, readAuto, routeSealed, withAutoMode } from "./auto-model.js";
+import { CHAT_SERVICE_OUTPUT } from "../data/chat-limits.js";
+import { AutoChip, AutoEstimate, autoModelReleased, autoPoolFrom, autoTierList, useAutoChoices } from "./AutoModel.jsx";
 import { STORAGE_KEY as MODEL_CHOICES, loadChoices, resolveChoice, withChoice, requestNeedsVision } from "./model-finder.js";
 import { useShareTargetPrefill } from "./share-target.js";
 import { InstallAppEntry } from "./InstallApp.jsx";
@@ -265,6 +268,9 @@ const sampleCode =
 // Symposium runs are saved with their own conversation mode and have no
 // thread view to open, so they stay out of the recent-conversations list
 // and the workspace home.
+// Auto Model: the reply budget select offers up to the service's ceiling;
+// each model Auto picks gets the budget up to its own limit.
+const AUTO_BUDGET_MODEL = { chatLimits: { maxOutputTokens: CHAT_SERVICE_OUTPUT } };
 const recentConversations = (list) =>
   list.filter((c) => c.mode !== "symposium");
 export function AppSidebar({
@@ -666,6 +672,12 @@ export default function Workspace() {
   // browser. While it's unreleased the plain model select stays as it was.
   const longAnswersLive = isReleased(config, "longanswers");
   const finderLive = isReleased(config, "finder");
+  // Auto Model (src/AutoModel.jsx): whether Auto is chosen in each text
+  // section, and how it picks (Account → Settings), in this browser.
+  const [autoChoices, setAutoChoices] = useAutoChoices();
+  // A ?model= link picks its model for this visit, over Auto, until Auto
+  // is chosen again.
+  const [modelLinked, setModelLinked] = useState(() => !!params.get("model"));
   const [modelChoices, setModelChoices] = useState(() => {
     const saved = loadChoices(readStore);
     // A ?model= link picks the model for this visit without remembering it.
@@ -857,10 +869,24 @@ export default function Workspace() {
   const statusLive = !demo && statusReleased(config);
   const { report: statusReport } = useModelStatus(statusLive);
   const modelStatus = useMemo(() => (statusLive ? statusByModel(statusReport) : null), [statusLive, statusReport]);
-  const selectedDown = modelStatus && selected && modelStatus[selected.id]?.status === "down" ? selected : null;
+  // Auto Model, once released: signed in, in chat, code and Uncensored,
+  // never the demo (whose models aren't called). The models it may use here
+  // are the picker's own (this section, Private Mode, images), less any that
+  // are Down; the server checks the same again when it chooses.
+  const autoLive = !demo && !!user && textMode && autoModelReleased(config);
+  const autoChosen = autoLive && !modelLinked && autoChoices.modes[mode] === true;
+  const autoPool = useMemo(
+    () => (autoLive ? autoPoolFrom(finderModels, modelStatus) : []),
+    [autoLive, finderModels, modelStatus],
+  );
+  const autoTiers = useMemo(() => autoTierList(autoPool), [autoPool]);
+  const autoRequest = { prefer: autoChoices.prefer, helper: autoChoices.helper };
+  const selectedDown =
+    !autoChosen && modelStatus && selected && modelStatus[selected.id]?.status === "down" ? selected : null;
   // Training Labels: flag models whose provider trains on prompts, and
   // offer the listed version that doesn't. Private mode never lists them.
   const trainingSelected =
+    !autoChosen &&
     trainingLive &&
     textMode &&
     !privateMode &&
@@ -877,6 +903,15 @@ export default function Workspace() {
     setModelChoices((prev) => withChoice(prev, mode, choice));
     // Only what the person chose is remembered, never a fallback.
     if (!demo) saveStore(MODEL_CHOICES, withChoice(loadChoices(readStore), mode, choice));
+    // Choosing a model or preset turns Auto off for this section.
+    if (autoChoices.modes[mode]) setAutoChoices(withAutoMode(autoChoices, mode, false));
+    setQuote(null);
+  }
+  // Auto Model: "Auto" at the top of the picker, remembered per section in
+  // this browser, like the model choice it replaces.
+  function chooseAuto() {
+    setModelLinked(false);
+    setAutoChoices(withAutoMode(autoChoices, mode, true));
     setQuote(null);
   }
   // Video choices come only from the model's published prices, as the server requires.
@@ -1546,14 +1581,56 @@ export default function Workspace() {
     : null;
   const incompatibleMention = finderLive && mentioned && needsVision && !mentioned.vision;
   const target = mentioned || selected;
-  const selectedReplyBudget = longAnswersLive ? replyBudgetFor(target, replyBudget) : REPLY_BUDGET;
+  // Deep Research (src/DeepResearch.jsx): offered where Web is (chat and
+  // code, signed in, never the demo or Sealed Mode).
+  const researchAvailable =
+    !demo && !!user && researchReleased(config) && ["chat", "code"].includes(mode);
+  const researchOn = researchAvailable && !!researchDepth && !sealedOn && !blindActive;
+  // Auto answers a plain message. Blind, Deep Research and an @mention pick
+  // their own models, and Sealed Mode routes in this browser (below).
+  const autoActive = autoChosen && !sealedOn && !blindActive && !researchOn && !mentioned;
+  // Beside the picker: Deep Research runs on the model Auto would give way to.
+  const autoNote =
+    autoChosen && researchOn && target ? (
+      <>
+        Deep Research doesn't use Auto. It runs on <span data-i18n="off">{target.name}</span>.
+      </>
+    ) : null;
+  // Auto asks for the reply budget as chosen; each model gets it up to its
+  // own limit.
+  const selectedReplyBudget = autoActive
+    ? longAnswersLive ? replyBudget : REPLY_BUDGET
+    : longAnswersLive ? replyBudgetFor(target, replyBudget) : REPLY_BUDGET;
   // What a chat Send posts, shared with the credit estimate beside it.
   const sendText = mentioned ? mention[2].trim() : prompt.trim();
-  const sendModel = target?.id || model;
+  const sendModel = autoActive ? AUTO : target?.id || model;
   // Sealed Mode: the most this message can hold, worked out here from the
   // sealed body's size exactly as the server bounds it. Never a server quote,
   // which would carry the prompt unsealed.
+  // Auto in Sealed Mode: chosen in this browser by rules only, among the
+  // sealed models (a helper would see the prompt unsealed). What's shown
+  // here follows the composer; Send routes the request as it's sealed.
+  const sealedAutoOn = sealedOn && autoModelReleased(config) && sealedModelId === AUTO;
+  const sealedAutoPool = useMemo(
+    () => sealedModels.filter((m) => modelStatus?.[m.id]?.status !== "down"),
+    [sealedModels, modelStatus],
+  );
+  const sealedRoute = useMemo(() => {
+    if (!sealedAutoOn) return null;
+    const { request } = buildChatRequest({
+      messages,
+      text: sendText,
+      documents: sentDocuments,
+      asData: documentsAsData,
+      instructions: instructionsActive ? instructions.body.trim() : "",
+      preserveHistory: longAnswersLive,
+    });
+    return routeSealed({ messages: request, mode, prefer: autoChoices.prefer, pool: sealedAutoPool });
+  }, [sealedAutoOn, messages, sendText, sentDocuments, documentsAsData, instructionsActive, instructions.body, longAnswersLive, mode, autoChoices.prefer, sealedAutoPool]);
+  const sealedSend = sealedRoute?.model || sealedTarget;
+  const sealedAutoTiers = useMemo(() => autoTierList(sealedAutoPool), [sealedAutoPool]);
   const sealedHoldCredits = useMemo(() => {
+    const sealedTarget = sealedSend;
     if (!sealedOn || !sealedTarget) return null;
     const { request } = buildChatRequest({
       messages,
@@ -1572,7 +1649,7 @@ export default function Workspace() {
     });
     const bytes = ciphertextLength(utf8Length(JSON.stringify(body)));
     return sealedHoldUsd(sealedTarget, bytes, cap) * 1000 * (1 + (Number(config?.markup) || 0) / 100);
-  }, [sealedOn, sealedTarget, messages, sendText, sentDocuments, documentsAsData, instructionsActive, instructions.body, longAnswersLive, config?.markup]);
+  }, [sealedOn, sealedSend, messages, sendText, sentDocuments, documentsAsData, instructionsActive, instructions.body, longAnswersLive, config?.markup]);
   const branchesLive = isReleased(config, "branches");
   // Live Preview (src/LivePreview.jsx): Code & Build's Preview tab and a
   // Preview button on HTML blocks in replies. Browser-only and sandboxed.
@@ -1686,7 +1763,7 @@ export default function Workspace() {
         : null,
       memoryFacts: facts,
     });
-    return quoteBody({
+    const body = quoteBody({
       model: sendModel,
       request,
       webSearch,
@@ -1696,6 +1773,11 @@ export default function Workspace() {
       memory,
       mode,
     });
+    // Auto's estimate names no model: it's priced on the models this chat
+    // may use (its section and Private Mode, as Send says them).
+    if (!autoActive) return body;
+    const { model: _chosen, ...rest } = body;
+    return { ...rest, mode, auto: autoRequest, ...(privateMode ? { private: true } : {}) };
   }
   // Seed Guard: what Send would carry right now (the prompt, attached
   // documents' text and active standing instructions), scanned in this
@@ -1829,11 +1911,6 @@ export default function Workspace() {
   useEffect(() => {
     sharpen.reset();
   }, [current, mode]);
-  // Deep Research (src/DeepResearch.jsx): offered where Web is (chat and
-  // code, signed in, never the demo or Sealed Mode).
-  const researchAvailable =
-    !demo && !!user && researchReleased(config) && ["chat", "code"].includes(mode);
-  const researchOn = researchAvailable && !!researchDepth && !sealedOn && !blindActive;
   // Onchain Explainer: a transaction hash, address or explorer link in the
   // composer offers "Explain on-chain". Nothing leaves the browser until it's
   // pressed; then the server looks it up (free, read only) and the facts go
@@ -1899,9 +1976,9 @@ export default function Workspace() {
     !branching &&
     !!sendText &&
     !incompatibleMention &&
-    !!target?.callable &&
+    (autoActive || !!target?.callable) &&
     !!config?.services?.generation &&
-    !(privateMode && !target?.private) &&
+    (autoActive || !(privateMode && !target?.private)) &&
     // Blind quotes both of its models instead (below).
     !blindActive &&
     // Deep research shows its own maximum instead.
@@ -1912,7 +1989,8 @@ export default function Workspace() {
     () => (autoEstimate ? estimateRequest() : null),
     // Everything estimateRequest reads that can change between renders.
     [autoEstimate, sendText, sendModel, messages, attachments, sentDocuments, documentsAsData,
-      sentInstructions, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive, memoryFacts, mode],
+      sentInstructions, veilOn, veilWords, webSearch, current, teamPays.on, selectedReplyBudget, longAnswersLive, memoryFacts, mode,
+      autoActive, autoChoices.prefer, autoChoices.helper, privateMode],
   );
   const estimate = useCreditEstimate(estimateBody);
   // Blind Compare: each reply's budget fits both models, and the estimate
@@ -1949,7 +2027,8 @@ export default function Workspace() {
   // the chat's to switch.
   const costCompareLive =
     estimatesLive && isReleased(config, "costcompare") && textMode && !demo && !!user;
-  const compareBase = costCompareLive && !mentioned ? estimateBody : null;
+  // Nor for Auto, which prices its own candidates.
+  const compareBase = costCompareLive && !mentioned && !autoActive ? estimateBody : null;
   // Injection Shield on a paste: invisible characters come out of every
   // paste, and a long one (LARGE_PASTE) is checked for instruction-like
   // phrases. The paste is put in by hand so what lands is exactly what was
@@ -2231,7 +2310,11 @@ export default function Workspace() {
     // Deep research runs a new question; an edit or regenerate is a chat.
     if (researchOn && !redo) return sendResearch();
     const redoModel = redo?.model ? visibleModels.find((x) => x.id === redo.model && x.callable) : null;
-    const effectiveModel = redo ? redoModel || selected : target;
+    // Auto Model: a new message while Auto answers, or an edited one (a
+    // regenerate asks the model that answered, or the one picked under the
+    // reply). The server chooses; its choice arrives before the reply.
+    const useAuto = redo ? autoChosen && !redo.model : autoActive;
+    const effectiveModel = useAuto ? null : redo ? redoModel || selected : target;
     const requestVision = redo
       ? requestNeedsVision(buildChatRequest({
           messages: redo.base,
@@ -2240,7 +2323,7 @@ export default function Workspace() {
           instructions: sentInstructions,
         }).request)
       : needsVision;
-    if (finderLive && textMode && requestVision && !effectiveModel?.vision) {
+    if (!useAuto && finderLive && textMode && requestVision && !effectiveModel?.vision) {
       setError("Choose a model that can read the images in this conversation.");
       return;
     }
@@ -2253,11 +2336,11 @@ export default function Workspace() {
         );
         return;
       }
-      if (!effectiveModel?.callable || !config?.services?.generation) {
+      if ((!useAuto && !effectiveModel?.callable) || !config?.services?.generation) {
         setError("This model is not currently available for generation.");
         return;
       }
-      if (privateMode && !effectiveModel?.private) {
+      if (!useAuto && privateMode && !effectiveModel?.private) {
         setError("Choose a private model, or turn off Private mode.");
         return;
       }
@@ -2273,7 +2356,7 @@ export default function Workspace() {
     setBusy(true);
     controller.current = new AbortController();
     const text = redo ? redo.content : sendText;
-    const requestModel = effectiveModel?.id || model;
+    const requestModel = useAuto ? AUTO : effectiveModel?.id || model;
     const requestId = uid();
     if (chatControlLive) { charge.begin(requestId); reading.reset(); }
     if (mode === "image" || mode === "video") {
@@ -2511,7 +2594,9 @@ export default function Workspace() {
       memoryUsed = null,
       // The final event's credits_charged: kept on the reply on screen, so a
       // chat that isn't saved can still export its receipts (Chat Export).
-      charged = null;
+      charged = null,
+      // Auto Model: which model the server chose and why (src/auto-model.js).
+      autoInfo = null;
     const sendingPrivate = privateMode && !demo;
     try {
       await streamChat(
@@ -2521,6 +2606,11 @@ export default function Workspace() {
           ...(ephemeral ? { ephemeral: true } : { conversationId }),
           mode,
           max_tokens: longAnswersLive ? replyBudgetFor(effectiveModel, replyBudget) : REPLY_BUDGET,
+          // Auto Model: no model, Auto's settings, and the reply budget as
+          // chosen (each model gets it up to its own limit).
+          ...(useAuto
+            ? { model: undefined, auto: autoRequest, max_tokens: longAnswersLive ? replyBudget : REPLY_BUDGET }
+            : {}),
           requestId,
           ...(webSearch ? { web_search: true } : {}),
           ...(sendingPrivate ? { private: true } : {}),
@@ -2537,6 +2627,7 @@ export default function Workspace() {
         (event) => {
           if (chatControlLive && !charge.isCurrent(requestId)) return;
           if (event.billing) charge.accept(requestId, event.billing);
+          if (event.auto || event.anonyma?.auto) autoInfo = readAuto(event.auto || event.anonyma.auto) || autoInfo;
           if (event.conversationId) liveId = event.conversationId;
           if (event.anonyma) setReceipt(event.anonyma);
           finishReason = event.anonyma?.finish_reason || event.choices?.[0]?.finish_reason || finishReason;
@@ -2569,9 +2660,10 @@ export default function Workspace() {
               reasoning,
               images,
               citations,
-              model: requestModel,
+              model: autoInfo?.model || requestModel,
               finishReason,
               requestId,
+              ...(autoInfo ? { auto: autoInfo } : {}),
               ...(privateInfo
                 ? { private: privateInfo, masked: requestMasked }
                 : {}),
@@ -2592,6 +2684,7 @@ export default function Workspace() {
       if (err.data?.anonyma?.memory) memoryUsed = err.data.anonyma.memory;
       if (err.data?.anonyma?.privacy) trailInfo = err.data.anonyma.privacy;
       if (err.data?.anonyma?.credits_charged != null) charged = err.data.anonyma.credits_charged;
+      if (err.data?.anonyma?.auto) autoInfo = readAuto(err.data.anonyma.auto) || autoInfo;
       setCurrent(liveId);
       // Refused before anything was reserved (out of credits, a spending
       // limit, Seed Guard, a rate limit): nothing started and nothing was
@@ -2610,8 +2703,9 @@ export default function Workspace() {
         }
       }
       if (!refused && (chatControlLive || output || reasoning || images.length)) setMessages([...next, {
-        role: "assistant", content: output, reasoning, images, citations, model: requestModel,
+        role: "assistant", content: output, reasoning, images, citations, model: autoInfo?.model || requestModel,
         finishReason: finishReason || "interrupted", interrupted: true, requestId,
+        ...(autoInfo ? { auto: autoInfo } : {}),
         ...(memoryUsed ? { memoryUsed } : {}),
         ...(trailInfo ? { privacy: trailInfo } : {}),
         ...(sendingPrivate ? { private: { privacy: "zdr", stored: false }, masked: requestMasked } : {}),
@@ -2955,9 +3049,9 @@ export default function Workspace() {
   // first if its last check is too old; if that fails nothing is sent. The
   // server keeps no copy: Device Vault keeps the chat while it's unlocked.
   async function sendSealed(redo) {
-    const model =
-      (redo?.model && sealedModels.find((m) => m.id === redo.model)) || sealedTarget;
-    if (!model) {
+    const pinned = redo?.model ? sealedModels.find((m) => m.id === redo.model) : null;
+    const fallbackModel = pinned || sealedTarget;
+    if (!fallbackModel) {
       setError("No sealed models are available right now.");
       return;
     }
@@ -2990,6 +3084,12 @@ export default function Workspace() {
       preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
     });
+    // Auto: routed on the request exactly as it will be sealed.
+    const routed =
+      !pinned && sealedAutoOn
+        ? routeSealed({ messages: built.request, mode, prefer: autoChoices.prefer, pool: sealedAutoPool })
+        : null;
+    const model = routed?.model || fallbackModel;
     const next = built.next;
     if (veiling) {
       if (!deviceOnly) saveVeilState(veilKeyRef.current, veilStateRef.current);
@@ -3014,6 +3114,7 @@ export default function Workspace() {
       model: model.id,
       finishReason,
       sealed: sealedInfo,
+      ...(routed ? { auto: routed.auto } : {}),
       ...extra,
     });
     setMessages([...next, reply({ pending: true })]);
@@ -3070,7 +3171,9 @@ export default function Workspace() {
   // Edit a user turn or regenerate an answer. A saved conversation is first
   // branched just before that turn, so the original keeps every message;
   // off-the-record and demo chats rewind only here and stay unsaved.
-  async function rewind(index, kind, editedText = null, { allowSeed = false } = {}) {
+  // `model` regenerates on another model (Auto Model's "Use a different
+  // model"); otherwise a regenerate asks the model that answered.
+  async function rewind(index, kind, editedText = null, { allowSeed = false, model = null } = {}) {
     if (busy) return;
     // Seed Guard: an edit is new text; stop before any branch is made.
     if (editedText != null && !allowSeed && seedLive && scanSecrets(editedText)) return;
@@ -3112,7 +3215,7 @@ export default function Workspace() {
           edited: editedText,
           images: plan.prompt.images || [],
           base: plan.base,
-          model: plan.model,
+          model: model || plan.model,
           conversationId,
         }, { allowSeed });
       } catch (e) {
@@ -3942,7 +4045,7 @@ export default function Workspace() {
                             {m.blind && <span>BLIND COMPARE</span>}
                             {m.role === "assistant" && m.model && !m.sample && (
                               <span className="model-tag">
-                                {models.find((x) => x.id === m.model)?.name || m.model}
+                                {m.model === AUTO ? "Auto" : models.find((x) => x.id === m.model)?.name || m.model}
                               </span>
                             )}
                           </div>
@@ -4057,6 +4160,21 @@ export default function Workspace() {
                             </details>
                           )}
                           </>
+                          )}
+                          {/* Auto Model: which model answered and why, and
+                              one click to regenerate on another. */}
+                          {m.role === "assistant" && m.auto && !m.sample && !(busy && i === messages.length - 1 && !m.content) && (
+                            <AutoChip
+                              auto={m.auto}
+                              models={models}
+                              alternatives={m.auto.sealed ? sealedAutoTiers : autoTiers}
+                              disabled={busy || branching}
+                              onUse={
+                                branchesLive && m.content && !m.research && !m.blind && !(busy && i === messages.length - 1)
+                                  ? (id) => rewind(i, "regenerate", null, { model: id })
+                                  : null
+                              }
+                            />
                           )}
                           {m.role === "assistant" && m.private && (
                             <PrivateReplyNote info={m.private} masked={m.masked} />
@@ -4699,10 +4817,14 @@ export default function Workspace() {
                           className="sealed-model"
                           aria-label="Sealed model"
                           data-i18n="off"
-                          value={sealedTarget?.id || ""}
+                          value={sealedAutoOn ? AUTO : sealedTarget?.id || ""}
                           disabled={busy}
                           onChange={(e) => setSealedModelId(e.target.value)}
                         >
+                          {/* Auto Model: rules only, in this browser. */}
+                          {autoModelReleased(config) && sealedModels.length > 1 && (
+                            <option value={AUTO}>{t("Auto")}</option>
+                          )}
                           {sealedModels.map((m) => (
                             <option value={m.id} key={m.id}>
                               {m.name}
@@ -4726,6 +4848,8 @@ export default function Workspace() {
                           trainingLive={trainingLive}
                           demo={demo}
                           status={modelStatus}
+                          // Auto Model, once released (src/AutoModel.jsx).
+                          auto={autoLive ? { on: autoChosen, tiers: autoTiers, onChoose: chooseAuto, note: autoNote } : null}
                           // On-Device Model: in Chat, a way to its page.
                           onDevice={
                             mode === "chat" && isReleased(config, "ondevice")
@@ -4964,9 +5088,11 @@ export default function Workspace() {
                           Reply budget
                           <select aria-label="Reply token budget" value={selectedReplyBudget} disabled={busy}
                             onChange={(e) => setReplyBudget(Number(e.target.value))}>
-                            {replyBudgets(target, selectedReplyBudget).map(value => <option key={value} value={value}>{value.toLocaleString()} tokens</option>)}
+                            {replyBudgets(autoActive ? AUTO_BUDGET_MODEL : target, selectedReplyBudget).map(value => <option key={value} value={value}>{value.toLocaleString()} tokens</option>)}
                           </select>
-                          {!target?.chatLimits?.outputLimitKnown && <span>Provider output cap unavailable; conservative service limit.</span>}
+                          {autoActive ? (
+                            <span>With Auto, each model gets this budget up to its own limit.</span>
+                          ) : !target?.chatLimits?.outputLimitKnown && <span>Provider output cap unavailable; conservative service limit.</span>}
                           <span>Higher budgets can cost and reserve more. Reasoning can use this budget. Chat history is kept or refused, never trimmed.</span>
                         </label>
                       )}
@@ -5067,10 +5193,13 @@ export default function Workspace() {
                     ) : researchOn ? (
                       <ResearchEstimate state={researchEstimate} />
                     ) : (
-                      estimatesLive && textMode && <CreditEstimate state={estimate} />
+                      estimatesLive && textMode && (autoActive
+                        ? <AutoEstimate state={estimate} models={models} />
+                        : <CreditEstimate state={estimate} />)
                     )}
                     {costCompareLive && !blindActive && !researchOn && (
-                      <CostCompare
+                      // Not with Auto, which prices its own candidates.
+                      !autoActive && <CostCompare
                         base={compareBase}
                         mode={mode}
                         privateMode={privateMode}

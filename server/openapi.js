@@ -45,6 +45,14 @@ const message = object(
 const chat = object(
   {
     model: string,
+    auto: {
+      ...object({
+        prefer: { enum: ["cheaper", "balanced", "stronger"], default: "balanced" },
+        helper: { ...bool, default: true },
+      }),
+      description:
+        "Auto Model, in place of model (sending both is 400 invalid_request; needs the automodel update released, 403 feature_unreleased otherwise): the model is chosen for this message from the models the request may use (its section, Private Mode, released, not Down, never a router), by rules first and, only when they are unsure and helper isn't false, one small helper call on the same hold. prefer moves close calls toward the fast or reasoning tier; with helper: false an unsure message goes where prefer sends it. The helper is the cheapest reviewed fast model the request may use, sent only the newest message's typed text and a few counts; a failed or unusable answer leaves the message on Balanced and costs nothing. An `auto` event before the reply and the final event's anonyma.auto carry { model, tier, reason, via, prefer, helper }. Workspace chat, code and Uncensored messages only: 400 auto_not_offered for Study, Document Compare, Sheets, Catch me up, Double-check, Symposium and task tools; 400 auto_unavailable when no model qualifies. POST /api/quote prices the same body: the chosen model's price once the rules decide, else the most it can cost (the dearest model it could land on plus the helper), which is what the chat holds.",
+    },
     messages: array(message),
     max_tokens: {
       ...integer,
@@ -328,6 +336,10 @@ const schemas = {
         receipt_id: {
           ...nullableString,
           description: "The signed receipt's id (the requestId) once Signed Receipts is released and the reply was signed; verify it at /verify. Otherwise null.",
+        },
+        helper: {
+          ...object({ model: string, provider: nullableString }),
+          description: "Auto Model only: present when Auto's rules were unsure and a small model was sent the newest message's typed text to choose the tier. Its catalog id and owned_by. It was sent with the same routing as the request, so retention applies to it too.",
         },
       },
       ["model", "provider", "route", "retention", "storage", "receipt_id"],

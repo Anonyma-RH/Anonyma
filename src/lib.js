@@ -195,6 +195,9 @@ export function messageFromServer(m) {
     citations: Array.isArray(c?.citations) ? c.citations : [],
     // Privacy Trail metadata kept with a saved reply (never prompt text).
     ...(c?.privacy && typeof c.privacy === "object" ? { privacy: c.privacy } : {}),
+    // Auto Model: which model Auto chose and why (ids and codes; the chip
+    // checks them, src/auto-model.js).
+    ...(c?.auto && typeof c.auto === "object" && !Array.isArray(c.auto) ? { auto: c.auto } : {}),
     // Blind Compare: both replies, and the reveal once voted (src/blind.js).
     ...(c?.blind && typeof c.blind === "object" ? { blind: c.blind } : {}),
     // Deep Research: the plan, each step's outcome and charge, and the

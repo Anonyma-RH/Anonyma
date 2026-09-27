@@ -4841,7 +4841,74 @@
     "The model's reply couldn't be read, so nothing was charged. Try another model for this watch.": "无法读取模型的回复，因此未扣费。请为此监测换一个模型。",
     "Paused after 3 replies in a row that couldn't be read. Nothing was charged. Choose another model for this watch, then switch it back on.": "连续 3 次无法读取模型的回复，已暂停。未扣费。请为此监测选择另一个模型，然后重新开启。",
     "The model couldn't make a summary this time. Nothing was charged.": "模型这次未能生成摘要。未扣费。",
-    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。"
+    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。",
+    "Auto Model": "自动选模型",
+    "Pick Auto and each message goes to the right model, and you see why.": "选择“自动”，每条消息都会交给合适的模型，并告诉你原因。",
+    "Fast for simple, strong for hard, a code model for code": "简单问题用快速模型，难题用强模型，代码交给代码模型",
+    "Every reply says which model answered and why, with one click to try another": "每条回复都注明由哪个模型回答及原因，一键即可换个模型再试",
+    "See the most it can cost before you send; pay only for what's used": "发送前先看最高费用；只为实际用量付费",
+    "Auto": "自动",
+    "Picks a model for each message": "为每条消息挑选模型",
+    "Fast for simple, strong for hard, a code model for code. Each reply says which model answered and why.": "简单问题用快速模型，难题用强模型，代码交给代码模型。每条回复都会注明由哪个模型回答及原因。",
+    "Model: Auto, picks a model for each message. Change model": "模型：自动，为每条消息挑选模型。更换模型",
+    "Long context": "长上下文",
+    "Deep Research doesn't use Auto. It runs on": "深度研究不使用自动选模型，它将使用",
+    "With Auto, each model gets this budget up to its own limit.": "使用自动选模型时，每个模型在自身上限内使用此预算。",
+    "Auto →": "自动 →",
+    "Auto's rules chose this model for this message. An estimate, not a final charge: you pay only for what's used.": "自动选模型的规则为这条消息选择了此模型。这是估算，不是最终费用：只为实际用量付费。",
+    "Until Auto chooses, this is the most the message can cost: the dearest model it might pick. It's what's held while the reply runs; you pay only for what's used.": "在自动选模型做出选择之前，这是这条消息的最高费用：按它可能选中的最贵模型计算。回复进行时会冻结这笔额度；只为实际用量付费。",
+    "How Auto chose this model": "自动选模型如何选择了此模型",
+    "Use a different model": "换个模型",
+    "How Auto chose": "自动选模型的选择方式",
+    "Reason": "原因",
+    "Chosen by": "选择方式",
+    "Helper model": "辅助模型",
+    "Auto prefers": "自动选模型偏好",
+    "quick question": "简单问题",
+    "general question": "一般问题",
+    "writing": "写作",
+    "analysis": "分析",
+    "math": "数学",
+    "step by step": "逐步推理",
+    "translation": "翻译",
+    "images attached": "附有图片",
+    "long document": "长文档",
+    "long conversation": "长会话",
+    "only model here": "此处唯一可用的模型",
+    "· because: quick question": "· 原因：简单问题",
+    "· because: general question": "· 原因：一般问题",
+    "· because: writing": "· 原因：写作",
+    "· because: analysis": "· 原因：分析",
+    "· because: math": "· 原因：数学",
+    "· because: step by step": "· 原因：逐步推理",
+    "· because: code": "· 原因：代码",
+    "· because: translation": "· 原因：翻译",
+    "· because: images attached": "· 原因：附有图片",
+    "· because: long document": "· 原因：长文档",
+    "· because: long conversation": "· 原因：长会话",
+    "· because: only model here": "· 原因：此处唯一可用的模型",
+    "The rules were unsure, so a small model read your newest message and chose the tier.": "规则无法确定，因此由一个小模型读取你最新的消息并选择了等级。",
+    "The rules were unsure and the small model's answer couldn't be used, so Auto used Balanced. That check cost nothing.": "规则无法确定，且小模型的回答无法使用，因此自动选模型使用了“均衡”。这次判断没有扣费。",
+    "Chosen by rules in ANONYMA, from your message's length, attachments and wording. No extra model was asked.": "由 ANONYMA 内的规则根据消息长度、附件和措辞选择。没有询问其他模型。",
+    "Sealed Mode: chosen in this browser by rules only, so your message went nowhere else.": "密封模式：仅由此浏览器中的规则选择，你的消息没有发送到其他任何地方。",
+    "Regenerate with another model": "用其他模型重新生成",
+    "Regenerates this reply on that model, as a new message. Auto stays on for your next one.": "用该模型重新生成这条回复，作为一条新消息。你的下一条消息仍由自动选模型处理。",
+    "Auto Model.": "自动选模型。",
+    "How Auto picks a model for each message, in this browser. Choose Auto at the top of the model picker in Chat, Code and Uncensored. It never changes Private Mode, Sealed Mode or Uncensored: it only picks among the models they allow.": "自动选模型在此浏览器中如何为每条消息挑选模型。在对话、代码和无审查中，从模型选择器顶部选择“自动”。它不会改变隐私模式、密封模式或无审查，只会在它们允许的模型中挑选。",
+    "Cheaper": "更省",
+    "Stronger": "更强",
+    "Close calls go to the fast model.": "拿不准时交给快速模型。",
+    "Close calls go to the balanced model.": "拿不准时交给均衡模型。",
+    "Close calls go to the reasoning model.": "拿不准时交给推理模型。",
+    "When the rules are unsure, ask a small model to choose": "规则无法确定时，让一个小模型来选择",
+    "It reads only your newest message (Veil's tags stay tags), never your files, history or memory, and costs a fraction of a credit, included in that message's charge. If its answer can't be used, Auto uses Balanced and charges nothing for it.": "它只读取你最新的一条消息（Veil 的标签保持为标签），不会读取你的文件、历史或记忆，费用不到 1 积分，计入该消息的费用。如果它的回答无法使用，自动选模型会使用“均衡”，且这次判断不收费。",
+    "Off: nothing but the model that answers sees your message. An unsure message goes where your preference sends it.": "关闭：除回答的模型外，没有其他模型会看到你的消息。无法确定的消息按你的偏好分配。",
+    "Auto isn't offered here. Choose a model.": "此处不提供自动选模型。请选择一个模型。",
+    "No model Auto can use here reads images. Choose a model, or remove the images. Nothing was sent or charged.": "此处没有自动选模型可用且能读取图片的模型。请选择一个模型，或移除图片。未发送任何内容，也未扣费。",
+    "No model Auto can use here fits this request right now. Choose a model. Nothing was sent or charged.": "此处目前没有自动选模型可用且能容纳此请求的模型。请选择一个模型。未发送任何内容，也未扣费。",
+    "Also read by": "同时读取者",
+    "Auto's helper: your newest message only, to choose the model.": "自动选模型的辅助模型：仅读取你最新的一条消息，用于选择模型。",
+    "Send a model or auto, not both.": "请发送模型或 auto，不能同时发送两者。"
   },
   "patterns": [
     {
@@ -7871,6 +7938,26 @@
     {
       "en": "Made {0}; the rest weren't usable and were left out.",
       "zh": "生成了 {0}；其余内容无法使用，已略去。"
+    },
+    {
+      "en": "· ≈{0} credits",
+      "zh": "· 约 {0} 积分"
+    },
+    {
+      "en": "Auto · up to ≈{0} credits",
+      "zh": "自动 · 最多约 {0} 积分"
+    },
+    {
+      "en": "Auto → {0} · ≈{1} credits",
+      "zh": "自动 → {0} · 约 {1} 积分"
+    },
+    {
+      "en": "≈{0} credits, included in this reply's charge",
+      "zh": "约 {0} 积分，已计入这条回复的费用"
+    },
+    {
+      "en": "Until Auto chooses, this is the most the message can cost: the dearest model it might pick, plus up to ≈{0} credits for a small model to help choose. It's what's held while the reply runs; you pay only for what's used.",
+      "zh": "在自动选模型做出选择之前，这是这条消息的最高费用：按它可能选中的最贵模型计算，另加最多约 {0} 积分用于小模型协助选择。回复进行时会冻结这笔额度；只为实际用量付费。"
     }
   ]
 }

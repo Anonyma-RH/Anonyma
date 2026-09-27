@@ -23,6 +23,7 @@ export function PrivacyTrail({ privacy, models = [], receiptsLive = false }) {
   const model = models.find((m) => m.id === trail.model);
   const rows = trailRows(trail, {
     modelName: model?.name,
+    helperName: trail.helper ? models.find((m) => m.id === trail.helper.model)?.name : undefined,
     privateModel: model?.private === true,
     receiptsLive,
   });
@@ -62,7 +63,7 @@ export function PrivacyTrail({ privacy, models = [], receiptsLive = false }) {
               <div key={row.key} className={"privacy-row " + row.key}>
                 <dt>{row.label}</dt>
                 <dd>
-                  {row.key === "model" ? (
+                  {row.key === "model" || row.key === "helper" ? (
                     <>
                       <span data-i18n="off">{row.value}</span>
                       {row.provider ? (
@@ -72,6 +73,7 @@ export function PrivacyTrail({ privacy, models = [], receiptsLive = false }) {
                       ) : (
                         <span className="privacy-provider">Provider not listed</span>
                       )}
+                      {row.note && <small>{row.note}</small>}
                     </>
                   ) : row.key === "retention" ? (
                     <>

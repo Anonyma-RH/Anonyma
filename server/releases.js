@@ -1001,6 +1001,26 @@ export const UPDATES = [
     // Mode and Device Vault chats continue in the browser only.
     released: true,
   },
+  {
+    id: "automodel",
+    title: "Auto Model",
+    tagline: "Pick Auto and each message goes to the right model, and you see why.",
+    points: [
+      "Fast for simple, strong for hard, a code model for code",
+      "Every reply says which model answered and why, with one click to try another",
+      "See the most it can cost before you send; pay only for what's used",
+    ],
+    // "Auto" in the workspace's model picker (src/AutoModel.jsx): an
+    // /api/chat or /api/quote body with `auto` (its settings) and no model,
+    // gated here in featuresFor. Rules first, then, only when
+    // they're unsure, one small helper call on the same hold
+    // (server/auto-model.js). Workspace only: never the API, MCP, Blind,
+    // Deep Research, Sheets or the other tasks with their own model. Sealed
+    // Mode routes in the browser, by rules only. Nothing new is stored: a
+    // reply keeps its chip data with the message (erased and exported with
+    // it); the settings live in the browser.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1405,6 +1425,16 @@ export function featuresFor(req) {
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");
+  // Auto Model: a chat (or its estimate) that asks Auto to pick the model.
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.auto !== undefined) {
+    needed.push("automodel");
+    // An Auto estimate says what the chat will use (a chat is gated below).
+    if (p === "/api/quote") {
+      if (body.private === true) needed.push("private");
+      if (body.mode === "code") needed.push("code");
+      if (body.mode === "uncensored") needed.push("uncensored");
+    }
+  }
   // A chat (or its estimate) that asks for saved memory.
   if ((p === "/api/chat" || p === "/api/quote") && post && body.memory != null)
     needed.push("memory");

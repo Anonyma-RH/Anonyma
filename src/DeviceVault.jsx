@@ -261,7 +261,10 @@ export function VaultLimits() {
 // tag before a chat's title (its project's colour); both are optional.
 export function VaultSection({ vault, currentId, onOpen, onDialog, filter = null, mark = null }) {
   if (vault.status === "off" || vault.status === "loading") return null;
-  const chats = filter ? vault.chats.filter(filter) : vault.chats;
+  // Canvas keeps its device-only canvases here too; they're listed on the
+  // Canvas page, not with the chats.
+  const own = vault.chats.filter((c) => c.mode !== "canvas");
+  const chats = filter ? own.filter(filter) : own;
   return (
     <section className="vault-section" aria-label="Device Vault">
       <div className="sidebar-group-label vault-label">
@@ -316,7 +319,7 @@ export function VaultSection({ vault, currentId, onOpen, onDialog, filter = null
               </div>
             ))}
           </div>
-          {!vault.chats.length ? (
+          {!own.length ? (
             <p className="vault-hint">No device-only chats yet. Turn on Device only in the composer.</p>
           ) : (
             !chats.length && <p className="vault-hint">None here for this filter.</p>
@@ -441,6 +444,9 @@ export function VaultDialog({ vault, dialog, onClose, onUnlocked }) {
     [confirmDelete, setConfirmDelete] = useState(false),
     [importing, setImporting] = useState(false);
   const kind = dialog.kind;
+  // Canvas keeps its device-only canvases in the vault too (mode "canvas").
+  const canvases = vault.chats.filter((c) => c.mode === "canvas").length,
+    chats = vault.chats.length - canvases;
   async function run(fn) {
     setBusy(true);
     setError("");
@@ -608,10 +614,11 @@ export function VaultDialog({ vault, dialog, onClose, onUnlocked }) {
         ) : (
           <>
             <p>
-              {vault.chats.length === 1
+              {chats === 1
                 ? "1 chat is saved on this device, encrypted."
-                : `${vault.chats.length} chats are saved on this device, encrypted.`}
+                : `${chats} chats are saved on this device, encrypted.`}
             </p>
+            {canvases > 0 && <p>{canvases === 1 ? "So is 1 canvas." : `So are ${canvases} canvases.`}</p>}
             <IdleSelect
               value={vault.meta?.idleMinutes || DEFAULT_IDLE_MINUTES}
               onChange={(m) => run(() => vault.setIdle(m))}

@@ -36,6 +36,7 @@ import { prepareStudyRequest, studyBudget } from "../study.js";
 import { prepareCompareRequest } from "../compare.js";
 import { compareBudget } from "../../src/compare-spec.js";
 import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
+import { prepareCanvasRequest, canvasBudget, canvasVerdict } from "../canvas.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -84,6 +85,11 @@ export function chatRoutes(ctx) {
     // same way from its checked transcript (server/catchup.js). Its release
     // gate is in featuresFor.
     const catchupTask = !api && prepareCatchupRequest(req.body);
+    // Canvas: a suggestion's messages are built the same way from its
+    // checked `canvas` payload (server/canvas.js), after the other built-
+    // message modes, each of which refuses ready-made `messages`. Its
+    // release gate is in featuresFor.
+    const canvasTask = api ? undefined : prepareCanvasRequest(req.body);
     // Seed Guard: refused before anything is validated, reserved or stored.
     refuseSeedPhrase(cfg, req, api);
     if (!api) validateTaskRequest(req.body);
@@ -105,6 +111,14 @@ export function chatRoutes(ctx) {
     if (catchupTask && m.type === "chat") {
       if (imageCallable(m)) fail(400, "Catch me up needs a text model.", "unsupported_model");
       req.body.max_tokens = catchupBudget(m, req.body.messages);
+    }
+    // A suggestion's reply budget, fitted to the model (refused when the
+    // rewrite can't fit), and only a usable reply is paid for: one that
+    // can't be read or was cut off releases its hold (canvasVerdict).
+    if (canvasTask && m.type === "chat") {
+      if (imageCallable(m)) fail(400, "Canvas needs a text model.", "unsupported_model");
+      req.body.max_tokens = canvasBudget(canvasTask, m, req.body.messages);
+      req.acceptOutput = canvasVerdict(canvasTask);
     }
     // Dedicated image models are priced per option and served by
     // /v1/images/generations; through chat they would be held at the
@@ -562,14 +576,16 @@ export function chatRoutes(ctx) {
           "empty_output",
         );
       // A server-side caller that pays only for a reply it can use (Page
-      // Watch, which runs unattended; set in code, never from the request
-      // body) isn't charged for one it can't read: the hold is released
-      // below, as for an empty reply.
-      if (req.acceptOutput && !req.acceptOutput(output, finishReason || "stop"))
+      // Watch, which runs unattended, and Canvas suggestions; set in code,
+      // never from the request body) isn't charged for one it can't read:
+      // the hold is released below, as for an empty reply. It may say why,
+      // as { message, code }.
+      const verdict = req.acceptOutput ? req.acceptOutput(output, finishReason || "stop") : true;
+      if (verdict !== true)
         fail(
           502,
-          "The model's reply couldn't be used. Nothing was charged.",
-          "unusable_output",
+          verdict?.message || "The model's reply couldn't be used. Nothing was charged.",
+          verdict?.code || "unusable_output",
         );
       const { input, out } = tokenCounts();
       const reported = reportedProviderCost(usage, upstreamCost, feePercent());

@@ -43,6 +43,8 @@ const OnDevice = lazy(() => import("./OnDevice.jsx"));
 const Study = lazy(() => import("./Study.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
+// Canvas: its editor, tracked changes and exports load only on its page.
+const Canvas = lazy(() => import("./Canvas.jsx"));
 // Audio Overview's dialog and player, loaded only when opened.
 const AudioOverviewDialog = lazy(() => import("./AudioOverview.jsx"));
 // Summarize & Continue's dialog, loaded when Catch me up is first opened.
@@ -307,17 +309,19 @@ export function AppSidebar({
           ["tools", "Task tools"],
           ["sheets", "Sheets"],
           ["compare", "Compare docs"],
+          ["canvas", "Canvas"],
           ["study", "Study"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
         ]
-          // Local Sheets, On-Device Model, Document Compare and Study Mode
-          // stay out of sight entirely until they're released.
+          // Local Sheets, On-Device Model, Document Compare, Study Mode and
+          // Canvas stay out of sight entirely until they're released.
           .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
           .filter(([id]) => id !== "device" || isReleased(config, "ondevice"))
           .filter(([id]) => id !== "compare" || isReleased(config, "doccompare"))
           .filter(([id]) => id !== "study" || isReleased(config, "study"))
+          .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
           .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
@@ -546,7 +550,9 @@ export default function Workspace() {
     // Study Mode's page likewise.
     (mode === "study" && (!config || isReleased(config, "study"))) ||
     // Document Compare's page, the same way.
-    (mode === "compare" && (!config || isReleased(config, "doccompare")));
+    (mode === "compare" && (!config || isReleased(config, "doccompare"))) ||
+    // And Canvas's.
+    (mode === "canvas" && (!config || isReleased(config, "canvas")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -1354,6 +1360,13 @@ export default function Workspace() {
       setMenu(false);
       if (isReleased(config, "ondevice"))
         navigate("/workspace/device" + (demo ? "?demo=1" : ""), { state: { vaultChat: chat.id } });
+      return;
+    }
+    // A device-only canvas opens on the Canvas page (src/Canvas.jsx).
+    if (chat.mode === "canvas") {
+      setMenu(false);
+      if (isReleased(config, "canvas"))
+        navigate("/workspace/canvas?" + new URLSearchParams({ ...(demo ? { demo: "1" } : {}), doc: chat.id }));
       return;
     }
     if (mode !== chat.mode) {
@@ -3541,6 +3554,7 @@ export default function Workspace() {
                 device: "On-device",
                 study: "Study",
                 compare: "Compare docs",
+                canvas: "Canvas",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -3774,6 +3788,25 @@ export default function Workspace() {
             isReleased(config, "doccompare") && (
               <Suspense fallback={<p className="compare-loading">Opening Compare docs…</p>}>
                 <Compare key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
+          ) : mode === "canvas" ? (
+            isReleased(config, "canvas") && (
+              <Suspense fallback={<p className="canvas-loading">Opening Canvas…</p>}>
+                <Canvas
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  models={models}
+                  config={config}
+                  refresh={refresh}
+                  veilOn={veilOn}
+                  setVeilOn={setVeilOn}
+                  veilWords={veilWords}
+                  vault={vault}
+                  vaultLive={vaultLive}
+                  onUnlockVault={() => setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })}
+                />
               </Suspense>
             )
           ) : mode === "tools" ? (

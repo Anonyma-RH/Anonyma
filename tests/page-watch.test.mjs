@@ -881,15 +881,18 @@ test("a database made before the unreadable count gets it", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-pagewatch-db-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const path = join(dir, "old.sqlite");
+  // The migration that adds it, wherever later ones have been appended.
+  const version = MIGRATIONS.findIndex((m) => String(m).includes('"unreadable"')) + 1;
+  assert.ok(version > 0);
   const old = database(path);
   old.exec("ALTER TABLE page_watches DROP COLUMN unreadable");
-  old.prepare("DELETE FROM schema_additive WHERE version=?").run(MIGRATIONS.length);
-  old.exec(`PRAGMA user_version=${MIGRATIONS.length - 1}`);
+  old.prepare("DELETE FROM schema_additive WHERE version>=?").run(version);
+  old.exec(`PRAGMA user_version=${version - 1}`);
   old.close();
   const db = database(path);
   t.after(() => db.close());
   assert.ok(db.prepare("PRAGMA table_info(page_watches)").all().some((col) => col.name === "unreadable"));
-  assert.ok(db.prepare("SELECT 1 FROM schema_additive WHERE version=?").get(MIGRATIONS.length), "recorded as additive");
+  assert.ok(db.prepare("SELECT 1 FROM schema_additive WHERE version=?").get(version), "recorded as additive");
 });
 
 test("SSRF: a watched page that starts redirecting to a private address is refused, and nothing private is dialled", async (t) => {

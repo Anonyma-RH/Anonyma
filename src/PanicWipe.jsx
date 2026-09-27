@@ -11,6 +11,7 @@ import {
   WIPE_BLIND,
   WIPE_STUDY,
   WIPE_WATCHES,
+  WIPE_CANVAS,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPED_PATH,
@@ -35,6 +36,8 @@ export function PanicWipe({ user }) {
   const studyLive = !!config && isReleased(config, "study");
   // And Page Watch's watches.
   const watchesLive = isReleased(config, "pagewatch");
+  // And canvases saved to the account.
+  const canvasLive = isReleased(config, "canvas");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
   const [open, setOpen] = useState(false),
@@ -106,6 +109,7 @@ export function PanicWipe({ user }) {
                   {blindLive && <li>{WIPE_BLIND}</li>}
                   {studyLive && <li>{WIPE_STUDY}</li>}
                   {watchesLive && <li>{WIPE_WATCHES}</li>}
+                  {canvasLive && <li>{WIPE_CANVAS}</li>}
                 </ul>
               </div>
               <div>

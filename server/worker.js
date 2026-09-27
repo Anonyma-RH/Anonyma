@@ -258,6 +258,11 @@ export function createWorker(ctx) {
       db.prepare(
         "DELETE FROM sealed_shares WHERE expires IS NOT NULL AND expires<=?",
       ).run(now());
+      // Canvas: a canvas past its auto-delete time. Reads already treat it
+      // as gone; this reclaims the storage.
+      db.prepare(
+        "DELETE FROM canvas_documents WHERE expires IS NOT NULL AND expires<?",
+      ).run(now());
       recoverExpiredHolds();
       if (cfg.rpc && cfg.token) {
         // About daily: each read schedules the next 12 to 36 hours on, at a

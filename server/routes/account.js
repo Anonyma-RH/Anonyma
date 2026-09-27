@@ -9,6 +9,7 @@ import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
 import { exportBlindVotes, forgetBlindVotes } from "./blind.js";
 import { exportAudioOverviews, forgetAudioOverviews } from "./audio-overview.js";
+import { exportCanvases, forgetCanvases } from "./canvas.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -48,8 +49,8 @@ import {
 // - support requests, video jobs, saved uploads, Scrolls, standing
 //   instructions, memory facts, routines, page watches (with the last
 //   version of each page and their reports), bookmarks, Blind Compare votes,
-//   Audio Overview scripts and NYMA top-up quotes (a credited top-up stays
-//   as its deposit);
+//   Audio Overview scripts, Canvas canvases and NYMA top-up quotes (a
+//   credited top-up stays as its deposit);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -112,6 +113,8 @@ export function eraseAccountContent(db, user) {
   forgetBlindVotes(db, id);
   // Audio Overview: saved overviews' scripts (their audio is media, below).
   forgetAudioOverviews(db, id);
+  // Canvas: every canvas kept on the account.
+  forgetCanvases(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -218,6 +221,13 @@ export function accountRoutes(ctx) {
   function audioOverviewExport(user) {
     const list = exportAudioOverviews(db, user);
     return list.length || isReleased(cfg, "audiooverview") ? { audioOverviews: list } : {};
+  }
+  // Canvas: each canvas kept on the account, with its text (once the update
+  // is live, or while any exist). Canvases kept only in the browser never
+  // reach the server.
+  function canvasExport(user) {
+    const list = exportCanvases(db, user);
+    return list.length || isReleased(cfg, "canvas") ? { canvases: list } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -550,6 +560,8 @@ export function accountRoutes(ctx) {
       ...blindExport(req.user.id),
       // Audio Overview: saved overviews' scripts.
       ...audioOverviewExport(req.user.id),
+      // Canvas: canvases kept on the account, with their text.
+      ...canvasExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

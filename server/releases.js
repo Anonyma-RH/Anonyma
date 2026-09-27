@@ -1016,7 +1016,7 @@ export const UPDATES = [
     // pandas and matplotlib wheels) under /pyodide/, gated here
     // (featuresFor) and cached for a year. No routes, nothing charged,
     // nothing stored per account, so nothing to erase or export.
-    released: false,
+    released: true,
   },
   {
     id: "deadswitch",

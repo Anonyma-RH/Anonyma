@@ -887,7 +887,7 @@ export const UPDATES = [
     // one small model call on the ordinary hold/settle path, sent only the
     // prompt and never stored. In Private Mode it needs "private" too
     // (featuresFor). Nothing is kept per account, so nothing to erase.
-    released: false,
+    released: true,
   },
   {
     id: "ondevice",

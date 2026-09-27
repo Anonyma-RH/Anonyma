@@ -885,6 +885,7 @@ const featureIcons = {
   deadswitch: "hourglass",
   giftlinks: "ticket",
   arena: "podium",
+  vaultsync: "devices",
 };
 const launch = {
   id: "mvp",

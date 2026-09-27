@@ -5080,7 +5080,71 @@
     "The Blind Arena ranks models from blind votes. Yes adds this vote and your next ones.": "盲测竞技场根据盲测投票为模型排名。选择同意后，这次投票和你之后的投票都会加入。",
     "Only the two models, your vote and the day, with no account attached.": "只包含两个模型、你的投票结果和日期，不关联任何账户。",
     "Off-the-record, Private, Device Vault and Uncensored rounds are never added.": "不留记录、隐私模式、本机保险库和无审查的轮次从不加入。",
-    "Change it any time in Account settings.": "你可以随时在账户设置中更改。"
+    "Change it any time in Account settings.": "你可以随时在账户设置中更改。",
+    "Vault Sync": "保险库同步",
+    "Your Device Vault on all your devices.": "你的本机保险库，在你的所有设备上。",
+    "End-to-end encrypted: we only ever store ciphertext": "端到端加密：我们只存储密文",
+    "Your passphrase never leaves your device": "你的密码短语永远不会离开你的设备",
+    "Forget the synced copy any time; Panic Wipe deletes it too": "随时可以删除同步副本；紧急清除也会将其删除",
+    "If you forget the passphrase, nobody can recover these chats, including us.": "如果你忘记密码短语，任何人都无法恢复这些会话，包括我们。",
+    "We can see how many records you store, their sizes and when they change.": "我们能看到你存储了多少条记录、它们的大小以及何时发生变化。",
+    "The synced copy was deleted, so this device stopped syncing. Its chats are still here.": "同步副本已被删除，因此此设备已停止同步。它的会话仍保留在这里。",
+    "Your synced vault was replaced on another device, so this device stopped syncing. Its chats are still here.": "你的同步保险库已在另一台设备上被替换，因此此设备已停止同步。它的会话仍保留在这里。",
+    "This vault isn't the synced one, so this device stopped syncing. Its chats are still here.": "此保险库不是正在同步的那个，因此此设备已停止同步。它的会话仍保留在这里。",
+    "Sync is paused for a moment. It will try again shortly.": "同步暂停片刻，稍后会自动重试。",
+    "Couldn't reach ANONYMA to sync. Your chats are safe on this device; it will try again.": "无法连接 ANONYMA 进行同步。你的会话安全地保存在此设备上；稍后会自动重试。",
+    "Sync didn't finish. It will try again.": "同步未完成，稍后会自动重试。",
+    "Synced just now": "刚刚已同步",
+    "1 chat changed on two devices at once. Both versions are kept; the older one is marked Conflict copy.": "有 1 个会话同时在两台设备上被修改。两个版本都已保留；较旧的版本标记为“冲突副本”。",
+    "1 chat is over 4 MB, so it stays on this device only.": "有 1 个会话超过 4 MB，因此只保留在此设备上。",
+    "Synced storage is full (50 MB). New changes stay on this device until you delete some chats.": "同步存储空间已满（50 MB）。在你删除一些会话之前，新的更改只保留在此设备上。",
+    "1 synced chat couldn't be read and was skipped.": "有 1 个同步的会话无法读取，已跳过。",
+    "Delete the synced copy from ANONYMA's servers? Your devices keep their own vaults and stop syncing. Backups are separate copies; without your passphrase they can't be read.": "要从 ANONYMA 的服务器上删除同步副本吗？你的各台设备会保留自己的保险库并停止同步。备份是单独的副本；没有你的密码短语，它们无法被读取。",
+    "Forgetting…": "正在删除……",
+    "Forget synced copy": "删除同步副本",
+    "Sync across devices": "跨设备同步",
+    "Sync status couldn't be loaded.": "无法加载同步状态。",
+    "Checking sync…": "正在检查同步……",
+    "Another of your devices syncs a different vault. To join it, enter that vault's passphrase. The chats here are encrypted again with its key, and this device then unlocks with that passphrase.": "你的另一台设备正在同步另一个保险库。要加入它，请输入该保险库的密码短语。此处的会话会用它的密钥重新加密，之后此设备将使用该密码短语解锁。",
+    "Synced vault's passphrase": "同步保险库的密码短语",
+    "Joining…": "正在加入……",
+    "Join synced vault": "加入同步保险库",
+    "Sync this vault across my devices (end-to-end encrypted)": "在我的所有设备间同步此保险库（端到端加密）",
+    "Your browser encrypts each chat before it's uploaded, so ANONYMA stores only ciphertext. Unlock with the same passphrase on another device to see the same chats.": "你的浏览器会在上传前加密每个会话，因此 ANONYMA 只存储密文。在另一台设备上用同一个密码短语解锁，即可看到相同的会话。",
+    "Syncing…": "正在同步……",
+    "Sync didn't finish.": "同步未完成。",
+    "Waiting to sync…": "等待同步……",
+    "Your other devices sync this vault. Turn sync on to add this device.": "你的其他设备正在同步此保险库。开启同步即可加入此设备。",
+    "Turning on…": "正在开启……",
+    "Turn on sync": "开启同步",
+    "Sync now": "立即同步",
+    "You sync a Device Vault from another device. Enter its passphrase to bring those chats here, end-to-end encrypted.": "你正在从另一台设备同步本机保险库。输入它的密码短语，即可以端到端加密的方式把这些会话带到这里。",
+    "Unlock synced vault": "解锁同步保险库",
+    "Create a separate vault here instead": "改为在此创建单独的保险库",
+    "Forgot it? Nobody can recover the synced chats, including us.": "忘记了？任何人都无法恢复同步的会话，包括我们。",
+    "Sync stopped on this device": "此设备已停止同步",
+    "Sync will try again": "同步将重试",
+    "Synced · conflict copies kept": "已同步 · 已保留冲突副本",
+    "Synced across your devices": "已在你的设备间同步",
+    "Vault Sync settings": "保险库同步设置",
+    "Conflict copy": "冲突副本",
+    "Another of your devices syncs a different vault.": "你的另一台设备正在同步另一个保险库。",
+    "Also forget the synced copy on ANONYMA's servers. Your other devices keep their vaults and stop syncing.": "同时删除 ANONYMA 服务器上的同步副本。你的其他设备会保留各自的保险库并停止同步。",
+    "This chat changed on another device while you were writing here, so your version is kept as a separate copy.": "你在这里写作时，此会话在另一台设备上被修改了，因此你的版本已另存为单独的副本。",
+    "Vault Sync's encrypted copy of your Device Vault on our servers": "保险库同步在我们服务器上保存的本机保险库加密副本",
+    "Vault Sync, if you turn it on: your browser encrypts each Device Vault chat before it's uploaded, so ANONYMA stores only ciphertext. We keep each chat's random id, version, size and when it changed, plus the vault's salt and an encrypted passphrase check; never the passphrase, the key or a title. Nobody can read these chats without your passphrase, including us. Forget synced copy, Panic Wipe and closing your account delete it; your account export includes the encrypted copy.": "保险库同步（如果你开启）：你的浏览器会在上传前加密每个本机保险库会话，因此 ANONYMA 只存储密文。我们会保存每个会话的随机 ID、版本、大小和修改时间，以及保险库的盐值和一份加密的密码短语校验数据；绝不保存密码短语、密钥或标题。没有你的密码短语，任何人都无法读取这些会话，包括我们。删除同步副本、紧急清除和关闭账户都会将其删除；你的账户导出包含这份加密副本。",
+    "The synced vault was replaced on another device.": "同步保险库已在另一台设备上被替换。",
+    "This account doesn't sync a vault.": "此账户没有同步保险库。",
+    "This account already syncs a vault. Join it, or forget it first.": "此账户已在同步一个保险库。请加入它，或先将其删除。",
+    "A strong passphrase matters: anyone who got the encrypted copy could try to guess it.": "密码短语的强度很重要：任何拿到加密副本的人都可能尝试猜测它。",
+    "Open your synced vault": "打开你的同步保险库",
+    "Device only: encrypted in this browser and synced end-to-end encrypted; ANONYMA stores only ciphertext": "仅存本机：在此浏览器中加密，并以端到端加密方式同步；ANONYMA 只存储密文",
+    "Device only: this chat is encrypted in this browser and synced to your other devices end-to-end encrypted. ANONYMA's servers store only ciphertext; the model provider still receives what you send.": "仅存本机：此会话在此浏览器中加密，并以端到端加密方式同步到你的其他设备。ANONYMA 的服务器只存储密文；模型提供商仍会收到你发送的内容。",
+    "It's deleted from this vault on every device that syncs it. ANONYMA only ever had its ciphertext, so this can't be undone.": "它会从每台同步此保险库的设备上删除。ANONYMA 只保存过它的密文，因此此操作无法撤销。",
+    "Encrypted on this device with your passphrase. Vault Sync keeps only ciphertext on our servers.": "用你的密码短语在此设备上加密。保险库同步只在我们的服务器上保存密文。",
+    "New chats here start Device only: they're kept encrypted in this browser and listed below while Device Vault is unlocked. Vault Sync keeps only ciphertext on our servers.": "此项目的新会话以仅存本机方式开始：它们加密保存在此浏览器中，本机保险库解锁时列在下方。保险库同步只在我们的服务器上保存密文。",
+    "New chats are kept encrypted in this browser's Device Vault; Vault Sync keeps only ciphertext on our servers. This choice stays in this browser; elsewhere they start off the record.": "新会话加密保存在此浏览器的本机保险库中；保险库同步只在我们的服务器上保存密文。此选择只保存在此浏览器中；在其他地方，新会话以不留记录方式开始。",
+    "You've reached 5,000 synced chats. New chats stay on this device until you delete some.": "你已同步了 5,000 个会话。在你删除一些会话之前，新会话只保留在此设备上。"
   },
   "patterns": [
     {
@@ -8282,6 +8346,34 @@
     {
       "en": "Arena #{0}",
       "zh": "竞技场第 {0} 名"
+    },
+    {
+      "en": "Last synced {0}",
+      "zh": "上次同步：{0}"
+    },
+    {
+      "en": "{0} chats changed on two devices at once. Both versions are kept; the older ones are marked Conflict copy.",
+      "zh": "有 {0} 个会话同时在两台设备上被修改。两个版本都已保留；较旧的版本标记为“冲突副本”。"
+    },
+    {
+      "en": "{0} chats are over 4 MB, so they stay on this device only.",
+      "zh": "有 {0} 个会话超过 4 MB，因此只保留在此设备上。"
+    },
+    {
+      "en": "{0} synced chats couldn't be read and were skipped.",
+      "zh": "有 {0} 个同步的会话无法读取，已跳过。"
+    },
+    {
+      "en": "1 chat synced · {0} of {1} used",
+      "zh": "已同步 1 个会话 · 已用 {0}，共 {1}"
+    },
+    {
+      "en": "{0} chats synced · {1} of {2} used",
+      "zh": "已同步 {0} 个会话 · 已用 {1}，共 {2}"
+    },
+    {
+      "en": "Up to {0} in all; a chat over {1} stays on this device only.",
+      "zh": "总共最多 {0}；超过 {1} 的会话只保留在此设备上。"
     }
   ]
 }

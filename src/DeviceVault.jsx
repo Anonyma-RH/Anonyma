@@ -28,8 +28,13 @@ import {
   deleteRecord,
   replaceVault,
   deleteVault,
+  exclusive,
 } from "./device-vault-store.js";
 import "./device-vault.css";
+// Vault Sync: optional, end-to-end-encrypted sync of this vault. Its UI
+// renders only when it's released and passed in (`sync`); it's the only
+// part that talks to the server (src/VaultSync.jsx).
+import { VaultSyncSection, VaultSyncJoin, VaultSyncStatus, ConflictCopyTag } from "./VaultSync.jsx";
 
 // Device Vault: "Save on this device only" (see src/device-vault.js).
 export { vaultReleased } from "./device-vault.js";
@@ -79,6 +84,13 @@ function dropKey(reason) {
 // decrypted chats while unlocked (dropped again with the key).
 export function useDeviceVault({ enabled, account, onLock }) {
   const [state, setState] = useState({ status: "off", meta: null, chats: [], damaged: 0 });
+  // Counts this tab's own changes, so Vault Sync (src/VaultSync.jsx) knows
+  // when there's something to send.
+  const [rev, setRev] = useState(0);
+  const changed = () => setRev((n) => n + 1);
+  // And which chats the last sync brought from another device, so an open
+  // one can reload (Workspace.jsx).
+  const [remoteChanges, setRemoteChanges] = useState({ rev: 0, ids: [] });
   const stateRef = useRef(state);
   stateRef.current = state;
   const onLockRef = useRef(onLock);
@@ -142,6 +154,8 @@ export function useDeviceVault({ enabled, account, onLock }) {
   };
   return {
     ...state,
+    rev,
+    remoteChanges,
     unlocked: state.status === "unlocked",
     lock: (reason = "manual") => dropKey(reason),
     async create(passphrase, idle) {
@@ -159,14 +173,49 @@ export function useDeviceVault({ enabled, account, onLock }) {
     async save(chat) {
       const k = need();
       const record = await sealChat(k, chat);
-      await putRecords(account, [record]);
+      await exclusive(account, () => putRecords(account, [record]));
       if (session.key !== k) return;
       setState((s) => ({ ...s, chats: newestFirst([chat, ...s.chats.filter((c) => c.id !== chat.id)]) }));
+      changed();
     },
     async remove(id) {
       need();
-      await deleteRecord(account, id);
+      await exclusive(account, () => deleteRecord(account, id));
       setState((s) => ({ ...s, chats: s.chats.filter((c) => c.id !== id) }));
+      changed();
+    },
+    // ---- Vault Sync (src/VaultSync.jsx); nothing here touches the network ----
+    // The unlocked key, for sealing and opening synced records in this tab.
+    key: () => need(),
+    // Chats another device changed or deleted, already written to this
+    // vault by the sync: shown without decrypting the vault again.
+    applyRemote(shown = [], gone = []) {
+      if (!shown.length && !gone.length) return;
+      const drop = new Set([...gone, ...shown.map((c) => c.id)]);
+      setState((s) =>
+        s.status === "unlocked" && session.account === account
+          ? { ...s, chats: newestFirst([...shown, ...s.chats.filter((c) => !drop.has(c.id))]) }
+          : s,
+      );
+      setRemoteChanges((r) => ({ rev: r.rev + 1, ids: [...drop] }));
+    },
+    // A device joining a synced vault it doesn't have yet: the synced
+    // settings, opened with the key its passphrase gave.
+    async adopt(meta, key) {
+      const forAccount = account;
+      await exclusive(forAccount, () => replaceVault(forAccount, meta, []));
+      await open(key, meta, forAccount);
+    },
+    // Joining a synced vault from a device that has its own: every chat here
+    // is sealed again with the synced key, and this vault then opens with
+    // the synced passphrase. A chat that can't be read here can't be moved.
+    async rekey(meta, key) {
+      const forAccount = account;
+      need();
+      const records = [];
+      for (const c of stateRef.current.chats) records.push(await sealChat(key, c));
+      await exclusive(forAccount, () => replaceVault(forAccount, meta, records));
+      await open(key, meta, forAccount);
     },
     async setIdle(minutes) {
       need();
@@ -194,8 +243,9 @@ export function useDeviceVault({ enabled, account, onLock }) {
       const fresh = mergeChats(stateRef.current.chats, chats);
       const records = [];
       for (const c of fresh) records.push(await sealChat(k, c));
-      await putRecords(forAccount, records);
+      await exclusive(forAccount, () => putRecords(forAccount, records));
       await open(k, stateRef.current.meta, forAccount);
+      if (fresh.length) changed();
       return { added: fresh.length, kept: chats.length - fresh.length };
     },
     async destroy() {
@@ -208,14 +258,19 @@ export function useDeviceVault({ enabled, account, onLock }) {
 }
 
 // Composer control beside Off the record, styled the same way.
-export function DeviceOnlyToggle({ active, onToggle, disabled }) {
+// `synced`: Vault Sync is on, so the vault's ciphertext is on the server too.
+export function DeviceOnlyToggle({ active, onToggle, disabled, synced = false }) {
   return (
     <button
       type="button"
       className={"attachment-control web-toggle device-only-toggle" + (active ? " on" : "")}
       aria-pressed={active}
       disabled={disabled}
-      title="Device only: saved encrypted in this browser, never on ANONYMA's servers"
+      title={
+        synced
+          ? "Device only: encrypted in this browser and synced end-to-end encrypted; ANONYMA stores only ciphertext"
+          : "Device only: saved encrypted in this browser, never on ANONYMA's servers"
+      }
       onClick={onToggle}
     >
       <Icon name={active ? "lock" : "unlock"} size={17} />
@@ -224,7 +279,7 @@ export function DeviceOnlyToggle({ active, onToggle, disabled }) {
   );
 }
 // Shown above the composer while Device only is on.
-export function DeviceOnlyNotice({ locked, onUnlock }) {
+export function DeviceOnlyNotice({ locked, onUnlock, synced = false }) {
   return locked ? (
     <div className="notice error device-only-notice" role="alert">
       <Icon name="lock" size={17} />
@@ -235,6 +290,12 @@ export function DeviceOnlyNotice({ locked, onUnlock }) {
         Unlock
       </button>
     </div>
+  ) : synced ? (
+    <Notice>
+      Device only: this chat is encrypted in this browser and synced to your
+      other devices end-to-end encrypted. ANONYMA's servers store only
+      ciphertext; the model provider still receives what you send.
+    </Notice>
   ) : (
     <Notice>
       Device only: this chat is encrypted and saved in this browser. ANONYMA's
@@ -259,7 +320,7 @@ export function VaultLimits() {
 // prompt to set it up or unlock it.
 // `filter` narrows the list (the sidebar's project filter) and `mark` adds a
 // tag before a chat's title (its project's colour); both are optional.
-export function VaultSection({ vault, currentId, onOpen, onDialog, filter = null, mark = null }) {
+export function VaultSection({ vault, currentId, onOpen, onDialog, filter = null, mark = null, sync = null }) {
   if (vault.status === "off" || vault.status === "loading") return null;
   const chats = filter ? vault.chats.filter(filter) : vault.chats;
   return (
@@ -301,9 +362,12 @@ export function VaultSection({ vault, currentId, onOpen, onDialog, filter = null
           <div className="conversation-list vault-list">
             {chats.map((c) => (
               <div className={c.id === currentId ? "current" : ""} key={c.id}>
-                <button data-i18n="off" onClick={() => onOpen(c)}>
-                  {mark?.(c)}
-                  {c.title}
+                <button onClick={() => onOpen(c)}>
+                  {sync?.live && c.conflictCopy && <ConflictCopyTag />}
+                  <span data-i18n="off">
+                    {mark?.(c)}
+                    {c.title}
+                  </span>
                 </button>
                 <button
                   className="conversation-options"
@@ -321,6 +385,7 @@ export function VaultSection({ vault, currentId, onOpen, onDialog, filter = null
           ) : (
             !chats.length && <p className="vault-hint">None here for this filter.</p>
           )}
+          <VaultSyncStatus sync={sync} onManage={() => onDialog({ kind: "manage" })} />
           {vault.damaged > 0 && (
             <p className="vault-hint">
               {vault.damaged === 1
@@ -431,7 +496,7 @@ function ImportForm({ vault, onDone }) {
 }
 
 // Set up, unlock, manage, or delete a chat from the vault.
-export function VaultDialog({ vault, dialog, onClose, onUnlocked }) {
+export function VaultDialog({ vault, dialog, onClose, onUnlocked, sync = null }) {
   const [pass, setPass] = useState(""),
     [again, setAgain] = useState(""),
     [idle, setIdle] = useState(DEFAULT_IDLE_MINUTES),
@@ -439,8 +504,13 @@ export function VaultDialog({ vault, dialog, onClose, onUnlocked }) {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [confirmDelete, setConfirmDelete] = useState(false),
-    [importing, setImporting] = useState(false);
+    [importing, setImporting] = useState(false),
+    // Vault Sync: set up a separate vault here instead of opening the synced
+    // one, and forget the synced copy along with a deleted vault.
+    [separate, setSeparate] = useState(false),
+    [forgetSynced, setForgetSynced] = useState(false);
   const kind = dialog.kind;
+  const joinSynced = kind === "setup" && !separate && !!sync?.live && !!sync.synced;
   async function run(fn) {
     setBusy(true);
     setError("");
@@ -453,7 +523,9 @@ export function VaultDialog({ vault, dialog, onClose, onUnlocked }) {
     }
   }
   const title =
-    kind === "setup"
+    joinSynced
+      ? "Open your synced vault"
+      : kind === "setup"
       ? "Set up Device Vault"
       : kind === "unlock"
         ? "Unlock Device Vault"
@@ -466,10 +538,17 @@ export function VaultDialog({ vault, dialog, onClose, onUnlocked }) {
       <div className="vault-dialog">
         {kind === "delete" ? (
           <>
-            <p>
-              It's removed from this browser's vault. It was never on ANONYMA's
-              servers, so this can't be undone.
-            </p>
+            {sync?.on ? (
+              <p>
+                It's deleted from this vault on every device that syncs it.
+                ANONYMA only ever had its ciphertext, so this can't be undone.
+              </p>
+            ) : (
+              <p>
+                It's removed from this browser's vault. It was never on ANONYMA's
+                servers, so this can't be undone.
+              </p>
+            )}
             <p className="vault-chat-title" data-i18n="off">{dialog.chat.title}</p>
             {error && <Notice type="error">{error}</Notice>}
             <div className="inline-actions">
@@ -487,6 +566,8 @@ export function VaultDialog({ vault, dialog, onClose, onUnlocked }) {
               </Button>
             </div>
           </>
+        ) : joinSynced ? (
+          <VaultSyncJoin sync={sync} onDone={() => onUnlocked()} onCreate={() => setSeparate(true)} />
         ) : kind === "setup" && !importing ? (
           <form
             onSubmit={(e) => {
@@ -589,11 +670,23 @@ export function VaultDialog({ vault, dialog, onClose, onUnlocked }) {
               Delete Device Vault and every chat in it from this browser? This
               can't be undone.
             </p>
+            {sync?.live && sync.synced && (
+              <label className="vault-check">
+                <input
+                  type="checkbox"
+                  checked={forgetSynced}
+                  onChange={(e) => setForgetSynced(e.target.checked)}
+                />
+                Also forget the synced copy on ANONYMA's servers. Your other
+                devices keep their vaults and stop syncing.
+              </label>
+            )}
             {error && <Notice type="error">{error}</Notice>}
             <div className="inline-actions">
               <Button
                 disabled={busy}
                 onClick={() => run(async () => {
+                  if (forgetSynced && sync?.synced) await sync.forget();
                   await vault.destroy();
                   onClose("deleted");
                 })}
@@ -616,6 +709,7 @@ export function VaultDialog({ vault, dialog, onClose, onUnlocked }) {
               value={vault.meta?.idleMinutes || DEFAULT_IDLE_MINUTES}
               onChange={(m) => run(() => vault.setIdle(m))}
             />
+            <VaultSyncSection sync={sync} />
             <div className="vault-block">
               <h3>Move to another device</h3>
               <p>

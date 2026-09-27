@@ -1171,6 +1171,36 @@ export const MIGRATIONS = [
         PRIMARY KEY(day,model_lo,model_hi),
         CHECK(model_lo<model_hi)) WITHOUT ROWID;
   `),
+  // Vault Sync (server/routes/vault-sync.js): ciphertext only. vault_sync is
+  // one row per account that turned sync on: a random id, the PBKDF2 salt
+  // and iteration count (not secret), the sealed verifier, a change counter
+  // (seq) and dates. vault_sync_records holds each synced chat as sealed
+  // bytes (IV and AES-GCM ciphertext) under its random id, with a version,
+  // the seq of its last change, its size and when it changed; a deleted one
+  // keeps a tombstone without bytes. Erased by Forget synced copy, account
+  // closure and Panic Wipe.
+  additive(`
+      CREATE TABLE IF NOT EXISTS vault_sync(user_id TEXT PRIMARY KEY REFERENCES users(id),
+        id TEXT NOT NULL UNIQUE,
+        salt TEXT NOT NULL,
+        iterations INTEGER NOT NULL,
+        verifier_iv TEXT NOT NULL,
+        verifier_ct TEXT NOT NULL,
+        seq INTEGER NOT NULL DEFAULT 0,
+        created INTEGER NOT NULL,
+        updated INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS vault_sync_records(user_id TEXT NOT NULL REFERENCES users(id),
+        id TEXT NOT NULL,
+        version INTEGER NOT NULL CHECK(version>0),
+        seq INTEGER NOT NULL,
+        iv BLOB,
+        ct BLOB,
+        size INTEGER NOT NULL DEFAULT 0,
+        deleted INTEGER NOT NULL DEFAULT 0 CHECK(deleted IN (0,1)),
+        updated INTEGER NOT NULL,
+        PRIMARY KEY(user_id,id));
+      CREATE INDEX IF NOT EXISTS vault_sync_records_seq ON vault_sync_records(user_id,seq);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

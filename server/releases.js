@@ -1069,6 +1069,24 @@ export const UPDATES = [
     // erased and exported with the account (server/arena.js).
     released: false,
   },
+  {
+    id: "vaultsync",
+    title: "Vault Sync",
+    tagline: "Your Device Vault on all your devices.",
+    points: [
+      "End-to-end encrypted: we only ever store ciphertext",
+      "Your passphrase never leaves your device",
+      "Forget the synced copy any time; Panic Wipe deletes it too",
+    ],
+    // Opt-in per device, from Device Vault's settings (src/VaultSync.jsx).
+    // The browser seals each chat before it's uploaded (src/vault-sync.js);
+    // the server keeps ciphertext, versions, sizes and times only
+    // (server/routes/vault-sync.js), erased with the account's content and
+    // exported as an importable vault file. Every route needs Device Vault
+    // released too (featuresFor), and the app also needs Ephemeral Chats,
+    // like Device Vault itself (vaultSyncReleased in src/vault-sync.js).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1273,6 +1291,8 @@ export function featuresFor(req) {
   }
   // Summarize & Continue: a fresh chat that carries a saved chat's summary.
   if (p === "/api/catchup" || p.startsWith("/api/catchup/")) return ["catchup"];
+  // Vault Sync: the synced Device Vault's settings and sealed records.
+  if (p === "/api/vault-sync" || p.startsWith("/api/vault-sync/")) return ["vaultsync", "vault"];
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.

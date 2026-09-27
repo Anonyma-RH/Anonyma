@@ -14,6 +14,7 @@ import {
   WIPE_STUDY,
   WIPE_WATCHES,
   WIPE_GIFTS,
+  WIPE_VAULT_SYNC,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPED_PATH,
@@ -42,6 +43,8 @@ export function PanicWipe({ user }) {
   const watchesLive = isReleased(config, "pagewatch");
   // And Gift Links' gifts (unclaimed ones come back first).
   const giftsLive = isReleased(config, "giftlinks");
+  // And Vault Sync's synced ciphertext.
+  const vaultSyncLive = isReleased(config, "vaultsync");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
   const [open, setOpen] = useState(false),
@@ -115,6 +118,7 @@ export function PanicWipe({ user }) {
                   {studyLive && <li>{WIPE_STUDY}</li>}
                   {watchesLive && <li>{WIPE_WATCHES}</li>}
                   {giftsLive && <li>{WIPE_GIFTS}</li>}
+                  {vaultSyncLive && <li>{WIPE_VAULT_SYNC}</li>}
                 </ul>
               </div>
               <div>

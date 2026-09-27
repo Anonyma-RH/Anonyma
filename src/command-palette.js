@@ -369,6 +369,7 @@ export const MODE_LABELS = {
   tools: "Research, Writing & Calculators",
   projects: "Projects",
   sheets: "Sheets",
+  device: "On-device",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -386,6 +387,8 @@ const PLACES = [
   ["projects", "Projects", ["project", "folders", "group chats", "pinned files"]],
   // Local Sheets: only once released (modeReleased checks MODE_FEATURES).
   ["sheets", "Sheets", ["spreadsheet", "csv", "tsv", "excel", "analyse", "analyze", "chart", "table", "data"]],
+  // On-Device Model: only once released (MODE_FEATURES maps it to "ondevice").
+  ["device", "On-device model", ["on device", "local model", "offline", "webgpu", "free", "private", "llama", "qwen"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

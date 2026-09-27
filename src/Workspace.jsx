@@ -37,6 +37,8 @@ import WorkspaceHome from "./WorkspaceHome.jsx";
 import TaskTools from "./TaskTools.jsx";
 // Local Sheets: its parser, planner checks and charts load only on its page.
 const Sheets = lazy(() => import("./Sheets.jsx"));
+// On-Device Model: its page, and the engine it starts, load only there.
+const OnDevice = lazy(() => import("./OnDevice.jsx"));
 import Routines from "./Routines.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import {
@@ -286,12 +288,15 @@ export function AppSidebar({
           ["collab", "Collab"],
           ["tools", "Task tools"],
           ["sheets", "Sheets"],
+          ["device", "On-device"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
         ]
           // Local Sheets stays out of sight entirely until it's released.
           .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
+          // So does On-Device Model.
+          .filter(([id]) => id !== "device" || isReleased(config, "ondevice"))
           .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
@@ -502,7 +507,9 @@ export default function Workspace() {
   ].includes(mode) ||
     // Local Sheets' page: unknown until it's released (config still loading
     // counts as known, so it doesn't flash "not found").
-    (mode === "sheets" && (!config || isReleased(config, "sheets")));
+    (mode === "sheets" && (!config || isReleased(config, "sheets"))) ||
+    // On-Device Model's page, likewise.
+    (mode === "device" && (!config || isReleased(config, "ondevice")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -1080,7 +1087,8 @@ export default function Workspace() {
   // reset above. Its id travels in navigation state, never in the URL.
   const vaultRequest = location.state?.vaultChat;
   useEffect(() => {
-    if (!vaultRequest) return;
+    // The On-device page opens its own vault chats.
+    if (!vaultRequest || mode === "device") return;
     const chat = vault.unlocked && textMode && vault.chats.find((c) => c.id === vaultRequest);
     if (chat && chat.mode === mode) openVaultChat(chat);
     navigate(location.pathname + location.search, { replace: true, state: null });
@@ -1271,6 +1279,14 @@ export default function Workspace() {
   // Opens a vault chat where it was written (chat, code or Uncensored), with
   // its own Veil map and Private Mode setting.
   function openVaultChat(chat) {
+    // An On-Device Model chat reopens only on its own page, never with a
+    // server model (src/OnDevice.jsx picks it up from navigation state).
+    if (chat.mode === "device") {
+      setMenu(false);
+      if (isReleased(config, "ondevice"))
+        navigate("/workspace/device" + (demo ? "?demo=1" : ""), { state: { vaultChat: chat.id } });
+      return;
+    }
     if (mode !== chat.mode) {
       navigate("/workspace/" + chat.mode, { state: { vaultChat: chat.id } });
       return;
@@ -3239,6 +3255,7 @@ export default function Workspace() {
                 routines: "Routines",
                 projects: "Projects",
                 sheets: "Sheets",
+                device: "On-device",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -3414,6 +3431,19 @@ export default function Workspace() {
             isReleased(config, "sheets") && (
               <Suspense fallback={<p className="sheets-loading">Opening Sheets…</p>}>
                 <Sheets key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
+          ) : mode === "device" ? (
+            isReleased(config, "ondevice") && (
+              <Suspense fallback={<p className="sheets-loading">Opening the on-device model…</p>}>
+                <OnDevice
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  vault={vault}
+                  vaultLive={vaultLive}
+                  onUnlockVault={() => setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })}
+                />
               </Suspense>
             )
           ) : mode === "tools" ? (
@@ -4314,6 +4344,12 @@ export default function Workspace() {
                           trainingLive={trainingLive}
                           demo={demo}
                           status={modelStatus}
+                          // On-Device Model: in Chat, a way to its page.
+                          onDevice={
+                            mode === "chat" && isReleased(config, "ondevice")
+                              ? () => navigate("/workspace/device" + (demo ? "?demo=1" : ""))
+                              : null
+                          }
                         />
                       ) : (
                       <select

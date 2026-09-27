@@ -201,11 +201,13 @@ export function vaultTitle(messages = [], veilMap = {}) {
 // reopens sealed and only ever goes on sealed) and, for a chat started in
 // a project, that project's id: the vault groups project chats in this
 // browser, since the server never learns a device-only chat exists.
+// On-Device Model's chats ("device", src/on-device.js) are kept here too and
+// reopen only on that page, never with a server model.
 export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, project = null, now = Date.now() }) {
   return {
     id,
     title: vaultTitle(messages, veil?.map),
-    mode: ["chat", "code", "uncensored"].includes(mode) ? mode : "chat",
+    mode: ["chat", "code", "uncensored", "device"].includes(mode) ? mode : "chat",
     private: !!privateMode,
     ...(typeof project === "string" && project ? { project } : {}),
     // Sealed Mode: it reopens sealed and only ever goes on sealed.

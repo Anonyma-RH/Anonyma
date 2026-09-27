@@ -14,6 +14,13 @@
 .app-shell .mf-preset small{color:#0135df;font-variant-numeric:tabular-nums}
 .app-shell .mf-preset[aria-pressed="true"]{border-color:#0135df;background:#eef2ff}
 .app-shell .mf-preset:disabled{opacity:.5;cursor:default}
+/* On-Device Model's entry: opens its page (src/OnDevice.jsx). */
+.app-shell .mf-ondevice{display:flex;align-items:center;gap:10px;margin:0 10px 8px;padding:9px 10px;border:1px solid #d7e1ff;border-left:3px solid #0135df;background:#f5f8ff;color:var(--work-ink);font:inherit;text-align:left;cursor:pointer}
+.app-shell .mf-ondevice>svg:first-child{flex-shrink:0;color:#0135df}
+.app-shell .mf-ondevice>span{display:grid;gap:1px;flex:1;min-width:0}
+.app-shell .mf-ondevice b{font-size:12px;font-weight:600}
+.app-shell .mf-ondevice small{font-size:11px;color:#0135df}
+.app-shell .mf-ondevice:hover,.app-shell .mf-ondevice:focus-visible{border-color:#0135df;background:#eef2ff}
 .app-shell .mf-search{margin:0 10px 8px;padding:10px 12px;border:1px solid var(--work-line);border-radius:4px;font:inherit;font-size:13px;color:var(--work-ink);background:#fff}
 .app-shell .mf-list{flex:1;min-height:0;overflow:auto;margin:0;padding:0 4px 4px;list-style:none}
 .app-shell .mf-list>li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;min-height:44px;padding:8px 10px;cursor:pointer}

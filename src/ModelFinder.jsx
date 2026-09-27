@@ -36,6 +36,8 @@ export default function ModelFinder({
   demo = false,
   // Model Status, once released: model id → its status (src/model-status.js).
   status = null,
+  // On-Device Model: opens its page, where a model runs in this browser.
+  onDevice = null,
 }) {
   const [open, setOpen] = useState(false),
     [query, setQuery] = useState(""),
@@ -170,6 +172,23 @@ export default function ModelFinder({
               </button>
             ))}
           </div>
+          {onDevice && (
+            <button
+              type="button"
+              className="mf-ondevice"
+              onClick={() => {
+                close(false);
+                onDevice();
+              }}
+            >
+              <Icon name="device" size={16} />
+              <span>
+                <b>On-device model</b>
+                <small>Runs in your browser · free · nothing sent</small>
+              </span>
+              <Icon name="arrow" size={13} />
+            </button>
+          )}
           <label className="sr-only" htmlFor={id + "-search"}>
             Search models
           </label>

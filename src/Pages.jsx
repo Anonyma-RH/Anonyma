@@ -873,6 +873,7 @@ const featureIcons = {
   status: "activity",
   ocr: "scantext",
   sharpen: "sharpen",
+  ondevice: "device",
 };
 const launch = {
   id: "mvp",

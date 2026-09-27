@@ -950,7 +950,7 @@ export const UPDATES = [
     // needs "routines" released too, and a watch on private models needs
     // "private" (featuresFor). The page is fetched with Link Reader's
     // SSRF-safe fetcher; summaries go through runChat's hold/settle path.
-    released: false,
+    released: true,
   },
   {
     id: "audiooverview",

@@ -213,7 +213,7 @@ import {
 } from "./command-palette.js";
 import { useLanguage, setLanguage, getLanguage, t } from "./i18n.js";
 import { CatchUpButton, CatchUpNudge, ContinuedBanner, CarriedSummary, catchupLive } from "./CatchUp.jsx";
-import { catchupEligible, withCarriedSummary, checkCarriedSummary } from "./catchup.js";
+import { catchupEligible, withCarriedSummary, checkCarriedSummary, chatLinkSearch } from "./catchup.js";
 import {
   ResearchDetails,
   ResearchEstimate,
@@ -1739,7 +1739,9 @@ export default function Workspace() {
         body: { from: current, summary, ...(title ? { title } : {}) },
       });
       if (Object.keys(state.map).length) saveVeilState(r.id, state);
-      await openChat({ id: r.id, mode: r.mode || mode, title: r.title, messages: [] });
+      // The fresh chat opens from its own link (the ?c= effect above loads
+      // it), so the address names it and a reload opens it, not the original.
+      navigate(location.pathname + chatLinkSearch(location.search, r.id), { replace: true });
       api("/api/conversations")
         .then((list) => setAll(recentConversations(list.data)))
         .catch(() => {});
@@ -1747,7 +1749,9 @@ export default function Workspace() {
       return;
     }
     // Device Vault, off the record and Private Mode: in this browser only.
-    // A vault chat is sealed into the vault with its first message.
+    // A vault chat is sealed into the vault with its first message. Such a
+    // chat has no link of its own: newChat drops any ?c= from the address,
+    // so a reload never reopens the original.
     const from =
       catchupStorage === "vault" && vaultChatId
         ? { id: vaultChatId, title: vaultTitle(messages, veilStateRef.current.map) }

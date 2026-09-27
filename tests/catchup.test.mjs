@@ -28,6 +28,7 @@ import {
   carriedContext,
   catchupEligible,
   catchupMessages,
+  chatLinkSearch,
   checkCatchupPayload,
   fitTranscript,
   formatTranscript,
@@ -520,6 +521,28 @@ test("Continue fresh starts an empty linked chat that carries the summary; the o
   const orphan = (await a.agent.get("/api/conversations/" + made.id).expect(200)).body;
   assert.equal(orphan.continued.from, null);
   assert.equal(orphan.continued.summary, summary);
+});
+
+test("after Continue fresh the address names the fresh chat, so a reload never reopens the original", () => {
+  // A saved fresh chat: ?c= becomes its id; a bookmark's ?m= jump goes; the rest stays.
+  assert.equal(chatLinkSearch("?c=c_old&m=m_1", "c_new"), "?c=c_new");
+  assert.equal(chatLinkSearch("?c=c_old&model=gpt-6-sol", "c_new"), "?c=c_new&model=gpt-6-sol");
+  assert.equal(chatLinkSearch("", "c_new"), "?c=c_new");
+  // A chat kept only in this browser has no link: ?c= goes.
+  assert.equal(chatLinkSearch("?c=c_old&m=m_1", null), "");
+  assert.equal(chatLinkSearch("?model=x&c=c_old", null), "?model=x");
+  const src = readFileSync(new URL("../src/Workspace.jsx", import.meta.url), "utf8");
+  const body = /async function continueFresh\(text\) \{[\s\S]*?\n  \}\n/.exec(src)[0];
+  // Saved: replace the address with the fresh chat's link; the ?c= effect opens it.
+  assert.match(
+    body,
+    /navigate\(location\.pathname \+ chatLinkSearch\(location\.search, r\.id\), \{ replace: true \}\);/,
+  );
+  assert.doesNotMatch(body, /openChat\(/, "the link opens it, once");
+  assert.match(src, /const linked = params\.get\("c"\);\n  useEffect\(\(\) => \{\n    if \(!linked \|\| !textMode\) return;[\s\S]*?openChat\(\{ id: linked, mode \}\);/);
+  // Browser only (off the record, Private Mode, Device Vault): newChat drops ?c=.
+  assert.match(body, /\n    newChat\(\);\n    veilStateRef\.current = state;\n    setCarried\(/);
+  assert.match(/function newChat\(\) \{[\s\S]*?\n  \}/.exec(src)[0], /if \(linked\) navigate\("\/workspace\/" \+ mode \+ \(demo \? "\?demo=1" : ""\)\);/);
 });
 
 test("Continue fresh checks its source and summary: yours only, text modes, no seed phrase, capped", async (t) => {

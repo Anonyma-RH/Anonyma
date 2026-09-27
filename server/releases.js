@@ -856,7 +856,7 @@ export const UPDATES = [
     // GET /api/status (server/routes/status.js) and the public /status page.
     // Aggregates only, kept in memory for an hour (server/model-status.js):
     // nothing per account, nothing stored, so nothing to erase or export.
-    released: false,
+    released: true,
   },
   {
     id: "ocr",

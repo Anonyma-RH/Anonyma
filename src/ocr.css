@@ -1,0 +1,295 @@
+/* Local OCR ("Text only"): the composer chip's button, the panel (inside
+   .modal) and the "From image" tag on a document chip. */
+
+/* ---- the composer chip ---- */
+.ocr-chip-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.attachment-list button.ocr-open {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid #0135df;
+  border-radius: 2px;
+  background: #fff;
+  color: #0135df;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.attachment-list button.ocr-open:hover:not(:disabled) {
+  background: #0135df;
+  color: #fff;
+}
+.attachment-list button.ocr-open:focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: 1px;
+}
+
+/* ---- the document chip it becomes ---- */
+.ocr-tag {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: 2px;
+  background: #edf2ff;
+  color: #0135df;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---- the panel ---- */
+.modal:has(.ocr-panel) {
+  max-width: 760px;
+}
+.ocr-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  color: #142343;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ocr-panel p {
+  margin: 0;
+}
+.ocr-lede {
+  color: #4a5872;
+}
+.ocr-body {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.ocr-image {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+}
+.ocr-image img {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+}
+.ocr-image figcaption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11px;
+  color: #68748a;
+}
+.ocr-image figcaption > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ocr-main {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.modal .ocr-language {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+}
+.ocr-language span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0135df;
+}
+.ocr-language select {
+  font: inherit;
+  font-size: 12px;
+  color: #142343;
+  padding: 5px 8px;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  background: #fff;
+}
+.ocr-language select:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 1px;
+}
+.ocr-progress {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  background: #f7f9fc;
+  border: 1px solid #e3e8f0;
+  border-radius: 2px;
+}
+.ocr-progress p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ocr-progress b {
+  font-weight: 600;
+  color: #061b69;
+}
+.ocr-progress p > span {
+  color: #0135df;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.ocr-bar {
+  height: 4px;
+  background: #e3e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ocr-bar span {
+  display: block;
+  height: 100%;
+  background: #0135df;
+}
+.ocr-progress small {
+  font-size: 11px;
+  color: #68748a;
+}
+.ocr-error {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.modal .ocr-edit {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+}
+.ocr-edit > span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0135df;
+}
+.ocr-edit textarea {
+  width: 100%;
+  min-height: 250px;
+  resize: vertical;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #142343;
+  background: #fff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+}
+.ocr-edit textarea:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 1px;
+  border-color: #0135df;
+}
+.ocr-confidence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ocr-confidence.good {
+  color: #0135df;
+}
+.ocr-confidence.warn,
+.ocr-confidence.low,
+.ocr-confidence.empty {
+  color: #9c3d2a;
+}
+.ocr-facts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 12px 0 0;
+  list-style: none;
+  border-top: 1px solid #e3e8f0;
+}
+.ocr-facts li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  font-size: 12px;
+  color: #4a5872;
+}
+.ocr-facts li > svg {
+  margin-top: 2px;
+  color: #0135df;
+}
+.ocr-facts li.ocr-saving b {
+  display: block;
+  font-weight: 600;
+  color: #061b69;
+}
+.ocr-facts small {
+  display: block;
+  font-size: 11px;
+  color: #68748a;
+}
+.ocr-facts .small-button {
+  align-self: center;
+}
+.ocr-actions {
+  justify-content: flex-end;
+  margin-top: 0;
+}
+.ocr-actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+@media (max-width: 700px) {
+  .ocr-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ocr-image img {
+    max-height: 140px;
+  }
+  .ocr-edit textarea {
+    min-height: 180px;
+  }
+  .ocr-facts li {
+    grid-template-columns: 16px minmax(0, 1fr);
+  }
+  .ocr-facts li .small-button {
+    grid-column: 2;
+    justify-self: start;
+  }
+  /* The two choices stay in reach while the panel scrolls. */
+  .ocr-actions {
+    position: sticky;
+    bottom: -23px;
+    margin: 0 -23px -23px;
+    padding: 12px 23px 16px;
+    background: var(--paper, #fff);
+    border-top: 1px solid #e3e8f0;
+  }
+  .ocr-actions .button {
+    flex: 1;
+    justify-content: center;
+  }
+}

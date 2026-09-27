@@ -54,6 +54,8 @@ function DocumentChip({ doc, onRemove, shield = null }) {
         <span className="document-chip-name" data-i18n="off">
           {doc.name}
         </span>
+        {/* Local OCR: text read from an image in the browser (src/ocr.js). */}
+        {doc.source === "ocr" && <span className="ocr-tag">From image</span>}
         <span className="document-chip-meta">{meta}</span>
         {doc.warning && (
           <Icon

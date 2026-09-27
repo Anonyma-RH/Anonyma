@@ -102,7 +102,9 @@ export function unescapeDocumentText(s) {
 // One <document> block. Only PDFs carry a page count, matching the example
 // in the feature spec; "truncated" is set once budget trimming cuts a file.
 // A page read by Link Reader (src/link-reader.js) is marked source="link"
-// and carries its URL, host and word count.
+// and carries its URL, host and word count. Text read from an image by
+// Local OCR (src/ocr.js) is marked source="ocr", so the model knows it may
+// hold misread words.
 export function buildDocumentBlock(doc) {
   const attrs = [`name="${escapeAttr(doc?.name || "document")}"`];
   if (doc?.source === "link") {
@@ -110,7 +112,7 @@ export function buildDocumentBlock(doc) {
     if (doc.url) attrs.push(`url="${escapeAttr(doc.url)}"`);
     if (doc.site) attrs.push(`site="${escapeAttr(doc.site)}"`);
     if (doc.words) attrs.push(`words="${Number(doc.words) || 0}"`);
-  }
+  } else if (doc?.source === "ocr") attrs.push(`source="ocr"`);
   if (doc?.pages) attrs.push(`pages="${Number(doc.pages)}"`);
   if (doc?.truncated) attrs.push(`truncated="true"`);
   return `<document ${attrs.join(" ")}>${escapeDocumentText(doc?.text)}</document>`;
@@ -175,7 +177,9 @@ export function parseDocumentBlocks(content) {
             site: attrs.site || "",
             words: Number(attrs.words) || 0,
           }
-        : {}),
+        : attrs.source === "ocr"
+          ? { source: "ocr" }
+          : {}),
     });
   }
   let rest = content.slice(lastIndex),

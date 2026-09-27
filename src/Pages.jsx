@@ -871,6 +871,7 @@ const featureIcons = {
   passkeys: "fingerprint",
   privacyscreen: "eyeoff",
   status: "activity",
+  ocr: "scantext",
 };
 const launch = {
   id: "mvp",

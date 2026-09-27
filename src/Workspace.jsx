@@ -101,6 +101,8 @@ import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import DocumentAttach, { DocumentChips, MessageDocuments } from "./Documents.jsx";
 import { CleanImageChip } from "./CleanUploads.jsx";
 import { RedactChipTools, RedactEditor, redactReleased } from "./Redact.jsx";
+import { OcrChipTool, OcrDialog, ocrReleased } from "./LocalOcr.jsx";
+import { replaceWithText } from "./ocr.js";
 import { IMAGE_TYPES, IMAGE_LIMIT, HEIC_LIMIT, isHeicFile, withKeep } from "./clean-notes.js";
 import { parseDocumentBlocks, MAX_DOCUMENTS } from "./documents.js";
 import { useShieldLive, shieldReleased, ShieldPanel, ShieldPasteNotice, shieldMarkdown } from "./Shield.jsx";
@@ -377,6 +379,8 @@ export default function Workspace() {
     [imageItems, setAttachments] = useState([]),
     // The composer image open in the redaction editor, if any.
     [redacting, setRedacting] = useState(null),
+    // Local OCR: the composer image whose text is being read, if any.
+    [ocrItem, setOcrItem] = useState(null),
     [documents, setDocuments] = useState([]),
     [media, setMedia] = useState(() => (demo ? readStore("media", []) : [])),
     [dialog, setDialog] = useState(null),
@@ -498,6 +502,13 @@ export default function Workspace() {
   // Nothing about a finding leaves the browser.
   const shieldView = useShieldLive(config);
   const shieldOn = shieldView && !demo && textMode;
+  // Local OCR (src/LocalOcr.jsx): "Text only" on a composer image reads its
+  // text in this browser; "Use text" swaps the image for that text as a
+  // Documents attachment, so it's sent like any attached file (Shield's
+  // "send as data", Veil's masking, Seed Guard). Text modes only: image and
+  // video modes use images as references, not as something to read. Not in
+  // the demo, which has no document attachments.
+  const ocrLive = !demo && textMode && ocrReleased(config);
   const [shieldPrefs, setShieldPrefs] = useState({}),
     [sendAsData, setSendAsData] = useState(true),
     [shieldOpen, setShieldOpen] = useState(null),
@@ -2607,7 +2618,11 @@ export default function Workspace() {
       return;
     }
     if (!redo && attachments.length) {
-      setError("Sealed models can't read images. Remove them to send.");
+      setError(
+        ocrLive
+          ? "Sealed models can't read images. Use Text only to send their words instead, or remove them."
+          : "Sealed models can't read images. Remove them to send.",
+      );
       return;
     }
     if (deviceOnly && !vault.unlocked) {
@@ -3989,7 +4004,7 @@ export default function Workspace() {
                 <form className="composer" onSubmit={send}>
                   {imageItems.length > 0 && (
                     <div className="attachment-list">
-                      {imageItems.map((a, i) => a.clean || redactLive ? (
+                      {imageItems.map((a, i) => a.clean || redactLive || ocrLive ? (
                         <CleanImageChip
                           key={i}
                           item={a}
@@ -3998,6 +4013,7 @@ export default function Workspace() {
                           }
                           onRemove={() => setAttachments((p) => p.filter((_, j) => j !== i))}
                         >
+                          <span className="ocr-chip-tools">
                           {redactLive && (
                             <RedactChipTools
                               item={a}
@@ -4005,6 +4021,14 @@ export default function Workspace() {
                               onOpen={() => setRedacting(a)}
                             />
                           )}
+                          {ocrLive && (
+                            <OcrChipTool
+                              item={a}
+                              disabled={busy}
+                              onOpen={() => setOcrItem(a)}
+                            />
+                          )}
+                          </span>
                         </CleanImageChip>
                       ) : (
                         <span key={i}>
@@ -4961,6 +4985,30 @@ export default function Workspace() {
           blocked={share.blocked}
           modelName={shareModelName}
           onClose={() => setShare(null)}
+        />
+      )}
+      {ocrLive && ocrItem && imageItems.includes(ocrItem) && (
+        <OcrDialog
+          item={ocrItem}
+          model={target}
+          markup={config?.markup}
+          veilWith={veilOn && isReleased(config, "veil") ? { state: veilStateRef.current, words: veilWords } : null}
+          documentsFull={documents.length >= MAX_DOCUMENTS}
+          onRedact={redactLive && !ocrItem.redacted ? () => {
+            setOcrItem(null);
+            setRedacting(ocrItem);
+          } : null}
+          onCancel={() => setOcrItem(null)}
+          onUse={(doc) => {
+            // The image leaves the composer and its text is attached in its
+            // place; nothing keeps the image after this.
+            const next = replaceWithText({ images: imageItems, documents, item: ocrItem, doc });
+            if (next) {
+              setAttachments(next.images);
+              setDocuments(next.documents);
+            }
+            setOcrItem(null);
+          }}
         />
       )}
       {redactLive && redacting && imageItems.includes(redacting) && (

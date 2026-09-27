@@ -4211,7 +4211,36 @@
     "Up: requests went through in the last 15 minutes.": "在线：过去 15 分钟内请求正常完成。",
     "Degraded: some requests failed or timed out in the last 15 minutes.": "降级：过去 15 分钟内有部分请求失败或超时。",
     "Down: most requests failed or timed out in the last 15 minutes.": "宕机：过去 15 分钟内大多数请求失败或超时。",
-    "looks down: most requests to it failed or timed out in the last 15 minutes. You can still send, or pick another model.": "似乎已宕机：过去 15 分钟内发往它的大多数请求失败或超时。你仍可发送，或换一个模型。"
+    "looks down: most requests to it failed or timed out in the last 15 minutes. You can still send, or pick another model.": "似乎已宕机：过去 15 分钟内发往它的大多数请求失败或超时。你仍可发送，或换一个模型。",
+    "Local OCR": "本地文字识别",
+    "Send the words, not the picture.": "只发文字，不发图片。",
+    "Text only reads the words in an attached image, right in your browser": "“仅文字”直接在你的浏览器中识别附加图片里的文字",
+    "Only the text you keep is sent: no image, no faces, no hidden details": "只发送你保留的文字：不发图片，不含人脸，也不含隐藏信息",
+    "Fewer tokens than an image; check the text, since OCR can misread": "比发送图片消耗更少 Token；OCR 可能识别有误，请核对文字",
+    "Text only": "仅文字",
+    "Read the text on this device and send it instead of the image": "在本设备上识别文字，用文字代替图片发送",
+    "Send the words, not the picture. The text is read in this browser; the image isn't uploaded.": "只发文字，不发图片。文字在你的浏览器中识别，图片不会上传。",
+    "English": "英文",
+    "Chinese and English": "中文和英文",
+    "Chinese": "中文",
+    "Reading the text…": "正在识别文字……",
+    "Loading the text reader…": "正在加载文字识别器……",
+    "The text reader couldn't load. Check your connection and try again.": "文字识别器加载失败。请检查网络连接后重试。",
+    "This image can't be read.": "无法读取这张图片。",
+    "Text from the image": "图片中的文字",
+    "No text found in this image.": "这张图片中没有找到文字。",
+    "OCR can misread text; check it before sending.": "OCR 可能识别有误，发送前请核对。",
+    "Use text replaces the image with this text. The image isn't sent or kept.": "“使用文字”会用这段文字替换图片。图片不会被发送，也不会被保留。",
+    "Estimated in this browser at this model's input rate. The provider's own count decides the charge.": "按此模型的输入价格在你的浏览器中估算。实际扣费以提供商自己的计数为准。",
+    "Veil will mask 1 item in this text before it's sent.": "发送前，Veil 会遮盖这段文字中的 1 项内容。",
+    "Read from the redacted copy: what you blacked out stays out.": "从打码后的副本中识别：被涂黑的部分不会进入文字。",
+    "To leave part of the image out, redact it first. The text is then read from the redacted copy.": "如需排除图片的某些部分，请先打码，文字随后会从打码后的副本中识别。",
+    "Redact first": "先打码",
+    "Use text": "使用文字",
+    "Keep image": "保留图片",
+    "From image": "来自图片",
+    "Sealed models can't read images. Use Text only to send their words instead, or remove them.": "密封模型无法读取图片。请使用“仅文字”改为发送图中的文字，或将图片移除。",
+    "Local OCR: Text only reads an image's words in your browser. Only the text you keep is sent, and only it is kept in a saved chat; the image isn't uploaded. The text reader's files come from ANONYMA's own server, and your browser keeps a copy.": "本地文字识别：“仅文字”在你的浏览器中识别图片里的文字。只有你保留的文字会被发送，已保存的会话中也只保留这些文字；图片不会上传。文字识别器的文件来自 ANONYMA 自己的服务器，你的浏览器会保存一份副本。"
   },
   "patterns": [
     {
@@ -6657,6 +6686,38 @@
     {
       "en": "Down: most requests failed or timed out in the last 15 minutes. Typical first token: {0} s.",
       "zh": "宕机：过去 15 分钟内大多数请求失败或超时。首个 Token 典型用时：{0} 秒。"
+    },
+    {
+      "en": "Read the text in {0}",
+      "zh": "识别 {0} 中的文字"
+    },
+    {
+      "en": "The first time, your browser downloads the text reader (about {0} MB) from ANONYMA and keeps it.",
+      "zh": "首次使用时，你的浏览器会从 ANONYMA 下载文字识别器（约 {0} MB）并保存下来。"
+    },
+    {
+      "en": "Read clearly: {0}% confidence.",
+      "zh": "识别清晰：置信度 {0}%。"
+    },
+    {
+      "en": "Some words may be wrong: {0}% confidence.",
+      "zh": "部分文字可能有误：置信度 {0}%。"
+    },
+    {
+      "en": "Hard to read: {0}% confidence. Check every line.",
+      "zh": "难以辨认：置信度 {0}%。请逐行核对。"
+    },
+    {
+      "en": "Input: image ≈ {0} credits → text ≈ {1} credits",
+      "zh": "输入：图片约 {0} 积分 → 文字约 {1} 积分"
+    },
+    {
+      "en": "Veil will mask {0} items in this text before it's sent.",
+      "zh": "发送前，Veil 会遮盖这段文字中的 {0} 项内容。"
+    },
+    {
+      "en": "{0} documents are already attached. Remove one to add this text.",
+      "zh": "已附加 {0} 个文档。请先移除一个，再添加这段文字。"
     }
   ]
 }

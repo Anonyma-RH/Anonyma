@@ -31,6 +31,8 @@ export default function DataControls() {
   const passkeys = !!config && isReleased(config, "passkeys");
   // And the Privacy Screen.
   const privacyScreen = !!config && isReleased(config, "privacyscreen");
+  // And Local OCR, which needs Documents.
+  const ocr = !!config && isReleased(config, "ocr") && isReleased(config, "documents");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -53,6 +55,11 @@ export default function DataControls() {
         {redact && (
           <li>
             Redact Before You Send: the boxes you draw on an image are applied in your browser. Only the redacted copy is sent, and only it is kept in a saved chat. The original isn't uploaded, and ANONYMA isn't told that an image was redacted.
+          </li>
+        )}
+        {ocr && (
+          <li>
+            Local OCR: Text only reads an image's words in your browser. Only the text you keep is sent, and only it is kept in a saved chat; the image isn't uploaded. The text reader's files come from ANONYMA's own server, and your browser keeps a copy.
           </li>
         )}
         <li>

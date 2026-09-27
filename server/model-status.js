@@ -274,11 +274,16 @@ export function createModelStatus({ clock = Date.now, enabled = () => true } = {
       families: list,
     };
   }
+  // One model's status right now ("up", "degraded", "down" or "unknown"),
+  // from the same window and thresholds as the report. Auto Model skips a
+  // model that's Down (server/auto-model.js).
+  const statusOf = (model, t = clock()) => summarize(byModel.get(model) || [], t).status;
   return {
     record,
     start,
     timed,
     report,
+    statusOf,
     now: () => clock(),
     // For tests: every stored event's fields (never more than these four).
     events: () => [...byModel.values()].flat().map((e) => ({ ...e })),

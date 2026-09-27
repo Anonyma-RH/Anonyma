@@ -21,6 +21,7 @@ import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { apiBoostInfo } from "../api-boost.js";
 import { prepareStudyRequest, studyBudget } from "../study.js";
 import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
+import { planAutoRequest, refuseAutoTask, requestSettings } from "../auto-model.js";
 import {
   fail,
   balance,
@@ -148,6 +149,8 @@ export function catalogRoutes(ctx) {
   // workspace asks automatically while a prompt is typed (Credit Estimates),
   // debounced, so the limit leaves room for that and for Symposium's columns.
   app.post("/api/quote", requireUser, limit("quote", 120, 60000), (req, res) => {
+    // Auto Model: priced as /api/chat will hold it (server/auto-model.js).
+    if (req.body.auto !== undefined) return res.json(autoQuote(req));
     // Study Mode: a deck's estimate prices the messages and reply budget the
     // same request to /api/chat would carry (server/study.js).
     const study = prepareStudyRequest(req.body, { quote: true });
@@ -207,4 +210,49 @@ export function catalogRoutes(ctx) {
         : {}),
     });
   });
+  // An Auto estimate: the same plan /api/chat makes for this body. Decided by
+  // the rules, it's the chosen model's price; pending the helper, the most it
+  // can cost (the dearest model it could land on plus the helper's most),
+  // which is what the chat holds. Nothing is sent, reserved or stored.
+  function autoQuote(req) {
+    const body = req.body;
+    refuseAutoTask(body, { task: body.study !== undefined || body.catchup !== undefined });
+    const settings = requestSettings(body);
+    const teamPaid = body.treasury === true;
+    const team = teamPaid ? ctx.treasury.forQuote(req.user.id, body.conversationId) : null;
+    const messages = models.checkMessages(ctx.files.expandMessages(req, body.messages)).messages;
+    const memory = ctx.memory.forRequest(req.user.id, body);
+    const sent = withMemory(messages, memory?.message);
+    const factor = teamPaid ? standardFactor(cfg) : markupFactor(req.user, cfg);
+    const searchFee = wantsWebSearch(body) ? cfg.webSearchPrice : 0;
+    const route = planAutoRequest(ctx, req, {
+      sent,
+      isPrivate: body.private === true,
+      mode: body.mode ?? "chat",
+      settings,
+      factor,
+      searchFee,
+    });
+    const room = !team && limitsLive(cfg) ? spendingRoom(db, req.user.id) : null;
+    return {
+      credits: credits(route.amount),
+      usd: route.amount / 1e7,
+      available: credits(team ? team.available : balance(db, req.user.id).available),
+      ...(room != null ? { spending_limit: { remaining: credits(room) } } : {}),
+      model: null,
+      estimate: true,
+      auto: {
+        decided: !route.pending,
+        ...(route.chosen
+          ? { model: route.chosen.model.id, tier: route.chosen.tier, reason: route.chosen.reason, via: "rules" }
+          : {}),
+        candidates: route.candidates.map((c) => ({ tier: c.tier, model: c.model.id, credits: credits(c.amount) })),
+        helper: route.helper ? { model: route.helper.id, credits: credits(route.helperMax) } : null,
+        prefer: route.settings.prefer,
+      },
+      ...(memory && body.memory != null
+        ? { memory: { used: memory.facts.length, skipped: memory.skipped } }
+        : {}),
+    };
+  }
 }

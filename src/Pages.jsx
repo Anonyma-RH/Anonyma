@@ -886,6 +886,7 @@ const featureIcons = {
   giftlinks: "ticket",
   arena: "podium",
   vaultsync: "devices",
+  automodel: "auto",
 };
 const launch = {
   id: "mvp",

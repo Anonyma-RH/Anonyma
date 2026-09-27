@@ -95,6 +95,7 @@ import {
   Printer,
   Podium,
   MonitorSmartphone,
+  Split,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -143,6 +144,7 @@ const icons = {
   memory: NotebookPen,
   share: Share2,
   route: Route,
+  auto: Split,
   lock: LockKeyhole,
   eraser: Eraser,
   lock: Lock,

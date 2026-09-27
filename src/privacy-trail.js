@@ -37,6 +37,14 @@ export function readTrail(p) {
     // undefined: not reported; null: Veil off; a number: masked details.
     veil: veil === null || (Number.isSafeInteger(veil) && veil >= 0) ? veil : undefined,
     receiptId: typeof p.receipt_id === "string" && p.receipt_id ? p.receipt_id : null,
+    // Auto Model's helper, when it was asked (its id and provider).
+    helper:
+      p.helper && typeof p.helper === "object" && typeof p.helper.model === "string" && p.helper.model
+        ? {
+            model: p.helper.model,
+            provider: typeof p.helper.provider === "string" && p.helper.provider ? p.helper.provider : null,
+          }
+        : null,
   };
 }
 
@@ -53,7 +61,7 @@ export function veilLabel(veil) {
 // the catalog marks the model private (it offers zero data retention, which
 // applies only when a request asks for it: Private Mode). `receiptsLive`
 // adds the receipt row even when this reply has no signed receipt.
-export function trailRows(trail, { modelName, privateModel = false, receiptsLive = false } = {}) {
+export function trailRows(trail, { modelName, helperName, privateModel = false, receiptsLive = false } = {}) {
   if (!trail) return [];
   const rows = [
     {
@@ -62,6 +70,18 @@ export function trailRows(trail, { modelName, privateModel = false, receiptsLive
       value: modelName || trail.model,
       provider: trail.provider,
     },
+    // Auto Model: its helper read the newest message to choose the model.
+    ...(trail.helper
+      ? [
+          {
+            key: "helper",
+            label: "Also read by",
+            value: helperName || trail.helper.model,
+            provider: trail.helper.provider,
+            note: "Auto's helper: your newest message only, to choose the model.",
+          },
+        ]
+      : []),
     { key: "route", label: "Route", value: ROUTE_LABELS[trail.route] },
     {
       key: "retention",

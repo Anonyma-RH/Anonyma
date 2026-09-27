@@ -7,6 +7,7 @@ import { compareTestReply } from "./compare.js";
 import { pageWatchTestReply } from "./page-watch-test.js";
 import { overviewTestReply } from "./audio-overview.js";
 import { catchupTestReply } from "./catchup.js";
+import { autoHelperTestReply } from "./auto-model-test.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -210,7 +211,8 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
     // finish reason, "length" when cut off), Local Sheets' planner and
     // explainer, Study Mode's decks, Document Compare's summary, Audio
     // Overview's script writer (server/audio-overview.js), Prompt Sharpen's
-    // sharpener (server/sharpen.js) and Highlight & Ask's fact-check: a
+    // sharpener (server/sharpen.js), Auto Model's helper
+    // (server/auto-model-test.js) and Highlight & Ask's fact-check: a
     // verdict in its JSON shape, with no pages (no search runs here), so the
     // card says it couldn't be verified. Each returns null otherwise.
     const factCheck = String(body.messages?.[0]?.content || "").startsWith("You fact-check one claim against the live web.")
@@ -225,6 +227,7 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
           compareTestReply(body.messages) ??
           overviewTestReply(body.messages) ??
           sharpenTestReply(body.messages) ??
+          autoHelperTestReply(body.messages) ??
           factCheck;
     const python = standIn === null ? pythonTestReply(text) : null;
     const answer = standIn !== null ? standIn : python !== null ? python : /code|function|javascript|python/i.test(text)

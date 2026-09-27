@@ -881,8 +881,8 @@ test("a database made before the unreadable count gets it", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "anonyma-pagewatch-db-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const path = join(dir, "old.sqlite");
-  // The version of the migration that adds it (later ones may follow).
-  const version = MIGRATIONS.findIndex((m) => String(m).includes('"unreadable"')) + 1;
+  // Locate this migration independently of later feature migrations.
+  const version = MIGRATIONS.findIndex((m) => String(m).includes('"page_watches", "unreadable"')) + 1;
   assert.ok(version > 0);
   const old = database(path);
   old.exec("ALTER TABLE page_watches DROP COLUMN unreadable");

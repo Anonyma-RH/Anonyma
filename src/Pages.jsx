@@ -39,6 +39,7 @@ import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { TwoStepPrompt } from "./TwoStep.jsx";
 import { PasskeyAuth } from "./Passkeys.jsx";
 import { passkeysReleased } from "./passkeys.js";
+import { GIFT_PATH } from "./gift-links.js";
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -882,6 +883,7 @@ const featureIcons = {
   catchup: "catchup",
   python: "terminal",
   deadswitch: "hourglass",
+  giftlinks: "ticket",
 };
 const launch = {
   id: "mvp",
@@ -1269,10 +1271,17 @@ export function Auth({ register = false }) {
               : "Start with a username and password."
             : "Pick up where your last idea left off."}
         </p>
-        {next && (
+        {next && next !== GIFT_PATH && (
           <Notice>
             An app is asking to connect. Sign in to review it: nothing is
             shared until you approve.
+          </Notice>
+        )}
+        {/* Gift Links: back to the claim page after signing in. */}
+        {next === GIFT_PATH && (
+          <Notice>
+            A gift is waiting. {register ? "Create an account" : "Sign in"} to
+            claim it; you'll go straight back to it.
           </Notice>
         )}
         {twoStep ? (

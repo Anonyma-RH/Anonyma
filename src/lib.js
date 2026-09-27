@@ -474,6 +474,9 @@ export async function walletUnlock(config, linkedWallet) {
 // consent page on this site, with its request, never anywhere else.
 export function safeNext(value) {
   if (typeof value !== "string" || value.length > 4096) return null;
+  // Gift Links' claim page: its code waits in this tab (src/gift-links.js),
+  // never in the address.
+  if (value === "/gift") return value;
   return /^\/connect\?[^\\#]*$/.test(value) ? value : null;
 }
 export const isReleased = (config, id) =>

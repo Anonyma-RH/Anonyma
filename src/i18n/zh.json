@@ -4930,7 +4930,104 @@
     "No reminder email: add a verified email in Account to get one.": "不会发送提醒邮件：请在账户中添加已验证的邮箱以接收提醒。",
     "We’ll email you a reminder 7 days before.": "我们会提前 7 天给你发送提醒邮件。",
     "We’ll email a reminder 7 days before, if email is set up and you’ve added one.": "如果已配置邮件服务且你已添加邮箱，我们会提前 7 天发送提醒邮件。",
-    "Inactivity Wipe: off until you choose 30, 90, 180 or 365 days. While it’s on, we keep the period, whether API and connected-app use counts, when you were last active (updated at most once an hour), the reminder’s state and when it last erased. Past the deadline it erases what Panic Wipe erases. A reminder email goes 7 days before, only if email is set up and only to a verified email. Turning it off or closing your account deletes the setting; Panic Wipe keeps it.": "闲置清除：在你选择 30、90、180 或 365 天之前保持关闭。开启期间，我们会保存所选期限、API 和已连接应用的使用是否算作活动、你上次活动的时间（最多每小时更新一次）、提醒状态，以及上次清除的时间。超过期限后，它会清除紧急清除所清除的内容。提前 7 天会发送一封提醒邮件，前提是已配置邮件服务，且只发往已验证的邮箱。关闭它或关闭账户会删除该设置；紧急清除会保留它。"
+    "Inactivity Wipe: off until you choose 30, 90, 180 or 365 days. While it’s on, we keep the period, whether API and connected-app use counts, when you were last active (updated at most once an hour), the reminder’s state and when it last erased. Past the deadline it erases what Panic Wipe erases. A reminder email goes 7 days before, only if email is set up and only to a verified email. Turning it off or closing your account deletes the setting; Panic Wipe keeps it.": "闲置清除：在你选择 30、90、180 或 365 天之前保持关闭。开启期间，我们会保存所选期限、API 和已连接应用的使用是否算作活动、你上次活动的时间（最多每小时更新一次）、提醒状态，以及上次清除的时间。超过期限后，它会清除紧急清除所清除的内容。提前 7 天会发送一封提醒邮件，前提是已配置邮件服务，且只发往已验证的邮箱。关闭它或关闭账户会删除该设置；紧急清除会保留它。",
+    "Gift Links": "礼物链接",
+    "Gift AI to anyone with a link. No usernames, no emails.": "用一个链接把 AI 送给任何人。无需用户名，无需邮箱。",
+    "Turn credits into a link, a code or a printable card": "把积分变成一个链接、一个礼物码或一张可打印的礼物卡",
+    "Anyone can claim it once; you never see who": "任何人都可领取一次；你永远看不到是谁领取的",
+    "Unclaimed credits come back to you after 30 days": "30 天内无人领取的积分会退回给你",
+    "Turn credits into a link anyone can claim once. No usernames, no emails; unclaimed credits come back to you.": "把积分变成一个任何人都能领取一次的链接。无需用户名，无需邮箱；无人领取的积分会退回给你。",
+    "Have a gift code?": "有礼物码？",
+    "Save the link now: it's shown only once. We keep only a fingerprint of the code, so nobody can show it again, us included.": "请立即保存链接：它只显示这一次。我们只保存礼物码的指纹，所以任何人都无法再次显示它，包括我们。",
+    "Copy code": "复制礼物码",
+    "Print card": "打印礼物卡",
+    "Make another": "再送一份",
+    "Amount": "金额",
+    "Custom": "自定义",
+    "Note (optional)": "附言（可选）",
+    "Happy birthday! Have fun with it.": "生日快乐！尽情享用吧。",
+    "Leaves your balance now": "立即从你的余额中扣除",
+    "Making your gift…": "正在生成你的礼物……",
+    "Make gift link": "生成礼物链接",
+    "Change something": "修改一下",
+    "Sample account: making a gift needs a signed-in account.": "示例账户：生成礼物需要登录账户。",
+    "Your gifts": "你的礼物",
+    "Loading your gifts…": "正在加载你的礼物……",
+    "No gifts yet. The ones you make show here, with when they're claimed.": "还没有礼物。你送出的礼物会显示在这里，并注明何时被领取。",
+    "Cancel gift": "取消礼物",
+    "Waiting to be claimed": "等待领取",
+    "Claimed": "已领取",
+    "Cancelled · credits returned": "已取消 · 积分已退回",
+    "Unclaimed after 30 days · credits returned": "30 天未被领取 · 积分已退回",
+    "Credits leave your balance when you make the gift. Cancel any time before it's claimed; unclaimed credits come back after 30 days.": "生成礼物时，积分即从你的余额中扣除。被领取前可随时取消；30 天内无人领取的积分会退回。",
+    "You see only that a gift was claimed, and when. Never who.": "你只能看到礼物已被领取以及领取时间，永远看不到是谁。",
+    "A gift counts toward your spending limits, like sending credits.": "和发送积分一样，礼物会计入你的消费上限。",
+    "Gift credits have no cash value and can't be refunded to cash.": "礼物积分没有现金价值，也不能退款为现金。",
+    "credits of AI": "AI 积分",
+    "Gift": "礼物",
+    "Chat, code, images, video and voice, on one balance.": "对话、代码、图像、视频和语音，一个余额全搞定。",
+    "QR code of the gift link": "礼物链接的二维码",
+    "Gift made": "已送出礼物",
+    "Gift claimed": "已领取礼物",
+    "Gift returned": "礼物已退回",
+    "Gift created": "已生成礼物",
+    "Gift cancelled": "礼物已取消",
+    "Gift returned: unclaimed after 30 days": "礼物已退回：30 天未被领取",
+    "Gift cancelled: account content erased": "礼物已取消：账户内容已清除",
+    "Gifts nobody has claimed yet are cancelled first: their links stop working and their credits are forfeited with the rest.": "尚未被领取的礼物会先被取消：其链接随即失效，积分与其余积分一并作废。",
+    "Your gift list and notes. Gifts nobody has claimed yet are cancelled, and their credits come back to your balance": "你的礼物列表和附言。尚未被领取的礼物会被取消，积分退回你的余额",
+    "A gift is waiting. Sign in to claim it; you'll go straight back to it.": "有一份礼物在等你。登录后即可领取，并会直接回到礼物页面。",
+    "A gift is waiting. Create an account to claim it; you'll go straight back to it.": "有一份礼物在等你。注册账户后即可领取，并会直接回到礼物页面。",
+    "Gift from 100 to 250,000 whole credits.": "礼物金额为 100 到 250,000 的整数积分。",
+    "Not enough available credits for this gift.": "可用积分不足，无法生成此礼物。",
+    "That request ID was already used for a different gift.": "该请求 ID 已用于另一份礼物。",
+    "A credited payment is under reconciliation. Gifts are paused until it is confirmed.": "一笔已入账的付款正在核对中。确认之前，礼物功能暂停。",
+    "This gift was already made, and its link was shown only once. If you didn't keep it, cancel the gift to get the credits back.": "这份礼物已经生成，其链接只显示过一次。如果你没有保存，请取消该礼物以取回积分。",
+    "Gift not found.": "找不到该礼物。",
+    "This gift was already claimed, so it can't be cancelled.": "这份礼物已被领取，无法取消。",
+    "This gift was already returned.": "这份礼物已经退回。",
+    "Enter a gift code.": "请输入礼物码。",
+    "That isn't a gift code. A code has 28 letters and numbers.": "这不是礼物码。礼物码由 28 个字母和数字组成。",
+    "That code has a typo. Check it and try again.": "礼物码有输入错误。请检查后重试。",
+    "No gift matches this code. Check it and try again.": "没有与此礼物码匹配的礼物。请检查后重试。",
+    "This is your own gift. Send the link to someone else, or cancel the gift to get the credits back.": "这是你自己的礼物。请把链接发给别人，或取消礼物以取回积分。",
+    "This gift has already been claimed.": "这份礼物已被领取。",
+    "This gift is no longer available. Its credits went back to the person who sent it.": "这份礼物已不可领取。其积分已退回给送礼人。",
+    "This gift can't be claimed right now. Try again later.": "这份礼物暂时无法领取。请稍后再试。",
+    "Opening your gift…": "正在打开你的礼物……",
+    "Gift link": "礼物链接",
+    "CLAIMED": "已领取",
+    "A GIFT OF AI": "一份 AI 礼物",
+    "GIFT LINK": "礼物链接",
+    "Claim a gift.": "领取礼物。",
+    "Paste the link or type the code you were given. Credits work with every model on ANONYMA.": "粘贴你收到的链接或输入礼物码。积分可用于 ANONYMA 上的所有模型。",
+    "A gift can be claimed once. If it was meant for you, ask the person who sent it for a new link.": "每份礼物只能领取一次。如果它本来是给你的，请向送礼人索要新的链接。",
+    "This gift was cancelled.": "这份礼物已被取消。",
+    "The person who sent it took it back before it was claimed. Its credits went back to them.": "送礼人在礼物被领取前将其收回，积分已退回给对方。",
+    "This gift wasn't claimed in time.": "这份礼物未在期限内被领取。",
+    "Gifts wait 30 days. Its credits went back to the person who sent it.": "礼物会保留 30 天。其积分已退回给送礼人。",
+    "This gift is no longer available.": "这份礼物已不可领取。",
+    "It was cancelled or wasn't claimed in time, so its credits went back to the person who sent it.": "它已被取消或未在期限内被领取，因此积分已退回给送礼人。",
+    "No gift matches this code.": "没有与此礼物码匹配的礼物。",
+    "Check the link or the code and try again. A code has 28 letters and numbers.": "请检查链接或礼物码后重试。礼物码由 28 个字母和数字组成。",
+    "Gift code or link": "礼物码或链接",
+    "Open gift": "打开礼物",
+    "Enter another code": "输入其他礼物码",
+    "This is your own gift. Send the link to someone else; you can cancel it in Account → Credits & funding.": "这是你自己的礼物。请把链接发给别人；你可以在“账户 → 积分与充值”中取消它。",
+    "Sign in to claim it.": "登录后领取。",
+    "Any account works, new or existing: a username and password, a passkey, email or a wallet. You'll come straight back here.": "新账户或已有账户均可：用户名和密码、通行密钥、邮箱或钱包都行。完成后会直接回到这里。",
+    "Create an account to claim": "注册账户以领取",
+    "They go into the balance of the account you're signed in to.": "积分将存入你当前登录账户的余额。",
+    "Signed in as": "当前登录：",
+    "Claiming…": "正在领取……",
+    "See your balance": "查看余额",
+    "One account can claim a gift, once.": "每份礼物只能由一个账户领取一次。",
+    "The person who sent it sees that it was claimed, and when. Never who.": "送礼人只能看到礼物已被领取以及领取时间，永远看不到是谁。",
+    "The code stays out of your address bar and our logs; we keep only a fingerprint of it.": "礼物码不会留在你的地址栏和我们的日志中；我们只保存它的指纹。",
+    "Paste the link or type the code": "粘贴链接或输入礼物码",
+    "Gift credits with a link": "用链接赠送积分",
+    "Gift Links: each gift you make (its amount, note, dates and whether it was claimed or returned) and a fingerprint of its code, never the code itself. Who claimed a gift isn't kept with it and is never shown to you. Panic Wipe and closing your account cancel your unclaimed gifts, return their credits to your balance, then delete the list; the ledger keeps its entries.": "礼物链接：你送出的每份礼物（金额、附言、日期，以及是否已被领取或退回）和礼物码的指纹，绝不保存礼物码本身。领取人不会与礼物一起保存，也永远不会显示给你。紧急清除和注销账户会先取消你尚未被领取的礼物，把积分退回你的余额，再删除礼物列表；账本会保留相应记录。",
+    "The export also lists the gifts you made: amount, note, dates and state. Codes aren't kept, so they can't be exported.": "导出内容还会列出你送出的礼物：金额、附言、日期和状态。礼物码不会被保存，因此无法导出。"
   },
   "patterns": [
     {
@@ -8024,6 +8121,82 @@
     {
       "en": "There was no activity for {0} days. Your account and credits are here.",
       "zh": "你的账户已连续 {0} 天没有活动。你的账户和积分都还在。"
+    },
+    {
+      "en": "Credits ({0} to {1})",
+      "zh": "积分（{0} 到 {1}）"
+    },
+    {
+      "en": "Confirm: gift {0} credits",
+      "zh": "确认：赠送 {0} 积分"
+    },
+    {
+      "en": "{0} waiting",
+      "zh": "{0} 份待领取"
+    },
+    {
+      "en": "Comes back {0} if unclaimed",
+      "zh": "若无人领取，将于 {0} 退回"
+    },
+    {
+      "en": "Claimed {0}",
+      "zh": "领取于 {0}"
+    },
+    {
+      "en": "Returned {0}",
+      "zh": "退回于 {0}"
+    },
+    {
+      "en": "Gift cancelled. {0} credits are back in your balance.",
+      "zh": "礼物已取消。{0} 积分已退回你的余额。"
+    },
+    {
+      "en": "Scan, or go to {0}/gift and enter",
+      "zh": "扫码，或前往 {0}/gift 输入"
+    },
+    {
+      "en": "Claim by {0} · No cash value",
+      "zh": "请于 {0} 前领取 · 无现金价值"
+    },
+    {
+      "en": "Gift card for {0} credits",
+      "zh": "{0} 积分的礼物卡"
+    },
+    {
+      "en": "You already have {0} gifts waiting to be claimed. Cancel one, or wait for one to be claimed.",
+      "zh": "你已有 {0} 份礼物等待领取。请取消一份，或等待其中一份被领取。"
+    },
+    {
+      "en": "Keep the note to {0} characters.",
+      "zh": "附言请不要超过 {0} 个字符。"
+    },
+    {
+      "en": "Too many wrong gift codes. Try again in {0} min.",
+      "zh": "输错礼物码的次数过多。请在 {0} 分钟后重试。"
+    },
+    {
+      "en": "{0} credits are yours.",
+      "zh": "{0} 积分归你了。"
+    },
+    {
+      "en": "You've been gifted {0} credits.",
+      "zh": "有人送了你 {0} 积分。"
+    },
+    {
+      "en": "They're in your balance now, ready for any model: {0} credits available.",
+      "zh": "积分已存入你的余额，可用于任何模型：可用 {0} 积分。"
+    },
+    {
+      "en": "Use them with any model on ANONYMA: chat, code, images, video and voice. Claim by {0}.",
+      "zh": "可用于 ANONYMA 上的任何模型：对话、代码、图像、视频和语音。请于 {0} 前领取。"
+    },
+    {
+      "en": "Claim {0} credits.",
+      "zh": "领取 {0} 积分。"
+    },
+    {
+      "en": "Claim {0} credits",
+      "zh": "领取 {0} 积分"
     }
   ]
 }

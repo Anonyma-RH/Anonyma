@@ -129,6 +129,11 @@ const CATEGORY = {
   payment_correction: "topup",
   transfer_out: "sent",
   transfer_in: "received",
+  // Gift Links: a gift made is sent; one cancelled or unclaimed comes back
+  // into the same column, so sent nets it out; a claimed gift is received.
+  gift_out: "sent",
+  gift_return: "sent",
+  gift_in: "received",
   referral: "reward",
   referral_correction: "reward",
   holder_reward: "reward",

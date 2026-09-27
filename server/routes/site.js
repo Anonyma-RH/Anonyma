@@ -20,8 +20,8 @@ import {
 export function siteRoutes({ app, db, cfg }) {
   // Gated pages this installation serves: the Connect an App consent page,
   // the public NYMA page (/token), Panic Wipe's "Wiped" page, the
-  // workspace's Sheets, On-device, Study and Compare pages and Model Status'
-  // page exist only once their update is live.
+  // workspace's Sheets, On-device, Study and Compare pages, Model Status'
+  // page and Gift Links' claim page exist only once their update is live.
   const served = () => ({
     connect: connectLive(cfg),
     token: isReleased(cfg, "holders"),
@@ -32,6 +32,8 @@ export function siteRoutes({ app, db, cfg }) {
     ondevice: isReleased(cfg, "ondevice"),
     study: isReleased(cfg, "study"),
     compare: isReleased(cfg, "doccompare"),
+    // Gift Links' claim page (/gift), never in the sitemap.
+    gift: isReleased(cfg, "giftlinks"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

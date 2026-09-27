@@ -2457,6 +2457,78 @@ route("post", "/api/credits/send", "Send credits to another account", {
   description:
     "Moves available credits atomically as a linked transfer_out/transfer_in ledger pair. Reusing a requestId returns the original transfer instead of sending again. Paused while a credited payment is under reconciliation. Credits sent count toward the sender's own spending limits: 402 spending_limit when a transfer would go over one.",
 });
+// Gift Links (update "giftlinks").
+const giftCode = {
+  ...string,
+  maxLength: 400,
+  description:
+    "The gift code (28 Crockford base32 symbols, dashes optional, any case), or the whole claim link: only what follows its # is read",
+};
+const gift = object({
+  id: string,
+  amount: { ...integer, description: "Credits" },
+  note: { ...string, maxLength: 140 },
+  status: { enum: ["open", "claimed", "revoked", "expired"] },
+  created: integer,
+  expires: { ...integer, description: "When an unclaimed gift goes back to you (30 days after it was made)" },
+  claimed: { type: ["integer", "null"], description: "When it was claimed. Who claimed it is never shown" },
+  returned: { type: ["integer", "null"], description: "When its credits came back to you (cancelled or unclaimed)" },
+});
+route("get", "/api/gifts", "Your gifts", {
+  response: object({
+    data: array(gift),
+    open: { ...integer, description: "Gifts waiting to be claimed" },
+    limits: object({ min: integer, max: integer, note: integer, open: integer, days: integer }),
+  }),
+  description: "Newest first, the latest 100. The account export has every one.",
+});
+route("post", "/api/gifts", "Make a gift link", {
+  status: 201,
+  body: object(
+    {
+      amount: { ...integer, minimum: 100, maximum: 250000, description: "Whole credits" },
+      note: { ...string, maxLength: 140, description: "Optional, one line, shown to whoever opens the link. With Seed Guard live, a seed phrase is refused (400 seed_phrase_blocked)." },
+      requestId,
+    },
+    ["amount"],
+  ),
+  response: {
+    ...gift,
+    properties: {
+      ...gift.properties,
+      code: { ...string, description: "Shown once: only its hash is stored" },
+      link: { ...string, description: "The claim link, with the code after its #" },
+      available: number,
+      repeated: { ...bool, description: "The requestId was used already: the original gift, without its code (200)" },
+    },
+  },
+  description:
+    "The credits leave your balance at once as a gift_out ledger entry and the gift holds them. Same rules as sending credits: 402 insufficient_credits, 402 spending_limit (a gift counts toward your spending limits), 409 payment_reconciliation_pending. At most 25 open gifts (409 gift_limit); 10 an hour per account and 30 per network address. Gift credits have no cash value and can't be refunded to cash.",
+});
+route("post", "/api/gifts/{id}/revoke", "Cancel an unclaimed gift", {
+  response: { ...gift, properties: { ...gift.properties, available: number } },
+  description:
+    "Its credits come back at once (gift_return). 409 gift_not_open once it's claimed or returned; 404 gift_not_found for another account's gift. Unclaimed gifts also come back by themselves after 30 days, and when you wipe or close the account.",
+});
+route("post", "/api/gifts/peek", "Look at a gift before claiming it", {
+  auth: null,
+  body: object({ code: giftCode }, ["code"]),
+  response: object({
+    status: { enum: ["open", "claimed", "cancelled", "expired"] },
+    amount: { ...integer, description: "Open gifts only" },
+    note: { ...string, description: "Open gifts only" },
+    expires: { ...integer, description: "Open gifts only" },
+    own: { ...bool, description: "Open gifts only: you made it" },
+  }),
+  description:
+    "No sign-in needed. The code goes in the body, never the URL. 400 gift_code_invalid or gift_code_typo (a wrong check symbol) never count as a guess; 404 gift_not_found does. 10 wrong codes an hour per account, or 30 per network address, lock out peeks and claims for the rest of that hour (429 gift_locked). 60 an hour per network address.",
+});
+route("post", "/api/gifts/claim", "Claim a gift", {
+  body: object({ code: giftCode }, ["code"]),
+  response: object({ status: { enum: ["claimed"] }, amount: integer, note: string, available: number }),
+  description:
+    "Exactly one account gets the credits (gift_in), in one transaction. 400 gift_own for your own gift; 410 gift_claimed or gift_returned; 409 gift_paused while the giver has a payment under reconciliation; 404 gift_not_found counts toward the lockout (429 gift_locked). The giver sees only that it was claimed and when, never by whom. 20 an hour per account and 60 per network address.",
+});
 route("get", "/api/media", "List private workspace library", {
   response: object({ data: array(ref("Media")) }),
 });

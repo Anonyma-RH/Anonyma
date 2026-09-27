@@ -268,6 +268,9 @@ export function createWorker(ctx) {
         console.error("Inactivity Wipe check failed; it will retry.");
       }
       if (closed) return;
+      // Gift Links: unclaimed gifts past their 30 days go back to their
+      // givers, each once, on the ledger (server/routes/gifts.js).
+      ctx.gifts?.expire();
       if (cfg.rpc && cfg.token) {
         // About daily: each read schedules the next 12 to 36 hours on, at a
         // random time (token_due, server/holders.js). A failed read is

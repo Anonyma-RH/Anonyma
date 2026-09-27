@@ -10,6 +10,7 @@ import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
 import { exportBlindVotes, forgetBlindVotes } from "./blind.js";
 import { exportAudioOverviews, forgetAudioOverviews } from "./audio-overview.js";
 import { exportInactivity, forgetInactivity, inactivityLive } from "../inactivity-wipe.js";
+import { exportGifts, forgetGifts } from "./gifts.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -51,6 +52,9 @@ import {
 //   version of each page and their reports), bookmarks, Blind Compare votes,
 //   Audio Overview scripts and NYMA top-up quotes (a credited top-up stays
 //   as its deposit);
+// - Gift Links' gifts: every unclaimed one is cancelled first, its credits
+//   returned to the balance on the ledger (Panic Wipe keeps them; closure
+//   forfeits them with the rest), then the gift list and notes go;
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -113,6 +117,8 @@ export function eraseAccountContent(db, user) {
   forgetBlindVotes(db, id);
   // Audio Overview: saved overviews' scripts (their audio is media, below).
   forgetAudioOverviews(db, id);
+  // Gift Links: unclaimed gifts come back to the balance, then the list goes.
+  forgetGifts(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -226,6 +232,13 @@ export function accountRoutes(ctx) {
   function inactivityExport(user) {
     const setting = exportInactivity(db, user);
     return setting || inactivityLive(cfg) ? { inactivityWipe: setting } : {};
+  }
+  // Gift Links: every gift this account made, with its amount, note, dates
+  // and state (once the update is live, or while any exist). Never a code,
+  // which isn't kept, and never who claimed one.
+  function giftsExport(user) {
+    const list = exportGifts(db, user);
+    return list.length || isReleased(cfg, "giftlinks") ? { gifts: list } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -436,6 +449,7 @@ export function accountRoutes(ctx) {
         keyCap: "credits",
         mediaCost: "credits",
         requestAmount: "integer subcredits",
+        giftAmount: "credits",
       },
       user: publicUser(req.user),
       ledger: db
@@ -559,6 +573,9 @@ export function accountRoutes(ctx) {
       // Audio Overview: saved overviews' scripts.
       ...audioOverviewExport(req.user.id),
       ...inactivityExport(req.user.id),
+      // Gift Links: the gifts this account made (claimed ones are also in
+      // the ledger above, as gift_in).
+      ...giftsExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

@@ -1035,6 +1035,24 @@ export const UPDATES = [
     // closure, in the account export.
     released: false,
   },
+  {
+    id: "giftlinks",
+    title: "Gift Links",
+    tagline: "Gift AI to anyone with a link. No usernames, no emails.",
+    points: [
+      "Turn credits into a link, a code or a printable card",
+      "Anyone can claim it once; you never see who",
+      "Unclaimed credits come back to you after 30 days",
+    ],
+    // /api/gifts (server/routes/gifts.js) and the /gift claim page, which is
+    // a 404 until release. Credits move only on the ledger: a gift_out debit
+    // when it's made, then exactly one gift_in (claimed) or gift_return
+    // (cancelled, expired or erased) sharing one ref. The worker returns
+    // expired gifts whether or not this is released, so switching it off
+    // never strands credits. Gift rows are exported and erased with the
+    // account's content (unclaimed ones are returned first).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1322,6 +1340,9 @@ export function featuresFor(req) {
   )
     return ["app"];
   if (p === "/api/credits/send" || p === "/api/referrals") return ["social"];
+  // Gift Links: making, listing and cancelling gifts, and a link's peek and
+  // claim. (The /gift page itself is a 404 until release: site-routes.js.)
+  if (p === "/api/gifts" || p.startsWith("/api/gifts/")) return ["giftlinks"];
   // Pay with NYMA: the rate, quotes and claims.
   if (p === "/api/nyma" || p.startsWith("/api/nyma/")) return ["paynyma"];
   // Onchain Explainer: the read-only chain lookup.

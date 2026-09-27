@@ -880,6 +880,7 @@ const featureIcons = {
   audiooverview: "audio",
   highlight: "highlight",
   catchup: "catchup",
+  doctranslate: "languages",
 };
 const launch = {
   id: "mvp",

@@ -43,6 +43,8 @@ const OnDevice = lazy(() => import("./OnDevice.jsx"));
 const Study = lazy(() => import("./Study.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
+// Translate Documents: its readers, part planner and exports load only on its page.
+const Translate = lazy(() => import("./Translate.jsx"));
 // Audio Overview's dialog and player, loaded only when opened.
 const AudioOverviewDialog = lazy(() => import("./AudioOverview.jsx"));
 // Summarize & Continue's dialog, loaded when Catch me up is first opened.
@@ -307,6 +309,7 @@ export function AppSidebar({
           ["tools", "Task tools"],
           ["sheets", "Sheets"],
           ["compare", "Compare docs"],
+          ["translate", "Translate docs"],
           ["study", "Study"],
           ["routines", "Routines"],
           ["projects", "Projects"],
@@ -317,6 +320,7 @@ export function AppSidebar({
           .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
           .filter(([id]) => id !== "device" || isReleased(config, "ondevice"))
           .filter(([id]) => id !== "compare" || isReleased(config, "doccompare"))
+          .filter(([id]) => id !== "translate" || isReleased(config, "doctranslate"))
           .filter(([id]) => id !== "study" || isReleased(config, "study"))
           .map(([id, t]) =>
           modeReleased(config, id) ? (
@@ -546,7 +550,9 @@ export default function Workspace() {
     // Study Mode's page likewise.
     (mode === "study" && (!config || isReleased(config, "study"))) ||
     // Document Compare's page, the same way.
-    (mode === "compare" && (!config || isReleased(config, "doccompare")));
+    (mode === "compare" && (!config || isReleased(config, "doccompare"))) ||
+    // Translate Documents' page, likewise.
+    (mode === "translate" && (!config || isReleased(config, "doctranslate")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3541,6 +3547,7 @@ export default function Workspace() {
                 device: "On-device",
                 study: "Study",
                 compare: "Compare docs",
+                translate: "Translate docs",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -3774,6 +3781,12 @@ export default function Workspace() {
             isReleased(config, "doccompare") && (
               <Suspense fallback={<p className="compare-loading">Opening Compare docs…</p>}>
                 <Compare key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
+          ) : mode === "translate" ? (
+            isReleased(config, "doctranslate") && (
+              <Suspense fallback={<p className="translate-loading">Opening Translate docs…</p>}>
+                <Translate key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
               </Suspense>
             )
           ) : mode === "tools" ? (

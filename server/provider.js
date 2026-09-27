@@ -6,6 +6,7 @@ import { studyTestReply } from "./study.js";
 import { compareTestReply } from "./compare.js";
 import { pageWatchTestReply } from "./page-watch-test.js";
 import { overviewTestReply } from "./audio-overview.js";
+import { translateTestReply } from "./translate-test.js";
 import { catchupTestReply } from "./catchup.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
@@ -155,7 +156,14 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
     const factCheck = String(body.messages?.[0]?.content || "").startsWith("You fact-check one claim against the live web.")
       ? JSON.stringify({ verdict: "unverified", reason: "Local test provider: no web search was run.", sources: [] })
       : null;
-    const finishing = pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages);
+    // Translate docs' stand-in (server/translate-test.js) can also fail on
+    // purpose, as a provider error would.
+    const finishing =
+      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? translateTestReply(body.messages);
+    if (finishing?.error) {
+      yield { error: { message: finishing.error } };
+      return;
+    }
     const standIn =
       finishing !== null
         ? finishing.text

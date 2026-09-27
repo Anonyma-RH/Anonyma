@@ -31,6 +31,7 @@ export function siteRoutes({ app, db, cfg }) {
     ondevice: isReleased(cfg, "ondevice"),
     study: isReleased(cfg, "study"),
     compare: isReleased(cfg, "doccompare"),
+    translate: isReleased(cfg, "doctranslate"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

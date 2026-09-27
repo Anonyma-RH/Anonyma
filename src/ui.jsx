@@ -212,6 +212,8 @@ const pixels = {
   study: ["..#####", "..#...#", "#####.#", "#...#.#", "#.#.###", "#...#..", "#####.."],
   // Two pages side by side: two versions of a document.
   compare: ["###.###", "#.#.#.#", "###.###", "#.#.#.#", "#.#.###", "#.#.#.#", "###.###"],
+  // 文 and A: a document in another language.
+  translate: [".#.....", "###..#.", ".#..#.#", "#.#.###", "....#.#", "....#.#", "......."],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

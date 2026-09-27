@@ -41,6 +41,7 @@ import { bookmarkRoutes } from "./routes/bookmarks.js";
 import { linkReaderRoutes } from "./routes/link-reader.js";
 import { blindRoutes } from "./routes/blind.js";
 import { researchRoutes } from "./routes/research.js";
+import { translateRoutes } from "./routes/translate.js";
 import { sharpenRoutes } from "./routes/sharpen.js";
 import { factCheckRoutes } from "./routes/factcheck.js";
 import { catchupRoutes } from "./routes/catchup.js";
@@ -166,6 +167,10 @@ export function createApp(overrides = {}) {
   // and settled on the ordinary billing path (after Memory and Projects,
   // whose checks it uses).
   researchRoutes(ctx);
+  // Translate Documents: one model call per part of a document read in the
+  // browser, each part held and settled on the ordinary billing path;
+  // nothing is stored.
+  translateRoutes(ctx);
   // Prompt Sharpen: one small model call that rewrites a prompt, held and
   // settled on the ordinary billing path; nothing is stored.
   sharpenRoutes(ctx);

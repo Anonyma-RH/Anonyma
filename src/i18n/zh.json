@@ -4841,7 +4841,124 @@
     "The model's reply couldn't be read, so nothing was charged. Try another model for this watch.": "无法读取模型的回复，因此未扣费。请为此监测换一个模型。",
     "Paused after 3 replies in a row that couldn't be read. Nothing was charged. Choose another model for this watch, then switch it back on.": "连续 3 次无法读取模型的回复，已暂停。未扣费。请为此监测选择另一个模型，然后重新开启。",
     "The model couldn't make a summary this time. Nothing was charged.": "模型这次未能生成摘要。未扣费。",
-    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。"
+    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。",
+    "Translate Documents": "文档翻译",
+    "Translate a whole document and keep its structure.": "翻译整份文档，并保留原有结构。",
+    "PDF, DOCX, TXT or Markdown into 35 languages, with headings, lists and tables kept": "PDF、DOCX、TXT 或 Markdown 文档可译成 35 种语言，标题、列表和表格原样保留",
+    "Side by side as it translates, with a glossary and a formal or plain tone": "边翻译边左右对照，支持术语表，语气可选正式或平实",
+    "See the most it can cost first; pay only for the parts that come back. Export DOCX, Markdown or PDF": "先查看最高费用，只为成功返回的部分付费。可导出 DOCX、Markdown 或 PDF",
+    "Translate docs": "翻译文档",
+    "Opening Translate docs…": "正在打开翻译文档……",
+    "YOUR FILE STAYS ON THIS DEVICE": "你的文件只保留在此设备上",
+    "Translate a whole document and keep its structure: headings, lists and tables. See it side by side, then export it. Only the text goes to the model, a part at a time, off the record.": "翻译整份文档并保留结构：标题、列表和表格。左右对照查看后即可导出。只有文字会逐部分发送给模型，全程不留记录。",
+    "Try a sample policy": "试用示例政策",
+    "Drop a document here": "将文档拖到这里",
+    "PDF, DOCX, TXT or Markdown, up to 25 MB": "PDF、DOCX、TXT 或 Markdown，最大 25 MB",
+    "PDF, TXT or Markdown, up to 25 MB": "PDF、TXT 或 Markdown，最大 25 MB",
+    "The file is read in this browser. Only its text goes to the model, a part at a time. Nothing is saved.": "文件在此浏览器中读取，只有文字会逐部分发送给模型，不会保存任何内容。",
+    "Structure kept": "保留结构",
+    "Headings, paragraphs, lists and tables come back in place, side by side with the original.": "标题、段落、列表和表格都会原样返回，并与原文左右对照。",
+    "Pay for what comes back": "只为返回的译文付费",
+    "See the most it can cost first. A part that fails or is stopped costs nothing.": "先查看最高费用。失败或被停止的部分不收费。",
+    "Close this document": "关闭此文档",
+    "1 word": "1 个词",
+    "1 part": "1 个部分",
+    "Tone": "语气",
+    "Formal": "正式",
+    "Plain": "平实",
+    "formal": "正式",
+    "plain": "平实",
+    "Glossary": "术语表",
+    "1 term": "1 个术语",
+    "One per line. A term on its own is kept as written; “term = translation” says how to translate it. Only the terms a part uses go with it.": "每行一条。单独的术语会保持原样；“术语 = 译法”用来指定译法。每个部分只会带上它用到的术语。",
+    "Start over": "重新开始",
+    "Translate 1 part": "翻译 1 个部分",
+    "Retry the failed part": "重试失败的部分",
+    "Translate the last part": "翻译最后一个部分",
+    "Sign in to translate. Reading a file works without an account.": "登录后即可翻译。读取文件无需账户。",
+    "The most it can cost is held first. Each part is then charged only on what it uses, usually a small share of that; a part that fails or is stopped costs nothing. Off the record: nothing is saved.": "系统会先冻结最高费用，之后每个部分只按实际用量扣费，通常只占其中一小部分；失败或被停止的部分不收费。不留记录：不会保存任何内容。",
+    "Each part goes on its own, with the fixed instructions below. Never the file itself, its name or anything else from it.": "每个部分单独发送，并附上下方的固定说明。绝不会发送文件本身、文件名或文件中的其他内容。",
+    "Each part goes on its own, with the fixed instructions below. Never the file itself, its name or anything else from it; only the glossary terms a part uses.": "每个部分单独发送，并附上下方的固定说明。绝不会发送文件本身、文件名或文件中的其他内容；只会带上该部分用到的术语。",
+    "Part": "部分",
+    "Veil is on: details it recognises are masked before sending, as shown, and put back when the translation arrives.": "Veil 已开启：识别到的细节会在发送前被遮盖（如上所示），译文返回后再还原。",
+    "The text is marked as data to translate, never instructions to follow.": "这些文字会标记为待翻译的数据，绝不会被当作指令执行。",
+    "Stopping…": "正在停止……",
+    "Translating": "正在翻译",
+    "Translated": "已翻译",
+    "Parts translated": "已翻译的部分",
+    "Save to Files": "保存到文件",
+    "Keep a copy in Files for up to 7 days": "在“文件”中保留一份副本，最长 7 天",
+    "Machine translation: check it before you rely on it.": "机器翻译：使用前请先核对。",
+    "Parts not translated yet are exported in the original language. Machine translation: check it before you rely on it.": "尚未翻译的部分会以原文导出。机器翻译：使用前请先核对。",
+    "Private Mode keeps nothing, so saving to Files is off. Download it instead.": "隐私模式不保留任何内容，因此无法保存到“文件”。请改为下载。",
+    "Veil kept details on this device, so this translation isn't saved to Files. Download it instead.": "Veil 已将细节保留在此设备上，因此这份译文不会保存到“文件”。请改为下载。",
+    "Seed Guard found what looks like a wallet secret in this document, so it isn't saved to Files.": "Seed Guard 在此文档中发现了疑似钱包密钥的内容，因此不会保存到“文件”。",
+    "Upload this translation to my account as a Markdown file. It's kept in Files for 7 days, where I can delete it sooner. The original file is never uploaded.": "将这份译文以 Markdown 文件上传到我的账户。它会在“文件”中保留 7 天，我也可以提前删除。原始文件绝不会上传。",
+    "Stopped. Finished parts are kept and charged; the rest weren't charged.": "已停止。已完成的部分会保留并扣费，其余部分未收费。",
+    "Original and translation, side by side": "原文与译文左右对照",
+    "Original text": "原文",
+    "Not translated yet": "尚未翻译",
+    "Waiting its turn…": "排队中……",
+    "Translating…": "正在翻译……",
+    "Stopped before this part finished. Not charged.": "此部分完成前已停止，未收费。",
+    "Retry": "重试",
+    "Translated on the second try: the first lost a masked detail and wasn't charged.": "第二次尝试时译出：第一次丢失了被遮盖的细节，未收费。",
+    "This DOCX is too large to read here. Split it, or save it as PDF or text.": "此 DOCX 文件过大，无法在这里读取。请拆分文件，或另存为 PDF 或文本。",
+    "The DOCX is missing its document.": "此 DOCX 文件缺少正文。",
+    "The DOCX is damaged.": "此 DOCX 文件已损坏。",
+    "This isn't a Word document.": "这不是 Word 文档。",
+    "This DOCX has no document body.": "此 DOCX 文件没有正文。",
+    "The DOCX couldn't be made. Try Markdown instead.": "无法生成 DOCX 文件，请改用 Markdown。",
+    "It couldn't be saved.": "无法保存。",
+    "The connection ended before the translation finished. Check your activity before retrying.": "翻译完成前连接已中断。重试前请先查看你的活动记录。",
+    "Translate docs stopped.": "翻译文档已停止。",
+    "Translate docs is unavailable.": "翻译文档暂不可用。",
+    "The model ran out of room before it finished this part, so it wasn't used or charged. Retry, or choose another model.": "模型在完成此部分前用尽了回复空间，因此未采用该结果，也未收费。请重试或换一个模型。",
+    "The model returned nothing for this part, so it wasn't charged. Retry, or choose another model.": "模型没有返回此部分的内容，因此未收费。请重试或换一个模型。",
+    "The translation of this part lost a detail Veil masked (such as [EMAIL_1]) twice, so it wasn't used or charged. Retry, or choose another model.": "此部分的译文两次丢失了 Veil 遮盖的细节（例如 [EMAIL_1]），因此未采用该结果，也未收费。请重试或换一个模型。",
+    "This part couldn't be translated, so it wasn't charged. Retry, or choose another model.": "此部分无法翻译，因此未收费。请重试或换一个模型。",
+    "The estimate changed since it was shown. Check the new one, then translate again. Nothing was charged.": "估算在显示后发生了变化。请查看新的估算，然后重新翻译。未收取任何费用。",
+    "A translation is already running. Wait for it, or stop it first.": "已有翻译正在进行。请等待其完成，或先停止它。",
+    "A translation sends only the document's parts, so it can't be combined with other chat options.": "翻译只会发送文档的各个部分，因此不能与其他对话选项同时使用。",
+    "Translations are paid from your own balance, not a team treasury.": "翻译费用从你自己的余额支付，而非团队金库。",
+    "Translate docs needs a text model.": "翻译文档需要使用文本模型。",
+    "A part of this document is too long for this model's context. Choose a model with a larger context.": "此文档中有部分内容超出该模型的上下文长度。请选择上下文更长的模型。",
+    "A quote takes each part's size, not its text.": "估价只需各部分的大小，不接收其文字。",
+    "Choose a language to translate into.": "请选择要翻译成的语言。",
+    "Chinese (Simplified)": "中文（简体）",
+    "Chinese (Traditional)": "中文（繁体）",
+    "Spanish": "西班牙语",
+    "French": "法语",
+    "German": "德语",
+    "Italian": "意大利语",
+    "Portuguese": "葡萄牙语",
+    "Japanese": "日语",
+    "Korean": "韩语",
+    "Russian": "俄语",
+    "Arabic": "阿拉伯语",
+    "Hindi": "印地语",
+    "Bengali": "孟加拉语",
+    "Indonesian": "印度尼西亚语",
+    "Malay": "马来语",
+    "Vietnamese": "越南语",
+    "Thai": "泰语",
+    "Turkish": "土耳其语",
+    "Polish": "波兰语",
+    "Dutch": "荷兰语",
+    "Swedish": "瑞典语",
+    "Danish": "丹麦语",
+    "Norwegian": "挪威语",
+    "Finnish": "芬兰语",
+    "Greek": "希腊语",
+    "Czech": "捷克语",
+    "Romanian": "罗马尼亚语",
+    "Hungarian": "匈牙利语",
+    "Ukrainian": "乌克兰语",
+    "Hebrew": "希伯来语",
+    "Persian": "波斯语",
+    "Urdu": "乌尔都语",
+    "Swahili": "斯瓦希里语",
+    "Filipino": "菲律宾语"
   },
   "patterns": [
     {
@@ -7871,6 +7988,102 @@
     {
       "en": "Made {0}; the rest weren't usable and were left out.",
       "zh": "生成了 {0}；其余内容无法使用，已略去。"
+    },
+    {
+      "en": "{0} parts",
+      "zh": "{0} 个部分"
+    },
+    {
+      "en": "{0} terms",
+      "zh": "{0} 个术语"
+    },
+    {
+      "en": "Only the first {0} terms are used.",
+      "zh": "只使用前 {0} 个术语。"
+    },
+    {
+      "en": "Terms longer than {0} characters are left out.",
+      "zh": "超过 {0} 个字符的术语会被忽略。"
+    },
+    {
+      "en": "Into {0}, {1} tone. To change the language, tone or glossary, start over.",
+      "zh": "译为{0}，{1}语气。如需更改语言、语气或术语表，请重新开始。"
+    },
+    {
+      "en": "Into {0}, {1} tone, with 1 glossary term. To change them, start over.",
+      "zh": "译为{0}，{1}语气，使用 1 个术语。如需更改，请重新开始。"
+    },
+    {
+      "en": "Into {0}, {1} tone, with {2} glossary terms. To change them, start over.",
+      "zh": "译为{0}，{1}语气，使用 {2} 个术语。如需更改，请重新开始。"
+    },
+    {
+      "en": "Translate {0} parts",
+      "zh": "翻译 {0} 个部分"
+    },
+    {
+      "en": "Retry {0} failed parts",
+      "zh": "重试 {0} 个失败的部分"
+    },
+    {
+      "en": "Translate the other {0} parts",
+      "zh": "翻译其余 {0} 个部分"
+    },
+    {
+      "en": "Part {0} of {1}",
+      "zh": "第 {0} 部分，共 {1} 部分"
+    },
+    {
+      "en": "Part {0}",
+      "zh": "第 {0} 部分"
+    },
+    {
+      "en": "Translating · {0} of {1}",
+      "zh": "正在翻译 · {0} / {1}"
+    },
+    {
+      "en": "{0} of {1} parts translated",
+      "zh": "已翻译 {0} / {1} 个部分"
+    },
+    {
+      "en": "{0} of up to {1} credits",
+      "zh": "已用 {0} 积分，最多 {1} 积分"
+    },
+    {
+      "en": "up to {0} credits",
+      "zh": "最多 {0} 积分"
+    },
+    {
+      "en": "Retry · up to {0} credits",
+      "zh": "重试 · 最多 {0} 积分"
+    },
+    {
+      "en": "Saved to Files as “{0}” for 7 days.",
+      "zh": "已保存到“文件”，名为“{0}”，保留 7 天。"
+    },
+    {
+      "en": "\"{0}\" isn't a document Translate docs can read. Try PDF, DOCX, TXT or MD.",
+      "zh": "翻译文档无法读取“{0}”。请使用 PDF、DOCX、TXT 或 MD。"
+    },
+    {
+      "en": "\"{0}\" is larger than 25 MB.",
+      "zh": "“{0}”超过 25 MB。"
+    },
+    {
+      "en": "No text found in \"{0}\". It may be a scanned image; Local OCR can read images in chat.",
+      "zh": "“{0}”中未找到文本，它可能是扫描图片；在对话中可用本地 OCR 读取图片。"
+    },
+    {
+      "en": "No text to translate in \"{0}\".",
+      "zh": "“{0}”中没有可翻译的文本。"
+    },
+    {
+      "en": "\"{0}\" has more than {1} characters of text (about 50 pages). Split it and translate it in parts.",
+      "zh": "“{0}”的文本超过 {1} 个字符（约 50 页）。请拆分后分批翻译。"
+    },
+    {
+      "en": "\"{0}\" splits into more than {1} parts. Split it and translate it in parts.",
+      "zh": "“{0}”会被分成超过 {1} 个部分。请拆分后分批翻译。"
     }
   ]
 }

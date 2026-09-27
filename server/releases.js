@@ -1173,7 +1173,7 @@ export const UPDATES = [
     // (featuresFor). Saved notes are one ordinary conversation (the notes
     // and the timed transcript); off the record keeps nothing, and the
     // recording itself is never stored. The page is /workspace/notes.
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

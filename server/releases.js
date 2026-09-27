@@ -1140,7 +1140,7 @@ export const UPDATES = [
     // /api/slides (server/routes/slides.js): title, theme and slides only,
     // erased and exported with the account. Off the record and Private Mode
     // keep a deck in the browser only.
-    released: false,
+    released: true,
   },
   {
     id: "doctranslate",

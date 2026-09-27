@@ -25,7 +25,7 @@ import {
 // Background maintenance: due routines, video completion, payment status
 // checks, expired media and reservations, token holdings and table cleanup.
 export function createWorker(ctx) {
-  const { db, cfg, inflight, routines, sealed } = ctx;
+  const { db, cfg, inflight, routines, sealed, pageWatch } = ctx;
   const { mediaJSON, saveMedia, deleteMedia, assignCosts } = ctx.media;
   const workerController = new AbortController();
   let workerPromise = null;
@@ -64,6 +64,9 @@ export function createWorker(ctx) {
       // Routines (server/routines.js): start the runs that are due. They go
       // on alongside the rest of maintenance rather than holding it up.
       routines?.startDue();
+      // Page Watch (server/page-watch.js): the checks that are due, the same
+      // way.
+      pageWatch?.startDue();
       // Sealed Mode: settle held sealed requests from PPQ's query history
       // (only with SEALED_RECONCILE on), alongside the rest.
       sealed?.tick();
@@ -313,16 +316,20 @@ export function createWorker(ctx) {
     "UPDATE deposits SET status='reconciliation',updated=? WHERE status IN ('creating','error') AND provider_id IS NULL",
   ).run(now());
   recoverExpiredHolds();
-  // Settles once this round of maintenance and the routine runs due by
-  // then have finished (a routine that came due during a round still starts).
+  // Settles once this round of maintenance and the routine runs and page
+  // checks due by then have finished (one that came due during a round still
+  // starts).
   function tick() {
     workerPromise ||= runTick().finally(() => {
       workerPromise = null;
     });
-    if (!routines) return workerPromise;
+    if (!routines && !pageWatch) return workerPromise;
     return workerPromise.then(() => {
-      if (!closed) routines.startDue();
-      return routines.idle();
+      if (!closed) {
+        routines?.startDue();
+        pageWatch?.startDue();
+      }
+      return Promise.all([routines?.idle(), pageWatch?.idle()]);
     });
   }
   const timer = setInterval(
@@ -342,12 +349,14 @@ export function createWorker(ctx) {
       workerController.abort();
       await workerPromise?.catch(() => {});
       await routines?.stop();
+      await pageWatch?.stop();
     },
     close() {
       closed = true;
       clearInterval(timer);
       workerController.abort();
       routines?.stop();
+      pageWatch?.stop();
     },
   };
 }

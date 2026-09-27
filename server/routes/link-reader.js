@@ -25,7 +25,8 @@ const PER_ACCOUNT = 2,
   EXTRACT_MS = 8000;
 const WORKER = new URL("../link-extract-worker.js", import.meta.url);
 
-function runExtraction(html, host) {
+// Also Page Watch's (server/page-watch.js), which reads pages the same way.
+export function runExtraction(html, host) {
   return new Promise((resolve, reject) => {
     const worker = new Worker(WORKER, {
       workerData: { html, host },

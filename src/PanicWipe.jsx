@@ -9,6 +9,7 @@ import {
   WIPE_GOES_PROJECTS,
   WIPE_BOOKMARKS,
   WIPE_BLIND,
+  WIPE_WATCHES,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPED_PATH,
@@ -29,6 +30,8 @@ export function PanicWipe({ user }) {
   const bookmarksLive = isReleased(useApp()?.config, "bookmarks");
   // And Blind Compare's votes.
   const blindLive = isReleased(useApp()?.config, "blind");
+  // And Page Watch's watches.
+  const watchesLive = isReleased(config, "pagewatch");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
   const [open, setOpen] = useState(false),
@@ -98,6 +101,7 @@ export function PanicWipe({ user }) {
                   {projectsLive && <li>{WIPE_GOES_PROJECTS}</li>}
                   {bookmarksLive && <li>{WIPE_BOOKMARKS}</li>}
                   {blindLive && <li>{WIPE_BLIND}</li>}
+                  {watchesLive && <li>{WIPE_WATCHES}</li>}
                 </ul>
               </div>
               <div>

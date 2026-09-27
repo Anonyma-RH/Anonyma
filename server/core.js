@@ -1011,6 +1011,47 @@ export const MIGRATIONS = [
         user_id TEXT NOT NULL REFERENCES users(id),
         at INTEGER NOT NULL);
   `),
+  // Page Watch (server/page-watch.js): a public page the server checks on a
+  // schedule. page_watches keeps the URL, the schedule and budget, the
+  // optional "only tell me if…" hint, and the readable text of the page's
+  // last version with its fingerprint (for the next diff; at most 200 KB,
+  // enforced in code), plus timestamps and the failure count. At most 20
+  // per account, also enforced here. page_watch_reports is its part of the
+  // Routines inbox: a change's summary (never the page or the diff), a
+  // refusal or a pause note, the charge and receipt, the newest 50 per
+  // watch, going with the watch. Both are erased with the account's content.
+  additive(`
+      CREATE TABLE IF NOT EXISTS page_watches(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        url TEXT NOT NULL,hint TEXT,model TEXT NOT NULL,
+        private_only INTEGER NOT NULL DEFAULT 0 CHECK(private_only IN (0,1)),
+        every TEXT NOT NULL CHECK(every IN ('6h','daily','weekly')),
+        monthly_budget INTEGER NOT NULL CHECK(typeof(monthly_budget)='integer' AND monthly_budget>0),
+        enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
+        paused TEXT,failures INTEGER NOT NULL DEFAULT 0,
+        next_check INTEGER,running_since INTEGER,
+        last_check INTEGER,last_status TEXT,last_code TEXT,last_change INTEGER,
+        snapshot TEXT,snapshot_hash TEXT,snapshot_at INTEGER,
+        snapshot_truncated INTEGER NOT NULL DEFAULT 0,
+        created INTEGER NOT NULL,updated INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS page_watches_user ON page_watches(user_id,created);
+      CREATE INDEX IF NOT EXISTS page_watches_due ON page_watches(next_check) WHERE enabled=1;
+      CREATE TRIGGER IF NOT EXISTS page_watches_per_account BEFORE INSERT ON page_watches
+        WHEN (SELECT COUNT(*) FROM page_watches WHERE user_id=NEW.user_id)>=20
+        BEGIN SELECT RAISE(ABORT,'watch_limit'); END;
+      CREATE TABLE IF NOT EXISTS page_watch_reports(id TEXT PRIMARY KEY,
+        watch_id TEXT NOT NULL REFERENCES page_watches(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        checked INTEGER NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('changed','refused','failed','unreadable','paused')),
+        summary TEXT,model TEXT,private_only INTEGER NOT NULL DEFAULT 0,hint TEXT,
+        request_id TEXT,charged INTEGER NOT NULL DEFAULT 0,finish_reason TEXT,receipt TEXT,
+        added INTEGER,removed INTEGER,flagged INTEGER NOT NULL DEFAULT 0,
+        code TEXT,message TEXT,
+        seen INTEGER NOT NULL DEFAULT 0 CHECK(seen IN (0,1)));
+      CREATE INDEX IF NOT EXISTS page_watch_reports_watch ON page_watch_reports(watch_id,checked);
+      CREATE INDEX IF NOT EXISTS page_watch_reports_user ON page_watch_reports(user_id,checked);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

@@ -8,6 +8,8 @@ export default function DataControls() {
   const shares = !!config && isReleased(config, "sharelinks");
   // So are Routines.
   const routines = !!config && isReleased(config, "routines");
+  // And Page Watch, whose reports are part of the Routines inbox.
+  const pageWatch = routines && isReleased(config, "pagewatch");
   // And Sealed Share, which builds on Share a Chat.
   const sealedShares = shares && isReleased(config, "sealedshare");
   // And Projects.
@@ -119,6 +121,19 @@ export default function DataControls() {
             routine deletes its answers; the ledger entries stay. Closing your
             account deletes every routine and its inbox, and no routine runs
             after that.
+          </li>
+        )}
+        {pageWatch && (
+          <li>
+            Page Watch: each watched page’s link, how often it’s checked, its
+            hint, model and budget, and one copy of the page’s readable text
+            (the last version, at most 200 KB) with its fingerprint, kept only
+            to spot changes. Reports keep a change’s summary, never the page
+            or the diff: the newest 50 per watch, with their charges and
+            signed receipts. The model is sent only the changed lines, a
+            little context and the site’s name. Deleting a watch deletes its
+            copy of the page and its reports; Panic Wipe and closing your
+            account delete every watch.
           </li>
         )}
         {projects && (
@@ -252,6 +267,12 @@ export default function DataControls() {
       {routines && (
         <p>
           The export also includes your routines and their inbox runs.
+        </p>
+      )}
+      {pageWatch && (
+        <p>
+          The export also includes your page watches, the copy of each page
+          they keep, and their reports.
         </p>
       )}
       {alerts && (

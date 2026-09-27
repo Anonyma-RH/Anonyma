@@ -3,6 +3,7 @@ import { exportConversations } from "./conversations.js";
 import { HOLDER_RESET } from "../holders.js";
 import { limitsView } from "../spending-limits.js";
 import { exportRoutines, forgetRoutines } from "../routines.js";
+import { exportWatches, forgetWatches } from "../page-watch.js";
 import { exportProjects } from "./projects.js";
 import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
@@ -44,8 +45,9 @@ import {
 // - projects, with their filed chats and pinned files (the chats go with
 //   the conversations above);
 // - support requests, video jobs, saved uploads, Scrolls, standing
-//   instructions, memory facts, routines, bookmarks, Blind Compare votes and
-//   NYMA top-up quotes (a credited top-up stays as its deposit);
+//   instructions, memory facts, routines, page watches (with the last
+//   version of each page and their reports), bookmarks, Blind Compare votes
+//   and NYMA top-up quotes (a credited top-up stays as its deposit);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -95,6 +97,8 @@ export function eraseAccountContent(db, user) {
   // Routines and their inbox. A run already picked up is refused by its
   // reservation, which finds the routine gone.
   forgetRoutines(db, id);
+  // Page Watch: each watch, the last version of its page and its reports.
+  forgetWatches(db, id);
   // Bookmarks and their notes, including those in other people's collabs.
   forgetBookmarks(db, id);
   // Blind Compare: the votes behind "Your rankings".
@@ -188,6 +192,14 @@ export function accountRoutes(ctx) {
   // Blind Compare: each vote (model ids, outcome, date), once the update is
   // live or while any exist. Compared replies of saved chats are already in
   // their conversations above.
+  // Page Watch: each watch with the last version of its page, and its
+  // reports (once the update is live, or while any exist).
+  function watchesExport(user) {
+    const all = exportWatches(db, user);
+    return all.watches.length || all.reports.length || isReleased(cfg, "pagewatch")
+      ? { pageWatch: all }
+      : {};
+  }
   function blindExport(user) {
     const list = exportBlindVotes(db, user);
     return list.length || isReleased(cfg, "blind") ? { blindVotes: list } : {};
@@ -508,6 +520,7 @@ export function accountRoutes(ctx) {
       spendingLimits: exportLimits(req.user.id),
       // Routines: each routine and its inbox (answers, charges, receipts).
       routines: exportRoutines(db, req.user.id),
+      ...watchesExport(req.user.id),
       // Projects: each one's settings, filed chats and pinned files (once
       // the update is live, or while any project exists).
       ...projectsExport(req.user.id),

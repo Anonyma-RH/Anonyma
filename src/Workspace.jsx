@@ -38,6 +38,7 @@ import TaskTools from "./TaskTools.jsx";
 // Local Sheets: its parser, planner checks and charts load only on its page.
 const Sheets = lazy(() => import("./Sheets.jsx"));
 import Routines from "./Routines.jsx";
+import { WatchBadge } from "./PageWatch.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import {
   projectsReleased,
@@ -287,6 +288,10 @@ export function AppSidebar({
               <PixelTile name={id} />
               {t}
               {isEarlyAccess(config, MODE_FEATURES[id]) && <EarlyTag />}
+              {/* Page Watch: changes waiting in the Routines inbox. */}
+              {id === "routines" && (
+                <WatchBadge enabled={!!signedIn && isReleased(config, "pagewatch") && modeReleased(config, "routines")} />
+              )}
               {active === id && <span className="nav-active-dot" />}
             </Link>
           ) : (

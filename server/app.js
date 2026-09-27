@@ -41,6 +41,7 @@ import { blindRoutes } from "./routes/blind.js";
 import { researchRoutes } from "./routes/research.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
+import { pageWatchRoutes } from "./routes/page-watch.js";
 import { sealedRoutes } from "./routes/sealed.js";
 import { accountRoutes } from "./routes/account.js";
 import { wipeRoutes } from "./routes/wipe.js";
@@ -154,6 +155,9 @@ export function createApp(overrides = {}) {
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).
   ctx.routines = routineRoutes(ctx);
+  // Page Watch checks run from the worker too; changes are summarised
+  // through runChat and land in the Routines inbox.
+  ctx.pageWatch = pageWatchRoutes(ctx);
   const worker = createWorker(ctx);
   // Passkeys' store, for the account export (routes are registered below).
   ctx.passkeys = createPasskeys(db, cfg);
@@ -191,6 +195,8 @@ export function createApp(overrides = {}) {
     tick: worker.tick,
     // The Routines runner (server/routines.js), for tests and tooling.
     routines: ctx.routines,
+    // Page Watch's checker (server/page-watch.js), for tests and tooling.
+    pageWatch: ctx.pageWatch,
     // Sealed Mode's reconciler (server/sealed.js), for tests and tooling.
     sealed: ctx.sealed,
     stopWork: async () => {

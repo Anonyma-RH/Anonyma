@@ -15,6 +15,8 @@ import {
   nextRunAfter,
   parseTime,
 } from "./routines.js";
+import { WatchesTab, WatchReportCard, demoWatchState, markWatchesSeen } from "./PageWatch.jsx";
+import { MAX_WATCHES, mergeInbox, shortUrl } from "./page-watch.js";
 import "./routines.css";
 
 // Routines: saved prompts that run on a schedule with their own budget, and
@@ -22,6 +24,10 @@ import "./routines.css";
 // server, so Veil can't mask them: the page says the prompt is sent as
 // written. Names, prompts, answers, sources and model names are the user's
 // or a model's words, so they're marked data-i18n="off".
+//
+// Once Page Watch is released (src/PageWatch.jsx) the page gets a third tab
+// for watched pages, and their reports join the inbox, newest first with
+// the runs.
 
 const fmtCredits = (v) =>
   Number(v).toLocaleString(undefined, { maximumFractionDigits: 4 });
@@ -635,8 +641,18 @@ export default function Routines({ demo, user, models, config, refresh, markdown
     [loaded, setLoaded] = useState(demo),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [formError, setFormError] = useState("");
+    [formError, setFormError] = useState(""),
+    [watches, setWatches] = useState(() => (demo ? demoWatchState().watches : [])),
+    [reports, setReports] = useState(() => (demo ? demoWatchState().reports : [])),
+    [reportsMore, setReportsMore] = useState(false),
+    // Reports that were unread when this page showed them keep their
+    // "Unread" tag while it stays open, even once they're marked seen.
+    [fresh, setFresh] = useState(() => new Set());
   const live = !demo && !!user;
+  // Page Watch: its tab, and its reports in this inbox.
+  const watchLive = isReleased(config, "pagewatch");
+  const watchFilter = filter.startsWith("w:") ? filter.slice(2) : "";
+  const routineFilter = watchFilter ? "" : filter;
   const mounted = useRef(true);
   useEffect(() => () => void (mounted.current = false), []);
   const choices = models.filter(
@@ -654,15 +670,23 @@ export default function Routines({ demo, user, models, config, refresh, markdown
   async function load(quiet = false) {
     if (!live) return;
     try {
-      const q = filter ? "?routine=" + encodeURIComponent(filter) : "";
-      const [list, inbox] = await Promise.all([
+      const q = routineFilter ? "?routine=" + encodeURIComponent(routineFilter) : "";
+      const wq = watchFilter ? "?watch=" + encodeURIComponent(watchFilter) : "";
+      const none = { runs: [], reports: [], more: false };
+      const [list, inbox, watched, reported] = await Promise.all([
         api("/api/routines"),
-        api("/api/routines/runs" + q),
+        watchFilter ? none : api("/api/routines/runs" + q),
+        watchLive ? api("/api/watches") : null,
+        watchLive && !routineFilter ? api("/api/watches/reports" + wq) : none,
       ]);
       if (!mounted.current) return;
       setRoutines(list.routines);
       setRuns(inbox.runs);
       setMore(inbox.more);
+      if (watched) setWatches(watched.watches);
+      setReports(reported.reports);
+      setReportsMore(reported.more);
+      addFresh(reported.reports);
       setLoaded(true);
       if (!quiet) setError("");
     } catch (e) {
@@ -671,10 +695,13 @@ export default function Routines({ demo, user, models, config, refresh, markdown
   }
   useEffect(() => {
     load();
-  }, [live, filter]);
+  }, [live, filter, watchLive]);
   // Keep the inbox current while the page is open: often while a run is in
   // flight, otherwise now and then.
-  const anyRunning = routines.some((r) => r.running) || runs.some((r) => r.status === "running");
+  const anyRunning =
+    routines.some((r) => r.running) ||
+    runs.some((r) => r.status === "running") ||
+    (watchLive && watches.some((w) => w.running));
   useEffect(() => {
     if (!live) return;
     const timer = setInterval(() => {
@@ -683,19 +710,55 @@ export default function Routines({ demo, user, models, config, refresh, markdown
     return () => clearInterval(timer);
   }, [live, filter, anyRunning]);
 
+  function addFresh(list) {
+    const unread = list.filter((r) => !r.seen).map((r) => r.id);
+    if (unread.length) setFresh((set) => new Set([...set, ...unread]));
+  }
   async function olderRuns() {
     const last = runs.at(-1);
-    if (!last) return;
-    const q = new URLSearchParams({ before: String(last.started_at) });
-    if (filter) q.set("routine", filter);
+    const lastReport = reports.at(-1);
     try {
-      const page = await api("/api/routines/runs?" + q);
-      setRuns((r) => [...r, ...page.runs]);
-      setMore(page.more);
+      if (more && last) {
+        const q = new URLSearchParams({ before: String(last.started_at) });
+        if (routineFilter) q.set("routine", routineFilter);
+        const page = await api("/api/routines/runs?" + q);
+        setRuns((r) => [...r, ...page.runs]);
+        setMore(page.more);
+      }
+      if (watchLive && reportsMore && lastReport) {
+        const q = new URLSearchParams({ before: String(lastReport.checked_at) });
+        if (watchFilter) q.set("watch", watchFilter);
+        const page = await api("/api/watches/reports?" + q);
+        setReports((r) => [...r, ...page.reports]);
+        setReportsMore(page.more);
+        addFresh(page.reports);
+      }
     } catch (e) {
       setError(e.message);
     }
   }
+  async function removeReport(report) {
+    if (demo) {
+      setReports((list) => list.filter((x) => x.id !== report.id));
+      return;
+    }
+    setBusy(true);
+    try {
+      await api("/api/watches/reports/" + report.id, { method: "DELETE" });
+      setReports((list) => list.filter((x) => x.id !== report.id));
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  // Reports shown in the inbox count as seen (the workspace badge clears);
+  // they keep their "Unread" tag while the page stays open (`fresh`).
+  const newest = reports.find((r) => !r.seen)?.checked_at;
+  useEffect(() => {
+    if (!live || !watchLive || tab !== "inbox" || newest == null) return;
+    markWatchesSeen(Math.max(...reports.map((r) => r.checked_at)));
+  }, [live, watchLive, tab, newest]);
   function openEditor(r) {
     setFormError("");
     setDraft(r ? draftOf(r) : blankDraft(choices));
@@ -785,7 +848,13 @@ export default function Routines({ demo, user, models, config, refresh, markdown
     }
   }
 
-  const shown = demo && filter ? runs.filter((r) => r.routine_id === filter) : runs;
+  const shown = demo && filter ? runs.filter((r) => !watchFilter && r.routine_id === routineFilter) : runs;
+  const shownReports = !watchLive
+    ? []
+    : demo && filter
+      ? reports.filter((r) => r.watch_id === watchFilter)
+      : reports;
+  const items = mergeInbox({ runs: shown, runsMore: more, reports: shownReports, reportsMore });
   const atLimit = routines.length >= MAX_ROUTINES;
   return (
     <section className="routines-page">
@@ -798,7 +867,7 @@ export default function Routines({ demo, user, models, config, refresh, markdown
             answer lands in your inbox.
           </p>
         </div>
-        {(live || demo) && (
+        {(live || demo) && tab !== "watches" && (
           <Button type="button" onClick={() => openEditor(null)} disabled={atLimit || busy}>
             New routine <Icon name="plus" size={16} />
           </Button>
@@ -835,6 +904,17 @@ export default function Routines({ demo, user, models, config, refresh, markdown
               Your routines
               <span className="routines-count">{`${routines.length}/${MAX_ROUTINES}`}</span>
             </button>
+            {watchLive && (
+              <button
+                type="button"
+                aria-pressed={tab === "watches"}
+                className={tab === "watches" ? "active" : ""}
+                onClick={() => setTab("watches")}
+              >
+                Page Watch
+                <span className="routines-count">{`${watches.length}/${MAX_WATCHES}`}</span>
+              </button>
+            )}
           </div>
           {atLimit && tab === "routines" && !draft && (
             <p className="routine-help">
@@ -854,7 +934,24 @@ export default function Routines({ demo, user, models, config, refresh, markdown
               onDelete={() => remove(routines.find((r) => r.id === draft.id))}
             />
           )}
-          {tab === "routines" ? (
+          {tab === "watches" && watchLive ? (
+            <WatchesTab
+              demo={demo}
+              live={live}
+              models={choices}
+              config={config}
+              watches={watches}
+              setWatches={setWatches}
+              reload={load}
+              setError={setError}
+              nameOf={nameOf}
+              onRemoved={(id) => filter === "w:" + id && setFilter("")}
+              onReports={(id) => {
+                setFilter("w:" + id);
+                setTab("inbox");
+              }}
+            />
+          ) : tab === "routines" ? (
             routines.length ? (
               <div className="routine-grid">
                 {routines.map((r) => (
@@ -888,12 +985,30 @@ export default function Routines({ demo, user, models, config, refresh, markdown
                 <label>
                   <span>Show</span>
                   <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-                    <option value="">All routines</option>
+                    <option value="">{watchLive ? "Everything" : "All routines"}</option>
+                    {/* With Page Watch, a heading row before each group (a
+                        plain option, so the language switch translates it). */}
+                    {watchLive && routines.length > 0 && (
+                      <option value="#routines" disabled>
+                        Routines
+                      </option>
+                    )}
                     {routines.map((r) => (
                       <option key={r.id} value={r.id} data-i18n="off">
                         {r.name}
                       </option>
                     ))}
+                    {watchLive && watches.length > 0 && (
+                      <option value="#watches" disabled>
+                        Page Watch
+                      </option>
+                    )}
+                    {watchLive &&
+                      watches.map((w) => (
+                        <option key={w.id} value={"w:" + w.id} data-i18n="off">
+                          {shortUrl(w.url)}
+                        </option>
+                      ))}
                   </select>
                 </label>
                 {live && (
@@ -903,23 +1018,35 @@ export default function Routines({ demo, user, models, config, refresh, markdown
                   </button>
                 )}
               </div>
-              {shown.map((run) => (
-                <RunCard
-                  key={run.id}
-                  run={run}
-                  modelName={nameOf(run.model)}
-                  markdown={markdown}
-                  busy={busy}
-                  onDelete={() => removeRun(run)}
-                />
-              ))}
-              {loaded && !shown.length && (
+              {items.map(({ kind, item }) =>
+                kind === "run" ? (
+                  <RunCard
+                    key={item.id}
+                    run={item}
+                    modelName={nameOf(item.model)}
+                    markdown={markdown}
+                    busy={busy}
+                    onDelete={() => removeRun(item)}
+                  />
+                ) : (
+                  <WatchReportCard
+                    key={item.id}
+                    report={item}
+                    modelName={nameOf(item.model)}
+                    markdown={markdown}
+                    busy={busy}
+                    fresh={!item.seen || fresh.has(item.id)}
+                    onDelete={() => removeReport(item)}
+                  />
+                ),
+              )}
+              {loaded && !items.length && (
                 <Empty icon="history" title="Nothing here yet.">
                   Each run's answer lands here, with its time, status, charge
                   and signed receipt.
                 </Empty>
               )}
-              {more && (
+              {(more || (watchLive && reportsMore)) && (
                 <button type="button" className="small-button routines-more" onClick={olderRuns}>
                   Show older runs
                 </button>

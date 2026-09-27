@@ -994,8 +994,18 @@ async function pageModule() {
     "rich.mjs",
     `export const ReplyMarkdown = ({ children }) => React.createElement("div", null, children);`,
   );
+  // Page Watch's tab and cards (tests/page-watch.test.mjs covers them).
+  const watch = stub(
+    "page-watch.mjs",
+    `export const WatchesTab = () => null;
+     export const WatchReportCard = () => null;
+     export const demoWatchState = () => ({ watches: [], reports: [] });
+     export const markWatchesSeen = () => {};`,
+  );
   const out = code
     .replace(/^import "\.\/routines\.css";$/m, "")
+    .replace(/from "\.\/PageWatch\.jsx"/g, `from "${watch}"`)
+    .replace(/from "\.\/page-watch\.js"/g, `from "${new URL("../src/page-watch.js", import.meta.url)}"`)
     .replace(/from "\.\/ui\.jsx"/g, `from "${ui}"`)
     .replace(/from "\.\/SignedReceipt\.jsx"/g, `from "${receipt}"`)
     .replace(/from "react-router-dom"/g, `from "${router}"`)

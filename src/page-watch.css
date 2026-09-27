@@ -1,0 +1,175 @@
+/* Page Watch: a tab of the Routines page and cards in its inbox. Flat
+   cobalt-on-white, built on the Routines styles (routines.css). */
+.watches-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.watches-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.watches-intro h2 {
+  margin: 0 0 6px;
+  font-family: inherit;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.watches-intro p {
+  margin: 0;
+  max-width: 640px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+}
+.watch-editor .routine-field input:disabled {
+  background: var(--work-surface, #f7f9fc);
+  color: var(--work-muted, #68748a);
+}
+.routine-help.watch-first {
+  margin: -6px 0 0;
+}
+.watch-cost {
+  display: grid;
+  gap: 6px;
+  padding: 12px 13px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: var(--work-surface, #f7f9fc);
+}
+.watch-cost p,
+.watch-honest,
+.watch-kept,
+.watch-flagged {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.watch-cost svg,
+.watch-honest svg,
+.watch-kept svg,
+.watch-flagged svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--brand-blue, #0135df);
+}
+.watch-honest {
+  margin-top: 18px;
+  padding: 11px 13px;
+  background: #f3f6ff;
+  border-left: 3px solid var(--brand-blue, #0135df);
+  color: var(--work-ink, #142343);
+}
+.watch-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--work-muted, #68748a);
+  overflow-wrap: anywhere;
+}
+.watch-hint q,
+.run-meta q {
+  color: var(--work-ink, #142343);
+}
+.watch-paused {
+  margin: 0;
+  padding: 9px 11px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  background: #fff6f3;
+  border: 1px solid #eecfc1;
+  color: #8a3326;
+}
+.routine-tag.paused {
+  border-color: #eecfc1;
+  color: #8a3326;
+}
+.watch-kept {
+  color: var(--work-muted, #68748a);
+  font-size: 12px;
+}
+.routines-page .routine-actions a.small-button,
+.routines-page .run-actions a.small-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+}
+.run-status.changed {
+  background: var(--brand-blue, #0135df);
+  color: #fff;
+}
+.run-card.watch-report.unreadable {
+  border-left-color: #c9a227;
+}
+.run-card.watch-report.paused {
+  border-left-color: #9c3d2e;
+}
+.watch-new {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.4px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  color: var(--brand-blue, #0135df);
+  background: #e8eeff;
+}
+.watch-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--brand-blue, #0135df);
+}
+.watch-flagged {
+  margin-top: 12px;
+  padding: 9px 11px;
+  background: #f3f6ff;
+  color: var(--work-ink, #142343);
+}
+
+/* The workspace sidebar's count of changes waiting in the inbox: yellow on
+   the cobalt navigation, like its capability icons. */
+.nav-badge {
+  min-width: 18px;
+  height: 18px;
+  margin-left: auto;
+  padding: 0 5px;
+  border-radius: 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: #0135df;
+  background: #ffb21c;
+}
+.nav-badge + .nav-active-dot {
+  margin-left: 8px;
+}
+/* A watch's title opens the page. */
+.watch-card h3 a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+.watch-card h3 a:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.watch-card h3 svg {
+  flex: none;
+  color: var(--brand-blue, #0135df);
+}
+
+@media (max-width: 760px) {
+  .watches-intro {
+    align-items: stretch;
+  }
+}

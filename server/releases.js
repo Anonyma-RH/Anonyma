@@ -1033,7 +1033,7 @@ export const UPDATES = [
     // Panic Wipe's own, so it needs "wipe" released too (featuresFor). One
     // row per account that turned it on, kept by Panic Wipe, deleted by
     // closure, in the account export.
-    released: false,
+    released: true,
   },
   {
     id: "giftlinks",

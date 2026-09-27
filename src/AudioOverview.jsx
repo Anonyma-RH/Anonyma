@@ -8,6 +8,7 @@ import { scanSecrets, seedGuardMessage, isSoft } from "./seed-guard.js";
 import { pdfText } from "./pdf-text.js";
 import { extractOffice, browserInflate, textBytes } from "./file-formats.js";
 import { DOCUMENT_ACCEPT, MAX_FILE_BYTES, documentKind, formatBytes } from "./documents.js";
+import { getLanguage } from "./i18n.js";
 import {
   LANGUAGES,
   LENGTHS,
@@ -19,9 +20,13 @@ import {
   chatSource,
   documentSource,
   formatClock,
+  guessLanguage,
   hasVeilTags,
+  pickVoices,
   researchSource,
   turnAt,
+  voiceDefaults,
+  voicesMaximum,
 } from "./audio-overview.js";
 import "./audio-overview.css";
 
@@ -33,7 +38,8 @@ import "./audio-overview.css";
 
 const CHOICES = "audio-overview:choices";
 // A fast, inexpensive text model with a long context writes the script
-// unless another is picked (and remembered in this browser).
+// unless another is picked (and remembered in this browser). The voices
+// default to the cheapest voice model for the language (voiceDefaults).
 const SCRIPT_MODELS = ["gemini-3.7-flash", "deepseek/deepseek-v4.1-flash", "gpt-5.4-mini", "claude-haiku-4.5"];
 const KIND_LABELS = { document: "Document", chat: "Chat", research: "Research report" };
 const KIND_ICONS = { document: "file", chat: "chat", research: "research" };
@@ -211,9 +217,11 @@ function OverviewMaker({ config, user, models, sources, pickFiles, pickChats, of
     [length, setLength] = useState(LENGTHS[remembered.length] ? remembered.length : "short"),
     [language, setLanguage] = useState(LANGUAGES.some(([c]) => c === remembered.language) ? remembered.language : "auto"),
     [catalog, setCatalog] = useState(null),
-    [tts, setTts] = useState(remembered.tts || ""),
-    [voiceA, setVoiceA] = useState(remembered.voiceA || ""),
-    [voiceB, setVoiceB] = useState(remembered.voiceB || ""),
+    [tts, setTts] = useState(""),
+    [voiceA, setVoiceA] = useState(""),
+    [voiceB, setVoiceB] = useState(""),
+    // What was picked by hand in this dialog: the voice model, the voices.
+    [touched, setTouched] = useState({ tts: false, voices: false }),
     [ephemeral, setEphemeral] = useState(!!offRecord),
     [seedOk, setSeedOk] = useState(false),
     [error, setError] = useState(""),
@@ -242,18 +250,6 @@ function OverviewMaker({ config, user, models, sources, pickFiles, pickChats, of
     return () => ctl.abort();
   }, []);
   const voiceModel = catalog?.find((m) => m.id === tts) || null;
-  // A remembered choice that's no longer offered falls back to the first.
-  useEffect(() => {
-    if (catalog && !voiceModel && catalog[0]) setTts(catalog[0].id);
-  }, [catalog, voiceModel]);
-  useEffect(() => {
-    const voices = voiceModel?.voices || [];
-    if (!voiceModel) return;
-    const has = (id) => voices.some((v) => v.id === id);
-    const a = has(voiceA) ? voiceA : voices[0]?.id || "";
-    setVoiceA(a);
-    setVoiceB((b) => (has(b) && (b !== a || voices.length < 2) ? b : voices.find((v) => v.id !== a)?.id || a));
-  }, [voiceModel]);
   // The Voice studio: saved chats to pick from, loaded on first use.
   useEffect(() => {
     if (!pickChats || chats) return;
@@ -299,6 +295,28 @@ function OverviewMaker({ config, user, models, sources, pickFiles, pickChats, of
         : picked != null
           ? sources[picked]
           : null;
+  // The language the voices need: the one chosen, or the source's own (this
+  // page's language until there's a source).
+  const voiceLanguage = language === "auto" ? guessLanguage(source?.text, getLanguage()) : language;
+  // Until one is picked by hand: the remembered voice model and voices, else
+  // the cheapest model with voices for that language, and two of them.
+  useEffect(() => {
+    if (!catalog?.length || touched.tts) return;
+    const d = voiceDefaults({ catalog, language: voiceLanguage, length, remembered: remembered.tts ? remembered : null });
+    setTts(d.tts);
+    if (!touched.voices) {
+      setVoiceA(d.voiceA);
+      setVoiceB(d.voiceB);
+    }
+  }, [catalog, voiceLanguage, length, touched.tts]);
+  // A model picked by hand gets two voices for the language, until those
+  // are picked by hand too.
+  useEffect(() => {
+    if (!touched.tts || touched.voices || !voiceModel) return;
+    const pair = pickVoices(voiceModel, voiceLanguage);
+    setVoiceA(pair.voiceA);
+    setVoiceB(pair.voiceB);
+  }, [tts, voiceLanguage, touched.tts]);
   const seedGuard = config?.releases?.features?.seedguard === true;
   const block = useMemo(() => sourceBlock(source, { veilWords, seedGuard }), [source, veilWords, seedGuard]);
   const blocked = block && !(typeof block === "object" && block.soft && seedOk);
@@ -330,7 +348,14 @@ function OverviewMaker({ config, user, models, sources, pickFiles, pickChats, of
   }, [quoteKey, !!run, !!result]);
   async function start() {
     if (!body) return;
-    saveStore(CHOICES, choices);
+    // The voice model and voices are remembered once picked by hand (or
+    // remembered before); otherwise the next overview picks for its language.
+    saveStore(CHOICES, {
+      model,
+      length,
+      language,
+      ...(touched.tts || touched.voices || remembered.tts ? { tts, voiceA, voiceB } : {}),
+    });
     setError("");
     setResult(null);
     const ctl = new AbortController();
@@ -377,6 +402,15 @@ function OverviewMaker({ config, user, models, sources, pickFiles, pickChats, of
   if (run) return <OverviewProgress run={run} onStop={() => controller.current?.abort()} />;
   const q = quote.status === "ready" ? quote : quote.last;
   const voices = voiceModel?.voices || [];
+  // Each voice model's maximum, as the quote for this source and length
+  // gives it; before there is one, what its voices can cost.
+  const quoted = q && q.length === length && q.source_characters === source?.text?.trim().length ? q : null;
+  const modelLabel = (m) => {
+    const most = quoted?.voice_models?.find((x) => x.id === m.id);
+    return most
+      ? `${m.name} · up to ≈${formatCredits(most.credits)} credits`
+      : `${m.name} · voices up to ≈${formatCredits(voicesMaximum(m, length))} credits`;
+  };
   const voiceLabel = (v) => `${v.name}${v.language && v.language !== "multi" ? ` · ${v.language}` : ""}`;
   return (
     <>
@@ -472,41 +506,6 @@ function OverviewMaker({ config, user, models, sources, pickFiles, pickChats, of
           </select>
         </label>
         <label>
-          <span>Voice model</span>
-          <select value={tts} onChange={(e) => setTts(e.target.value)} disabled={!catalog?.length}>
-            {!catalog && <option value="">Loading…</option>}
-            {catalog?.map((m) => (
-              <option key={m.id} value={m.id} data-i18n="off">
-                {m.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        {voices.length > 0 && (
-          <>
-            <label>
-              <span>Host A</span>
-              <select value={voiceA} onChange={(e) => setVoiceA(e.target.value)} data-i18n="off">
-                {voices.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {voiceLabel(v)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>Host B</span>
-              <select value={voiceB} onChange={(e) => setVoiceB(e.target.value)} data-i18n="off">
-                {voices.map((v) => (
-                  <option key={v.id} value={v.id} disabled={v.id === voiceA && voices.length > 1}>
-                    {voiceLabel(v)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </>
-        )}
-        <label>
           <span>Script written by</span>
           <select value={model} onChange={(e) => setModel(e.target.value)} data-i18n="off">
             {scriptModels.map((m) => (
@@ -516,6 +515,64 @@ function OverviewMaker({ config, user, models, sources, pickFiles, pickChats, of
             ))}
           </select>
         </label>
+      </div>
+      <div className="overview-grid overview-voices">
+        <label>
+          <span>Voice model</span>
+          <select
+            value={tts}
+            onChange={(e) => {
+              setTts(e.target.value);
+              setTouched({ tts: true, voices: false });
+            }}
+            disabled={!catalog?.length}
+          >
+            {!catalog && <option value="">Loading…</option>}
+            {catalog?.map((m) => (
+              <option key={m.id} value={m.id}>
+                {modelLabel(m)}
+              </option>
+            ))}
+          </select>
+        </label>
+        {voices.length > 0 && (
+          <>
+            <label>
+              <span>Host A</span>
+              <select
+                value={voiceA}
+                onChange={(e) => {
+                  setVoiceA(e.target.value);
+                  setTouched((t) => ({ ...t, voices: true }));
+                }}
+                data-i18n="off"
+              >
+                {voices.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {voiceLabel(v)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Host B</span>
+              <select
+                value={voiceB}
+                onChange={(e) => {
+                  setVoiceB(e.target.value);
+                  setTouched((t) => ({ ...t, voices: true }));
+                }}
+                data-i18n="off"
+              >
+                {voices.map((v) => (
+                  <option key={v.id} value={v.id} disabled={v.id === voiceA && voices.length > 1}>
+                    {voiceLabel(v)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
       </div>
       <label className="overview-check">
         <input type="checkbox" checked={ephemeral} disabled={!!offRecord} onChange={(e) => setEphemeral(e.target.checked)} />

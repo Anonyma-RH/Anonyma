@@ -179,6 +179,124 @@ export function parseScript(raw, lengthId, maxTurn = MAX_TURN) {
 export const scriptCharacters = (turns) =>
   (turns || []).reduce((n, t) => n + (t?.text?.length || 0), 0);
 
+// ---- Choosing the voices, in the browser ----
+
+// The most the voices can cost for a length, in credits, from the model's
+// listed price per 1,000 characters (at the account's rate). The same for
+// every source, so the cheapest voice model is the cheapest overview.
+export const voicesMaximum = (model, length) =>
+  Math.round(((LENGTHS[length]?.maxChars || 0) / 1000) * (Number(model?.credits_per_1k_chars) || 0) * 10000) / 10000;
+
+// Other names a catalog may give a voice's language.
+const LANGUAGE_ALIASES = { zh: ["cmn", "chinese", "mandarin"], en: ["english"] };
+const isMulti = (v) => ["multi", "multilingual"].includes(String(v?.language || "").trim().toLowerCase());
+// Whether a voice speaks `code` ("en", "zh"...): its own language, or "multi".
+export function voiceSpeaks(voice, code) {
+  const l = String(voice?.language || "").trim().toLowerCase();
+  if (!l) return false;
+  if (isMulti(voice)) return true;
+  if (l === code || l.startsWith(code + "-") || l.startsWith(code + "_")) return true;
+  const name = (LANGUAGES.find(([c]) => c === code)?.[1] || "").toLowerCase();
+  return l === name || (LANGUAGE_ALIASES[code] || []).some((a) => l === a || l.startsWith(a + "-"));
+}
+
+// The language a source is written in, roughly, for choosing voices when
+// the script follows the source: its script (kana, Hangul, Han, Cyrillic,
+// Arabic, Devanagari), else its commonest short words. `fallback` when
+// there's too little to tell.
+const COMMON_WORDS = {
+  en: "the and of to is in that it for with was are this",
+  es: "el la de que y los las en es por con una del para",
+  fr: "le la les des et est une du que dans pour pas sur",
+  de: "der die das und ist nicht mit ein eine zu den von auf",
+  pt: "o os que não uma do da em para com são dos das",
+  it: "il che di la e non per un una sono del della gli",
+  nl: "de het een en van is niet dat op zijn met voor",
+  pl: "i w nie się na że jest do to z jak po",
+  tr: "ve bir bu için ile da değil çok olarak gibi daha",
+};
+export function guessLanguage(text, fallback = "en") {
+  const t = String(text || "").slice(0, 6000);
+  const count = (re) => (t.match(re) || []).length;
+  const letters = count(/\p{L}/gu);
+  if (letters < 20) return fallback;
+  const share = (re) => count(re) / letters;
+  if (share(/[\u3040-\u30ff]/g) > 0.05) return "ja";
+  if (share(/[\uac00-\ud7af]/g) > 0.2) return "ko";
+  if (share(/[\u4e00-\u9fff]/g) > 0.2) return "zh";
+  if (share(/[\u0400-\u04ff]/g) > 0.2) return "ru";
+  if (share(/[\u0600-\u06ff]/g) > 0.2) return "ar";
+  if (share(/[\u0900-\u097f]/g) > 0.2) return "hi";
+  const words = t.toLowerCase().match(/\p{L}+/gu) || [];
+  let best = null,
+    top = 0;
+  for (const [code, list] of Object.entries(COMMON_WORDS)) {
+    const set = new Set(list.split(" "));
+    const score = words.reduce((n, w) => n + (set.has(w) ? 1 : 0), 0);
+    if (score > top) [best, top] = [code, score];
+  }
+  return top >= 3 ? best : fallback;
+}
+
+const byName = (a, b) => String(a.name || a.id).localeCompare(String(b.name || b.id));
+const genderOf = (v) => {
+  const g = String(v?.gender || "").trim().toLowerCase();
+  return g === "female" || g === "f" ? "female" : g === "male" || g === "m" ? "male" : null;
+};
+// Two different voices for language `code`: voices in that language first,
+// then multilingual ones, alphabetically; a female and a male voice when the
+// catalog says which are which.
+export function pickVoices(model, code) {
+  const voices = [...(model?.voices || [])].sort(byName);
+  if (!voices.length) return { voiceA: "", voiceB: "" };
+  const own = voices.filter((v) => voiceSpeaks(v, code) && !isMulti(v));
+  const multi = voices.filter((v) => isMulti(v));
+  const candidates = own.length + multi.length ? [...own, ...multi] : voices;
+  const female = candidates.find((v) => genderOf(v) === "female"),
+    male = candidates.find((v) => genderOf(v) === "male");
+  if (female && male) return { voiceA: female.id, voiceB: male.id };
+  const a = candidates[0];
+  const b = candidates.find((v) => v.id !== a.id) || voices.find((v) => v.id !== a.id) || a;
+  return { voiceA: a.id, voiceB: b.id };
+}
+// The voice model with the lowest maximum for the length, among those with
+// voices for language `code`: two of them if any model has two, else one;
+// else the cheapest model with any voices, else the cheapest.
+export function pickVoiceModel(catalog, { language, length }) {
+  const priced = (catalog || []).filter((m) => Number.isFinite(Number(m?.credits_per_1k_chars)));
+  const speaking = (m) => (m.voices || []).filter((v) => voiceSpeaks(v, language)).length;
+  const pool = [
+    priced.filter((m) => speaking(m) >= 2),
+    priced.filter((m) => speaking(m) >= 1),
+    priced.filter((m) => m.voices?.length),
+    priced,
+  ].find((list) => list.length);
+  if (!pool) return "";
+  return [...pool].sort((a, b) => voicesMaximum(a, length) - voicesMaximum(b, length) || byName(a, b))[0].id;
+}
+// The voice model and voices a new overview starts with. A choice this
+// browser remembered wins while its model is still offered (its voices too,
+// while they are); otherwise the cheapest model for the language, with two
+// of its voices.
+export function voiceDefaults({ catalog, language, length, remembered = null }) {
+  const kept = (catalog || []).find((m) => m.id === remembered?.tts);
+  if (kept) {
+    const ids = (kept.voices || []).map((v) => v.id);
+    const ok =
+      ids.includes(remembered.voiceA) &&
+      ids.includes(remembered.voiceB) &&
+      (remembered.voiceA !== remembered.voiceB || ids.length < 2);
+    return {
+      tts: kept.id,
+      ...(ok ? { voiceA: remembered.voiceA, voiceB: remembered.voiceB } : pickVoices(kept, language)),
+      remembered: true,
+    };
+  }
+  const id = pickVoiceModel(catalog, { language, length });
+  const model = (catalog || []).find((m) => m.id === id);
+  return { tts: id, ...(model ? pickVoices(model, language) : { voiceA: "", voiceB: "" }), remembered: false };
+}
+
 // ---- Sources, built in the browser ----
 
 const clip = (text) => {

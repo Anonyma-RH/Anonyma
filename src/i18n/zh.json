@@ -6703,6 +6703,14 @@
     {
       "en": "The voice model failed on turn {0} of {1}, so the overview stopped there. What was voiced is kept; nothing further was charged.",
       "zh": "语音模型在第 {0} 段（共 {1} 段）失败，概览就此停止。已配音的部分会保留；不会再扣费。"
+    },
+    {
+      "en": "{0} · up to ≈{1} credits",
+      "zh": "{0} · 最多约 {1} 积分"
+    },
+    {
+      "en": "{0} · voices up to ≈{1} credits",
+      "zh": "{0} · 配音最多约 {1} 积分"
     }
   ]
 }

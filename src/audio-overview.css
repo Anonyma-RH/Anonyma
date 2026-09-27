@@ -145,6 +145,9 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px 14px;
 }
+.overview-voices {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+}
 .modal .overview-grid label,
 .modal .overview-chat-pick label {
   display: flex;
@@ -529,7 +532,8 @@
   .overview-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
-  .overview-grid .overview-length {
+  .overview-grid .overview-length,
+  .overview-voices > label:first-child {
     grid-column: 1 / -1;
   }
   .overview-transcript {

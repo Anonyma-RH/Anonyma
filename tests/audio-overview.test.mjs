@@ -28,13 +28,19 @@ import {
   SCRIPT_CUT_SHORT,
   SCRIPT_UNUSABLE,
   chatSource,
+  guessLanguage,
   hasVeilTags,
   overviewLive,
   parseScript,
+  pickVoiceModel,
+  pickVoices,
   researchSource,
   splitTurn,
   spoken,
   turnAt,
+  voiceDefaults,
+  voiceSpeaks,
+  voicesMaximum,
 } from "../src/audio-overview.js";
 import { compileDictionary, translateText } from "../src/i18n.js";
 
@@ -84,6 +90,16 @@ const CATALOG = {
         voices: [
           { id: "v-roger", name: "Roger", language: "multi" },
           { id: "v-sarah", name: "Sarah", language: "multi" },
+        ],
+      },
+      {
+        id: "deepgram_aura_2",
+        name: "Deepgram Aura 2",
+        provider: "deepgram",
+        pricing: { unit: "per_1k_chars", api_price: 0.0165 },
+        voices: [
+          { id: "aura-2-amalthea-en", name: "Amalthea", language: "en" },
+          { id: "aura-2-andromeda-en", name: "Andromeda", language: "en" },
         ],
       },
     ],
@@ -413,6 +429,115 @@ test("sources are built in the browser without restoring Veil's placeholders", (
   assert.equal(turnAt([{ start: 0 }, { start: 2.5 }, { start: 5 }], 3), 1);
 });
 
+// ---- Choosing the voices ----
+
+// As /api/audio/models lists them (prices per 1,000 characters, in credits
+// at the account's rate), in the gateway's order: the dearest first.
+const VOICE_CATALOG = [
+  {
+    id: "eleven_v3",
+    name: "Eleven v3",
+    credits_per_1k_chars: 1.9,
+    voices: [
+      { id: "v3-rachel", name: "Rachel", gender: "female", language: "multi" },
+      { id: "v3-adam", name: "Adam", gender: "male", language: "multi" },
+    ],
+  },
+  {
+    id: "eleven_multilingual_v2",
+    name: "Eleven Multilingual v2",
+    credits_per_1k_chars: 1.9,
+    voices: [
+      { id: "ml-aria", name: "Aria", gender: "female", language: "multi" },
+      { id: "ml-roger", name: "Roger", gender: "male", language: "multi" },
+    ],
+  },
+  {
+    id: "eleven_flash_v2_5",
+    name: "Eleven Flash v2.5",
+    credits_per_1k_chars: 0.4222,
+    voices: [
+      { id: "fl-sarah", name: "Sarah", gender: "female", language: "multi" },
+      { id: "fl-roger", name: "Roger", gender: "male", language: "multi" },
+      { id: "fl-alice", name: "Alice", gender: "female", language: "multi" },
+    ],
+  },
+  {
+    id: "deepgram_aura_2",
+    name: "Deepgram Aura 2",
+    credits_per_1k_chars: 0.1583,
+    voices: [
+      { id: "aura-2-thalia-en", name: "Thalia", language: "en" },
+      { id: "aura-2-andromeda-en", name: "Andromeda", language: "en" },
+      { id: "aura-2-amalthea-en", name: "Amalthea", language: "en-US" },
+      { id: "aura-2-celeste-es", name: "Celeste", language: "es" },
+    ],
+  },
+  // Cheapest of all, but with no voices to give the two hosts.
+  { id: "no-voices", name: "No voices", credits_per_1k_chars: 0.01, voices: [] },
+];
+
+test("the default voice model is the cheapest with voices for the language; two voices, female and male when known", () => {
+  assert.equal(voicesMaximum(VOICE_CATALOG[3], "short"), 0.7124);
+  assert.equal(voicesMaximum(VOICE_CATALOG[3], "long"), 1.7413);
+  // English: Deepgram's English voices, the two first alphabetically (it
+  // lists no genders).
+  assert.deepEqual(voiceDefaults({ catalog: VOICE_CATALOG, language: "en", length: "short" }), {
+    tts: "deepgram_aura_2",
+    voiceA: "aura-2-amalthea-en",
+    voiceB: "aura-2-andromeda-en",
+    remembered: false,
+  });
+  assert.equal(pickVoiceModel(VOICE_CATALOG, { language: "en", length: "long" }), "deepgram_aura_2");
+  // Other languages: the cheapest multilingual model, a female and a male voice.
+  for (const language of ["zh", "ja", "fr", "de"])
+    assert.deepEqual(voiceDefaults({ catalog: VOICE_CATALOG, language, length: "short" }), {
+      tts: "eleven_flash_v2_5",
+      voiceA: "fl-alice",
+      voiceB: "fl-roger",
+      remembered: false,
+    }, language);
+  // One Spanish voice isn't a pair: two multilingual ones are preferred.
+  assert.equal(pickVoiceModel(VOICE_CATALOG, { language: "es", length: "short" }), "eleven_flash_v2_5");
+  // Deepgram alone: its one Spanish voice leads, then another of its voices.
+  assert.deepEqual(pickVoices(VOICE_CATALOG[3], "es"), { voiceA: "aura-2-celeste-es", voiceB: "aura-2-amalthea-en" });
+  // A model's voices when none speak the language: still two different ones.
+  assert.deepEqual(pickVoices(VOICE_CATALOG[3], "zh"), { voiceA: "aura-2-amalthea-en", voiceB: "aura-2-andromeda-en" });
+  assert.deepEqual(pickVoices(VOICE_CATALOG[4], "en"), { voiceA: "", voiceB: "" });
+  assert.equal(pickVoiceModel([], { language: "en", length: "short" }), "");
+  assert.equal(voiceSpeaks({ language: "cmn-CN" }, "zh"), true);
+  assert.equal(voiceSpeaks({ language: "English" }, "en"), true);
+  assert.equal(voiceSpeaks({ language: "en-GB" }, "es"), false);
+  assert.equal(voiceSpeaks({}, "en"), false);
+  // A remembered choice wins while its model is offered; its voices too.
+  assert.deepEqual(
+    voiceDefaults({
+      catalog: VOICE_CATALOG,
+      language: "en",
+      length: "short",
+      remembered: { tts: "eleven_v3", voiceA: "v3-adam", voiceB: "v3-rachel" },
+    }),
+    { tts: "eleven_v3", voiceA: "v3-adam", voiceB: "v3-rachel", remembered: true },
+  );
+  assert.deepEqual(
+    voiceDefaults({ catalog: VOICE_CATALOG, language: "en", length: "short", remembered: { tts: "eleven_v3", voiceA: "gone", voiceB: "v3-rachel" } }),
+    { tts: "eleven_v3", voiceA: "v3-rachel", voiceB: "v3-adam", remembered: true },
+  );
+  assert.equal(voiceDefaults({ catalog: VOICE_CATALOG, language: "en", length: "short", remembered: { tts: "retired" } }).tts, "deepgram_aura_2");
+  // "Same as the source": the source's language, else the page's.
+  assert.equal(guessLanguage(SOURCE_TEXT), "en");
+  assert.equal(guessLanguage("Las líneas nocturnas pasan cada 20 minutos desde la medianoche, en lugar de cada 45, y los pases son válidos."), "es");
+  assert.equal(guessLanguage("从3月3日起，潮水公交用四条夜间线路取代原有的六条深夜线路。夜间线路从午夜到凌晨5点每20分钟一班。"), "zh");
+  assert.equal(guessLanguage("夜行バスは3月3日から、6つの深夜路線に代わって4つの路線で運行します。"), "ja");
+  assert.equal(guessLanguage("", "zh"), "zh");
+  assert.equal(guessLanguage("x = 1; y = 2; z = x + y; console.log(z);", "en"), "en");
+  // The dialog uses these, and remembers the voice model only once it's
+  // picked by hand (or was remembered before).
+  const dialog = readFileSync(new URL("../src/AudioOverview.jsx", import.meta.url), "utf8");
+  assert.match(dialog, /voiceDefaults\(\{ catalog, language: voiceLanguage, length, remembered: remembered\.tts \? remembered : null \}\)/);
+  assert.match(dialog, /\.\.\.\(touched\.tts \|\| touched\.voices \|\| remembered\.tts \? \{ tts, voiceA, voiceB \} : \{\}\)/);
+});
+
 // ---- Joining the clips ----
 
 test("MP3 clips are joined without their tags and Xing frames; WAV clips with one format; others aren't", () => {
@@ -459,6 +584,11 @@ test("a run: quote first, then the script and each turn voiced, joined, charged 
   assert.equal(quote.source_characters, SOURCE_TEXT.length);
   assert.equal(quote.steps.voices, usdUnits(4.5 * 0.0422 * factor) / 10000);
   assert.ok(Math.abs(quote.credits - quote.steps.script - quote.steps.voices) < 1e-6);
+  // Each voice model's maximum, the same way: the chosen one is the quote.
+  assert.deepEqual(quote.voice_models, [
+    { id: TTS, credits: quote.credits },
+    { id: "deepgram_aura_2", credits: (Math.round(quote.steps.script * 10000) + usdUnits(4.5 * 0.0165 * factor)) / 10000 },
+  ]);
   assert.equal(g.calls.chat.length + g.calls.speech.length, 0, "a quote calls nothing");
   const before = balance(s.db, p.user.id).total;
   const ev = (await make(p).expect(200)).body;
@@ -811,6 +941,8 @@ test("every visible string has a Chinese entry, including the release copy", () 
     "Loading…",
     "Untitled conversation",
     "Loading the conversation…",
+    "Deepgram Aura 2 · up to ≈81 credits",
+    "Deepgram Aura 2 · voices up to ≈0.712 credits",
     "Reading the file…",
     "Choose a file",
     "Choose another file",

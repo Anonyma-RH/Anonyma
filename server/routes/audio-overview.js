@@ -140,6 +140,15 @@ export function audioOverviewRoutes(ctx) {
   app.post("/api/audio/overview/quote", requireUser, limit("overview_quote", 120, 60000), async (req, res) => {
     const p = await prepare(req);
     const room = limitsLive(cfg) ? spendingRoom(db, req.user.id) : null;
+    // The same maximum with each voice model this account is offered, for
+    // the picker: the script's share is the same whichever voices it gets.
+    const offered = ctx.earlyModels.view(viewerOf(req), "tts");
+    const voiceModels = (await audio.load()).tts
+      .filter((t) => !offered.hides(t.id))
+      .map((t) => ({
+        id: t.id,
+        credits: credits(p.costs.amounts.script + voiceCharge(LENGTHS[p.length].maxChars, t, p.factor)),
+      }));
     res.json({
       credits: credits(p.costs.total),
       usd: p.costs.total / 1e7,
@@ -151,6 +160,7 @@ export function audioOverviewRoutes(ctx) {
       max_characters: LENGTHS[p.length].maxChars,
       source_characters: p.source.text.length,
       steps: { script: credits(p.costs.amounts.script), voices: credits(p.costs.amounts.voices) },
+      voice_models: voiceModels,
       estimate: true,
     });
   });

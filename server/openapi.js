@@ -2021,6 +2021,10 @@ route("post", "/api/audio/overview/quote", "The most an audio overview can cost"
     max_characters: integer,
     source_characters: integer,
     steps: object({ script: number, voices: number }),
+    voice_models: {
+      ...array(object({ id: string, credits: number })),
+      description: "The same maximum with each speech model this account is offered, for choosing one",
+    },
     estimate: bool,
   }),
   description:

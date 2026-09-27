@@ -369,7 +369,7 @@ export const MODE_LABELS = {
   tools: "Research, Writing & Calculators",
   projects: "Projects",
   sheets: "Sheets",
-  compare: "Compare",
+  compare: "Compare docs",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -388,7 +388,7 @@ const PLACES = [
   // Local Sheets: only once released (modeReleased checks MODE_FEATURES).
   ["sheets", "Sheets", ["spreadsheet", "csv", "tsv", "excel", "analyse", "analyze", "chart", "table", "data"]],
   // Document Compare: likewise only once released.
-  ["compare", "Compare", ["compare documents", "diff", "redline", "track changes", "versions", "contract", "changes"]],
+  ["compare", "Compare docs", ["compare documents", "diff", "redline", "track changes", "versions", "contract", "changes"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

@@ -58,7 +58,7 @@ async function readDocument(file, officeAllowed) {
   const name = file.name;
   const kind = documentKind(file);
   if (!kind || (kind === "office" && !officeAllowed))
-    throw Error(`"${name}" isn't a document Compare can read. Try PDF, DOCX, TXT or MD.`);
+    throw Error(`"${name}" isn't a document Compare docs can read. Try PDF, DOCX, TXT or MD.`);
   if (file.size > MAX_FILE_BYTES) throw Error(`"${name}" is larger than 25 MB.`);
   let text = "",
     pages = null,
@@ -401,7 +401,7 @@ export default function Compare({ demo, user, models, config, refresh, veilOn, s
       <div className={"compare-head" + (result ? " compact" : "")}>
         <div>
           <p className="eyebrow">YOUR DOCUMENTS STAY ON THIS DEVICE</p>
-          <h1>Compare</h1>
+          <h1>Compare docs</h1>
           <p>
             See every change between two versions of a document. Only the
             changed parts go to the AI, and only if you ask for a summary.

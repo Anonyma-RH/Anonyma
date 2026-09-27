@@ -273,7 +273,7 @@ export function AppSidebar({
           ["collab", "Collab"],
           ["tools", "Task tools"],
           ["sheets", "Sheets"],
-          ["compare", "Compare"],
+          ["compare", "Compare docs"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
@@ -3157,7 +3157,7 @@ export default function Workspace() {
                 routines: "Routines",
                 projects: "Projects",
                 sheets: "Sheets",
-                compare: "Compare",
+                compare: "Compare docs",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -3337,7 +3337,7 @@ export default function Workspace() {
             )
           ) : mode === "compare" ? (
             isReleased(config, "doccompare") && (
-              <Suspense fallback={<p className="compare-loading">Opening Compare…</p>}>
+              <Suspense fallback={<p className="compare-loading">Opening Compare docs…</p>}>
                 <Compare key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
               </Suspense>
             )

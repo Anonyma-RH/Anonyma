@@ -147,6 +147,9 @@ test("unreleased: a summary is refused before anything else, and there's no page
   const ids = (c) => paletteActions({ config: c, mode: "chat", signedIn: true }).map((x) => x.id);
   assert.ok(!ids(cfg({})).includes("go-compare"));
   assert.ok(ids(cfg({ doccompare: true })).includes("go-compare"));
+  // Named "Compare docs", apart from Blind Compare and Cost Compare.
+  const place = paletteActions({ config: cfg({ doccompare: true }), mode: "chat", signedIn: true }).find((x) => x.id === "go-compare");
+  assert.equal(place.label, "Compare docs");
 });
 
 test("the gate is expressed in featuresFor: doccompare plus the off-the-record path it always takes", () => {
@@ -167,12 +170,15 @@ test("the workspace keeps Compare out of sight until it's released, and runs the
   assert.match(src, /mode === "compare" && \(!config \|\| isReleased\(config, "doccompare"\)\)/);
   assert.match(src, /mode === "compare" \? \(\s*isReleased\(config, "doccompare"\) &&/);
   assert.match(src, /const Compare = lazy\(\(\) => import\("\.\/Compare\.jsx"\)\)/);
+  assert.match(src, /\["compare", "Compare docs"\]/);
+  assert.match(src, /compare: "Compare docs",/);
   const page = readFileSync(new URL("../src/Compare.jsx", import.meta.url), "utf8");
   assert.match(page, /new Worker\(new URL\("\.\/compare\.worker\.js", import\.meta\.url\), \{ type: "module" \}\)/);
   assert.doesNotMatch(page, /dangerouslySetInnerHTML|localStorage|sessionStorage|indexedDB/);
   // Document and model text are never translated.
   assert.match(page, /<p data-i18n="off">/);
   assert.match(page, /className="prose markdown" data-i18n="off"/);
+  assert.match(page, /<h1>Compare docs<\/h1>/);
   // The server copies the shared module it imports.
   assert.match(readFileSync(new URL("../Dockerfile", import.meta.url), "utf8"), /src\/compare-spec\.js/);
   assert.match(readFileSync(new URL("../src/Pages.jsx", import.meta.url), "utf8"), /doccompare: "diff"/);
@@ -740,7 +746,8 @@ test("every visible string of the update has a Chinese entry", async () => {
     entry.title,
     entry.tagline,
     ...entry.points,
-    "Compare",
+    "Compare docs",
+    "Opening Compare docs…",
     "YOUR DOCUMENTS STAY ON THIS DEVICE",
     "Hide unchanged",
     "Redline (HTML)",
@@ -770,6 +777,7 @@ test("every visible string of the update has a Chinese entry", async () => {
     const zh = translateText(en, dict);
     assert.ok(zh && han.test(zh), `${en} → ${zh}`);
   }
+  assert.equal(translateText("Compare docs", dict), "文档对比");
   // Model names stay as written inside a pattern.
   assert.equal(translateText("Send to GLM 5.2 (Fast)", dict), "发送给 GLM 5.2 (Fast)");
 });

@@ -4238,7 +4238,6 @@
     "The changes are too long to send at once.": "改动内容过长，无法一次发送。",
     "There are no changes to summarize.": "没有可总结的改动。",
     "Too many changes to send at once.": "改动太多，无法一次发送。",
-    "Opening Compare…": "正在打开对比……",
     "Compared in the browser with ANONYMA. To make a PDF, print this page and choose Save as PDF.": "由 ANONYMA 在浏览器中完成对比。如需 PDF，请打印此页面并选择“另存为 PDF”。",
     "~~Struck through~~ was removed and **bold** was added. ¶ numbers count paragraphs in each version.": "~~删除线~~表示已删除，**粗体**表示新增。¶ 编号按各版本的段落计数。",
     "No differences found.": "未发现差异。",
@@ -4248,7 +4247,9 @@
     "added": "处新增",
     "removed": "处删除",
     "moved": "处移动",
-    "Ask for a summary and the AI gets only the changed passages, with a little context. You see exactly what's sent first.": "请求摘要时，AI 只会收到改动段落及少量上下文。发送前你会先看到确切内容。"
+    "Ask for a summary and the AI gets only the changed passages, with a little context. You see exactly what's sent first.": "请求摘要时，AI 只会收到改动段落及少量上下文。发送前你会先看到确切内容。",
+    "Compare docs": "文档对比",
+    "Opening Compare docs…": "正在打开文档对比……"
   },
   "patterns": [
     {
@@ -6688,8 +6689,8 @@
       "zh": "发送给 {0}"
     },
     {
-      "en": "\"{0}\" isn't a document Compare can read. Try PDF, DOCX, TXT or MD.",
-      "zh": "对比功能无法读取“{0}”。请尝试 PDF、DOCX、TXT 或 MD。"
+      "en": "\"{0}\" isn't a document Compare docs can read. Try PDF, DOCX, TXT or MD.",
+      "zh": "文档对比无法读取“{0}”。请尝试 PDF、DOCX、TXT 或 MD。"
     },
     {
       "en": "No text found in \"{0}\". It may be a scanned image.",

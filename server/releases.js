@@ -1122,7 +1122,7 @@ export const UPDATES = [
     // record /api/chat request carrying `canvas` (server/canvas.js), priced
     // by /api/quote with the same payload, and charged only when the reply
     // can be used (runChat's acceptOutput).
-    released: false,
+    released: true,
   },
   {
     id: "slides",

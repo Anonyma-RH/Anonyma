@@ -1,5 +1,6 @@
 {
   "strings": {
+    "Slide decks saved to your account": "保存到你账户中的演示稿",
     "— authenticated": "——经过身份验证的",
     "— authenticated chat generation, billed to the account’s prepaid balance and subject to the key’s rolling 24-hour cap.": "——经过身份验证的对话生成，会从账户的预付余额中扣费，并受密钥滚动 24 小时上限限制。",
     "— authenticated model list with id, object, owned_by and created. It can include image models; use type metadata from": "——经过身份验证的模型列表，包含 id、object、owned_by 和 created。列表可能包含图像模型；请使用",

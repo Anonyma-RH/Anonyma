@@ -31,11 +31,12 @@ export function reportedProviderCost(usage, explicitCost, feePercent = 5.5) {
   if (valid(usage?.cost) && usage.is_byok !== true) return usage.cost * fee;
   return null;
 }
-// PPQ's native Gemini response can exclude thinking from completion/total.
+// PPQ's native Gemini response can exclude thinking from completion_tokens
+// while including it in total_tokens.
 // A live 2026-09-27 request reported 40 completion + 573 reasoning tokens;
-// PPQ history billed 613 output tokens. Only repair the provably exclusive
-// shape (reasoning exceeds completion). Ordinary inclusive usage and the
-// ambiguous smaller-reasoning case remain untouched to avoid overcharging.
+// PPQ history billed 613 output tokens. Only repair the exclusive shape
+// proven by total = prompt + completion + reasoning. Ordinary inclusive
+// usage and inconsistent totals remain untouched to avoid overcharging.
 export function normalizeProviderUsage(usage, gateway, model) {
   let host;
   try { host = new URL(gateway).hostname; } catch { return usage; }
@@ -44,9 +45,9 @@ export function normalizeProviderUsage(usage, gateway, model) {
   if (host !== "api.ppq.ai" || !/^(?:google\/)?gemini-/.test(model || "") ||
       !usage?.extra_properties?.google ||
       ![input, output, reasoning, usage?.total_tokens].every((n) => Number.isSafeInteger(n) && n >= 0) ||
-      reasoning <= output || usage.total_tokens !== input + output ||
+      reasoning <= 0 || usage.total_tokens !== input + output + reasoning ||
       !Number.isSafeInteger(input + output + reasoning)) return usage;
-  return { ...usage, completion_tokens: output + reasoning, total_tokens: input + output + reasoning };
+  return { ...usage, completion_tokens: output + reasoning };
 }
 // Codes for upstream responses that prove the provider did not accept the
 // request, so its reservation can be released without reconciliation.

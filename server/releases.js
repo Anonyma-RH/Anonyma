@@ -967,6 +967,22 @@ export const UPDATES = [
     // with the account); off the record keeps nothing.
     released: false,
   },
+  {
+    id: "highlight",
+    title: "Highlight & Ask",
+    tagline: "Select any part of a reply and ask about just that part.",
+    points: [
+      "Ask, explain, simplify or translate the part you select",
+      "Fact-check it against the web: a verdict with its sources",
+      "See the most a check can cost first; a failed check costs nothing",
+    ],
+    // The toolbar is browser only (src/HighlightAsk.jsx): Ask, Explain,
+    // Simplify and Translate put a quote in the composer, sent as a normal
+    // chat. Fact-check is /api/factcheck (server/routes/factcheck.js), one
+    // web search, so it needs "search" released too (featuresFor). Nothing
+    // new is stored: a saved check is two ordinary conversation turns.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1146,6 +1162,20 @@ export function featuresFor(req) {
       if (body.private === true) needed.push("private", "ephemeral");
       else if (body.ephemeral === true) needed.push("ephemeral");
       if (body.veil_masked !== undefined) needed.push("veil");
+    }
+    return needed;
+  }
+  // Highlight & Ask's fact-check: one web search on the selected text, so
+  // it needs Live Web Search too. What a check turns on needs its own
+  // update, as the same chat would: Private Mode, off the record, a project
+  // and Privacy Trail's Veil count.
+  if (p === "/api/factcheck" || p.startsWith("/api/factcheck/")) {
+    const needed = ["highlight", "search"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      else if (body.ephemeral === true) needed.push("ephemeral");
+      if (body.project !== undefined) needed.push("projects");
+      if (body.veil_masked !== undefined) needed.push("trail");
     }
     return needed;
   }

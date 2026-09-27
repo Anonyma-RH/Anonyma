@@ -146,9 +146,14 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
     // Deterministic stand-ins for the features that parse a model's reply:
     // Page Watch's summaries (with a finish reason when cut off), Local
     // Sheets' planner and explainer, Study Mode's decks, Document Compare's
-    // summary, Audio Overview's script writer (server/audio-overview.js) and
-    // Prompt Sharpen's sharpener (server/sharpen.js). Each returns null
+    // summary, Audio Overview's script writer (server/audio-overview.js),
+    // Prompt Sharpen's sharpener (server/sharpen.js) and Highlight & Ask's
+    // fact-check: a verdict in its JSON shape, with no pages (no search runs
+    // here), so the card says it couldn't be verified. Each returns null
     // otherwise.
+    const factCheck = String(body.messages?.[0]?.content || "").startsWith("You fact-check one claim against the live web.")
+      ? JSON.stringify({ verdict: "unverified", reason: "Local test provider: no web search was run.", sources: [] })
+      : null;
     const watch = pageWatchTestReply(body.messages);
     const standIn =
       watch !== null
@@ -157,7 +162,8 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
           studyTestReply(body.messages) ??
           compareTestReply(body.messages) ??
           overviewTestReply(body.messages) ??
-          sharpenTestReply(body.messages);
+          sharpenTestReply(body.messages) ??
+          factCheck;
     const answer = standIn !== null ? standIn : /code|function|javascript|python/i.test(text)
       ? "**Local test provider** — this is a deterministic integration fixture, not a live model.\n\n```javascript filename=hello.js\nexport function greet(name) {\n  return `Hello, ${name}!`;\n}\n```\n\nThe file is available in the code panel."
       : /\b(diagram|equation|formula)s?\b|图表|公式|流程图/i.test(text)

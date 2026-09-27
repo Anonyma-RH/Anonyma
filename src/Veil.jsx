@@ -104,6 +104,8 @@ function splitVeilText(text, map) {
               hProperties: {
                 className: "veil-mark",
                 title: `Veiled — the model saw [${m[1]}]`,
+                // Highlight & Ask quotes a veiled value as its placeholder.
+                dataVeilTag: m[1],
               },
             },
             children: [{ type: "text", value }],

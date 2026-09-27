@@ -259,6 +259,8 @@ export function BlindTurn({
   onKeepComparing,
   Markdown = ReactMarkdown,
   markdown,
+  // Highlight & Ask: once revealed, each reply's text can be selected.
+  highlightable = false,
 }) {
   const reveal = blind.reveal || null;
   const outcome = reveal?.outcome || null;
@@ -304,7 +306,12 @@ export function BlindTurn({
                 )}
                 {x.text && !blind.pending && <CopyReply text={x.text} side={side} />}
               </header>
-              <div className="markdown" data-i18n="off">
+              <div
+                className="markdown"
+                data-i18n="off"
+                data-highlight-reply={highlightable && reveal && x.text && !blind.pending ? "" : undefined}
+                data-highlight-model={highlightable && reveal ? reveal[side]?.model || undefined : undefined}
+              >
                 {x.text ? (
                   <Markdown remarkPlugins={marks} components={markdown}>
                     {x.text}

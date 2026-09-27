@@ -2208,6 +2208,56 @@ route("get", "/api/audio/overview/{id}", "One saved audio overview with its scri
   }),
   description: "The script as voiced, with each turn's start in seconds, for the transcript and chapter jumps. 404 not_found for anyone else's.",
 });
+// Highlight & Ask's fact-check (update "highlight", which also needs "search").
+const factCheckRequest = object(
+  {
+    model: { ...string, description: "A callable text model; it runs the web search and writes the verdict" },
+    claim: { ...string, minLength: 1, maxLength: 1000, description: "The text selected in a reply (400 claim_too_long above 1,000 characters)" },
+    requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+    conversationId: { ...string, description: "Add the check to this saved conversation (not a Symposium run)" },
+    ephemeral: { ...bool, description: "Off the record: nothing is saved (needs ephemeral)" },
+    private: { ...bool, description: "Private Mode: a zero-data-retention model, ZDR routing, nothing saved (needs private and ephemeral)" },
+    project: { ...string, description: "File a new saved check in this project (needs projects)" },
+    veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for the claim (needs trail); anything above 0, or a Veil placeholder such as [EMAIL_1] in the claim, is refused with 400 factcheck_veiled" },
+  },
+  ["model", "claim"],
+);
+route("post", "/api/factcheck/quote", "The most a fact-check can cost", {
+  body: factCheckRequest,
+  response: object({
+    credits: { ...number, description: "The maximum: the claim, the whole reply budget and the web search fee" },
+    usd: number,
+    available: number,
+    spending_limit: object({ remaining: number }),
+    model: string,
+    web_search_fee: number,
+    estimate: bool,
+  }),
+  description:
+    "Reserves and charges nothing. The same checks as a fact-check (Seed Guard with no override, Veil, Private Mode, context allowance), so a quote that succeeds describes exactly what a check would hold.",
+});
+route("post", "/api/factcheck", "Fact-check selected text against the web", {
+  body: factCheckRequest,
+  response: object({
+    conversationId: { type: ["string", "null"] },
+    user_message: object({ id: string, text: string }),
+    message: object({
+      id: string,
+      text: { ...string, description: "The card as Markdown: the verdict and the reason" },
+      citations: array(object({ url: string, title: string })),
+      factcheck: object({
+        verdict: { enum: ["supported", "disputed", "mixed", "unverified"] },
+        reason: string,
+        named: { ...bool, description: "False when the model named none of the pages the search returned, so the search's first pages are shown" },
+        lang: { enum: ["en", "zh"] },
+        credits_charged: number,
+      }),
+    }),
+    anonyma: object({ credits_charged: number, request_id: string, finish_reason: string }),
+  }),
+  description:
+    "Workspace only (session). One web search through Live Web Search's plugin and fee, with a reply budget of 8,000 tokens (within the model's output limit) for a strict JSON verdict. Only the claim is sent, as delimited data, never the rest of the chat. Sources are 1 to 3 pages the search returned; an address the search didn't return is never shown, and a search that returned no pages is always unverified. The maximum is held first (402 insufficient_credits or spending_limit with nothing charged) and settled on actual usage once a verdict is read. A failed, stopped or unreadable check is released and charges nothing: 502 factcheck_cut_short when the model ran out of room, factcheck_unreadable for any other answer that isn't the verdict JSON, factcheck_failed when the provider failed. A saved check adds two ordinary messages to the conversation (the quote, then the card's text with its sources as citations) or starts a new one; off the record and Private Mode store nothing.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

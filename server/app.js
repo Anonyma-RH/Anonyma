@@ -42,6 +42,7 @@ import { linkReaderRoutes } from "./routes/link-reader.js";
 import { blindRoutes } from "./routes/blind.js";
 import { researchRoutes } from "./routes/research.js";
 import { sharpenRoutes } from "./routes/sharpen.js";
+import { factCheckRoutes } from "./routes/factcheck.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { pageWatchRoutes } from "./routes/page-watch.js";
@@ -167,6 +168,10 @@ export function createApp(overrides = {}) {
   // Prompt Sharpen: one small model call that rewrites a prompt, held and
   // settled on the ordinary billing path; nothing is stored.
   sharpenRoutes(ctx);
+  // Highlight & Ask's fact-check: one web search on selected text, held and
+  // settled on the ordinary billing path (after Projects, which a new saved
+  // check can be filed in).
+  factCheckRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

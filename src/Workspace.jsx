@@ -235,6 +235,8 @@ import {
 } from "./Sharpen.jsx";
 import { pickSharpener, sharpenPool } from "./sharpen.js";
 import { overviewLive, chatSource, researchSource, documentSource } from "./audio-overview.js";
+import { HighlightToolbar, FactCheckCard, highlightReleased, factCheckReleased } from "./HighlightAsk.jsx";
+import { FACTCHECK_VEILED, MAX_CLAIM, factCheckUserText, hasVeilPlaceholder } from "./highlight-ask.js";
 const initial = [
   {
     id: "welcome",
@@ -1973,6 +1975,132 @@ export default function Workspace() {
     [researchQuote, sendText, sendModel, researchDepth, mode, ephemeral, privateMode, current, memoryFacts, veilWords, trailLive, project?.id],
   );
   const researchEstimate = useResearchEstimate(researchQuoteBody);
+  // Highlight & Ask (src/HighlightAsk.jsx): selecting text in a reply offers
+  // a quote in the composer (Ask about this, Explain, Simplify, Translate),
+  // or a fact-check of just that text against the web. Fact-check follows
+  // Web: chat and code, signed in, never the demo or Sealed Mode.
+  const highlightLive = highlightReleased(config) && textMode;
+  const threadRef = useRef(null);
+  const factCheckLive =
+    !demo && !!user && factCheckReleased(config) && ["chat", "code"].includes(mode) && !sealedOn && !sealedThread;
+  const factVeiling = veilOn && isReleased(config, "veil");
+  // Why a fact-check can't run right now, or null. The server refuses the
+  // same things; its quote says why for anything else.
+  function factCheckBlock(claim) {
+    if (busy) return "Wait for the reply in progress to finish.";
+    if (!target?.callable || !config?.services?.generation)
+      return "This model is not currently available for generation.";
+    if (privateMode && !target?.private) return "Choose a private model, or turn off Private mode.";
+    if (deviceOnly && !vault.unlocked) return "Unlock Device Vault to keep chatting on this device only.";
+    if (teamPays.on) return "A fact-check is paid from your own balance. Turn off Team pays to run it.";
+    if (claim.length > MAX_CLAIM) return "Select a shorter passage to fact-check: up to 1,000 characters.";
+    // A placeholder means Veil masked it earlier; with Veil on, anything it
+    // would mask now counts too (checked on a copy of this chat's map).
+    if (
+      hasVeilPlaceholder(claim) ||
+      (factVeiling && veil(claim, cloneVeilState(veilStateRef.current), veilWords).count)
+    )
+      return FACTCHECK_VEILED;
+    return null;
+  }
+  // The /api/factcheck body (and its quote's): only the selected text, into
+  // this chat as it's kept (saved, off the record, Private or Device only).
+  const factCheckBody = (claim) => ({
+    model: sendModel,
+    claim,
+    ...(ephemeral ? { ephemeral: true } : current ? { conversationId: current } : {}),
+    ...(privateMode ? { private: true } : {}),
+    ...(trailLive ? { veil_masked: factVeiling ? 0 : null } : {}),
+    ...(projectsLive ? projectRequestFields(project, { ephemeral, conversationId: current }) : {}),
+  });
+  // A quote goes after whatever is already in the composer, to edit first.
+  function quoteIntoComposer(text, { clipped } = {}) {
+    if (!text) return;
+    setPrompt((p) => insertIntoPrompt(p, text).slice(0, 48000));
+    setInfo(clipped ? "Long selection: only the first 6,000 characters were quoted." : "");
+    requestAnimationFrame(() => {
+      const el = promptBox.current;
+      if (!el) return;
+      el.focus();
+      el.selectionStart = el.selectionEnd = el.value.length;
+      el.scrollTop = el.scrollHeight;
+    });
+  }
+  // Fact-check's run: the quote and a card that fills in once the verdict
+  // arrives. A refusal or failure takes both back out; nothing was charged.
+  async function runFactCheck(claim) {
+    if (!user) {
+      setError("Sign in to start generating, or open the demo.");
+      return;
+    }
+    const block = factCheckBlock(claim);
+    if (block) {
+      setError(block);
+      return;
+    }
+    setError("");
+    setInfo("");
+    setReceipt(null);
+    setVeilNote(null);
+    // Chat Control's charge panel follows chat requests; a check shows its own.
+    if (chatControlLive) charge.reset();
+    setBusy(true);
+    controller.current = new AbortController();
+    const requestId = uid();
+    const body = { ...factCheckBody(claim), requestId };
+    const before = messages;
+    const requestModel = target.id;
+    const asked = { role: "user", content: factCheckUserText(claim) };
+    const reply = (extra) => ({ role: "assistant", model: requestModel, requestId, ...extra });
+    setMessages([...before, asked, reply({ content: "", factcheck: { live: true } })]);
+    let liveId = ephemeral ? null : current;
+    try {
+      const r = await api("/api/factcheck", { method: "POST", body, signal: controller.current.signal });
+      if (r.conversationId) liveId = r.conversationId;
+      const a = r.anonyma || {};
+      setMessages([
+        ...before,
+        { ...asked, content: r.user_message?.text || asked.content, ...(r.user_message?.id ? { id: r.user_message.id } : {}) },
+        reply({
+          ...(r.message?.id ? { id: r.message.id } : {}),
+          content: r.message?.text || "",
+          citations: r.message?.citations || [],
+          factcheck: r.message?.factcheck,
+          finishReason: a.finish_reason || "stop",
+          credits: a.credits_charged,
+          ...(a.private ? { private: a.private, masked: 0 } : {}),
+          ...(a.privacy ? { privacy: a.privacy } : {}),
+        }),
+      ]);
+      if (!chatControlLive) setReceipt(a);
+      setCurrent(liveId);
+    } catch (err) {
+      setMessages(before);
+      if (err.name === "AbortError") setInfo("Fact-check stopped. Nothing was charged.");
+      else setError(err.message);
+    } finally {
+      if (factVeiling && liveId && liveId !== veilKeyRef.current && !deviceOnly) {
+        moveVeilState(veilKeyRef.current, liveId);
+        veilKeyRef.current = liveId;
+      }
+      setBusy(false);
+      refresh();
+      if (!ephemeral)
+        api("/api/conversations")
+          .then((r) => setAll(recentConversations(r.data)))
+          .catch(() => {});
+      if (project && !ephemeral) projects.reload();
+    }
+  }
+  const factCheck = factCheckLive
+    ? {
+        modelName: () => target?.name || sendModel,
+        block: factCheckBlock,
+        quote: (claim, _model, signal) =>
+          api("/api/factcheck/quote", { method: "POST", body: factCheckBody(claim), signal }),
+        run: (claim) => runFactCheck(claim),
+      }
+    : null;
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
   // history before it and the conversation to add to, instead of the composer.
   // `allowSeed` is Seed Guard's confirmed "Send anyway".
@@ -3597,8 +3725,17 @@ export default function Workspace() {
                     <span>The original is unchanged.</span>
                   </div>
                 )}
+                {highlightLive && (
+                  <HighlightToolbar
+                    key={current || vaultChatId || "new"}
+                    root={threadRef}
+                    enabled={messages.length > 0 && !editing}
+                    onQuote={quoteIntoComposer}
+                    factCheck={factCheck}
+                  />
+                )}
                 {messages.length && textMode ? (
-                  <div className="messages">
+                  <div className={"messages" + (highlightLive ? " highlight-live" : "")} ref={threadRef}>
                     {messages.map((m, i) => {
                       // A saved user message may carry <document> blocks after
                       // the typed prompt; render those as collapsed chips
@@ -3696,6 +3833,7 @@ export default function Workspace() {
                               onKeepComparing={() => keepComparing(m.blind.reveal)}
                               Markdown={ReplyMarkdown}
                               markdown={shieldView ? shieldMarkdown() : undefined}
+                              highlightable={highlightLive}
                             />
                           ) : (
                           <>
@@ -3703,9 +3841,23 @@ export default function Workspace() {
                               untranslated; with documents attached only it is
                               fenced off, leaving the chips' labels to the
                               language switch while their names stay as sent. */}
+                          {highlightLive && m.factcheck ? (
+                            <FactCheckCard factcheck={m.factcheck} citations={m.citations} />
+                          ) : (
                           <div
                             className="markdown"
                             data-i18n={m.content && !hasDocuments ? "off" : undefined}
+                            // Highlight & Ask: a finished reply's text can be selected to ask about.
+                            data-highlight-reply={
+                              highlightLive &&
+                              m.role === "assistant" &&
+                              m.content &&
+                              !m.research?.live &&
+                              !m.factcheck &&
+                              !(busy && i === messages.length - 1)
+                                ? ""
+                                : undefined
+                            }
                           >
                             {m.research?.live ? (
                               <ResearchProgress research={m.research} />
@@ -3743,6 +3895,7 @@ export default function Workspace() {
                               />
                             ))}
                           </div>
+                          )}
                           {researchAvailable && m.role === "assistant" && m.research && !m.research.live && (
                             <ResearchDetails
                               research={m.research}
@@ -3750,7 +3903,7 @@ export default function Workspace() {
                               trail={trailLive}
                             />
                           )}
-                          {m.citations?.length > 0 && !(researchAvailable && m.research) && (
+                          {m.citations?.length > 0 && !(researchAvailable && m.research) && !(highlightLive && m.factcheck) && (
                             <div className="citations">
                               <span>Sources</span>
                               {m.citations.map((c) => (
@@ -3799,7 +3952,7 @@ export default function Workspace() {
                           )}
                           {/* A Deep research report says so itself when it was cut short;
                               a continuation would be a chat, not more research. */}
-                          {longAnswersLive && m.role === "assistant" && !m.blind && !m.research && completionNotice(m) && (
+                          {longAnswersLive && m.role === "assistant" && !m.blind && !m.research && !m.factcheck && completionNotice(m) && (
                             <div className="fine-print" role="status">
                               <p>{completionNotice(m)}</p>
                               {i === messages.length - 1 && !busy && (m.content || m.reasoning) && (
@@ -3883,7 +4036,7 @@ export default function Workspace() {
                                 </button>
                               )}
                               {rememberButton(m)}
-                              {m.role === "assistant" && m.content && !m.blind && !m.research && (
+                              {m.role === "assistant" && m.content && !m.blind && !m.research && !m.factcheck && (
                                 <button type="button" onClick={() => rewind(i, "regenerate")}>
                                   Regenerate
                                 </button>
@@ -3915,6 +4068,7 @@ export default function Workspace() {
                             m.role === "assistant" &&
                             m.content &&
                             !m.blind &&
+                            !m.factcheck &&
                             m.model &&
                             !m.sample &&
                             !(busy && i === messages.length - 1) &&

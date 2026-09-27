@@ -275,6 +275,18 @@ export function carriedContext(summary) {
 export function withCarriedSummary(instructions, summary) {
   return [carriedContext(summary), String(instructions || "").trim()].filter(Boolean).join("\n\n");
 }
+// The workspace address of a chat: its ?c= link (or none), with the rest of
+// the address kept. A bookmark's ?m= jump belongs to the chat it came from,
+// so it goes. Continue fresh opens a saved fresh chat at its own link, so a
+// reload opens the fresh chat, never the one it continued from.
+export function chatLinkSearch(search, id) {
+  const next = new URLSearchParams(search || "");
+  next.delete("m");
+  if (id) next.set("c", id);
+  else next.delete("c");
+  const out = next.toString();
+  return out ? "?" + out : "";
+}
 // A carried summary as the user may keep it.
 export function checkCarriedSummary(summary) {
   const text = typeof summary === "string" ? summary.trim() : "";

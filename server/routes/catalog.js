@@ -19,6 +19,7 @@ import { withMemory } from "../../src/memory.js";
 import { trainingFields, liveIds } from "../training.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { apiBoostInfo } from "../api-boost.js";
+import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
 import {
   fail,
   balance,
@@ -146,8 +147,15 @@ export function catalogRoutes(ctx) {
   // workspace asks automatically while a prompt is typed (Credit Estimates),
   // debounced, so the limit leaves room for that and for Symposium's columns.
   app.post("/api/quote", requireUser, limit("quote", 120, 60000), (req, res) => {
+    // Summarize & Continue: a catch-up estimate prices the messages and reply
+    // room the request itself will send (server/catchup.js).
+    const catchupTask = prepareCatchupRequest(req.body);
     const m = getModel(req.body.model);
     ctx.earlyModels.check(viewerOf(req), "models", m.id);
+    if (catchupTask) {
+      if (m.type !== "chat" || imageCallable(m)) fail(400, "Catch me up needs a text model.", "unsupported_model");
+      req.body.max_tokens = catchupBudget(m, req.body.messages);
+    }
     const teamPaid = req.body.treasury === true;
     if (teamPaid && m.type !== "chat") fail(400, "Team pays supports chat requests only.");
     const team = teamPaid ? ctx.treasury.forQuote(req.user.id, req.body.conversationId) : null;

@@ -201,7 +201,7 @@ export function vaultTitle(messages = [], veilMap = {}) {
 // reopens sealed and only ever goes on sealed) and, for a chat started in
 // a project, that project's id: the vault groups project chats in this
 // browser, since the server never learns a device-only chat exists.
-export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, project = null, now = Date.now() }) {
+export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, project = null, carried = null, now = Date.now() }) {
   return {
     id,
     title: vaultTitle(messages, veil?.map),
@@ -210,6 +210,19 @@ export function vaultChat({ id, mode, privateMode, sealed = false, messages, vei
     ...(typeof project === "string" && project ? { project } : {}),
     // Sealed Mode: it reopens sealed and only ever goes on sealed.
     ...(sealed ? { sealed: true } : {}),
+    // Summarize & Continue: the summary a chat continued fresh carries, and
+    // the vault chat it came from (id and title), kept only in the vault.
+    ...(typeof carried?.summary === "string" && carried.summary
+      ? {
+          carried: {
+            summary: carried.summary,
+            from:
+              carried.from && typeof carried.from === "object"
+                ? { id: String(carried.from.id || ""), title: String(carried.from.title || "") }
+                : null,
+          },
+        }
+      : {}),
     messages: messages.filter((m) => !m.sample),
     veil: veil
       ? { map: { ...veil.map }, counters: { ...veil.counters }, valueToTag: { ...veil.valueToTag } }

@@ -1,0 +1,427 @@
+/* Summarize & Continue: the header's Catch me up button, its dialog (built
+   on .modal, .inline-actions and .small-button from styles.css), and the
+   banner and summary card of a continued chat. Flat cobalt and white with
+   the brand yellow only on the tile, 2px corners and hairlines, like Deep
+   Research and Chat Export. */
+
+/* ---- Header button (like Export) ---- */
+.catchup-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 12px;
+  color: #0135df;
+  background: #fff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.catchup-open:hover:not(:disabled) {
+  background: #f0f4fc;
+}
+.catchup-open:disabled {
+  color: #96a4be;
+  cursor: default;
+}
+.catchup-open:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 2px;
+}
+@media (max-width: 700px) {
+  .catchup-open {
+    padding: 8px;
+  }
+  .catchup-open span {
+    display: none;
+  }
+}
+/* Phones: the action moves from the full header to under the newest message. */
+.app-shell .catchup-nudge {
+  display: none;
+}
+@media (max-width: 480px) {
+  .catchup-open {
+    display: none;
+  }
+  .app-shell .catchup-nudge {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin: 4px 0 8px;
+    padding: 10px 12px;
+    background: #f5f8ff;
+    border: 1px solid #dae5ff;
+    border-radius: 2px;
+    font-size: 12px;
+    color: #4a5872;
+  }
+  .app-shell .catchup-nudge button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: #0135df;
+    background: #fff;
+    border: 1px solid #0135df;
+    border-radius: 2px;
+    padding: 7px 10px;
+    cursor: pointer;
+  }
+}
+
+/* ---- Dialog ---- */
+.modal:has(.catchup) {
+  max-width: 720px;
+}
+.catchup {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  color: #142343;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.catchup p {
+  margin: 0;
+}
+.catchup-lede {
+  color: #4a5872;
+}
+.modal .catchup-model {
+  margin: 0;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #68748a;
+}
+.catchup-model select {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #142343;
+  background: #fff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  padding: 9px 10px;
+  width: 100%;
+}
+.catchup-sees {
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+}
+.catchup-eyebrow {
+  margin: 0 0 8px !important;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #0135df;
+}
+.catchup-sees ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.catchup-sees li,
+.catchup-note {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  color: #4a5872;
+  font-size: 12px;
+}
+.catchup-sees li svg,
+.catchup-note svg {
+  margin-top: 3px;
+  color: #0135df;
+}
+.catchup-actions {
+  margin-top: 0;
+}
+.catchup-estimate {
+  font-size: 12px;
+  color: #24498b;
+  font-variant-numeric: tabular-nums;
+}
+.catchup-estimate.short {
+  color: #8a4b00;
+}
+.catchup-running {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  padding: 8px 0;
+}
+.catchup-bar {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  background: #e3e8f0;
+}
+.catchup-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 34%;
+  background: #0135df;
+  animation: catchup-slide 1.3s ease-in-out infinite;
+}
+@keyframes catchup-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .catchup-bar span {
+    animation: none;
+    width: 100%;
+    opacity: 0.4;
+  }
+}
+
+/* ---- The summary ---- */
+.catchup-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 22px;
+}
+.catchup-section:first-child,
+.catchup-leftoff {
+  grid-column: 1 / -1;
+}
+.catchup-section h3 {
+  margin: 0 0 6px;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  color: #0135df;
+}
+.catchup-section ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+}
+.catchup-section li {
+  position: relative;
+  padding-left: 16px;
+}
+.catchup-section li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  background: #0135df;
+}
+.catchup-none {
+  color: #96a4be;
+  font-size: 12px;
+}
+.catchup-leftoff {
+  padding: 10px 14px;
+  background: #f5f8ff;
+  border-left: 3px solid #0135df;
+  border-radius: 2px;
+}
+.catchup-leftoff p {
+  font-weight: 600;
+  color: #061b69;
+  overflow-wrap: anywhere;
+}
+.catchup-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  font-size: 12px;
+  color: #68748a;
+}
+.catchup-meta span:not(:last-child)::after {
+  content: "·";
+  margin: 0 7px;
+}
+
+/* ---- Continue fresh ---- */
+.catchup-savings {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  background: #f0f5ff;
+  border: 1px solid #dae5ff;
+  border-radius: 2px;
+}
+.catchup-savings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+}
+.catchup-savings-row > span {
+  display: grid;
+  gap: 1px;
+}
+.catchup-savings-row small {
+  font-size: 11px;
+  color: #4a5872;
+}
+.catchup-savings-row b {
+  font-size: 20px;
+  font-weight: 600;
+  color: #061b69;
+  font-variant-numeric: tabular-nums;
+}
+.catchup-savings-row > svg {
+  color: #0135df;
+}
+.catchup-savings-row strong {
+  margin-left: auto;
+  padding: 6px 10px;
+  background: #0135df;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.catchup-savings p {
+  font-size: 11px;
+  color: #4a5872;
+}
+.modal .catchup-draft {
+  margin: 0;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #68748a;
+}
+.catchup-draft textarea {
+  width: 100%;
+  min-height: 170px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.5;
+  color: #142343;
+  background: #fff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+.catchup-draft textarea:focus {
+  outline: none;
+  border-color: #0135df;
+  box-shadow: inset 0 0 0 1px #0135df;
+}
+
+@media (max-width: 700px) {
+  .catchup-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .catchup-savings-row b {
+    font-size: 17px;
+  }
+  .catchup-savings-row strong {
+    margin-left: 0;
+  }
+}
+
+/* ---- A continued chat ---- */
+.app-shell .catchup-banner svg {
+  color: #0135df;
+}
+.app-shell .carried-summary {
+  margin: 0 0 26px;
+  background: #fff;
+  border: 1px solid #dae5ff;
+  border-radius: 2px;
+  color: #142343;
+}
+.app-shell .carried-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: #f5f8ff;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+}
+.app-shell .carried-head:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 2px;
+}
+.app-shell .carried-head > svg {
+  flex: none;
+  color: #0135df;
+  transition: transform 0.2s;
+}
+.app-shell .carried-summary.open .carried-head > svg {
+  transform: rotate(180deg);
+}
+.app-shell .carried-tile {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  background: #0135df;
+  color: #ffb21c;
+}
+.app-shell .carried-title {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+.app-shell .carried-title b {
+  font-size: 13px;
+  font-weight: 600;
+  color: #061b69;
+}
+.app-shell .carried-title small {
+  font-size: 11px;
+  color: #4a5872;
+}
+.app-shell .carried-body {
+  padding: 14px 16px 16px;
+  border-top: 1px solid #dae5ff;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 240px;
+  overflow: auto;
+}

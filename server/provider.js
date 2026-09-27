@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fail, generationPrice } from "./core.js";
 import { sheetsTestReply } from "./sheets.js";
+import { catchupTestReply } from "./catchup.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -122,9 +123,11 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       typeof last === "string"
         ? last
         : last?.find((p) => p.type === "text")?.text || "";
-    // Local Sheets' planner and explainer get a deterministic stand-in.
+    // Local Sheets' planner and explainer get a deterministic stand-in, and
+    // so does Summarize & Continue's summary (with its finish reason).
     const sheets = sheetsTestReply(body.messages);
-    const answer = sheets !== null ? sheets : /code|function|javascript|python/i.test(text)
+    const catchup = sheets === null ? catchupTestReply(body.messages) : null;
+    const answer = sheets !== null ? sheets : catchup ? catchup.text : /code|function|javascript|python/i.test(text)
       ? "**Local test provider** — this is a deterministic integration fixture, not a live model.\n\n```javascript filename=hello.js\nexport function greet(name) {\n  return `Hello, ${name}!`;\n}\n```\n\nThe file is available in the code panel."
       : /\b(diagram|equation|formula)s?\b|图表|公式|流程图/i.test(text)
       ? TEST_DIAGRAM_ANSWER
@@ -136,6 +139,7 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       await new Promise((r) => setTimeout(r, 12));
       yield { choices: [{ delta: { content: part }, index: 0 }] };
     }
+    if (catchup) yield { choices: [{ delta: {}, finish_reason: catchup.finish, index: 0 }] };
     yield {
       choices: [],
       usage: {

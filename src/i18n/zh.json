@@ -4172,7 +4172,78 @@
     "Confirm with your passkey again.": "请再次用你的通行密钥确认。",
     "A passkey works too.": "也可以用通行密钥。",
     "Blind can't be combined with Deep research or Sheets.": "盲测对比不能与深度研究或表格同时使用。",
-    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。"
+    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。",
+    "Summarize & Continue": "总结并继续",
+    "Catch up on a long chat, then continue it fresh for fewer tokens.": "快速回顾长会话，再用更少的 Token 在新会话中继续。",
+    "Catch me up: key points, decisions, open questions and where you left off": "帮我回顾：要点、决定、待解决问题，以及上次停在哪里",
+    "Continue fresh: a new chat that carries the summary, not the whole history": "在新会话中继续：新会话只带上总结，而不是全部历史",
+    "See the estimate first, and about how many fewer tokens each message sends": "先看估算，并了解每条消息大约少发送多少 Token",
+    "Catch me up": "帮我回顾",
+    "Catch me up on this chat": "帮我回顾此会话",
+    "Summarize this chat, then continue fresh": "总结此会话，然后在新会话中继续",
+    "Continued from": "延续自",
+    "Continued from an off-the-record chat": "延续自一个不留记录的会话",
+    "Continued from an earlier chat": "延续自一个较早的会话",
+    "Continued": "延续",
+    "Summary carried into this chat": "带入此会话的总结",
+    "Saved like any chat, with a link back to this one. This chat stays as it is.": "像其他会话一样保存，并附有返回此会话的链接。此会话保持不变。",
+    "Kept in Device Vault on this device, like this chat. This chat stays as it is.": "与此会话一样，保存在此设备的本机保险库中。此会话保持不变。",
+    "Off the record, like this chat: nothing is saved. This chat isn't saved either, so it closes when the fresh one starts. Copy anything you need first.": "与此会话一样不留记录：不保存任何内容。此会话同样没有保存，因此新会话开始时它会关闭。请先复制你需要的内容。",
+    "Private Mode, like this chat: zero-data-retention models, nothing saved. This chat isn't saved either, so it closes when the fresh one starts. Copy anything you need first.": "与此会话一样使用隐私模式：仅限零数据保留模型，不保存任何内容。此会话同样没有保存，因此新会话开始时它会关闭。请先复制你需要的内容。",
+    "Key points": "要点",
+    "Decisions": "决定",
+    "Open questions": "待解决问题",
+    "Where we left off": "上次停在哪里",
+    "None": "无",
+    "None recorded": "没有记录",
+    "None open": "没有待解决的问题",
+    "Not stated": "未提及",
+    "Now, with every message": "现在，每条消息都附带",
+    "Fresh chat, with the summary": "新会话，只带总结",
+    "An estimate, from the token count the provider reported for the summary. Your next question and each reply add to both.": "这是估算，依据提供商为本次总结报告的 Token 数。你的下一个问题和每条回复都会让两边的数字增加。",
+    "A rough estimate at about four characters a token. Your next question and each reply add to both.": "这是粗略估算，按约每 4 个字符 1 个 Token 计算。你的下一个问题和每条回复都会让两边的数字增加。",
+    "A short summary of this chat: key points, decisions, open questions and where you left off. Then, if you like, continue in a fresh chat that carries only the summary.": "为此会话生成简短总结：要点、决定、待解决问题，以及上次停在哪里。之后，你可以选择在一个只带上总结的新会话中继续。",
+    "Summarize with": "用于总结的模型",
+    "WHAT THE AI SEES": "AI 能看到的内容",
+    "Attached files are named, not included. Images are left out.": "附件只列出文件名，不包含内容。图片不会发送。",
+    "Veil masks 1 detail before sending. The summary is restored here.": "发送前，Veil 会遮盖 1 处敏感信息。总结会在这里还原。",
+    "Veil is on: details it finds are masked before sending.": "Veil 已开启：它发现的敏感信息会在发送前被遮盖。",
+    "Private Mode: zero-data-retention models only.": "隐私模式：仅限零数据保留模型。",
+    "Off the record: the summary is shown here and isn't saved, unless you continue fresh.": "不留记录：总结只显示在这里，不会保存，除非你在新会话中继续。",
+    "No model can summarize this chat right now.": "目前没有可以总结此会话的模型。",
+    "This chat is too long for this model. Pick one with a larger context.": "对这个模型来说，此会话太长了。请选择上下文更长的模型。",
+    "Summarize": "总结",
+    "Summarize anyway": "仍然总结",
+    "Continue fresh": "在新会话中继续",
+    "Copy summary": "复制总结",
+    "Summarize again": "重新总结",
+    "The oldest message wasn't included.": "最早的 1 条消息未包含在内。",
+    "The model hit its reply limit, so this may be incomplete.": "模型已达到回复上限，因此这份总结可能不完整。",
+    "A new chat starts with this summary as its context, sent with each message instead of the whole history. Edit it first if you like.": "新会话以这份总结作为上下文开始，每条消息只附带总结，而不是全部历史。你可以先编辑它。",
+    "The summary the fresh chat carries": "新会话带上的总结",
+    "Starting…": "正在开始……",
+    "Start fresh chat": "开始新会话",
+    "Back to the summary": "返回总结",
+    "Charged 1 credit.": "已扣除 1 积分。",
+    "Stopped. If the model had already started, what it wrote was charged.": "已停止。如果模型已经开始生成，已生成的部分会计费。",
+    "The summary couldn't be made.": "无法生成总结。",
+    "The fresh chat couldn't be started.": "无法开始新会话。",
+    "The model ran out of room before the summary was finished. Try again, or pick another model.": "模型在总结完成前用完了回复空间。请重试，或换一个模型。",
+    "The model's reply wasn't a summary this page can read. Try again, or pick another model.": "模型的回复不是本页能读取的总结。请重试，或换一个模型。",
+    "Catch me up works on chats with at least 8 messages, or about 6,000 tokens of text.": "“帮我回顾”适用于至少有 8 条消息，或约 6,000 个 Token 文本的会话。",
+    "This chat is too long for this model to summarize. Choose a model with a larger context. Nothing was sent or charged.": "此会话太长，这个模型无法总结。请选择上下文更长的模型。未发送任何内容，也未扣费。",
+    "A catch-up summary is never saved: send it off the record.": "回顾总结从不保存：请以不留记录方式发送。",
+    "A catch-up summary can't be combined with other chat options.": "回顾总结不能与其他对话选项同时使用。",
+    "Catch me up works in chat, code and Uncensored.": "“帮我回顾”适用于对话、代码和无审查模式。",
+    "Catch me up needs a text model.": "“帮我回顾”需要文本模型。",
+    "Send the chat to summarize as a transcript.": "请以文字记录的形式发送要总结的会话。",
+    "A catch-up request carries only its transcript.": "回顾请求只能包含会话文字记录。",
+    "Each turn is from the user or the assistant.": "每一轮都必须来自用户或助手。",
+    "Name the chat to continue from.": "请指定要延续的会话。",
+    "Only chat, code and Uncensored conversations can be continued fresh.": "只有对话、代码和无审查会话可以在新会话中继续。",
+    "Add the summary the fresh chat should start from.": "请添加新会话开始时使用的总结。",
+    "Keep the summary under 12,000 characters.": "总结请控制在 12,000 个字符以内。",
+    "This chat is getting long.": "此会话越来越长了。"
   },
   "patterns": [
     {
@@ -6578,6 +6649,82 @@
     {
       "en": "Too many incorrect attempts. Try again in {0} minutes, or sign out instead.",
       "zh": "错误次数过多。请在 {0} 分钟后重试，或改为退出登录。"
+    },
+    {
+      "en": "Sent as context with each message · ≈{0} tokens",
+      "zh": "作为上下文随每条消息发送 · 约 {0} 个 Token"
+    },
+    {
+      "en": "≈{0} tokens",
+      "zh": "约 {0} 个 Token"
+    },
+    {
+      "en": "{0}% fewer",
+      "zh": "减少 {0}%"
+    },
+    {
+      "en": "{0} (this chat's model)",
+      "zh": "{0}（此会话的模型）"
+    },
+    {
+      "en": "{0} (costs less)",
+      "zh": "{0}（更便宜）"
+    },
+    {
+      "en": "The newest {0} of {1} messages, as text. The oldest one doesn't fit this model.",
+      "zh": "以文本形式发送 {1} 条消息中最新的 {0} 条。最早的 1 条超出了这个模型的容量。"
+    },
+    {
+      "en": "The newest {0} of {1} messages, as text. The oldest {2} don't fit this model.",
+      "zh": "以文本形式发送 {1} 条消息中最新的 {0} 条。最早的 {2} 条超出了这个模型的容量。"
+    },
+    {
+      "en": "All {0} messages, as text (≈{1} tokens).",
+      "zh": "全部 {0} 条消息，以文本形式发送（约 {1} 个 Token）。"
+    },
+    {
+      "en": "Veil masks {0} details before sending. The summary is restored here.",
+      "zh": "发送前，Veil 会遮盖 {0} 处敏感信息。总结会在这里还原。"
+    },
+    {
+      "en": "Charged {0} credits.",
+      "zh": "已扣除 {0} 积分。"
+    },
+    {
+      "en": "Up to {0} credits · over your balance",
+      "zh": "最多 {0} 积分 · 超出你的余额"
+    },
+    {
+      "en": "Up to {0} credits · you pay only what it uses",
+      "zh": "最多 {0} 积分 · 只按实际用量付费"
+    },
+    {
+      "en": "Summarizing {0} messages with {1}…",
+      "zh": "正在用 {1} 总结 {0} 条消息……"
+    },
+    {
+      "en": "By {0}",
+      "zh": "由 {0} 生成"
+    },
+    {
+      "en": "The oldest {0} messages weren't included.",
+      "zh": "最早的 {0} 条消息未包含在内。"
+    },
+    {
+      "en": "A transcript has 2 to {0} turns.",
+      "zh": "文字记录须包含 2 到 {0} 轮。"
+    },
+    {
+      "en": "Each turn has 1 to {0} characters of text.",
+      "zh": "每一轮须包含 1 到 {0} 个字符的文本。"
+    },
+    {
+      "en": "A transcript can't exceed {0} characters.",
+      "zh": "文字记录不能超过 {0} 个字符。"
+    },
+    {
+      "en": "Up to {0} credits · over your spending limit",
+      "zh": "最多 {0} 积分 · 超出你的消费上限"
     }
   ]
 }

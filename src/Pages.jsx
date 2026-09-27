@@ -870,6 +870,7 @@ const featureIcons = {
   deepresearch: "research",
   passkeys: "fingerprint",
   privacyscreen: "eyeoff",
+  catchup: "catchup",
 };
 const launch = {
   id: "mvp",

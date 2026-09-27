@@ -245,6 +245,8 @@ const pixels = {
   canvas: [".....##", "....#.#", "...#.#.", "..#.#..", ".###...", "##.....", "#######"],
   // A screen on its stand, showing a title and a line: a slide deck.
   slides: ["#######", "#.....#", "#.###.#", "#.....#", "#######", "...#...", "..###.."],
+  // 文 and A: a document in another language.
+  translate: [".#.....", "###..#.", ".#..#.#", "#.#.###", "....#.#", "....#.#", "......."],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

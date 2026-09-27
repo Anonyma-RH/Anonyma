@@ -889,6 +889,7 @@ const featureIcons = {
   automodel: "auto",
   canvas: "canvas",
   slides: "present",
+  doctranslate: "languages",
 };
 const launch = {
   id: "mvp",

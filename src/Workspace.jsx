@@ -47,6 +47,8 @@ const Compare = lazy(() => import("./Compare.jsx"));
 const Canvas = lazy(() => import("./Canvas.jsx"));
 // Slides: its editor, presenter, exports and deck storage load only on its page.
 const Slides = lazy(() => import("./Slides.jsx"));
+// Translate Documents: its readers, part planner and exports load only on its page.
+const Translate = lazy(() => import("./Translate.jsx"));
 // Audio Overview's dialog and player, loaded only when opened.
 const AudioOverviewDialog = lazy(() => import("./AudioOverview.jsx"));
 // Summarize & Continue's dialog, loaded when Catch me up is first opened.
@@ -324,6 +326,7 @@ export function AppSidebar({
           ["sheets", "Sheets"],
           ["compare", "Compare docs"],
           ["canvas", "Canvas"],
+          ["translate", "Translate docs"],
           ["study", "Study"],
           ["slides", "Slides"],
           ["routines", "Routines"],
@@ -335,6 +338,7 @@ export function AppSidebar({
           .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
           .filter(([id]) => id !== "device" || isReleased(config, "ondevice"))
           .filter(([id]) => id !== "compare" || isReleased(config, "doccompare"))
+          .filter(([id]) => id !== "translate" || isReleased(config, "doctranslate"))
           .filter(([id]) => id !== "study" || isReleased(config, "study"))
           .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
           .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
@@ -584,7 +588,9 @@ export default function Workspace() {
     // And Canvas's.
     (mode === "canvas" && (!config || isReleased(config, "canvas"))) ||
     // And Slides'.
-    (mode === "slides" && (!config || isReleased(config, "slides")));
+    (mode === "slides" && (!config || isReleased(config, "slides"))) ||
+    // Translate Documents' page, likewise.
+    (mode === "translate" && (!config || isReleased(config, "doctranslate")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3772,6 +3778,7 @@ export default function Workspace() {
                 compare: "Compare docs",
                 canvas: "Canvas",
                 slides: "Slides",
+                translate: "Translate docs",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4045,6 +4052,12 @@ export default function Workspace() {
                   vaultLive={vaultLive}
                   onUnlockVault={() => setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })}
                 />
+              </Suspense>
+            )
+          ) : mode === "translate" ? (
+            isReleased(config, "doctranslate") && (
+              <Suspense fallback={<p className="translate-loading">Opening Translate docs…</p>}>
+                <Translate key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
               </Suspense>
             )
           ) : mode === "tools" ? (

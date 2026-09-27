@@ -374,6 +374,7 @@ export const MODE_LABELS = {
   compare: "Compare docs",
   canvas: "Canvas",
   slides: "Slides",
+  translate: "Translate docs",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -395,6 +396,8 @@ const PLACES = [
   ["sheets", "Sheets", ["spreadsheet", "csv", "tsv", "excel", "analyse", "analyze", "chart", "table", "data"]],
   // Document Compare: likewise only once released.
   ["compare", "Compare docs", ["compare documents", "diff", "redline", "track changes", "versions", "contract", "changes"]],
+  // Translate Documents: likewise only once released.
+  ["translate", "Translate docs", ["translate", "translation", "language", "document", "pdf", "docx", "localize", "side by side"]],
   // Study Mode: only once released, like Sheets.
   ["study", "Study", ["flashcards", "quiz", "revise", "revision", "learn", "anki", "spaced repetition", "cards"]],
   // Canvas: likewise only once released.

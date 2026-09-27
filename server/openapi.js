@@ -2220,6 +2220,65 @@ route("post", "/api/research", "Run Deep research", {
   description:
     "Workspace only (session). Plans up to 3 or 6 sub-questions (strict JSON; invalid output falls back to the question itself), runs one web search per sub-question and writes a Markdown report whose [n] citations map only to the pages those searches returned; other URLs and out-of-range numbers are removed. Before anything runs, every step is held at its maximum (402 insufficient_credits or spending_limit, 409 research_running for a second run, with nothing charged). Each step settles on its own usage as it finishes; a step that fails, is stopped (closing the stream) or never starts is released, so only finished steps are charged. SSE events: research.stage planning, planned (questions), searching / searched (index, status, sources, credits), writing, then done with message { text, citations, research } and anonyma { credits_charged, request_id, private?, privacy?, memory? }, or error with whatever finished. A saved run adds the question and the report to the conversation as ordinary messages.",
 });
+// Translate Documents (update "doctranslate").
+route("post", "/api/translate/quote", "The most translating a document's parts can cost", {
+  body: object(
+    {
+      model: { ...string, description: "A callable text model" },
+      sizes: {
+        ...array(object({ json: integer, bytes: integer }, ["json", "bytes"])),
+        maxItems: 150,
+        description: "One entry per part to be translated: the serialised length and context estimate of the part's longest request (src/translate-spec.js measure of pricedMessages). The parts' text is never sent to a quote (400 invalid_request with parts or glossary).",
+      },
+      private: { ...bool, description: "Private Mode: a zero-data-retention model only (needs private and ephemeral)" },
+    },
+    ["model", "sizes"],
+  ),
+  response: object({
+    credits: { ...number, description: "The maximum for all the parts: what a run holds" },
+    units: { ...integer, description: "The same maximum in integer ledger units; send it back as max_units" },
+    part_units: { ...array(integer), description: "Each part's maximum, in the order sent" },
+    parts: array(number),
+    available: number,
+    spending_limit: object({ remaining: number }),
+    model: string,
+    estimate: bool,
+  }),
+  description: "Reserves, charges, stores and sends nothing. 400 context_limit_exceeded when a part leaves the model less than 2,000 tokens of reply room.",
+});
+route("post", "/api/translate", "Translate a document's parts", {
+  body: object(
+    {
+      model: { ...string, description: "A callable text model" },
+      target: { ...string, description: "The language code to translate into (35 languages, e.g. zh-CN, es, fr, de, ja, ko, pt, ru, ar, hi)" },
+      tone: { enum: ["formal", "plain"] },
+      of: { ...integer, minimum: 1, maximum: 150, description: "How many parts the whole document has" },
+      parts: {
+        ...array(object({ index: integer, text: { ...string, maxLength: 8000 } }, ["index", "text"])),
+        description: "The parts to translate now (all, the rest after Stop, or one to retry), each as Markdown, masked by Veil in the browser when it's on",
+      },
+      glossary: {
+        ...array(object({ term: { ...string, maxLength: 80 }, as: { ...string, maxLength: 80 } }, ["term"])),
+        maxItems: 40,
+        description: "Terms to keep as written, or to translate as `as`. Each part is sent only the terms it contains.",
+      },
+      max_units: { ...integer, description: "The quote's units for exactly these parts; any other figure is refused with 409 estimate_changed, nothing held" },
+      requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+      private: { ...bool, description: "Private Mode: a zero-data-retention model with ZDR routing and no failover (needs private and ephemeral)" },
+      veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for these parts (needs trail)" },
+      allow_seed_phrase: { ...bool, description: "Seed Guard's Send anyway (needs seedguard); otherwise a part or term holding a seed phrase is refused with 400 seed_phrase_blocked" },
+    },
+    ["model", "target", "tone", "of", "parts", "max_units"],
+  ),
+  stream: true,
+  description:
+    "Workspace only (session), always off the record: nothing is stored and nothing is logged, and the model never sees the file's name. Every part's maximum is held before anything runs, exactly the quoted total (402 insufficient_credits or spending_limit, 409 translate_running for a second run, with nothing charged). Up to 3 parts run at once, each one model call told to return only its translation with the same Markdown structure; a part whose answer drops or changes a Veil placeholder is retried once with the missing ones named. A part settles on its own usage when its translation is usable; one that fails, comes back empty, is cut off at its reply budget, loses a placeholder twice, is stopped or never starts is released and charged nothing. SSE events: translate.stage started (parts, reserved), part (index, status running, done with text and credits, failed with code and message, or stopped), then done (status done, partial or stopped; done, not_done, credits_charged) with anonyma { credits_charged, request_id, stored: false, private?, privacy? }.",
+});
+route("post", "/api/translate/stop", "Stop the running translation", {
+  body: object({ requestId: { ...string, description: "The run to stop; omitted, the account's running translation" } }),
+  response: object({ stopped: bool }),
+  description: "Parts in flight and not yet started are released and charged nothing; the run's stream then reports what finished, and ends.",
+});
 // Prompt Sharpen (update "sharpen"; Private Mode needs "private" too).
 route("post", "/api/sharpen/quote", "What sharpening a prompt costs", {
   body: object(

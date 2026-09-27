@@ -41,6 +41,7 @@ export function siteRoutes({ app, db, cfg }) {
     gift: isReleased(cfg, "giftlinks"),
     canvas: isReleased(cfg, "canvas"),
     slides: isReleased(cfg, "slides"),
+    translate: isReleased(cfg, "doctranslate"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

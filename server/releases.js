@@ -1142,6 +1142,23 @@ export const UPDATES = [
     // keep a deck in the browser only.
     released: false,
   },
+  {
+    id: "doctranslate",
+    title: "Translate Documents",
+    tagline: "Translate a whole document and keep its structure.",
+    points: [
+      "PDF, DOCX, TXT or Markdown into 35 languages, with headings, lists and tables kept",
+      "Side by side as it translates, with a glossary and a formal or plain tone",
+      "See the most it can cost first; pay only for the parts that come back. Export DOCX, Markdown or PDF",
+    ],
+    // The workspace's Translate docs page (src/Translate.jsx). The file is
+    // read in the browser; only the parts' text goes, one off-the-record
+    // model call per part through /api/translate (server/routes/translate.js),
+    // held and settled on the ordinary billing path. Nothing is stored, so
+    // there's nothing to erase or export; saving a translation to Files is
+    // an ordinary upload the person chooses.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1341,6 +1358,19 @@ export function featuresFor(req) {
       else if (body.ephemeral === true) needed.push("ephemeral");
       if (body.project !== undefined) needed.push("projects");
       if (body.veil_masked !== undefined) needed.push("trail");
+    }
+    return needed;
+  }
+  // Translate Documents: a run of a document's parts, and its quote. What a
+  // run turns on needs its own update, as the same chat would: Private Mode
+  // (which always takes the off-the-record path), Privacy Trail's Veil
+  // count and Seed Guard's override.
+  if (p === "/api/translate" || p.startsWith("/api/translate/")) {
+    const needed = ["doctranslate"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      if (body.veil_masked !== undefined) needed.push("trail");
+      if (body.allow_seed_phrase !== undefined) needed.push("seedguard");
     }
     return needed;
   }

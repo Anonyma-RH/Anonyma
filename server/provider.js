@@ -6,6 +6,7 @@ import { studyTestReply } from "./study.js";
 import { compareTestReply } from "./compare.js";
 import { pageWatchTestReply } from "./page-watch-test.js";
 import { overviewTestReply } from "./audio-overview.js";
+import { translateTestReply } from "./translate-test.js";
 import { catchupTestReply } from "./catchup.js";
 import { autoHelperTestReply } from "./auto-model-test.js";
 import { canvasTestReply } from "./canvas.js";
@@ -229,8 +230,14 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       ? JSON.stringify({ verdict: "unverified", reason: "Local test provider: no web search was run.", sources: [] })
       : null;
     // Slides' deck and slide writer (server/slides.js) finishes the same way.
+    // Translate docs' stand-in (server/translate-test.js) can also fail on
+    // purpose, as a provider error would.
     const finishing =
-      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? canvasTestReply(body.messages) ?? slidesTestReply(body.messages);
+      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? canvasTestReply(body.messages) ?? slidesTestReply(body.messages) ?? translateTestReply(body.messages);
+    if (finishing?.error) {
+      yield { error: { message: finishing.error } };
+      return;
+    }
     const standIn =
       finishing !== null
         ? finishing.text

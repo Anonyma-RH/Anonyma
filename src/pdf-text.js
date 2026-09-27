@@ -44,3 +44,27 @@ export async function pdfText(data, withDetails = false, hiddenOf = null) {
   }
   return { text: pages.join("\n\n").trim(), pages: doc.numPages, hidden, hiddenText };
 }
+// Translate docs (src/doc-translate.js pdfBlocks): each page's text items
+// with where they sit and how big they are, so headings, lists and
+// paragraphs can be told apart. Items too small to see (under 2 pt) or off
+// the page are left out, as a reader wouldn't see them either.
+export async function pdfLayout(data) {
+  const pdfjs = await loadPdfjs();
+  const doc = await pdfjs.getDocument({ data }).promise;
+  const pages = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const [x0, y0, x1, y1] = page.view;
+    const content = await page.getTextContent();
+    const items = [];
+    for (const item of content.items) {
+      if (typeof item.str !== "string") continue;
+      const [a, b, c, d, x, y] = item.transform;
+      const h = Math.abs(item.height) || Math.hypot(c, d) || Math.hypot(a, b);
+      if (item.str.trim() && (h < 2 || x < x0 - 1 || x > x1 + 1 || y < y0 - 1 || y > y1 + 1)) continue;
+      items.push({ str: item.str, x, y, w: item.width || 0, h, eol: !!item.hasEOL });
+    }
+    pages.push({ items });
+  }
+  return { pages, count: doc.numPages };
+}

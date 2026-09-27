@@ -9,6 +9,7 @@ import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
 import { exportBlindVotes, forgetBlindVotes } from "./blind.js";
 import { exportAudioOverviews, forgetAudioOverviews } from "./audio-overview.js";
+import { exportVaultSync, forgetVaultSync } from "./vault-sync.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -50,6 +51,7 @@ import {
 //   version of each page and their reports), bookmarks, Blind Compare votes,
 //   Audio Overview scripts and NYMA top-up quotes (a credited top-up stays
 //   as its deposit);
+// - Vault Sync's ciphertext and its synced settings;
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -112,6 +114,9 @@ export function eraseAccountContent(db, user) {
   forgetBlindVotes(db, id);
   // Audio Overview: saved overviews' scripts (their audio is media, below).
   forgetAudioOverviews(db, id);
+  // Vault Sync: the synced ciphertext, its tombstones and settings. Each
+  // device keeps its own copy and stops syncing when it next checks.
+  forgetVaultSync(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -193,6 +198,13 @@ export function accountRoutes(ctx) {
       .list(user)
       .map(({ name, created, lastUsed, synced }) => ({ name, created, lastUsed, synced }));
     return list.length || isReleased(cfg, "passkeys") ? { passkeys: list } : {};
+  }
+  // Vault Sync: the synced ciphertext as an importable vault file, with a
+  // note that it needs the passphrase (once the update is live, or while a
+  // synced copy exists; null when there's none).
+  function vaultSyncExport(user) {
+    const synced = exportVaultSync(db, user);
+    return synced || isReleased(cfg, "vaultsync") ? { vaultSync: synced } : {};
   }
   function bookmarksExport(user) {
     const list = exportBookmarks(db, user);
@@ -550,6 +562,8 @@ export function accountRoutes(ctx) {
       ...blindExport(req.user.id),
       // Audio Overview: saved overviews' scripts.
       ...audioOverviewExport(req.user.id),
+      // Vault Sync: the encrypted chats exactly as synced.
+      ...vaultSyncExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

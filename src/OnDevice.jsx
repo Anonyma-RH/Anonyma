@@ -487,7 +487,11 @@ export default function OnDevice({ user, demo, vault, vaultLive, onUnlockVault }
                   />
                   <span>
                     <b>Keep this chat in Device Vault</b>
-                    <small>Encrypted on this device with your passphrase. Never on our servers.</small>
+                    <small>
+                      {vault?.synced
+                        ? "Encrypted on this device with your passphrase. Vault Sync keeps only ciphertext on our servers."
+                        : "Encrypted on this device with your passphrase. Never on our servers."}
+                    </small>
                   </span>
                 </label>
               ) : (

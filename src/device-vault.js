@@ -165,9 +165,17 @@ export async function createVault(passphrase, { idleMinutes = DEFAULT_IDLE_MINUT
 // The key for a vault, or VaultError "wrong_passphrase".
 export async function unlockVault(meta, passphrase) {
   const key = await deriveVaultKey(passphrase, fromBase64(meta.kdf.salt), meta.kdf.iterations);
-  const text = await openJson(key, meta.verifier, VERIFIER_AAD, "wrong_passphrase");
-  if (text !== VERIFIER_TEXT) throw vaultError("wrong_passphrase");
+  if (!(await keyOpensVerifier(key, meta.verifier))) throw vaultError("wrong_passphrase");
   return key;
+}
+// Whether an unlocked key opens a vault's verifier: Vault Sync's check that
+// this device's vault is the synced one before it sends anything.
+export async function keyOpensVerifier(key, verifier) {
+  try {
+    return (await openJson(key, verifier, VERIFIER_AAD, "wrong_passphrase")) === VERIFIER_TEXT;
+  } catch {
+    return false;
+  }
 }
 
 // One chat, sealed: only its id is readable without the key.
@@ -203,12 +211,15 @@ export function vaultTitle(messages = [], veilMap = {}) {
 // browser, since the server never learns a device-only chat exists.
 // On-Device Model's chats ("device", src/on-device.js) are kept here too and
 // reopen only on that page, never with a server model.
-export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, project = null, carried = null, now = Date.now() }) {
+// Vault Sync: a chat changed on two devices at once keeps both versions;
+// the one kept beside the other is marked as a conflict copy.
+export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, project = null, carried = null, conflictCopy = false, now = Date.now() }) {
   return {
     id,
     title: vaultTitle(messages, veil?.map),
     mode: ["chat", "code", "uncensored", "device"].includes(mode) ? mode : "chat",
     private: !!privateMode,
+    ...(conflictCopy ? { conflictCopy: true } : {}),
     ...(typeof project === "string" && project ? { project } : {}),
     // Sealed Mode: it reopens sealed and only ever goes on sealed.
     ...(sealed ? { sealed: true } : {}),

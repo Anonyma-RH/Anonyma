@@ -82,6 +82,7 @@ import {
   vaultReleased,
 } from "./DeviceVault.jsx";
 import { vaultChat, vaultTitle } from "./device-vault.js";
+import { useVaultSync, vaultSyncReleased } from "./VaultSync.jsx";
 import {
   SealedToggle,
   SealedPanel,
@@ -523,6 +524,16 @@ export default function Workspace() {
   // idle timer, closing the tab) closes any vault chat on screen.
   const vaultLive = !demo && !!user && vaultReleased(config);
   const vault = useDeviceVault({ enabled: vaultLive, account: user?.id, onLock: vaultLocked });
+  // Vault Sync (src/VaultSync.jsx): the vault's end-to-end-encrypted copy
+  // for the account's other devices, once released and turned on.
+  const vaultSync = useVaultSync({
+    enabled: vaultLive && vaultSyncReleased(config),
+    account: user?.id,
+    vault,
+  });
+  // Pages that describe where vault chats are kept (On-device, Projects)
+  // say so honestly while sync is on.
+  vault.synced = vaultSync.on;
   const validMode = [
     "home",
     "chat",
@@ -1168,14 +1179,24 @@ export default function Workspace() {
     const snapshot = JSON.stringify(kept);
     if (snapshot === vaultSavedRef.current) return;
     vaultSavedRef.current = snapshot;
-    const ref = (vaultChatRef.current ||= { id: uid(), created: Date.now() });
+    let ref = (vaultChatRef.current ||= { id: uid(), created: Date.now() });
+    // Vault Sync: another device changed this chat while a reply was
+    // coming in here, so this version is kept beside it as a copy.
+    if (ref.stale) {
+      ref = vaultChatRef.current = { id: uid(), created: Date.now(), copy: true };
+      setInfo("This chat changed on another device while you were writing here, so your version is kept as a separate copy.");
+    }
     setVaultChatId(ref.id);
     const veilKey = veilKeyRef.current;
+    const saving = Date.now();
+    ref.updated = saving;
     vault
       .save(
         vaultChat({
           id: ref.id,
           created: ref.created,
+          conflictCopy: !!ref.copy,
+          now: saving,
           mode,
           privateMode,
           sealed: sealedOn || sealedThread,
@@ -1193,6 +1214,24 @@ export default function Workspace() {
         setError(e?.message || "This chat couldn't be saved to Device Vault.");
       });
   }, [deviceOnly, busy, vault.unlocked, messages]);
+  // Vault Sync: when another device changes the vault chat open here, it
+  // reloads while nothing is being sent; mid-reply, this tab's version is
+  // kept as a copy when it's saved (above).
+  useEffect(() => {
+    const ref = vaultChatRef.current;
+    if (!vault.remoteChanges.rev || !deviceOnly || !ref || !vault.unlocked) return;
+    if (!vault.remoteChanges.ids.includes(ref.id)) return;
+    const stored = vault.chats.find((c) => c.id === ref.id);
+    if (!stored || stored.updated === ref.updated) return;
+    if (busy) {
+      ref.stale = true;
+      return;
+    }
+    ref.updated = stored.updated;
+    if (stored.veil) veilStateRef.current = cloneVeilState(stored.veil);
+    vaultSavedRef.current = JSON.stringify(stored.messages);
+    setMessages(stored.messages);
+  }, [vault.remoteChanges.rev]);
   // Shared conversations refresh while open so members see each other.
   useEffect(() => {
     if (!shared || !current || busy) return;
@@ -1363,7 +1402,7 @@ export default function Workspace() {
     newChat();
     veilKeyRef.current = "vault-" + chat.id;
     veilStateRef.current = chat.veil ? cloneVeilState(chat.veil) : createVeilState();
-    vaultChatRef.current = { id: chat.id, created: chat.created };
+    vaultChatRef.current = { id: chat.id, created: chat.created, updated: chat.updated, copy: !!chat.conflictCopy };
     vaultSavedRef.current = JSON.stringify(chat.messages);
     setVaultChatId(chat.id);
     setDeviceOnly(true);
@@ -3497,6 +3536,7 @@ export default function Workspace() {
               openVaultChat(c);
             }}
             onDialog={setVaultDialog}
+            sync={vaultSync}
           />
         )}
       </AppSidebar>
@@ -4324,6 +4364,7 @@ export default function Workspace() {
                     onUnlock={() =>
                       setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })
                     }
+                    synced={vaultSync.on}
                   />
                 )}
                 {!demo &&
@@ -4880,6 +4921,7 @@ export default function Workspace() {
                           active={deviceOnly}
                           onToggle={toggleDeviceOnly}
                           disabled={busy}
+                          synced={vaultSync.on}
                         />
                       )}
                       {!demo &&
@@ -5465,6 +5507,7 @@ export default function Workspace() {
           key={vaultDialog.kind + ":" + (vaultDialog.chat?.id || "")}
           vault={vault}
           dialog={vaultDialog}
+          sync={vaultSync}
           onClose={(why) => {
             const d = vaultDialog;
             setVaultDialog(null);

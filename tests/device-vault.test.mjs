@@ -470,11 +470,18 @@ test("the server gates a device-only chat as off the record and never learns of 
   const { agent: a2 } = await register(eph.app, "vault-two");
   await a2.post("/api/chat").send(body).expect(200);
   assert.equal(eph.db.prepare("SELECT COUNT(*) n FROM messages").get().n, 0);
-  // No route, contract or server code knows about it.
+  // No route, contract or server code knows about it. The one exception is
+  // Vault Sync, which a person turns on to keep the vault's ciphertext on
+  // the server (server/routes/vault-sync.js, tests/vault-sync.test.mjs):
+  // anything else that mentions a vault is only there to wire Vault Sync.
+  const onlySync = (file, text) => {
+    for (const line of text.split("\n").filter((l) => /vault/i.test(l)))
+      assert.match(line, /vault[-_ ]?sync/i, `${file}: ${line.trim().slice(0, 120)}`);
+  };
   for (const f of readdirSync(new URL("../server/routes/", import.meta.url)))
-    assert.doesNotMatch(src("server/routes/" + f), /vault/i, f);
+    if (f !== "vault-sync.js") onlySync(f, src("server/routes/" + f));
   for (const f of ["server/app.js", "server/core.js", "server/openapi.js", "server/middleware.js"])
-    assert.doesNotMatch(src(f), /vault/i, f);
+    onlySync(f, src(f));
   const contract = (await request(eph.app).get("/api/openapi.json").expect(200)).body;
   assert.ok(!Object.keys(contract.paths).some((p) => /vault/i.test(p)), "no vault route");
   assert.doesNotMatch(JSON.stringify(contract.paths["/api/chat"]), /vault/i, "no vault field on a chat");
@@ -512,8 +519,12 @@ test("the workspace wires Device only behind its release, on the off-the-record 
   assert.match(ws, /\.then\(\(\) => forgetVeilState\(veilKey\)\)/);
   assert.match(ws, /privateContext=\{privateMode \|\| ephemeral \|\| veilOn\}/);
   assert.match(ws, /if \(deviceOnly && textMode && !vault\.unlocked\) \{/);
-  // Vault chat titles are content, never translated.
-  assert.match(src("src/DeviceVault.jsx"), /<button data-i18n="off" onClick=\{\(\) => onOpen\(c\)\}>/);
+  // Vault chat titles (and their project marks) are content, never
+  // translated; Vault Sync's Conflict copy tag before them is.
+  assert.match(
+    src("src/DeviceVault.jsx"),
+    /<button onClick=\{\(\) => onOpen\(c\)\}>\s*\{sync\?\.live && c\.conflictCopy && <ConflictCopyTag \/>\}\s*<span data-i18n="off">\s*\{mark\?\.\(c\)\}\s*\{c\.title\}\s*<\/span>/,
+  );
   // Its roadmap card has an icon.
   assert.match(src("src/Pages.jsx"), /\n  vault: "lock",\n/);
 });

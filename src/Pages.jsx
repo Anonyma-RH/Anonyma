@@ -880,6 +880,7 @@ const featureIcons = {
   audiooverview: "audio",
   highlight: "highlight",
   catchup: "catchup",
+  vaultsync: "devices",
 };
 const launch = {
   id: "mvp",

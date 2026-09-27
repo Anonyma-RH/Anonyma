@@ -40,6 +40,8 @@ export default function DataControls() {
   const ocr = !!config && isReleased(config, "ocr") && isReleased(config, "documents");
   // And Study Mode.
   const study = !!config && isReleased(config, "study");
+  // And Vault Sync, which builds on Device Vault.
+  const vaultSync = !!config && isReleased(config, "vaultsync") && isReleased(config, "vault");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -72,6 +74,11 @@ export default function DataControls() {
         <li>
           Device Vault keeps device-only chats encrypted in this browser with your passphrase; ANONYMA's servers store none of them, and they can't be recovered without the passphrase.
         </li>
+        {vaultSync && (
+          <li>
+            Vault Sync, if you turn it on: your browser encrypts each Device Vault chat before it's uploaded, so ANONYMA stores only ciphertext. We keep each chat's random id, version, size and when it changed, plus the vault's salt and an encrypted passphrase check; never the passphrase, the key or a title. Nobody can read these chats without your passphrase, including us. Forget synced copy, Panic Wipe and closing your account delete it; your account export includes the encrypted copy.
+          </li>
+        )}
         <li>
           Routines: each routine's prompt and settings, and the newest 50 runs per routine (answer, charge and receipt), until you delete them.
         </li>

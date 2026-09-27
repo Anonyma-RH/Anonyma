@@ -1944,6 +1944,78 @@ route("delete", "/api/bookmarks/{id}", "Remove a bookmark", {
   response: ref("Ok"),
   description: "The message itself is unchanged.",
 });
+// Vault Sync (update "vaultsync", which also needs "vault"): Device Vault's
+// end-to-end-encrypted sync. The browser seals every chat before it's sent.
+const vaultSyncBox = object({ iv: { ...string, description: "Vault Sync: base64 of the 12-byte AES-GCM IV" }, ct: { ...string, description: "Vault Sync: base64 of the AES-GCM ciphertext and tag" } }, ["iv", "ct"]);
+const vaultSyncSettings = object({
+  id: { ...string, description: "The synced vault's random id (Vault Sync)" },
+  kdf: object({ name: { enum: ["PBKDF2"] }, hash: { enum: ["SHA-256"] }, iterations: { ...integer, minimum: 600000, maximum: 10000000 }, salt: { ...string, description: "Base64, 16–64 bytes; not secret" } }),
+  verifier: { ...vaultSyncBox, description: "Vault Sync: a fixed text sealed with the vault key, so a device can tell a wrong passphrase" },
+  created: integer,
+  updated: integer,
+  records: { ...integer, description: "Synced chats" },
+  tombstones: { ...integer, description: "Deleted chats' markers" },
+  bytes: { ...integer, description: "Ciphertext stored (IV and ciphertext bytes)" },
+  cursor: { ...integer, description: "The newest change's position" },
+});
+const vaultSyncLimits = object({ bytes: integer, recordBytes: integer, records: integer });
+const vaultSyncRecord = object({
+  id: string,
+  version: integer,
+  deleted: bool,
+  size: integer,
+  updated: integer,
+  iv: { ...string, description: "Vault Sync: absent on a tombstone" },
+  ct: { ...string, description: "Vault Sync: absent on a tombstone" },
+});
+const vaultSyncStats = object({ records: integer, bytes: integer });
+route("get", "/api/vault-sync", "Your synced vault (Vault Sync)", {
+  response: object({ vault: { oneOf: [vaultSyncSettings, { type: "null" }] }, limits: vaultSyncLimits }),
+  description:
+    "Vault Sync: the synced vault's settings (salt, iteration count and sealed verifier, none of them secret) and how much is stored, or null when this account doesn't sync one. 600 reads per 10 minutes, shared with pulls.",
+});
+route("post", "/api/vault-sync", "Turn on Vault Sync", {
+  status: 201,
+  body: object({ kdf: object({ name: { enum: ["PBKDF2"] }, hash: { enum: ["SHA-256"] }, iterations: integer, salt: string }, ["name", "hash", "iterations", "salt"]), verifier: vaultSyncBox }, ["kdf", "verifier"]),
+  response: object({ vault: vaultSyncSettings, limits: vaultSyncLimits }),
+  description:
+    "Vault Sync: makes this vault the account's synced vault. Only the salt, iteration count and verifier are sent: never the passphrase or the key. Any other field is refused (400 invalid_request). One per account: 409 vault_sync_exists when one is already synced. 30 changes an hour, shared with DELETE.",
+});
+route("delete", "/api/vault-sync", "Forget the synced copy (Vault Sync)", {
+  response: object({ ok: bool, forgotten: bool }),
+  description:
+    "Vault Sync: deletes every synced record, tombstone and the settings, overwritten in the database file. Devices keep their own vaults and stop syncing when they next check. Backups are separate copies; without the passphrase they can't be read. Account closure and Panic Wipe do the same.",
+});
+route("get", "/api/vault-sync/records", "Pull synced changes (Vault Sync)", {
+  query: [
+    { name: "vault", in: "query", required: true, schema: string, description: "Vault Sync: the synced vault's id (409 vault_sync_changed when it was replaced; 404 vault_sync_missing when there is none)" },
+    { name: "since", in: "query", required: false, schema: { ...integer, minimum: 0, default: 0 }, description: "The cursor from the last pull" },
+    { name: "limit", in: "query", required: false, schema: { ...integer, minimum: 1, maximum: 500, default: 200 } },
+  ],
+  response: object({ vault: string, records: array(vaultSyncRecord), cursor: integer, more: bool, stats: vaultSyncStats }),
+  description: "Vault Sync: records changed after since, oldest change first, tombstones included. Start the next pull at cursor while more is true.",
+});
+route("post", "/api/vault-sync/records", "Push sealed changes (Vault Sync)", {
+  body: object(
+    {
+      vault: { ...string, description: "Vault Sync: the synced vault's id (409 vault_sync_changed when it was replaced)" },
+      records: array({
+        oneOf: [
+          object({ id: string, base: integer, iv: string, ct: string }, ["id", "base", "iv", "ct"]),
+          object({ id: string, base: integer, deleted: { enum: [true] } }, ["id", "base", "deleted"]),
+        ],
+      }),
+    },
+    ["vault", "records"], // Vault Sync
+  ),
+  response: object({
+    results: array(object({ id: string, version: integer, conflict: vaultSyncRecord, error: { enum: ["too_large", "storage_full", "record_limit"] } })),
+    cursor: integer,
+    stats: vaultSyncStats,
+  }),
+  description:
+    "Vault Sync: 1–100 sealed records (at most 8 MB of IV and ciphertext bytes), each naming the version it was based on (0 for a new one). Ids are random: letters, digits, - and _, up to 100. A record whose base is stale comes back as conflict with the current record, to merge in the browser; the rest get their new version. Per account: 50 MB of ciphertext, 4 MB per record, 5,000 chats. Only id, base, iv and ct (or id, base and deleted: true) are accepted: anything else refuses the whole request (400 invalid_request) and nothing is written. 240 pushes per 10 minutes.",
+});
 // Link Reader (update "linkreader", which also needs "documents").
 route("post", "/api/read", "Read a web page for a message", {
   body: object(
@@ -2770,7 +2842,7 @@ route(
   "Download account JSON with explicit monetary units",
   {
     description:
-      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs), once Projects is released or while any exists, projects (each project's settings, the ids of the chats and SPaymposium runs fiealed in wit,h anNYMA quod its pinned files), and whether two-step sign-in is on (twoStep: { enabled }, once that update is live or while it's obillin; never its secret org recovrds (serny coaledReques),ts: metand,ata once Bookmarks is released or while any exist, bookmarks (bookmarks: id, message_id, conversation_id, nQuote, created and updated; the message text is already in its conversation). Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
+      "Authenticated account export: profile, full ledger and deposits, request accounting, video jobs, key metadata, active session dates, account-linked support tickets, media metadata, accessible conversations, spending limits (spendingLimits, null when none were set), routines (routines: each routine and its inbox runs), once Projects is released or while any exists, projects (each project's settings, the ids of the chats and SPaymposium runs fiealed in wit,h anNYMA quod its pinned files), and whether two-step sign-in is on (twoStep: { enabled }, once that update is live or while it's obillin; never its secret org recovrds (serny coaledReques),ts: metand,ata once Bookmarks is released or while any exist, bookmarks (bookmarks: id, message_id, conversation_id, nQuote, created and updated; the message text is already in its conversation). Once Vault Sync is released or while a synced copy exists, vaultSync: the synced ciphertext as a Device Vault file (file) that opens only with the vault's passphrase, each record's id, version, size, deleted flag and time (records), and a note; null when nothing is synced. Own shared contributions remain exportable after membership removal, without other members content. Passwords, key/session secrets and hashes are excluded. Media bytes are not embedded; download before deletion. schemaVersion, exportedAt and units describe the format.",
   },
 );
 route("delete", "/api/account", "Close account and forfeit unused credits", {

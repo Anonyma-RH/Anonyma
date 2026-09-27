@@ -54,6 +54,9 @@ export const PRIVACY_HELP = {
   device: "New chats are kept encrypted in this browser's Device Vault, never on our servers. This choice stays in this browser; elsewhere they start off the record.",
   private: "New chats use zero-data-retention models only and are never saved.",
 };
+// Device only while Vault Sync is on: the vault's ciphertext is synced too.
+export const PRIVACY_HELP_SYNCED =
+  "New chats are kept encrypted in this browser's Device Vault; Vault Sync keeps only ciphertext on our servers. This choice stays in this browser; elsewhere they start off the record.";
 // The releases a stored default needs, besides Projects (the server gates
 // saving one on them; see featuresFor).
 export const PRIVACY_FEATURES = {

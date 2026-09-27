@@ -11,6 +11,7 @@ import {
   PROJECT_COLORS,
   PRIVACY_LABELS,
   PRIVACY_HELP,
+  PRIVACY_HELP_SYNCED,
   DEFAULT_COLOR,
   colorHex,
   privacyChoices,
@@ -195,7 +196,7 @@ function ColorChoice({ value, onChange }) {
   );
 }
 
-export function Editor({ draft, setDraft, config, models, vaultLive, busy, error, onSave, onCancel, onDelete }) {
+export function Editor({ draft, setDraft, config, models, vaultLive, vaultSynced = false, busy, error, onSave, onCancel, onDelete }) {
   const [confirming, setConfirming] = useState(false);
   const [files, setFiles] = useState(null);
   const set = (k) => (v) => setDraft((d) => ({ ...d, [k]: v }));
@@ -304,7 +305,7 @@ export function Editor({ draft, setDraft, config, models, vaultLive, busy, error
                     onChange={() => set("privacy")(p)}
                   />
                   <b>{PRIVACY_LABELS[p]}</b>
-                  <small>{PRIVACY_HELP[p]}</small>
+                  <small>{p === "device" && vaultSynced ? PRIVACY_HELP_SYNCED : PRIVACY_HELP[p]}</small>
                 </label>
               ))}
             </div>
@@ -498,7 +499,9 @@ export function ProjectView({
           <Icon name="shield" size={15} />
           <span>
             {privacy === "device"
-              ? "New chats here start Device only: they're kept encrypted in this browser and listed below while Device Vault is unlocked, never on our servers."
+              ? vault?.synced
+                ? "New chats here start Device only: they're kept encrypted in this browser and listed below while Device Vault is unlocked. Vault Sync keeps only ciphertext on our servers."
+                : "New chats here start Device only: they're kept encrypted in this browser and listed below while Device Vault is unlocked, never on our servers."
               : privacy === "private"
                 ? "New chats here start in Private Mode: zero-data-retention models only, never saved, so never listed here."
                 : "New chats here start off the record: never saved, so never listed here."}
@@ -749,6 +752,7 @@ export default function Projects({
       config={config}
       models={models}
       vaultLive={vaultLive}
+      vaultSynced={!!vault?.synced}
       busy={busy}
       error={formError}
       onSave={save}

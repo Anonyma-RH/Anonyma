@@ -5,7 +5,7 @@ import { config, database, uid } from "./core.js";
 import { assertNoTestCredits } from "./readiness.js";
 import { authRoutes } from "./auth.js";
 import { createLimiter, applyMiddleware, errorHandler } from "./middleware.js";
-import { releaseGuard } from "./releases.js";
+import { releaseGuard, isReleased } from "./releases.js";
 import { requestHolder } from "./holders.js";
 import { holderRoutes } from "./routes/holders.js";
 import { createModels } from "./models.js";
@@ -15,6 +15,7 @@ import { createAudioCatalog } from "./audio.js";
 import { createFallback } from "./fallback.js";
 import { createReceiptSigner } from "./receipts.js";
 import { createWorker } from "./worker.js";
+import { createModelStatus } from "./model-status.js";
 import { catalogRoutes } from "./routes/catalog.js";
 import { conversationRoutes } from "./routes/conversations.js";
 import { apiRoutes } from "./routes/api.js";
@@ -58,6 +59,7 @@ import { nymaRoutes } from "./routes/nyma.js";
 import { onchainRoutes } from "./routes/onchain.js";
 import { historyLibrary } from "./history-library.js";
 import { previewRoutes } from "./routes/preview.js";
+import { statusRoutes } from "./routes/status.js";
 import { siteRoutes } from "./routes/site.js";
 
 export function createApp(overrides = {}) {
@@ -100,6 +102,12 @@ export function createApp(overrides = {}) {
     fallback: createFallback(cfg),
     receipts: createReceiptSigner(db, cfg),
     inflight: { controllers: new Set(), holds: new Set() },
+    // Model Status: each model's recent outcomes and timings, in memory
+    // only and only once released (server/model-status.js).
+    modelStatus: createModelStatus({
+      clock: cfg.statusClock || Date.now,
+      enabled: () => isReleased(cfg, "status"),
+    }),
   };
   // The catalog this process starts with. On a new or just-upgraded
   // database it becomes the baseline: nothing already listed is new.
@@ -180,6 +188,8 @@ export function createApp(overrides = {}) {
   nymaRoutes(ctx);
   // Onchain Explainer: read-only chain lookups (the explanation is a chat).
   ctx.onchain = onchainRoutes(ctx).onchain;
+  // Model Status: the public, aggregated status of each model family.
+  statusRoutes(ctx);
   // Live Preview's frame page, before the site's static files and fallback.
   previewRoutes(ctx);
   siteRoutes(ctx);
@@ -193,6 +203,8 @@ export function createApp(overrides = {}) {
     routines: ctx.routines,
     // Sealed Mode's reconciler (server/sealed.js), for tests and tooling.
     sealed: ctx.sealed,
+    // Model Status' in-memory window (server/model-status.js), for tests.
+    modelStatus: ctx.modelStatus,
     stopWork: async () => {
       for (const c of ctx.inflight.controllers)
         c.abort(new Error("Service restarting"));

@@ -447,11 +447,15 @@ export function chatRoutes(ctx) {
     }
     const feePercent = () =>
       servedBy === "backup" ? cfg.gateway2FeePercent : cfg.gatewayFeePercent;
+    // Model Status: this request's outcome and timings, from when it's sent
+    // (server/model-status.js). Only the model id; nothing about the person.
+    const probe = ctx.modelStatus.start(m.id);
     try {
       // Blind Compare holds both sides here until both are reserved, so a
       // refused side releases the other before anything is sent (set in
       // code by routes/blind.js, never from the request body).
       if (req.beforeSend) await req.beforeSend();
+      probe.sent();
       for await (const part of stream()) {
         if (part.error)
           fail(
@@ -468,6 +472,8 @@ export function chatRoutes(ctx) {
         )
           reasoning += delta.reasoning || delta.reasoning_content;
         if (delta.images) images.push(...delta.images);
+        if (delta.content || delta.reasoning || delta.reasoning_content || delta.images?.length)
+          probe.first();
         for (const a of [
           ...(delta.annotations || []),
           ...(part.choices?.[0]?.message?.annotations || []),
@@ -491,6 +497,7 @@ export function chatRoutes(ctx) {
           );
         }
       }
+      probe.done(!!(output || reasoning || images.length));
       // Images are downloaded before returning durable/private references.
       // A caller that returns text only (the MCP server) keeps none of them.
       const mediaSource = !api && !ephemeral && conversation && images.length
@@ -668,6 +675,7 @@ export function chatRoutes(ctx) {
           anonyma: extension,
         });
     } catch (e) {
+      probe.fail(e, controller.signal);
       const timedOut =
         controller.signal.aborted &&
         controller.signal.reason?.message === "Provider timeout";

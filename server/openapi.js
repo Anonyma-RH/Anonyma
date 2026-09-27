@@ -2537,6 +2537,38 @@ for (const method of ["get", "delete"]) paths["/mcp"][method].responses = {
     content: { "application/json": { schema: ref("Error") } },
   },
 };
+// Model Status (update "status"; server/model-status.js).
+const timing = (p90) => ({
+  type: ["object", "null"],
+  properties: { median: integer, ...(p90 ? { p90: integer } : {}) },
+  description: "Milliseconds, rounded to 100; null with fewer than minSamples successful requests in the last hour",
+});
+const statusFields = {
+  status: {
+    enum: ["up", "degraded", "down", "unknown"],
+    description: "From the share of requests that failed or timed out in the last 15 minutes (degraded from thresholds.degraded, down from thresholds.down); unknown with fewer than minSamples requests",
+  },
+  ttft: timing(true),
+  total: { ...timing(false), description: "Median time to a complete reply or image, in milliseconds, rounded to 100; null with too few samples" },
+};
+route("get", "/api/status", "Model status", {
+  auth: null,
+  response: object({
+    checkedAt: { ...integer, description: "When these numbers were computed (epoch ms), not when a model was last used" },
+    windows: object({ statusMinutes: integer, timingMinutes: integer }),
+    minSamples: integer,
+    thresholds: object({ degraded: number, down: number }),
+    families: array(
+      object({
+        name: { ...string, description: "The models' maker, as the catalog's owned_by" },
+        ...statusFields,
+        models: array(object({ id: string, name: string, type: string, ...statusFields })),
+      }),
+    ),
+  }),
+  description:
+    "Public and the same for everyone; recomputed at most every 30 seconds (Cache-Control: public, max-age=30). Measured from this installation's own chat, image and video traffic, kept in memory for an hour and never per account: no account, prompt or reply is kept, and a restart clears it. Requests refused before sending, stopped by the person, or rejected by the provider as invalid (400, 413, 422) don't count. Every family with a released, callable model is listed; a family's models appear only once they have enough data. Not a promise from the provider.",
+});
 // Onchain Explainer (update "onchain"; server/onchain.js).
 route("post", "/api/onchain/lookup", "Look up a transaction or address", {
   body: object(

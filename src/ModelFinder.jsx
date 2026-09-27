@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Icon } from "./ui.jsx";
 import { EarlyModelTag } from "./early-models.js";
+import { StatusDot } from "./StatusDot.jsx";
 import { formatCredits } from "./estimate.js";
 import {
   PRESETS,
@@ -33,6 +34,8 @@ export default function ModelFinder({
   notes = [],
   trainingLive = false,
   demo = false,
+  // Model Status, once released: model id → its status (src/model-status.js).
+  status = null,
 }) {
   const [open, setOpen] = useState(false),
     [query, setQuery] = useState(""),
@@ -121,6 +124,7 @@ export default function ModelFinder({
         onClick={() => (open ? close() : openPanel())}
       >
         {preset && <small>{PRESETS.find((p) => p.id === preset).label}</small>}
+        {current && status && <StatusDot entry={status[current.id]} />}
         <b data-i18n="off">{current?.name || "Choose a model"}</b>
         {current && <EarlyModelTag model={current} />}
         <Icon name="down" size={14} />
@@ -198,8 +202,9 @@ export default function ModelFinder({
                 onMouseMove={() => i !== active && setActive(i)}
                 onClick={() => choose({ model: m.id })}
               >
-                <span className="mf-name" data-i18n="off">
-                  {m.name}
+                <span className="mf-name">
+                  {status && <StatusDot entry={status[m.id]} />}
+                  <span data-i18n="off">{m.name}</span>
                 </span>
                 <span className="mf-meta">
                   <span data-i18n="off">{m.provider}</span>

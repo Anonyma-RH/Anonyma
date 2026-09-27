@@ -288,6 +288,9 @@ export function researchRoutes(ctx) {
         citedUrls.add(url);
         cited.push({ url, title });
       };
+      // Model Status: each step counts as one request to the model.
+      const probe = ctx.modelStatus.start(m.id);
+      probe.sent();
       try {
         for await (const part of stream()) {
           if (part.error) fail(502, part.error.message || "Provider error", "provider_rejected");
@@ -297,12 +300,17 @@ export function researchRoutes(ctx) {
           if (typeof delta.content === "string") text += delta.content;
           if (typeof delta.reasoning === "string" || typeof delta.reasoning_content === "string")
             reasoning += delta.reasoning || delta.reasoning_content;
+          if (delta.content || delta.reasoning || delta.reasoning_content) probe.first();
           for (const a of [...(delta.annotations || []), ...(choice?.message?.annotations || [])])
             cite(a?.url_citation?.url, a?.url_citation?.title);
           for (const url of part.citations || []) cite(url);
           if (part.usage) partUsage = part.usage;
           if (Number.isFinite(part.cost)) upstreamCost = part.cost;
         }
+        probe.done(!!(text || reasoning));
+      } catch (e) {
+        probe.fail(e, step.signal);
+        throw e;
       } finally {
         clearTimeout(timer);
         controller.signal.removeEventListener("abort", onStop);

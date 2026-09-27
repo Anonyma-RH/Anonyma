@@ -210,6 +210,8 @@ import {
   stoppedReply,
   useResearchEstimate,
 } from "./DeepResearch.jsx";
+import { statusByModel, statusReleased, useModelStatus } from "./model-status.js";
+import { ModelDownNotice } from "./StatusDot.jsx";
 const initial = [
   {
     id: "welcome",
@@ -755,6 +757,13 @@ export default function Workspace() {
   // eligible pool must clear the send target instead of retaining an old model.
   const model = finderLive ? resolvedModel?.model?.id || "" : legacyModel;
   const selected = models.find((m) => m.id === model);
+  // Model Status: a dot beside each model in the picker, and a notice when
+  // the chosen one is down. Public, aggregated numbers (GET /api/status);
+  // never in the demo, whose models aren't called.
+  const statusLive = !demo && statusReleased(config);
+  const { report: statusReport } = useModelStatus(statusLive);
+  const modelStatus = useMemo(() => (statusLive ? statusByModel(statusReport) : null), [statusLive, statusReport]);
+  const selectedDown = modelStatus && selected && modelStatus[selected.id]?.status === "down" ? selected : null;
   // Training Labels: flag models whose provider trains on prompts, and
   // offer the listed version that doesn't. Private mode never lists them.
   const trainingSelected =
@@ -4193,6 +4202,7 @@ export default function Workspace() {
                           ].filter(Boolean)}
                           trainingLive={trainingLive}
                           demo={demo}
+                          status={modelStatus}
                         />
                       ) : (
                       <select
@@ -4591,6 +4601,8 @@ export default function Workspace() {
                       onDismiss={() => dismissTraining(trainingSelected.id)}
                     />
                   )}
+                  {/* Model Status: the chosen model is down (never blocks Send). */}
+                  {selectedDown && !sealedOn && !blindActive && <ModelDownNotice model={selectedDown} />}
                   {mode === "image" && (
                     <details className="compare-options">
                       <summary>Compare image models (up to 4)</summary>

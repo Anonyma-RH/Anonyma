@@ -67,7 +67,11 @@ export async function submitVideoJob(ctx, req, { key, api = false } = {}) {
     now(),
   );
   try {
-    const job = await createVideo(cfg, request);
+    // Model Status: whether the submission was accepted (the video itself
+    // finishes later, in the worker), without timings.
+    const job = await ctx.modelStatus.timed(m.id, () => createVideo(cfg, request), {
+      timed: false,
+    });
     if (!job.id) throw Error("Provider did not return a video job ID.");
     db.prepare(
       "UPDATE videos SET provider_id=?,status='pending',updated=? WHERE id=?",

@@ -7,7 +7,33 @@ prepaid credit balance. This repository contains the React client, Node.js API,
 SQLite accounting and conversation storage, model gateway integration, CLI,
 and application tests.
 
-The hosted app includes chat, Code & Build, Live Web Search, Veil, Uncensored Models, the expanded model catalog, Image Studio, Voice & Audio, Video Studio, Collab, Developer API & CLI, Referrals & Credits, dashboard, account and credits. Availability remains controlled by named release gates.
+This code runs the live service at [askanonyma.com](https://askanonyma.com): chat
+and code workspaces, image, voice and video studios, Deep Research, Symposium,
+the developer API, CLI and MCP server, and privacy tools such as Veil, Private
+Mode, Sealed Mode, Device Vault and Seed Guard. Each feature ships behind a named
+release gate; the [featured releases](#featured-releases) below link a note and
+a launch film for each one.
+
+## Verify it's live
+
+Everything below is public and needs no account:
+
+- **What's switched on right now:** [askanonyma.com/api/config](https://askanonyma.com/api/config)
+  lists every release gate (`releases.features`) and whether it's live.
+- **Which models are up:** [askanonyma.com/status](https://askanonyma.com/status), measured from
+  the service's own traffic ([JSON](https://askanonyma.com/api/status)).
+- **Proof of a reply:** completed replies come with signed receipts that anyone can
+  check at [askanonyma.com/verify](https://askanonyma.com/verify).
+- **API documentation:** [askanonyma.com/docs/api](https://askanonyma.com/docs/api) and
+  [askanonyma.com/developers](https://askanonyma.com/developers); the contract is also in
+  [`server/openapi.js`](server/openapi.js).
+- **Models and prices:** [askanonyma.com/models](https://askanonyma.com/models) and
+  [askanonyma.com/pricing](https://askanonyma.com/pricing).
+- **Roadmap and token facts:** [askanonyma.com/roadmap](https://askanonyma.com/roadmap) and
+  [askanonyma.com/token](https://askanonyma.com/token).
+
+Each commit here mirrors a private source commit, in the same order and with its
+original dates; [HISTORY.md](HISTORY.md) explains how.
 
 ## Contract address
 

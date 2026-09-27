@@ -41,6 +41,8 @@ const Sheets = lazy(() => import("./Sheets.jsx"));
 const OnDevice = lazy(() => import("./OnDevice.jsx"));
 // Study Mode: its reviewer, parser and deck storage load only on its page.
 const Study = lazy(() => import("./Study.jsx"));
+// Document Compare: its reader, diff worker and redline load only on its page.
+const Compare = lazy(() => import("./Compare.jsx"));
 import Routines from "./Routines.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import {
@@ -292,6 +294,7 @@ export function AppSidebar({
           ["sheets", "Sheets"],
           ["device", "On-device"],
           ["study", "Study"],
+          ["compare", "Compare docs"],
           ["routines", "Routines"],
           ["projects", "Projects"],
           ["library", "Your library"],
@@ -302,6 +305,8 @@ export function AppSidebar({
           // So does On-Device Model.
           .filter(([id]) => id !== "device" || isReleased(config, "ondevice"))
           .filter(([id]) => id !== "study" || isReleased(config, "study"))
+          // Document Compare likewise.
+          .filter(([id]) => id !== "compare" || isReleased(config, "doccompare"))
           .map(([id, t]) =>
           modeReleased(config, id) ? (
             <Link
@@ -516,7 +521,9 @@ export default function Workspace() {
     // On-Device Model's page, likewise.
     (mode === "device" && (!config || isReleased(config, "ondevice"))) ||
     // Study Mode's page likewise.
-    (mode === "study" && (!config || isReleased(config, "study")));
+    (mode === "study" && (!config || isReleased(config, "study"))) ||
+    // Document Compare's page, the same way.
+    (mode === "compare" && (!config || isReleased(config, "doccompare")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3266,6 +3273,7 @@ export default function Workspace() {
                 sheets: "Sheets",
                 device: "On-device",
                 study: "Study",
+                compare: "Compare docs",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -3473,6 +3481,12 @@ export default function Workspace() {
             isReleased(config, "study") && (
               <Suspense fallback={<p className="study-loading">Opening Study…</p>}>
                 <Study key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
+          ) : mode === "compare" ? (
+            isReleased(config, "doccompare") && (
+              <Suspense fallback={<p className="compare-loading">Opening Compare docs…</p>}>
+                <Compare key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
               </Suspense>
             )
           ) : mode === "tools" ? (

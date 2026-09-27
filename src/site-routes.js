@@ -75,6 +75,8 @@ export function knownPage(path, served = {}) {
     (served.ondevice === true && path === "/workspace/device") ||
     // Study Mode's page likewise.
     (served.study === true && path === "/workspace/study") ||
+    // Document Compare's page, likewise.
+    (served.compare === true && path === "/workspace/compare") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

@@ -33,6 +33,8 @@ import { viewerOf } from "../early-models.js";
 import { apiRateLimit } from "../api-boost.js";
 import { prepareSheetsRequest, sheetsBudget } from "../sheets.js";
 import { prepareStudyRequest, studyBudget } from "../study.js";
+import { prepareCompareRequest } from "../compare.js";
+import { compareBudget } from "../../src/compare-spec.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -67,6 +69,12 @@ export function chatRoutes(ctx) {
     // checked `study` payload (server/study.js). It runs first, so a request
     // carrying `sheets` too is refused as a study request.
     const study = api ? undefined : prepareStudyRequest(req.body);
+    // Document Compare: "Summarize changes" builds its messages here from
+    // its checked `compare` payload (server/compare.js), before Sheets and
+    // Seed Guard read them; after Study, so a request carrying both is
+    // refused (each refuses ready-made `messages`). Its release gate is in
+    // featuresFor.
+    const compareTask = api ? undefined : prepareCompareRequest(req.body);
     // Local Sheets: a workspace sheets question's messages are built here
     // from its checked `sheets` payload (server/sheets.js), before Seed
     // Guard reads them. Its release gate is in featuresFor.
@@ -85,6 +93,9 @@ export function chatRoutes(ctx) {
     // A deck's reply budget fitted to the chosen model (server/study.js).
     if (study && m.type === "chat")
       req.body.max_tokens = studyBudget(study, m, req.body.messages);
+    // A summary's reply budget fitted to the chosen model (src/compare-spec.js).
+    if (compareTask && m.type === "chat")
+      req.body.max_tokens = compareBudget(m, req.body.messages);
     // Dedicated image models are priced per option and served by
     // /v1/images/generations; through chat they would be held at the
     // cheapest variant while the provider chooses the quality.

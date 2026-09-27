@@ -4483,7 +4483,84 @@
     "The source is too short to study.": "来源太短，无法用来学习。",
     "The source is too long. Cut it to 40,000 characters.": "来源太长。请缩减到 40,000 个字符以内。",
     "The source has control characters.": "来源包含控制字符。",
-    "Choose a chat model to make a deck.": "请选择一个对话模型来制作卡组。"
+    "Choose a chat model to make a deck.": "请选择一个对话模型来制作卡组。",
+    "Document Compare": "文档对比",
+    "See every change. Only the changes go to the AI.": "看清每一处改动。只有改动部分会发给 AI。",
+    "Drop two versions of a PDF, DOCX or text file; they're compared in your browser": "拖入 PDF、DOCX 或文本文件的两个版本，在你的浏览器中完成对比",
+    "A word-level redline with a change list, and HTML and Markdown exports": "逐词修订标记与改动列表，可导出为 HTML 和 Markdown",
+    "Optional AI summary of the changed passages only, off the record": "可选的 AI 摘要只处理改动段落，不留记录",
+    "YOUR DOCUMENTS STAY ON THIS DEVICE": "你的文档只保留在此设备上",
+    "See every change between two versions of a document. Only the changed parts go to the AI, and only if you ask for a summary.": "看清文档两个版本之间的每一处改动。只有改动部分会发给 AI，而且只在你要求摘要时才发送。",
+    "Try a sample NDA": "试用示例保密协议",
+    "Swap the original and the revised version": "交换原始版本和修订版本",
+    "Both files are read in this browser. They aren't uploaded, saved or kept after you leave.": "两个文件都在此浏览器中读取，不会上传或保存，离开后也不会保留。",
+    "Every change": "每一处改动",
+    "A word-level redline, like track changes, with a change list. Moved paragraphs are spotted too.": "逐词修订标记，就像修订模式，并附改动列表。移动过的段落也能识别出来。",
+    "Only changes go out": "只发送改动",
+    "Comparing on this device…": "正在此设备上对比……",
+    "These versions are very long or very different, so parts of the comparison are coarser than word by word.": "这两个版本很长或差异很大，因此部分对比无法精确到逐词。",
+    "Only the first 5 MB of text in a file was read, so changes after that aren't shown.": "文件中只读取了前 5 MB 文本，之后的改动不会显示。",
+    "Words added and removed": "新增和删除的词数",
+    "Previous change": "上一处改动",
+    "Next change": "下一处改动",
+    "Hide unchanged": "隐藏未改动内容",
+    "Download the redline as a web page. Open it and print to PDF.": "将修订标记下载为网页。打开后可打印为 PDF。",
+    "Redline (HTML)": "修订标记（HTML）",
+    "Download the change list as Markdown": "将改动列表下载为 Markdown",
+    "Changes (Markdown)": "改动列表（Markdown）",
+    "No differences found: the two versions have the same text. Spacing isn't compared.": "未发现差异：两个版本的文本相同。空格差异不参与对比。",
+    "Changes": "改动",
+    "AI summary": "AI 摘要",
+    "Changed": "已修改",
+    "Removed": "已删除",
+    "Moved": "已移动",
+    "less than 1%": "不到 1%",
+    "Anything to focus on?": "有需要重点关注的吗？",
+    "Optional": "可选",
+    "For example: I'm the receiving party": "例如：我是接收方",
+    "Summarize changes…": "总结改动……",
+    "You see exactly what's sent before anything goes. Billed as one message, off the record: nothing is saved.": "发送前你会先看到确切的发送内容。按一条消息计费，不留记录：不会保存任何内容。",
+    "Sign in to summarize. Comparing works without an account.": "登录后即可生成摘要。对比功能无需账户。",
+    "Injection Shield:": "注入防护：",
+    "The passages are marked as data, not instructions.": "这些段落会标记为数据，而非指令。",
+    "Send to the model": "发送给模型",
+    "Billed as one message, off the record: nothing is saved. Not legal advice.": "按一条消息计费，不留记录：不会保存任何内容。不构成法律建议。",
+    "Original": "原始版本",
+    "Revised": "修订版本",
+    "Sample": "示例",
+    "1 page": "1 页",
+    "Replace": "替换",
+    "Reading in this browser…": "正在此浏览器中读取……",
+    "Drop the original here": "将原始版本拖到这里",
+    "Drop the revised version here": "将修订版本拖到这里",
+    "PDF, DOCX, TXT, MD and other text files, up to 25 MB": "PDF、DOCX、TXT、MD 等文本文件，最大 25 MB",
+    "This file couldn't be read.": "无法读取此文件。",
+    "The comparison stopped. Try again, or try shorter documents.": "对比已中断。请重试，或改用较短的文档。",
+    "These documents are too large for this browser's memory.": "这些文档太大，超出了此浏览器的内存。",
+    "Redline": "修订标记",
+    "1 unchanged paragraph": "1 个未改动段落",
+    "1 unchanged sentence": "1 个未改动句子",
+    "Written from the 1 changed passage only. Not legal advice.": "仅根据这 1 个改动段落撰写。不构成法律建议。",
+    "The model ran out of room before it finished, so this summary stops short. It's charged for what it wrote.": "模型在完成前用尽了回复空间，因此这份摘要不完整。已写出的部分会计费。",
+    "Summarize again": "重新总结",
+    "Off the record: not saved": "不留记录：未保存",
+    "Summaries of changes are never saved: send them off the record.": "改动摘要从不保存：请以不留记录的方式发送。",
+    "A summary of changes can't be combined with other chat options.": "改动摘要不能与其他对话选项同时使用。",
+    "The changes are too long to send at once.": "改动内容过长，无法一次发送。",
+    "There are no changes to summarize.": "没有可总结的改动。",
+    "Too many changes to send at once.": "改动太多，无法一次发送。",
+    "Compared in the browser with ANONYMA. To make a PDF, print this page and choose Save as PDF.": "由 ANONYMA 在浏览器中完成对比。如需 PDF，请打印此页面并选择“另存为 PDF”。",
+    "~~Struck through~~ was removed and **bold** was added. ¶ numbers count paragraphs in each version.": "~~删除线~~表示已删除，**粗体**表示新增。¶ 编号按各版本的段落计数。",
+    "No differences found.": "未发现差异。",
+    "change": "处改动",
+    "changes": "处改动",
+    "changed": "处修改",
+    "added": "处新增",
+    "removed": "处删除",
+    "moved": "处移动",
+    "Ask for a summary and the AI gets only the changed passages, with a little context. You see exactly what's sent first.": "请求摘要时，AI 只会收到改动段落及少量上下文。发送前你会先看到确切内容。",
+    "Compare docs": "文档对比",
+    "Opening Compare docs…": "正在打开文档对比……"
   },
   "patterns": [
     {
@@ -7241,6 +7318,94 @@
     {
       "en": "{0} hours",
       "zh": "{0} 小时"
+    },
+    {
+      "en": "+{0} / −{1} words",
+      "zh": "+{0} / −{1} 词"
+    },
+    {
+      "en": "about {0}%",
+      "zh": "约 {0}%"
+    },
+    {
+      "en": "The AI gets only the {0} changed passages, each with a little context: {1} of the text in your two documents. Never the whole files.",
+      "zh": "AI 只会收到这 {0} 个改动段落，各附少量上下文，占你两份文档文本的{1}。绝不会收到完整文件。"
+    },
+    {
+      "en": "The AI gets only the changed passage, with a little context: {0} of the text in your two documents. Never the whole files.",
+      "zh": "AI 只会收到这个改动段落及少量上下文，占你两份文档文本的{0}。绝不会收到完整文件。"
+    },
+    {
+      "en": "Exactly these {0} characters, from all {1} changes, plus ANONYMA's fixed instructions. Nothing else from your files.",
+      "zh": "确切发送这 {0} 个字符，来自全部 {1} 处改动，另加 ANONYMA 的固定说明。不会发送文件中的其他任何内容。"
+    },
+    {
+      "en": "Exactly these {0} characters, from the 1 change, plus ANONYMA's fixed instructions. Nothing else from your files.",
+      "zh": "确切发送这 {0} 个字符，来自这 1 处改动，另加 ANONYMA 的固定说明。不会发送文件中的其他任何内容。"
+    },
+    {
+      "en": "Exactly these {0} characters, from the first {1} of {2} changes, plus ANONYMA's fixed instructions. Nothing else from your files.",
+      "zh": "确切发送这 {0} 个字符，来自 {2} 处改动中的前 {1} 处，另加 ANONYMA 的固定说明。不会发送文件中的其他任何内容。"
+    },
+    {
+      "en": "Send to {0}",
+      "zh": "发送给 {0}"
+    },
+    {
+      "en": "\"{0}\" isn't a document Compare docs can read. Try PDF, DOCX, TXT or MD.",
+      "zh": "文档对比无法读取“{0}”。请尝试 PDF、DOCX、TXT 或 MD。"
+    },
+    {
+      "en": "No text found in \"{0}\". It may be a scanned image.",
+      "zh": "“{0}”中未找到文本，它可能是扫描图片。"
+    },
+    {
+      "en": "The text in \"{0}\" is longer than 5 MB.",
+      "zh": "“{0}”中的文本超过 5 MB。"
+    },
+    {
+      "en": "\"{0}\" isn't UTF-8 text.",
+      "zh": "“{0}”不是 UTF-8 文本。"
+    },
+    {
+      "en": "No text found in \"{0}\".",
+      "zh": "“{0}”中未找到文本。"
+    },
+    {
+      "en": "{0} unchanged paragraphs",
+      "zh": "{0} 个未改动段落"
+    },
+    {
+      "en": "{0} unchanged sentences",
+      "zh": "{0} 个未改动句子"
+    },
+    {
+      "en": "Moved to ¶ {0}",
+      "zh": "已移至 ¶ {0}"
+    },
+    {
+      "en": "Moved from ¶ {0}",
+      "zh": "移自 ¶ {0}"
+    },
+    {
+      "en": "Written from the {0} changed passages only. Not legal advice.",
+      "zh": "仅根据这 {0} 个改动段落撰写。不构成法律建议。"
+    },
+    {
+      "en": "Written from the first {0} of {1} changed passages only. Not legal advice.",
+      "zh": "仅根据 {1} 个改动段落中的前 {0} 个撰写。不构成法律建议。"
+    },
+    {
+      "en": "{0} words added",
+      "zh": "新增 {0} 个词"
+    },
+    {
+      "en": "{0} words removed",
+      "zh": "删除 {0} 个词"
+    },
+    {
+      "en": "Written by {0} from the changed passages only. Not legal advice.",
+      "zh": "由 {0} 仅根据改动段落撰写。不构成法律建议。"
     }
   ]
 }

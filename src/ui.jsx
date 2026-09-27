@@ -79,6 +79,8 @@ import {
   GraduationCap,
   Flame,
   RotateCcw,
+  FileDiff,
+  ChevronUp,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -146,6 +148,8 @@ const icons = {
   link: Link2,
   chain: Link2,
   sheet: Sheet,
+  diff: FileDiff,
+  up: ChevronUp,
   scale: Scale,
   shuffle: Shuffle,
   trophy: Trophy,
@@ -190,6 +194,8 @@ const pixels = {
   device: [".#.#.#.", "#######", ".#...#.", "##.#.##", ".#...#.", "#######", ".#.#.#."],
   // Two cards, one flipped behind the other: a study deck.
   study: ["..#####", "..#...#", "#####.#", "#...#.#", "#.#.###", "#...#..", "#####.."],
+  // Two pages side by side: two versions of a document.
+  compare: ["###.###", "#.#.#.#", "###.###", "#.#.#.#", "#.#.###", "#.#.#.#", "###.###"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

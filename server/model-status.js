@@ -121,6 +121,19 @@ export function summarize(events, t) {
   };
 }
 
+// A model's family: its maker, as the catalog names it.
+const familyName = (m) =>
+  String(m.owned_by || m.provider || "").trim() || "Other";
+// The family's display name among the catalog's spellings of it: mixed case
+// first ("OpenAI", not "OPENAI" or "openai"), then the most used, then A to Z.
+export function displayName(spellings) {
+  const cased = (name) =>
+    /[A-Z]/.test(name) && /[a-z]/.test(name) ? 0 : /[A-Z]/.test(name) ? 1 : 2;
+  return [...spellings.entries()].sort(
+    ([a, n], [b, m]) => cased(a) - cased(b) || m - n || (a < b ? -1 : a > b ? 1 : 0),
+  )[0][0];
+}
+
 const duration = (ms) =>
   Number.isFinite(ms) && ms >= 0 ? Math.round(ms) : null;
 
@@ -224,11 +237,15 @@ export function createModelStatus({ clock = Date.now, enabled = () => true } = {
   // time `t`: every family with at least one of them, and only the models
   // whose numbers can be shown. Nothing about any request or person.
   function report(models, t = clock()) {
+    // Families are grouped case-insensitively: the catalog spells some
+    // makers more than one way ("google" and "Google").
     const families = new Map();
     for (const m of models) {
-      const name = String(m.owned_by || m.provider || "Other");
-      if (!families.has(name)) families.set(name, { name, events: [], models: [] });
-      const family = families.get(name);
+      const name = familyName(m);
+      const key = name.toLowerCase();
+      if (!families.has(key)) families.set(key, { spellings: new Map(), events: [], models: [] });
+      const family = families.get(key);
+      family.spellings.set(name, (family.spellings.get(name) || 0) + 1);
       const events = byModel.get(m.id);
       if (!events?.length) continue;
       family.events.push(...events);
@@ -238,8 +255,8 @@ export function createModelStatus({ clock = Date.now, enabled = () => true } = {
     }
     const ORDER = { down: 0, degraded: 1, up: 2, unknown: 3 };
     const list = [...families.values()]
-      .map(({ name, events, models: shown }) => ({
-        name,
+      .map(({ spellings, events, models: shown }) => ({
+        name: displayName(spellings),
         ...summarize(events, t),
         models: shown.sort((a, b) => a.name.localeCompare(b.name)),
       }))

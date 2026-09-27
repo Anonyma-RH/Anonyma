@@ -21,6 +21,7 @@ import {
   STATUS_WINDOW_MS,
   TIMING_WINDOW_MS,
   createModelStatus,
+  displayName,
   outcomeOf,
   percentile,
   statusFrom,
@@ -360,6 +361,48 @@ test("the report: families by maker, models only with enough data, nothing about
     [...keys(report)].filter((k) => !/^\d+$/.test(k)).sort(),
     ["checkedAt", "degraded", "down", "families", "id", "median", "minSamples", "models", "name", "p90", "status", "statusMinutes", "thresholds", "timingMinutes", "total", "ttft", "type", "windows"].sort(),
   );
+});
+
+test("families are grouped case-insensitively, under the catalog's properly cased name, once", () => {
+  let now = 50 * MINUTE;
+  const store = createModelStatus({ clock: () => now });
+  const catalog = [
+    { id: "google/a", name: "G A", owned_by: "google", type: "chat" },
+    { id: "google/b", name: "G B", owned_by: "Google", type: "chat" },
+    { id: "google/c", name: "G C", owned_by: " GOOGLE ", type: "image" },
+    { id: "openai/a", name: "O A", owned_by: "openai", type: "chat" },
+    { id: "openai/b", name: "O B", owned_by: "OpenAI", type: "chat" },
+    { id: "openai/c", name: "O C", owned_by: "OpenAI", type: "chat" },
+    { id: "xai/a", name: "X A", owned_by: "xai", type: "chat" },
+    { id: "xai/b", name: "X B", owned_by: "xAI", type: "chat" },
+    { id: "flux/a", name: "F A", owned_by: "flux", type: "image" },
+    { id: "none/a", name: "N A", owned_by: "", type: "chat" },
+    { id: "none/b", name: "N B", provider: "other", type: "chat" },
+  ];
+  // Traffic split across two spellings of the same maker counts as one family.
+  for (let i = 0; i < 3; i++) {
+    store.record("google/a", "ok", { ttft: 400, total: 900 });
+    store.record("google/b", "ok", { ttft: 600, total: 1100 });
+  }
+  const report = store.report(catalog, now);
+  const names = report.families.map((f) => f.name);
+  assert.deepEqual(names, ["Google", "flux", "OpenAI", "Other", "xAI"]);
+  assert.equal(new Set(names.map((n) => n.toLowerCase())).size, names.length, "each family once");
+  const google = family(report, "Google");
+  assert.equal(google.status, "up");
+  assert.deepEqual(google.ttft, { median: 400, p90: 600 });
+  // Unknown families are all still listed, once each, for "Not enough data yet".
+  assert.deepEqual(
+    report.families.filter((f) => f.status === "unknown").map((f) => f.name),
+    ["flux", "OpenAI", "Other", "xAI"],
+  );
+  // The display name: mixed case first, then capitals, then the most used.
+  assert.equal(displayName(new Map([["openai", 5], ["OpenAI", 1]])), "OpenAI");
+  assert.equal(displayName(new Map([["xai", 1], ["xAI", 1]])), "xAI");
+  assert.equal(displayName(new Map([["GOOGLE", 1], ["Google", 3], ["google", 9]])), "Google");
+  assert.equal(displayName(new Map([["GOOGLE", 2], ["Google", 1]])), "Google");
+  assert.equal(displayName(new Map([["IBM", 1], ["ibm", 4]])), "IBM");
+  assert.equal(displayName(new Map([["flux", 1]])), "flux");
 });
 
 // ---- Real traffic ----

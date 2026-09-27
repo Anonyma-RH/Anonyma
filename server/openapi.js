@@ -2398,6 +2398,51 @@ route("post", "/api/factcheck", "Fact-check selected text against the web", {
   description:
     "Workspace only (session). One web search through Live Web Search's plugin and fee, with a reply budget of 8,000 tokens (within the model's output limit) for a strict JSON verdict. Only the claim is sent, as delimited data, never the rest of the chat. Sources are 1 to 3 pages the search returned; an address the search didn't return is never shown, and a search that returned no pages is always unverified. The maximum is held first (402 insufficient_credits or spending_limit with nothing charged) and settled on actual usage once a verdict is read. A failed, stopped or unreadable check is released and charges nothing: 502 factcheck_cut_short when the model ran out of room, factcheck_unreadable for any other answer that isn't the verdict JSON, factcheck_failed when the provider failed. A saved check adds two ordinary messages to the conversation (the quote, then the card's text with its sources as citations) or starts a new one; off the record and Private Mode store nothing.",
 });
+// Canvas (update "canvas"). A suggestion is an /api/chat request (and
+// /api/quote estimate) carrying `canvas`, described under POST /api/canvas.
+const canvasDoc = object({
+  id: string,
+  title: { ...string, maxLength: 200 },
+  content: { ...string, maxLength: 200000, description: "The canvas's Markdown text" },
+  revision: { ...integer, description: "Goes up by one with each saved change" },
+  created: integer,
+  updated: integer,
+  expires: { type: ["integer", "null"], description: "The auto-delete time it took from the account's default when it was made; null keeps it until deleted" },
+});
+route("get", "/api/canvas", "Your canvases", {
+  response: object({
+    data: array(object({ id: string, title: string, chars: integer, revision: integer, created: integer, updated: integer, expires: { type: ["integer", "null"] } })),
+    limit: { ...integer, description: "Canvases an account can keep (200)" },
+  }),
+  description: "Newest first, without their text. Only canvases kept on the account: ones kept only in the browser (off the record in one tab, or encrypted on the device) never reach the server. A canvas past its auto-delete time is never listed. 240 reads a minute.",
+});
+route("post", "/api/canvas", "Keep a new canvas on your account", {
+  status: 201,
+  body: object({
+    title: { ...string, maxLength: 200, description: "Default \"Untitled canvas\"" },
+    content: { ...string, maxLength: 200000, description: "Markdown text; line breaks and tabs are the only control characters allowed" },
+  }),
+  response: canvasDoc,
+  description:
+    "Takes the account's auto-delete default, as a new conversation does. At most 200 per account (409 canvas_limit); more than 200,000 characters is 413 canvas_too_large. With Seed Guard live, a seed phrase in the title or text is refused (400 seed_phrase_blocked, no override). Suggestions on a canvas are POST /api/chat with ephemeral: true and canvas: { action: improve | shorten | expand | tone | grammar | custom | summarize | consistent, scope: selection | document, text, before?, after?, tone?: formal | friendly | plain, instruction? } (a selection up to 12,000 characters with up to 600 characters of context on each side, or a document up to 40,000 characters; 400 invalid_canvas), whose messages and reply budget (8,000 tokens plus room for the rewrite, lowered to the model's limits; 400 canvas_too_long when the rewrite can't fit) the server builds. They're never saved, and only a usable reply is charged: a reply that can't be read (502 canvas_unreadable) or was cut off by its budget (502 canvas_length) releases its hold. POST /api/quote prices the same body.",
+});
+route("get", "/api/canvas/{id}", "One canvas, with its text", {
+  response: canvasDoc,
+  description: "404 canvas_not_found for another account's canvas, a deleted one or one past its auto-delete time.",
+});
+route("patch", "/api/canvas/{id}", "Rename a canvas or save its text", {
+  body: object({
+    title: { ...string, maxLength: 200 },
+    content: { ...string, maxLength: 200000 },
+    base: { ...integer, minimum: 1, description: "The revision the change was made from: if the canvas has changed since, nothing is saved (409 canvas_conflict)" },
+  }),
+  response: canvasDoc,
+  description: "Send a title, text or both. An unchanged canvas keeps its revision. Seed Guard applies as for a new canvas. 1,200 writes per 10 minutes, for autosave.",
+});
+route("delete", "/api/canvas/{id}", "Delete a canvas", {
+  response: ref("Ok"),
+  description: "Deleted at once. Panic Wipe and closing the account delete every canvas; the account export lists them with their text.",
+});
 // Summarize & Continue (update "catchup"). Catch me up is an /api/chat
 // request (and /api/quote estimate) carrying `catchup`, documented there.
 route("post", "/api/catchup/continue", "Continue a saved chat fresh from its summary", {

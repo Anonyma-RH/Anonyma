@@ -22,6 +22,8 @@ export function siteRoutes({ app, db, cfg }) {
   // the public NYMA page (/token), Panic Wipe's "Wiped" page, the
   // workspace's Sheets, On-device, Study and Compare pages, Model Status'
   // page, Gift Links claim page and Blind Arena exist only once released.
+  // workspace's Sheets, On-device, Study, Compare and Canvas pages and Model
+  // Status' page exist only once their update is live.
   const served = () => ({
     connect: connectLive(cfg),
     token: isReleased(cfg, "holders"),
@@ -36,6 +38,7 @@ export function siteRoutes({ app, db, cfg }) {
     compare: isReleased(cfg, "doccompare"),
     // Gift Links' claim page (/gift), never in the sitemap.
     gift: isReleased(cfg, "giftlinks"),
+    canvas: isReleased(cfg, "canvas"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

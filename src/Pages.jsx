@@ -887,6 +887,7 @@ const featureIcons = {
   arena: "podium",
   vaultsync: "devices",
   automodel: "auto",
+  canvas: "canvas",
 };
 const launch = {
   id: "mvp",

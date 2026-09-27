@@ -80,6 +80,8 @@ export function knownPage(path, served = {}) {
     (served.compare === true && path === "/workspace/compare") ||
     // Gift Links' claim page, likewise; never in the sitemap.
     (served.gift === true && path === "/gift") ||
+    // Canvas's page, likewise.
+    (served.canvas === true && path === "/workspace/canvas") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

@@ -22,6 +22,7 @@ import { apiBoostInfo } from "../api-boost.js";
 import { prepareStudyRequest, studyBudget } from "../study.js";
 import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
 import { planAutoRequest, refuseAutoTask, requestSettings } from "../auto-model.js";
+import { prepareCanvasRequest, canvasBudget } from "../canvas.js";
 import {
   fail,
   balance,
@@ -158,6 +159,9 @@ export function catalogRoutes(ctx) {
     // room the request itself will send (server/catchup.js). After Study, so
     // a quote carrying both is refused (each refuses ready-made `messages`).
     const catchupTask = prepareCatchupRequest(req.body);
+    // Canvas: a suggestion's estimate prices the messages and reply budget
+    // the suggestion itself will carry (server/canvas.js).
+    const canvasTask = prepareCanvasRequest(req.body, { quote: true });
     const m = getModel(req.body.model);
     ctx.earlyModels.check(viewerOf(req), "models", m.id);
     if (study && m.type !== "chat") fail(400, "Choose a chat model to make a deck.", "unsupported_model");
@@ -165,6 +169,10 @@ export function catalogRoutes(ctx) {
     if (catchupTask) {
       if (m.type !== "chat" || imageCallable(m)) fail(400, "Catch me up needs a text model.", "unsupported_model");
       req.body.max_tokens = catchupBudget(m, req.body.messages);
+    }
+    if (canvasTask) {
+      if (m.type !== "chat" || imageCallable(m)) fail(400, "Canvas needs a text model.", "unsupported_model");
+      req.body.max_tokens = canvasBudget(canvasTask, m, req.body.messages);
     }
     const teamPaid = req.body.treasury === true;
     if (teamPaid && m.type !== "chat") fail(400, "Team pays supports chat requests only.");

@@ -1107,6 +1107,23 @@ export const UPDATES = [
     // it); the settings live in the browser.
     released: false,
   },
+  {
+    id: "canvas",
+    title: "Canvas",
+    tagline: "Write with AI beside you. Every suggestion shows up as a tracked change you accept or reject.",
+    points: [
+      "Select text to improve, shorten, expand, change its tone or fix its grammar",
+      "Only your selection and a little context go to the AI, never the whole document unless you ask",
+      "Keep a canvas on your account, off the record in this tab, or in Device Vault; export Markdown, DOCX or PDF",
+    ],
+    // The workspace's Canvas page (src/Canvas.jsx). Canvases kept on the
+    // account are /api/canvas (server/routes/canvas.js: canvas_documents,
+    // erased and exported with the account). A suggestion is an off-the-
+    // record /api/chat request carrying `canvas` (server/canvas.js), priced
+    // by /api/quote with the same payload, and charged only when the reply
+    // can be used (runChat's acceptOutput).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1313,6 +1330,8 @@ export function featuresFor(req) {
   if (p === "/api/catchup" || p.startsWith("/api/catchup/")) return ["catchup"];
   // Vault Sync: the synced Device Vault's settings and sealed records.
   if (p === "/api/vault-sync" || p.startsWith("/api/vault-sync/")) return ["vaultsync", "vault"];
+  // Canvas: the canvases an account keeps on the server.
+  if (p === "/api/canvas" || p.startsWith("/api/canvas/")) return ["canvas"];
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.
@@ -1522,6 +1541,11 @@ export function featuresFor(req) {
   // (server/catchup.js). The request is always off the record (pushed below).
   if ((p === "/api/chat" || p === "/api/quote") && post && body.catchup !== undefined)
     needed.push("catchup");
+  // Canvas: a suggestion on a canvas, and its estimate (server/canvas.js).
+  // A suggestion is always off the record, so it needs Ephemeral Chats too
+  // (pushed below).
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.canvas !== undefined)
+    needed.push("canvas");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

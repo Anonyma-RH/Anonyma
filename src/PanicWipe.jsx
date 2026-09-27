@@ -15,6 +15,7 @@ import {
   WIPE_WATCHES,
   WIPE_GIFTS,
   WIPE_VAULT_SYNC,
+  WIPE_CANVAS,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPED_PATH,
@@ -45,6 +46,8 @@ export function PanicWipe({ user }) {
   const giftsLive = isReleased(config, "giftlinks");
   // And Vault Sync's synced ciphertext.
   const vaultSyncLive = isReleased(config, "vaultsync");
+  // And canvases saved to the account.
+  const canvasLive = isReleased(config, "canvas");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
   const [open, setOpen] = useState(false),
@@ -119,6 +122,7 @@ export function PanicWipe({ user }) {
                   {watchesLive && <li>{WIPE_WATCHES}</li>}
                   {giftsLive && <li>{WIPE_GIFTS}</li>}
                   {vaultSyncLive && <li>{WIPE_VAULT_SYNC}</li>}
+                  {canvasLive && <li>{WIPE_CANVAS}</li>}
                 </ul>
               </div>
               <div>

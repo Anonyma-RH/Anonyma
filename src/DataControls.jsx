@@ -51,6 +51,8 @@ export default function DataControls() {
   const gifts = !!config && isReleased(config, "giftlinks");
   // And Vault Sync, which builds on Device Vault.
   const vaultSync = !!config && isReleased(config, "vaultsync") && isReleased(config, "vault");
+  // And Canvas.
+  const canvas = !!config && isReleased(config, "canvas");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -289,6 +291,18 @@ export default function DataControls() {
             in the browser you use it in.
           </li>
         )}
+        {canvas && (
+          <li>
+            Canvas: a canvas saved to your account keeps its title and text,
+            up to 200 per account, until you delete it; your auto-delete
+            default applies to new ones. Suggestions are off-the-record chats:
+            only the selection and a little text around it (or the whole
+            document, for whole-document actions) is sent, and nothing about
+            them is saved. Canvases kept off the record stay in one browser
+            tab; Device Vault canvases are encrypted in this browser. Panic
+            Wipe and closing your account delete saved canvases.
+          </li>
+        )}
         {nyma && (
           <li>
             Pay with NYMA quotes: each quote’s NYMA amount, rate, bonus and
@@ -381,6 +395,7 @@ export default function DataControls() {
       {overviews && (
         <p>The export also lists your audio overviews’ scripts. Their audio files are listed with your media.</p>
       )}
+      {canvas && <p>The export also includes your canvases saved to your account, with their text.</p>}
       {passkeys && (
         <p>
           The export also lists your passkeys: each one’s name, when it was

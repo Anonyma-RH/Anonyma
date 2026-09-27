@@ -1201,6 +1201,26 @@ export const MIGRATIONS = [
         PRIMARY KEY(user_id,id));
       CREATE INDEX IF NOT EXISTS vault_sync_records_seq ON vault_sync_records(user_id,seq);
   `),
+  // Canvas (server/routes/canvas.js): a canvas kept on the account, its
+  // title and Markdown text only, with a revision number so two tabs can't
+  // silently overwrite each other. `expires` is the account's auto-delete
+  // default when it was made (null: kept until deleted). Up to 200 per
+  // account. Erased with the account's content (closure, Panic Wipe);
+  // suggestions made on a canvas are never stored.
+  additive(`
+      CREATE TABLE IF NOT EXISTS canvas_documents(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        title TEXT NOT NULL CHECK(length(title) BETWEEN 1 AND 200),
+        content TEXT NOT NULL CHECK(length(content) <= 200000),
+        revision INTEGER NOT NULL DEFAULT 1,
+        created INTEGER NOT NULL,
+        updated INTEGER NOT NULL,
+        expires INTEGER);
+      CREATE INDEX IF NOT EXISTS canvas_documents_user ON canvas_documents(user_id,updated);
+      CREATE TRIGGER IF NOT EXISTS canvas_documents_per_account BEFORE INSERT ON canvas_documents
+        WHEN (SELECT COUNT(*) FROM canvas_documents WHERE user_id=NEW.user_id)>=200
+        BEGIN SELECT RAISE(ABORT,'canvas_limit'); END;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

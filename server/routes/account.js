@@ -13,6 +13,7 @@ import { exportAudioOverviews, forgetAudioOverviews } from "./audio-overview.js"
 import { exportInactivity, forgetInactivity, inactivityLive } from "../inactivity-wipe.js";
 import { exportGifts, forgetGifts } from "./gifts.js";
 import { exportVaultSync, forgetVaultSync } from "./vault-sync.js";
+import { exportCanvases, forgetCanvases } from "./canvas.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -61,6 +62,8 @@ import {
 //   credited top-up stays as its deposit). Votes already added to the Blind
 //   Arena stay: its aggregate has no account id, so none of it is theirs;
 // - Vault Sync's ciphertext and its synced settings;
+//   Audio Overview scripts, Canvas canvases and NYMA top-up quotes (a
+//   credited top-up stays as its deposit);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -130,6 +133,8 @@ export function eraseAccountContent(db, user) {
   // Vault Sync: the synced ciphertext, its tombstones and settings. Each
   // device keeps its own copy and stops syncing when it next checks.
   forgetVaultSync(db, id);
+  // Canvas: every canvas kept on the account.
+  forgetCanvases(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -266,6 +271,13 @@ export function accountRoutes(ctx) {
   function giftsExport(user) {
     const list = exportGifts(db, user);
     return list.length || isReleased(cfg, "giftlinks") ? { gifts: list } : {};
+  }
+  // Canvas: each canvas kept on the account, with its text (once the update
+  // is live, or while any exist). Canvases kept only in the browser never
+  // reach the server.
+  function canvasExport(user) {
+    const list = exportCanvases(db, user);
+    return list.length || isReleased(cfg, "canvas") ? { canvases: list } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -607,6 +619,8 @@ export function accountRoutes(ctx) {
       ...giftsExport(req.user.id),
       // Vault Sync: the encrypted chats exactly as synced.
       ...vaultSyncExport(req.user.id),
+      // Canvas: canvases kept on the account, with their text.
+      ...canvasExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

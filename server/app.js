@@ -47,6 +47,7 @@ import { sharpenRoutes } from "./routes/sharpen.js";
 import { factCheckRoutes } from "./routes/factcheck.js";
 import { catchupRoutes } from "./routes/catchup.js";
 import { vaultSyncRoutes } from "./routes/vault-sync.js";
+import { canvasRoutes } from "./routes/canvas.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { pageWatchRoutes } from "./routes/page-watch.js";
@@ -188,6 +189,9 @@ export function createApp(overrides = {}) {
   catchupRoutes(ctx);
   // Vault Sync: sealed records only; the browser encrypts every chat first.
   vaultSyncRoutes(ctx);
+  // Canvas: the canvases an account keeps (its suggestions run through
+  // runChat, registered above).
+  canvasRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

@@ -1,8 +1,17 @@
 name: Release checks
+# Runs on main, on pull requests and on demand, not on every feature-branch
+# push: that kept the private repo inside GitHub's free Actions minutes. The
+# main run's credential scan still covers every branch (--log-opts=--all over a
+# full-history checkout), and each commit is scanned locally by the pre-commit
+# hook. A newer push cancels a superseded run for the same ref.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

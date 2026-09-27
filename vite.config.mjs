@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { OCR_ENGINE_FILES, OCR_ENGINE_PATH, OCR_ENGINE_VERSION } from "./src/ocr-assets.js";
+import { PYODIDE_PATH } from "./src/python-assets.js";
+import { pyodideAssets } from "./scripts/pyodide-assets.mjs";
 
 const require = createRequire(import.meta.url);
 
@@ -41,6 +43,44 @@ function ocrEngine() {
   };
 }
 
+// Python Runner (src/python-assets.js): Pyodide's interpreter from the
+// pinned npm package and the checked numpy, pandas and matplotlib wheels
+// (scripts/pyodide-assets.mjs), copied into the build under PYODIDE_PATH and
+// served from there by the dev server, so nothing loads from a CDN.
+const PYODIDE_TYPES = {
+  ".mjs": "text/javascript",
+  ".wasm": "application/wasm",
+  ".json": "application/json",
+  ".txt": "text/plain; charset=utf-8",
+  ".zip": "application/zip",
+};
+function pyodideEngine() {
+  let assets;
+  const load = () => (assets ??= pyodideAssets({ log: (m) => console.log(m) }));
+  return {
+    name: "anonyma-pyodide",
+    configureServer(server) {
+      server.middlewares.use(PYODIDE_PATH, (req, res, next) => {
+        const name = req.url.split("?")[0].slice(1);
+        load().then((list) => {
+          const file = list.find((f) => f.name === name);
+          if (!file) return next();
+          res.setHeader("Content-Type", PYODIDE_TYPES[name.slice(name.lastIndexOf("."))] || "application/octet-stream");
+          res.end(file.source ?? readFileSync(file.path));
+        }, next);
+      });
+    },
+    async generateBundle() {
+      for (const file of await load())
+        this.emitFile({
+          type: "asset",
+          fileName: `${PYODIDE_PATH.slice(1)}/${file.name}`,
+          source: file.source ?? readFileSync(file.path),
+        });
+    },
+  };
+}
+
 export default defineConfig({
   build: {
     outDir: "dist/client",
@@ -70,5 +110,5 @@ export default defineConfig({
       clientFiles: ["./src/main.jsx"],
     },
   },
-  plugins: [react(), ocrEngine()],
+  plugins: [react(), ocrEngine(), pyodideEngine()],
 });

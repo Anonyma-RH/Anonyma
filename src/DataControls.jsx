@@ -40,6 +40,8 @@ export default function DataControls() {
   const ocr = !!config && isReleased(config, "ocr") && isReleased(config, "documents");
   // And Study Mode.
   const study = !!config && isReleased(config, "study");
+  // And Python Runner.
+  const python = !!config && isReleased(config, "python");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -67,6 +69,11 @@ export default function DataControls() {
         {ocr && (
           <li>
             Local OCR: Text only reads an image's words in your browser. Only the text you keep is sent, and only it is kept in a saved chat; the image isn't uploaded. The text reader's files come from ANONYMA's own server, and your browser keeps a copy.
+          </li>
+        )}
+        {python && (
+          <li>
+            Python Runner: code from a reply runs in your browser, with no network. Its output, and any file you give it, stay on this device and aren't saved with the chat. Python's files come from ANONYMA's own server, and your browser keeps a copy.
           </li>
         )}
         <li>

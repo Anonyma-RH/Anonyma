@@ -4841,7 +4841,44 @@
     "The model's reply couldn't be read, so nothing was charged. Try another model for this watch.": "无法读取模型的回复，因此未扣费。请为此监测换一个模型。",
     "Paused after 3 replies in a row that couldn't be read. Nothing was charged. Choose another model for this watch, then switch it back on.": "连续 3 次无法读取模型的回复，已暂停。未扣费。请为此监测选择另一个模型，然后重新开启。",
     "The model couldn't make a summary this time. Nothing was charged.": "模型这次未能生成摘要。未扣费。",
-    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。"
+    "A reply that can't be read, or a summary that fails, isn't charged.": "无法读取的回复或失败的摘要不扣费。",
+    "Python Runner": "Python 运行器",
+    "Run the Python it writes, right in the chat, on your device.": "在会话中直接运行它写的 Python，就在你的设备上。",
+    "A Run button on Python code in replies, with the output and charts below it": "回复里的 Python 代码带有“运行”按钮，输出和图表显示在代码下方",
+    "It runs in your browser with no network; nothing runs on our servers": "代码在你的浏览器中运行，无法联网；我们的服务器上不运行任何代码",
+    "numpy, pandas and matplotlib included, and your attached CSV only if you choose": "内置 numpy、pandas 和 matplotlib；只有你选择时，代码才能读取你附加的 CSV",
+    "Run": "运行",
+    "Run again": "再次运行",
+    "Run code": "运行代码",
+    "Another block is running.": "另一个代码块正在运行。",
+    "Code runs in your browser. It can't reach the internet or your files unless you attach them. Check code before you run it.": "代码在你的浏览器中运行，无法访问互联网；除非你附加文件，否则也无法读取你的文件。运行前请先检查代码。",
+    "Time limit": "时间限制",
+    "Use my attached file": "使用我附加的文件",
+    "shortened": "已截短",
+    "Run this code in your browser?": "在你的浏览器中运行这段代码？",
+    "Python · in your browser": "Python · 在你的浏览器中",
+    "Close output": "关闭输出",
+    "Files given to this run": "本次运行可读取的文件",
+    "Starting Python…": "正在启动 Python……",
+    "Running…": "运行中……",
+    "Python didn't start in time. Try again.": "Python 未能及时启动，请重试。",
+    "Stopped: another block started": "已停止：另一个代码块开始运行",
+    "Python couldn't run here.": "Python 无法在这里运行。",
+    "Python couldn't start in this browser.": "Python 无法在此浏览器中启动。",
+    "Finished with an error": "运行出错",
+    "Output": "输出",
+    "Output cut short: only the first 200,000 characters are shown.": "输出过长：只显示前 200,000 个字符。",
+    "Only the first 12 figures are shown.": "只显示前 12 张图。",
+    "The code ran out of memory. Python Runner allows about 1 GB.": "代码内存不足。Python 运行器最多可使用约 1 GB 内存。",
+    "Python Runner has no network, so code can't download anything.": "Python 运行器无法联网，因此代码无法下载任何内容。",
+    "Python was stopped, so nothing it was doing carries on.": "Python 已被停止，它正在进行的操作不会继续。",
+    "The code finished without printing anything.": "代码已运行完毕，没有输出任何内容。",
+    "Python Runner: code from a reply runs in your browser, with no network. Its output, and any file you give it, stay on this device and aren't saved with the chat. Python's files come from ANONYMA's own server, and your browser keeps a copy.": "Python 运行器：回复中的代码在你的浏览器中运行，无法联网。它的输出以及你提供给它的文件都只留在本设备上，不会随会话保存。Python 的文件来自 ANONYMA 自己的服务器，你的浏览器会保留一份副本。",
+    "The code reads a file it wasn't given. Attach it to the chat, then tick it next to Run.": "代码读取了没有提供给它的文件。请先把文件附加到会话，再在“运行”旁勾选它。",
+    "Use my attached CSV": "使用我附加的 CSV",
+    "Open-source licences": "开源许可",
+    "Loading packages…": "正在加载软件包……",
+    "1 minute": "1 分钟"
   },
   "patterns": [
     {
@@ -7871,6 +7908,34 @@
     {
       "en": "Made {0}; the rest weren't usable and were left out.",
       "zh": "生成了 {0}；其余内容无法使用，已略去。"
+    },
+    {
+      "en": "Loading {0}…",
+      "zh": "正在加载 {0}……"
+    },
+    {
+      "en": "Running… {0} s",
+      "zh": "运行中…… {0} 秒"
+    },
+    {
+      "en": "Finished in {0} s",
+      "zh": "已完成，用时 {0} 秒"
+    },
+    {
+      "en": "Stopped: still running after {0} s",
+      "zh": "已停止：运行超过 {0} 秒"
+    },
+    {
+      "en": "Figure {0}",
+      "zh": "图 {0}"
+    },
+    {
+      "en": "{0} isn't available here. Python Runner has numpy, pandas, matplotlib and Python's standard library.",
+      "zh": "这里无法使用 {0}。Python 运行器提供 numpy、pandas、matplotlib 和 Python 标准库。"
+    },
+    {
+      "en": "The first run downloads Python (about {0} MB) from ANONYMA, and numpy, pandas or matplotlib (up to {1} MB more) only when code uses them. Your browser keeps a copy.",
+      "zh": "首次运行时会从 ANONYMA 下载 Python（约 {0} MB）；只有代码用到 numpy、pandas 或 matplotlib 时才会下载它们（最多另需 {1} MB）。你的浏览器会保留一份副本。"
     }
   ]
 }

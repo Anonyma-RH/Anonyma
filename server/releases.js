@@ -981,7 +981,7 @@ export const UPDATES = [
     // chat. Fact-check is /api/factcheck (server/routes/factcheck.js), one
     // web search, so it needs "search" released too (featuresFor). Nothing
     // new is stored: a saved check is two ordinary conversation turns.
-    released: false,
+    released: true,
   },
   {
     id: "catchup",

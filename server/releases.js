@@ -872,7 +872,7 @@ export const UPDATES = [
     // needs "documents" too. The one thing served is the text reader itself
     // (worker, WebAssembly core and English/Chinese language data) under
     // /ocr/, gated here (featuresFor) and cached for a year.
-    released: false,
+    released: true,
   },
   {
     id: "sharpen",

@@ -28,6 +28,8 @@ export const WIPE_BLIND = "Your Blind Compare votes and rankings";
 // Listed only once Study Mode is released (PanicWipe.jsx). Its decks live
 // only in the browser, so they go with this browser's data below.
 export const WIPE_STUDY = "Study Mode decks and review progress in this browser";
+// Listed only once Page Watch is released (PanicWipe.jsx).
+export const WIPE_WATCHES = "Page watches, the copy of each page they keep, and their reports";
 // Shown under "What stays" once Passkeys is live.
 export const WIPE_KEEPS_PASSKEYS = "Your passkeys, so you can still sign in";
 export const WIPE_STAYS = [

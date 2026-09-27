@@ -1654,6 +1654,101 @@ route("delete", "/api/routines/runs/{id}", "Delete one run from the inbox", {
   response: ref("Ok"),
   description: "The ledger entry and signed receipt stay. 409 routine_running while it's in flight.",
 });
+// Page Watch (update "pagewatch", which also needs "routines"; a watch on
+// private models needs "private").
+const watchFields = {
+  every: { enum: ["6h", "daily", "weekly"], description: "How often the server checks the page; never more often than every 6 hours" },
+  hint: { type: ["string", "null"], maxLength: 300, description: "Optional \"only tell me if…\": with one, the model first says whether a change matters for it, and a report is kept only when it does. Sent as written (Veil can't mask it); a seed phrase is refused (400 seed_phrase_blocked)." },
+  model: { ...string, description: "A text chat model this installation can run; it summarises the changes" },
+  private_only: { ...bool, default: false, description: "Needs Private Mode released. Summaries route like Private Mode: zero data retention models only, never the backup gateway. Reports are still kept in the inbox." },
+  monthly_budget_credits: { ...number, exclusiveMinimum: 0, maximum: 1000000, description: "Per calendar month (UTC), at most four decimals, and at least what one summary with the model can cost (400 watch_budget_too_small; see /api/watches/estimate)" },
+  enabled: { ...bool, default: true, description: "Switching a paused watch back on resets its failure count" },
+};
+const pageWatch = object({
+  id: string,
+  url: { ...string, description: "The page, without tracking parameters. Set once: another page is another watch." },
+  site: string,
+  ...watchFields,
+  paused: { type: ["string", "null"], enum: ["failures", null], description: "failures: switched off after 5 failed checks in a row" },
+  failures: { ...integer, description: "Failed checks in a row" },
+  next_check_at: { type: ["integer", "null"], description: "null while off" },
+  running: bool,
+  last_check_at: { type: ["integer", "null"] },
+  last_status: { type: ["string", "null"], enum: ["baseline", "unchanged", "changed", "not_relevant", "refused", "failed", "unreadable", "fetch_failed", "paused", null] },
+  last_code: { type: ["string", "null"] },
+  last_change_at: { type: ["integer", "null"] },
+  kept: { type: ["object", "null"], description: "The one version of the page kept, to spot changes: when it was taken, its size (at most 200 KB of text) and whether the page was longer. Deleting the watch deletes it." },
+  month: object({ spent: number, held: number, remaining: number, resets_at: integer }),
+  created: integer,
+  updated: integer,
+});
+const watchReport = object({
+  id: string,
+  watch_id: string,
+  url: string,
+  site: string,
+  checked_at: integer,
+  status: { enum: ["changed", "refused", "failed", "unreadable", "paused"], description: "refused: nothing was reserved or charged; unreadable: the model's answer couldn't be used (code length: it ran out of room)" },
+  summary: { type: ["string", "null"], description: "What changed, in markdown bullet points (changed only). The page and the diff themselves are never kept." },
+  model: { type: ["string", "null"] },
+  private_only: bool,
+  hint: { type: ["string", "null"] },
+  request_id: { type: ["string", "null"] },
+  credits_charged: number,
+  finish_reason: { type: ["string", "null"] },
+  signed_receipt: { type: ["object", "null"] },
+  added: { type: ["integer", "null"], description: "Lines added" },
+  removed: { type: ["integer", "null"], description: "Lines removed" },
+  flagged: { ...integer, description: "Instruction-like phrases Injection Shield found in the added lines (they were sent as data)" },
+  code: { type: ["string", "null"] },
+  message: { type: ["string", "null"] },
+  seen: bool,
+});
+route("get", "/api/watches", "Your page watches", {
+  response: object({ watches: array(pageWatch), max_watches: integer, keep_reports: integer, every: object({}), max_failures: integer, snapshot_bytes: integer }),
+  description: "Oldest first. The kept page text itself is in the account export, not here. 120 reads a minute.",
+});
+route("get", "/api/watches/estimate", "The most one change summary can cost", {
+  query: [{ name: "model", in: "query", required: true, schema: string, description: "A chat model" }],
+  response: object({ model: string, private: bool, max_credits: number, reply_tokens: integer, max_diff_chars: integer }),
+  description: "The worst case with the largest set of changes a model is sent and the full reply budget; you're charged only what a summary uses. A check with no change is free.",
+});
+route("post", "/api/watches", "Watch a page", {
+  status: 201,
+  body: object({ url: { ...string, maxLength: 2048 }, ...watchFields }, ["url", "every", "model", "monthly_budget_credits"]),
+  response: pageWatch,
+  description:
+    "Reads the page once now (free), with Link Reader's rules and errors (400 link_invalid, link_blocked, link_userinfo, link_port; 413; 415 link_type, PDFs included; 422 link_unreadable; 502; 504; 429 link_busy), and keeps its readable text to compare with. The first check is one interval later. Each check is fetched by the server (no cookies, no Referer, never your IP); when the text changed beyond whitespace, clock times and \"updated\" dates, the model gets only the changed lines with two lines of context, and the site's name, never the link. At most 20 per account (409 watch_limit); 409 watch_exists for a page you already watch. 400 invalid_watch, invalid_schedule, invalid_model, private_model_required or watch_budget_too_small. 60 changes an hour.",
+});
+route("patch", "/api/watches/{id}", "Change, switch on or switch off a watch", {
+  body: object(watchFields),
+  response: pageWatch,
+  description: "Omitted fields keep their value. Switching on or a new schedule moves the next check to one interval after the last (and at least a minute from now).",
+});
+route("delete", "/api/watches/{id}", "Stop watching a page", {
+  response: ref("Ok"),
+  description: "Deletes the watch, the version of the page it kept and its reports. The ledger entries and signed receipts stay. 409 watch_running while a check is in flight.",
+});
+route("get", "/api/watches/reports", "Page Watch's part of the Routines inbox", {
+  query: [
+    { name: "watch", in: "query", required: false, schema: string, description: "Only this watch's reports" },
+    { name: "before", in: "query", required: false, schema: integer, description: "Only reports checked before this time, for the next page" },
+  ],
+  response: object({ reports: array(watchReport), more: bool }),
+  description: "Newest first, 50 at a time. Each watch keeps its newest 50 reports. A change that didn't match a watch's hint, or a check that found nothing, adds none.",
+});
+route("delete", "/api/watches/reports/{id}", "Delete one report", {
+  response: ref("Ok"),
+  description: "The ledger entry and signed receipt stay.",
+});
+route("get", "/api/watches/unseen", "Reports not seen yet", {
+  response: object({ count: integer }),
+  description: "For the workspace badge.",
+});
+route("post", "/api/watches/seen", "Mark reports as seen", {
+  body: object({ before: { ...integer, description: "Only reports checked at or before this time" } }),
+  response: ref("Ok"),
+});
 // Projects (update "projects"; pinning files also needs "files", and a
 // default privacy mode the update behind it).
 const projectFile = object({

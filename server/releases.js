@@ -936,6 +936,22 @@ export const UPDATES = [
     // stored and there's nothing to erase or export.
     released: false,
   },
+  {
+    id: "pagewatch",
+    title: "Page Watch",
+    tagline: "Watch any page. Hear what changed. Our server checks it, not you.",
+    points: [
+      "Every 6 hours, daily or weekly, fetched by our server, never your browser",
+      "No real change, no charge: only a changed page is summarised",
+      "Add “only tell me if…” to hear only the changes you care about",
+    ],
+    // /api/watches (server/routes/page-watch.js, checks in
+    // server/page-watch.js). Its reports land in the Routines inbox, so it
+    // needs "routines" released too, and a watch on private models needs
+    // "private" (featuresFor). The page is fetched with Link Reader's
+    // SSRF-safe fetcher; summaries go through runChat's hold/settle path.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1251,6 +1267,14 @@ export function featuresFor(req) {
     return ["sharelinks"];
   if (p === "/api/account/usage" || p.startsWith("/api/account/usage/"))
     return ["insights"];
+  // Page Watch: watches and their reports, which are part of the Routines
+  // inbox. A watch on Private models only needs Private Mode too.
+  if (p === "/api/watches" || p.startsWith("/api/watches/")) {
+    const needed = ["pagewatch", "routines"];
+    if ((post || req.method === "PATCH") && body.private_only === true)
+      needed.push("private");
+    return needed;
+  }
   // Routines, and the features a routine turns on for its runs: saving one
   // with web search needs Live Web Search, and Private models only needs
   // Private Mode (routing only: a routine's answers are kept in its inbox).

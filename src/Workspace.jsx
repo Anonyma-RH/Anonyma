@@ -44,6 +44,7 @@ const Study = lazy(() => import("./Study.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 import Routines from "./Routines.jsx";
+import { WatchBadge } from "./PageWatch.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
 import {
   projectsReleased,
@@ -317,6 +318,10 @@ export function AppSidebar({
               <PixelTile name={id} />
               {t}
               {isEarlyAccess(config, MODE_FEATURES[id]) && <EarlyTag />}
+              {/* Page Watch: changes waiting in the Routines inbox. */}
+              {id === "routines" && (
+                <WatchBadge enabled={!!signedIn && isReleased(config, "pagewatch") && modeReleased(config, "routines")} />
+              )}
               {active === id && <span className="nav-active-dot" />}
             </Link>
           ) : (

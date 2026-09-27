@@ -4560,7 +4560,91 @@
     "moved": "处移动",
     "Ask for a summary and the AI gets only the changed passages, with a little context. You see exactly what's sent first.": "请求摘要时，AI 只会收到改动段落及少量上下文。发送前你会先看到确切内容。",
     "Compare docs": "文档对比",
-    "Opening Compare docs…": "正在打开文档对比……"
+    "Opening Compare docs…": "正在打开文档对比……",
+    "Page Watch": "网页监测",
+    "Watch any page. Hear what changed. Our server checks it, not you.": "监测任意网页，变化即告知。由我们的服务器检查，而不是你。",
+    "Every 6 hours, daily or weekly, fetched by our server, never your browser": "每 6 小时、每天或每周检查一次，由我们的服务器抓取，绝不经过你的浏览器",
+    "No real change, no charge: only a changed page is summarised": "没有实质变化就不扣费：只为有变化的网页生成摘要",
+    "Add “only tell me if…” to hear only the changes you care about": "添加“仅在……时告诉我”，只获知你关心的变化",
+    "Every 6 hours": "每 6 小时",
+    "Every week": "每周",
+    "First version saved": "已保存第一个版本",
+    "No change": "无变化",
+    "Changed, but not what you asked about": "有变化，但不是你关心的内容",
+    "Changed; the summary was refused": "有变化；摘要请求被拒绝",
+    "Changed; the summary failed": "有变化；摘要生成失败",
+    "Changed; the model's answer couldn't be read": "有变化；无法读取模型的回答",
+    "Couldn't read the page": "无法读取该网页",
+    "Checked": "已检查",
+    "Page changed": "网页有变化",
+    "No summary": "无摘要",
+    "Unread": "未读",
+    "Couldn't reach the page.": "无法访问该网页。",
+    "The page took longer than 10 seconds to load.": "该网页加载超过 10 秒。",
+    "The link now points to a private or local address, so it isn't read.": "该链接现在指向私有或本地地址，因此不会读取。",
+    "The page is no longer a web page or plain text.": "该网页已不再是网页或纯文本。",
+    "The page is larger than 5 MB.": "该网页大于 5 MB。",
+    "The link redirected more than 3 times.": "该链接重定向超过 3 次。",
+    "No readable text was found on the page.": "该网页上没有找到可读文本。",
+    "The page couldn't be read.": "无法读取该网页。",
+    "Your balance couldn't cover a summary. Nothing was charged.": "你的余额不足以支付一次摘要。未扣费。",
+    "This watch's monthly budget couldn't cover a summary. Nothing was charged.": "此监测的每月预算不足以支付一次摘要。未扣费。",
+    "Your spending limits couldn't cover a summary. Nothing was charged.": "你的消费上限不足以支付一次摘要。未扣费。",
+    "This watch's model isn't available right now. Nothing was charged.": "此监测的模型目前不可用。未扣费。",
+    "The hint looks like a wallet seed phrase, so nothing was sent. Nothing was charged.": "提示看起来像钱包助记词，因此未发送任何内容。未扣费。",
+    "The model ran out of room before it finished, so no summary is shown. The charge stands; nothing was retried.": "模型在完成前用尽了输出空间，因此不显示摘要。费用照常计算；未自动重试。",
+    "The model's answer couldn't be read, so no summary is shown.": "无法读取模型的回答，因此不显示摘要。",
+    "No summary was made.": "未生成摘要。",
+    "Stop watching this page? Its kept copy and its reports are deleted. This can't be undone.": "停止监测此网页？其保存的副本和报告都会被删除。此操作无法撤销。",
+    "Delete watch": "删除监测",
+    "Edit watch": "编辑监测",
+    "Watch a page": "监测网页",
+    "Page link": "网页链接",
+    "The page is read once when you save, to keep a first version to compare with. Web pages and plain text only; not PDFs.": "保存时会读取一次该网页，保留第一个版本用于比较。仅支持网页和纯文本，不支持 PDF。",
+    "How often": "检查频率",
+    "Only tell me if… (optional)": "仅在……时告诉我（可选）",
+    "the price changes": "价格变动",
+    "With a hint, the model first decides whether a change matters to you. You're told only when it does; that check still costs a summary.": "设置提示后，模型会先判断变化对你是否重要，只有重要时才通知你；这次判断仍按一次摘要计费。",
+    "The model sees only the lines that changed, a little context around them, the site's name and your hint: not the whole page, not the link. Veil can't mask the hint, so it's sent as written.": "模型只会看到变化的行、其前后少量上下文、网站名称和你的提示：看不到整个网页，也看不到链接。Veil 无法遮盖提示，因此会按原样发送。",
+    "Model for summaries": "摘要所用模型",
+    "Zero-data-retention models only, never the backup gateway. Reports are still kept in your inbox.": "仅使用零数据保留模型，绝不使用备用网关。报告仍会保存在你的收件箱中。",
+    "A summary is billed like a message: you pay only what it uses.": "摘要按消息计费：只为实际用量付费。",
+    "Checking is free. No real change, no charge.": "检查免费。没有实质变化就不扣费。",
+    "A summary is refused, and nothing is charged, when your balance, your spending limits or this watch's monthly budget can't cover it. The budget resets each calendar month (UTC).": "当你的余额、消费上限或此监测的每月预算不足以支付摘要时，摘要会被拒绝，且不扣费。预算按自然月重置（UTC）。",
+    "Checked on schedule by our server.": "由我们的服务器按计划检查。",
+    "Saved, but not checked until you switch it on.": "已保存，但在你开启之前不会检查。",
+    "ANONYMA keeps the last version of the page to spot changes. Delete the watch to delete it.": "ANONYMA 会保留该网页的最新版本，用来发现变化。删除监测即可删除它。",
+    "Save watch": "保存监测",
+    "Reading the page…": "正在读取网页……",
+    "Start watching": "开始监测",
+    "Only tell me if:": "仅在以下情况告诉我：",
+    "Tells you about every real change.": "每次实质变化都会告诉你。",
+    "Checking now": "正在检查",
+    "Last check": "上次检查",
+    "Last change": "上次变化",
+    "Next check": "下次检查",
+    "View reports": "查看报告",
+    "Open page": "打开网页",
+    "The summary reached its length limit and may be cut short.": "摘要已达到长度上限，可能不完整。",
+    "Injection Shield: the new text had 1 instruction-like phrase. It was sent to the model as data only.": "注入防护：新文本中有 1 个类似指令的短语，它仅作为数据发送给模型。",
+    "Copy summary": "复制摘要",
+    "Paste a link and choose how often. Our server checks the page, not your browser: no cookies, no referrer, never your IP. When it really changes, you're told what changed, here in your inbox.": "粘贴链接并选择检查频率。由我们的服务器检查网页，而不是你的浏览器：不带 Cookie，不带来源页，绝不暴露你的 IP。网页有实质变化时，你会在收件箱里看到变化内容。",
+    "You watch the most pages an account can. Delete a watch to add another.": "你监测的网页数量已达账户上限。删除一个监测后才能新增。",
+    "No pages watched yet.": "还没有监测任何网页。",
+    "Watch a pricing page, a changelog, a job board or a policy, and hear when it changes.": "监测定价页、更新日志、招聘页或政策条款，变化时即告知你。",
+    "1 new page change": "1 个新的网页变化",
+    "Page watches, the copy of each page they keep, and their reports": "网页监测、其保存的每个网页副本及其报告",
+    "Page Watch: each watched page’s link, how often it’s checked, its hint, model and budget, and one copy of the page’s readable text (the last version, at most 200 KB) with its fingerprint, kept only to spot changes. Reports keep a change’s summary, never the page or the diff: the newest 50 per watch, with their charges and signed receipts. The model is sent only the changed lines, a little context and the site’s name. Deleting a watch deletes its copy of the page and its reports; Panic Wipe and closing your account delete every watch.": "网页监测：每个被监测网页的链接、检查频率、提示、模型和预算，以及该网页可读文本的一份副本（最新版本，最多 200 KB）及其指纹，仅用于发现变化。报告只保存变化的摘要，绝不保存网页或差异内容：每个监测保留最新 50 条，附带费用和签名收据。发送给模型的只有变化的行、少量上下文和网站名称。删除监测会删除其网页副本和报告；紧急清除和关闭账户会删除所有监测。",
+    "The export also includes your page watches, the copy of each page they keep, and their reports.": "导出内容还包括你的网页监测、其保存的每个网页副本及其报告。",
+    "You already watch this page.": "你已经在监测这个网页。",
+    "A watch's page can't be changed. Delete it and watch the new page instead.": "监测的网页无法更改。请删除它，改为监测新网页。",
+    "Check every 6 hours, daily or weekly.": "请选择每 6 小时、每天或每周检查一次。",
+    "This looks like a wallet seed phrase. A watch's hint is saved and sent with every summary, so ANONYMA won't save one. Remove it to continue.": "这看起来像钱包助记词。监测的提示会被保存，并随每次摘要一起发送，因此 ANONYMA 不会保存它。请删除后继续。",
+    "Page Watch reads web pages and plain text, not PDFs.": "网页监测只读取网页和纯文本，不支持 PDF。",
+    "Watch not found.": "找不到该监测。",
+    "This page is being checked. Delete the watch once the check finishes.": "正在检查此网页。请在检查完成后再删除监测。",
+    "Report not found.": "找不到该报告。",
+    "Result": "结果"
   },
   "patterns": [
     {
@@ -7406,6 +7490,46 @@
     {
       "en": "Written by {0} from the changed passages only. Not legal advice.",
       "zh": "由 {0} 仅根据改动段落撰写。不构成法律建议。"
+    },
+    {
+      "en": "Paused after 5 failed checks in a row. {0} Switch the watch back on to try again.",
+      "zh": "连续 5 次检查失败，已暂停。{0}重新开启此监测即可再试。"
+    },
+    {
+      "en": "Paused after 5 failed checks in a row. {0} Switch it back on to try again.",
+      "zh": "连续 5 次检查失败，已暂停。{0}重新开启即可再试。"
+    },
+    {
+      "en": "A summary costs at most {0} credits with this model, and usually far less: you pay only what it uses.",
+      "zh": "使用此模型，一次摘要最多花费 {0} 积分，通常远低于此：只为实际用量付费。"
+    },
+    {
+      "en": "Kept: the last version of this page, {0}, from {1}.",
+      "zh": "已保存：此网页的最新版本，{0}，保存于 {1}。"
+    },
+    {
+      "en": "{0} lines added · {1} removed",
+      "zh": "新增 {0} 行 · 删除 {1} 行"
+    },
+    {
+      "en": "Injection Shield: the new text had {0} instruction-like phrases. They were sent to the model as data only.",
+      "zh": "注入防护：新文本中有 {0} 个类似指令的短语，它们仅作为数据发送给模型。"
+    },
+    {
+      "en": "{0} new page changes",
+      "zh": "{0} 个新的网页变化"
+    },
+    {
+      "en": "You can watch up to {0} pages. Delete a watch to add another.",
+      "zh": "你最多可以监测 {0} 个网页。删除一个监测后才能新增。"
+    },
+    {
+      "en": "Set a monthly budget of at least {0} credits: one summary with this model can cost up to that.",
+      "zh": "请将每月预算设为至少 {0} 积分：使用此模型，一次摘要最多可能花费这么多。"
+    },
+    {
+      "en": "Keep “only tell me if…” to {0} characters.",
+      "zh": "“仅在……时告诉我”请控制在 {0} 个字符以内。"
     }
   ]
 }

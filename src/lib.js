@@ -488,6 +488,8 @@ export const MODE_FEATURES = {
   uncensored: "uncensored",
   symposium: "symposium",
   sheets: "sheets",
+  // On-Device Model's page (src/OnDevice.jsx).
+  device: "ondevice",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

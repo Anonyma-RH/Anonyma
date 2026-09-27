@@ -844,6 +844,22 @@ export const UPDATES = [
     // password, email code or wallet signature without touching the session.
     released: true,
   },
+  {
+    id: "ondevice",
+    title: "On-Device Model",
+    tagline: "A model that runs entirely on your device.",
+    points: [
+      "Download a small model once; it runs in your browser",
+      "Free, and it keeps answering with no connection",
+      "Nothing you type is sent to ANONYMA or anyone else",
+    ],
+    // Browser only (src/OnDevice.jsx, src/on-device.js): no server routes,
+    // so nothing to gate in featuresFor, and nothing stored server-side. Its
+    // page, /workspace/device, is unknown (a 404) until release. It needs
+    // WebGPU; the model files come straight from Hugging Face and GitHub at
+    // pinned revisions, checked against pinned hashes.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

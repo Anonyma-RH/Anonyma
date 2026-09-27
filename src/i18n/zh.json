@@ -4172,7 +4172,79 @@
     "Confirm with your passkey again.": "请再次用你的通行密钥确认。",
     "A passkey works too.": "也可以用通行密钥。",
     "Blind can't be combined with Deep research or Sheets.": "盲测对比不能与深度研究或表格同时使用。",
-    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。"
+    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。",
+    "On-Device Model": "本机模型",
+    "A model that runs entirely on your device.": "完全在你的设备上运行的模型。",
+    "Download a small model once; it runs in your browser": "只需下载一次小模型，它就在你的浏览器中运行",
+    "Free, and it keeps answering with no connection": "免费，断网后也能继续回答",
+    "Nothing you type is sent to ANONYMA or anyone else": "你输入的内容不会发送给 ANONYMA 或任何人",
+    "On-device": "本机模型",
+    "On-device model": "本机模型",
+    "Opening the on-device model…": "正在打开本机模型……",
+    "Runs in your browser · free · nothing sent": "在浏览器中运行 · 免费 · 不外传",
+    "RUNS ON THIS DEVICE": "在本设备上运行",
+    "Chat with a small model that runs in your browser. Free, it keeps answering offline, and nothing you type is sent anywhere.": "与在你浏览器中运行的小模型对话。免费，离线也能继续回答，你输入的内容不会发送到任何地方。",
+    "Checking this browser for WebGPU…": "正在检查此浏览器是否支持 WebGPU……",
+    "Your browser doesn't support this yet": "你的浏览器暂不支持此功能",
+    "This browser doesn't have WebGPU, which the on-device model needs.": "此浏览器不支持 WebGPU，而本机模型需要它。",
+    "This browser has WebGPU, but it couldn't find a graphics processor it can use.": "此浏览器支持 WebGPU，但找不到可用的图形处理器。",
+    "This device's graphics processor is too limited for these models.": "此设备的图形处理器性能不足，无法运行这些模型。",
+    "It works in:": "可在以下环境中使用：",
+    "Chrome or Edge 113 and later on Windows, macOS and ChromeOS": "Windows、macOS 和 ChromeOS 上的 Chrome 或 Edge 113 及更高版本",
+    "Chrome on recent Android phones": "较新 Android 手机上的 Chrome",
+    "Safari where WebGPU is turned on (Safari 26 and later)": "已开启 WebGPU 的 Safari（Safari 26 及更高版本）",
+    "Everything else in ANONYMA works as usual in this browser.": "ANONYMA 的其他功能在此浏览器中照常可用。",
+    "Open Chat": "打开对话",
+    "Ask anything. The reply is written by your own device; you can even turn off your connection.": "随便问。回答由你自己的设备生成，你甚至可以断开网络。",
+    "on this device": "本机运行",
+    "Free · nothing sent": "免费 · 不外传",
+    "Stopped at the length limit.": "已达到长度上限，回答已停止。",
+    "Earlier messages didn't fit the model's memory, so it saw only the most recent ones.": "较早的消息超出了模型的记忆长度，因此它只看到了最近的消息。",
+    "Message the on-device model": "给本机模型发消息",
+    "On this device · free · nothing sent": "仅在本设备 · 免费 · 不外传",
+    "Send message": "发送消息",
+    "Keep this chat in Device Vault": "将此会话保存到本机保险库",
+    "Encrypted on this device with your passphrase. Never on our servers.": "用你的密码短语在此设备上加密。绝不存到我们的服务器。",
+    "Not saved: kept in this tab only, gone when you reload or close it.": "未保存：只保留在此标签页中，刷新或关闭后即消失。",
+    "Set up Device Vault to keep it": "设置本机保险库以保存它",
+    "Unlock Device Vault to keep it": "解锁本机保险库以保存它",
+    "Models on this device": "本设备上的模型",
+    "Fastest. Quick questions, rewrites and short drafts.": "最快。适合快速提问、改写和短稿。",
+    "Balanced. Better at reasoning, and at Chinese and other languages.": "均衡。推理能力更好，也更擅长中文和其他语言。",
+    "The most capable of the three. Slower, and needs more memory.": "三者中能力最强。速度较慢，需要更多内存。",
+    "Starting…": "正在启动……",
+    "Not downloaded": "未下载",
+    "No models downloaded yet": "尚未下载任何模型",
+    "What leaves this device": "什么会离开此设备",
+    "The model file downloads once from Hugging Face, and its small engine file from GitHub (they see a download, not your chats). After that, everything runs on your device: no credits, nothing sent to ANONYMA or anyone.": "模型文件只从 Hugging Face 下载一次，它的小型引擎文件来自 GitHub（它们只看到一次下载，看不到你的会话）。之后一切都在你的设备上运行：不消耗积分，不向 ANONYMA 或任何人发送任何内容。",
+    "Your browser keeps the files until you remove them, and may clear them if it runs short of space.": "浏览器会一直保留这些文件，直到你移除它们；存储空间不足时，浏览器也可能清除它们。",
+    "Small models are weaker than the ones in Chat: expect simpler answers and more mistakes. No web search, files or memory here.": "小模型不如“对话”中的模型强：回答会更简单，出错也更多。这里没有联网搜索、文件或记忆功能。",
+    "Remove downloaded model?": "移除已下载的模型？",
+    "Image not shown: on-device replies never load images.": "图片未显示：本机模型的回答从不加载图片。",
+    "Already on this device": "已在此设备上",
+    "Graphics memory": "显存",
+    "Cost": "费用",
+    "Free, no credits": "免费，不消耗积分",
+    "Licence": "许可证",
+    "Resume download": "继续下载",
+    "Loads from this device. No download, nothing sent.": "从此设备加载。无需下载，不发送任何内容。",
+    "Only the model file is downloaded. Your messages never leave this device.": "只会下载模型文件。你的消息绝不会离开此设备。",
+    "Model download": "模型下载",
+    "A one-time download. If you stop, what's downloaded is kept and the next start resumes.": "只需下载一次。如果中途停止，已下载的部分会保留，下次启动时继续。",
+    "Getting the model ready on your graphics processor.": "正在你的图形处理器上准备模型。",
+    "Stop download": "停止下载",
+    "This chat couldn't be saved to Device Vault. It's still here in this tab.": "此会话无法保存到本机保险库。它仍保留在此标签页中。",
+    "The model's files couldn't be removed. Try again, or clear this site's data in your browser settings.": "无法移除模型文件。请重试，或在浏览器设置中清除此网站的数据。",
+    "A downloaded file didn't match its expected fingerprint, so it wasn't used. Remove the model and try again.": "下载的文件与预期指纹不符，因此未被使用。请移除模型后重试。",
+    "There isn't enough storage space on this device for this model. Free some space or pick a smaller model.": "此设备的存储空间不足以容纳此模型。请释放一些空间，或选择更小的模型。",
+    "This device's graphics processor can't run this build. Reload the page to try again.": "此设备的图形处理器无法运行此版本。请刷新页面后重试。",
+    "This chat is too long for the on-device model. Start a new chat.": "此会话对本机模型来说太长了。请开始新对话。",
+    "The graphics processor ran out of memory or stopped. Try a smaller model, close other tabs, or reload the page.": "图形处理器内存不足或已停止。请尝试更小的模型、关闭其他标签页，或刷新页面。",
+    "The on-device engine couldn't run in this browser. Reload the page and try again.": "本机引擎无法在此浏览器中运行。请刷新页面后重试。",
+    "The download stopped. Check your connection and try again; the parts already downloaded are kept.": "下载已中断。请检查网络后重试；已下载的部分会保留。",
+    "The model couldn't start on this device. Reload the page and try again, or pick a smaller model.": "模型无法在此设备上启动。请刷新页面后重试，或选择更小的模型。",
+    "The on-device model stopped before finishing. Try again, or start a new chat.": "本机模型在完成前停止了。请重试，或开始新对话。",
+    "Downloading…": "正在下载……"
   },
   "patterns": [
     {
@@ -6578,6 +6650,78 @@
     {
       "en": "Too many incorrect attempts. Try again in {0} minutes, or sign out instead.",
       "zh": "错误次数过多。请在 {0} 分钟后重试，或改为退出登录。"
+    },
+    {
+      "en": "{0} is ready",
+      "zh": "{0} 已就绪"
+    },
+    {
+      "en": "{0} tokens a second",
+      "zh": "每秒 {0} 个 Token"
+    },
+    {
+      "en": "Message {0}, on this device",
+      "zh": "给 {0} 发消息，在本设备上运行"
+    },
+    {
+      "en": "{0} download",
+      "zh": "下载 {0}"
+    },
+    {
+      "en": "About {0} of graphics memory",
+      "zh": "约 {0} 显存"
+    },
+    {
+      "en": "Downloaded · {0}",
+      "zh": "已下载 · {0}"
+    },
+    {
+      "en": "Partly downloaded · {0}",
+      "zh": "已部分下载 · {0}"
+    },
+    {
+      "en": "Using {0} on this device",
+      "zh": "本设备已使用 {0}"
+    },
+    {
+      "en": "{0} free for this site",
+      "zh": "此网站还可用 {0}"
+    },
+    {
+      "en": "frees {0} on this device. You can download it again any time.",
+      "zh": "将释放此设备上的 {0}。你随时可以重新下载。"
+    },
+    {
+      "en": "{0}, once",
+      "zh": "{0}，仅需一次"
+    },
+    {
+      "en": "About {0}",
+      "zh": "约 {0}"
+    },
+    {
+      "en": "Start {0}",
+      "zh": "启动 {0}"
+    },
+    {
+      "en": "Download {0} and start",
+      "zh": "下载 {0} 并启动"
+    },
+    {
+      "en": "Downloading {0}%",
+      "zh": "正在下载 {0}%"
+    },
+    {
+      "en": "Loading from this device {0}%",
+      "zh": "正在从本设备加载 {0}%"
+    },
+    {
+      "en": "{0} of {1} downloaded",
+      "zh": "已下载 {0}，共 {1}"
+    },
+    {
+      "en": "That message is too long for the on-device model. Keep it under {0} characters.",
+      "zh": "这条消息对本机模型来说太长了。请控制在 {0} 个字符以内。"
     }
   ]
 }

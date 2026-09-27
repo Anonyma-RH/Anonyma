@@ -70,6 +70,8 @@ export function knownPage(path, served = {}) {
     (served.wipe === true && path === "/wiped") ||
     // Local Sheets' page exists only once that update is live.
     (served.sheets === true && path === "/workspace/sheets") ||
+    // So does On-Device Model's.
+    (served.ondevice === true && path === "/workspace/device") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

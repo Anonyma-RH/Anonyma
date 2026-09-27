@@ -525,6 +525,16 @@ export function chatRoutes(ctx) {
           "The model returned no content. Nothing was charged.",
           "empty_output",
         );
+      // A server-side caller that pays only for a reply it can use (Page
+      // Watch, which runs unattended; set in code, never from the request
+      // body) isn't charged for one it can't read: the hold is released
+      // below, as for an empty reply.
+      if (req.acceptOutput && !req.acceptOutput(output, finishReason || "stop"))
+        fail(
+          502,
+          "The model's reply couldn't be used. Nothing was charged.",
+          "unusable_output",
+        );
       const { input, out } = tokenCounts();
       const reported = reportedProviderCost(usage, upstreamCost, feePercent());
       // Whether the provider folds the search fee into its reported cost
@@ -680,7 +690,17 @@ export function chatRoutes(ctx) {
         accepted &&
         controller.signal.aborted &&
         controller.signal.reason?.message === "Client disconnected";
-      if (chargeReservation) {
+      if (req.acceptOutput) {
+        // Only a usable reply is paid for (see acceptOutput above): an
+        // unusable, failed, timed-out or stopped request releases its hold,
+        // whatever the failure-billing policy below would charge.
+        release(db, hold);
+        if (timedOut) {
+          e.status = 504;
+          e.code = "provider_timeout";
+          e.message = "The provider deadline expired. Nothing was charged.";
+        }
+      } else if (chargeReservation) {
         receipt = settle(
           db,
           hold,

@@ -11,7 +11,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { transformWithEsbuild } from "vite";
 import { createApp } from "../server/app.js";
-import { balance, catalog, chatPrice, hash, now, reserve, settle } from "../server/core.js";
+import { balance, catalog, chatPrice, database, hash, now, reserve, settle, MIGRATIONS } from "../server/core.js";
 import { UPDATES, featuresFor } from "../server/releases.js";
 import { watchMessages, replyTokens, worstCase } from "../server/page-watch.js";
 import { pageWatchTestReply } from "../server/page-watch-test.js";
@@ -28,6 +28,8 @@ import {
   nextCheck,
   failureDelay,
   parseVerdict,
+  readReply,
+  MAX_UNREADABLE,
   mergeInbox,
   shortUrl,
 } from "../src/page-watch.js";
@@ -363,6 +365,31 @@ test("snapshots, schedules, backoff, verdicts and the merged inbox", () => {
   assert.deepEqual(parseVerdict("Sure! The price changed.", "stop"), { error: "unreadable" });
   assert.deepEqual(parseVerdict('{"matters": "yes"}', "stop"), { error: "unreadable" });
   assert.deepEqual(parseVerdict('{"matters": true, "summary": ""}', "stop"), { error: "unreadable" });
+  // The shapes real models use. Claude Haiku 4.5 answers with "summary" as a
+  // list of strings, in a code fence (captures/pagewatch/haiku-take-bug.json).
+  const haiku =
+    '```json\n{\n  "matters": true,\n  "summary": [\n    "BTC price: $64,210 (was $63,480)",\n    "24h change: +1.2% (was -0.4%)"\n  ]\n}\n```';
+  assert.deepEqual(parseVerdict(haiku, "stop"), {
+    matters: true,
+    summary: "- BTC price: $64,210 (was $63,480)\n- 24h change: +1.2% (was -0.4%)",
+  });
+  assert.deepEqual(parseVerdict('{"matters": true, "summary": ["- **Pro** $39 (was $49)", "* New yearly plan"]}', "stop"), {
+    matters: true,
+    summary: "- **Pro** $39 (was $49)\n* New yearly plan",
+  });
+  assert.deepEqual(parseVerdict('Here you go:\n{"matters": "Yes", "summary": {"text": "- $39"}}', "stop"), { matters: true, summary: "- $39" });
+  assert.deepEqual(parseVerdict('{"matters": "no", "summary": []}', "stop"), { matters: false, summary: "" });
+  assert.deepEqual(parseVerdict('{"matters": "false"}', "stop"), { matters: false, summary: "" });
+  assert.deepEqual(parseVerdict('{"matters": true, "summary": [{"text": "a"}, {"text": "b"}]}', "stop"), { matters: true, summary: "- a\n- b" });
+  assert.deepEqual(parseVerdict('{"matters": "maybe", "summary": "x"}', "stop"), { error: "unreadable" });
+  assert.deepEqual(parseVerdict('{"matters": true, "summary": []}', "stop"), { error: "unreadable" });
+  assert.deepEqual(parseVerdict('{"matters": true, "summary": [42, null]}', "stop"), { error: "unreadable" });
+  // Without a hint any non-empty reply is the summary.
+  assert.deepEqual(readReply(null, "  - $39 (was $49) ", "stop"), { matters: true, summary: "- $39 (was $49)" });
+  assert.deepEqual(readReply(null, "- cut sho", "length"), { matters: true, summary: "- cut sho" });
+  assert.deepEqual(readReply(null, "  ", "length"), { error: "length" });
+  assert.deepEqual(readReply("the price", haiku, "stop").matters, true);
+  assert.equal(MAX_UNREADABLE, 3);
   // The inbox merges runs and reports newest first, without gaps.
   const run = (id, t) => ({ id, started_at: t });
   const rep = (id, t) => ({ id, checked_at: t });
@@ -596,7 +623,7 @@ test("a change is summarised from the changed lines only, billed once, and lands
   await p.agent.delete("/api/watches/reports/" + rep.id).expect(404);
 });
 
-test("with a hint the model says yes or no first; only a yes is reported; a cut-off answer stops plainly", async (t) => {
+test("with a hint the model says yes or no first; only a yes is reported; a cut-off answer is noted and not charged", async (t) => {
   const c = clock(t, Date.UTC(2026, 8, 26, 8));
   const s = fixture(t);
   const p = await person(s.app);
@@ -625,7 +652,10 @@ test("with a hint the model says yes or no first; only a yes is reported; a cut-
   assert.equal(yes.hint, "the price changes");
   assert.match(yes.summary, /\*\*\$29\*\* \(was \$49\)/);
   assert.ok(!yes.summary.includes('"matters"'), "the summary, not the JSON");
-  // The model runs out of room mid-answer: a plain note, no retry, no summary.
+  // The model runs out of room mid-answer: a plain note, no summary, no
+  // retry now, and no charge (the watch runs unattended).
+  const before = balance(s.db, p.user.id).available;
+  const kept = row(s, w.id).snapshot;
   pg.set(PRICING(29, "PAGEWATCH-TEST-LENGTH price note").replace("Follow us on Mastodon", "Follow us on Bluesky"));
   c.advance(6 * HOUR + 1000);
   const cutAt = c.now;
@@ -636,9 +666,15 @@ test("with a hint the model says yes or no first; only a yes is reported; a cut-
   assert.equal(cut.code, "length");
   assert.equal(cut.finish_reason, "length");
   assert.equal(cut.summary, null);
-  assert.ok(cut.credits_charged > 0, "the charge stands");
-  assert.equal(holdsFor(s, p.user.id, w.id).length, 3, "one request per change: nothing retried");
+  assert.equal(cut.credits_charged, 0, "nothing charged");
+  assert.equal(cut.signed_receipt, null);
+  const holds = holdsFor(s, p.user.id, w.id);
+  assert.equal(holds.length, 3, "one request per change: nothing retried");
+  assert.equal(holds.find((h) => h.id.endsWith("_" + cutAt)).status, "released");
+  assert.equal(balance(s.db, p.user.id).available, before);
   assert.equal(row(s, w.id).last_code, "length");
+  assert.equal(row(s, w.id).unreadable, 1);
+  assert.equal(row(s, w.id).snapshot, kept, "the change is tried again at the next check");
   // Without a hint, a cut-off summary is still shown, marked.
   const direct = pageWatchTestReply(watchMessages({ hint: null, site: "x.example", diff: "+ PAGEWATCH-TEST-LENGTH" }));
   assert.equal(direct.finish, "length");
@@ -728,6 +764,132 @@ ${extra}
   assert.equal(rep.added, 1);
   assert.equal(rep.removed, 0);
   assert.match(rep.summary, /\*\*Added:\*\* Version 4\.3/);
+});
+
+test("a list-shaped verdict (Claude Haiku's) is read, summarised and charged like any other", async (t) => {
+  const c = clock(t, Date.UTC(2026, 8, 26, 8));
+  const s = fixture(t);
+  const p = await person(s.app);
+  const pg = page(PRICING(49));
+  const w = await create(p, pg.url, { hint: "the price changes" });
+  pg.set(PRICING(39, "PAGEWATCH-TEST-ARRAY"));
+  c.advance(6 * HOUR + 1000);
+  await s.tick();
+  await s.tick();
+  const [rep] = await inbox(p);
+  assert.equal(rep.status, "changed");
+  assert.match(rep.summary, /^- Pro plan price: \*\*\$39\*\* \(was \$49\)\n- \*\*Added:\*\* PAGEWATCH-TEST-ARRAY$/);
+  assert.ok(!rep.summary.includes("["), "bullets, not the JSON list");
+  assert.ok(rep.credits_charged > 0);
+  assert.equal(row(s, w.id).unreadable, 0);
+  assert.equal(row(s, w.id).snapshot, PRICING(39, "PAGEWATCH-TEST-ARRAY"));
+});
+
+test("a reply that can't be read is never charged, leaves a note, and the third in a row pauses the watch", async (t) => {
+  const c = clock(t, Date.UTC(2026, 8, 26, 8));
+  const s = fixture(t);
+  const p = await person(s.app);
+  const pg = page(PRICING(49));
+  const w = await create(p, pg.url, { hint: "the price changes" });
+  const start = balance(s.db, p.user.id).available;
+  const kept = row(s, w.id).snapshot;
+  pg.set(PRICING(39, "PAGEWATCH-TEST-GARBLE"));
+  const attempts = [];
+  for (let i = 1; i <= MAX_UNREADABLE; i++) {
+    c.set(row(s, w.id).next_check + 1000);
+    attempts.push(c.now);
+    await s.tick();
+    await s.tick();
+    const r = row(s, w.id);
+    assert.equal(r.unreadable, i);
+    assert.equal(r.snapshot, kept, "the change stays to be summarised");
+  }
+  // Every reply was released: no ledger entry, no receipt, the balance whole.
+  const holds = holdsFor(s, p.user.id, w.id);
+  assert.equal(holds.length, MAX_UNREADABLE);
+  assert.ok(holds.every((h) => h.status === "released"), "released, never settled");
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger WHERE ref LIKE ?").get(`${p.user.id}:pagewatch_%`).n, 0);
+  assert.equal(balance(s.db, p.user.id).available, start);
+  assert.equal(balance(s.db, p.user.id).held, 0);
+  assert.equal((await view(p, w.id)).month.spent, 0);
+  // Two notes, then the pause.
+  const notes = await inbox(p);
+  assert.deepEqual(notes.map((n) => n.status), ["paused", "unreadable", "unreadable"]);
+  assert.ok(notes.every((n) => n.code === "unreadable" && n.credits_charged === 0 && n.summary === null && !n.signed_receipt));
+  assert.deepEqual(notes.map((n) => n.checked_at).reverse(), attempts);
+  const paused = await view(p, w.id);
+  assert.equal(paused.enabled, false);
+  assert.equal(paused.paused, "unreadable");
+  assert.equal(paused.next_check_at, null);
+  // Paused: never checked.
+  const count = fetchesOf(pg.path);
+  c.advance(7 * 24 * HOUR);
+  await s.tick();
+  assert.equal(fetchesOf(pg.path), count);
+  // Another model, switched back on: the run starts afresh and the change
+  // that was never read is summarised now, and charged once.
+  pg.set(PRICING(39));
+  const again = (await p.agent.patch("/api/watches/" + w.id).send({ model: "venice/venice-uncensored-1-2", enabled: true }).expect(200)).body;
+  assert.equal(again.paused, null);
+  assert.equal(again.unreadable, 0);
+  c.set(again.next_check_at + 1000);
+  await s.tick();
+  await s.tick();
+  const [summary] = await inbox(p);
+  assert.equal(summary.status, "changed");
+  assert.match(summary.summary, /\*\*\$39\*\* \(was \$49\)/);
+  assert.ok(summary.credits_charged > 0);
+  assert.equal(row(s, w.id).unreadable, 0);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger WHERE ref LIKE ?").get(`${p.user.id}:pagewatch_%`).n, 1);
+  // A usable reply between unreadable ones ends the run.
+  pg.set(PRICING(29, "PAGEWATCH-TEST-GARBLE"));
+  c.set(row(s, w.id).next_check + 1000);
+  await s.tick();
+  assert.equal(row(s, w.id).unreadable, 1);
+  pg.set(PRICING(19));
+  c.set(row(s, w.id).next_check + 1000);
+  await s.tick();
+  assert.equal(row(s, w.id).unreadable, 0);
+  assert.equal((await inbox(p))[0].status, "changed");
+});
+
+test("a summary that fails or times out is not charged either", async (t) => {
+  const c = clock(t, Date.UTC(2026, 8, 26, 8));
+  // The local provider streams slower than this deadline.
+  const s = fixture(t, undefined, { requestTimeoutMs: 25 });
+  const p = await person(s.app);
+  const pg = page(PRICING(49));
+  const w = await create(p, pg.url);
+  const start = balance(s.db, p.user.id).available;
+  pg.set(PRICING(39));
+  c.advance(6 * HOUR + 1000);
+  await s.tick();
+  await s.tick();
+  const [rep] = await inbox(p);
+  assert.equal(rep.status, "failed");
+  assert.equal(rep.code, "provider_timeout");
+  assert.equal(rep.credits_charged, 0);
+  const [hold] = holdsFor(s, p.user.id, w.id);
+  assert.equal(hold.status, "released", "no failure-billing charge for an unattended watch");
+  assert.equal(balance(s.db, p.user.id).available, start);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger WHERE user_id=? AND amount<0").get(p.user.id).n, 0);
+  // A provider failure isn't the model's reply: it doesn't count towards the pause.
+  assert.equal(row(s, w.id).unreadable, 0);
+});
+
+test("a database made before the unreadable count gets it", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "anonyma-pagewatch-db-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const path = join(dir, "old.sqlite");
+  const old = database(path);
+  old.exec("ALTER TABLE page_watches DROP COLUMN unreadable");
+  old.prepare("DELETE FROM schema_additive WHERE version=?").run(MIGRATIONS.length);
+  old.exec(`PRAGMA user_version=${MIGRATIONS.length - 1}`);
+  old.close();
+  const db = database(path);
+  t.after(() => db.close());
+  assert.ok(db.prepare("PRAGMA table_info(page_watches)").all().some((col) => col.name === "unreadable"));
+  assert.ok(db.prepare("SELECT 1 FROM schema_additive WHERE version=?").get(MIGRATIONS.length), "recorded as additive");
 });
 
 test("SSRF: a watched page that starts redirecting to a private address is refused, and nothing private is dialled", async (t) => {
@@ -1000,6 +1162,8 @@ test("the page marks links, hints, summaries and model names off, and translates
     { ...reports[0], id: "cut", status: "unreadable", code: "length", summary: null },
     { ...reports[0], id: "bad", status: "unreadable", code: "unreadable", summary: null },
     { ...reports[0], id: "pause", status: "paused", code: "link_status", summary: null, model: null },
+    { ...reports[0], id: "pause-model", status: "paused", code: "unreadable", summary: null, credits_charged: 0 },
+    { ...reports[0], id: "late", status: "failed", code: "provider_timeout", summary: null, credits_charged: 0 },
     { ...reports[0], id: "fail", status: "failed", code: "provider_rejected", message: "The provider rejected this request.", summary: null },
   ];
   const html = [
@@ -1048,7 +1212,13 @@ test("the page marks links, hints, summaries and model names off, and translates
         onDelete() {},
       }),
     ),
-    ...[...watches, paused, { ...watches[1], running: true, last_check_at: null, kept: null }].map((w) =>
+    ...[
+      ...watches,
+      paused,
+      { ...paused, id: "pm", paused: "unreadable", last_code: "unreadable" },
+      { ...watches[0], id: "u", last_status: "unreadable", last_code: "length" },
+      { ...watches[1], running: true, last_check_at: null, kept: null },
+    ].map((w) =>
       renderToStaticMarkup(createElement(WatchCard, { w, modelName: "Gemini 2.5 Flash" })),
     ),
     ...variants.map((r) => renderToStaticMarkup(createElement(WatchReportCard, { report: r, modelName: "Gemini 2.5 Flash", fresh: r.id === "demo-report-1" }))),
@@ -1063,6 +1233,9 @@ test("the page marks links, hints, summaries and model names off, and translates
   // The honest lines are there.
   assert.ok(shown.includes("ANONYMA keeps the last version of the page to spot changes. Delete the watch to delete it."));
   assert.ok(shown.includes("Checking is free. No real change, no charge."));
+  assert.ok(shown.includes("A reply that can't be read, or a summary that fails, isn't charged."));
+  assert.ok(shown.includes("The model's reply couldn't be read, so nothing was charged. Try another model for this watch."));
+  assert.ok(shown.includes("Paused after 3 replies in a row that couldn't be read. Nothing was charged. Choose another model for this watch, then switch it back on."));
   assert.ok(shown.some((x) => x.startsWith("The model sees only the lines that changed")));
   // Everything else has a translation.
   const date = /^\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2} [AP]M$/;

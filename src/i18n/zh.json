@@ -7851,6 +7851,22 @@
     {
       "en": "Up to {0} credits · over your spending limit",
       "zh": "最多 {0} 积分 · 超出你的消费上限"
+    },
+    {
+      "en": "Made {0} and {1}: the source had enough for that many.",
+      "zh": "生成了 {0}和 {1}：来源的内容只够生成这么多。"
+    },
+    {
+      "en": "Made {0}: the source had enough for that many.",
+      "zh": "生成了 {0}：来源的内容只够生成这么多。"
+    },
+    {
+      "en": "Made {0} and {1}; the rest weren't usable and were left out.",
+      "zh": "生成了 {0}和 {1}；其余内容无法使用，已略去。"
+    },
+    {
+      "en": "Made {0}; the rest weren't usable and were left out.",
+      "zh": "生成了 {0}；其余内容无法使用，已略去。"
     }
   ]
 }

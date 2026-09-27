@@ -46,7 +46,7 @@ export const STUDY_SYSTEM = [
   "Rules:",
   "- Use only what the source says. Never add facts, numbers, names, dates or quotes it doesn't contain, even ones you know to be true.",
   "- Copy each snippet word for word from the source: one to three sentences, at most 300 characters.",
-  "- Each card or question tests a different point. If the source doesn't support as many as the task asks for, write fewer.",
+  "- Write exactly as many cards and questions as the task asks for, each testing a different point. Write fewer only when the source is too short to support that many different points; never pad with repeats or facts from outside the source.",
   "- A quiz question has exactly 4 options and one correct answer. The wrong options must be clearly wrong according to the source.",
   "- Keep fronts and questions short. A back answers in at most two sentences.",
   "- Write in the language the source is written in.",
@@ -114,10 +114,11 @@ export function checkStudyPayload(raw) {
   };
 }
 
-// What's asked for, in words: "up to 20 flashcards and up to 20 quiz questions".
+// What's asked for, in words: "exactly 20 flashcards and exactly 20 quiz
+// questions" (fewer only when the source is too short; see STUDY_SYSTEM).
 export function taskText({ make, count }) {
-  const cards = `up to ${count} flashcards`,
-    quiz = `up to ${count} quiz questions`;
+  const cards = `exactly ${count} flashcards`,
+    quiz = `exactly ${count} quiz questions`;
   return make === "cards" ? cards : make === "quiz" ? quiz : `${cards} and ${quiz}`;
 }
 

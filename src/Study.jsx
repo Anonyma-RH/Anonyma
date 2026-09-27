@@ -41,6 +41,7 @@ import {
   reviewedToday,
   sampleDeck,
   schedule,
+  shortfallNote,
   streak,
   streamedCount,
   studyPayload,
@@ -403,7 +404,19 @@ export default function Study({ demo, user, models, config, refresh, veilOn, set
         quiz: restored.quiz,
       });
       await saveDeck(deck);
-      setGen({ status: "done", ...started, charged, deckId: deck.id, dropped: result.dropped, ungrounded: result.ungrounded });
+      setGen({
+        status: "done",
+        ...started,
+        charged,
+        deckId: deck.id,
+        dropped: result.dropped,
+        ungrounded: result.ungrounded,
+        // Fewer than asked for: said plainly, not as an error.
+        note: shortfallNote(
+          { cards: deck.cards.length, quiz: deck.quiz.length },
+          { make, count, dropped: result.dropped },
+        ),
+      });
     } catch (err) {
       const stopped = err.name === "AbortError";
       setGen({
@@ -926,6 +939,7 @@ function Result({ gen, deck, onOpen, onReview }) {
             .filter(Boolean)
             .join(" · ")}
         </small>
+        {gen.note && <small>{gen.note}</small>}
         {gen.ungrounded > 0 && (
           <small className="warn">
             {gen.ungrounded === 1

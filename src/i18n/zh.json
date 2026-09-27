@@ -4172,7 +4172,57 @@
     "Confirm with your passkey again.": "请再次用你的通行密钥确认。",
     "A passkey works too.": "也可以用通行密钥。",
     "Blind can't be combined with Deep research or Sheets.": "盲测对比不能与深度研究或表格同时使用。",
-    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。"
+    "Deep research can't be combined with Blind or Sheets.": "深度研究不能与盲测对比或表格同时使用。",
+    "Prompt Sharpen": "提示词打磨",
+    "One tap turns a rough prompt into a clear one.": "一键把粗略的提示词打磨得清晰明确。",
+    "Rewrites your prompt so the goal, context and format are clear": "改写你的提示词，让目标、背景和格式一目了然",
+    "See every change side by side; use it, edit it or keep yours": "并排查看每一处改动；可直接使用、编辑，或保留原文",
+    "Off the record, and billed as a tiny message": "不留记录，按一条很短的消息计费",
+    "Sharpen": "打磨",
+    "Sharpening…": "正在打磨……",
+    "Stop sharpening. Nothing is charged.": "停止打磨。不会扣除任何费用。",
+    "Sharpen this prompt. Off the record.": "打磨此提示词。不留记录。",
+    "No zero-data-retention model is available to sharpen with in Private mode.": "隐私模式下没有可用于打磨的零数据保留模型。",
+    "No model is available to sharpen with right now.": "目前没有可用于打磨的模型。",
+    "Seed Guard found what looks like a wallet secret in this prompt, so Sharpen won't send it.": "助记词防护在此提示词中发现了疑似钱包密钥的内容，因此不会发送去打磨。",
+    "Type at least 12 characters to sharpen.": "至少输入 12 个字符才能打磨。",
+    "Sharpen works on prompts up to 6,000 characters.": "打磨仅适用于 6,000 个字符以内的提示词。",
+    "Wait for the reply to finish.": "请等待回复完成。",
+    "PROMPT SHARPEN": "提示词打磨",
+    "Sharpening your prompt…": "正在打磨你的提示词……",
+    "Already clear: no changes suggested.": "已经很清晰：无需修改。",
+    "Your prompt wasn't changed.": "你的提示词未被修改。",
+    "Before": "修改前",
+    "After": "修改后",
+    "Edit the sharpened prompt": "编辑打磨后的提示词",
+    "What changed": "改动说明",
+    "Answer to sharpen it further": "回答问题，进一步打磨",
+    "Your answer": "你的回答",
+    "Sharpen again": "再次打磨",
+    "Seed Guard found what looks like a wallet secret in your answer, so Sharpen won't send it.": "助记词防护在你的回答中发现了疑似钱包密钥的内容，因此不会发送。",
+    "Use this": "使用此版本",
+    "Keep mine": "保留原文",
+    "The sharpened prompt is in the composer.": "打磨后的提示词已放入输入框。",
+    "Veil masked 1 detail before sending and restored it here.": "Veil 在发送前遮蔽了 1 处细节，并已在此处还原。",
+    "Only this prompt is sent, off the record: not your chat, files, memory or instructions. Nothing is saved.": "只发送这条提示词，且不留记录：不包括你的会话、文件、记忆或指令。不会保存任何内容。",
+    "Sharpen model": "打磨模型",
+    "Prompt Sharpen.": "提示词打磨。",
+    "The model that sharpens your prompts, in this browser. The default is a fast, inexpensive model that doesn't train on prompts. Private mode always uses a zero-data-retention model, and Uncensored its own models.": "在此浏览器中用于打磨提示词的模型。默认是一款快速、低价、且不会用提示词训练的模型。隐私模式始终使用零数据保留模型，无审查模式则使用其专属模型。",
+    "Stopped. Nothing was charged.": "已停止。未扣除任何费用。",
+    "Sharpen didn't finish. Nothing was charged.": "打磨未完成。未扣除任何费用。",
+    "Sharpen sends only your prompt, never the chat, files, memory or instructions.": "打磨只发送你的提示词，绝不发送会话、文件、记忆或指令。",
+    "Sharpen is paid from your own balance, not a team treasury.": "打磨费用从你自己的余额中支付，而不是团队金库。",
+    "The model ran out of room before it finished, so your prompt wasn't changed. Nothing was charged. Try a shorter prompt or another model.": "模型在完成前用尽了回复空间，因此你的提示词未被修改。未扣除任何费用。请尝试更短的提示词或换一个模型。",
+    "The model's answer couldn't be read, so your prompt wasn't changed. Nothing was charged. Try again, or pick another model.": "无法读取模型的回答，因此你的提示词未被修改。未扣除任何费用。请重试，或换一个模型。",
+    "The sharpened prompt dropped or changed a Veil placeholder such as [EMAIL_1], so it wasn't used. Nothing was charged. Try again, or pick another model.": "打磨后的提示词丢失或改动了 Veil 占位符（例如 [EMAIL_1]），因此未被采用。未扣除任何费用。请重试，或换一个模型。",
+    "The model returned nothing, so your prompt wasn't changed. Nothing was charged.": "模型没有返回任何内容，因此你的提示词未被修改。未扣除任何费用。",
+    "The model took too long, so your prompt wasn't changed. Nothing was charged.": "模型响应超时，因此你的提示词未被修改。未扣除任何费用。",
+    "Sharpen needs a text model.": "打磨需要使用文本模型。",
+    "Answer at most 2 questions.": "最多回答 2 个问题。",
+    "Each answer needs its question and some text.": "每个回答都需要对应的问题和内容。",
+    "Keep each answer under 500 characters.": "每个回答请控制在 500 个字符以内。",
+    "Send the prompt's length in characters.": "请发送提示词的字符长度。",
+    "A quote takes the prompt's length, not the prompt.": "估价只接收提示词的长度，不接收提示词本身。"
   },
   "patterns": [
     {
@@ -6578,6 +6628,26 @@
     {
       "en": "Too many incorrect attempts. Try again in {0} minutes, or sign out instead.",
       "zh": "错误次数过多。请在 {0} 分钟后重试，或改为退出登录。"
+    },
+    {
+      "en": "Sharpen this prompt: about {0} credits, at most {1}. Off the record.",
+      "zh": "打磨此提示词：约 {0} 积分，最多 {1} 积分。不留记录。"
+    },
+    {
+      "en": "{0} · default",
+      "zh": "{0} · 默认"
+    },
+    {
+      "en": "Sends your prompt and answers again: about {0} credits.",
+      "zh": "会再次发送你的提示词和回答：约 {0} 积分。"
+    },
+    {
+      "en": "{0} added · {1} removed",
+      "zh": "新增 {0} · 删除 {1}"
+    },
+    {
+      "en": "Veil masked {0} details before sending and restored them here.",
+      "zh": "Veil 在发送前遮蔽了 {0} 处细节，并已在此处还原。"
     }
   ]
 }

@@ -39,6 +39,7 @@ import { bookmarkRoutes } from "./routes/bookmarks.js";
 import { linkReaderRoutes } from "./routes/link-reader.js";
 import { blindRoutes } from "./routes/blind.js";
 import { researchRoutes } from "./routes/research.js";
+import { sharpenRoutes } from "./routes/sharpen.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
 import { sealedRoutes } from "./routes/sealed.js";
@@ -150,6 +151,9 @@ export function createApp(overrides = {}) {
   // and settled on the ordinary billing path (after Memory and Projects,
   // whose checks it uses).
   researchRoutes(ctx);
+  // Prompt Sharpen: one small model call that rewrites a prompt, held and
+  // settled on the ordinary billing path; nothing is stored.
+  sharpenRoutes(ctx);
   shareRoutes(ctx);
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).

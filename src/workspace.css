@@ -351,3 +351,44 @@
 .app-shell .credit-estimate b{font-weight:600}
 @media(max-width:700px){.app-shell .credit-estimate{font-size:10px;padding:5px 7px}.app-shell .credit-estimate b{display:none}.app-shell .composer-controls.with-estimate{flex-wrap:wrap}.app-shell .composer-controls.with-estimate>div{flex:1 1 100%}.app-shell .with-estimate .send-cluster{margin-left:auto}}
 .app-shell .notice .limit-link{margin-left:6px;white-space:nowrap}
+
+/* Workspace hierarchy: the existing visual language, fewer primary choices. */
+.app-sidebar .more-tools-button{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;margin-top:6px;padding:8px 10px;border:1px solid #ffffff80;border-radius:2px;color:#fff;text-align:left;font-size:13px;background:transparent}
+.app-sidebar .more-tools-button>svg:last-child{margin-left:auto}
+.app-sidebar .more-tools-button:hover,.app-sidebar .more-tools-button.active{background:#ffffff16}
+.app-sidebar .new-conversation{margin-top:20px}
+.app-sidebar .sidebar-bottom{padding-top:20px}
+.workspace-tool-directory{color:#142343}
+.workspace-tool-directory .tool-search-label{display:block;margin-bottom:8px;font-size:12px}
+.workspace-tool-directory input{width:100%;padding:12px;border:1px solid #e3e8f0;border-radius:2px;background:#fff;color:#142343}
+.workspace-tool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0;max-height:50dvh;overflow-y:auto}
+.workspace-tool-grid>a{display:flex;align-items:center;gap:10px;min-height:52px;padding:10px;border:1px solid #e3e8f0;border-radius:2px;font-size:13px;color:#142343}
+.workspace-tool-grid>a:hover,.workspace-tool-grid>a.active{background:#f0f4ff;border-color:#0135df}
+.workspace-tool-grid>a>span:nth-child(2){flex:1;min-width:0}
+.workspace-tool-grid .pixel-tile{flex-shrink:0;background:#0135df;color:#ffb21c;border-color:#0135df}
+.workspace-tool-footer{display:flex;flex-wrap:wrap;gap:20px;padding-top:14px;border-top:1px solid #e3e8f0;font-size:12px;color:#0135df}
+.app-shell .composer-options-toggle{gap:6px}
+.app-shell .composer-options-toggle[aria-expanded="true"]{color:#0135df;background:#edf2ff}
+.app-shell .composer-storage-status{font-size:11px;line-height:1.6;color:var(--work-muted);margin:10px 0 0}
+.app-shell .composer-options-panel{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--work-line)}
+.app-shell .composer-options-panel[hidden]{display:none}
+.app-shell .composer-options-panel select{max-width:100%;font-size:12px;border:1px solid var(--work-line);background:var(--work-surface);padding:7px;border-radius:2px}
+.app-shell .composer-options-panel>.fine-print{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.app-shell .composer-options-panel>.fine-print>span{flex-basis:100%}
+@media(max-width:480px){.workspace-tool-grid{grid-template-columns:1fr}.app-shell .composer-controls{flex-wrap:wrap}.app-shell .composer-controls>.send-cluster{margin-left:auto}}
+.app-sidebar .project-folder summary{display:flex;align-items:center;gap:8px;list-style:none;cursor:pointer;color:#d2deff;font-size:12px;padding:10px 8px}
+.app-sidebar .project-folder summary::-webkit-details-marker{display:none}
+.app-sidebar .project-folder summary>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app-sidebar .project-folder:not([open]) summary>svg{transform:rotate(-90deg)}
+.app-sidebar .project-folder-chats{margin:0 8px 8px 22px;border-left:1px solid #ffffff40;padding-left:8px}
+.app-sidebar .project-folder-chats>button,.app-sidebar .project-folder-chats>a{display:flex;align-items:center;gap:8px;width:100%;padding:8px;color:#d2deff;text-align:left;font-size:11px;border-radius:2px;overflow:hidden;text-overflow:ellipsis}
+.app-sidebar .project-folder-chats>button:hover,.app-sidebar .project-folder-chats>button.current{background:#ffffff16;color:#fff}
+
+.workspace-tool-description{display:block;margin-top:5px;font-size:12px;line-height:1.5;font-weight:400;color:#68748a}
+.workspace-tool-grid>a{align-items:flex-start;padding:12px}
+.workspace-tool-footer>a{flex:1 1 220px;min-width:0}
+.workspace-tool-directory{display:flex;flex-direction:column;max-height:calc(85dvh - 150px)}
+.workspace-tool-grid{min-height:0;flex-shrink:1;grid-auto-rows:max-content;align-content:start}
+.workspace-tool-directory>input,.workspace-tool-footer{flex-shrink:0}
+/* Keep the search field still as semantic results change. */
+.app-shell .modal:has(.workspace-tool-directory){height:min(680px,85dvh)}

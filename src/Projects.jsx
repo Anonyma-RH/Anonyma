@@ -95,13 +95,13 @@ export function ProjectSwatch({ color, size = 10, title, className = "" }) {
   );
 }
 
-// The cobalt sidebar's PROJECTS section: each project opens its page.
-export function ProjectsSidebar({ projects, currentId, onNew, shown = 6 }) {
+// Expand a project to reach its recent chats or open the full project.
+export function ProjectsSidebar({ projects, currentId, onNew, shown = 6, chats = [], currentChat, onOpenChat }) {
   const list = projects.slice(0, shown);
   return (
     <section className="projects-sidebar" aria-label="Projects">
       <div className="sidebar-group-label projects-label">
-        <span>PROJECTS</span>
+        <span>FOLDERS & PROJECTS</span>
         <button type="button" className="projects-add" onClick={onNew} title="New project">
           <Icon name="plus" size={12} />
           New
@@ -110,12 +110,22 @@ export function ProjectsSidebar({ projects, currentId, onNew, shown = 6 }) {
       {list.length > 0 && (
         <div className="conversation-list projects-list">
           {list.map((p) => (
-            <div key={p.id} className={p.id === currentId ? "current" : ""}>
-              <Link to={"/workspace/projects?p=" + encodeURIComponent(p.id)}>
+            <details key={p.id} className="project-folder" open={p.id === currentId || undefined}>
+              <summary>
+                <Icon name="down" size={12} />
                 <ProjectSwatch color={p.color} />
                 <span data-i18n="off">{p.name}</span>
-              </Link>
-            </div>
+              </summary>
+              <div className="project-folder-chats">
+                {chats.filter(c => c.project_id === p.id).slice(0, 6).map(c => (
+                  <button type="button" key={c.id} data-i18n="off"
+                    className={c.id === currentChat ? "current" : ""}
+                    aria-current={c.id === currentChat ? "page" : undefined}
+                    onClick={() => onOpenChat?.(c)}>{c.title}</button>
+                ))}
+                <Link to={"/workspace/projects?p=" + encodeURIComponent(p.id)}>Open project<Icon name="arrow" size={12} /></Link>
+              </div>
+            </details>
           ))}
         </div>
       )}

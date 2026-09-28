@@ -1,3 +1,4 @@
+import { rankTools } from "./tool-search.js";
 import { CONTINUE_PROMPT, replyBudgetFor, replyBudgets, completionNotice } from "./long-answers.js";
 import { chatFailureMessage } from "./chat-control.js";
 import { useReadingPosition, useRequestCharge, ChargeStatus } from "./ChatControl.jsx";
@@ -291,12 +292,77 @@ export function AppSidebar({
   active = "chat",
   demo = false,
   children,
+  newConversation,
   open = false,
   onClose,
 }) {
   const q = demo ? "?demo=1" : "";
   const { user, config } = useApp();
   const signedIn = !demo && user;
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [toolSearch, setToolSearch] = useState("");
+  const primaryModes = ["chat", "image", "video"];
+  const navigation = [
+    ["home", "Home", "See your recent work, credit usage and account activity in one place."],
+    ["chat", "Chat & reason"],
+    ["uncensored", "Uncensored", "Chat with models from the uncensored collection. Choose the model that suits your conversation."],
+    ["symposium", "Symposium", "Ask several models the same question, compare their answers and combine the best parts."],
+    // On-Device Model: a chat mode, with the others.
+    ["device", "On-device", "Download a small model to chat directly in your browser, without sending your prompts to a provider."],
+    ["code", "Code & build", "Write, explain and debug code with AI. Keep generated files together as you build."],
+    ["image", "Images"],
+    ["video", "Video"],
+    ["audio", "Voice & audio", "Turn text into spoken audio, or transcribe a recording into text."],
+    ["collab", "Collab", "Work with other people in shared conversations. Invite your team to contribute in one place."],
+    // Tools for your own documents and data.
+    ["tools", "Task tools", "Use focused tools for research, writing and calculations without starting from a blank prompt."],
+    ["sheets", "Sheets", "Explore spreadsheet data with questions, charts and tables. Calculations run on your device."],
+    ["compare", "Compare docs", "Compare two documents to find changes and differences, with references back to the source text."],
+    ["canvas", "Canvas", "Write and edit alongside AI. Review each suggested change before accepting it."],
+    ["translate", "Translate docs", "Translate documents while keeping headings, lists and tables. Review the translation beside the original."],
+    ["study", "Study", "Turn a document or conversation into flashcards and quizzes to practise what you have learned."],
+    ["slides", "Slides", "Turn a prompt, document or chat into a slide deck. Edit, present or export it."],
+    ["notes", "Meeting notes", "Turn a recording into a timestamped transcript, key decisions and action items."],
+    ["routines", "Routines", "Schedule prompts to run automatically with spending limits. Read the results in your inbox."],
+    ["projects", "Projects", "Group related chats, files and instructions in folders. Set defaults for each project."],
+    ["library", "Your library", "Find and revisit the images, videos and audio you have created."],
+  ]
+    // Local Sheets, On-Device Model, Document Compare, Study Mode and
+    // Canvas stay out of sight entirely until they're released.
+    .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
+    .filter(([id]) => id !== "device" || isReleased(config, "ondevice"))
+    .filter(([id]) => id !== "compare" || isReleased(config, "doccompare"))
+    .filter(([id]) => id !== "translate" || isReleased(config, "doctranslate"))
+    .filter(([id]) => id !== "study" || isReleased(config, "study"))
+    .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
+    .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
+    .filter(([id]) => id !== "notes" || modeReleased(config, "notes"));
+  // Recompute translated matching when the language changes, even on Account pages.
+  useLanguage();
+  const toolAvailable = (id) => id === "models" || (id === "api" ? isReleased(config, "api") : modeReleased(config, id));
+  const extraTools = [
+    ["models", "Explore models", "Browse available models and compare their capabilities and prices."],
+    ["api", "Developer API", "Connect your own apps and scripts to ANONYMA using an API key."],
+  ];
+  const toolResults = rankTools([
+    ...navigation.filter(([id]) => !primaryModes.includes(id)),
+    ...(toolSearch.trim() ? extraTools : []),
+  ], toolSearch, t);
+  const closeTools = () => { setToolsOpen(false); setToolSearch(""); };
+  const toolLink = ([id, label, description]) => (
+    <Link key={id}
+      className={(active === id ? "active " : "") + (toolAvailable(id) ? "" : "locked")}
+      aria-current={active === id ? "page" : undefined}
+      to={toolAvailable(id) ? (id === "models" ? "/models" : id === "api" ? "/account/keys" + q : "/workspace/" + id + q) : "/roadmap"}
+      onClick={() => { closeTools(); onClose?.(); }}>
+      <PixelTile name={id} /><span><span>{label}</span>{description && <small className="workspace-tool-description">{description}</small>}</span>
+      {toolAvailable(id) ? <>
+        {isEarlyAccess(config, MODE_FEATURES[id]) && <EarlyTag />}
+        {id === "routines" && <WatchBadge enabled={!!signedIn && isReleased(config, "pagewatch") && modeReleased(config, "routines")} />}
+      </> : <SoonTag />}
+      {active === id && <span className="nav-active-dot" />}
+    </Link>
+  );
   return (
     <aside className={"app-sidebar " + (open ? "shown" : "")}>
       <div className="sidebar-brand">
@@ -309,83 +375,38 @@ export function AppSidebar({
           <Icon name="close" />
         </button>
       </div>
+      {newConversation}
       <div className="sidebar-group-label">WORKSPACE</div>
       <nav aria-label="Workspace navigation">
-        {[
-          ["home", "Home"],
-          ["chat", "Chat & reason"],
-          ["uncensored", "Uncensored"],
-          ["symposium", "Symposium"],
-          // On-Device Model: a chat mode, with the others.
-          ["device", "On-device"],
-          ["code", "Code & build"],
-          ["image", "Images"],
-          ["video", "Video"],
-          ["audio", "Voice & audio"],
-          ["collab", "Collab"],
-          // Tools for your own documents and data.
-          ["tools", "Task tools"],
-          ["sheets", "Sheets"],
-          ["compare", "Compare docs"],
-          ["canvas", "Canvas"],
-          ["translate", "Translate docs"],
-          ["study", "Study"],
-          ["slides", "Slides"],
-          ["notes", "Meeting notes"],
-          ["routines", "Routines"],
-          ["projects", "Projects"],
-          ["library", "Your library"],
-        ]
-          // Local Sheets, On-Device Model, Document Compare, Study Mode and
-          // Canvas stay out of sight entirely until they're released.
-          .filter(([id]) => id !== "sheets" || isReleased(config, "sheets"))
-          .filter(([id]) => id !== "device" || isReleased(config, "ondevice"))
-          .filter(([id]) => id !== "compare" || isReleased(config, "doccompare"))
-          .filter(([id]) => id !== "translate" || isReleased(config, "doctranslate"))
-          .filter(([id]) => id !== "study" || isReleased(config, "study"))
-          .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
-          .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
-          .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
-          .map(([id, t]) =>
-          modeReleased(config, id) ? (
-            <Link
-              key={id}
-              className={active === id ? "active" : ""}
-              to={"/workspace/" + id + q}
-            >
-              <PixelTile name={id} />
-              {t}
-              {isEarlyAccess(config, MODE_FEATURES[id]) && <EarlyTag />}
-              {/* Page Watch: changes waiting in the Routines inbox. */}
-              {id === "routines" && (
-                <WatchBadge enabled={!!signedIn && isReleased(config, "pagewatch") && modeReleased(config, "routines")} />
-              )}
-              {active === id && <span className="nav-active-dot" />}
-            </Link>
-          ) : (
-            <Link key={id} className="locked" to="/roadmap">
-              <PixelTile name={id} />
-              {t}
-              <SoonTag />
-            </Link>
-          ),
-        )}
+        {navigation.filter(([id]) => primaryModes.includes(id)).map(toolLink)}
+        <button type="button"
+          className={"more-tools-button" + (!primaryModes.includes(active) ? " active" : "")}
+          aria-haspopup="dialog" aria-expanded={toolsOpen}
+          onClick={() => setToolsOpen(true)}>
+          <PixelTile name="tools" /><span>More tools</span>
+          <WatchBadge enabled={!!signedIn && isReleased(config, "pagewatch") && modeReleased(config, "routines")} />
+          <Icon name="plus" size={16} />
+        </button>
       </nav>
+      {toolsOpen && <Modal title="More tools" onClose={closeTools}>
+        <div className="workspace-tool-directory">
+          <label className="tool-search-label" htmlFor="workspace-tool-search">Find a tool</label>
+          <input id="workspace-tool-search" type="search" placeholder="What do you want to do?" maxLength={256}
+            value={toolSearch} onChange={e => setToolSearch(e.target.value)} />
+          <div className="workspace-tool-grid">
+            {toolResults.map(toolLink)}
+          </div>
+          {toolResults.length === 0 &&
+            <p role="status">No tools match your search.</p>}
+          {!toolSearch.trim() && <div className="workspace-tool-footer">
+            <Link to="/models" onClick={() => { closeTools(); onClose?.(); }}><span>Explore models</span><small className="workspace-tool-description">Browse available models and compare their capabilities and prices.</small></Link>
+            <Link to={isReleased(config, "api") ? "/account/keys" + q : "/roadmap"}
+              onClick={() => { closeTools(); onClose?.(); }}><span>Developer API{!isReleased(config, "api") && <SoonTag />}</span><small className="workspace-tool-description">Connect your own apps and scripts to ANONYMA using an API key.</small></Link>
+          </div>}
+        </div>
+      </Modal>}
       {children}
       <div className="sidebar-bottom">
-        <Link to="/models">
-          <PixelTile name="models" />
-          Explore models
-          <Icon name="diagonal" size={13} />
-        </Link>
-        <Link
-          to={isReleased(config, "api") ? "/account/keys" + q : "/roadmap"}
-          className={isReleased(config, "api") ? "" : "locked"}
-        >
-          <PixelTile name="key" />
-          Developer API
-          {!isReleased(config, "api") && <SoonTag />}
-        </Link>
         <Link to={"/account/credits" + q}>
           <PixelTile name="credits" />
           Credits
@@ -421,7 +442,7 @@ export function AppSidebar({
   );
 }
 export default function Workspace() {
-  const { mode = "home" } = useParams();
+  const { mode = "chat" } = useParams();
   const location = useLocation();
   const welcomeRef = useRef();
   const [params] = useSearchParams();
@@ -454,6 +475,7 @@ export default function Workspace() {
     [media, setMedia] = useState(() => (demo ? readStore("media", []) : [])),
     [dialog, setDialog] = useState(null),
     [menu, setMenu] = useState(false),
+    [composerOptionsOpen, setComposerOptionsOpen] = useState(false),
     [n, setN] = useState(1),
     [compareModels, setCompareModels] = useState([]),
     [jobs, setJobs] = useState([]),
@@ -3636,20 +3658,25 @@ export default function Workspace() {
         demo={demo}
         open={menu}
         onClose={() => setMenu(false)}
-      >
-        <button
+        newConversation={<button
           className="new-conversation"
           onClick={() => {
             newChat();
             leaveProject();
+            navigate("/workspace/chat" + (demo ? "?demo=1" : ""));
+            setMenu(false);
           }}
         >
           <Icon name="plus" size={17} />
           New conversation
-        </button>
+        </button>}
+      >
         {projectsLive && (
           <ProjectsSidebar
             projects={projects.list}
+            chats={all}
+            currentChat={current}
+            onOpenChat={openChat}
             currentId={mode === "projects" ? params.get("p") : project?.id}
             onNew={() => {
               setMenu(false);
@@ -5190,6 +5217,158 @@ export default function Workspace() {
                           <span>Web</span>
                         </button>
                       )}
+                      <button type="button" className="attachment-control composer-options-toggle"
+                        aria-expanded={composerOptionsOpen} aria-controls="composer-options-panel"
+                        onClick={() => setComposerOptionsOpen(v => !v)}>
+                        <Icon name="settings" size={17} /><span>Options</span>
+                      </button>
+                      {mode === "image" && (
+                        <select
+                          aria-label="Number of images"
+                          value={n}
+                          onChange={(e) => setN(Number(e.target.value))}
+                        >
+                          {[1, 2, 3, 4].map((x) => (
+                            <option key={x} value={x}>
+                              {x} image{x > 1 ? "s" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {mode === "video" && presets.length > 0 && (
+                        <>
+                          {qualities.some(Boolean) && (
+                            <select
+                              aria-label="Video quality"
+                              value={vq}
+                              onChange={(e) =>
+                                setVideo((v) => ({
+                                  ...v,
+                                  quality: e.target.value,
+                                }))
+                              }
+                            >
+                              {qualities.map((q) => (
+                                <option key={q} value={q}>
+                                  {q
+                                    ? q[0].toUpperCase() + q.slice(1)
+                                    : "Default quality"}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                          <select
+                            aria-label="Aspect ratio"
+                            value={vr}
+                            onChange={(e) =>
+                              setVideo((v) => ({ ...v, ratio: e.target.value }))
+                            }
+                          >
+                            {ratios.map((r) => (
+                              <option key={r} value={r}>
+                                {r || "Default ratio"}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            aria-label="Duration"
+                            value={vd}
+                            onChange={(e) =>
+                              setVideo((v) => ({
+                                ...v,
+                                duration: e.target.value,
+                              }))
+                            }
+                          >
+                            {durations.map((d) => (
+                              <option key={d} value={d}>
+                                {d ? d + " seconds" : "Default length"}
+                              </option>
+                            ))}
+                          </select>
+                        </>
+                      )}
+                    </div>
+                    {incompatibleMention && (
+                      <span role="status">The mentioned model cannot read this conversation’s images. Choose a vision model.</span>
+                    )}
+                    <span className="send-cluster">
+                    {blindActive ? (
+                      <BlindEstimate state={blindEstimate} />
+                    ) : researchOn ? (
+                      <ResearchEstimate state={researchEstimate} />
+                    ) : (
+                      estimatesLive && textMode && (autoActive
+                        ? <AutoEstimate state={estimate} models={models} />
+                        : <CreditEstimate state={estimate} />)
+                    )}
+                    {costCompareLive && !blindActive && !researchOn && (
+                      // Not with Auto, which prices its own candidates.
+                      !autoActive && <CostCompare
+                        base={compareBase}
+                        mode={mode}
+                        privateMode={privateMode}
+                        replyBudget={longAnswersLive ? replyBudget : REPLY_BUDGET}
+                        current={selected}
+                        pool={finderLive ? finderModels : visibleModels}
+                        allModels={models}
+                        presetOpts={finderOpts}
+                        presetsLive={finderLive}
+                        notes={[
+                          privateMode ? "Private mode: zero-data-retention models only." : "",
+                          finderLive && needsVision ? "Showing models that can read your images." : "",
+                        ].filter(Boolean)}
+                        busy={busy}
+                        onSwitch={(id) => {
+                          if (finderLive) chooseModel({ model: id });
+                          else {
+                            setModel(id);
+                            setQuote(null);
+                          }
+                        }}
+                      />
+                    )}
+                    {busy ? (
+                      <button
+                        type="button"
+                        className="send-button"
+                        aria-label="Stop generation"
+                        onClick={stop}
+                      >
+                        <Icon name="stop" size={17} />
+                      </button>
+                    ) : (
+                      <button
+                        type="submit"
+                        className="send-button"
+                        disabled={
+                          !prompt.trim() ||
+                          !!seedHit ||
+                          !!researchBlocked ||
+                          (finderLive && !selected && !sealedOn && !blindActive) ||
+                          (blindActive && !validPair(blindPair, blindModels)) ||
+                          blindAwaiting ||
+                          incompatibleMention ||
+                          (privateMode && !privateModelsCallable.length) ||
+                          // Sealed Mode sends only once the enclave is verified.
+                          (sealedOn && (!sealedTarget || enclave.state.status !== "verified"))
+                        }
+                        aria-label={demo ? "Run sample" : "Generate"}
+                      >
+                        <Icon name="arrow" size={21} />
+                      </button>
+                    )}
+                    </span>
+                  </div>
+                  {textMode && <p className="composer-storage-status">
+                    {demo ? "Local sample · no charges" : deviceOnly ? (vaultSync.on ? "Device Vault · encrypted sync on" : "Device Vault · saved on this device") : ephemeral || sealedOn || privateMode ? "Off the record · chat not saved to your account" : "Chat saved to your account"}
+                    {privateMode && " · Private mode"}
+                    {sealedOn && " · Sealed mode"}
+                    {veilOn && " · Veil on"}
+                    {memoryLive && memoryUse && !memoryExcluded && " · Memory on"}
+                    {instructionsActive && " · Standing instructions on"}
+                  </p>}
+                  <div id="composer-options-panel" className="composer-options-panel" hidden={!composerOptionsOpen}>
                       {researchAvailable && !sealedOn && (
                         <ResearchToggle
                           on={researchOn}
@@ -5334,143 +5513,6 @@ export default function Workspace() {
                           {memoryUse && <span className="memory-dot" aria-hidden="true" />}
                         </button>
                       )}
-                      {mode === "image" && (
-                        <select
-                          aria-label="Number of images"
-                          value={n}
-                          onChange={(e) => setN(Number(e.target.value))}
-                        >
-                          {[1, 2, 3, 4].map((x) => (
-                            <option key={x} value={x}>
-                              {x} image{x > 1 ? "s" : ""}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                      {mode === "video" && presets.length > 0 && (
-                        <>
-                          {qualities.some(Boolean) && (
-                            <select
-                              aria-label="Video quality"
-                              value={vq}
-                              onChange={(e) =>
-                                setVideo((v) => ({
-                                  ...v,
-                                  quality: e.target.value,
-                                }))
-                              }
-                            >
-                              {qualities.map((q) => (
-                                <option key={q} value={q}>
-                                  {q
-                                    ? q[0].toUpperCase() + q.slice(1)
-                                    : "Default quality"}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                          <select
-                            aria-label="Aspect ratio"
-                            value={vr}
-                            onChange={(e) =>
-                              setVideo((v) => ({ ...v, ratio: e.target.value }))
-                            }
-                          >
-                            {ratios.map((r) => (
-                              <option key={r} value={r}>
-                                {r || "Default ratio"}
-                              </option>
-                            ))}
-                          </select>
-                          <select
-                            aria-label="Duration"
-                            value={vd}
-                            onChange={(e) =>
-                              setVideo((v) => ({
-                                ...v,
-                                duration: e.target.value,
-                              }))
-                            }
-                          >
-                            {durations.map((d) => (
-                              <option key={d} value={d}>
-                                {d ? d + " seconds" : "Default length"}
-                              </option>
-                            ))}
-                          </select>
-                        </>
-                      )}
-                    </div>
-                    {incompatibleMention && (
-                      <span role="status">The mentioned model cannot read this conversation’s images. Choose a vision model.</span>
-                    )}
-                    <span className="send-cluster">
-                    {blindActive ? (
-                      <BlindEstimate state={blindEstimate} />
-                    ) : researchOn ? (
-                      <ResearchEstimate state={researchEstimate} />
-                    ) : (
-                      estimatesLive && textMode && (autoActive
-                        ? <AutoEstimate state={estimate} models={models} />
-                        : <CreditEstimate state={estimate} />)
-                    )}
-                    {costCompareLive && !blindActive && !researchOn && (
-                      // Not with Auto, which prices its own candidates.
-                      !autoActive && <CostCompare
-                        base={compareBase}
-                        mode={mode}
-                        privateMode={privateMode}
-                        replyBudget={longAnswersLive ? replyBudget : REPLY_BUDGET}
-                        current={selected}
-                        pool={finderLive ? finderModels : visibleModels}
-                        allModels={models}
-                        presetOpts={finderOpts}
-                        presetsLive={finderLive}
-                        notes={[
-                          privateMode ? "Private mode: zero-data-retention models only." : "",
-                          finderLive && needsVision ? "Showing models that can read your images." : "",
-                        ].filter(Boolean)}
-                        busy={busy}
-                        onSwitch={(id) => {
-                          if (finderLive) chooseModel({ model: id });
-                          else {
-                            setModel(id);
-                            setQuote(null);
-                          }
-                        }}
-                      />
-                    )}
-                    {busy ? (
-                      <button
-                        type="button"
-                        className="send-button"
-                        aria-label="Stop generation"
-                        onClick={stop}
-                      >
-                        <Icon name="stop" size={17} />
-                      </button>
-                    ) : (
-                      <button
-                        type="submit"
-                        className="send-button"
-                        disabled={
-                          !prompt.trim() ||
-                          !!seedHit ||
-                          !!researchBlocked ||
-                          (finderLive && !selected && !sealedOn && !blindActive) ||
-                          (blindActive && !validPair(blindPair, blindModels)) ||
-                          blindAwaiting ||
-                          incompatibleMention ||
-                          (privateMode && !privateModelsCallable.length) ||
-                          // Sealed Mode sends only once the enclave is verified.
-                          (sealedOn && (!sealedTarget || enclave.state.status !== "verified"))
-                        }
-                        aria-label={demo ? "Run sample" : "Generate"}
-                      >
-                        <Icon name="arrow" size={21} />
-                      </button>
-                    )}
-                    </span>
                   </div>
                   {/* Training Labels: under the model picker, never blocking Send. */}
                   {trainingSelected && !sealedOn && !blindActive && (

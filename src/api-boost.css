@@ -1,0 +1,113 @@
+/* API Boost: the account's rate limit on Account → API keys, the per-tier
+   list in Account → Settings → NYMA holdings and on /token, and the API
+   guide's rate limits. Flat cobalt and white; the brand yellow square marks
+   the account's own tier. */
+
+.api-rate {
+  margin: 0 0 22px;
+  padding: 14px 16px;
+  background: #edf2ff;
+  border-left: 3px solid #0135df;
+  color: #16213f;
+  min-width: 0;
+}
+.api-rate-line {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.api-rate-line b {
+  color: #0135df;
+  font-size: 16px;
+  font-weight: 600;
+}
+.api-rate-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #4b5570;
+  overflow-wrap: anywhere;
+}
+.api-rate-note a {
+  color: #0135df;
+  font-weight: 600;
+}
+.api-rate-tiers,
+.holdings-api-boost ul,
+.token-page .token-api-boost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.api-rate-tiers li,
+.holdings-api-boost li,
+.token-page .token-api-boost li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 10px;
+  border: 1px solid #c3cff5;
+  border-radius: 2px;
+  background: #fff;
+  font-size: 12px;
+  color: #4b5570;
+}
+.api-rate-tiers li b,
+.holdings-api-boost li b,
+.token-page .token-api-boost li b {
+  color: #0135df;
+  font-size: 13px;
+}
+.holdings-api-boost li em,
+.token-page .token-api-boost li em {
+  font-style: normal;
+  color: #8a93a8;
+}
+.api-rate-tiers li.on {
+  background: #0135df;
+  border-color: #0135df;
+  color: #fff;
+}
+.api-rate-tiers li.on b {
+  color: #fff;
+}
+/* In NYMA holdings the account's tier is outlined, as Referral Boost's is. */
+.holdings-api-boost li.on {
+  border-color: #0135df;
+  box-shadow: inset 0 0 0 1px #0135df;
+  color: #16213f;
+}
+.api-rate-tiers li.on::before,
+.holdings-api-boost li.on::before {
+  content: "";
+  align-self: center;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  background: #ffb21c;
+}
+.holdings-api-boost {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.holdings-api-boost h3 {
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+.settings-stack .holdings-api-boost p {
+  margin-top: 6px;
+}
+.token-page .token-api-boost {
+  margin-top: 12px;
+}
+.api-guide-limits ul {
+  margin: 8px 0 0;
+}
+.holdings-rows b em.holdings-perk {
+  margin-top: 3px;
+  color: #0135df;
+}

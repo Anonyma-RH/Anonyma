@@ -1,0 +1,109 @@
+/* Referral Boost: the rate block on the Account page's cobalt invite card,
+   and the per-tier list in Account → Settings → NYMA holdings. Flat cobalt
+   and white, with the brand yellow marking the account's own tier. */
+
+.app-shell .invite-card .referral-rate {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.24);
+}
+.app-shell .invite-card .referral-rate-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0;
+}
+.app-shell .invite-card .referral-rate-line b {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 600;
+}
+.app-shell .invite-card .referral-rate-line span {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+.referral-rate-tiers,
+.holdings-boost ul,
+.token-boost {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.referral-rate-tiers li,
+.holdings-boost li,
+.token-boost li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 2px;
+  font-size: 12px;
+  min-width: 0;
+}
+.referral-rate-tiers li {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.85);
+}
+.referral-rate-tiers li b {
+  color: #fff;
+  font-size: 14px;
+}
+.referral-rate-tiers li.on {
+  background: #fff;
+  border-color: #fff;
+  color: #0b1b57;
+}
+.referral-rate-tiers li.on b {
+  color: #0135df;
+}
+.referral-rate-tiers li.on::before,
+.holdings-boost li.on::before {
+  content: "";
+  align-self: center;
+  width: 6px;
+  height: 6px;
+  background: #ffb21c;
+}
+.app-shell .invite-card .referral-rate-note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Account → Settings → NYMA holdings. */
+.holdings-boost {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.holdings-boost h3 {
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+.settings-stack .holdings-boost p {
+  margin-top: 6px;
+}
+.holdings-boost li,
+.token-boost li {
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.holdings-boost li b,
+.token-boost li b {
+  color: #0135df;
+  font-size: 14px;
+}
+.holdings-boost li.on {
+  border-color: #0135df;
+  box-shadow: inset 0 0 0 1px #0135df;
+}
+
+/* The /token page's perks list. */
+.token-perks .token-boost {
+  margin-top: 12px;
+}

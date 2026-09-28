@@ -1,0 +1,174 @@
+/* Low-Balance Alerts: a gold-ruled cobalt strip under the workspace notice,
+   and the Account panel in Credits & funding. */
+.low-balance {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 36px;
+  background: #fbf7e9;
+  border-bottom: 1px solid #eadcae;
+  color: #1c2a55;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.low-balance.empty {
+  background: #fff3ee;
+  border-bottom-color: #f3d4c6;
+  color: #7f2f1f;
+}
+.low-balance-mark {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: #c9a227;
+}
+.low-balance.empty .low-balance-mark {
+  background: #c2512f;
+}
+.low-balance p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.low-balance b {
+  font-weight: 700;
+}
+.low-balance-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+.low-balance .low-balance-topup {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  background: #0135df;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  border-radius: 2px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.low-balance .low-balance-topup:hover {
+  background: #0029b0;
+}
+.low-balance .low-balance-settings {
+  color: #0135df;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.low-balance-dismiss {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.low-balance-dismiss:hover,
+.low-balance-dismiss:focus-visible {
+  opacity: 1;
+}
+@media (max-width: 700px) {
+  .low-balance {
+    flex-wrap: wrap;
+    padding: 10px 18px;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .low-balance p {
+    flex-basis: calc(100% - 22px);
+  }
+  .low-balance-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .low-balance-dismiss {
+    margin-left: auto;
+  }
+}
+
+/* Beside a "Not enough credits" refusal. */
+.low-balance-inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-left: 6px;
+}
+.low-balance-inline a {
+  font-weight: 700;
+  color: #0135df;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+/* The Account panel. */
+.form-panel.balance-alert {
+  margin: 0 0 32px;
+}
+.balance-alert > p:first-of-type {
+  margin-top: 0;
+}
+.form-panel .balance-alert-check {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: var(--work-ink, #142343);
+  cursor: pointer;
+}
+.form-panel .balance-alert-check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 1px 0 0;
+  accent-color: #0135df;
+}
+.form-panel .balance-alert-level {
+  margin-bottom: 8px;
+}
+.form-panel .balance-alert-level input:disabled {
+  opacity: 0.55;
+}
+.balance-alert-hint,
+.balance-alert-now {
+  margin: 0 0 18px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+  font-variant-numeric: tabular-nums;
+}
+.balance-alert-hint .small-button {
+  margin-left: 6px;
+}
+.balance-alert-now {
+  margin: 14px 0 0;
+  color: var(--work-ink, #142343);
+}
+.balance-alert-notes {
+  margin: 18px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--work-muted, #68748a);
+}
+.balance-alert-notes li + li {
+  margin-top: 4px;
+}

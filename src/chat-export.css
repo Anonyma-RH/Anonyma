@@ -1,0 +1,499 @@
+/* Chat Export: the workspace's Export button, the Export dialog, the
+   History export buttons and the printable page (with its print stylesheet). */
+
+/* ---- Workspace Export button ---- */
+.chat-export-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 12px;
+  color: #0135df;
+  background: #fff;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chat-export-open:hover:not(:disabled) {
+  background: #f0f4fc;
+}
+.chat-export-open:disabled {
+  color: #96a4be;
+  cursor: default;
+}
+.chat-export-open:focus-visible {
+  outline: 2px solid #0135df;
+  outline-offset: 2px;
+}
+@media (max-width: 700px) {
+  .chat-export-open {
+    padding: 8px;
+  }
+  .chat-export-open span {
+    display: none;
+  }
+}
+
+/* ---- Export dialog ---- */
+.chat-export {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  color: #142343;
+}
+.chat-export p {
+  margin: 0;
+}
+.chat-export-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.chat-export-lede,
+.chat-export-loading {
+  font-size: 13px;
+  line-height: 1.55;
+  color: #4a5872;
+}
+.chat-export fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.chat-export legend {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #68748a;
+  margin-bottom: 8px;
+  padding: 0;
+}
+.chat-export-formats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.chat-export-formats legend {
+  grid-column: 1 / -1;
+}
+.modal .chat-export-formats label {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #d5def0;
+  border-radius: 2px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+.modal .chat-export-formats label.active {
+  border-color: #0135df;
+  background: #f5f8ff;
+  box-shadow: inset 0 0 0 1px #0135df;
+}
+.modal .chat-export-formats input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.modal .chat-export-formats label:has(input:focus-visible) {
+  outline: 2px solid #0135df;
+  outline-offset: 2px;
+}
+.chat-export-formats b {
+  font-size: 14px;
+  font-weight: 600;
+  color: #061b69;
+}
+.chat-export-formats small {
+  color: #68748a;
+  font-size: 11px;
+}
+.chat-export-options {
+  display: grid;
+  gap: 10px;
+}
+.modal .chat-export-options label {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.modal .chat-export-options input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #0135df;
+}
+.chat-export-options label:has(input:disabled) {
+  color: #8a96ab;
+  cursor: default;
+}
+.chat-export-options small {
+  display: block;
+  font-size: 12px;
+  color: #68748a;
+}
+.chat-export-restore {
+  padding: 10px 12px;
+  border: 1px solid #ffd27a;
+  background: #fffaf0;
+}
+.chat-export-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+}
+.chat-export-facts li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.chat-export-facts svg {
+  color: #0135df;
+  margin-top: 3px;
+}
+.chat-export-saved {
+  font-size: 12px;
+  color: #0a6b3d;
+  overflow-wrap: anywhere;
+}
+.chat-export .inline-actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+@media (max-width: 520px) {
+  .chat-export-formats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- History & library ---- */
+.history-hit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  min-width: 0;
+}
+.history-hit-row .history-export,
+.library-review-heading .history-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+@media (max-width: 520px) {
+  .history-hit-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .history-hit-row .history-export {
+    justify-self: start;
+  }
+}
+
+/* ---- Print view ---- */
+.chat-print-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: auto;
+  background: #e9edf5;
+  color: #142343;
+}
+.chat-print-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #0135df;
+  color: #fff;
+  font-size: 12px;
+}
+.chat-print-toolbar > span {
+  flex: 1;
+  min-width: 0;
+  color: #dfe7ff;
+}
+.chat-print-toolbar .small-button {
+  color: #fff;
+  border-color: #ffffff66;
+  background: transparent;
+}
+.chat-print-toolbar .small-button:hover {
+  background: #ffffff1f;
+}
+.chat-print-toolbar .chat-print-go {
+  background: #ffb21c;
+  color: #061b69;
+  border: 0;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.chat-print-toolbar .icon-button {
+  color: #fff;
+}
+.chat-print-toolbar :focus-visible {
+  outline: 2px solid #ffb21c;
+  outline-offset: 2px;
+}
+.chat-print-page {
+  max-width: 780px;
+  margin: 28px auto 48px;
+  padding: 52px 60px;
+  background: #fff;
+  box-shadow: 0 10px 40px #061b6914;
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.chat-print-head {
+  border-bottom: 2px solid #0135df;
+  padding-bottom: 20px;
+  margin-bottom: 8px;
+}
+.chat-print-brand {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0135df;
+}
+.chat-print-brand span + span::before {
+  content: "·";
+  margin-right: 10px;
+}
+.chat-print-head h1 {
+  font-family: var(--serif, Georgia, serif);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  margin: 0 0 16px;
+  color: #061b69;
+}
+.chat-print-head dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 3px 16px;
+  margin: 0;
+  font-size: 12px;
+}
+.chat-print-head dt {
+  color: #68748a;
+}
+.chat-print-head dd {
+  margin: 0;
+}
+.chat-print-notes {
+  margin: 14px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #4a5872;
+}
+.chat-print-message {
+  padding: 18px 0;
+  border-bottom: 1px solid #e3e8f0;
+}
+.chat-print-message:last-child {
+  border-bottom: 0;
+}
+.chat-print-message > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 6px;
+}
+.chat-print-message > header b {
+  font-size: 13px;
+  font-weight: 700;
+  color: #061b69;
+}
+.chat-print-message.assistant > header b {
+  color: #0135df;
+}
+.chat-print-message > header time {
+  font-size: 11px;
+  color: #68748a;
+}
+.chat-print-body p,
+.chat-print-body ul,
+.chat-print-body ol,
+.chat-print-body pre,
+.chat-print-body table,
+.chat-print-body blockquote {
+  margin: 0 0 10px;
+}
+.chat-print-body ul,
+.chat-print-body ol {
+  padding-left: 22px;
+}
+.chat-print-body h1,
+.chat-print-body h2,
+.chat-print-body h3,
+.chat-print-body h4 {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 14px 0 6px;
+  color: #061b69;
+}
+.chat-print-body > :first-child {
+  margin-top: 0;
+}
+.chat-print-body > :last-child {
+  margin-bottom: 0;
+}
+.chat-print-body pre {
+  background: #f5f7fb;
+  border: 1px solid #e3e8f0;
+  padding: 10px 12px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat-print-body code {
+  font-size: 12px;
+}
+.chat-print-body table {
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.chat-print-body th,
+.chat-print-body td {
+  border: 1px solid #d5def0;
+  padding: 4px 8px;
+}
+.chat-print-body blockquote {
+  margin: 0;
+  padding-left: 12px;
+  border-left: 3px solid #d5def0;
+  color: #4a5872;
+}
+.chat-print-placeholder,
+.chat-print-inline-image {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border: 1px dashed #b9c6e0;
+  font-size: 12px;
+  color: #4a5872;
+}
+.chat-print-inline-image {
+  display: inline-flex;
+  margin: 0;
+}
+.chat-print-sources {
+  margin-top: 10px;
+  font-size: 12px;
+}
+.chat-print-sources ol {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}
+.chat-print-url {
+  color: #0135df;
+}
+.chat-print-receipt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: #68748a;
+}
+.chat-print-receipt code {
+  font-size: 11px;
+}
+@media (max-width: 700px) {
+  .chat-print-toolbar {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+  }
+  .chat-print-toolbar > span {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .chat-print-toolbar .chat-print-go {
+    margin-left: auto;
+  }
+  .chat-print-page {
+    margin: 0;
+    padding: 28px 18px;
+    box-shadow: none;
+  }
+  .chat-print-head h1 {
+    font-size: 26px;
+  }
+}
+
+/* Printing: only the export page, in plain black on white, paginated. */
+@media print {
+  html.chat-printing body > *:not(.chat-print-root) {
+    display: none !important;
+  }
+  html.chat-printing,
+  html.chat-printing body {
+    background: #fff !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .chat-print-root {
+    position: static;
+    overflow: visible;
+    background: #fff;
+  }
+  .chat-print-toolbar {
+    display: none;
+  }
+  .chat-print-page {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    font-size: 11pt;
+  }
+  .chat-print-message > header {
+    break-after: avoid;
+  }
+  .chat-print-body pre,
+  .chat-print-placeholder,
+  .chat-print-receipt {
+    break-inside: avoid;
+  }
+  @page {
+    margin: 18mm 16mm;
+  }
+}
+.library-review-heading .history-export {
+  margin-left: auto;
+}

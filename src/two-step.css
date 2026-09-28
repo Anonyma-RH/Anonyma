@@ -1,0 +1,195 @@
+/* Two-Step Sign-in: Account → Security (TwoStepSettings) and the sign-in
+   step (TwoStepPrompt) in src/TwoStep.jsx. Builds on .settings-stack,
+   .identity-rows, .notice, .button and .small-button from styles.css. */
+.two-step-body {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.two-step-body > .notice {
+  margin: 0;
+}
+.settings-stack.two-step p + p {
+  margin-top: 8px;
+}
+.two-step h3 {
+  font-size: 18px;
+  letter-spacing: -0.2px;
+  line-height: 1.25;
+}
+/* The QR code is always dark on white, whatever the theme: phone cameras
+   read it most reliably that way. */
+.two-step-qr {
+  display: block;
+  width: 184px;
+  height: 184px;
+  flex: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  image-rendering: pixelated;
+}
+.two-step-scan {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.two-step-scan > div {
+  min-width: 0;
+}
+.two-step-scan details {
+  margin-top: 12px;
+  font-size: 11px;
+}
+.two-step-scan summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.two-step-key {
+  display: block;
+  margin: 10px 0;
+  padding: 10px 12px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  word-spacing: 4px;
+  background: #f3f6ee;
+  border: 1px solid var(--line);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.two-step-field {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.two-step-field input {
+  max-width: 280px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 18px;
+  letter-spacing: 3px;
+}
+.two-step-setup .inline-actions,
+.two-step-manage .inline-actions,
+.two-step-codes .inline-actions {
+  margin-top: 4px;
+}
+.two-step-setup,
+.two-step-manage,
+.two-step-codes {
+  display: grid;
+  gap: 14px;
+}
+.two-step-manage > p,
+.two-step-codes > p {
+  font-size: 12px !important;
+  color: var(--ink) !important;
+  margin: 0 !important;
+  line-height: 1.55;
+}
+.two-step-codes ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+  padding: 14px 16px 14px 36px;
+  background: #f3f6ee;
+  border: 1px solid var(--line);
+}
+.two-step-codes code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.two-step-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.two-step-check input {
+  width: 16px;
+  height: 16px;
+}
+.two-step-status b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.two-step-status > div > span {
+  width: 130px;
+}
+.two-step .button.danger {
+  background: #a2634f;
+  border-color: #a2634f;
+  color: #fff;
+}
+.two-step .button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+/* The sign-in page's second step. */
+.two-step-prompt {
+  display: grid;
+  gap: 14px;
+  margin-top: 26px;
+}
+.two-step-prompt > p:not(.eyebrow) {
+  margin: 0;
+  font-size: 14px;
+}
+.two-step-prompt .eyebrow {
+  margin: 0;
+}
+.two-step-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+.two-step-links .text-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+@media (max-width: 640px) {
+  .two-step-scan {
+    flex-direction: column;
+  }
+  .two-step-qr {
+    width: 200px;
+    height: 200px;
+  }
+  .two-step-codes ol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .two-step-status > div > span {
+    width: auto;
+  }
+}
+/* "Confirm it's you" before turning it on or making new recovery codes. */
+.two-step-reauth {
+  display: grid;
+  gap: 12px;
+  padding: 20px 22px;
+  background: #f3f6ee;
+  border: 1px solid var(--line);
+}
+.two-step-reauth > p {
+  font-size: 12px !important;
+  color: var(--ink) !important;
+  margin: 0 !important;
+  line-height: 1.55;
+}
+.two-step-reauth form {
+  display: grid;
+  gap: 12px;
+}
+.two-step-reauth .notice {
+  margin: 0;
+}
+.two-step-reauth input[type="password"] {
+  max-width: 280px;
+}

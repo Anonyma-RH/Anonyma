@@ -1,0 +1,284 @@
+/* Bookmarks (src/Bookmarks.jsx): the star under a saved message, its note,
+   the jump highlight, and the Bookmarks tab in Your library. */
+
+/* ---- In the chat ---- */
+.app-shell .turn-actions .bookmark-star,
+.app-shell .turn-actions .bookmark-note-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.app-shell .turn-actions .bookmark-star.on {
+  border-color: var(--brand-blue, #0135df);
+  background: var(--brand-blue, #0135df);
+  color: #fff;
+}
+.app-shell .turn-actions .bookmark-star.on svg {
+  color: var(--brand-orange, #ffb21c);
+}
+.app-shell .turn-actions .bookmark-star.on:hover {
+  background: #0129ad;
+  color: #fff;
+}
+.app-shell .turn-actions .bookmark-star:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.bookmark-details {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  min-width: 0;
+}
+.bookmark-note {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink, #18233f);
+  overflow-wrap: anywhere;
+}
+.bookmark-note svg {
+  flex: none;
+  color: var(--brand-orange, #ffb21c);
+  transform: translateY(1px);
+}
+.bookmark-flash {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted, #606a80);
+}
+.bookmark-flash a {
+  color: var(--brand-blue, #0135df);
+  font-weight: 600;
+}
+.bookmark-error {
+  margin: 0;
+  font-size: 12px;
+  color: #b42318;
+}
+.bookmark-note-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-items: end;
+  max-width: 560px;
+}
+.bookmark-note-form label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted, #606a80);
+}
+.bookmark-note-form input {
+  min-width: 0;
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--ink, #18233f);
+  padding: 9px 11px;
+  border: 1px solid var(--brand-blue, #0135df);
+  border-radius: 6px;
+}
+.bookmark-note-form small {
+  font-size: 11px;
+  color: var(--muted, #606a80);
+  padding-bottom: 10px;
+}
+.bookmark-note-form .bookmark-error,
+.bookmark-note-actions {
+  grid-column: 1 / -1;
+}
+.bookmark-note-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.bookmark-note-actions .primary,
+.bookmark-card-actions .primary {
+  background: var(--brand-blue, #0135df);
+  border-color: var(--brand-blue, #0135df);
+  color: #fff;
+}
+/* The message a bookmark opened at: a gold rule and a fading blue wash. */
+.app-shell .message.bookmark-target {
+  position: relative;
+  animation: bookmark-target 4s ease-out both;
+  border-radius: 10px;
+}
+.app-shell .message.bookmark-target::before {
+  content: "";
+  position: absolute;
+  inset: -10px -14px;
+  border-left: 3px solid var(--brand-orange, #ffb21c);
+  border-radius: 10px;
+  pointer-events: none;
+  animation: bookmark-rule 4s ease-out both;
+}
+@keyframes bookmark-target {
+  0%,
+  45% {
+    background: #0135df14;
+    box-shadow: 0 0 0 10px #0135df14;
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+@keyframes bookmark-rule {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .message.bookmark-target,
+  .app-shell .message.bookmark-target::before {
+    animation: none;
+    background: #0135df14;
+  }
+}
+
+/* ---- Your library → Bookmarks ---- */
+.bookmarks-panel {
+  max-width: 900px;
+}
+.bookmarks-search > div input {
+  max-width: 100%;
+}
+.bookmark-count {
+  margin: 0 0 14px;
+}
+.bookmark-list {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.bookmark-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border: 1px solid #dce2ed;
+  border-left: 3px solid var(--brand-blue, #0135df);
+  border-radius: 12px;
+  background: #fff;
+  color: #193758;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.bookmark-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+.bookmark-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 650;
+  color: var(--brand-blue, #0135df);
+  letter-spacing: 0.02em;
+}
+.bookmark-kind svg {
+  color: var(--brand-orange, #ffb21c);
+}
+.bookmark-model {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: var(--brand-deep, #061b69);
+}
+.bookmark-card time {
+  margin-left: auto;
+}
+.bookmark-excerpt {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink, #18233f);
+}
+.bookmark-excerpt.empty {
+  color: #64748b;
+  font-style: italic;
+}
+.bookmark-card .bookmark-note {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff8e8;
+}
+.bookmark-note-label {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a5a00;
+}
+.bookmark-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: 12px;
+  color: #64748b;
+}
+.bookmark-where {
+  min-width: 0;
+}
+.bookmark-where strong {
+  color: #193758;
+}
+.bookmark-expires {
+  color: #8a5a00;
+}
+.bookmark-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+.bookmark-card-actions .small-button {
+  font-size: 11px;
+  min-height: 32px;
+  padding: 7px 12px;
+  text-decoration: none;
+  color: inherit;
+}
+.bookmark-card-actions .small-button.primary {
+  color: #fff;
+}
+.bookmark-empty {
+  color: #64748b;
+}
+@media (max-width: 640px) {
+  .bookmark-card {
+    padding: 15px 14px;
+  }
+  .bookmark-card time,
+  .bookmark-card-actions {
+    margin-left: 0;
+  }
+  .bookmark-card-actions {
+    width: 100%;
+  }
+  .bookmark-note-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .bookmark-note-form small {
+    padding-bottom: 0;
+  }
+}

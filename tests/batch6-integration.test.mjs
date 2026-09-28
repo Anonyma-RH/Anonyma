@@ -140,9 +140,12 @@ test("the header's chat tools compact to icons when crowded, and the sidebar fit
   assert.match(css, /@media\(max-width:1680px\)\{\.app-shell \.workspace-header\.tools-5 :is\(\.find-open,\.catchup-open,\.share-open-button,\.chat-export-open\)\{padding:8px\}/);
   assert.match(css, /@media\(max-width:480px\)\{\.app-shell \.workspace-header\.tools-4>span\{display:none\}/);
   assert.match(css, /\.app-sidebar nav:has\(>a:nth-child\(15\)\) a\{min-height:38px;padding-block:5px\}/);
-  // The sidebar's order: On-device with the chat modes, then the document
-  // tools together; the command palette lists places in the same order.
-  const order = [...ws.matchAll(/^\s+\["(\w+)", "[^"]+"\],$/gm)].map((m) => m[1]);
+  // The directory retains the navigation order, with optional descriptions.
+  // Primary destinations remain up front; other entries live in More tools.
+  assert.match(ws, /const primaryModes = \["chat", "image", "video"\];/);
+  assert.match(ws, /navigation\.filter\(\(\[id\]\) => primaryModes\.includes\(id\)\)\.map\(toolLink\)/);
+  assert.match(ws, /navigation\.filter\(\(\[id\]\) => !primaryModes\.includes\(id\)\)/);
+  const order = [...ws.matchAll(/^\s+\["(\w+)", "[^"]+"(?:, "[^"]+")?\],$/gm)].map((m) => m[1]);
   const nav = order.slice(order.indexOf("home"), order.indexOf("library") + 1);
   assert.deepEqual(nav, ["home", "chat", "uncensored", "symposium", "device", "code", "image", "video", "audio", "collab", "tools", "sheets", "compare", "canvas", "translate", "study", "slides", "notes", "routines", "projects", "library"]);
   const palette = source("command-palette.js");

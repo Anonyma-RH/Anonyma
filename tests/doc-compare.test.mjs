@@ -170,7 +170,7 @@ test("the workspace keeps Compare out of sight until it's released, and runs the
   assert.match(src, /mode === "compare" && \(!config \|\| isReleased\(config, "doccompare"\)\)/);
   assert.match(src, /mode === "compare" \? \(\s*isReleased\(config, "doccompare"\) &&/);
   assert.match(src, /const Compare = lazy\(\(\) => import\("\.\/Compare\.jsx"\)\)/);
-  assert.match(src, /\["compare", "Compare docs"\]/);
+  assert.match(src, /\["compare", "Compare docs", "Compare two documents[^"\n]+"\]/);
   assert.match(src, /compare: "Compare docs",/);
   const page = readFileSync(new URL("../src/Compare.jsx", import.meta.url), "utf8");
   assert.match(page, /new Worker\(new URL\("\.\/compare\.worker\.js", import\.meta\.url\), \{ type: "module" \}\)/);

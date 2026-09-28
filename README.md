@@ -14,6 +14,13 @@ Mode, Sealed Mode, Device Vault and Seed Guard. Each feature ships behind a name
 release gate; the [featured releases](#featured-releases) below link a note and
 a launch film for each one.
 
+## Latest update — 28 September 2026
+
+[Workspace navigation, folders and tool search](docs/releases/workspace.md) is live:
+Chat, Images and Video up front; conversations in expandable folders; extra
+controls under Options; and a described, searchable More tools directory.
+The release passed 1,614 local tests and was verified on the live site.
+
 ## Verify it's live
 
 Everything below is public and needs no account:

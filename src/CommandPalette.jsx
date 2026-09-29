@@ -74,26 +74,27 @@ export function PaletteButton({ onOpen, apple }) {
   );
 }
 
-// While 中文 is on, action labels are shown (and searchable) in Chinese from
-// the site's own dictionary. Chat titles, model names and scrolls are
-// content and stay exactly as written.
+// While Español or 中文 is on, action labels are shown (and searchable) in
+// that language from the site's own dictionary. Chat titles, model names and
+// scrolls are content and stay exactly as written.
 function useTranslate(config) {
-  const zh = useLanguage() === "zh" && isReleased(config, "zh");
+  const language = useLanguage();
+  const lang = language !== "en" && isReleased(config, language) ? language : null;
   const [dict, setDict] = useState(null);
   useEffect(() => {
-    if (!zh) return setDict(null);
+    if (!lang) return setDict(null);
     let live = true;
-    loadDictionary().then(
+    loadDictionary(lang).then(
       (d) => live && setDict(d),
       () => {},
     );
     return () => {
       live = false;
     };
-  }, [zh]);
+  }, [lang]);
   return useMemo(
-    () => (zh && dict ? (s) => translateText(s, dict) : null),
-    [zh, dict],
+    () => (lang && dict?.lang === lang ? (s) => translateText(s, dict) : null),
+    [lang, dict],
   );
 }
 

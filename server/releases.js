@@ -1175,6 +1175,21 @@ export const UPDATES = [
     // recording itself is never stored. The page is /workspace/notes.
     released: true,
   },
+  {
+    id: "es",
+    title: "Español",
+    tagline: "The whole site in Spanish.",
+    points: [
+      "One switch between English, Spanish and Chinese",
+      "Every page, the workspace and your account",
+      "Your chats stay exactly as written",
+    ],
+    // Client-only, like "zh" (src/i18n.js, src/i18n/es.json, the switch in
+    // src/LanguageSwitch.jsx): the choice lives in this browser, nothing is
+    // sent or stored, and until it is released the switch has no Español
+    // button and the dictionary never loads.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

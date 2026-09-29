@@ -51,6 +51,7 @@ const STOP_WAIT = 5000;
 // else the browser's own language when it isn't English, else Spanish.
 function startLanguage() {
   if (getLanguage() === "zh") return "zh-CN";
+  if (getLanguage() === "es") return "es";
   const nav = (typeof navigator !== "undefined" && navigator.language) || "";
   const exact = LANGUAGES.find((l) => l.code.toLowerCase() === nav.toLowerCase());
   const base = LANGUAGES.find((l) => l.code === nav.split("-")[0]);

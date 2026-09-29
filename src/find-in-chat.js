@@ -321,17 +321,19 @@ export function startIndex(total, rectOf, bandTop) {
 
 const num = (n) => Number(n).toLocaleString("en-US");
 // The count next to the field, which is also the live region screen readers
-// announce. Chinese is written here (not through the page translator) so the
-// numbers never meet a generic "{0} of {1}" pattern.
+// announce. Chinese and Spanish are written here (not through the page
+// translator) so the numbers never meet a generic "{0} of {1}" pattern.
+// `lang` is "zh", "es" or false for English (true also means Chinese).
 export function countLabel(
   { index = -1, total = 0, capped = false, query = "" } = {},
-  zh = false,
+  lang = false,
 ) {
   if (!cleanQuery(query)) return "";
-  if (!total) return zh ? "无匹配" : "No matches";
+  const l = lang === true ? "zh" : lang;
+  if (!total) return l === "zh" ? "无匹配" : l === "es" ? "Sin coincidencias" : "No matches";
   const n = num(total) + (capped ? "+" : "");
   const i = num(index + 1);
-  return zh ? `第 ${i} 个，共 ${n} 个` : `${i} of ${n}`;
+  return l === "zh" ? `第 ${i} 个，共 ${n} 个` : l === "es" ? `${i} de ${n}` : `${i} of ${n}`;
 }
 
 // ---- The shortcut ----

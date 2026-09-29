@@ -386,9 +386,9 @@ function useUiText() {
   const language = useLanguage();
   const [, redraw] = useState(0);
   useEffect(() => {
-    if (language !== "zh") return;
+    if (language === "en") return;
     let current = true;
-    loadDictionary().then(
+    loadDictionary(language).then(
       () => setTimeout(() => current && redraw((n) => n + 1), 0),
       () => {},
     );
@@ -396,7 +396,7 @@ function useUiText() {
       current = false;
     };
   }, [language]);
-  return (text) => (language === "zh" ? t(text) : text);
+  return (text) => (language !== "en" ? t(text) : text);
 }
 
 // A remote image isn't fetched until the user says so: loading it would tell

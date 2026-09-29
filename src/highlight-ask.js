@@ -38,7 +38,7 @@ export const languageById = (id) => LANGUAGES.find((l) => l.id === id) || null;
 // the Chinese app; otherwise the browser's own language if it's on the list
 // and isn't English, else Simplified Chinese.
 export function defaultLanguage(uiLang, browserLangs = []) {
-  if (uiLang === "zh") return "en";
+  if (uiLang === "zh" || uiLang === "es") return "en";
   for (const tag of browserLangs || []) {
     const id = String(tag || "").toLowerCase().split("-")[0];
     if (id && id !== "en" && languageById(id)) return id;

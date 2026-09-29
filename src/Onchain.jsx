@@ -166,7 +166,7 @@ function When({ time }) {
   if (!time || !Number.isFinite(d.getTime())) return null;
   return (
     <span data-i18n="off">
-      {new Intl.DateTimeFormat(lang === "zh" ? "zh-CN" : "en", {
+      {new Intl.DateTimeFormat(lang === "zh" ? "zh-CN" : lang === "es" ? "es-419" : "en", {
         year: "numeric",
         month: "short",
         day: "numeric",

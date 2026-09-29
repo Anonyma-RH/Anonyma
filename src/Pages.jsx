@@ -899,6 +899,7 @@ const featureIcons = {
   quotecards: "quotemark",
   recovery: "lifebuoy",
   pushalerts: "bell",
+  decoy: "mask",
 };
 const launch = {
   id: "mvp",

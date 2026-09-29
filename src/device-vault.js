@@ -40,7 +40,9 @@ export const VAULT_LIMITS = [
   "Anyone using this browser unlocked can read them.",
   "The model provider still receives what you send.",
 ];
-const VERIFIER_TEXT = "ANONYMA Device Vault";
+// Exported for Decoy Vault's stand-in slot (src/decoy-vault.js), whose
+// verifier must be the same size as a real one.
+export const VERIFIER_TEXT = "ANONYMA Device Vault";
 const VERIFIER_AAD = "anonyma-vault:verifier";
 const chatAad = (id) => "anonyma-vault:chat:" + id;
 
@@ -147,15 +149,19 @@ export async function openJson(key, box, aad, code = "damaged") {
 
 // A new vault: its stored settings (salt, iteration count, verifier and the
 // idle lock) and the unlocked key, which is only ever held in memory.
-export async function createVault(passphrase, { idleMinutes = DEFAULT_IDLE_MINUTES } = {}) {
+// Decoy Vault passes the real vault's iteration count, so both cost the same.
+export async function createVault(
+  passphrase,
+  { idleMinutes = DEFAULT_IDLE_MINUTES, iterations = VAULT_ITERATIONS } = {},
+) {
   const problem = passphraseProblem(passphrase);
   if (problem) throw new VaultError("short_passphrase", problem);
   const salt = randomBytes(SALT_BYTES);
-  const key = await deriveVaultKey(passphrase, salt, VAULT_ITERATIONS);
+  const key = await deriveVaultKey(passphrase, salt, iterations);
   const meta = {
     format: VAULT_FORMAT,
     version: VAULT_VERSION,
-    kdf: { name: "PBKDF2", hash: "SHA-256", iterations: VAULT_ITERATIONS, salt: toBase64(salt) },
+    kdf: { name: "PBKDF2", hash: "SHA-256", iterations, salt: toBase64(salt) },
     cipher: "AES-GCM-256",
     verifier: await sealJson(key, VERIFIER_TEXT, VERIFIER_AAD),
     idleMinutes: IDLE_CHOICES.includes(idleMinutes) ? idleMinutes : DEFAULT_IDLE_MINUTES,

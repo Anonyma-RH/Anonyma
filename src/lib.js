@@ -270,6 +270,29 @@ export function videoPresets(model) {
 // server's exact one-time challenge; no transfer, approval or recovery phrase is ever requested.
 export const walletAvailable = (config) =>
   !!globalThis.window?.ethereum || !!config?.walletProject;
+// Phone and tablet browsers (Safari, Chrome) have no wallet extension, so
+// without WalletConnect the only way to sign there is a wallet app's own
+// browser, which injects window.ethereum. iPadOS reports itself as a Mac.
+export function isMobileBrowser(nav = globalThis.navigator) {
+  const ua = String(nav?.userAgent || "");
+  return (
+    /Android|iPhone|iPad|iPod|Mobile/i.test(ua) ||
+    (nav?.platform === "MacIntel" && nav?.maxTouchPoints > 1)
+  );
+}
+// Links that open `url` inside a wallet app's browser, in each app's
+// published deep-link format. Nothing about the account is in them: the
+// wallet browser keeps its own cookies, so you sign in again there.
+export function walletBrowserLinks(url) {
+  const u = new URL(url);
+  const bare = u.host + u.pathname + u.search + u.hash;
+  const full = encodeURIComponent(u.href);
+  return [
+    { name: "MetaMask", href: "https://metamask.app.link/dapp/" + bare },
+    { name: "Coinbase Wallet", href: "https://go.cb-w.com/dapp?cb_url=" + full },
+    { name: "Trust Wallet", href: "https://link.trustwallet.com/open_url?coin_id=60&url=" + full },
+  ];
+}
 async function walletProvider(config, chain) {
   let provider = globalThis.window?.ethereum;
   if (!provider) {

@@ -17,13 +17,14 @@ import {
   Empty,
   CopyButton,
   Modal,
+  WalletMissing,
+  useWalletAvailable,
 } from "./ui.jsx";
 import {
   api,
   download,
   savings,
   walletSign,
-  walletAvailable,
   safeNext,
   isReleased,
 } from "./lib.js";
@@ -1181,6 +1182,7 @@ export function Legal({ type }) {
 }
 export function Auth({ register = false }) {
   const { config, connected, refresh } = useApp();
+  const canSign = useWalletAvailable(config);
   const navigate = useNavigate();
   // An app's connection request waiting for sign-in: go back to it after,
   // with a full page load so its own headers (no referrer) apply.
@@ -1367,19 +1369,13 @@ export function Auth({ register = false }) {
               for a recovery phrase.
             </Notice>
             {connected ? (
-              <Button onClick={walletSubmit} disabled={busy || !walletAvailable(config)}>
+              <Button onClick={walletSubmit} disabled={busy || !canSign}>
                 {busy ? "Waiting for your wallet…" : "Connect wallet"}
               </Button>
             ) : (
               <Button disabled>Wallet sign-in needs the account service</Button>
             )}
-            {connected && !walletAvailable(config) && (
-              <p className="fine-print">
-                No wallet was found in this browser. On a phone, open this page in
-                your wallet app's own browser (for example MetaMask, Coinbase
-                Wallet or Rabby) to sign in with your wallet.
-              </p>
-            )}
+            {connected && !canSign && <WalletMissing signIn />}
             {error && <Notice type="error">{error}</Notice>}
           </>
         ) : (

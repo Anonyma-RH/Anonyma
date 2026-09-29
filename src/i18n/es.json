@@ -6410,7 +6410,15 @@
     "to claim it; you'll go straight back to it.": "para reclamarlo; volverás directo a él.",
     "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) and link it there. On a computer, use a browser with a wallet extension.": "No se encontró ninguna billetera en este navegador. En el teléfono, abre esta página en el navegador propio de tu app de billetera (por ejemplo MetaMask, Coinbase Wallet o Rabby) y vincúlala ahí. En una computadora, usa un navegador con una extensión de billetera.",
     "Copy this page's link": "Copiar el enlace de esta página",
-    "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) to sign in with your wallet.": "No se encontró ninguna billetera en este navegador. En el teléfono, abre esta página en el navegador propio de tu app de billetera (por ejemplo MetaMask, Coinbase Wallet o Rabby) para iniciar sesión con tu billetera."
+    "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) to sign in with your wallet.": "No se encontró ninguna billetera en este navegador. En el teléfono, abre esta página en el navegador propio de tu app de billetera (por ejemplo MetaMask, Coinbase Wallet o Rabby) para iniciar sesión con tu billetera.",
+    "No browser wallet found. Install a wallet extension such as MetaMask, then reload this page.": "No se encontró ninguna billetera de navegador. Instala una extensión de billetera como MetaMask y vuelve a cargar esta página.",
+    "This phone browser has no wallet. Open this page in your wallet app's browser to sign in with your wallet.": "Este navegador del teléfono no tiene billetera. Abre esta página en el navegador de tu app de billetera para iniciar sesión con tu billetera.",
+    "This phone browser has no wallet. Open this page in your wallet app's browser, sign in there, and link your wallet from it.": "Este navegador del teléfono no tiene billetera. Abre esta página en el navegador de tu app de billetera, inicia sesión ahí y vincula tu billetera desde ahí.",
+    "Another wallet app? Paste the page link into its built-in browser.": "¿Otra app de billetera? Pega el enlace de la página en su navegador integrado.",
+    "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "¿Otra app de billetera? Pega el enlace de la página en su navegador integrado. Tu app de billetera tiene su propio inicio de sesión, así que ahí vuelves a iniciar sesión en ANONYMA.",
+    "Open in MetaMask": "Abrir en MetaMask",
+    "Open in Coinbase Wallet": "Abrir en Coinbase Wallet",
+    "Open in Trust Wallet": "Abrir en Trust Wallet"
   },
   "patterns": [
     {

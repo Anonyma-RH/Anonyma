@@ -4857,5 +4857,13 @@ td code {
   vertical-align: 2px;
 }
 
-/* No wallet in this browser: the note and a copy-link button under the disabled Link wallet button. */
+/* No wallet in this browser: the note, then on a phone one-tap links into
+   wallet apps' browsers and a copy-link button, under the disabled button. */
 .wallet-missing { display: grid; gap: 10px; justify-items: start; margin-top: 12px; }
+.wallet-missing .notice,
+.wallet-missing .fine-print { margin: 0; }
+.wallet-missing-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.wallet-missing-links a.small-button { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+/* Account settings: a full-width block under the Wallet row, not another row. */
+.identity-rows > .wallet-missing { display: grid; margin: -4px 0 16px; font-size: 12px; }
+.identity-rows .wallet-missing span { width: auto; color: inherit; }

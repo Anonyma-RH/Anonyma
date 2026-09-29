@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { animate } from "animejs";
 import { reducedMotion } from "./motion.js";
 import { Link } from "react-router-dom";
+import { isMobileBrowser, walletAvailable, walletBrowserLinks } from "./lib.js";
 import {
   Mic,
   Globe,
@@ -551,18 +552,58 @@ export function Art({ kind = "chat", color = "mint" }) {
 
 // Shown where a wallet is needed but this browser has none (and WalletConnect
 // isn't configured): phones and in-app browsers have no wallet extension, so
-// the page says how to continue instead of only disabling the button.
-export function WalletMissing() {
+// the page says how to continue instead of only disabling the button. On a
+// phone that's a wallet app's own browser, one tap away; on a computer, a
+// wallet extension. Whole sentences, so the language switch translates them.
+export function WalletMissing({ signIn = false }) {
   const here = globalThis.location?.href || "https://askanonyma.com/account/credits";
+  if (!isMobileBrowser())
+    return (
+      <div className="wallet-missing">
+        <Notice>
+          No browser wallet found. Install a wallet extension such as MetaMask,
+          then reload this page.
+        </Notice>
+      </div>
+    );
   return (
     <div className="wallet-missing">
       <Notice>
-        No wallet was found in this browser. On a phone, open this page in your
-        wallet app's own browser (for example MetaMask, Coinbase Wallet or
-        Rabby) and link it there. On a computer, use a browser with a wallet
-        extension.
+        {signIn
+          ? "This phone browser has no wallet. Open this page in your wallet app's browser to sign in with your wallet."
+          : "This phone browser has no wallet. Open this page in your wallet app's browser, sign in there, and link your wallet from it."}
       </Notice>
-      <CopyButton text={here} label="Copy this page's link" />
+      <div className="wallet-missing-links">
+        {walletBrowserLinks(here).map((w) => (
+          <a
+            key={w.name}
+            className="small-button"
+            href={w.href}
+            rel="noopener noreferrer"
+          >
+            {`Open in ${w.name}`}
+            <Icon name="arrow" size={14} />
+          </a>
+        ))}
+        <CopyButton text={here} label="Copy this page's link" />
+      </div>
+      <p className="fine-print">
+        {signIn
+          ? "Another wallet app? Paste the page link into its built-in browser."
+          : "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there."}
+      </p>
     </div>
   );
+}
+// Whether this browser can sign with a wallet. Some wallet browsers inject
+// window.ethereum just after the page loads and announce it with
+// `ethereum#initialized`, so the answer is read again then.
+export function useWalletAvailable(config) {
+  const [, recheck] = useState(0);
+  useEffect(() => {
+    const again = () => recheck((n) => n + 1);
+    window.addEventListener("ethereum#initialized", again, { once: true });
+    return () => window.removeEventListener("ethereum#initialized", again);
+  }, []);
+  return walletAvailable(config);
 }

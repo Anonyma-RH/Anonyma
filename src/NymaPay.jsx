@@ -6,10 +6,16 @@ import {
   payWithWallet,
   readStore,
   saveStore,
-  walletAvailable,
   walletSign,
 } from "./lib.js";
-import { Button, CopyButton, Icon, Notice, WalletMissing } from "./ui.jsx";
+import {
+  Button,
+  CopyButton,
+  Icon,
+  Notice,
+  WalletMissing,
+  useWalletAvailable,
+} from "./ui.jsx";
 import "./nyma-pay.css";
 
 // NYMA top-ups exist only on Robinhood Chain (chain 4663), so its copy names
@@ -53,6 +59,7 @@ export default function NymaPayPanel({ config, user, demo, onChanged }) {
     [done, setDone] = useState(""),
     [pasted, setPasted] = useState("");
   const controller = useRef(null);
+  const canSign = useWalletAvailable(config);
   const ready = !!np && !!wp && !!user && !demo;
   const pending = () => readStore(pendingKey, []);
   const forget = (txHash) =>
@@ -145,7 +152,6 @@ export default function NymaPayPanel({ config, user, demo, onChanged }) {
   }, [ready, user?.id, user?.wallet]);
 
   if (!np || !wp) return null;
-  const canSign = walletAvailable(config);
   const bonusPercent = Math.round(np.bonus * 1000) / 10;
   const open = quote && quote.expires > clockNow;
   const estimate =
@@ -178,7 +184,6 @@ export default function NymaPayPanel({ config, user, demo, onChanged }) {
           <Button
             type="button"
             disabled={demo || !user || busy || !canSign}
-            title={canSign ? undefined : "No browser wallet found."}
             onClick={() =>
               run(async () => {
                 await walletSign(config, true);

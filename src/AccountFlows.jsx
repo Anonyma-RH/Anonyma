@@ -6,10 +6,16 @@ import {
   payWithWallet,
   readStore,
   saveStore,
-  walletAvailable,
   walletSign,
 } from "./lib.js";
-import { Button, Notice, CopyButton, Icon, WalletMissing } from "./ui.jsx";
+import {
+  Button,
+  Notice,
+  CopyButton,
+  Icon,
+  WalletMissing,
+  useWalletAvailable,
+} from "./ui.jsx";
 
 // Refusals that a later check can't change, so the saved hash is dropped.
 const FINAL_WALLET_ERRORS = [
@@ -34,6 +40,7 @@ export function WalletPayPanel({ config, user, demo, onChanged }) {
     [done, setDone] = useState(""),
     [pasted, setPasted] = useState("");
   const controller = useRef(null);
+  const canSign = useWalletAvailable(config);
   const pending = () => readStore(pendingKey, []);
   const forget = (txHash) =>
     saveStore(
@@ -89,7 +96,6 @@ export function WalletPayPanel({ config, user, demo, onChanged }) {
   }, [wp?.address, user?.id, user?.wallet]);
 
   if (!wp) return null;
-  const canSign = walletAvailable(config);
   return (
     <form
       className="form-panel wallet-pay"
@@ -123,7 +129,6 @@ export function WalletPayPanel({ config, user, demo, onChanged }) {
           <Button
             type="button"
             disabled={demo || !user || busy || !canSign}
-            title={canSign ? undefined : "No browser wallet found."}
             onClick={() =>
               run(async () => {
                 await walletSign(config, true);

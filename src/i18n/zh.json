@@ -6407,7 +6407,15 @@
     "The photo's size couldn't be read.": "无法读取照片的尺寸。",
     "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) and link it there. On a computer, use a browser with a wallet extension.": "此浏览器中没有找到钱包。在手机上，请在你的钱包应用自带的浏览器（例如 MetaMask、Coinbase Wallet 或 Rabby）中打开此页面并在那里关联。在电脑上，请使用装有钱包扩展的浏览器。",
     "Copy this page's link": "复制此页面链接",
-    "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) to sign in with your wallet.": "此浏览器中没有找到钱包。在手机上，请在你的钱包应用自带的浏览器（例如 MetaMask、Coinbase Wallet 或 Rabby）中打开此页面，用钱包登录。"
+    "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) to sign in with your wallet.": "此浏览器中没有找到钱包。在手机上，请在你的钱包应用自带的浏览器（例如 MetaMask、Coinbase Wallet 或 Rabby）中打开此页面，用钱包登录。",
+    "No browser wallet found. Install a wallet extension such as MetaMask, then reload this page.": "未找到浏览器钱包。请安装 MetaMask 等钱包扩展程序，然后重新加载此页面。",
+    "This phone browser has no wallet. Open this page in your wallet app's browser to sign in with your wallet.": "此手机浏览器中没有钱包。请在你的钱包应用内置浏览器中打开此页面，用钱包登录。",
+    "This phone browser has no wallet. Open this page in your wallet app's browser, sign in there, and link your wallet from it.": "此手机浏览器中没有钱包。请在你的钱包应用内置浏览器中打开此页面，在那里登录，然后从那里关联你的钱包。",
+    "Another wallet app? Paste the page link into its built-in browser.": "使用其他钱包应用？请把页面链接粘贴到它的内置浏览器中。",
+    "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "使用其他钱包应用？请把页面链接粘贴到它的内置浏览器中。钱包应用有自己独立的登录状态，所以你需要在那里重新登录 ANONYMA。",
+    "Open in MetaMask": "在 MetaMask 中打开",
+    "Open in Coinbase Wallet": "在 Coinbase Wallet 中打开",
+    "Open in Trust Wallet": "在 Trust Wallet 中打开"
   },
   "patterns": [
     {

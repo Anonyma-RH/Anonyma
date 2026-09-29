@@ -15,6 +15,7 @@ import {
   ComingSoon,
   SoonTag,
   WalletMissing,
+  useWalletAvailable,
 } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
@@ -30,7 +31,6 @@ import {
   download,
   uid,
   walletSign,
-  walletAvailable,
   isReleased,
   releaseUpdate,
 } from "./lib.js";
@@ -100,6 +100,7 @@ export default function Account() {
   const [params] = useSearchParams();
   const demo = params.get("demo") === "1";
   const { user, connected, config, refresh } = useApp();
+  const canSign = useWalletAvailable(config);
   // Agent allowances extend API keys, so they show only once both are live.
   const allowancesOn =
     isReleased(config, "api") && isReleased(config, "allowances");
@@ -950,12 +951,7 @@ export default function Account() {
                     <b>{user?.wallet || "Not linked"}</b>
                     <button
                       className="small-button"
-                      disabled={demo || !user || busy || !walletAvailable(config)}
-                      title={
-                        walletAvailable(config)
-                          ? undefined
-                          : "No browser wallet found and WalletConnect is not configured."
-                      }
+                      disabled={demo || !user || busy || !canSign}
                       onClick={async () => {
                         setBusy(true);
                         setError("");
@@ -981,7 +977,7 @@ export default function Account() {
                       onError={setError}
                     />
                   </div>
-                  {!demo && user && !walletAvailable(config) && <WalletMissing />}
+                  {!demo && user && !canSign && <WalletMissing />}
                   {/* Once the Holder Program is live, NYMA holdings get their
                       own section below. */}
                   {!holdersReleased(config) && user?.wallet && config?.services?.token && (

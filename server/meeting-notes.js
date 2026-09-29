@@ -127,35 +127,133 @@ const line = (start, end, text, speaker) => {
   const label = speakerLabel(speaker);
   return { start: s, end: e != null && e >= s ? e : s, text: t, ...(label ? { speaker: label } : {}) };
 };
-// Words into lines: a new line at a speaker change, a pause of a second or
-// more, a sentence end once a line has run 6 seconds, or at 20 seconds.
-function fromWords(list) {
+// ---- Words into lines ----
+
+// A line breaks at a speaker change, at a pause of 0.8 seconds or more, and
+// at a sentence end once the line has run 3 seconds; and it never runs past
+// about 10 seconds, so a jump to a line lands close to what was said.
+export const LINE_PAUSE = 0.8;
+export const LINE_MAX = 10;
+export const LINE_MIN_SENTENCE = 3;
+const SENTENCE_END = /[.!?。！？…]["'”’)\]]*$/;
+const ABBREVIATION = /^(?:mr|mrs|ms|dr|prof|sr|jr|st|vs)\.$/i;
+const CJK = /[\u3040-\u30ff\u3400-\u9fff]/;
+const sentenceEnd = (token) => SENTENCE_END.test(token) && !ABBREVIATION.test(token);
+// Letters and digits only, lowercase: what two spellings of a word share.
+const fold = (v) => String(v ?? "").normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}\p{M}]+/gu, "");
+
+// The reply's words with their times: { text, start, end, speaker }. A
+// word's speaker is its own, else `speaker` (its segment's).
+function wordItems(list, speaker = null) {
   const out = [];
-  let cur = null;
   for (const w of list) {
-    const text = words(w?.punctuated_word ?? w?.word ?? w?.text);
     const start = num(w?.start),
       end = num(w?.end);
-    if (!text || start == null) continue;
-    const speaker = speakerLabel(w?.speaker);
+    if (start == null) continue;
+    out.push({
+      text: words(w?.punctuated_word ?? w?.word ?? w?.text),
+      start,
+      end: Math.max(start, end ?? start),
+      speaker: speakerLabel(w?.speaker) ?? speaker,
+    });
+  }
+  return out;
+}
+// Consecutive items grouped into lines by the rules above. An item that is
+// `glued` (in the middle of a written word) never starts a line.
+function groupItems(items) {
+  const groups = [];
+  let cur = null;
+  for (const it of items) {
     if (
       cur &&
-      (speaker !== cur.speaker ||
-        start - cur.end >= 1 ||
-        (/[.!?。！？]$/.test(cur.text) && cur.end - cur.start >= 6) ||
-        cur.end - cur.start >= 20)
+      !it.glued &&
+      (it.speaker !== cur.speaker ||
+        it.start - cur.end >= LINE_PAUSE ||
+        it.end - cur.start > LINE_MAX ||
+        (cur.sentenceEnd && cur.end - cur.start >= LINE_MIN_SENTENCE))
     ) {
-      out.push(cur);
+      groups.push(cur);
       cur = null;
     }
-    if (!cur) cur = { start, end: end ?? start, text, speaker };
-    else {
-      cur.text += (/^[\u3400-\u9fff]/.test(text) && /[\u3400-\u9fff]$/.test(cur.text) ? "" : " ") + text;
-      cur.end = Math.max(cur.end, end ?? start);
-    }
+    if (!cur) cur = { items: [], start: it.start, end: it.end, speaker: it.speaker };
+    cur.items.push(it);
+    cur.end = Math.max(cur.end, it.end);
+    cur.sentenceEnd = it.sentenceEnd;
   }
-  if (cur) out.push(cur);
-  return out.map((c) => line(c.start, c.end, c.text, c.speaker)).filter(Boolean);
+  if (cur) groups.push(cur);
+  return groups;
+}
+// Words into lines, with the words' own text: the fallback for a reply that
+// has no text to take from (or none the words match).
+function fromWords(list, speaker = null) {
+  const items = wordItems(list, speaker)
+    .filter((it) => it.text)
+    .map((it) => ({ ...it, sentenceEnd: sentenceEnd(it.text) }));
+  return groupItems(items)
+    .map((g) =>
+      line(g.start, g.end, g.items.reduce((t, it) => t + (t && !(CJK.test(it.text[0]) && CJK.test(t.at(-1))) ? " " : "") + it.text, ""), g.speaker),
+    )
+    .filter(Boolean);
+}
+// The text a segment carries (punctuated and cased) cut into lines at the
+// times of the reply's words, which supply only times: some gateways' words
+// have no punctuation and no capitals. Words are matched to the text in
+// order by their letters and digits; a word the text doesn't have is
+// skipped, and text between two matched words (a number written in digits,
+// say) goes with the line before it, so nothing the segment says is lost or
+// respelled. null when too little of the two match to trust it.
+function alignedLines(text, list, speaker = null) {
+  const written = String(text ?? "").normalize("NFC");
+  const items = wordItems(list, speaker).filter((it) => fold(it.text));
+  // The text folded to letters and digits, each character kept with its
+  // place in the original and whether it begins a written word.
+  let folded = "";
+  const from = [],
+    to = [],
+    head = [];
+  let after = false;
+  for (let i = 0; i < written.length; ) {
+    const ch = String.fromCodePoint(written.codePointAt(i));
+    const g = fold(ch);
+    [...g].forEach((c, n) => {
+      folded += c;
+      from.push(i);
+      to.push(i + ch.length);
+      head.push(n === 0 && (!after || CJK.test(ch)));
+    });
+    after = g.length > 0;
+    i += ch.length;
+  }
+  if (!items.length || !folded) return null;
+  const placed = [];
+  let cursor = 0,
+    covered = 0;
+  for (const it of items) {
+    const w = fold(it.text);
+    let k = folded.startsWith(w, cursor) ? cursor : -1;
+    for (let j = cursor + 1; k < 0 && j <= Math.min(folded.length - w.length, cursor + 60); j++)
+      if (head[j] && folded.startsWith(w, j)) k = j;
+    if (k < 0) {
+      // A word the text lacks still fills the time it took, so it isn't read as a pause.
+      if (placed.length) placed.at(-1).end = Math.max(placed.at(-1).end, it.end);
+      continue;
+    }
+    placed.push({ ...it, a: from[k], b: to[k + w.length - 1], glued: !head[k] });
+    cursor = k + w.length;
+    covered += w.length;
+  }
+  if (placed.length < items.length * 0.6 || covered < folded.length * 0.6) return null;
+  placed.forEach((p, n) => {
+    const token = /^\S*/.exec(written.slice(p.a, placed[n + 1]?.a ?? written.length))[0];
+    p.sentenceEnd = sentenceEnd(token);
+  });
+  const groups = groupItems(placed);
+  return groups
+    .map((g, n) =>
+      line(g.start, g.end, written.slice(n ? g.items[0].a : 0, groups[n + 1]?.items[0].a ?? written.length), g.speaker),
+    )
+    .filter(Boolean);
 }
 // A line longer than this says little about where in it something was said:
 // it is coarse. (Whisper-style segments and speech utterances are far
@@ -172,9 +270,10 @@ function replyWords(j) {
     if (Array.isArray(list) && list.length) return list;
   return Array.isArray(j.segments) ? j.segments.flatMap((s) => (Array.isArray(s?.words) ? s.words : [])) : [];
 }
-// Coarse lines cut into finer ones by the words that fall inside them.
-// Lines with no words to cut them by are left as they are (the caller marks
-// them untimed); times are never invented.
+// Coarse lines cut into finer ones by the words that fall inside them: the
+// line's own text at the words' times, else the words' text. Lines with no
+// words to cut them by are left as they are (the caller marks them untimed);
+// times are never invented.
 function splitCoarse(lines, list) {
   return lines.flatMap((s) => {
     if (!isCoarse(s)) return [s];
@@ -182,7 +281,7 @@ function splitCoarse(lines, list) {
       const t = num(w?.start);
       return t != null && t >= s.start - 0.05 && t <= s.end + 0.05;
     });
-    const finer = fromWords(inside).map((l) => (l.speaker || !s.speaker ? l : { ...l, speaker: s.speaker }));
+    const finer = alignedLines(s.text, inside, s.speaker) ?? fromWords(inside, s.speaker);
     return finer.length > 1 ? finer : [s];
   });
 }

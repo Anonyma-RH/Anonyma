@@ -591,6 +591,8 @@ export function paletteActions(ctx = {}) {
       "two-step", "2fa", "authenticator", "one-time code", "recovery codes", "sign-in",
       // Passkeys live in Security too, once released.
       ...(on("passkeys") ? ["passkey", "passkeys", "face id", "fingerprint", "webauthn"] : []),
+      // And the Recovery Kit, once released.
+      ...(on("recovery") ? ["recovery kit", "backup codes", "lost password", "account recovery", "get back in", "恢复套件", "找回账户"] : []),
     ], { icon: "shield" });
   account("settings", "Account settings", "settings", [
     "preferences", "sessions", "export", "sign out",

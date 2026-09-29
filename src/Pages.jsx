@@ -1,6 +1,6 @@
 import DataControls from "./DataControls.jsx";
 import ApiGuide, { ApiExample } from "./ApiGuide.jsx";
-import React, { useMemo, useState } from "react";
+import React, { Suspense, lazy, useMemo, useState } from "react";
 import {
   Link,
   useNavigate,
@@ -38,8 +38,13 @@ import V1Media from "./V1Media.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
 import { TwoStepPrompt } from "./TwoStep.jsx";
 import { PasskeyAuth } from "./Passkeys.jsx";
+import { RecoveryKitLink } from "./RecoveryKitLink.jsx";
 import { passkeysReleased } from "./passkeys.js";
 import { GIFT_PATH } from "./gift-links.js";
+// Recovery Kit's sign-in flow loads only once someone opens it.
+const RecoveryKitSignIn = lazy(() =>
+  import("./RecoveryKit.jsx").then((m) => ({ default: m.RecoveryKitSignIn })),
+);
 export function PageIntro({ eyebrow, title, children }) {
   return (
     <div className="page-intro">
@@ -892,6 +897,7 @@ const featureIcons = {
   doctranslate: "languages",
   meetingnotes: "meeting",
   quotecards: "quotemark",
+  recovery: "lifebuoy",
 };
 const launch = {
   id: "mvp",
@@ -1187,7 +1193,9 @@ export function Auth({ register = false }) {
     [challenge, setChallenge] = useState(null),
     [recover, setRecover] = useState(false),
     // Two-Step Sign-in: the first step succeeded and a code is needed.
-    [twoStep, setTwoStep] = useState(null);
+    [twoStep, setTwoStep] = useState(null),
+    // Recovery Kit: "Use a recovery code" is open.
+    [kit, setKit] = useState(false);
   // Passkeys: a tab of their own, once released.
   const passkeysOn = passkeysReleased(config);
   const methods = ["password", ...(passkeysOn ? ["passkey"] : []), "email", "wallet"];
@@ -1266,6 +1274,8 @@ export function Auth({ register = false }) {
         <h1>
           {twoStep
             ? "One more step."
+            : kit
+            ? "Back into your account."
             : recover
             ? "A fresh start."
             : register
@@ -1277,7 +1287,9 @@ export function Auth({ register = false }) {
             ? method === "passkey"
               ? "Start with a username and a passkey."
               : "Start with a username and password."
-            : "Pick up where your last idea left off."}
+            : kit
+              ? "No email needed: your username and one code from your kit."
+              : "Pick up where your last idea left off."}
         </p>
         {next && next !== GIFT_PATH && (
           <Notice>
@@ -1302,6 +1314,18 @@ export function Auth({ register = false }) {
               setError("");
             }}
           />
+        ) : kit ? (
+          <Suspense fallback={<p className="fine-print">Loading…</p>}>
+            <RecoveryKitSignIn
+              config={config}
+              connected={connected}
+              onSignedIn={finish}
+              onCancel={() => {
+                setKit(false);
+                setError("");
+              }}
+            />
+          </Suspense>
         ) : (
         <>
         <div className="filter-tabs">
@@ -1457,7 +1481,7 @@ export function Auth({ register = false }) {
           </p>
         )}
         <div className="auth-bottom">
-          {!register && !twoStep && (
+          {!register && !twoStep && !kit && (
             <button
               className="text-link recovery-link"
               onClick={() => {
@@ -1469,6 +1493,17 @@ export function Auth({ register = false }) {
             >
               {recover ? "Back to sign in" : "Forgot your password?"}
             </button>
+          )}
+          {/* Recovery Kit: a username and one code, once released. */}
+          {!register && !twoStep && !kit && !recover && (
+            <RecoveryKitLink
+              config={config}
+              onClick={() => {
+                setKit(true);
+                setChallenge(null);
+                setError("");
+              }}
+            />
           )}
           <p>
             {register ? "Already have an account?" : "New here?"}{" "}

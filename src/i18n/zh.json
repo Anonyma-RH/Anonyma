@@ -21,7 +21,6 @@
     "Find and revisit the images, videos and audio you have created.": "查找并重新查看你创作的图像、视频和音频。",
     "Browse available models and compare their capabilities and prices.": "浏览可用模型，比较它们的能力和价格。",
     "Connect your own apps and scripts to ANONYMA using an API key.": "使用 API 密钥将你自己的应用和脚本连接到 ANONYMA。",
-
     "Options": "选项",
     "Open project": "打开项目",
     "FOLDERS & PROJECTS": "文件夹与项目",
@@ -5805,7 +5804,79 @@
     "Make an image card of this reply, on this device": "在此设备上把这条回复做成图片卡片",
     "Make an image card of this text, on this device": "在此设备上把这段文字做成图片卡片",
     "This text looks like a wallet seed phrase or key. The card would show it to anyone you send the image to.": "这段文字看起来像钱包助记词或私钥。收到这张图片的人都能在卡片上看到它。",
-    "Untick this to mask them again.": "取消勾选即可重新遮盖。"
+    "Untick this to mask them again.": "取消勾选即可重新遮盖。",
+    "Recovery Kit": "恢复套件",
+    "No email? Keep a recovery kit: ten one-time codes that get you back into your account.": "没有邮箱？保留一份恢复套件：10 个一次性代码，帮你重新进入账户。",
+    "Ten one-time codes, shown once, to download or print; we keep only scrambled copies": "10 个一次性代码，仅显示一次，可下载或打印；我们只保留经过不可逆处理的副本",
+    "Your username and one code get you back in; then you set a new password or add a passkey": "凭用户名和一个代码即可重新进入账户，随后设置新密码或添加通行密钥",
+    "Every other session is signed out, and wrong codes lock recovery for an hour": "其他所有会话都会退出登录；输错代码过多会锁定恢复功能一小时",
+    "Recovery kit": "恢复套件",
+    "Recovery kit.": "恢复套件。",
+    "RECOVERY KIT": "恢复套件",
+    "ANONYMA recovery kit": "ANONYMA 恢复套件",
+    "Made": "创建于",
+    "Codes": "代码",
+    "Each code gets you back into your account once, if you lose your password or passkey.": "如果丢失了密码或通行密钥，每个代码可帮你重新进入账户一次。",
+    "On the sign-in page, choose “Use a recovery code”, then enter your username and one code.": "在登录页选择“使用恢复套件码”，然后输入你的用户名和一个代码。",
+    "Each code gets you back into your account once, if you lose your password or passkey. On the sign-in page, choose “Use a recovery code”, then enter your username and one code.": "如果丢失了密码或通行密钥，每个代码可帮你重新进入账户一次。在登录页选择“使用恢复套件码”，然后输入你的用户名和一个代码。",
+    "Anyone with your username and one of these codes can get in, even with two-step sign-in on. Keep this page private.": "任何人只要知道你的用户名并持有其中一个代码，即使开启了两步登录也能进入你的账户。请妥善保管此页。",
+    "Anyone with your username and one of these codes can get in, even with two-step sign-in on. Keep this offline and private.": "任何人只要知道你的用户名并持有其中一个代码，即使开启了两步登录也能进入你的账户。请离线妥善保管。",
+    "Save your recovery kit.": "保存你的恢复套件。",
+    "Each code gets you back in once if you lose your password or passkey. They’re shown only now; ANONYMA keeps only scrambled copies and can’t show them again.": "如果丢失了密码或通行密钥，每个代码可帮你重新进入账户一次。代码只在此时显示；ANONYMA 只保留经过不可逆处理的副本，无法再次显示。",
+    "Download (.txt)": "下载（.txt）",
+    "Print": "打印",
+    "I’ve saved my kit somewhere safe": "我已将恢复套件保存在安全的地方",
+    "Ten one-time codes that get you back into your account if you lose your password or passkey. No email needed.": "10 个一次性代码，在你丢失密码或通行密钥时帮你重新进入账户。无需邮箱。",
+    "Anyone with your username and one of these codes can get in, even with two-step sign-in on, so keep the kit offline, like a spare key. Using a code signs out every session and asks for a new password or passkey.": "任何人只要知道你的用户名并持有其中一个代码，即使开启了两步登录也能进入你的账户，所以请像备用钥匙一样离线保管。使用代码会让所有会话退出登录，并要求设置新密码或添加通行密钥。",
+    "ANONYMA keeps only scrambled copies of the codes. Making or deleting a kit asks you to confirm it’s you first. It doesn’t replace two-step sign-in’s own recovery codes.": "ANONYMA 只保留代码经过不可逆处理的副本。生成或删除恢复套件前，需要先确认是你本人。它不能代替两步登录自己的恢复码。",
+    "Making or deleting a recovery kit needs a fresh confirmation from this session.": "生成或删除恢复套件，需要在当前会话中重新确认是你本人。",
+    "A recovery kit needs a username to recover with, and this account doesn’t have one. Use email or wallet sign-in to get back in.": "恢复套件需要用户名才能找回账户，而此账户没有用户名。请使用邮箱或钱包登录找回。",
+    "Every code has been used. Make a new kit.": "所有代码都已用完。请生成新的恢复套件。",
+    "Only 1 code left. Make a new kit before you run out.": "只剩 1 个代码。请在用完前生成新的恢复套件。",
+    "Make a new kit? Your current codes stop working at once.": "生成新的恢复套件？当前的代码将立即失效。",
+    "Delete your recovery kit? Its codes stop working at once, and you’ll need your password or passkey to sign in.": "删除恢复套件？其中的代码将立即失效，之后你需要用密码或通行密钥登录。",
+    "Make a new kit": "生成新的恢复套件",
+    "Delete kit": "删除恢复套件",
+    "Sign in to a real account to make a recovery kit.": "登录真实账户后，即可生成恢复套件。",
+    "No kit yet. Make one now, while you can still sign in.": "还没有恢复套件。趁现在还能登录，生成一份吧。",
+    "Making your kit…": "正在生成恢复套件……",
+    "Make a recovery kit": "生成恢复套件",
+    "Your new kit is ready. The old codes no longer work.": "新的恢复套件已生成。旧代码已失效。",
+    "Recovery kit deleted. Its codes no longer work.": "恢复套件已删除。其中的代码已失效。",
+    "Use a recovery code": "使用恢复套件码",
+    "Your kit has no unused codes left. Make a new one in Account → Security.": "你的恢复套件已没有未使用的代码。请在账户 → 安全性中生成新的恢复套件。",
+    "Your kit has 1 unused code left.": "你的恢复套件还剩 1 个未使用的代码。",
+    "That isn’t a recovery kit code. A code has 20 letters and numbers, like 7K3Q-M9XD-2HVA-PN4T-8RZC.": "这不是恢复套件码。恢复套件码由 20 个字母和数字组成，例如 7K3Q-M9XD-2HVA-PN4T-8RZC。",
+    "That looks like a two-step recovery code. Those work after your password, at the two-step step. A recovery kit code has 20 letters and numbers.": "这看起来是两步登录的恢复码。它要在输入密码后的两步验证环节使用。恢复套件码由 20 个字母和数字组成。",
+    "That code has a typo. Check it against your kit and try again.": "代码有输入错误。请对照恢复套件检查后重试。",
+    "The two passwords don’t match.": "两次输入的密码不一致。",
+    "You’re back in with your new passkey.": "你已用新的通行密钥重新进入账户。",
+    "You’re back in with your new password.": "你已用新密码重新进入账户。",
+    "Make a new kit in Account → Security before you run out.": "请在用完前，到账户 → 安全性中生成新的恢复套件。",
+    "Two-step sign-in is still on: your next password sign-in asks for your authenticator code.": "两步登录仍处于开启状态：下次用密码登录时，仍需输入身份验证器中的验证码。",
+    "Code accepted. Every session on this account was signed out.": "代码已通过验证。此账户的所有会话都已退出登录。",
+    "Choose a new password.": "设置新密码。",
+    "Type it again": "再次输入",
+    "Set password and sign in": "设置密码并登录",
+    "or": "或",
+    "Add a passkey instead": "改为添加通行密钥",
+    "Enter your username and one code from your recovery kit.": "输入你的用户名，以及恢复套件中的一个代码。",
+    "Recovery kit code": "恢复套件码",
+    "No email on this account?": "此账户没有绑定邮箱？",
+    "Keep a recovery kit: ten one-time codes that get you back in if you lose your password or passkey.": "保留一份恢复套件：10 个一次性代码，在你丢失密码或通行密钥时帮你重新进入账户。",
+    "That username and code don’t match.": "用户名和代码不匹配。",
+    "That code was already used. Each code works once; try another from your kit.": "这个代码已经用过了。每个代码只能用一次，请换用恢复套件中的另一个。",
+    "This recovery step expired. The code you used is spent; start again with another code from your kit.": "此恢复步骤已过期。你使用的代码已失效，请用恢复套件中的另一个代码重新开始。",
+    "Confirm it’s you first. Making or deleting a recovery kit needs your password, a passkey (or a fresh email code or wallet signature) from the last 10 minutes.": "请先确认是你本人。生成或删除恢复套件，需要你在最近 10 分钟内输入密码、使用通行密钥（或提供新的邮箱验证码、钱包签名）。",
+    "You already have a recovery kit. Make a new one to replace it.": "你已经有恢复套件了。如需替换，请生成新的恢复套件。",
+    "A recovery kit needs a username to recover with, and this account has none.": "恢复套件需要用户名才能找回账户，而此账户没有用户名。",
+    "Enter your username.": "请输入你的用户名。",
+    "Back into your account.": "重新进入你的账户。",
+    "No email needed: your username and one code from your kit.": "无需邮箱：只需用户名和恢复套件中的一个代码。",
+    "Your recovery kit, so you can still get back in": "你的恢复套件，方便你之后仍能找回账户",
+    "Recovery kit: when you made it, and each of its ten codes only as a one-way scrypt digest with when it was used; never the codes. A code that was accepted waits 15 minutes for your new password or passkey. Wrong codes are counted for an hour per username and per network address, under keys that don’t contain either. If you dismiss the nudge to make a kit, when you did. Your export says when the kit was made and how many codes are unused. Deleting the kit or closing your account deletes it; Panic Wipe keeps it so you can still get back in.": "恢复套件：保存其创建时间，以及 10 个代码各自的单向 scrypt 摘要和使用时间；从不保存代码本身。通过验证的代码会等待 15 分钟，供你设置新密码或添加通行密钥。输错的代码会按用户名和网络地址分别计数一小时，计数所用的键不包含两者中的任何一个。如果你关闭了生成恢复套件的提醒，会记录关闭时间。导出内容会说明恢复套件的创建时间和未使用代码的数量。删除恢复套件或关闭账户会将其删除；紧急清除会保留它，方便你之后仍能找回账户。",
+    "The export also says when your recovery kit was made, how many of its codes are unused and when one was last used. Never the codes: ANONYMA can’t show them again.": "导出内容还会说明恢复套件的创建时间、未使用代码的数量，以及上次使用代码的时间。不包含代码本身：ANONYMA 无法再次显示它们。",
+    "API keys and connected apps weren’t changed. If you don’t recognise one, revoke it in Account.": "API 密钥和已连接的应用没有变化。如有不认识的，请在账户中撤销。"
   },
   "patterns": [
     {
@@ -9403,6 +9474,34 @@
     {
       "en": "{0} masked details stay as tags like [EMAIL_1] unless you tick this.",
       "zh": "{0} 处被遮盖的细节会保持为 [EMAIL_1] 这样的标签，除非你勾选此项。"
+    },
+    {
+      "en": "{0} of {1} unused",
+      "zh": "{1} 个中有 {0} 个未使用"
+    },
+    {
+      "en": "Only {0} codes left. Make a new kit before you run out.",
+      "zh": "只剩 {0} 个代码。请在用完前生成新的恢复套件。"
+    },
+    {
+      "en": "Your kit has {0} unused codes left.",
+      "zh": "你的恢复套件还剩 {0} 个未使用的代码。"
+    },
+    {
+      "en": "Finish within {0} minutes. The code is spent either way; until you finish, your current password or passkey still works.",
+      "zh": "请在 {0} 分钟内完成。无论是否完成，这个代码都已用掉；完成之前，你当前的密码或通行密钥仍然有效。"
+    },
+    {
+      "en": "Each code works once. After {0} wrong codes, recovery for that username locks for an hour.",
+      "zh": "每个代码只能使用一次。输错 {0} 次后，该用户名的恢复功能将锁定一小时。"
+    },
+    {
+      "en": "Too many recovery attempts. Try again in {0} min.",
+      "zh": "恢复尝试次数过多。请在 {0} 分钟后重试。"
+    },
+    {
+      "en": "This account already has {0} passkeys. Set a new password instead.",
+      "zh": "此账户已有 {0} 个通行密钥。请改为设置新密码。"
     }
   ]
 }

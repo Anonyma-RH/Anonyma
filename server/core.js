@@ -1238,6 +1238,37 @@ export const MIGRATIONS = [
         WHEN (SELECT COUNT(*) FROM slide_decks WHERE user_id=NEW.user_id)>=200
         BEGIN SELECT RAISE(ABORT,'slides_limit'); END;
   `),
+  // Recovery Kit (server/recovery-kit.js): ten one-time codes that get an
+  // account back in with its username. recovery_kits: the kit's scrypt salt
+  // and when it was made. recovery_kit_codes: each code only as its scrypt
+  // digest (never the code), and when it was used. recovery_pending: a code
+  // that was accepted, waiting for a new password or passkey; the token is
+  // kept as a hash and lasts 15 minutes. recovery_lockouts: attempts per
+  // username and per network address for an hour, keyed by an HMAC under the
+  // installation secret, so no username or address is stored.
+  // recovery_nudges: when the account dismissed the one-time nudge. The kit
+  // and the nudge are kept by Panic Wipe (a sign-in method, like the
+  // password) and deleted by account closure; a pending recovery goes with
+  // the sessions.
+  additive(`
+      CREATE TABLE IF NOT EXISTS recovery_kits(user_id TEXT PRIMARY KEY REFERENCES users(id),
+        salt TEXT NOT NULL CHECK(length(salt)=32),
+        created INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS recovery_kit_codes(user_id TEXT NOT NULL REFERENCES users(id),
+        slot INTEGER NOT NULL CHECK(slot BETWEEN 1 AND 10),
+        digest TEXT NOT NULL CHECK(length(digest)=128),
+        used INTEGER,
+        PRIMARY KEY(user_id,slot));
+      CREATE TABLE IF NOT EXISTS recovery_pending(hash TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        expires INTEGER NOT NULL,created INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS recovery_pending_user ON recovery_pending(user_id);
+      CREATE TABLE IF NOT EXISTS recovery_lockouts(key TEXT PRIMARY KEY CHECK(length(key)=64),
+        attempts INTEGER NOT NULL CHECK(attempts>=0),
+        window_end INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS recovery_nudges(user_id TEXT PRIMARY KEY REFERENCES users(id),
+        dismissed INTEGER NOT NULL);
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

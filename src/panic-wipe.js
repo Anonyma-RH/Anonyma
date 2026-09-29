@@ -47,6 +47,8 @@ export const WIPE_VAULT_SYNC = "Vault Sync's encrypted copy of your Device Vault
 export const WIPE_CANVAS = "Canvases saved to your account";
 // Shown under "What stays" once Passkeys is live.
 export const WIPE_KEEPS_PASSKEYS = "Your passkeys, so you can still sign in";
+// Shown under "What stays" once Recovery Kit is live.
+export const WIPE_KEEPS_RECOVERY_KIT = "Your recovery kit, so you can still get back in";
 export const WIPE_STAYS = [
   "Your account and every credit in it",
   "Your ledger, deposits and receipts",

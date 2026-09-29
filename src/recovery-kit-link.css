@@ -1,0 +1,5 @@
+/* Recovery Kit: the sign-in page's "Use a recovery code" (src/RecoveryKitLink.jsx),
+   beside "Forgot your password?" (.recovery-link in styles.css). */
+.recovery-kit-link {
+  margin-left: 18px;
+}

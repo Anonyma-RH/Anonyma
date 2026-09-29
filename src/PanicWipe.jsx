@@ -19,6 +19,7 @@ import {
   WIPE_CANVAS,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
+  WIPE_KEEPS_RECOVERY_KIT,
   WIPED_PATH,
   clearBrowserData,
   walletPaymentPending,
@@ -53,6 +54,8 @@ export function PanicWipe({ user }) {
   const canvasLive = isReleased(config, "canvas");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
+  // And the Recovery Kit, like the password.
+  const recoveryKitLive = !!config && isReleased(config, "recovery");
   const [open, setOpen] = useState(false),
     [typed, setTyped] = useState(""),
     [busy, setBusy] = useState(false),
@@ -136,6 +139,7 @@ export function PanicWipe({ user }) {
                     <li key={t}>{t}</li>
                   ))}
                   {passkeysLive && <li>{WIPE_KEEPS_PASSKEYS}</li>}
+                  {recoveryKitLive && <li>{WIPE_KEEPS_RECOVERY_KIT}</li>}
                   {arenaLive && <li>{WIPE_ARENA_STAYS}</li>}
                 </ul>
                 <p className="fine-print">

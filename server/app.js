@@ -61,6 +61,7 @@ import { inactivityWipeRoutes } from "./routes/inactivity-wipe.js";
 import { createInactivityWipe } from "./inactivity-wipe.js";
 import { twoStepRoutes } from "./routes/two-step.js";
 import { passkeyRoutes } from "./routes/passkeys.js";
+import { recoveryKitRoutes } from "./routes/recovery-kit.js";
 import { createPasskeys } from "./passkeys.js";
 import { unlockRoutes } from "./routes/unlock.js";
 import { allowanceRoutes } from "./routes/allowances.js";
@@ -228,6 +229,10 @@ export function createApp(overrides = {}) {
   twoStepRoutes(ctx);
   // Passkeys: sign-in, passwordless sign-up and Account → Security's list.
   passkeyRoutes(ctx);
+  // Recovery Kit: ten one-time codes that get an account back in with its
+  // username, then a new password or passkey (after Passkeys, whose
+  // ceremony it reuses).
+  recoveryKitRoutes(ctx);
   // Privacy Screen: the idle lock's unlock check (never touches the session).
   unlockRoutes(ctx);
   allowanceRoutes(ctx);
@@ -263,6 +268,8 @@ export function createApp(overrides = {}) {
     sealed: ctx.sealed,
     // Model Status' in-memory window (server/model-status.js), for tests.
     modelStatus: ctx.modelStatus,
+    // Recovery Kit's store (server/recovery-kit.js), for tests.
+    recoveryKit: ctx.recoveryKit,
     // Inactivity Wipe's sweep and test-mode outbox, for tests and tooling.
     inactivity: ctx.inactivity,
     // Gift Links' expiry (server/routes/gifts.js), for tests and tooling.

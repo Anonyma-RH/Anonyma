@@ -48,6 +48,8 @@ const MeetingNotes = lazy(() => import("./MeetingNotes.jsx"));
 const ChatImport = lazy(() => import("./ChatImport.jsx"));
 // Photo Tools: its page (and the code that shrinks and reads a photo) loads only there.
 const PhotoTools = lazy(() => import("./PhotoTools.jsx"));
+// File Search: its page loads only when opened.
+const FileSearch = lazy(() => import("./FileSearch.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
@@ -336,6 +338,7 @@ export function AppSidebar({
     ["notes", "Meeting notes", "Turn a recording into a timestamped transcript, key decisions and action items."],
     ["import", "Import chats", "Bring your ChatGPT or Claude history here. Choose which chats to keep and where they go."],
     ["photos", "Photo tools", "Edit a photo with words, remove its background or upscale it. See the price first."],
+    ["filesearch", "Search files", "Ask one question across all your saved files. Every answer cites the file and the passage it came from."],
     ["routines", "Routines", "Schedule prompts to run automatically with spending limits. Read the results in your inbox."],
     ["projects", "Projects", "Group related chats, files and instructions in folders. Set defaults for each project."],
     ["library", "Your library", "Find and revisit the images, videos and audio you have created."],
@@ -351,7 +354,8 @@ export function AppSidebar({
     .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
     .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
     .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
-    .filter(([id]) => id !== "photos" || modeReleased(config, "photos"));
+    .filter(([id]) => id !== "photos" || modeReleased(config, "photos"))
+    .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"));
   // Recompute translated matching when the language changes, even on Account pages.
   useLanguage();
   const toolAvailable = (id) => id === "models" || (id === "api" ? isReleased(config, "api") : modeReleased(config, id));
@@ -647,7 +651,9 @@ export default function Workspace() {
     // Chat Import's page, likewise.
     (mode === "import" && (!config || isReleased(config, "chatimport"))) ||
     // Photo Tools' page, the same way (it needs Image Studio's models too).
-    (mode === "photos" && (!config || modeReleased(config, "photos")));
+    (mode === "photos" && (!config || modeReleased(config, "photos"))) ||
+    // File Search's page, likewise (it needs Files and Documents too).
+    (mode === "filesearch" && (!config || modeReleased(config, "filesearch")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3890,6 +3896,7 @@ export default function Workspace() {
                 notes: "Meeting notes",
                 import: "Import chats",
                 photos: "Photo tools",
+                filesearch: "Search files",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4201,6 +4208,24 @@ export default function Workspace() {
                   veilOn={veilOn}
                   setVeilOn={setVeilOn}
                   veilWords={veilWords}
+                />
+              </Suspense>
+            )
+          ) : mode === "filesearch" ? (
+            modeReleased(config, "filesearch") && (
+              <Suspense fallback={<p className="fsearch-loading">Opening Search files…</p>}>
+                <FileSearch
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  models={models}
+                  config={config}
+                  refresh={refresh}
+                  veilOn={veilOn}
+                  setVeilOn={setVeilOn}
+                  veilWords={veilWords}
+                  vault={vault}
+                  vaultLive={vaultLive}
                 />
               </Suspense>
             )
@@ -4538,7 +4563,7 @@ export default function Workspace() {
                               alternatives={m.auto.sealed ? sealedAutoTiers : autoTiers}
                               disabled={busy || branching}
                               onUse={
-                                branchesLive && m.content && !m.research && !m.blind && !(busy && i === messages.length - 1)
+                                branchesLive && m.content && !m.research && !m.blind && !m.filesearch && !(busy && i === messages.length - 1)
                                   ? (id) => rewind(i, "regenerate", null, { model: id })
                                   : null
                               }
@@ -4566,7 +4591,7 @@ export default function Workspace() {
                           )}
                           {/* A Deep research report says so itself when it was cut short;
                               a continuation would be a chat, not more research. */}
-                          {longAnswersLive && m.role === "assistant" && !m.blind && !m.research && !m.factcheck && completionNotice(m) && (
+                          {longAnswersLive && m.role === "assistant" && !m.blind && !m.research && !m.factcheck && !m.filesearch && completionNotice(m) && (
                             <div className="fine-print" role="status">
                               <p>{completionNotice(m)}</p>
                               {i === messages.length - 1 && !busy && (m.content || m.reasoning) && (
@@ -4651,12 +4676,29 @@ export default function Workspace() {
                                 </button>
                               )}
                               {rememberButton(m)}
-                              {m.role === "assistant" && m.content && !m.blind && !m.research && !m.factcheck && (
+                              {m.role === "assistant" && m.content && !m.blind && !m.research && !m.factcheck && !m.filesearch && (
                                 <button type="button" onClick={() => rewind(i, "regenerate")}>
                                   Regenerate
                                 </button>
                               )}
                               {cardButton(m, i)}
+                              {/* A File Search answer can't be regenerated here: a chat would
+                                  answer without the files. Asking again reopens File Search with
+                                  the question, carried in the route's state, never in the address. */}
+                              {m.role === "assistant" && m.filesearch && !demo && modeReleased(config, "filesearch") && (
+                                <Link
+                                  className="turn-link"
+                                  to="/workspace/filesearch"
+                                  state={{
+                                    filesearchQuestion: unveil(
+                                      String(messages.slice(0, i).filter((x) => x.role === "user").at(-1)?.content || ""),
+                                      veilStateRef.current.map,
+                                    ),
+                                  }}
+                                >
+                                  Ask again in File Search
+                                </Link>
+                              )}
                               {!ephemeral && !demo && current && m.id && (
                                 <button type="button" onClick={() => branchFrom(m)}>
                                   Branch from here

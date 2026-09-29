@@ -18,6 +18,7 @@ import { exportCanvases, forgetCanvases } from "./canvas.js";
 import { exportSlideDecks, forgetSlideDecks } from "./slides.js";
 import { exportRecoveryKit, forgetRecoveryKit } from "../recovery-kit.js";
 import { exportPush, forgetPush, pushReleased } from "../push-alerts.js";
+import { exportFileIndex, forgetFileIndex } from "../file-search.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -73,6 +74,8 @@ import {
 //   credited top-up stays as its deposit);
 //   Audio Overview scripts, Slides decks and NYMA top-up quotes (a credited
 //   top-up stays as its deposit);
+// - File Search's passages and index words for the saved files (with the
+//   files, which it leaves to the uploads line below);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -127,6 +130,9 @@ export function eraseAccountContent(db, user) {
   );
   db.prepare("DELETE FROM tickets WHERE user_id=?").run(id);
   db.prepare("DELETE FROM videos WHERE user_id=?").run(id);
+  // File Search: the passages and index words of the saved files, removed
+  // before the files themselves (they'd also go with each file).
+  forgetFileIndex(db, id);
   db.prepare("DELETE FROM uploads WHERE user_id=?").run(id);
   db.prepare("DELETE FROM scrolls WHERE user_id=?").run(id);
   db.prepare("DELETE FROM user_instructions WHERE user_id=?").run(id);
@@ -317,6 +323,12 @@ export function accountRoutes(ctx) {
   function pushExport(user) {
     const kept = exportPush(db, user);
     return kept || pushReleased(cfg) ? { pushAlerts: kept } : {};
+  }
+  // File Search: each indexed saved file with its passages as the index holds
+  // them (once the update is live, or while any exist).
+  function fileSearchExport(user) {
+    const list = exportFileIndex(db, user);
+    return list.length || isReleased(cfg, "filesearch") ? { fileSearch: { indexedFiles: list } } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -665,6 +677,8 @@ export function accountRoutes(ctx) {
       ...slidesExport(req.user.id),
       // Push Alerts: subscribed browsers (host only) and switches.
       ...pushExport(req.user.id),
+      // File Search: the passages the index holds for the saved files.
+      ...fileSearchExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

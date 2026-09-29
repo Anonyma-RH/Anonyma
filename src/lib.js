@@ -210,6 +210,12 @@ export function messageFromServer(m) {
     ...(c?.factcheck && typeof c.factcheck === "object" && !Array.isArray(c.factcheck)
       ? { factcheck: { ...c.factcheck, live: false } }
       : {}),
+    // File Search: the files and places an answer cites (never passage text).
+    // Such a turn is not regenerated or continued as a chat, which would
+    // answer without the files (src/FileSearch.jsx reopens it).
+    ...(c?.filesearch && typeof c.filesearch === "object" && !Array.isArray(c.filesearch)
+      ? { filesearch: c.filesearch }
+      : {}),
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.
@@ -512,12 +518,16 @@ export const MODE_FEATURES = {
   import: "chatimport",
   // Photo Tools' page (src/PhotoTools.jsx), which runs on Image Studio's models.
   photos: "phototools",
+  // File Search's page (src/FileSearch.jsx), which searches saved files'
+  // text, so it needs Files & Reusable Uploads and Documents too.
+  filesearch: "filesearch",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")
     return ["images", "video", "audio"].some((id) => isReleased(config, id));
   if (mode === "notes") return isReleased(config, "meetingnotes") && isReleased(config, "audio");
   if (mode === "photos") return isReleased(config, "phototools") && isReleased(config, "images");
+  if (mode === "filesearch") return ["filesearch", "files", "documents"].every((id) => isReleased(config, id));
   return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
 }
 

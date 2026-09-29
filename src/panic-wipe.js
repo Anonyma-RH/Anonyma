@@ -47,6 +47,9 @@ export const WIPE_VAULT_SYNC = "Vault Sync's encrypted copy of your Device Vault
 export const WIPE_CANVAS = "Canvases saved to your account";
 // Listed only once Push Alerts is released (PanicWipe.jsx).
 export const WIPE_PUSH = "Push Alerts: every browser that gets your alerts, and your choices";
+// Listed only once File Search is released (PanicWipe.jsx, InactivityWipe.jsx):
+// the index of the saved files' text goes with them.
+export const WIPE_FILE_SEARCH = "File Search's index of your saved files' text";
 // Shown under "What stays" once Passkeys is live.
 export const WIPE_KEEPS_PASSKEYS = "Your passkeys, so you can still sign in";
 // Shown under "What stays" once Recovery Kit is live.

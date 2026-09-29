@@ -7,6 +7,7 @@ import { compareTestReply } from "./compare.js";
 import { pageWatchTestReply } from "./page-watch-test.js";
 import { overviewTestReply } from "./audio-overview.js";
 import { translateTestReply } from "./translate-test.js";
+import { fileSearchTestReply } from "./file-search-test.js";
 import { catchupTestReply } from "./catchup.js";
 import { autoHelperTestReply } from "./auto-model-test.js";
 import { canvasTestReply } from "./canvas.js";
@@ -220,6 +221,29 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       yield {
         choices: [],
         usage: { prompt_tokens: 10, completion_tokens: 10 },
+      };
+      return;
+    }
+    // File Search's stand-in (server/file-search-test.js) answers from the
+    // passages it is given, citing them by number.
+    const fileSearch = fileSearchTestReply(body.messages);
+    if (fileSearch) {
+      if (fileSearch.error) {
+        yield { error: { message: fileSearch.error } };
+        return;
+      }
+      for (const part of fileSearch.text.match(/.{1,16}|\n/g) || []) {
+        signal?.throwIfAborted();
+        await new Promise((r) => setTimeout(r, 12));
+        yield { choices: [{ delta: { content: part }, index: 0 }] };
+      }
+      if (fileSearch.finish) yield { choices: [{ delta: {}, index: 0, finish_reason: fileSearch.finish }] };
+      yield {
+        choices: [],
+        usage: {
+          prompt_tokens: Math.ceil(JSON.stringify(body.messages).length / 4),
+          completion_tokens: Math.ceil(fileSearch.text.length / 4),
+        },
       };
       return;
     }

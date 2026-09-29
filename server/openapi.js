@@ -2508,6 +2508,94 @@ route("post", "/api/translate/stop", "Stop the running translation", {
   response: object({ stopped: bool }),
   description: "Parts in flight and not yet started are released and charged nothing; the run's stream then reports what finished, and ends.",
 });
+// File Search (update "filesearch", which also needs "files" and "documents").
+const searchPassage = object({
+  id: { ...integer, description: "The passage's id in the index; send it back with its text to keep it" },
+  file_id: string,
+  file: string,
+  kind: { enum: ["heading", "slide", "sheet", "page", "part"], description: "What section is: a heading's own words, Slide n, Worksheet n, Page n, or Part n of m" },
+  section: string,
+  text: string,
+  flagged: { ...integer, description: "Instruction-like phrases Injection Shield found in the passage (it is still sent, as data)" },
+});
+const fileSearchBody = {
+  model: { ...string, description: "A callable text model (never Auto, an image or a Sealed Mode model)" },
+  question: { ...string, minLength: 2, maxLength: 1000, description: "The question, masked by Veil in the browser when it's on" },
+  passages: {
+    ...array(object({ id: integer, text: { ...string, maxLength: 1600 } }, ["id", "text"])),
+    minItems: 1,
+    maxItems: 8,
+    description: "The passages to send, from a search: each the stored passage exactly, or with details replaced by Veil's tags (400 passage_changed otherwise; 404 passage_unavailable when its file is gone)",
+  },
+  private: { ...bool, description: "Private Mode: a zero-data-retention model with ZDR routing and no failover (needs private and ephemeral)" },
+  ephemeral: { ...bool, description: "Off the record: nothing is saved (needs ephemeral)" },
+};
+route("get", "/api/file-search/files", "The saved files File Search can search", {
+  response: object({
+    files: array(object({ id: string, name: string, bytes: integer, truncated: bool, expires: integer, passages: { ...integer, description: "How many passages the file's text is cut into (0 when it holds no text)" } })),
+    projects: array(object({ id: string, name: string, color: string, privacy: string, files: array(string) })),
+    passages: integer,
+    top: integer,
+    most: integer,
+  }),
+  description:
+    "Workspace only (session). The account's saved documents (text, DOCX, XLSX, PPTX) that have not expired, newest first. The first call after a file is saved reads its text into the index, per account. projects lists each project's pinned files once Projects is live. Nothing is sent to a model and nothing is logged.",
+});
+route("post", "/api/file-search/search", "Look up the best passages for a question", {
+  body: object(
+    {
+      question: { ...string, minLength: 2, maxLength: 1000 },
+      files: { ...array(string), maxItems: 50, description: "Search only these saved files (404 if one isn't the account's)" },
+      project: { ...string, description: "Or only this project's pinned files (needs projects; not with files)" },
+    },
+    ["question"],
+  ),
+  response: object({
+    passages: { ...array(searchPassage), maxItems: 6, description: "The best passages, most relevant first; only matches, so possibly none" },
+    searched: object({ files: integer, passages: integer }),
+    top: integer,
+  }),
+  description:
+    "Workspace only (session). Ranks the account's passages with SQLite FTS5 (BM25), or BM25 in JS where FTS5 isn't available. Sends nothing to a model, holds and charges nothing, stores nothing about the question and logs nothing. 400 no_search_terms when the question has nothing to look for.",
+});
+route("post", "/api/file-search/quote", "The most an answer can cost", {
+  body: object(fileSearchBody, ["model", "question", "passages"]),
+  response: object({
+    credits: { ...number, description: "The maximum: what a run holds" },
+    units: { ...integer, description: "The same maximum in integer ledger units; send it back as max_units" },
+    available: number,
+    spending_limit: object({ remaining: number }),
+    model: string,
+    passages: integer,
+    estimate: bool,
+  }),
+  description: "Reserves, charges and stores nothing. The question and passages are priced exactly as they will be sent, with the model's reply budget.",
+});
+route("post", "/api/file-search", "Answer a question from the passages kept", {
+  body: object(
+    {
+      ...fileSearchBody,
+      max_units: { ...integer, description: "The quote's units; any other figure is refused with 409 estimate_changed, nothing held" },
+      requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+      veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for the question and passages (needs trail)" },
+      allow_seed_phrase: { ...bool, description: "Seed Guard's Send anyway (needs seedguard); otherwise a question or passage holding a seed phrase is refused with 400 seed_phrase_blocked" },
+    },
+    ["model", "question", "passages", "max_units"],
+  ),
+  response: object({
+    conversationId: { type: ["string", "null"], description: "The saved conversation, or null off the record and in Private Mode" },
+    user_message: object({ id: string, text: string }),
+    message: object({
+      id: string,
+      text: { ...string, description: "The answer, with citations [n] that name only passages that were sent" },
+      sources: array(object({ n: integer, passage: integer, file_id: string, file: string, kind: string, section: string, cited: bool })),
+      cut_short: { ...bool, description: "The reply ran out of room after a usable start; it was charged for what it used" },
+    }),
+    anonyma: object({ credits_charged: number, request_id: string, finish_reason: string, stored: bool, private: object(), privacy: object() }),
+  }),
+  description:
+    "Workspace only (session). The question, the kept passages and fixed instructions (as data, with Injection Shield's notice) go to one model call: never the files, their names or their other text. The maximum is held before anything is sent, exactly the quoted units (402 insufficient_credits or spending_limit with nothing charged). It settles on actual usage when the answer can be used; a provider failure, an empty answer, an answer cut off with nothing in it and a stopped request are released and charged nothing (502 file_search_failed, file_search_empty, file_search_cut_short). A saved answer is one ordinary conversation (the question, the answer and the files and places it cites, never the passage text); off the record and Private Mode keep nothing.",
+});
 // Prompt Sharpen (update "sharpen"; Private Mode needs "private" too).
 route("post", "/api/sharpen/quote", "What sharpening a prompt costs", {
   body: object(

@@ -902,6 +902,7 @@ const featureIcons = {
   decoy: "mask",
   chatimport: "import",
   phototools: "image",
+  filesearch: "filesearch",
 };
 const launch = {
   id: "mvp",

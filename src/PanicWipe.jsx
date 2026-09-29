@@ -18,6 +18,7 @@ import {
   WIPE_VAULT_SYNC,
   WIPE_CANVAS,
   WIPE_PUSH,
+  WIPE_FILE_SEARCH,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPE_KEEPS_RECOVERY_KIT,
@@ -56,6 +57,7 @@ export function PanicWipe({ user }) {
   const canvasLive = isReleased(config, "canvas");
   // And Push Alerts' browsers.
   const pushLive = isReleased(config, "pushalerts") && isReleased(config, "app");
+  const fileSearchLive = isReleased(config, "filesearch");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
   // And the Recovery Kit, like the password.
@@ -137,6 +139,7 @@ export function PanicWipe({ user }) {
                   {vaultSyncLive && <li>{WIPE_VAULT_SYNC}</li>}
                   {canvasLive && <li>{WIPE_CANVAS}</li>}
                   {pushLive && <li>{WIPE_PUSH}</li>}
+                  {fileSearchLive && <li>{WIPE_FILE_SEARCH}</li>}
                 </ul>
               </div>
               <div>

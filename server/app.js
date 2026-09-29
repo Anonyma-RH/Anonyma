@@ -47,6 +47,7 @@ import { blindRoutes } from "./routes/blind.js";
 import { arenaRoutes } from "./routes/arena.js";
 import { researchRoutes } from "./routes/research.js";
 import { translateRoutes } from "./routes/translate.js";
+import { fileSearchRoutes } from "./routes/file-search.js";
 import { sharpenRoutes } from "./routes/sharpen.js";
 import { factCheckRoutes } from "./routes/factcheck.js";
 import { catchupRoutes } from "./routes/catchup.js";
@@ -203,6 +204,10 @@ export function createApp(overrides = {}) {
   // browser, each part held and settled on the ordinary billing path;
   // nothing is stored.
   translateRoutes(ctx);
+  // File Search: a question matched against the text of the account's saved
+  // files, then one model call on the passages kept, held and settled on the
+  // ordinary billing path (after Conversations, where a saved answer goes).
+  fileSearchRoutes(ctx);
   // Prompt Sharpen: one small model call that rewrites a prompt, held and
   // settled on the ordinary billing path; nothing is stored.
   sharpenRoutes(ctx);

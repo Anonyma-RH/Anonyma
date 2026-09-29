@@ -378,6 +378,7 @@ export const MODE_LABELS = {
   notes: "Meeting notes",
   import: "Import chats",
   photos: "Photo tools",
+  filesearch: "Search files",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -413,6 +414,8 @@ const PLACES = [
   ["import", "Import chats", ["import", "chatgpt", "claude", "history", "export", "migrate", "bring my chats", "conversations"]],
   // Photo Tools: only once released, with Image Studio.
   ["photos", "Photo tools", ["photo", "picture", "edit photo", "remove background", "cut out", "upscale", "enlarge", "retouch", "transparent"]],
+  // File Search: only once released, with Files and Documents.
+  ["filesearch", "Search files", ["search files", "find in files", "ask my files", "saved files", "documents", "citations", "passages", "across files"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

@@ -1,0 +1,713 @@
+/* Search files: flat cobalt-on-white, like Translate docs and Compare docs.
+   The passages sit on white cards with a cobalt number, the answer on a
+   white card with a cobalt top rule, and "What the AI sees" is the one
+   cobalt block, so what will be sent stands out. */
+.fsearch-page {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 30px 30px 100px;
+  color: var(--work-ink, #142343);
+}
+.fsearch-loading {
+  padding: 24px 0;
+  font-size: 13px;
+  color: var(--work-muted, #68748a);
+}
+.fsearch-head {
+  margin-bottom: 18px;
+}
+.fsearch-head h1 {
+  font-size: clamp(28px, 4vw, 44px);
+  letter-spacing: -0.045em;
+  margin: 10px 0 8px;
+}
+.fsearch-head p:not(.eyebrow) {
+  margin: 0;
+  max-width: 660px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+}
+.fsearch-page .notice {
+  margin: 12px 0;
+}
+.fsearch-page button:disabled,
+.fsearch-page select:disabled,
+.fsearch-page textarea:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.fsearch-page :focus-visible {
+  outline: 2px solid var(--brand-blue, #0135df);
+  outline-offset: 1px;
+}
+.fsearch-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 12px;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  background: #fff;
+  color: var(--work-ink, #142343);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fsearch-secondary:hover:not(:disabled) {
+  border-color: var(--brand-blue, #0135df);
+  color: var(--brand-blue, #0135df);
+}
+.fsearch-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--brand-blue, #0135df);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.fsearch-tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  background: var(--brand-blue, #0135df);
+  color: var(--brand-orange, #ffb21c);
+}
+.fsearch-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--work-muted, #68748a);
+}
+.fsearch-note.warn {
+  color: #8a5a00;
+}
+.fsearch-note.light {
+  color: #fff;
+}
+.fsearch-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Before a search */
+.fsearch-promises {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.fsearch-promises li {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-left: 3px solid var(--brand-blue, #0135df);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.fsearch-promises span {
+  color: var(--work-muted, #68748a);
+}
+.fsearch-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 34px 20px 30px;
+  border: 1px dashed #b9c6e6;
+  border-top: 3px solid var(--brand-blue, #0135df);
+  border-radius: 2px;
+  background: var(--work-surface, #f7f9fc);
+  text-align: center;
+}
+.fsearch-empty b {
+  margin-top: 4px;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+.fsearch-empty small {
+  max-width: 520px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--work-muted, #68748a);
+}
+
+/* The files searched */
+.fsearch-files {
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-top: 3px solid var(--brand-blue, #0135df);
+  background: #fff;
+}
+.fsearch-files > summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fsearch-files > summary svg {
+  flex: none;
+  color: var(--brand-blue, #0135df);
+}
+.fsearch-files-body {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+.fsearch-files-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.fsearch-project {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 650;
+}
+.fsearch-project select {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 6px 8px;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  background: #fff;
+  color: var(--work-ink, #142343);
+}
+.fsearch-file-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid var(--work-line, #e3e8f0);
+}
+.fsearch-file-list li + li {
+  border-top: 1px solid var(--work-line, #e3e8f0);
+}
+.fsearch-file-list label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.fsearch-file-list b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.fsearch-file-list small {
+  font-size: 11.5px;
+  color: var(--work-muted, #68748a);
+  white-space: nowrap;
+}
+.fsearch-file-list li.empty {
+  opacity: 0.6;
+}
+.fsearch-file-list input,
+.fsearch-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--brand-blue, #0135df);
+}
+
+/* The question */
+.fsearch-ask {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 0;
+}
+.fsearch-ask > label {
+  font-size: 12px;
+  font-weight: 650;
+}
+.fsearch-ask-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+.fsearch-ask textarea {
+  flex: 1;
+  min-width: 0;
+  resize: vertical;
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  background: #fff;
+  color: var(--work-ink, #142343);
+}
+.fsearch-ask .button,
+.fsearch-go .button {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* The passages found */
+.fsearch-results {
+  margin-top: 22px;
+}
+.fsearch-results-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin-bottom: 10px;
+}
+.fsearch-results-head h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+.fsearch-asked {
+  margin: 2px 0 0;
+  max-width: 640px;
+  font-size: 13px;
+  color: var(--work-muted, #68748a);
+  overflow-wrap: anywhere;
+}
+.fsearch-results-head small {
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+}
+.fsearch-none {
+  padding: 16px 18px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-left: 3px solid #b9c6e6;
+  background: var(--work-surface, #f7f9fc);
+}
+.fsearch-none p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.fsearch-passages {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fsearch-passages li {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-left: 3px solid var(--brand-blue, #0135df);
+  background: #fff;
+}
+.fsearch-passages li.left-out {
+  border-left-color: #d2d9e5;
+  background: var(--work-surface, #f7f9fc);
+}
+.fsearch-passages li.left-out .fsearch-text {
+  color: var(--work-muted, #68748a);
+}
+.fsearch-check {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  cursor: pointer;
+}
+.fsearch-badge {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  background: var(--brand-blue, #0135df);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.fsearch-passages li.left-out .fsearch-badge {
+  background: #b9c6e6;
+}
+.fsearch-where {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  text-align: left;
+}
+.fsearch-where b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.fsearch-where small {
+  font-size: 11.5px;
+  color: var(--work-muted, #68748a);
+}
+.fsearch-flag {
+  color: #8a5a00;
+  font-weight: 600;
+}
+.fsearch-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.fsearch-text.muted {
+  font-style: italic;
+  color: var(--work-muted, #68748a);
+}
+.fsearch-passages .fsearch-link {
+  justify-self: start;
+}
+
+/* What the AI sees */
+.fsearch-sees {
+  margin: 16px 0 0;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+}
+.fsearch-sees > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fsearch-sees[open] {
+  border-color: var(--brand-blue, #0135df);
+  background: var(--brand-blue, #0135df);
+  color: #fff;
+}
+.fsearch-sees[open] > summary svg {
+  color: var(--brand-orange, #ffb21c);
+}
+.fsearch-sees[open] :focus-visible {
+  outline-color: #fff;
+}
+.fsearch-sees-body {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+.fsearch-sees p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #dfe6ff;
+}
+.fsearch-sees p.light {
+  color: #fff;
+}
+.fsearch-sees pre {
+  max-height: 320px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  background: #fff;
+  color: var(--work-ink, #142343);
+  font-size: 11.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.fsearch-sees details summary {
+  font-size: 12px;
+  cursor: pointer;
+}
+.fsearch-sees details pre {
+  margin-top: 8px;
+  max-height: 220px;
+  font-size: 11px;
+}
+.fsearch-data {
+  flex-wrap: wrap;
+}
+
+/* Settings and the ask row */
+.fsearch-settings {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.4fr) minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 12px 14px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: var(--work-surface, #f7f9fc);
+}
+.fsearch-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 650;
+}
+.fsearch-field select {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 400;
+  padding: 9px 10px;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  background: #fff;
+  color: var(--work-ink, #142343);
+}
+.fsearch-toggles {
+  display: flex;
+  gap: 6px;
+}
+.fsearch-vault {
+  margin-top: 10px;
+  align-items: flex-start;
+}
+.fsearch-vault svg {
+  flex: none;
+  margin-top: 2px;
+}
+.fsearch-go {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 16px 0 0;
+}
+.fsearch-go > small {
+  flex: 1 1 300px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--work-muted, #68748a);
+}
+.app-shell .fsearch-estimate {
+  font-size: 12px;
+  padding: 8px 10px;
+}
+.app-shell .fsearch-estimate.ready {
+  color: var(--brand-blue, #0135df);
+  font-weight: 600;
+}
+
+/* The answer */
+.fsearch-answer {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 18px 20px 18px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-top: 3px solid var(--brand-blue, #0135df);
+  background: #fff;
+}
+.fsearch-answer-q small {
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--work-muted, #68748a);
+}
+.fsearch-answer-q p {
+  margin: 3px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.fsearch-answer-body {
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.fsearch-answer-body > :first-child {
+  margin-top: 0;
+}
+.fsearch-answer-body > :last-child {
+  margin-bottom: 0;
+}
+.fsearch-page .fsearch-answer-body button.fsearch-cite {
+  display: inline-block;
+  min-width: 1.6em;
+  margin: 0 1px;
+  padding: 0 3px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--brand-blue, #0135df);
+  color: #fff;
+  font: inherit;
+  font-size: 0.78em;
+  font-weight: 700;
+  line-height: 1.55;
+  vertical-align: 0.12em;
+  cursor: pointer;
+}
+.fsearch-page .fsearch-answer-body button.fsearch-cite:hover {
+  background: #0028a8;
+}
+.fsearch-sources {
+  display: grid;
+  gap: 6px;
+}
+.fsearch-sources h3 {
+  margin: 4px 0 0;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.fsearch-sources.rest h3 {
+  color: var(--work-muted, #68748a);
+  font-weight: 600;
+}
+.fsearch-sources ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fsearch-sources li {
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-left: 3px solid var(--brand-blue, #0135df);
+  background: #fff;
+}
+.fsearch-sources.rest li {
+  border-left-color: #d2d9e5;
+}
+.fsearch-sources li.flash {
+  border-color: var(--brand-blue, #0135df);
+  box-shadow: 0 0 0 2px #dae5ff;
+}
+.fsearch-sources li.open {
+  background: #fbfcff;
+}
+.fsearch-source-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fsearch-source-head .fsearch-where {
+  flex: 1;
+}
+.fsearch-sources .fsearch-text {
+  padding: 0 12px 12px 46px;
+}
+.fsearch-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+}
+.fsearch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 820px) {
+  .fsearch-page {
+    padding: 22px 16px 80px;
+  }
+  .fsearch-promises {
+    grid-template-columns: 1fr;
+  }
+  .fsearch-settings {
+    grid-template-columns: 1fr;
+  }
+  .fsearch-ask-row {
+    flex-direction: column;
+  }
+  .fsearch-ask .button {
+    align-self: stretch;
+    justify-content: center;
+  }
+  .fsearch-project {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .fsearch-answer {
+    padding: 16px 14px;
+  }
+  .fsearch-sources .fsearch-text {
+    padding-left: 12px;
+  }
+  .fsearch-file-list label {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .fsearch-file-list small {
+    grid-column: 2;
+    white-space: normal;
+  }
+}
+
+/* Marked words, and the chevron on a details' summary */
+.fsearch-page mark {
+  padding: 0 1px;
+  background: #fff1bd;
+  color: inherit;
+  font-weight: 600;
+}
+.fsearch-summary-text {
+  flex: 1;
+  min-width: 0;
+}
+.fsearch-chev {
+  flex: none;
+  margin-left: auto;
+  transition: transform 0.15s;
+}
+details[open] > summary > .fsearch-chev {
+  transform: rotate(180deg);
+}
+.fsearch-sees[open] > summary .fsearch-chev {
+  color: #fff;
+}

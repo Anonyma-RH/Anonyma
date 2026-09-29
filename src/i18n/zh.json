@@ -5776,7 +5776,36 @@
     "Send each piece as a WAV file.": "请以 WAV 文件发送每个片段。",
     "Send each piece as mono 16-bit PCM at 16 kHz.": "请以 16 kHz 单声道 16 位 PCM 发送每个片段。",
     "Timing comes from the transcription provider. Some sections may span up to five minutes.": "时间标记由转录服务提供，部分段落可能长达五分钟。",
-    "Owners only when the transcript names them; timed notes link to transcript sections": "仅在转录明确提及姓名时标注负责人；带时间标记的纪要链接到对应转录段落"
+    "Owners only when the transcript names them; timed notes link to transcript sections": "仅在转录明确提及姓名时标注负责人；带时间标记的纪要链接到对应转录段落",
+    "Quote Cards": "引用卡片",
+    "Turn a great answer into a clean image card to share. Made on your device; no link back to your chat.": "把一段精彩的回答做成简洁的图片卡片，方便分享。在你的设备上生成，不含指向你会话的链接。",
+    "Select text in a reply, or press Card on the whole reply": "选中回复中的文字，或对整条回复点击“卡片”",
+    "Cobalt, White, Dark or Column, as a 1:1, 4:5 or 16:9 PNG to save or copy": "钴蓝、白色、深色或立柱模板，1:1、4:5 或 16:9 的 PNG，可保存或复制",
+    "Nothing is uploaded and there is no share link; Veil's masked details stay masked unless you show them": "不上传任何内容，也没有分享链接；除非你选择显示，Veil 遮盖的细节会保持遮盖",
+    "Quote card": "引用卡片",
+    "Card preview": "卡片预览",
+    "Template": "模板",
+    "Column": "立柱",
+    "Card text": "卡片文字",
+    "Lines under the quote": "引文下方的文字行",
+    "Asked on ANONYMA": "在 ANONYMA 上提问",
+    "The model's name": "模型名称",
+    "Not known for this text": "此文字的来源模型未知",
+    "Show the real details Veil masked": "显示 Veil 遮盖的真实细节",
+    "1 masked detail stays as a tag like [EMAIL_1] unless you tick this.": "1 处被遮盖的细节会保持为 [EMAIL_1] 这样的标签，除非你勾选此项。",
+    "The card now shows the real details. Anyone you send the image to will be able to read them.": "卡片现在显示的是真实细节。收到这张图片的人都能读到它们。",
+    "Save PNG": "保存 PNG",
+    "Copy image": "复制图片",
+    "Saved as a PNG.": "已保存为 PNG。",
+    "The image couldn't be made.": "无法生成图片。",
+    "Copied the image.": "已复制图片。",
+    "This browser can't copy an image. Use Save PNG.": "此浏览器无法复制图片，请使用“保存 PNG”。",
+    "Made on this device. Nothing is uploaded, and the image has no link back to your chat.": "在此设备上生成。不上传任何内容，图片也不含指向你会话的链接。",
+    "Card": "卡片",
+    "Make an image card of this reply, on this device": "在此设备上把这条回复做成图片卡片",
+    "Make an image card of this text, on this device": "在此设备上把这段文字做成图片卡片",
+    "This text looks like a wallet seed phrase or key. The card would show it to anyone you send the image to.": "这段文字看起来像钱包助记词或私钥。收到这张图片的人都能在卡片上看到它。",
+    "Untick this to mask them again.": "取消勾选即可重新遮盖。"
   },
   "patterns": [
     {
@@ -9366,6 +9395,14 @@
     {
       "en": "{0} can't take a meeting transcript. Pick a model with a longer context.",
       "zh": "{0} 无法读取会议文字稿。请选择上下文更长的模型。"
+    },
+    {
+      "en": "Too long for one card. The first {0} characters fit; the rest is left off.",
+      "zh": "内容过长，一张卡片放不下。前 {0} 个字符可以放下，其余部分未显示。"
+    },
+    {
+      "en": "{0} masked details stay as tags like [EMAIL_1] unless you tick this.",
+      "zh": "{0} 处被遮盖的细节会保持为 [EMAIL_1] 这样的标签，除非你勾选此项。"
     }
   ]
 }

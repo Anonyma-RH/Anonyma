@@ -56,6 +56,8 @@ const Translate = lazy(() => import("./Translate.jsx"));
 const AudioOverviewDialog = lazy(() => import("./AudioOverview.jsx"));
 // Summarize & Continue's dialog, loaded when Catch me up is first opened.
 const CatchUpDialog = lazy(() => import("./CatchUpDialog.jsx"));
+// Quote Cards' editor and its canvas drawing, loaded when a card is first made.
+const QuoteCardDialog = lazy(() => import("./QuoteCards.jsx"));
 import Routines from "./Routines.jsx";
 import { WatchBadge } from "./PageWatch.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
@@ -102,6 +104,8 @@ import {
 import { sealedHoldUsd, sealedBody, ciphertextLength, utf8Length } from "./sealed.js";
 import { rewindPlan, resendContent, promptParts, branchesAt, singleFlight } from "./branches.js";
 import "./branches.css";
+// Quote Cards: the Card button's style is needed before its dialog loads.
+import "./quote-cards.css";
 import {
   PrivateModeToggle,
   PrivateModeNotice,
@@ -541,6 +545,9 @@ export default function Workspace() {
     [exporting, setExporting] = useState(null),
     // Audio Overview: null, or what its dialog offers (see openOverview).
     [overview, setOverview] = useState(null),
+    // Quote Cards: null, or { text } (a selection) / { markdown } (a whole
+    // reply), with the reply's model when it says.
+    [card, setCard] = useState(null),
     [scrollFill, setScrollFill] = useState(null),
     [slashDismissedFor, setSlashDismissedFor] = useState(null),
     [slashIndex, setSlashIndex] = useState(0),
@@ -2269,6 +2276,30 @@ export default function Workspace() {
   // or a fact-check of just that text against the web. Fact-check follows
   // Web: chat and code, signed in, never the demo or Sealed Mode.
   const highlightLive = highlightReleased(config) && textMode;
+  // Quote Cards (src/QuoteCards.jsx): a Card button on each finished reply and
+  // on Highlight & Ask's toolbar. Everything happens in this browser, so it
+  // works wherever there's a reply on screen: the demo, Sealed Mode and
+  // device-only chats included.
+  const cardsLive = isReleased(config, "quotecards") && textMode;
+  const cardButton = (m, i) =>
+    cardsLive &&
+    m.role === "assistant" &&
+    typeof m.content === "string" &&
+    m.content.trim() &&
+    !m.blind &&
+    !m.factcheck &&
+    !m.research?.live &&
+    !(busy && i === messages.length - 1) ? (
+      <button
+        type="button"
+        className="quote-card-open"
+        title="Make an image card of this reply, on this device"
+        onClick={() => setCard({ markdown: m.content, model: m.model || null })}
+      >
+        <Icon name="imagedown" size={13} />
+        Card
+      </button>
+    ) : null;
   const threadRef = useRef(null);
   const factCheckLive =
     !demo && !!user && factCheckReleased(config) && ["chat", "code"].includes(mode) && !sealedOn && !sealedThread;
@@ -4177,6 +4208,7 @@ export default function Workspace() {
                     root={threadRef}
                     enabled={messages.length > 0 && !editing}
                     onQuote={quoteIntoComposer}
+                    onCard={cardsLive ? setCard : null}
                     factCheck={factCheck}
                   />
                 )}
@@ -4330,6 +4362,10 @@ export default function Workspace() {
                                 ? ""
                                 : undefined
                             }
+                            // The model that wrote it, for Quote Cards' credit line.
+                            data-highlight-model={
+                              cardsLive && highlightLive && m.role === "assistant" && m.model ? m.model : undefined
+                            }
                           >
                             {m.research?.live ? (
                               <ResearchProgress research={m.research} />
@@ -4464,10 +4500,11 @@ export default function Workspace() {
                             </button>
                           )}
                           {!(branchesLive && !busy && !branching && editing?.index !== i && !m.sample) &&
-                            (rememberButton(m) || bookmarks.actions(m, i, messages)) && (
+                            (rememberButton(m) || bookmarks.actions(m, i, messages) || cardButton(m, i)) && (
                               <div className="turn-actions">
                                 {bookmarks.actions(m, i, messages)}
                                 {rememberButton(m)}
+                                {cardButton(m, i)}
                               </div>
                             )}
                           {branchesLive && editing?.index === i && (
@@ -4528,6 +4565,7 @@ export default function Workspace() {
                                   Regenerate
                                 </button>
                               )}
+                              {cardButton(m, i)}
                               {!ephemeral && !demo && current && m.id && (
                                 <button type="button" onClick={() => branchFrom(m)}>
                                   Branch from here
@@ -5911,6 +5949,17 @@ export default function Workspace() {
           testMode={!!config?.testMode}
           onClose={() => setExporting(null)}
         />
+      )}
+      {card && cardsLive && (
+        <Suspense fallback={null}>
+          <QuoteCardDialog
+            source={card}
+            modelName={card.model ? modelName(card.model) : ""}
+            veilMap={veilStateRef.current.map}
+            seedGuard={seedLive}
+            onClose={() => setCard(null)}
+          />
+        </Suspense>
       )}
       {overview && overviewOn && (
         <Suspense fallback={null}>

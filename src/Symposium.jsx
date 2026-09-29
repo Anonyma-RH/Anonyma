@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
@@ -31,6 +31,8 @@ import {
 const COLUMN_TOKENS = 2048;
 import { LowBalanceRefusal } from "./BalanceAlerts.jsx";
 import "./symposium.css";
+// Quote Cards' editor, loaded when a card is first made from an answer.
+const QuoteCardDialog = lazy(() => import("./QuoteCards.jsx"));
 
 const STATUS_LABEL = {
   pending: "Waiting…",
@@ -376,6 +378,10 @@ export default function Symposium({
   // own, in the run's project if it has one.
   const highlightLive = !demo && highlightReleased(config);
   const factLive = highlightLive && !!user && factCheckReleased(config);
+  // Quote Cards: the toolbar's Card button, made in this browser (nothing is
+  // sent), with the model that wrote the answer for its credit line.
+  const cardsLive = highlightLive && isReleased(config, "quotecards");
+  const [card, setCard] = useState(null);
   const factVeiling = veilOn && veilLive;
   const checking = checks.some((c) => c.status === "live");
   function quoteIntoQuestion(text) {
@@ -656,8 +662,20 @@ export default function Symposium({
             root={resultsRef}
             enabled={runModels.length > 0}
             onQuote={quoteIntoQuestion}
+            onCard={cardsLive ? setCard : null}
             factCheck={factCheck}
           />
+        )}
+        {card && cardsLive && (
+          <Suspense fallback={null}>
+            <QuoteCardDialog
+              source={card}
+              modelName={card.model ? modelName(card.model) : ""}
+              veilMap={veilState.current.map}
+              seedGuard={seedLive}
+              onClose={() => setCard(null)}
+            />
+          </Suspense>
         )}
       </div>
       <div className="composer-zone">

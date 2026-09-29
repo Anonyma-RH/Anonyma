@@ -84,6 +84,8 @@ import {
   ScanEye,
   Highlighter,
   MessageSquareQuote,
+  Quote,
+  ImageDown,
   Lightbulb,
   Feather,
   Languages,
@@ -189,6 +191,9 @@ const icons = {
   watch: ScanEye,
   highlight: Highlighter,
   quote: MessageSquareQuote,
+  // Quote Cards: a quotation mark, and a picture being saved.
+  quotemark: Quote,
+  imagedown: ImageDown,
   lightbulb: Lightbulb,
   feather: Feather,
   languages: Languages,

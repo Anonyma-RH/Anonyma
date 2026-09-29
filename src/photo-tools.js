@@ -117,6 +117,64 @@ export async function shrinkToFit(file, limit = IMAGE_LIMIT) {
   throw new PhotoError(`"${file.name}" is too large to send even when shrunk. Use a smaller photo.`);
 }
 
+// The size a photo is redrawn at so its long side is at most `max`, keeping
+// its shape. `scaled` is false when it already fits.
+export function fitPlan(width, height, max) {
+  const long = Math.max(width, height);
+  if (!(long > max)) return { width, height, scaled: false };
+  const scale = max / long;
+  return { width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), scaled: true };
+}
+
+// A copy of a photo (a data URL) whose long side is at most `max` px, made in
+// this browser. An upscaler makes a photo 4x bigger on each side, and the
+// provider bills before that result can be checked, so an upscale goes from a
+// copy no bigger than the model takes. A photo that already fits is returned
+// as it is. A PNG or WebP stays one (so transparency stays); a GIF becomes a
+// PNG of its first frame; anything else is a JPEG. The copy carries no
+// metadata, and stays under `limit` bytes.
+export async function fitLongSide(url, max, limit = IMAGE_LIMIT) {
+  const blob = dataUrlBlob(url);
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(blob);
+  } catch {
+    throw new PhotoError("This photo couldn't be opened to make a smaller copy.");
+  }
+  try {
+    const original = { width: bitmap.width, height: bitmap.height };
+    const plan = fitPlan(bitmap.width, bitmap.height, max);
+    if (!plan.scaled) return { url, ...original, original, scaled: false };
+    const draw = async (type) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = plan.width;
+      canvas.height = plan.height;
+      const ctx = canvas.getContext("2d");
+      if (type === "image/jpeg") {
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, plan.width, plan.height);
+      }
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(bitmap, 0, 0, plan.width, plan.height);
+      return new Promise((resolve) => canvas.toBlob(resolve, type, 0.92));
+    };
+    const first = blob.type === "image/webp" ? "image/webp" : blob.type === "image/jpeg" ? "image/jpeg" : "image/png";
+    let out = await draw(first);
+    // A busy PNG can stay big even when smaller: a JPEG always fits.
+    if ((!out || out.size > limit) && first !== "image/jpeg") out = await draw("image/jpeg");
+    if (!out || out.size > limit) throw new PhotoError("A smaller copy of this photo is still too large to send. Use a smaller photo.");
+    const copy = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new PhotoError("The smaller copy couldn't be read."));
+      reader.readAsDataURL(out);
+    });
+    return { url: copy, width: plan.width, height: plan.height, original, scaled: true };
+  } finally {
+    bitmap.close?.();
+  }
+}
+
 // What the "after" line says about size, from the two pictures' pixels.
 export function sizeNote(before, after) {
   if (!before?.width || !after?.width) return "";

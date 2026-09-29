@@ -6396,7 +6396,14 @@
     "Repo Reader needs a text model.": "仓库阅读器需要文本模型。",
     "That link isn't on a host this reader may fetch from.": "该链接不在此阅读器允许获取的主机上。",
     "Busy, try again in a moment.": "繁忙，请稍后再试。",
-    "Whole file": "整个文件"
+    "Whole file": "整个文件",
+    "Making a smaller copy to upscale…": "正在制作用于放大的较小副本……",
+    "This photo couldn't be opened to make a smaller copy.": "无法打开这张照片来制作较小的副本。",
+    "A smaller copy of this photo is still too large to send. Use a smaller photo.": "这张照片的较小副本仍然太大，无法发送。请使用更小的照片。",
+    "The smaller copy couldn't be read.": "无法读取较小的副本。",
+    "A smaller copy of this photo couldn't be made.": "无法制作这张照片的较小副本。",
+    "That picture couldn't be read.": "无法读取那张图片。",
+    "The photo's size couldn't be read.": "无法读取照片的尺寸。"
   },
   "patterns": [
     {
@@ -10430,6 +10437,18 @@
     {
       "en": "Keep the question under {0} characters.",
       "zh": "请将问题控制在 {0} 个字符以内。"
+    },
+    {
+      "en": "Upscaled from a {0} px copy",
+      "zh": "由 {0} px 的副本放大"
+    },
+    {
+      "en": "A photo bigger than {0} px on its long side is shrunk to a copy that size here first, so the result stays a manageable size.",
+      "zh": "长边超过 {0} px 的照片会先在此处缩小为该尺寸的副本，使结果保持在合理大小。"
+    },
+    {
+      "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
+      "zh": "放大最多支持长边 {0} px 的照片。请缩小后再试。"
     }
   ]
 }

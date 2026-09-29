@@ -17,6 +17,7 @@ import {
   checkOutput,
   holdUnits,
   holdUsd,
+  imageSize,
   offerOf,
   photoIssue,
   photoModels,
@@ -24,6 +25,7 @@ import {
   sniff,
   testOutput,
   unusable,
+  upscaleMaxSide,
 } from "../photo-tools.js";
 import { tagUsage } from "../usage-insights.js";
 
@@ -145,6 +147,18 @@ export function photoToolsRoutes(ctx) {
     // What the file is, not what its label says.
     if (sniff(bytes) !== photo[1]) fail(400, "That file isn't the kind of picture it says it is.", "invalid_image");
     if (bytes.length > IMAGE_LIMIT) fail(400, "The photo is larger than 1.5 MiB. Shrink it and try again.", "image_too_large");
+    // An upscaler makes the photo 4x bigger on each side (or more), and the
+    // provider bills before the result can be checked, so the input is capped
+    // so that its result stays a size we can return. The page shrinks a bigger
+    // photo to a copy this size first; a request that doesn't is refused here,
+    // before anything is held.
+    if (tool === "upscale") {
+      const size = imageSize(bytes),
+        max = upscaleMaxSide(m.id);
+      if (!size || !size.width || !size.height) fail(400, "The photo's size couldn't be read.", "invalid_image");
+      if (Math.max(size.width, size.height) > max)
+        fail(400, `Upscaling takes a photo up to ${max} px on its long side. Shrink it and try again.`, "image_too_large_for_upscale");
+    }
     if (!Number.isSafeInteger(body.max_units) || body.max_units !== amount) fail(409, PHOTO_CHANGED, "estimate_changed");
     // The library item a result may sit beside, kept from the library's
     // cap while this result is saved. Optional, and only your own.

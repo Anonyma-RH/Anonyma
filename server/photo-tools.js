@@ -35,6 +35,18 @@ const EXTEND = ["flux-2-pro-outpaint"];
 const EDIT_FIRST = ["seedream-v5-lite-edit", "qwen-image-2-edit", "flux-2-pro-i2i", "grok-imagine-edit"];
 const FIRST = { edit: EDIT_FIRST, background: BACKGROUND, upscale: UPSCALE };
 
+// How much bigger each upscaler makes a photo on each side (aura-sr: always
+// 4x, checked live at 512 to 2048). The others aren't published, so they are
+// treated as the worst case, 4x. A result is checked and returned whole (32 MB
+// inline, 100 MB saved) only after the provider has billed, so the input is
+// capped so that the largest result stays under UPSCALE_OUTPUT_SIDE pixels on
+// its long side: 1024 px in for a 4x model.
+export const UPSCALE_FACTORS = { "aura-sr": 4 };
+export const UPSCALE_DEFAULT_FACTOR = 4;
+export const UPSCALE_OUTPUT_SIDE = 4096;
+export const upscaleMaxSide = (id, factors = UPSCALE_FACTORS) =>
+  Math.max(1, Math.floor(UPSCALE_OUTPUT_SIDE / (factors[id] ?? UPSCALE_DEFAULT_FACTOR)));
+
 export const EXTEND_UNAVAILABLE =
   "Extend isn't available yet: the gateway's outpainting model doesn't accept a photo, and publishes no direction or size to ask for.";
 
@@ -116,6 +128,8 @@ export const offerOf = (m, factor, cfg) => {
     credits: credits(units),
     units,
     private: isPrivateModel(m, cfg),
+    // An upscaler takes a photo no bigger than this on its long side.
+    ...(toolOf(m) === "upscale" ? { max_side: upscaleMaxSide(m.id) } : {}),
   };
 };
 
@@ -134,6 +148,49 @@ export function sniff(bytes) {
   if (b.length >= 12 && b.subarray(0, 4).toString("latin1") === "RIFF" && b.subarray(8, 12).toString("latin1") === "WEBP")
     return "image/webp";
   if (b.length >= 4 && b.subarray(0, 4).toString("latin1") === "GIF8") return "image/gif";
+  return null;
+}
+
+// A picture's pixel size from its header, or null when it can't be read. Only
+// the header is read; the pixels are never decoded.
+export function imageSize(bytes) {
+  const b = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+  const kind = sniff(b);
+  if (kind === "image/png") return b.length >= 24 ? { width: b.readUInt32BE(16), height: b.readUInt32BE(20) } : null;
+  if (kind === "image/gif") return b.length >= 10 ? { width: b.readUInt16LE(6), height: b.readUInt16LE(8) } : null;
+  if (kind === "image/jpeg") {
+    // Walk the segments to the first start-of-frame marker.
+    for (let at = 2; at + 4 <= b.length; ) {
+      if (b[at] !== 0xff) {
+        at++;
+        continue;
+      }
+      const marker = b[at + 1];
+      if (marker === 0xff) {
+        at++;
+        continue;
+      }
+      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd9)) {
+        at += 2;
+        continue;
+      }
+      const length = b.readUInt16BE(at + 2);
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker))
+        return at + 9 <= b.length ? { width: b.readUInt16BE(at + 7), height: b.readUInt16BE(at + 5) } : null;
+      at += 2 + length;
+    }
+    return null;
+  }
+  if (kind === "image/webp") {
+    const chunk = b.subarray(12, 16).toString("latin1");
+    if (chunk === "VP8X") return b.length >= 30 ? { width: 1 + b.readUIntLE(24, 3), height: 1 + b.readUIntLE(27, 3) } : null;
+    if (chunk === "VP8L" && b.length >= 25 && b[20] === 0x2f) {
+      const bits = b.readUInt32LE(21);
+      return { width: (bits & 0x3fff) + 1, height: ((bits >>> 14) & 0x3fff) + 1 };
+    }
+    if (chunk === "VP8 " && b.length >= 30 && b[23] === 0x9d && b[24] === 0x01 && b[25] === 0x2a)
+      return { width: b.readUInt16LE(26) & 0x3fff, height: b.readUInt16LE(28) & 0x3fff };
+  }
   return null;
 }
 

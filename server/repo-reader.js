@@ -43,8 +43,10 @@ import {
 // against both and returns the best few excerpts.
 //
 // The cache: per account, in this process's memory only, for 30 minutes
-// from the read, 3 repos an account and a server-wide memory budget
-// (oldest forgotten first). Never logged and never written anywhere;
+// from the read, 3 repos an account and a server-wide memory budget of
+// 128 MB shared by every account (the least recently used repo is forgotten
+// first; a read that can't fit even then is refused as busy). Never logged
+// and never written anywhere;
 // erased with the account's content (forgetRepos) and listed, names and
 // times only, in its export (exportRepos).
 
@@ -71,6 +73,7 @@ const MESSAGES = {
   repo_corrupt: [422, "That download wasn't a readable archive, so it wasn't read."],
   repo_no_text: [422, "No readable text files were found in that repo."],
   repo_unpack_timeout: [504, "That repo took too long to unpack, so it wasn't read."],
+  repo_cache_full: [503, "Busy, try again in a moment."],
 };
 export const repoError = (code) => new RepoError(MESSAGES[code][0], code, MESSAGES[code][1]);
 
@@ -622,11 +625,14 @@ export function findForQuestion(entry, question) {
 
 // ---- The cache ----
 
+// The cache's server-wide memory budget: the container's memory is shared
+// with everything else the server does.
+export const REPO_CACHE_BYTES = 128 * 1024 * 1024;
 export function createRepoCache({
   now = Date.now,
   ttlMs = REPO_READER.ttlMinutes * 60000,
   perAccount = REPO_READER.perAccount,
-  maxBytes = 256 * 1024 * 1024,
+  maxBytes = REPO_CACHE_BYTES,
 } = {}) {
   const entries = new Map();
   const drop = (id) => {
@@ -640,20 +646,30 @@ export function createRepoCache({
     for (const [id, e] of entries) if (e.expires <= t) drop(id);
   };
   const bytes = () => [...entries.values()].reduce((n, e) => n + e.bytes, 0);
-  const oldest = (user) => {
+  // The least recently used entry (of one account, or of all).
+  const idlest = (user) => {
     let pick = null;
-    for (const e of entries.values()) if ((user == null || e.user === user) && (!pick || e.created < pick.created)) pick = e;
+    for (const e of entries.values()) if ((user == null || e.user === user) && (!pick || e.used < pick.used)) pick = e;
     return pick;
   };
+  const touch = (e) => {
+    if (e) e.used = now();
+    return e;
+  };
   return {
-    // Keeps a read repo for this account; returns the entry.
+    // Keeps a read repo for this account and returns the entry. The
+    // account's least recently used repo goes when it has 3, then anyone's
+    // least recently used until it fits the budget; one that can't fit
+    // even in an empty cache is refused as busy, and nothing is dropped.
     put(user, data) {
       sweep();
+      if (!(data.bytes <= maxBytes)) throw repoError("repo_cache_full");
       for (const e of [...entries.values()]) if (e.user === user && e.key === data.key) drop(e.id);
-      while ([...entries.values()].filter((e) => e.user === user).length >= perAccount) drop(oldest(user).id);
-      while (entries.size && bytes() + data.bytes > maxBytes) drop(oldest().id);
+      while ([...entries.values()].filter((e) => e.user === user).length >= perAccount) drop(idlest(user).id);
+      while (entries.size && bytes() + data.bytes > maxBytes) drop(idlest().id);
+      if (bytes() + data.bytes > maxBytes) throw repoError("repo_cache_full");
       const created = now();
-      const entry = { ...data, id: uid("repo_"), user, created, expires: created + ttlMs };
+      const entry = { ...data, id: uid("repo_"), user, created, used: created, expires: created + ttlMs };
       entry.timer = setTimeout(() => drop(entry.id), ttlMs);
       entry.timer.unref?.();
       entries.set(entry.id, entry);
@@ -662,11 +678,11 @@ export function createRepoCache({
     get(user, id) {
       sweep();
       const e = typeof id === "string" ? entries.get(id) : null;
-      return e && e.user === user ? e : null;
+      return e && e.user === user ? touch(e) : null;
     },
     byKey(user, key) {
       sweep();
-      for (const e of entries.values()) if (e.user === user && e.key === key) return e;
+      for (const e of entries.values()) if (e.user === user && e.key === key) return touch(e);
       return null;
     },
     list(user) {
@@ -689,6 +705,11 @@ export function createRepoCache({
       sweep();
       return entries.size;
     },
+    get bytes() {
+      sweep();
+      return bytes();
+    },
+    maxBytes,
   };
 }
 // One cache per app (per database), so account erasure can reach it.

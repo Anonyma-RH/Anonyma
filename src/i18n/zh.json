@@ -5831,7 +5831,7 @@
     "Public repos only: our server downloads the code, so GitHub sees ANONYMA, not you": "仅限公开仓库：由我们的服务器下载代码，因此 GitHub 看到的是 ANONYMA，而不是你",
     "Browse the files, see exactly which excerpts go to the AI, and jump to each cited line": "浏览文件，确切看到哪些片段会交给 AI，并跳转到每一处被引用的行",
     "Reading a repo is free and answers bill like a message; the files are forgotten after 30 minutes": "读取仓库免费，回答按普通消息计费；文件会在 30 分钟后被忘记",
-    "Repo Reader: a repo you read is kept only in the server's memory, for your account, for 30 minutes (or until you forget it), then dropped; it's never written to disk or logged. Questions are asked off the record, so neither they nor the answers are saved. Your data export lists the repos open at the time; Panic Wipe and closing the account forget them at once.": "仓库阅读器：你读取的仓库只保存在服务器内存中，仅供你的账户使用，保留 30 分钟（或直到你让它忘记），随后丢弃；它从不写入磁盘，也不记录日志。提问不留记录，因此问题和回答都不会保存。你的数据导出会列出当时打开的仓库；紧急清除和注销账户会立即忘记它们。",
+    "Repo Reader: a repo you read is kept only in the server's memory, for your account, for 30 minutes (or until you forget it, or sooner when the server needs the memory), then dropped; it's never written to disk or logged. Questions are asked off the record, so neither they nor the answers are saved. Your data export lists the repos open at the time; Panic Wipe and closing the account forget them at once.": "仓库阅读器：你读取的仓库只保存在服务器内存中，仅供你的账户使用，保留 30 分钟（或直到你让它忘记，服务器内存紧张时也可能更早），随后丢弃；它从不写入磁盘，也不记录日志。提问不留记录，因此问题和回答都不会保存。你的数据导出会列出当时打开的仓库；紧急清除和注销账户会立即忘记它们。",
     "Repos open in Repo Reader": "仓库阅读器中打开的仓库",
     "Paste a public GitHub repo link, like github.com/owner/repo.": "请粘贴一个公开的 GitHub 仓库链接，例如 github.com/owner/repo。",
     "Paste the repo's main link, or a /tree/<branch> link for one branch or tag.": "请粘贴仓库的主链接，或指向某个分支或标签的 /tree/<branch> 链接。",
@@ -5859,7 +5859,8 @@
     "Questions about a repo are asked off the record: send the request off the record.": "关于仓库的问题都会不留记录地提问：请以不留记录的方式发送请求。",
     "A repo question can't be combined with other chat options.": "仓库问题不能与其他对话选项同时使用。",
     "Repo Reader needs a text model.": "仓库阅读器需要文本模型。",
-    "That link isn't on a host this reader may fetch from.": "该链接不在此阅读器允许获取的主机上。"
+    "That link isn't on a host this reader may fetch from.": "该链接不在此阅读器允许获取的主机上。",
+    "Busy, try again in a moment.": "繁忙，请稍后再试。"
   },
   "patterns": [
     {

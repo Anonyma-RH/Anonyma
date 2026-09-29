@@ -15,6 +15,7 @@ import {
   archiveUrl,
   buildIndex,
   createRepoCache,
+  REPO_CACHE_BYTES,
   findForQuestion,
   prepareRepoRequest,
   repoBudget,
@@ -763,34 +764,54 @@ test("free but limited: 20 reads an hour, one at a time; an open repo and a bad 
   assert.equal((await agent.get("/api/repos").expect(200)).body.data.length, REPO_READER.perAccount);
 });
 
-test("the cache: 30 minutes from the read, per account, bounded, and cleared on demand", async (t) => {
+test("the cache: 30 minutes from the read, 3 per account, a 128 MB budget that forgets the least recently used", async (t) => {
+  assert.equal(REPO_CACHE_BYTES, 128 * 1024 * 1024);
+  const defaults = createRepoCache();
+  assert.equal(defaults.maxBytes, REPO_CACHE_BYTES);
   let clock = 1_000_000;
+  const tick = () => (clock += 1000);
   const cache = createRepoCache({ now: () => clock, perAccount: 2, maxBytes: 1000 });
   t.after(() => cache.clear());
-  const put = (user, key, bytes = 100) => cache.put(user, { key, repo: key, ref: null, commit: null, index: { files: [] }, bytes });
+  const put = (user, key, bytes = 100) => {
+    tick();
+    return cache.put(user, { key, repo: key, ref: null, commit: null, index: { files: [] }, bytes });
+  };
   const a = put("u1", "a");
-  clock += 60000;
   const b = put("u1", "b");
-  assert.equal(cache.get("u1", a.id).key, "a");
   assert.equal(cache.get("u2", a.id), null, "another account's id is nothing");
-  assert.equal(cache.byKey("u1", "b").id, b.id);
-  // A third for the same account forgets its oldest.
-  clock += 60000;
+  // Using a repo keeps it: the account's least recently used goes first.
+  tick();
+  assert.equal(cache.get("u1", a.id).key, "a");
   const c = put("u1", "c");
-  assert.equal(cache.get("u1", a.id), null);
-  assert.deepEqual(cache.list("u1").map((e) => e.key), ["c", "b"]);
-  // The memory budget forgets the oldest anyone has.
-  const big = put("u2", "big", 850);
-  assert.equal(cache.get("u1", b.id), null);
-  assert.ok(cache.get("u1", c.id) && cache.get("u2", big.id));
-  // 30 minutes after it was read, it's gone.
-  assert.equal(c.expires - c.created, REPO_READER.ttlMinutes * 60000);
-  clock = c.created + 30 * 60000 - 1;
-  assert.ok(cache.get("u1", c.id));
+  assert.equal(cache.get("u1", b.id), null, "b was the least recently used");
+  assert.deepEqual(cache.list("u1").map((e) => e.key).sort(), ["a", "c"]);
+  // The shared budget: anyone's least recently used goes until it fits.
+  tick();
+  assert.ok(cache.byKey("u1", "c"));
+  const d = put("u2", "d", 300);
+  assert.equal(cache.bytes, 500);
+  // 500 + 650 is over 1000: a (least recently used) goes, then c (used
+  // before d was read), and d stays.
+  const big = put("u3", "big", 650);
+  assert.equal(cache.get("u1", a.id), null, "a was the least recently used of all");
+  assert.equal(cache.get("u1", c.id), null, "then c");
+  assert.ok(cache.get("u2", d.id) && cache.get("u3", big.id));
+  assert.equal(cache.bytes, 950);
+  // A read that can't fit even in an empty cache is refused as busy, and
+  // nothing is dropped for it.
+  assert.throws(
+    () => put("u4", "huge", 1001),
+    (e) => e.code === "repo_cache_full" && e.status === 503 && e.message === "Busy, try again in a moment.",
+  );
+  assert.ok(cache.get("u2", d.id) && cache.get("u3", big.id));
+  // 30 minutes after it was read, it's gone, however recently it was used.
+  assert.equal(d.expires - d.created, REPO_READER.ttlMinutes * 60000);
+  clock = d.created + 30 * 60000 - 1;
+  assert.ok(cache.get("u2", d.id));
   clock += 1;
-  assert.equal(cache.get("u1", c.id), null);
-  assert.equal(cache.list("u1").length, 0);
-  cache.forgetAll("u2");
+  assert.equal(cache.get("u2", d.id), null);
+  assert.equal(cache.list("u2").length, 0);
+  cache.forgetAll("u3");
   assert.equal(cache.size, 0);
 
   // The same through the routes, on a test clock.
@@ -812,6 +833,32 @@ test("the cache: 30 minutes from the read, per account, bounded, and cleared on 
   }
   assert.equal((await agent.get("/api/repos").expect(200)).body.data.length, 0);
   assert.equal(s.repoReader.cache.size, 0);
+});
+
+test("routes: the shared budget forgets the least recently used repo, and a read that can't fit is busy", async (t) => {
+  // How much one read of the demo repo takes.
+  const probe = fixture(t);
+  await openDemo((await person(probe.app, "probe")).agent);
+  const one = probe.repoReader.cache.bytes;
+  assert.ok(one > 0);
+  const s = fixture(t, undefined, { hooks: { cacheBytes: one * 2 + 10 } });
+  const a = await person(s.app, "lru_a");
+  const b = await person(s.app, "lru_b");
+  const c = await person(s.app, "lru_c");
+  const ra = await openDemo(a.agent);
+  const rb = await openDemo(b.agent);
+  // A uses theirs, so B's is now the least recently used.
+  await a.agent.get("/api/repos/" + ra.id).expect(200);
+  await openDemo(c.agent);
+  assert.equal((await b.agent.get("/api/repos/" + rb.id).expect(404)).body.error.code, "repo_gone");
+  await a.agent.get("/api/repos/" + ra.id).expect(200);
+  // Too big for the whole budget: busy, and nobody's repo is dropped.
+  const tiny = fixture(t, undefined, { hooks: { cacheBytes: Math.floor(one / 2) } });
+  const d = await person(tiny.app, "lru_d");
+  const r = await readRepo(d.agent).expect(503);
+  assert.equal(r.body.error.code, "repo_cache_full");
+  assert.equal(r.body.error.message, "Busy, try again in a moment.");
+  assert.equal(tiny.repoReader.cache.size, 0);
 });
 
 // ---- Asking: billing, modes and refusals ----

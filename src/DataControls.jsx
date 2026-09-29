@@ -321,8 +321,9 @@ export default function DataControls() {
         {repos && (
           <li>
             Repo Reader: a repo you read is kept only in the server's memory,
-            for your account, for 30 minutes (or until you forget it), then
-            dropped; it's never written to disk or logged. Questions are asked
+            for your account, for 30 minutes (or until you forget it, or
+            sooner when the server needs the memory), then dropped; it's never
+            written to disk or logged. Questions are asked
             off the record, so neither they nor the answers are saved. Your
             data export lists the repos open at the time; Panic Wipe and
             closing the account forget them at once.

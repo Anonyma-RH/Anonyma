@@ -6407,7 +6407,10 @@
     "Cambiar a español": "Cambiar a español",
     "Prices from the live catalog on every model": "Precios del catálogo en vivo para cada modelo",
     "A gift is waiting.": "Hay un regalo esperando.",
-    "to claim it; you'll go straight back to it.": "para reclamarlo; volverás directo a él."
+    "to claim it; you'll go straight back to it.": "para reclamarlo; volverás directo a él.",
+    "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) and link it there. On a computer, use a browser with a wallet extension.": "No se encontró ninguna billetera en este navegador. En el teléfono, abre esta página en el navegador propio de tu app de billetera (por ejemplo MetaMask, Coinbase Wallet o Rabby) y vincúlala ahí. En una computadora, usa un navegador con una extensión de billetera.",
+    "Copy this page's link": "Copiar el enlace de esta página",
+    "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) to sign in with your wallet.": "No se encontró ninguna billetera en este navegador. En el teléfono, abre esta página en el navegador propio de tu app de billetera (por ejemplo MetaMask, Coinbase Wallet o Rabby) para iniciar sesión con tu billetera."
   },
   "patterns": [
     {

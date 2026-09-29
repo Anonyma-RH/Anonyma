@@ -548,3 +548,21 @@ export function Art({ kind = "chat", color = "mint" }) {
     </div>
   );
 }
+
+// Shown where a wallet is needed but this browser has none (and WalletConnect
+// isn't configured): phones and in-app browsers have no wallet extension, so
+// the page says how to continue instead of only disabling the button.
+export function WalletMissing() {
+  const here = globalThis.location?.href || "https://askanonyma.com/account/credits";
+  return (
+    <div className="wallet-missing">
+      <Notice>
+        No wallet was found in this browser. On a phone, open this page in your
+        wallet app's own browser (for example MetaMask, Coinbase Wallet or
+        Rabby) and link it there. On a computer, use a browser with a wallet
+        extension.
+      </Notice>
+      <CopyButton text={here} label="Copy this page's link" />
+    </div>
+  );
+}

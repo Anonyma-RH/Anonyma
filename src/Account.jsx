@@ -14,6 +14,7 @@ import {
   CountUp,
   ComingSoon,
   SoonTag,
+  WalletMissing,
 } from "./ui.jsx";
 import AsciiField from "./AsciiField.jsx";
 import { Reveal } from "./ReferenceMotion.jsx";
@@ -980,6 +981,7 @@ export default function Account() {
                       onError={setError}
                     />
                   </div>
+                  {!demo && user && !walletAvailable(config) && <WalletMissing />}
                   {/* Once the Holder Program is live, NYMA holdings get their
                       own section below. */}
                   {!holdersReleased(config) && user?.wallet && config?.services?.token && (

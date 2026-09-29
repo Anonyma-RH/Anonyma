@@ -279,9 +279,15 @@ async function walletProvider(config, chain) {
       );
     const { EthereumProvider } =
       await import("@walletconnect/ethereum-provider");
+    // The chain is optional, not required: many mobile wallets refuse a
+    // session that requires a chain they haven't added yet. The public RPC
+    // lets the wallet reach it.
+    const id = Number(chain || config.walletChain || 1);
+    const rpc = config.walletPayments?.chainId === id ? config.walletPayments.publicRpc : undefined;
     provider = await EthereumProvider.init({
       projectId: config.walletProject,
-      chains: [chain || config.walletChain || 1],
+      optionalChains: [id],
+      ...(rpc ? { rpcMap: { [id]: rpc } } : {}),
       showQrModal: true,
     });
     await provider.connect();

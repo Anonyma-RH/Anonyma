@@ -6404,7 +6404,10 @@
     "The smaller copy couldn't be read.": "无法读取较小的副本。",
     "A smaller copy of this photo couldn't be made.": "无法制作这张照片的较小副本。",
     "That picture couldn't be read.": "无法读取那张图片。",
-    "The photo's size couldn't be read.": "无法读取照片的尺寸。"
+    "The photo's size couldn't be read.": "无法读取照片的尺寸。",
+    "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) and link it there. On a computer, use a browser with a wallet extension.": "此浏览器中没有找到钱包。在手机上，请在你的钱包应用自带的浏览器（例如 MetaMask、Coinbase Wallet 或 Rabby）中打开此页面并在那里关联。在电脑上，请使用装有钱包扩展的浏览器。",
+    "Copy this page's link": "复制此页面链接",
+    "No wallet was found in this browser. On a phone, open this page in your wallet app's own browser (for example MetaMask, Coinbase Wallet or Rabby) to sign in with your wallet.": "此浏览器中没有找到钱包。在手机上，请在你的钱包应用自带的浏览器（例如 MetaMask、Coinbase Wallet 或 Rabby）中打开此页面，用钱包登录。"
   },
   "patterns": [
     {

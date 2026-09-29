@@ -1375,8 +1375,9 @@ export function Auth({ register = false }) {
             )}
             {connected && !walletAvailable(config) && (
               <p className="fine-print">
-                No browser wallet was found, and WalletConnect is not configured on
-                this service.
+                No wallet was found in this browser. On a phone, open this page in
+                your wallet app's own browser (for example MetaMask, Coinbase
+                Wallet or Rabby) to sign in with your wallet.
               </p>
             )}
             {error && <Notice type="error">{error}</Notice>}

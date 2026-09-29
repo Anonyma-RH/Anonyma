@@ -9,7 +9,7 @@ import {
   walletAvailable,
   walletSign,
 } from "./lib.js";
-import { Button, CopyButton, Icon, Notice } from "./ui.jsx";
+import { Button, CopyButton, Icon, Notice, WalletMissing } from "./ui.jsx";
 import "./nyma-pay.css";
 
 // NYMA top-ups exist only on Robinhood Chain (chain 4663), so its copy names
@@ -189,6 +189,7 @@ export default function NymaPayPanel({ config, user, demo, onChanged }) {
             {busy ? "Waiting for your wallet…" : "Link wallet"}
             <Icon name="arrow" />
           </Button>
+          {!canSign && !demo && user && <WalletMissing />}
         </>
       ) : open ? (
         <div className="nyma-quote">

@@ -4856,3 +4856,6 @@ td code {
   margin-left: 6px;
   vertical-align: 2px;
 }
+
+/* No wallet in this browser: the note and a copy-link button under the disabled Link wallet button. */
+.wallet-missing { display: grid; gap: 10px; justify-items: start; margin-top: 12px; }

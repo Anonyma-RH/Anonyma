@@ -9,7 +9,7 @@ import {
   walletAvailable,
   walletSign,
 } from "./lib.js";
-import { Button, Notice, CopyButton, Icon } from "./ui.jsx";
+import { Button, Notice, CopyButton, Icon, WalletMissing } from "./ui.jsx";
 
 // Refusals that a later check can't change, so the saved hash is dropped.
 const FINAL_WALLET_ERRORS = [
@@ -134,6 +134,7 @@ export function WalletPayPanel({ config, user, demo, onChanged }) {
             {busy ? "Waiting for your wallet…" : "Link wallet"}
             <Icon name="arrow" />
           </Button>
+          {!canSign && !demo && user && <WalletMissing />}
           {error && <Notice type="error">{error}</Notice>}
         </>
       ) : (

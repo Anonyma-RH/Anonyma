@@ -1989,10 +1989,10 @@
     "Credits every 30 days": "Créditos cada 30 días",
     "Perks": "Beneficios",
     "Holder": "Titular",
-    "Insider": "Insider",
+    "Insider": "Avanzado",
     "Inner Circle": "Círculo íntimo",
     "Holder.": "Titular.",
-    "Insider.": "Insider.",
+    "Insider.": "Avanzado.",
     "Inner Circle.": "Círculo íntimo.",
     "No credits": "Sin créditos",
     "no credits": "sin créditos",
@@ -2005,7 +2005,7 @@
     "After 30 days, the cycle's credits go to your balance and the next cycle starts. They need a check from the last 48 hours; if there isn't one yet, the cycle waits for it.": "Después de 30 días, los créditos del ciclo pasan a tu saldo y empieza el siguiente ciclo. Necesitan una revisión de las últimas 48 horas; si aún no hay una, el ciclo la espera.",
     "The perks": "Los beneficios",
     "Holder and up": "Titular y superiores",
-    "Insider and up": "Insider y superiores",
+    "Insider and up": "Avanzado y superiores",
     "New features before their public release, marked with this tag in the workspace.": "Funciones nuevas antes de su lanzamiento público, marcadas con esta etiqueta en el espacio de trabajo.",
     "Each month, vote for one update that isn't released yet, in Account. You can change it until the month ends. Inner Circle votes help decide what ships next.": "Cada mes, vota en Cuenta por una actualización que aún no se ha lanzado. Puedes cambiar tu voto hasta que termine el mes. Los votos del Círculo íntimo ayudan a decidir qué se lanza después.",
     "Transparency": "Transparencia",
@@ -2036,7 +2036,7 @@
     "One vote a month, changeable until the month ends.": "Un voto al mes, que se puede cambiar hasta que termine el mes.",
     "Update to vote for": "Actualización por la que votar",
     "Vote saved. You can change it until the month ends.": "Voto guardado. Puedes cambiarlo hasta que termine el mes.",
-    "Open early for NYMA holders at the Insider tier and up, before its public release": "Se abre antes para los titulares de NYMA en el nivel Insider y superiores, antes de su lanzamiento público",
+    "Open early for NYMA holders at the Insider tier and up, before its public release": "Se abre antes para los titulares de NYMA del nivel Avanzado y superiores, antes de su lanzamiento público",
     "The roadmap vote is for Inner Circle accounts.": "El voto de la hoja de ruta es para cuentas del Círculo íntimo.",
     "Choose an update that isn't released yet.": "Elige una actualización que aún no se haya lanzado.",
     "NYMA holder reward": "Recompensa para titulares de NYMA",
@@ -3694,13 +3694,13 @@
     "Early": "Anticipado",
     "· Early": "· Anticipado",
     "Early Model Access": "Acceso anticipado a modelos",
-    "New models open to NYMA Insiders first.": "Los modelos nuevos se abren primero para los Insiders de NYMA.",
+    "New models open to NYMA Insiders first.": "Los modelos nuevos se abren primero para los titulares avanzados de NYMA.",
     "Newly added models, 14 days before everyone else": "Modelos recién agregados, 14 días antes que para los demás",
-    "For the Insider tier and up, tagged Early": "Para el nivel Insider y superiores, con la etiqueta Anticipado",
-    "New models open to Insiders first": "Los modelos nuevos se abren primero para los Insiders",
+    "For the Insider tier and up, tagged Early": "Para el nivel Avanzado y superiores, con la etiqueta Anticipado",
+    "New models open to Insiders first": "Los modelos nuevos se abren primero para los titulares avanzados",
     "They're in your model pickers now, tagged Early.": "Ya están en tus selectores de modelos, con la etiqueta Anticipado.",
     "No new models in early access right now. The next ones show here.": "No hay modelos nuevos en acceso anticipado por ahora. Los siguientes aparecerán aquí.",
-    "Open to NYMA Insiders first": "Abierto primero para los Insiders de NYMA",
+    "Open to NYMA Insiders first": "Abierto primero para los titulares avanzados de NYMA",
     "API Boost": "Impulso de API",
     "Higher API limits for NYMA holders.": "Límites de API más altos para los titulares de NYMA.",
     "More API and MCP requests a minute at every holder tier": "Más solicitudes de API y MCP por minuto en cada nivel de titular",
@@ -8500,11 +8500,11 @@
     },
     {
       "en": "For their first {0} days, newly added models are open to the Insider tier and up, then to everyone.",
-      "es": "Durante sus primeros {0} días, los modelos recién agregados están abiertos al nivel Insider y superiores, y luego para todos."
+      "es": "Durante sus primeros {0} días, los modelos recién agregados están abiertos al nivel Avanzado y superiores, y luego para todos."
     },
     {
       "en": "For their first {0} day, newly added models are open to the Insider tier and up, then to everyone.",
-      "es": "Durante su primer {0} día, los modelos recién agregados están abiertos al nivel Insider y superiores, y luego para todos."
+      "es": "Durante su primer {0} día, los modelos recién agregados están abiertos al nivel Avanzado y superiores, y luego para todos."
     },
     {
       "en": "Opens to everyone {0}",
@@ -8512,11 +8512,11 @@
     },
     {
       "en": "New model: open to NYMA Insiders and up first. Opens to everyone {0}.",
-      "es": "Modelo nuevo: se abre primero a los Insiders de NYMA y superiores. Se abre a todos el {0}."
+      "es": "Modelo nuevo: se abre primero a los titulares avanzados de NYMA y superiores. Se abre a todos el {0}."
     },
     {
       "en": "This model is new and open to NYMA Insiders first. It opens to everyone on {0}. Nothing was sent or charged.",
-      "es": "Este modelo es nuevo y se abre primero a los Insiders de NYMA. Se abre a todos el {0}. No se envió ni se cobró nada."
+      "es": "Este modelo es nuevo y se abre primero a los titulares avanzados de NYMA. Se abre a todos el {0}. No se envió ni se cobró nada."
     },
     {
       "en": "Your API rate limit: {0} requests/min ({1} boost)",

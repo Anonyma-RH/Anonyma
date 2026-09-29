@@ -31,6 +31,7 @@ import {
 import { paletteActions } from "../src/command-palette.js";
 import { countLabel } from "../src/find-in-chat.js";
 import { chainFactsText } from "../src/onchain.js";
+import { releaseCopy } from "../src/release-copy.js";
 
 // Español: the whole site in Spanish (src/i18n.js, src/i18n/es.json, the
 // EN / ES / 中文 switch). Release commits flip `released` on UPDATES entries;
@@ -69,7 +70,7 @@ const SAME = new Set([
   "Safari", "Firefox", "Edge",
   "api", "api — ANONYMA", "Audio", "audio", "audio — ANONYMA", "Auto", "Auto →", "App", "Canvas", "Chat", "chat",
   "chat — ANONYMA", "Chats", "Color", "demo", "Error", "Filipino", "Formal", "formal", "Hardware", "Hindi", "Info",
-  "Insider", "Insider.", "Lite", "Markdown", "Normal", "Original", "Popular", "Prime", "Pro", "Prompt", "Prompts",
+  "Lite", "Markdown", "Normal", "Original", "Popular", "Prime", "Pro", "Prompt", "Prompts",
   "Robinhood Chain, chain ID 4663", "software", "token", "Token", "tokens ·", "Tokens", "Turbo", "Urdu", "video",
   "Video", "video — ANONYMA", "vs", "Web", "whitepaper", "Whitepaper", "WHITEPAPER", "whitepaper — ANONYMA",
   "Word (DOCX)", "Español",
@@ -677,4 +678,95 @@ test("Spanish is client-only: nothing is stored on the server or sent anywhere",
   assert.match(source, /import\("\.\/i18n\/es\.json"\)/);
   assert.match(source, /import\("\.\/i18n\/zh\.json"\)/);
   assert.ok(!/from "\.\/i18n\/(es|zh)\.json"/.test(source), "the dictionaries must stay lazy");
+});
+
+// ------------------------------------------------- fixes after the release
+
+test("the release list reads every update by name, including names with a comma or an ampersand", () => {
+  // "Research, Writing & Calculators" and "Edit, Regenerate & Branch Chats"
+  // have a comma in them: the list is read name by name, a name at a time.
+  const config = {
+    services: { generation: true },
+    releases: { features: {}, updates: UPDATES.map((u) => ({ id: u.id, title: u.title, released: true })) },
+  };
+  const summary = releaseCopy(config).summary;
+  const spanish = translateText(summary, es);
+  const chinese = translateText(summary, zh);
+  assert.ok(spanish && chinese);
+  for (const { title } of UPDATES) {
+    const inEs = translateText(title, es);
+    const inZh = translateText(title, zh);
+    if (inEs && inEs !== title) assert.ok(spanish.includes(inEs), `Spanish list lost ${JSON.stringify(title)}`);
+    if (inZh && inZh !== title) assert.ok(chinese.includes(inZh), `Chinese list lost ${JSON.stringify(title)}`);
+  }
+  // No half-English name is left over: none of the fragments a comma splits.
+  for (const left of ["Writing & Calculators", "Regenerate & Branch Chats", "More Reliable Answers", "Longer,"]) {
+    assert.doesNotMatch(spanish, new RegExp(left.replace(/[&,]/g, "\\$&")), left);
+    assert.doesNotMatch(chinese, new RegExp(left.replace(/[&,]/g, "\\$&")), left);
+  }
+  assert.match(spanish, /Investigación, redacción y calculadoras/);
+  assert.match(spanish, /Respuestas más largas y confiables/);
+  assert.match(spanish, /Editar, regenerar y ramificar chats/);
+  // The tail of the list is a name too: "Prepaid credits" is not "{0} credits".
+  assert.match(spanish, /Panel, Cuenta, Créditos prepago\./);
+  assert.match(chinese, /控制台、账户、预付积分/);
+  // Names the dictionary lacks pass through; a sentence is not a list.
+  const small = compileDictionary({ strings: { Chat: "Chat", Account: "Cuenta" }, patterns: [{ en: "Enabled: {0}.", es: "Activado: {0}." }] }, "es");
+  assert.equal(translateText("Enabled: Chat, Veil, Account.", small), "Activado: Chat, Veil, Cuenta.");
+  assert.equal(translateText("Enabled: Hello there, this is not a list of names at all.", small), undefined);
+});
+
+test("text with its ampersands escaped (once or twice) is read as what it was", () => {
+  assert.equal(translateText("Research, Writing &amp;amp; Calculators", es), "Investigación, redacción y calculadoras");
+  assert.equal(translateText("Research, Writing &amp;amp; Calculators", zh), "研究、写作与计算器");
+  assert.equal(translateText("Code &amp; Build", es), "Código y desarrollo");
+  assert.equal(translateText("Voice &#38; Audio", es), "Voz y audio");
+  assert.equal(translateText("Edit, Regenerate &amp;amp; Branch Chats", es), "Editar, regenerar y ramificar chats");
+  // What isn't a known string stays as it is, entities and all.
+  assert.equal(translateText("Something &amp; nothing at all", es), undefined);
+});
+
+test("the NYMA tier names read the same way in Spanish as in Chinese: translated", () => {
+  const tiers = { Holder: ["持有者", "Titular"], Insider: ["资深持有者", "Avanzado"], "Inner Circle": ["核心圈", "Círculo íntimo"] };
+  for (const [name, [inZh, inEs]] of Object.entries(tiers)) {
+    assert.equal(translateText(name, zh), inZh, name);
+    assert.equal(translateText(name, es), inEs, name);
+    assert.equal(translateText(name + ".", es), inEs + ".", name);
+  }
+  // Nothing Spanish calls an "Insider" any more, sentences included.
+  for (const [en, text] of [...Object.entries(esRaw.strings), ...esRaw.patterns.map((p) => [p.en, p.es])])
+    assert.doesNotMatch(text, /Insider/, `${JSON.stringify(en)} → ${JSON.stringify(text)}`);
+  assert.equal(translateText("Insider and up", es), "Avanzado y superiores");
+  assert.equal(translateText("Your API rate limit: 360 requests/min (Insider boost)", es), "Tu límite de frecuencia de API: 360 solicitudes/min (impulso Avanzado)");
+});
+
+test("the header keeps short labels in Spanish: Flujos, Recursos and Entrar, only up there", () => {
+  const page = `<!doctype html><html lang="en"><head><title>x</title></head><body>
+    <header class="header"><nav class="nav" aria-label="Main navigation">
+      <a>Platform</a>
+      <div class="nav-drop"><button>Workflows <svg></svg></button></div>
+      <div class="nav-drop"><button>Knowledge Base <svg></svg></button></div>
+    </nav><div class="header-actions"><a>Log in</a><a class="header-cta">Get started</a></div></header>
+    <main><h2>Workflows</h2><h2>Knowledge Base</h2><a>Log in</a></main></body></html>`;
+  withPage(page, (document) => {
+    startTranslator(es);
+    const buttons = [...document.querySelectorAll(".nav-drop > button")].map((b) => b.textContent.trim());
+    assert.deepEqual(buttons, ["Flujos", "Recursos"]);
+    assert.equal(document.querySelector(".header-actions > a").textContent, "Entrar");
+    assert.equal(document.querySelector(".header-cta").textContent, "Comenzar");
+    assert.equal(document.querySelector(".nav > a").textContent, "Plataforma");
+    // Everywhere else the full names stay.
+    assert.deepEqual([...document.querySelectorAll("main h2")].map((h) => h.textContent), ["Flujos de trabajo", "Base de conocimiento"]);
+    assert.equal(document.querySelector("main a").textContent, "Iniciar sesión");
+    stopTranslator();
+    assert.deepEqual([...document.querySelectorAll(".nav-drop > button")].map((b) => b.textContent.trim()), ["Workflows", "Knowledge Base"]);
+    assert.equal(document.querySelector(".header-actions > a").textContent, "Log in");
+  });
+});
+
+test("the header's labels stay on one line and the breadcrumb is cut with an ellipsis", () => {
+  const css = read("src/i18n.css");
+  assert.match(css, /@media \(min-width: 1100px\) \{\s+\.header \.nav > a,\s+\.header \.nav > \.nav-drop > button,\s+\.header-actions > a \{\s+white-space: nowrap;/);
+  assert.match(css, /@media \(min-width: 940px\) and \(max-width: 1439px\)/);
+  assert.match(css, /\.app-shell \.workspace-header > span \{\s+min-width: 0;\s+overflow: hidden;\s+text-overflow: ellipsis;\s+white-space: nowrap;/);
 });

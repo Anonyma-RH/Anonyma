@@ -162,6 +162,34 @@ function spanishDate(m, dayFirst = browserDayFirst()) {
     Number(m[4]) + ":" + m[5] + (m[6] ? ":" + m[6] : "") + " " + (m[7] === "AM" ? "a.\u00a0m." : "p.\u00a0m.");
   return date ? date + ", " + time : time;
 }
+// The names in "A, B, C" when most of them are dictionary strings. A name
+// with a comma in it ("Research, Writing & Calculators") stays one name: the
+// longest run of items that is a dictionary string wins. Names the dictionary
+// lacks (Veil) pass through; undefined when it isn't a list of names.
+function knownList(core, dict) {
+  const items = core.split(", ");
+  if (items.length < 2) return undefined;
+  const out = [];
+  let known = 0;
+  let unknown = 0;
+  for (let i = 0; i < items.length; ) {
+    let found;
+    for (let n = Math.min(5, items.length - i); n >= 1 && found === undefined; n--) {
+      const v = dict.strings.get(items.slice(i, i + n).join(", "));
+      if (v !== undefined) found = [n, v];
+    }
+    if (found) {
+      out.push(found[1]);
+      known++;
+      i += found[0];
+    } else {
+      out.push(items[i]);
+      if (hasLetters(items[i])) unknown++;
+      i++;
+    }
+  }
+  return known >= 2 && unknown <= known / 2 ? out : undefined;
+}
 // A normalized string's translation, or undefined: an exact string, then a
 // pattern (captures translated the same way when they can be), then known
 // strings inside separators, " · " status lines and ", " lists. `strict`
@@ -173,6 +201,12 @@ export function translateString(core, dict, depth = 0, strict = false) {
   const hit = dict.strings.get(core);
   if (hit !== undefined) return hit;
   if (depth > 3) return undefined;
+  // A list of known names ("Chat, Code & Build, Veil, Prepaid credits") is
+  // read name by name before a pattern can swallow its tail ("{0} credits").
+  if (depth > 0) {
+    const list = knownList(core, dict);
+    if (list) return list.join(dict.lang === "es" ? ", " : "、");
+  }
   // Several patterns can match ("credits, worth ${0}." and "…${0}.{1}");
   // the first whose captures all translate wins, else the first match.
   let fallback;
@@ -229,6 +263,19 @@ export function translateString(core, dict, depth = 0, strict = false) {
   return undefined;
 }
 
+const ENTITY = /&(?:amp|lt|gt|quot|apos|#\d+|#x[\da-f]+);/i;
+const ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+// HTML character references, undone twice: an escaped string escaped again.
+function decodeEntities(s) {
+  const once = (t) =>
+    t.replace(/&(amp|lt|gt|quot|apos|#\d+|#x[\da-f]+);/gi, (m, name) => {
+      const n = name.toLowerCase();
+      if (ENTITIES[n]) return ENTITIES[n];
+      const code = n[1] === "x" ? parseInt(n.slice(2), 16) : Number(n.slice(1));
+      return Number.isInteger(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : m;
+    });
+  return once(once(s));
+}
 // The translation of rendered text with its leading and trailing whitespace
 // kept, or undefined when there is none (the text then stays English).
 export function translateText(text, dict, strict = false) {
@@ -242,6 +289,12 @@ export function translateText(text, dict, strict = false) {
   let zh = dict.cache.get(key);
   if (zh === undefined) {
     zh = translateString(core, dict, 0, strict) ?? null;
+    // Text that reached the page with its ampersands escaped ("Writing
+    // &amp;amp; Calculators", escaped once or twice) reads as what it was.
+    if (zh === null && ENTITY.test(core)) {
+      const plain = decodeEntities(core);
+      if (plain !== core) zh = translateString(normalize(plain), dict, 0, strict) ?? null;
+    }
     if (dict.cache.size > 5000) dict.cache.clear();
     dict.cache.set(key, zh);
   }
@@ -382,7 +435,10 @@ export function createSession(dict) {
     const ens = run.map(english);
     if (adoptable && adopt(run, ens)) return;
     let bases;
-    if (run.length > 1) {
+    // A scoped word ("Workflows" in the header, beside the arrow's space
+    // node) is settled node by node, never as part of the run.
+    const scoped = !!fixed && ens.some((en) => fixed.has(normalize(en)));
+    if (run.length > 1 && !scoped) {
       const all = ens.join("");
       // A date split across nodes has no letters but still translates.
       if (hasLetters(all) || translateDate(normalize(all), dict.lang) !== undefined) {
@@ -529,6 +585,11 @@ const SCOPED = {
     [".outro-text h2", "Platform", "ANONYMA"],
     [".n-flow-outro h2", "The ANONYMA", "La plataforma"],
     [".n-flow-outro h2", "Platform", "ANONYMA"],
+    // The header's labels stay short: "Workflows" is "Flujos" and "Knowledge
+    // Base" is "Recursos" up there, "Log in" is "Entrar".
+    [".header .nav-drop > button", "Workflows", "Flujos"],
+    [".header .nav-drop > button", "Knowledge Base", "Recursos"],
+    [".header-actions > a", "Log in", "Entrar"],
     [".training-switch", "Use", "Usar"],
     [".training-switch", "instead", "en su lugar"],
     [".privacy-chip span", "Privacy", "Rastro"],

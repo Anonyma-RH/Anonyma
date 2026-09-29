@@ -87,3 +87,72 @@
   align-self: flex-start;
   margin: 6px 12px 0;
 }
+/* The header's labels never wrap from 1100 px up, whatever the language:
+   "Knowledge Base", "Log in" or a longer Spanish word would otherwise stack
+   up to five lines. Between 940 and 1440 px the padding and gaps tighten to
+   make the room (below 1100 px there isn't enough of it to forbid wrapping
+   without pushing the buttons off the screen). */
+@media (min-width: 1100px) {
+  .header .nav > a,
+  .header .nav > .nav-drop > button,
+  .header-actions > a {
+    white-space: nowrap;
+  }
+}
+@media (min-width: 940px) and (max-width: 1439px) {
+  .header .nav {
+    gap: 8px;
+  }
+  .header .nav > a,
+  .header .nav > .nav-drop > button {
+    padding-inline: 12px;
+  }
+  .header-actions > a {
+    padding-inline: 12px;
+  }
+}
+@media (min-width: 940px) and (max-width: 1099px) {
+  .header .nav {
+    gap: 0;
+    font-size: 13px;
+  }
+  .header .nav-drop > button {
+    font-size: 13px;
+  }
+  .header .nav > a,
+  .header .nav > .nav-drop > button {
+    padding-inline: 8px;
+  }
+  .header-actions > a {
+    padding-inline: 10px;
+  }
+  .header-actions > a:last-child {
+    min-width: 0;
+  }
+}
+@media (min-width: 940px) and (max-width: 1019px) {
+  .header .nav,
+  .header .nav-drop > button {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+  .header .nav > a,
+  .header .nav > .nav-drop > button {
+    padding-inline: 6px;
+  }
+  .header-actions {
+    font-size: 12px;
+  }
+  .header > .logo {
+    font-size: 22px;
+  }
+}
+/* The workspace breadcrumb ("Chat y razonamiento / Espacio de trabajo
+   personal") gives way to the toolbar: one line, cut with an ellipsis before
+   it can run under the icons. */
+.app-shell .workspace-header > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

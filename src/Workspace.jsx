@@ -4748,6 +4748,9 @@ export default function Workspace() {
                             m.content &&
                             !m.blind &&
                             !m.factcheck &&
+                            // A saved File Search answer: a check here would see the
+                            // answer without the passages it was written from.
+                            !m.filesearch &&
                             m.model &&
                             !m.sample &&
                             !(busy && i === messages.length - 1) &&

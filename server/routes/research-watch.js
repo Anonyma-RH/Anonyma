@@ -12,6 +12,7 @@ import {
 import { isReleased } from "../releases.js";
 import { isPrivateModel } from "../private-mode.js";
 import { viewerOf } from "../early-models.js";
+import { AUTO_NOT_OFFERED } from "../auto-model.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { KEEP_RUNS, bool, listRoutines, parseSchedule, routineView, units } from "../routines.js";
 import { watchCosts } from "../research-watch.js";
@@ -74,6 +75,8 @@ export function researchWatchRoutes(ctx) {
   function watchInput(body, existing = null) {
     if (!body || typeof body !== "object" || Array.isArray(body))
       fail(400, "Send the watch as a JSON object.", "invalid_watch");
+    // Auto Model is for chat composers: a watch runs on the one model chosen.
+    if (body.auto !== undefined) fail(400, AUTO_NOT_OFFERED, "auto_not_offered");
     const has = (k) => Object.hasOwn(body, k);
     const next = existing ? { ...existing } : { kind: "research", web_search: 1 };
     const need = (k) => {
@@ -154,6 +157,7 @@ export function researchWatchRoutes(ctx) {
   // nothing.
   app.post("/api/research-watches/quote", requireUser, quoteLimit, (req, res) => {
     const body = req.body && typeof req.body === "object" ? req.body : {};
+    if (body.auto !== undefined) fail(400, AUTO_NOT_OFFERED, "auto_not_offered");
     if (!Object.hasOwn(DEPTHS, body.depth))
       fail(400, "Choose Quick or Thorough research.", "invalid_watch");
     const topic =

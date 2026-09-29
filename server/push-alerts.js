@@ -113,7 +113,7 @@ export function subscriptionInput(body) {
   if (!p256dh || !validPoint(p256dh) || !auth || auth.length !== 16)
     fail(400, "That subscription's keys aren't valid. Turn notifications off and on again in this browser.", "push_keys");
   const lang = b.lang === undefined ? "en" : b.lang;
-  if (!PUSH_LANGS.includes(lang)) fail(400, "Send lang as en or zh.", "invalid_request");
+  if (!PUSH_LANGS.includes(lang)) fail(400, "Send lang as en, es or zh.", "invalid_request");
   return {
     endpoint: checked.url.href,
     service: checked.service,

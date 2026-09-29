@@ -1281,7 +1281,8 @@ export const MIGRATIONS = [
   // the page's language, the VAPID key it was made with (a short hash),
   // when it was added and last reached. At most 10 per account; an
   // endpoint belongs to one account. push_settings: the account's switches
-  // (on by default), whether the balance was last seen below the
+  // (on by default; research is Research Watch's briefings), whether the
+  // balance was last seen below the
   // Low-Balance Alerts level, and the Inactivity Wipe period already
   // reminded; it goes with the last browser. push_queue: notifications
   // waiting for delivery (a browser, a kind, when, tries), one per browser
@@ -1293,7 +1294,7 @@ export const MIGRATIONS = [
         p256dh TEXT NOT NULL CHECK(length(p256dh) BETWEEN 80 AND 100),
         auth TEXT NOT NULL CHECK(length(auth) BETWEEN 16 AND 32),
         service TEXT NOT NULL CHECK(service IN ('google','mozilla','apple','microsoft')),
-        lang TEXT NOT NULL DEFAULT 'en' CHECK(lang IN ('en','zh')),
+        lang TEXT NOT NULL DEFAULT 'en' CHECK(lang IN ('en','zh','es')),
         key_id TEXT NOT NULL,
         created INTEGER NOT NULL,
         last_success INTEGER);
@@ -1307,6 +1308,7 @@ export const MIGRATIONS = [
         lowbalance INTEGER NOT NULL DEFAULT 1 CHECK(lowbalance IN (0,1)),
         gifts INTEGER NOT NULL DEFAULT 1 CHECK(gifts IN (0,1)),
         inactivity INTEGER NOT NULL DEFAULT 1 CHECK(inactivity IN (0,1)),
+        research INTEGER NOT NULL DEFAULT 1 CHECK(research IN (0,1)),
         low_state INTEGER CHECK(low_state IN (0,1)),
         inactivity_for INTEGER,
         updated INTEGER NOT NULL);

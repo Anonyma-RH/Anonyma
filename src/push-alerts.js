@@ -4,13 +4,15 @@
 
 // The per-account switches, each on by default once a browser is subscribed,
 // and the updates each one needs besides Push Alerts itself.
-export const PUSH_EVENTS = ["pagewatch", "routines", "lowbalance", "gifts", "inactivity"];
+export const PUSH_EVENTS = ["pagewatch", "routines", "lowbalance", "gifts", "inactivity", "research"];
 export const EVENT_UPDATES = {
   pagewatch: ["pagewatch", "routines"],
   routines: ["routines"],
   lowbalance: ["balancealerts"],
   gifts: ["giftlinks"],
   inactivity: ["deadswitch", "wipe"],
+  // Research Watch runs only with Routines, Deep Research and Live Web Search.
+  research: ["researchwatch", "routines", "deepresearch", "search"],
 };
 
 // Every notification ANONYMA can send, with its fixed text. None of them
@@ -29,6 +31,9 @@ export const PUSH_KINDS = {
     url: "/account/settings#inactivity-wipe",
     body: "Inactivity Wipe erases your content in 7 days. Sign in to keep it.",
   },
+  // Research Watch (server/routines.js): a watch's new briefing is in the
+  // Routines inbox. Never the topic or anything from the report.
+  research_report: { event: "research", url: "/workspace/routines", body: "Your research watch has a new briefing." },
   test: { event: null, url: "/account/settings#push-alerts", body: "Notifications from ANONYMA are working." },
 };
 // The same text in Chinese, for browsers that subscribed with the site in
@@ -42,9 +47,25 @@ export const PUSH_BODIES_ZH = {
   "Your gift was claimed.": "你的礼物已被领取。",
   "An unclaimed gift came back to your balance.": "一份未领取的礼物已退回你的余额。",
   "Inactivity Wipe erases your content in 7 days. Sign in to keep it.": "闲置清除将在 7 天后清除你的内容。登录即可保留。",
+  "Your research watch has a new briefing.": "你的研究监测有新的简报。",
   "Notifications from ANONYMA are working.": "ANONYMA 的通知已正常工作。",
 };
-export const PUSH_LANGS = ["en", "zh"];
+// And in Spanish, for browsers that subscribed with the site in Spanish.
+// Kept equal to src/i18n/es.json's translations (tests/push-alerts.test.mjs).
+export const PUSH_BODIES_ES = {
+  "Your page watch found a change.": "Tu vigilancia de página encontró un cambio.",
+  "A page watch was paused. Open it to see why.": "Se pausó una vigilancia de página. Ábrela para ver por qué.",
+  "Your routine has a new result.": "Tu rutina tiene un resultado nuevo.",
+  "Your balance is low.": "Tu saldo está bajo.",
+  "Your gift was claimed.": "Se reclamó tu regalo.",
+  "An unclaimed gift came back to your balance.": "Un regalo sin reclamar volvió a tu saldo.",
+  "Inactivity Wipe erases your content in 7 days. Sign in to keep it.":
+    "El Borrado por inactividad borrará tu contenido en 7 días. Inicia sesión para conservarlo.",
+  "Your research watch has a new briefing.": "Tu seguimiento de investigación tiene un informe nuevo.",
+  "Notifications from ANONYMA are working.": "Las notificaciones de ANONYMA funcionan.",
+};
+export const PUSH_LANGS = ["en", "zh", "es"];
+const PUSH_BODIES = { zh: PUSH_BODIES_ZH, es: PUSH_BODIES_ES };
 
 // The notification for one kind, in the subscription's language: the whole
 // payload the browser receives (then padded and encrypted).
@@ -55,7 +76,7 @@ export function pushPayload(kind, lang = "en") {
     v: 1,
     kind,
     title: PUSH_TITLE,
-    body: lang === "zh" ? PUSH_BODIES_ZH[k.body] || k.body : k.body,
+    body: PUSH_BODIES[lang]?.[k.body] || k.body,
     url: k.url,
     tag: "anonyma-" + (k.event || kind),
   };

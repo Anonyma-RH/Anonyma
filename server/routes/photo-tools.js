@@ -6,6 +6,7 @@ import { isReleased } from "../releases.js";
 import { privacyTrail, trailLive, veilMaskedFrom } from "../privacy-trail.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { viewerOf } from "../early-models.js";
+import { AUTO_NOT_OFFERED } from "../auto-model.js";
 import { findSeedPhrase, SEED_MESSAGE } from "../../src/seed-guard.js";
 import {
   EXTEND_UNAVAILABLE,
@@ -64,6 +65,8 @@ export function photoToolsRoutes(ctx) {
   // price.
   async function prepare(req) {
     const body = req.body || {};
+    // Auto Model is for chat composers: a photo tool is always one chosen model.
+    if (body.auto !== undefined) fail(400, AUTO_NOT_OFFERED, "auto_not_offered");
     if (body.tool === "extend") fail(400, EXTEND_UNAVAILABLE, "tool_unavailable");
     if (!TOOLS.includes(body.tool)) fail(400, "Choose a photo tool: edit, background or upscale.", "invalid_tool");
     const current = await ctx.models.current();

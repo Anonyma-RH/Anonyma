@@ -12,6 +12,7 @@ import {
   markupFactor,
 } from "../core.js";
 import { requestIdentifier } from "../middleware.js";
+import { viewerOf } from "../early-models.js";
 import { isPrivateModel } from "../private-mode.js";
 import { isReleased } from "../releases.js";
 import { tagUsage } from "../usage-insights.js";
@@ -89,6 +90,9 @@ export function researchRoutes(ctx) {
     const m = getModel(body.model);
     if (m.type !== "chat" || imageCallable(m))
       fail(400, "Deep research needs a text model.", "unsupported_model");
+    // Early Model Access, as a chat (and Research Watch) checks it: before
+    // anything is quoted or held.
+    ctx.earlyModels.check(viewerOf(req), "models", m.id);
     const isPrivate = body.private === true;
     if (isPrivate && !isPrivateModel(m, cfg))
       fail(400, "Private mode needs a model with zero data retention.", "private_model_required");
@@ -280,17 +284,23 @@ export function researchRoutes(ctx) {
         research: { stage: "planning", depth, max_searches: cap, reserved: credits(costs.total) },
         conversationId: conversation,
       });
-      // 1. Plan: strict JSON sub-questions, else the question itself.
+      // 1. Plan: strict JSON sub-questions, else the question itself. A plan
+      // that can't be used (not the JSON asked for) is released, uncharged,
+      // as Research Watch does: you pay only for results you get.
       try {
         const r = await call(costs.messages.plan, costs.budget.plan, false);
         if (!r.text.trim()) fail(502, "The planner returned nothing.", "empty_output");
-        Object.assign(planStep, {
-          status: "done",
-          credits: settleStep("plan", r),
-          finish_reason: r.finish || "stop",
-          ...withRoute(r.route),
-        });
         plan = parsePlan(r.text, question, cap);
+        if (plan.fallback) {
+          releaseStep("plan");
+          Object.assign(planStep, { status: "failed", finish_reason: r.finish || "stop", ...withRoute(r.route) });
+        } else
+          Object.assign(planStep, {
+            status: "done",
+            credits: settleStep("plan", r),
+            finish_reason: r.finish || "stop",
+            ...withRoute(r.route),
+          });
       } catch (e) {
         releaseStep("plan");
         planStep.status = stopped() ? "stopped" : "failed";

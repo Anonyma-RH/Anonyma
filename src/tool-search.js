@@ -47,6 +47,8 @@ const INTENTS = [
   ['code|coding|programming|debug|debugging|bug|website|app|编程|代码|调试', { code: 140, api: 35 }],
   ['team|teamwork|collaborate|collaboration|together|shared|协作|团队|共享', { collab: 140, projects: 30 }],
   ['schedule|scheduled|automate|automatic|recurring|daily|weekly|monitor|watch|定时|自动|每日|每周|监控', { routines: 140 }],
+  // Research Watch lives on the Routines page: a scheduled, sourced briefing.
+  ['research watch|research watches|briefing|briefings|keep me updated|keep me posted|track a topic|follow a topic|研究监测|简报|跟踪主题', { routines: 180 }],
   ['organize|organise|organization|organisation|folders|folder|整理|文件夹', { projects: 140 }],
   ['saved pictures|saved images|saved videos|creations|gallery|media library|已保存|作品|媒体库', { library: 140 }],
   ['edit photo|edit photos|edit a photo|photo editor|photo editing|retouch|cut out|cutout|remove background|remove the background|background removal|transparent background|upscale|upscaling|enlarge|enhance photo|修图|抠图|去背景|放大图片|高清放大', { photos: 140 }],

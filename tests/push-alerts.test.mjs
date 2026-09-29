@@ -43,6 +43,7 @@ import { BACKOFF_MS, MAX_ATTEMPTS, keyIdOf } from "../server/push-alerts.js";
 import {
   PUSH_KINDS,
   PUSH_BODIES_ZH,
+  PUSH_BODIES_ES,
   PUSH_EVENTS,
   MAX_DEVICES,
   deviceTag,
@@ -63,6 +64,7 @@ after(() => UPDATES.forEach((u, i) => (u.released = committed[i])));
 
 const b64u = (s) => Buffer.from(s.replace(/\s+/g, ""), "base64url");
 const zhDict = JSON.parse(readFileSync(new URL("../src/i18n/zh.json", import.meta.url), "utf8"));
+const esDict = JSON.parse(readFileSync(new URL("../src/i18n/es.json", import.meta.url), "utf8"));
 const zh = compileDictionary(zhDict);
 const han = /\p{Script=Han}/u;
 const VAPID = generateVapidKeys();
@@ -513,7 +515,7 @@ test("a test notification: VAPID-signed, encrypted to the browser, fixed size an
   // Every kind has the same encrypted size.
   const sizes = new Set();
   for (const kind of Object.keys(PUSH_KINDS))
-    for (const lang of ["en", "zh"]) {
+    for (const lang of ["en", "zh", "es"]) {
       const body = encryptPush({
         uaPublic: b.ecdh.getPublicKey(),
         authSecret: b.auth,
@@ -1084,6 +1086,10 @@ test("the section is gated, honest about what it does, and every word on it tran
   // The notifications' Chinese is the dictionary's.
   for (const k of Object.values(PUSH_KINDS)) assert.equal(PUSH_BODIES_ZH[k.body], zhDict.strings[k.body], k.body);
   assert.deepEqual(Object.keys(PUSH_BODIES_ZH).sort(), [...new Set(Object.values(PUSH_KINDS).map((k) => k.body))].sort());
+  // And the Spanish (batch 8: a browser can subscribe with the site in Spanish).
+  for (const k of Object.values(PUSH_KINDS)) assert.equal(PUSH_BODIES_ES[k.body], esDict.strings[k.body], k.body);
+  assert.deepEqual(Object.keys(PUSH_BODIES_ES).sort(), Object.keys(PUSH_BODIES_ZH).sort());
+  assert.equal(pushPayload("research_report", "es").body, esDict.strings["Your research watch has a new briefing."]);
   // The key the page subscribes with is the server's.
   assert.deepEqual(Buffer.from(keyBytes(VAPID.publicKey)), Buffer.from(VAPID.publicKey, "base64url"));
   assert.equal(await deviceTag("x"), createHash("sha256").update("x").digest("hex").slice(0, 16));

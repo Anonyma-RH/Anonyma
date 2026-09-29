@@ -28,6 +28,7 @@ const EVENTS = [
   ["lowbalance", "Low balance", PUSH_KINDS.lowbalance.body],
   ["gifts", "Gift Links", PUSH_KINDS.gift_claimed.body],
   ["inactivity", "Inactivity Wipe reminder", PUSH_KINDS.inactivity.body],
+  ["research", "Research watch briefings", PUSH_KINDS.research_report.body],
 ];
 
 // What the push service said to a test (POST …/test's outcome).

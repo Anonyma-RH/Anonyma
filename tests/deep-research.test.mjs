@@ -37,6 +37,7 @@ after(() => UPDATES.forEach((u, i) => (u.released = committed[i])));
 
 const MODEL = "google/gemini-2.5-flash";
 const QUESTION = "How do passkeys compare with passwords for everyday security?";
+const NYMA_CONTRACT = "0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583";
 const PLAN = [
   "How do passkeys work under the hood?",
   "Are passkeys resistant to phishing?",
@@ -457,10 +458,61 @@ test("thorough runs up to 6 searches; invalid planner JSON falls back to one sea
   const searches = g2.calls.filter((c) => c.kind === "search");
   assert.equal(searches.length, 1);
   assert.equal(searches[0].body.messages[1].content, QUESTION);
-  // The planner still ran, so it's charged; the 5 unused searches are released.
+  // The planner's output couldn't be used, so its step is released like the
+  // 5 unused searches (batch 8: as Research Watch); the search and report settle.
   const holds = holdsOf(s2, b.user.id);
-  assert.equal(holds.filter((h) => h.status === "settled").length, 3);
-  assert.equal(holds.filter((h) => h.status === "released").length, 5);
+  assert.equal(holds.filter((h) => h.status === "settled").length, 2);
+  assert.equal(holds.filter((h) => h.status === "released").length, 6);
+});
+
+test("an unusable plan is released and charges nothing; a usable one is charged", async (t) => {
+  const g = await gateway(t, { plan: "Search passkeys, then phishing." });
+  const s = fixture(t, { gatewayUrl: g.url });
+  const a = await person(s, "pia");
+  const list = events((await ask(a).expect(200)).body);
+  const done = list.at(-1);
+  assert.equal(done.research.stage, "done");
+  const plan = done.message.research.steps.find((x) => x.kind === "plan");
+  assert.equal(plan.status, "failed");
+  assert.equal(plan.credits, 0);
+  const holds = holdsOf(s, a.user.id);
+  const planHold = holds.find((h) => h.id.endsWith(":plan"));
+  assert.equal(planHold.status, "released");
+  // Only the one search and the report reached the ledger.
+  assert.equal(holds.filter((h) => h.status === "settled").length, 2);
+  // A usable plan settles its step as before.
+  const g2 = await gateway(t);
+  const s2 = fixture(t, { gatewayUrl: g2.url });
+  const b = await person(s2, "quin");
+  const ok = events((await ask(b).expect(200)).body).at(-1);
+  const plan2 = ok.message.research.steps.find((x) => x.kind === "plan");
+  assert.equal(plan2.status, "done");
+  assert.ok(plan2.credits > 0);
+  assert.equal(holdsOf(s2, b.user.id).find((h) => h.id.endsWith(":plan")).status, "settled");
+});
+
+test("Early Model Access: a model still in its early days is refused before anything is quoted or held", async (t) => {
+  const g = await gateway(t);
+  // Early Model Access is in effect only with the NYMA holder settings (the
+  // public NYMA contract, as in tests/early-models.test.mjs).
+  const s = fixture(t, {
+    gatewayUrl: g.url,
+    token: NYMA_CONTRACT,
+    chain: 4663,
+    rpc: "http://127.0.0.1:1",
+  });
+  const a = await person(s, "rhea");
+  s.db
+    .prepare(
+      "INSERT INTO model_first_seen(catalog,id,first_seen) VALUES('models',?,?) ON CONFLICT(catalog,id) DO UPDATE SET first_seen=excluded.first_seen",
+    )
+    .run(MODEL, Date.now());
+  const quote = await a.agent.post("/api/research/quote").send({ model: MODEL, question: QUESTION, depth: "quick" }).expect(403);
+  assert.equal(quote.body.error.code, "early_model");
+  const run = await ask(a).expect(403);
+  assert.equal(run.body.error.code, "early_model");
+  assert.equal(g.calls.length, 0);
+  assert.equal(holdsOf(s, a.user.id).length, 0);
 });
 
 test("stopping mid-way charges only the finished steps and keeps what they found", async (t) => {

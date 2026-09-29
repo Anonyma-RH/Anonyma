@@ -1593,6 +1593,7 @@ const pushEvents = object({
   lowbalance: { ...bool, description: "The settled balance dropped below the Low-Balance Alerts level (needs Low-Balance Alerts and a level)" },
   gifts: { ...bool, description: "A gift was claimed, or came back unclaimed (needs Gift Links)" },
   inactivity: { ...bool, description: "Inactivity Wipe's reminder, 7 days before the deadline (needs Inactivity Wipe on)" },
+  research: { ...bool, description: "A research watch has a new briefing in the Routines inbox (needs Research Watch, Routines, Deep Research and Live Web Search)" },
 });
 const pushView = object({
   available: { ...bool, description: "This server has a valid VAPID key pair and contact (the same as /api/config's services.push)" },
@@ -1602,7 +1603,7 @@ const pushView = object({
       id: string,
       service: { enum: ["google", "mozilla", "apple", "microsoft"] },
       tag: { ...string, description: "The first 16 hex characters of SHA-256 of the endpoint, so a page can recognise its own browser; the endpoint itself is never returned" },
-      lang: { enum: ["en", "zh"] },
+      lang: { enum: ["en", "zh", "es"] },
       created: integer,
       lastSuccess: { type: ["integer", "null"], description: "When a push service last accepted a notification for it" },
       stale: { ...bool, description: "Subscribed with an older VAPID key; nothing is sent until that browser subscribes again" },
@@ -1616,14 +1617,14 @@ const pushView = object({
 route("get", "/api/push", "Your Push Alerts browsers and switches", {
   response: pushView,
   description:
-    "Push Alerts sends browser notifications through Web Push, with no email. Each notification is one fixed sentence (a page watch found a change, a routine has a result, the balance is low, a gift was claimed or came back, Inactivity Wipe is 7 days away, or a test) and a link to the page to open: never chat or page text, amounts or names. The push service (Google, Mozilla, Apple or Microsoft) receives only the endpoint and an encrypted, fixed-size message. Account export includes pushAlerts (each browser's push service host, dates and language, and the switches); Panic Wipe, Inactivity Wipe and closing the account delete all of it.",
+    "Push Alerts sends browser notifications through Web Push, with no email. Each notification is one fixed sentence (a page watch found a change, a routine has a result, the balance is low, a gift was claimed or came back, Inactivity Wipe is 7 days away, a research watch has a new briefing, or a test) and a link to the page to open: never chat or page text, amounts or names. The push service (Google, Mozilla, Apple or Microsoft) receives only the endpoint and an encrypted, fixed-size message. Account export includes pushAlerts (each browser's push service host, dates and language, and the switches); Panic Wipe, Inactivity Wipe and closing the account delete all of it.",
 });
 route("post", "/api/push/subscriptions", "Turn on notifications in this browser", {
   body: object(
     {
       endpoint: { ...string, description: "PushSubscription.endpoint: https, on a known push service" },
       keys: object({ p256dh: string, auth: string }, ["p256dh", "auth"]),
-      lang: { enum: ["en", "zh"], description: "The language notifications are written in (default en)" },
+      lang: { enum: ["en", "zh", "es"], description: "The language notifications are written in (default en)" },
     },
     ["endpoint", "keys"],
   ),
@@ -1887,7 +1888,7 @@ route("post", "/api/research-watches/quote", "The most one research run can cost
     min_monthly_budget_credits: number,
     estimate: bool,
   }),
-  description: "Reserves and charges nothing. The same checks as saving a watch (model, Private Mode, context allowance). 120 quotes a minute.",
+  description: "Reserves and charges nothing. The same checks as saving a watch (model, Private Mode, context allowance). Auto Model isn't offered: 400 auto_not_offered with auto. 120 quotes a minute.",
 });
 route("post", "/api/research-watches", "Create a research watch", {
   status: 201,
@@ -1899,7 +1900,7 @@ route("post", "/api/research-watches", "Create a research watch", {
 route("patch", "/api/research-watches/{id}", "Change, switch on or switch off a research watch", {
   body: object(researchWatchFields),
   response: researchWatch,
-  description: "Omitted fields keep their value. Anything but switching off re-prices the watch, so per_run_credits is what a run would hold now. A new schedule, or switching on, moves the next run to the next slot after now.",
+  description: "Omitted fields keep their value. Anything but switching off re-prices the watch, so per_run_credits is what a run would hold now. A new schedule, or switching on, moves the next run to the next slot after now. A watch runs on the model chosen: 400 auto_not_offered with auto.",
 });
 route("delete", "/api/research-watches/{id}", "Delete a research watch and its reports", {
   response: ref("Ok"),
@@ -2609,13 +2610,13 @@ route("post", "/api/research/quote", "The most a Deep research run can cost", {
     estimate: bool,
   }),
   description:
-    "Reserves and charges nothing. The same checks as a run (Seed Guard with no override, Veil, Private Mode, context allowance), so a quote that succeeds describes exactly what a run would hold.",
+    "Reserves and charges nothing. The same checks as a run (Seed Guard with no override, Veil, Private Mode, Early Model Access (403 early_model), context allowance), so a quote that succeeds describes exactly what a run would hold.",
 });
 route("post", "/api/research", "Run Deep research", {
   body: researchRequest,
   stream: true,
   description:
-    "Workspace only (session). Plans up to 3 or 6 sub-questions (strict JSON; invalid output falls back to the question itself; every step's instructions say today's date in UTC and the planner and searches prefer recent items), runs one web search per sub-question and writes a Markdown report whose [n] citations map only to the pages those searches returned; other URLs and out-of-range numbers are removed. Before anything runs, every step is held at its maximum (402 insufficient_credits or spending_limit, 409 research_running for a second run, with nothing charged). Each step settles on its own usage as it finishes; a step that fails, is stopped (closing the stream) or never starts is released, so only finished steps are charged. SSE events: research.stage planning, planned (questions), searching / searched (index, status, sources, credits), writing, then done with message { text, citations, research } and anonyma { credits_charged, request_id, private?, privacy?, memory? }, or error with whatever finished. A saved run adds the question and the report to the conversation as ordinary messages.",
+    "Workspace only (session). Plans up to 3 or 6 sub-questions (strict JSON; invalid output falls back to the question itself, and that plan step is released, not charged; every step's instructions say today's date in UTC and the planner and searches prefer recent items), runs one web search per sub-question and writes a Markdown report whose [n] citations map only to the pages those searches returned; other URLs and out-of-range numbers are removed. Before anything runs, every step is held at its maximum (402 insufficient_credits or spending_limit, 409 research_running for a second run, with nothing charged). Each step settles on its own usage as it finishes; a step that fails, is stopped (closing the stream) or never starts is released, so only finished steps are charged. SSE events: research.stage planning, planned (questions), searching / searched (index, status, sources, credits), writing, then done with message { text, citations, research } and anonyma { credits_charged, request_id, private?, privacy?, memory? }, or error with whatever finished. A saved run adds the question and the report to the conversation as ordinary messages.",
 });
 // Translate Documents (update "doctranslate").
 route("post", "/api/translate/quote", "The most translating a document's parts can cost", {
@@ -3014,7 +3015,7 @@ route("post", "/api/photo-tools/quote", "The most a photo run can cost", {
     model: string,
     estimate: bool,
   }),
-  description: "Reserves and charges nothing. The same checks as a run, so a quote that succeeds describes exactly what a run would hold.",
+  description: "Reserves and charges nothing. The same checks as a run, so a quote that succeeds describes exactly what a run would hold. A photo tool runs on the model chosen: 400 auto_not_offered with auto.",
 });
 route("post", "/api/photo-tools/run", "Run a photo tool", {
   body: object(

@@ -18,6 +18,8 @@ import { watchCosts, watchWritePrompt } from "../server/research-watch.js";
 import { todayLine } from "../server/research.js";
 import { MAX_WATCHES, MAX_PREVIOUS, TOPIC_LIMIT, defaultName, keyFindings } from "../src/research-watch.js";
 import { DATA_NOTICE } from "../src/documents.js";
+import { generateVapidKeys } from "../server/web-push.js";
+import { keyIdOf } from "../server/push-alerts.js";
 import { compileDictionary, translateText } from "../src/i18n.js";
 
 // Release commits flip `released` on UPDATES entries. These tests cover the
@@ -1013,6 +1015,56 @@ test("one run at a time per watch; stopping a run keeps and charges only what fi
   assert.equal(balance(s.db, p.user.id).held, 0);
   assert.ok(run.charged > 0);
   assert.equal(s.db.prepare("SELECT COUNT(*) n FROM ledger WHERE user_id=? AND amount<0").get(p.user.id).n, 2);
+});
+
+test("batch 8: with Push Alerts live, a delivered briefing queues its own notification, not a routine's, and its switch turns it off", async (t) => {
+  const c = clock(t, utc("2026-09-25T07:00:00Z"));
+  const g = await gateway(t);
+  const vapid = generateVapidKeys();
+  const s = fixture(t, {
+    gatewayUrl: g.url,
+    vapidPublicKey: vapid.publicKey,
+    vapidPrivateKey: vapid.privateKey,
+    vapidSubject: "mailto:push@anonyma.test",
+  });
+  // Nothing is delivered in this test (no request leaves for a push service):
+  // only what is queued is checked.
+  await s.push.stop();
+  const p = await person(s);
+  s.db
+    .prepare(
+      "INSERT INTO push_subscriptions(id,user_id,endpoint,p256dh,auth,service,lang,key_id,created) VALUES(?,?,?,?,?,?,?,?,?)",
+    )
+    .run("ps_rw", p.user.id, "https://fcm.googleapis.com/fcm/send/rw-" + p.user.id, "B" + "A".repeat(86), "A".repeat(22), "google", "es", keyIdOf(vapid.publicKey), now());
+  s.db.prepare("INSERT INTO push_settings(user_id,updated) VALUES(?,?)").run(p.user.id, now());
+  const queued = () => s.db.prepare("SELECT kind FROM push_queue WHERE user_id=? ORDER BY created,rowid").all(p.user.id).map((r) => r.kind);
+  const made = await create(p);
+  c.set(utc("2026-09-25T08:00:30Z"));
+  await s.tick();
+  assert.equal((await inbox(p))[0].status, "done");
+  assert.deepEqual(queued(), ["research_report"]);
+  // The switch is the account's, on by default; off, the next briefing is quiet.
+  assert.equal((await p.agent.get("/api/push").expect(200)).body.events.research, true);
+  await p.agent.patch("/api/push/settings").send({ research: false }).expect(200);
+  s.db.prepare("DELETE FROM push_queue").run();
+  c.set(utc("2026-09-26T08:00:30Z"));
+  await s.tick();
+  assert.equal(runs(s, made.id).length, 2);
+  assert.deepEqual(queued(), []);
+});
+
+test("batch 8: Auto Model isn't offered for a watch: quote, create and change refuse an auto field", async (t) => {
+  const s = fixture(t);
+  const p = await person(s);
+  const made = await create(p);
+  for (const send of [
+    () => p.agent.post("/api/research-watches/quote").send({ model: MODEL, depth: "quick", auto: {} }),
+    () => p.agent.post("/api/research-watches").send(body({ topic: "Another", auto: {} })),
+    () => p.agent.patch("/api/research-watches/" + made.id).send({ auto: {} }),
+  ]) {
+    const res = await send().expect(400);
+    assert.equal(res.body.error.code, "auto_not_offered");
+  }
 });
 
 test("Early Model Access: a model still in its early days can't be chosen below Insider, and each run checks again", async (t) => {

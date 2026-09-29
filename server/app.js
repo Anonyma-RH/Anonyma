@@ -134,6 +134,10 @@ export function createApp(overrides = {}) {
   // Push Alerts (server/push-alerts.js): created before the routes so
   // Routines, Page Watch and Gift Links can queue their notifications.
   ctx.push = createPushAlerts(ctx);
+  // Research Watch tells Push Alerts about a delivered briefing through
+  // ctx.pushAlerts (server/routines.js): ids only, and only the account and
+  // kind reach the queue (tests replace it with setPushAlerts).
+  ctx.pushAlerts = { notify: ({ user, kind }) => ctx.push.notify(user, kind) };
   // The catalog this process starts with. On a new or just-upgraded
   // database it becomes the baseline: nothing already listed is new.
   earlyModels.recordCatalog(ctx.models.snapshot);

@@ -1258,7 +1258,7 @@ export const UPDATES = [
     // account are ever sent; the Device Vault and Markdown destinations
     // make no request at all. The page is /workspace/import. Nothing is
     // charged: no model is called.
-    released: false,
+    released: true,
   },
   {
     id: "phototools",

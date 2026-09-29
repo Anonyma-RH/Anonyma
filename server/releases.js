@@ -1175,6 +1175,28 @@ export const UPDATES = [
     // recording itself is never stored. The page is /workspace/notes.
     released: true,
   },
+  {
+    id: "filesearch",
+    title: "File Search",
+    tagline: "Ask across all your files at once. Answers cite the exact file and passage.",
+    points: [
+      "One question across every saved file, with each answer citing the file and the passage",
+      "See the few passages that will be sent first; only those go to the model, never whole files or their names",
+      "See the most it can cost first; an answer that can't be used costs nothing",
+    ],
+    // The workspace's File Search page (src/FileSearch.jsx), /workspace/
+    // filesearch. It searches the text of the account's saved files, so it
+    // needs Files & Reusable Uploads and Documents too (featuresFor). The
+    // text is cut into passages and indexed per account (file_chunks,
+    // server/file-search.js; erased with the file, its expiry and every
+    // erase, and exported with the account). Finding passages sends nothing
+    // to a model; an answer is one model call on the passages kept, held
+    // and settled on the ordinary billing path
+    // (/api/file-search, server/routes/file-search.js). A saved answer is an
+    // ordinary conversation naming the files and places it cites; off the
+    // record and Private Mode keep nothing.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1399,6 +1421,23 @@ export function featuresFor(req) {
     const needed = ["doctranslate"];
     if (post) {
       if (body.private === true) needed.push("private", "ephemeral");
+      if (body.veil_masked !== undefined) needed.push("trail");
+      if (body.allow_seed_phrase !== undefined) needed.push("seedguard");
+    }
+    return needed;
+  }
+  // File Search: a question matched against the text of the account's saved
+  // files. It reads what Files & Reusable Uploads saved and Documents
+  // extracted, so it needs both. What an answer turns on needs its own
+  // update, as the same chat would: Private Mode (which always takes the off-
+  // the-record path), off the record, a project's pinned files, Privacy
+  // Trail's Veil count and Seed Guard's override.
+  if (p === "/api/file-search" || p.startsWith("/api/file-search/")) {
+    const needed = ["filesearch", "files", "documents"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      else if (body.ephemeral === true) needed.push("ephemeral");
+      if (body.project !== undefined) needed.push("projects");
       if (body.veil_masked !== undefined) needed.push("trail");
       if (body.allow_seed_phrase !== undefined) needed.push("seedguard");
     }

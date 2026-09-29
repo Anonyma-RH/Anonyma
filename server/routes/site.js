@@ -44,6 +44,8 @@ export function siteRoutes({ app, db, cfg }) {
     translate: isReleased(cfg, "doctranslate"),
     // Meeting Notes' page, which transcribes with Voice & Audio's models.
     notes: isReleased(cfg, "meetingnotes") && isReleased(cfg, "audio"),
+    // File Search's page, which searches saved files' text.
+    filesearch: isReleased(cfg, "filesearch") && isReleased(cfg, "files") && isReleased(cfg, "documents"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

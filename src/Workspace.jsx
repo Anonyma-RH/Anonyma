@@ -44,6 +44,8 @@ const OnDevice = lazy(() => import("./OnDevice.jsx"));
 const Study = lazy(() => import("./Study.jsx"));
 // Meeting Notes: its recording reader and notes view load only on its page.
 const MeetingNotes = lazy(() => import("./MeetingNotes.jsx"));
+// File Search: its page loads only when opened.
+const FileSearch = lazy(() => import("./FileSearch.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
@@ -323,6 +325,7 @@ export function AppSidebar({
     ["study", "Study", "Turn a document or conversation into flashcards and quizzes to practise what you have learned."],
     ["slides", "Slides", "Turn a prompt, document or chat into a slide deck. Edit, present or export it."],
     ["notes", "Meeting notes", "Turn a recording into a timestamped transcript, key decisions and action items."],
+    ["filesearch", "Search files", "Ask one question across all your saved files. Every answer cites the file and the passage it came from."],
     ["routines", "Routines", "Schedule prompts to run automatically with spending limits. Read the results in your inbox."],
     ["projects", "Projects", "Group related chats, files and instructions in folders. Set defaults for each project."],
     ["library", "Your library", "Find and revisit the images, videos and audio you have created."],
@@ -336,7 +339,8 @@ export function AppSidebar({
     .filter(([id]) => id !== "study" || isReleased(config, "study"))
     .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
     .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
-    .filter(([id]) => id !== "notes" || modeReleased(config, "notes"));
+    .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
+    .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"));
   // Recompute translated matching when the language changes, even on Account pages.
   useLanguage();
   const toolAvailable = (id) => id === "models" || (id === "api" ? isReleased(config, "api") : modeReleased(config, id));
@@ -618,7 +622,9 @@ export default function Workspace() {
     // Translate Documents' page, likewise.
     (mode === "translate" && (!config || isReleased(config, "doctranslate"))) ||
     // Meeting Notes' page, the same way (it needs Voice & Audio too).
-    (mode === "notes" && (!config || modeReleased(config, "notes")));
+    (mode === "notes" && (!config || modeReleased(config, "notes"))) ||
+    // File Search's page, likewise (it needs Files and Documents too).
+    (mode === "filesearch" && (!config || modeReleased(config, "filesearch")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3813,6 +3819,7 @@ export default function Workspace() {
                 slides: "Slides",
                 translate: "Translate docs",
                 notes: "Meeting notes",
+                filesearch: "Search files",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4086,6 +4093,24 @@ export default function Workspace() {
                   vaultLive={vaultLive}
                   onUnlockVault={() => setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })}
                   projects={projectsLive ? projects.list : []}
+                />
+              </Suspense>
+            )
+          ) : mode === "filesearch" ? (
+            modeReleased(config, "filesearch") && (
+              <Suspense fallback={<p className="fsearch-loading">Opening Search files…</p>}>
+                <FileSearch
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  models={models}
+                  config={config}
+                  refresh={refresh}
+                  veilOn={veilOn}
+                  setVeilOn={setVeilOn}
+                  veilWords={veilWords}
+                  vault={vault}
+                  vaultLive={vaultLive}
                 />
               </Suspense>
             )

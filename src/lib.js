@@ -508,11 +508,15 @@ export const MODE_FEATURES = {
   translate: "doctranslate",
   // Meeting Notes' page (src/MeetingNotes.jsx), which needs Voice & Audio too.
   notes: "meetingnotes",
+  // File Search's page (src/FileSearch.jsx), which searches saved files'
+  // text, so it needs Files & Reusable Uploads and Documents too.
+  filesearch: "filesearch",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")
     return ["images", "video", "audio"].some((id) => isReleased(config, id));
   if (mode === "notes") return isReleased(config, "meetingnotes") && isReleased(config, "audio");
+  if (mode === "filesearch") return ["filesearch", "files", "documents"].every((id) => isReleased(config, id));
   return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
 }
 

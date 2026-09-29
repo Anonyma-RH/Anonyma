@@ -17,6 +17,7 @@ import {
   WIPE_GIFTS,
   WIPE_VAULT_SYNC,
   WIPE_CANVAS,
+  WIPE_FILE_SEARCH,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPED_PATH,
@@ -51,6 +52,7 @@ export function PanicWipe({ user }) {
   const vaultSyncLive = isReleased(config, "vaultsync");
   // And canvases saved to the account.
   const canvasLive = isReleased(config, "canvas");
+  const fileSearchLive = isReleased(config, "filesearch");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
   const [open, setOpen] = useState(false),
@@ -127,6 +129,7 @@ export function PanicWipe({ user }) {
                   {giftsLive && <li>{WIPE_GIFTS}</li>}
                   {vaultSyncLive && <li>{WIPE_VAULT_SYNC}</li>}
                   {canvasLive && <li>{WIPE_CANVAS}</li>}
+                  {fileSearchLive && <li>{WIPE_FILE_SEARCH}</li>}
                 </ul>
               </div>
               <div>

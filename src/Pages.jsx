@@ -891,6 +891,7 @@ const featureIcons = {
   slides: "present",
   doctranslate: "languages",
   meetingnotes: "meeting",
+  filesearch: "filesearch",
 };
 const launch = {
   id: "mvp",

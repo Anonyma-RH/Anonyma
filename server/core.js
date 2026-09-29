@@ -1238,6 +1238,48 @@ export const MIGRATIONS = [
         WHEN (SELECT COUNT(*) FROM slide_decks WHERE user_id=NEW.user_id)>=200
         BEGIN SELECT RAISE(ABORT,'slides_limit'); END;
   `),
+  // File Search (server/file-search.js): an index over the text of an
+  // account's saved files. file_chunks holds each file's text as passages
+  // (about 900 characters, with a section label); file_index says a file
+  // has been indexed (and whether its passages are in the full-text index),
+  // so an empty file isn't read again. Both go with the file: deleting a
+  // file, its expiry and every erase (closure, Panic Wipe, Inactivity Wipe)
+  // remove its passages, and a trigger removes them from the full-text
+  // index, SQLite's FTS5 where Node's SQLite has it (else the server ranks
+  // passages in JS). The index's secure-delete option overwrites removed
+  // words rather than leaving them until a merge. Erased and exported with
+  // the account.
+  (db) => {
+    additive(`
+      CREATE TABLE IF NOT EXISTS file_chunks(id INTEGER PRIMARY KEY AUTOINCREMENT,
+        upload_id TEXT NOT NULL REFERENCES uploads(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        ord INTEGER NOT NULL,
+        kind TEXT NOT NULL CHECK(kind IN ('heading','slide','sheet','page','part')),
+        section TEXT NOT NULL,
+        text TEXT NOT NULL);
+      CREATE INDEX IF NOT EXISTS file_chunks_upload ON file_chunks(upload_id,ord);
+      CREATE INDEX IF NOT EXISTS file_chunks_user ON file_chunks(user_id);
+      CREATE TABLE IF NOT EXISTS file_index(upload_id TEXT PRIMARY KEY REFERENCES uploads(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        chunks INTEGER NOT NULL,
+        fts INTEGER NOT NULL DEFAULT 0 CHECK(fts IN (0,1)),
+        indexed INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS file_index_user ON file_index(user_id);
+    `)(db);
+    try {
+      db.exec(
+        `CREATE VIRTUAL TABLE IF NOT EXISTS file_chunks_fts USING fts5(body,scope,tokenize='porter unicode61 remove_diacritics 2');
+         CREATE TRIGGER IF NOT EXISTS file_chunks_gone AFTER DELETE ON file_chunks
+           BEGIN DELETE FROM file_chunks_fts WHERE rowid=OLD.id; END;`,
+      );
+      try {
+        db.exec("INSERT INTO file_chunks_fts(file_chunks_fts,rank) VALUES('secure-delete',1)");
+      } catch {}
+    } catch {
+      // No FTS5 in this SQLite: passages are ranked in JS instead.
+    }
+  },
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

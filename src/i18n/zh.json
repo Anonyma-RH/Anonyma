@@ -5776,7 +5776,90 @@
     "Send each piece as a WAV file.": "请以 WAV 文件发送每个片段。",
     "Send each piece as mono 16-bit PCM at 16 kHz.": "请以 16 kHz 单声道 16 位 PCM 发送每个片段。",
     "Timing comes from the transcription provider. Some sections may span up to five minutes.": "时间标记由转录服务提供，部分段落可能长达五分钟。",
-    "Owners only when the transcript names them; timed notes link to transcript sections": "仅在转录明确提及姓名时标注负责人；带时间标记的纪要链接到对应转录段落"
+    "Owners only when the transcript names them; timed notes link to transcript sections": "仅在转录明确提及姓名时标注负责人；带时间标记的纪要链接到对应转录段落",
+    "YOUR SAVED FILES": "你保存的文件",
+    "Search files": "搜索文件",
+    "Ask one question across all your saved files. ANONYMA finds the best passages, shows you what would be sent, and the AI answers from those passages only, citing the file and the place.": "对你保存的所有文件提一个问题。ANONYMA 会找出最相关的段落，让你先看到将发送的内容，AI 只根据这些段落作答，并标明所引用的文件和位置。",
+    "The demo has no saved files. Sign in to search yours.": "演示中没有已保存的文件。登录后即可搜索你自己的文件。",
+    "Sign in to search your saved files.": "登录后即可搜索你保存的文件。",
+    "Reading your saved files…": "正在读取你保存的文件……",
+    "No saved files to search yet": "还没有可搜索的已保存文件",
+    "Save a text, code, Word, Excel or PowerPoint file from the paperclip menu in Chat (Saved files). It stays for the days you choose, up to 30, and you can ask across all of them here.": "在对话的回形针菜单（已保存的文件）中保存文本、代码、Word、Excel 或 PowerPoint 文件。文件会按你选择的天数保留，最长 30 天，之后你就可以在这里对所有文件统一提问。",
+    "Only a project's pinned files": "仅限某个项目的固定文件",
+    "Choose a project…": "选择项目……",
+    "No text found": "未找到文字",
+    "Files are saved from the paperclip menu in Chat and stay for the days you chose, up to 30. Audio, PDFs and images aren't searched.": "文件通过对话的回形针菜单保存，并按你选择的天数保留，最长 30 天。音频、PDF 和图片不会被搜索。",
+    "What notice do I have to give before ending the lease?": "终止租约前，我必须提前多久通知？",
+    "Find passages": "查找段落",
+    "This looks for the words of your question in your files, on ANONYMA's server. Nothing goes to an AI yet, and your question isn't saved.": "这一步会在 ANONYMA 的服务器上，按你问题中的字词查找你的文件。此时还没有任何内容发送给 AI，你的问题也不会被保存。",
+    "Only passages go": "只发送段落",
+    "Only the few best passages you keep are sent to the model. Never whole files, and never their names.": "只有你保留的最相关的几个段落会发送给模型。绝不发送整份文件，也绝不发送文件名。",
+    "You see it first": "先看后发",
+    "Look at exactly what the AI will see before you ask. Uncheck any passage to leave it out.": "提问前先查看 AI 将看到的确切内容。取消勾选任何一个段落即可不发送。",
+    "Every answer cites": "每个答案都有出处",
+    "Each claim points to a numbered passage, with its file and place. Open it to check the answer yourself.": "每条结论都指向一个带编号的段落，并标明文件和位置。打开它，即可亲自核对答案。",
+    "Best matches": "最佳匹配",
+    "No matches": "没有匹配",
+    "1 passage": "1 个段落",
+    "Searched 1 file": "已搜索 1 个文件",
+    "Searching your 1 saved file": "正在搜索你保存的 1 个文件",
+    "No passage matched. This finds the words of your question in your files, not their meaning, so try words the file is likely to use, or fewer of them.": "没有匹配的段落。这里按你问题中的字词查找，而不是按含义，请换成文件里可能出现的字词，或减少字词。",
+    "Send this passage": "发送这个段落",
+    "Leave this passage out": "不发送这个段落",
+    "Looks like an instruction to an AI": "看起来像是给 AI 的指令",
+    "Show the whole passage": "显示整个段落",
+    "Show less": "收起",
+    "The question, the passages you kept and fixed instructions go on one request. Never the files, their names or anything else in them.": "问题、你保留的段落和固定的指令会合成一次请求发送。绝不发送文件、文件名或文件中的其他任何内容。",
+    "Veil is on: details it recognises are masked before sending, as shown, and put back in the answer here.": "Veil 已开启：它识别出的信息会在发送前被遮盖（如上所示），并在这里的答案中还原。",
+    "Injection Shield: 1 passage has wording that looks like an instruction to an AI. It's sent as data, with a note not to follow it.": "注入防护：有 1 个段落的措辞看起来像是给 AI 的指令。它会作为数据发送，并附上不要照做的提示。",
+    "The passages are marked as data to read, never instructions to follow.": "这些段落会被标明为供阅读的数据，而不是要执行的指令。",
+    "Keep the answer": "答案保存到",
+    "Nowhere (Private mode)": "不保存（隐私模式）",
+    "Device Vault isn't offered here. Your saved files live on ANONYMA's server, so an answer built from them can't be kept only on this device. Ask off the record to keep nothing.": "这里不提供本机保险库。你保存的文件存放在 ANONYMA 的服务器上，因此根据它们生成的答案无法只保存在这台设备上。选择不留记录即可不保存任何内容。",
+    "Ask about 1 passage": "就 1 个段落提问",
+    "Reading the passages… If you stop, nothing is charged.": "正在阅读这些段落……如果停止，不会扣费。",
+    "The most it can cost is held first. You're charged only for what the answer uses, usually a small share of that. An answer that fails or can't be used costs nothing.": "系统会先冻结最高费用。你只需为答案实际用量付费，通常只是其中一小部分。失败或无法使用的答案不收费。",
+    "The answer was cut off at the model's reply limit. You're charged only for what it used.": "答案在模型的回复上限处被截断。你只需为实际用量付费。",
+    "AI answers can be wrong. Open a source and check it against your file.": "AI 的答案可能有误。请打开来源，对照你的文件核对。",
+    "The answer doesn't cite any passage. Read the passages below before you rely on it.": "这个答案没有引用任何段落。在采信之前，请先阅读下面的段落。",
+    "Also read, not cited": "也读过，但未引用",
+    "Saved in History": "已保存在历史记录中",
+    "Change the passages": "更换段落",
+    "Ask another question": "再问一个问题",
+    "Copy the answer": "复制答案",
+    "Open in History": "在历史记录中打开",
+    "The passage's text isn't kept. Ask again to read it.": "这个段落的文字不会保留。重新提问即可再次阅读。",
+    "Opening the answer…": "正在打开答案……",
+    "This answer isn't in your History any more.": "这个答案已不在你的历史记录中。",
+    "Ask a new question": "提出新问题",
+    "Opening Search files…": "正在打开搜索文件……",
+    "Ask one question across all your saved files. Every answer cites the file and the passage it came from.": "对你保存的所有文件提一个问题。每个答案都会标明所引用的文件和段落。",
+    "File Search": "文件搜索",
+    "Ask across all your files at once. Answers cite the exact file and passage.": "一次性对你的所有文件提问。答案会标明确切的文件和段落。",
+    "One question across every saved file, with each answer citing the file and the passage": "一个问题覆盖所有已保存的文件，每个答案都标明所引用的文件和段落",
+    "See the few passages that will be sent first; only those go to the model, never whole files or their names": "先看到将发送的少数段落；只有这些会发送给模型，绝不发送整份文件或文件名",
+    "See the most it can cost first; an answer that can't be used costs nothing": "先看到最高费用；无法使用的答案不收费",
+    "File Search's index of your saved files' text": "文件搜索为你保存的文件文字建立的索引",
+    "Ask a question of 2 to 1,000 characters.": "请输入 2 到 1,000 个字符的问题。",
+    "Choose files or a project, not both.": "请选择文件或项目，不要两者同时选择。",
+    "That question has nothing to look for. Add a few words about what you want to find.": "这个问题里没有可查找的内容。请加几个你想查找的字词。",
+    "Send 1 to 8 passages.": "请发送 1 到 8 个段落。",
+    "Each passage needs its id and its text.": "每个段落都需要提供其编号和文字。",
+    "A passage is no longer there: its file was deleted or has expired. Search again.": "有一个段落已不存在：它所在的文件已被删除或已过期。请重新搜索。",
+    "A passage doesn't match your saved file. Search again.": "有一个段落与你保存的文件不一致。请重新搜索。",
+    "File Search sends only your question and the passages you keep, so it can't be combined with other chat options.": "文件搜索只发送你的问题和你保留的段落，因此不能与其他对话选项同时使用。",
+    "File Search needs a text model.": "文件搜索需要文本模型。",
+    "Sealed Mode models can't search saved files: those live on ANONYMA's server. Choose another model.": "密封模式的模型无法搜索已保存的文件：这些文件存放在 ANONYMA 的服务器上。请选择其他模型。",
+    "The model ran out of room before it wrote an answer, so there's no result. Nothing was charged. Try again, or choose another model.": "模型在写出答案之前就用完了空间，因此没有结果。未扣费。请重试，或选择其他模型。",
+    "The model returned no answer, so there's no result. Nothing was charged. Try again, or choose another model.": "模型没有返回答案，因此没有结果。未扣费。请重试，或选择其他模型。",
+    "The estimate changed since it was shown. Check the new one, then ask again. Nothing was charged.": "自显示以来估算已变化。请查看新的估算后再提问。未扣费。",
+    "The question couldn't be answered. Nothing was charged. Try again, or choose another model.": "无法回答这个问题。未扣费。请重试，或选择其他模型。",
+    "The question couldn't be answered. Nothing was charged.": "无法回答这个问题。未扣费。",
+    "Choose up to 50 of your saved files.": "最多选择 50 个你保存的文件。",
+    "Your saved files couldn't be loaded.": "无法加载你保存的文件。",
+    "The search couldn't run.": "搜索未能运行。",
+    "Also read": "也读过",
+    "Passages found": "找到的段落"
   },
   "patterns": [
     {
@@ -9366,6 +9449,34 @@
     {
       "en": "{0} can't take a meeting transcript. Pick a model with a longer context.",
       "zh": "{0} 无法读取会议文字稿。请选择上下文更长的模型。"
+    },
+    {
+      "en": "{0} passages",
+      "zh": "{0} 个段落"
+    },
+    {
+      "en": "Searched {0} files",
+      "zh": "已搜索 {0} 个文件"
+    },
+    {
+      "en": "Searching all {0} saved files",
+      "zh": "正在搜索你保存的全部 {0} 个文件"
+    },
+    {
+      "en": "Searching {0} of {1} files",
+      "zh": "正在搜索 {1} 个文件中的 {0} 个"
+    },
+    {
+      "en": "Injection Shield: {0} passages have wording that looks like an instruction to an AI. They're sent as data, with a note not to follow them.",
+      "zh": "注入防护：有 {0} 个段落的措辞看起来像是给 AI 的指令。它们会作为数据发送，并附上不要照做的提示。"
+    },
+    {
+      "en": "Ask about {0} passages",
+      "zh": "就 {0} 个段落提问"
+    },
+    {
+      "en": "Worksheet {0}",
+      "zh": "工作表 {0}"
     }
   ]
 }

@@ -376,6 +376,7 @@ export const MODE_LABELS = {
   slides: "Slides",
   translate: "Translate docs",
   notes: "Meeting notes",
+  filesearch: "Search files",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -407,6 +408,8 @@ const PLACES = [
   ["slides", "Slides", ["slide deck", "presentation", "deck", "powerpoint", "keynote", "present", "pitch"]],
   // Meeting Notes: only once released, with Voice & Audio.
   ["notes", "Meeting notes", ["meeting", "recording", "transcribe", "transcript", "minutes", "action items", "call notes", "decisions"]],
+  // File Search: only once released, with Files and Documents.
+  ["filesearch", "Search files", ["search files", "find in files", "ask my files", "saved files", "documents", "citations", "passages", "across files"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

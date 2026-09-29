@@ -4436,7 +4436,7 @@ export default function Workspace() {
                               alternatives={m.auto.sealed ? sealedAutoTiers : autoTiers}
                               disabled={busy || branching}
                               onUse={
-                                branchesLive && m.content && !m.research && !m.blind && !(busy && i === messages.length - 1)
+                                branchesLive && m.content && !m.research && !m.blind && !m.filesearch && !(busy && i === messages.length - 1)
                                   ? (id) => rewind(i, "regenerate", null, { model: id })
                                   : null
                               }
@@ -4464,7 +4464,7 @@ export default function Workspace() {
                           )}
                           {/* A Deep research report says so itself when it was cut short;
                               a continuation would be a chat, not more research. */}
-                          {longAnswersLive && m.role === "assistant" && !m.blind && !m.research && !m.factcheck && completionNotice(m) && (
+                          {longAnswersLive && m.role === "assistant" && !m.blind && !m.research && !m.factcheck && !m.filesearch && completionNotice(m) && (
                             <div className="fine-print" role="status">
                               <p>{completionNotice(m)}</p>
                               {i === messages.length - 1 && !busy && (m.content || m.reasoning) && (
@@ -4548,10 +4548,27 @@ export default function Workspace() {
                                 </button>
                               )}
                               {rememberButton(m)}
-                              {m.role === "assistant" && m.content && !m.blind && !m.research && !m.factcheck && (
+                              {m.role === "assistant" && m.content && !m.blind && !m.research && !m.factcheck && !m.filesearch && (
                                 <button type="button" onClick={() => rewind(i, "regenerate")}>
                                   Regenerate
                                 </button>
+                              )}
+                              {/* A File Search answer can't be regenerated here: a chat would
+                                  answer without the files. Asking again reopens File Search with
+                                  the question, carried in the route's state, never in the address. */}
+                              {m.role === "assistant" && m.filesearch && !demo && modeReleased(config, "filesearch") && (
+                                <Link
+                                  className="turn-link"
+                                  to="/workspace/filesearch"
+                                  state={{
+                                    filesearchQuestion: unveil(
+                                      String(messages.slice(0, i).filter((x) => x.role === "user").at(-1)?.content || ""),
+                                      veilStateRef.current.map,
+                                    ),
+                                  }}
+                                >
+                                  Ask again in File Search
+                                </Link>
                               )}
                               {!ephemeral && !demo && current && m.id && (
                                 <button type="button" onClick={() => branchFrom(m)}>

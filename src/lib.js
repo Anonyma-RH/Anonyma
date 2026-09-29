@@ -210,6 +210,12 @@ export function messageFromServer(m) {
     ...(c?.factcheck && typeof c.factcheck === "object" && !Array.isArray(c.factcheck)
       ? { factcheck: { ...c.factcheck, live: false } }
       : {}),
+    // File Search: the files and places an answer cites (never passage text).
+    // Such a turn is not regenerated or continued as a chat, which would
+    // answer without the files (src/FileSearch.jsx reopens it).
+    ...(c?.filesearch && typeof c.filesearch === "object" && !Array.isArray(c.filesearch)
+      ? { filesearch: c.filesearch }
+      : {}),
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.

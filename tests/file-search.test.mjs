@@ -13,7 +13,7 @@ import { engineOf, fileSearchBudget } from "../server/file-search.js";
 import { fileSearchTestReply } from "../server/file-search-test.js";
 import { FILE_SEARCH_CHANGED, FILE_SEARCH_CUT_SHORT, FILE_SEARCH_EMPTY } from "../server/routes/file-search.js";
 import { knownPage } from "../src/site-routes.js";
-import { modeReleased } from "../src/lib.js";
+import { messageFromServer, modeReleased } from "../src/lib.js";
 import { paletteActions } from "../src/command-palette.js";
 import { WIPE_FILE_SEARCH } from "../src/panic-wipe.js";
 import {
@@ -1046,6 +1046,40 @@ test("finding passages and answering log nothing about the question, the passage
   }
 });
 
+// ---- History ----
+
+test("a saved answer can't be regenerated or continued as a chat; it offers to ask again in File Search, without the question in the address", async (t) => {
+  const g = await gateway(t);
+  const s = fixture(t, { gatewayUrl: g.url });
+  const a = await withFiles(s);
+  const res = await ask(a);
+  assert.equal(res.status, 200, JSON.stringify(res.body));
+  // The turn as the workspace reads it carries the mark that hides Regenerate.
+  const convo = (await a.agent.get("/api/conversations/" + res.body.conversationId).expect(200)).body;
+  const [asked, answered] = convo.messages.map(messageFromServer);
+  assert.equal(asked.filesearch, undefined);
+  assert.equal(answered.filesearch.sources.length, res.body.message.sources.length);
+  assert.equal(answered.content.slice(0, answered.filesearch.answer_chars), res.body.message.text);
+  assert.equal(messageFromServer({ role: "assistant", content: { text: "Plain chat answer." } }).filesearch, undefined);
+  assert.equal(messageFromServer({ role: "assistant", content: { text: "x", filesearch: "nope" } }).filesearch, undefined);
+  const ws = readFileSync(new URL("../src/Workspace.jsx", import.meta.url), "utf8");
+  // Regenerate, Auto's "use another model" (a regenerate) and Prepare
+  // continuation are all left off such a turn, as they are for a research report.
+  assert.match(ws, /m\.role === "assistant" && m\.content && !m\.blind && !m\.research && !m\.factcheck && !m\.filesearch && \(\s*<button type="button" onClick=\{\(\) => rewind\(i, "regenerate"\)\}>\s*Regenerate/);
+  assert.match(ws, /branchesLive && m\.content && !m\.research && !m\.blind && !m\.filesearch && /);
+  assert.match(ws, /longAnswersLive && m\.role === "assistant" && !m\.blind && !m\.research && !m\.factcheck && !m\.filesearch && completionNotice\(m\)/);
+  assert.equal((ws.match(/rewind\(i, "regenerate"/g) || []).length, 2, "every regenerate on a turn is guarded");
+  // The link opens File Search once released, and carries the question in the
+  // route's state: nothing about it goes in the address.
+  assert.match(ws, /m\.role === "assistant" && m\.filesearch && !demo && modeReleased\(config, "filesearch"\)/);
+  assert.match(ws, /to="\/workspace\/filesearch"\s+state=\{\{\s*filesearchQuestion:/);
+  assert.doesNotMatch(ws, /workspace\/filesearch\?/);
+  assert.match(ws, /Ask again in File Search/);
+  const page = readFileSync(new URL("../src/FileSearch.jsx", import.meta.url), "utf8");
+  assert.match(page, /useLocation\(\)\.state\?\.filesearchQuestion/);
+  assert.match(page, /useState\(\(\) => \(typeof carried === "string" \? carried\.slice\(0, LIMITS\.question\) : ""\)\)/);
+});
+
 // ---- The local-test stand-in ----
 
 test("the local-test stand-in answers from the passages it is given, citing them, and can fail on purpose", () => {
@@ -1074,6 +1108,7 @@ test("Chinese: the saved footer, the title and the words in the dictionary", asy
     "Ask another question",
     "Copy the answer",
     "Open in History",
+    "Ask again in File Search",
     "No saved files to search yet",
     "Only passages go",
     "You see it first",

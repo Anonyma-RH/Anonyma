@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import remarkGfm from "remark-gfm";
 import { Icon, Notice } from "./ui.jsx";
 import { api, isReleased, uid, copyText } from "./lib.js";
@@ -139,10 +139,13 @@ const Cite = ({ n: number, onOpen, children }) => (
 export default function FileSearch({ demo, user, models, config, refresh, veilOn, setVeilOn, veilWords, vaultLive }) {
   const [params, setParams] = useSearchParams();
   const savedId = params.get("c");
+  // "Ask again in File Search" from History carries the question in the
+  // route's state, never in the address.
+  const carried = useLocation().state?.filesearchQuestion;
   const [files, setFiles] = useState(null),
     [filesError, setFilesError] = useState(""),
     [chosen, setChosen] = useState(null),
-    [question, setQuestion] = useState(""),
+    [question, setQuestion] = useState(() => (typeof carried === "string" ? carried.slice(0, LIMITS.question) : "")),
     [searching, setSearching] = useState(false),
     [result, setResult] = useState(null),
     [kept, setKept] = useState(new Set()),

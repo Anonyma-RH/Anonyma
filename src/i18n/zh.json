@@ -5859,7 +5859,8 @@
     "Your saved files couldn't be loaded.": "无法加载你保存的文件。",
     "The search couldn't run.": "搜索未能运行。",
     "Also read": "也读过",
-    "Passages found": "找到的段落"
+    "Passages found": "找到的段落",
+    "Ask again in File Search": "再次在文件搜索中提问"
   },
   "patterns": [
     {

@@ -3,8 +3,10 @@
 .app-shell .turn-actions,
 .app-shell .branch-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .app-shell .turn-actions button,
-.app-shell .branch-chips button{font:inherit;font-size:12px;padding:5px 10px;border:1px solid var(--line,#d8dcea);border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.app-shell .turn-actions a.turn-link,
+.app-shell .branch-chips button{font:inherit;font-size:12px;padding:5px 10px;border:1px solid var(--line,#d8dcea);border-radius:6px;background:transparent;color:inherit;cursor:pointer;text-decoration:none}
 .app-shell .turn-actions button:hover,
+.app-shell .turn-actions a.turn-link:hover,
 .app-shell .branch-chips button:hover{border-color:#0135df;color:#0135df}
 .app-shell .branch-chips span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.6;align-self:center}
 .app-shell .edit-turn{margin-top:10px;display:grid;gap:8px}

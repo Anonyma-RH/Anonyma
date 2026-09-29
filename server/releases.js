@@ -1317,7 +1317,7 @@ export const UPDATES = [
     // excerpts the page showed), priced by /api/quote with the same payload
     // and held at exactly that price. Nothing is stored; erase clears the
     // cache, and the export lists what's open.
-    released: false,
+    released: true,
   },
   {
     id: "researchwatch",

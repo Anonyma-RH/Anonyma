@@ -1275,7 +1275,7 @@ export const UPDATES = [
     // so "images" too (featuresFor). Results are ordinary library images (no
     // request settings kept); off the record and Private Mode keep nothing.
     // Extend is not offered: the gateway's outpainting model takes no photo.
-    released: false,
+    released: true,
   },
   {
     id: "filesearch",

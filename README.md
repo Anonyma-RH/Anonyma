@@ -226,6 +226,36 @@ The following releases are live at askanonyma.com. They include short films made
 - [Blind Arena](docs/releases/blind-arena.md)
 - [Python Runner](docs/releases/python-runner.md)
 
+[Photo Tools](docs/releases/photo-tools.md): edit a photo with words, remove its background or upscale it,
+with the price shown first and metadata removed. Includes its launch film.
+
+[Push Alerts](docs/releases/push-alerts.md): browser notifications for watches, routines, balance, gifts and
+Inactivity Wipe, with no email and no content in the alert. Includes its launch film.
+
+[Recovery Kit](docs/releases/recovery-kit.md): ten one-time codes that get you back into an account without
+email; only their hashes are stored. Includes its launch film.
+
+[File Search](docs/releases/file-search.md): ask across your saved files; only the top passages go to the
+model, and answers cite them. Includes its launch film.
+
+[Repo Reader](docs/releases/repo-reader.md): ask about a public GitHub repo; only relevant snippets go to
+the model, and answers cite path:line. Includes its launch film.
+
+[Quote Cards](docs/releases/quote-cards.md): turn part of a reply into an image card, made on your device
+with nothing uploaded. Includes its launch film.
+
+[Español](docs/releases/espanol.md): the whole site, workspace and account in Spanish; your chats stay as
+written. Includes its launch film.
+
+[Decoy Vault](docs/releases/decoy-vault.md): a second passphrase opens a harmless decoy of your Device Vault,
+with its limits stated plainly. Includes its launch film.
+
+[Research Watch](docs/releases/research-watch.md): scheduled Deep Research briefings that report what's new,
+with sources and a monthly budget. Includes its launch film.
+
+[Chat Import](docs/releases/chat-import.md): bring ChatGPT or Claude history, read in your browser; you choose
+where it's kept. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

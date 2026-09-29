@@ -716,6 +716,7 @@ function AskPanel({ repo, live, config, models, refresh, veilOn, setVeilOn, veil
                       {`${s.path}:${s.start}-${s.end}`}
                     </button>
                     <small>{plural(s.text.length, "character", "characters")}</small>
+                    {found.whole?.[i] && <span className="repo-tag">Whole file</span>}
                     {found.flagged?.[i] && (
                       <span className="repo-tag warn" title={t("Injection Shield: this excerpt has text that reads like instructions to an AI. It's sent as data, and the model is told not to follow it.")}>
                         Reads like instructions

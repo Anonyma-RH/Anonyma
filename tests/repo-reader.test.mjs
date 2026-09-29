@@ -617,6 +617,67 @@ test("retrieval: BM25 over chunks, lifted by paths, tests and changelogs lowered
   assert.deepEqual(termsOf("限流器"), ["限流", "流器"]);
 });
 
+test("small top source files go whole, so logic near the end of a file isn't missed; big files and docs don't", async () => {
+  // A 240-line source file whose early lines talk about preflight requests
+  // a lot, while the code that answers the question is near the end.
+  const early = Array.from({ length: 200 }, (_, i) =>
+    i % 2 ? `// preflight OPTIONS request option ${i}` : `const option${i} = "preflight request ${i}";`,
+  );
+  const late = [
+    "",
+    "// Ends it early for the browser's check: the allowed methods, then 204.",
+    "function respond(req, res, cfg) {",
+    '  if (req.method !== "OPTIONS") return false;',
+    '  res.setHeader("Access-Control-Allow-Methods", cfg.methods);',
+    "  res.statusCode = cfg.successStatus || 204;",
+    '  res.setHeader("Content-Length", "0");',
+    "  res.end();",
+    "  return true;",
+    "}",
+    ...Array.from({ length: 29 }, (_, i) => `// tail ${i + 1}`),
+    "module.exports = respond;",
+    "",
+  ];
+  const lib = [...early, ...late].join("\n");
+  assert.equal(lib.split("\n").length, 241, "240 lines and a final newline");
+  const readme = Array.from({ length: 60 }, (_, i) => `The middleware answers preflight OPTIONS requests for you (${i}).`).join("\n");
+  const bigSource = Array.from({ length: 320 }, (_, i) => `// preflight OPTIONS request in a big file ${i}`).join("\n");
+  const files = [
+    { path: "README.md", text: readme, bytes: readme.length },
+    { path: "lib/index.js", text: lib, bytes: lib.length },
+    { path: "lib/big.js", text: bigSource, bytes: bigSource.length },
+  ];
+  const index = await buildIndex(files);
+  const question = "How does it answer preflight OPTIONS requests?";
+  const covers = (snippets, path, line) => snippets.some((x) => x.path === path && x.start <= line && x.end >= line);
+  // Without whole files, the best chunks of lib/index.js are its early ones:
+  // the code at line 203 would be left out.
+  const chunked = retrieve(index, question, { wholeLines: 0 });
+  assert.ok(chunked.snippets.some((x) => x.path === "lib/index.js"));
+  assert.ok(!covers(chunked.snippets, "lib/index.js", 203), JSON.stringify(chunked.snippets.map((x) => [x.path, x.start, x.end])));
+  // Now: lib/index.js goes whole, lines 1-240, and so the answer does too.
+  const found = retrieve(index, question);
+  const whole = found.snippets.find((x) => x.path === "lib/index.js");
+  assert.deepEqual([whole.start, whole.end, whole.whole], [1, 240, true]);
+  assert.equal(whole.text, lib.replace(/\n$/, ""));
+  assert.ok(whole.text.includes("function respond(req, res, cfg) {"));
+  // Over 300 lines, a source file is still sent as excerpts, and docs are
+  // chosen chunk by chunk exactly as before.
+  const big = found.snippets.filter((x) => x.path === "lib/big.js");
+  assert.ok(big.length && big.every((x) => !x.whole && x.end - x.start < 300));
+  const ranges = (list, path) => list.filter((x) => x.path === path).map((x) => [x.start, x.end]);
+  assert.deepEqual(ranges(found.snippets, "README.md"), ranges(chunked.snippets, "README.md"));
+  // All within the budget, and it reads back as a valid payload.
+  assert.ok(found.snippets.reduce((n, x) => n + x.text.length, 0) <= REPO_READER.snippetChars);
+  const entry = { repo: "octo/demo", ref: null, commit: null, index };
+  const { payload, whole: flags } = findForQuestion(entry, question);
+  assert.deepEqual(checkRepoPayload(payload), payload);
+  assert.equal(flags[payload.snippets.findIndex((x) => x.path === "lib/index.js")], true);
+  // And the model is told to say so when the code isn't there, not to lean on docs.
+  assert.match(REPO_SYSTEM, /If the code that would answer the question isn't among the excerpts, say so first/);
+  assert.match(REPO_SYSTEM, /don't describe how that code works from the README, other docs, comments or tests/);
+});
+
 test("the payload: what the page shows is what's sent, checked strictly and framed as data", async () => {
   const r = await unpackTarball(gz(DEMO));
   const entry = { repo: "octo/demo", ref: null, commit: COMMIT, index: await buildIndex(r.files) };

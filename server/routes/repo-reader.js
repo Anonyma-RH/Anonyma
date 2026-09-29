@@ -155,8 +155,8 @@ export function repoReaderRoutes(ctx) {
     if (!question) fail(400, "Type a question about the repo.", "invalid_repo");
     if (question.length > REPO_READER.maxQuestion)
       fail(400, `Keep the question under ${REPO_READER.maxQuestion.toLocaleString("en-US")} characters.`, "invalid_repo");
-    const { payload, flagged, fallback } = findForQuestion(e, question);
-    res.json({ repo: payload, flagged, fallback });
+    const { payload, flagged, whole, fallback } = findForQuestion(e, question);
+    res.json({ repo: payload, flagged, whole, fallback });
   });
 
   app.delete("/api/repos/:id", requireUser, use, (req, res) => {

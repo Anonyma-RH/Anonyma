@@ -466,14 +466,17 @@ export async function buildIndex(files, { chunkLines = REPO_READER.snippetLines 
   };
 }
 
+// Documentation, which is never sent whole in place of code.
+const DOC_FILE = /\.(md|mdx|markdown|rst|txt|adoc|asciidoc|org|rdoc|textile)$|(^|\/)(readme|changelog|changes|history|news|license|licence|copying|authors|contributors)(\.[a-z0-9]+)?$/i;
 const TEST_PATH = /(^|\/)(tests?|__tests__|specs?|e2e|fixtures?)\/|\.(test|spec)\.[a-z0-9]+$|(^|\/)test_[^/]+\.py$|_test\.(go|py|rb)$/i;
 const CHANGELOG = /(^|\/)(changelog|changes|history|news|releases?)(\.[a-z0-9]+)?$/i;
 const MANIFESTS = ["package.json", "pyproject.toml", "setup.py", "cargo.toml", "go.mod", "pom.xml", "build.gradle", "gemfile", "composer.json", "mix.exs", "deno.json"];
 const isReadme = (p) => /^readme(\.[a-z0-9]+)?$/i.test(p);
 
 // The best excerpts for a question: { snippets: [{ path, start, end, text,
-// flagged }], fallback }, at most maxSnippets, perFile from one file and
-// snippetChars of text. With no term matching anything, the README and the
+// whole, flagged }], fallback }, at most maxSnippets, perFile from one file
+// and snippetChars of text. The top one or two source files go whole when
+// they're 300 lines or less and fit. With no term matching anything, the README and the
 // top-level manifest go instead (fallback: true).
 export function retrieve(index, question, opts = {}) {
   const max = opts.maxSnippets ?? REPO_READER.maxSnippets,
@@ -535,6 +538,26 @@ export function retrieve(index, question, opts = {}) {
   const chosen = [],
     fromFile = new Map();
   let used = 0;
+  // Files in rank order, by their best chunk.
+  const fileRank = new Map();
+  for (const c of order) if (!fileRank.has(index.chunkFile[c])) fileRank.set(index.chunkFile[c], fileRank.size);
+  // Small source files near the top go whole (up to 300 lines, within the
+  // budget): the answer is often a few lines past the best-matching chunk.
+  // At most the first two source files among the top three.
+  const wholeLines = opts.wholeLines ?? REPO_READER.wholeFileLines;
+  const top = [...fileRank.keys()]
+    .slice(0, 3)
+    .filter((fi) => !DOC_FILE.test(index.files[fi].path))
+    .slice(0, 2);
+  for (const fi of top) {
+    const file = index.files[fi];
+    if (!file.lines || file.lines > wholeLines) continue;
+    const text = linesOf(file, 1, file.lines);
+    if (text.length > REPO_READER.maxSnippetChars || used + text.length > budget) continue;
+    chosen.push({ fi, start: 1, end: file.lines, text });
+    fromFile.set(fi, perFile);
+    used += text.length;
+  }
   for (const c of order) {
     if (chosen.length >= max) break;
     const fi = index.chunkFile[c];
@@ -550,14 +573,12 @@ export function retrieve(index, question, opts = {}) {
       while (end > start && text.length > room) text = linesOf(file, start, --end);
       if (text.length > room) continue;
     }
-    chosen.push({ fi, start, end, text, score: scores[c] });
+    chosen.push({ fi, start, end, text });
     fromFile.set(fi, (fromFile.get(fi) || 0) + 1);
     used += text.length;
   }
-  // Neighbouring excerpts of one file join up; files keep their best rank.
-  const rank = new Map();
-  chosen.forEach((s, i) => rank.has(s.fi) || rank.set(s.fi, i));
-  chosen.sort((a, b) => rank.get(a.fi) - rank.get(b.fi) || a.start - b.start);
+  // Neighbouring excerpts of one file join up; files keep their rank.
+  chosen.sort((a, b) => fileRank.get(a.fi) - fileRank.get(b.fi) || a.start - b.start);
   const snippets = [];
   for (const s of chosen) {
     const prev = snippets.at(-1);
@@ -574,6 +595,7 @@ export function retrieve(index, question, opts = {}) {
       start,
       end,
       text,
+      whole: start === 1 && end === index.files[fi].lines,
       // Injection Shield: text that reads like instructions to an AI. It's
       // sent as data either way; the page says so.
       flagged: findPhrases(projectVisible(text).visible).length > 0,
@@ -613,14 +635,16 @@ export function findForQuestion(entry, question) {
     snippets: found.snippets.map(({ path, start, end, text }) => ({ path, start, end, text })),
   };
   const flagged = found.snippets.map((s) => s.flagged);
+  const whole = found.snippets.map((s) => s.whole);
   payload.list = fileList(entry.index, payload.snippets.map((s) => s.path));
   while (payload.snippets.length > 1 && repoUserMessage(payload).length > REPO_READER.messageChars) {
     payload.snippets.pop();
     flagged.pop();
+    whole.pop();
   }
   while (payload.list.length > 20 && repoUserMessage(payload).length > REPO_READER.messageChars)
     payload.list = payload.list.slice(0, Math.floor(payload.list.length * 0.8));
-  return { payload, flagged, fallback: found.fallback };
+  return { payload, flagged, whole, fallback: found.fallback };
 }
 
 // ---- The cache ----

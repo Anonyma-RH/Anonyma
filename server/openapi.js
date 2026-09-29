@@ -2088,7 +2088,7 @@ const repoSnippet = object({
   path: string,
   start: { ...integer, minimum: 1 },
   end: integer,
-  text: { ...string, maxLength: 12000, description: "Lines start to end, exactly (end - start + 1 lines), unnumbered" },
+  text: { ...string, maxLength: 16000, description: "Lines start to end, exactly (end - start + 1 lines), unnumbered" },
 });
 route("post", "/api/repos", "Read a public GitHub repo", {
   body: object(
@@ -2126,10 +2126,11 @@ route("post", "/api/repos/{id}/excerpts", "The excerpts a question would send", 
       snippets: { ...array(repoSnippet), maxItems: 8 },
     }),
     flagged: { ...array(bool), description: "Per excerpt: Injection Shield found text that reads like instructions to an AI (it's sent as data either way)" },
+    whole: { ...array(bool), description: "Per excerpt: the whole file (the top one or two source files go whole when they're 300 lines or less and fit)" },
     fallback: { ...bool, description: "No term matched, so the README and top-level manifest were chosen" },
   }),
   description:
-    "Free; nothing is sent to a model. The question's terms are ranked against the files (BM25 over 40-line chunks, plus path and file-name matches): up to 8 excerpts, 3 from one file, 28,000 characters. Asking is then POST /api/chat with ephemeral: true and repo: this `repo` object (the question may be masked by Veil; the rest as returned), and optionally private: true. The server numbers each excerpt's lines and builds the messages: a fixed system prompt, the question, the file list and the excerpts as escaped document blocks with Injection Shield's data notice (400 invalid_repo for a malformed payload, more than 44,000 characters, or one combined with other chat options: a conversation, project, memory, web search, Auto, another task or Seed Guard's override). A seed phrase in the question is refused (400 seed_phrase_blocked, no override); the excerpts aren't scanned. The answer budget is 8,000 tokens, lowered to the model's limits (400 repo_too_long when its context leaves under 2,000). POST /api/quote prices the same body, and the request holds exactly that price; an empty reply is released and charges nothing. Nothing about the question is stored.",
+    "Free; nothing is sent to a model. The question's terms are ranked against the files (BM25 over 40-line chunks, plus path and file-name matches): up to 8 excerpts, 3 from one file, 28,000 characters; the top one or two source files (not docs) go whole when they're 300 lines or less and fit. Asking is then POST /api/chat with ephemeral: true and repo: this `repo` object (the question may be masked by Veil; the rest as returned), and optionally private: true. The server numbers each excerpt's lines and builds the messages: a fixed system prompt, the question, the file list and the excerpts as escaped document blocks with Injection Shield's data notice (400 invalid_repo for a malformed payload, more than 44,000 characters, or one combined with other chat options: a conversation, project, memory, web search, Auto, another task or Seed Guard's override). A seed phrase in the question is refused (400 seed_phrase_blocked, no override); the excerpts aren't scanned. The answer budget is 8,000 tokens, lowered to the model's limits (400 repo_too_long when its context leaves under 2,000). POST /api/quote prices the same body, and the request holds exactly that price; an empty reply is released and charges nothing. Nothing about the question is stored.",
 });
 route("delete", "/api/repos/{id}", "Forget an open repo now", {
   response: object({ ok: bool }),

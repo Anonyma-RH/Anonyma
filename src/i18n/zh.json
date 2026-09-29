@@ -5860,7 +5860,8 @@
     "A repo question can't be combined with other chat options.": "仓库问题不能与其他对话选项同时使用。",
     "Repo Reader needs a text model.": "仓库阅读器需要文本模型。",
     "That link isn't on a host this reader may fetch from.": "该链接不在此阅读器允许获取的主机上。",
-    "Busy, try again in a moment.": "繁忙，请稍后再试。"
+    "Busy, try again in a moment.": "繁忙，请稍后再试。",
+    "Whole file": "整个文件"
   },
   "patterns": [
     {

@@ -6397,6 +6397,13 @@
     "That link isn't on a host this reader may fetch from.": "Ese enlace no está en un host del que este lector pueda obtener contenido.",
     "Busy, try again in a moment.": "Ocupado, inténtalo de nuevo en un momento.",
     "Whole file": "Todo el archivo",
+    "Making a smaller copy to upscale…": "Creando una copia más pequeña para ampliar…",
+    "This photo couldn't be opened to make a smaller copy.": "No se pudo abrir esta foto para crear una copia más pequeña.",
+    "A smaller copy of this photo is still too large to send. Use a smaller photo.": "Una copia más pequeña de esta foto sigue siendo demasiado grande para enviarla. Usa una foto más pequeña.",
+    "The smaller copy couldn't be read.": "No se pudo leer la copia más pequeña.",
+    "A smaller copy of this photo couldn't be made.": "No se pudo crear una copia más pequeña de esta foto.",
+    "That picture couldn't be read.": "No se pudo leer esa imagen.",
+    "The photo's size couldn't be read.": "No se pudo leer el tamaño de la foto.",
     "Cambiar a español": "Cambiar a español",
     "Prices from the live catalog on every model": "Precios del catálogo en vivo para cada modelo",
     "A gift is waiting.": "Hay un regalo esperando.",
@@ -10434,6 +10441,18 @@
     {
       "en": "Keep the question under {0} characters.",
       "es": "Mantén la pregunta por debajo de {0} caracteres."
+    },
+    {
+      "en": "Upscaled from a {0} px copy",
+      "es": "Ampliación a partir de una copia de {0} px"
+    },
+    {
+      "en": "A photo bigger than {0} px on its long side is shrunk to a copy that size here first, so the result stays a manageable size.",
+      "es": "Una foto de más de {0} px en su lado largo se reduce aquí primero a una copia de ese tamaño, para que el resultado tenga un tamaño manejable."
+    },
+    {
+      "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
+      "es": "Ampliar admite fotos de hasta {0} px en su lado largo. Redúcela e intenta de nuevo."
     },
     {
       "en": "{0} · settled receipt.",

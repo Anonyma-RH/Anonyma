@@ -1206,7 +1206,7 @@ export const UPDATES = [
     // settings routes need "twostep" too, and adding a passkey while
     // recovering needs "passkeys" (featuresFor). Switched off again, kits
     // stay stored but can't be used until it's back.
-    released: false,
+    released: true,
   },
   {
     id: "pushalerts",

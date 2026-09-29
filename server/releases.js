@@ -1189,7 +1189,7 @@ export const UPDATES = [
     // the site's fonts (src/quote-card-render.js); the selection path is
     // Highlight & Ask's toolbar, so it needs "highlight" to be live too,
     // while a reply's own Card button does not.
-    released: false,
+    released: true,
   },
   {
     id: "recovery",

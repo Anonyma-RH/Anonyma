@@ -1789,10 +1789,12 @@ const routineRun = object({
   signed_receipt: { type: ["object", "null"], description: "Present once Signed Receipts is released; verify at /api/receipts/verify" },
   code: { type: ["string", "null"], description: "Why a run was refused or failed: insufficient_credits, spending_limit, routine_run_cap, routine_budget, routine_gone, model_unavailable, search_unavailable, private_unavailable, private_model_required, interrupted or a provider error code" },
   message: { type: ["string", "null"] },
+  kind: { enum: ["research"], description: "Present only on a research watch's report (see /api/research-watches)" },
+  research: { type: ["object", "null"], description: "A research report's record: depth, whether it compared with the last report (previous), the sub-questions searched, what each step did and cost (status done, failed, stopped or skipped, and with Privacy Trail released the route that served it), and the total charged. Never the report itself (that is answer). A report that couldn't be written has finish_reason interrupted and a code and message, with the searches' results as its answer." },
 });
 route("get", "/api/routines", "Your routines", {
   response: object({ routines: array(routine), max_routines: integer, keep_runs: integer }),
-  description: "Oldest first. month is this calendar month in each routine's own time zone: settled charges and open holds. 120 reads a minute.",
+  description: "Prompt routines only, oldest first (research watches are at /api/research-watches). month is this calendar month in each routine's own time zone: settled charges and open holds. 120 reads a minute.",
 });
 route("post", "/api/routines", "Create a routine", {
   status: 201,
@@ -1821,6 +1823,87 @@ route("get", "/api/routines/runs", "The Routines inbox", {
 route("delete", "/api/routines/runs/{id}", "Delete one run from the inbox", {
   response: ref("Ok"),
   description: "The ledger entry and signed receipt stay. 409 routine_running while it's in flight.",
+});
+// Research Watch (update "researchwatch", which also needs "routines",
+// "deepresearch" and "search"; a watch on private models needs "private").
+// A watch is a routine of kind "research"; its reports are runs in the
+// Routines inbox (GET /api/routines/runs, run.kind "research").
+const researchWatchFields = {
+  topic: { ...string, minLength: 1, maxLength: 500, description: "Sent to the model and, as sub-questions, to web search on every run, as written (Veil can't mask a scheduled run). A seed phrase is refused (400 seed_phrase_blocked)." },
+  name: { ...string, maxLength: 80, description: "Defaults to the topic, shortened" },
+  model: { ...string, description: "A text chat model this installation can run" },
+  depth: { enum: ["quick", "thorough"], description: "3 or 6 web searches per run" },
+  new_only: { ...bool, default: false, description: "Only what is new since last time: the newest finished report's key points (at most 3,000 characters, without citation numbers or addresses) are sent with the next run, as data. Deleting that report from the inbox makes the watch forget it." },
+  private_only: { ...bool, default: false, description: "Needs Private Mode released. Steps route like Private Mode: zero data retention models only, never the backup gateway. Reports are still kept in the inbox." },
+  schedule: object(
+    {
+      repeat: { enum: ["daily", "weekly"] },
+      time: { ...string, pattern: "^([01]\\d|2[0-3]):[0-5]\\d$", description: "Wall-clock time, 24-hour HH:MM" },
+      day: { ...integer, minimum: 0, maximum: 6, description: "Weekly only: 0 = Sunday … 6 = Saturday" },
+      timezone: { ...string, default: "UTC", description: "IANA time zone" },
+    },
+    ["repeat", "time"],
+  ),
+  monthly_budget_credits: { ...number, exclusiveMinimum: 0, maximum: 1000000, description: "Per calendar month in the watch's time zone, at most four decimals, and at least what one run can cost (400 watch_budget_too_small)" },
+  enabled: { ...bool, default: true },
+};
+const researchWatch = object({
+  id: string,
+  kind: { enum: ["research"] },
+  ...researchWatchFields,
+  per_run_credits: { ...number, description: "The most one run can cost, as quoted when the watch was saved. A run that would now cost more is refused (routine_run_cap) until the watch is saved again." },
+  next_run_at: { type: ["integer", "null"], description: "null while off" },
+  running: bool,
+  last_run_at: { type: ["integer", "null"] },
+  last_status: { type: ["string", "null"], enum: ["done", "refused", "failed", null] },
+  month: object({ spent: number, held: number, remaining: number, resets_at: integer }),
+  created: integer,
+  updated: integer,
+});
+route("get", "/api/research-watches", "Your research watches", {
+  response: object({ watches: array(researchWatch), max_watches: integer, keep_runs: integer }),
+  description: "Oldest first. month is this calendar month in each watch's own time zone: settled charges and open holds. 120 reads a minute.",
+});
+route("post", "/api/research-watches/quote", "The most one research run can cost", {
+  body: object(
+    {
+      model: researchWatchFields.model,
+      depth: researchWatchFields.depth,
+      topic: { ...string, maxLength: 500, description: "Optional; without one the quote assumes the longest topic" },
+      new_only: researchWatchFields.new_only,
+      private_only: researchWatchFields.private_only,
+    },
+    ["model", "depth"],
+  ),
+  response: object({
+    credits: { ...number, description: "The maximum: the plan, every search with its web search fee, and the report. It is also what a run holds." },
+    usd: number,
+    available: number,
+    spending_limit: object({ remaining: number }),
+    model: string,
+    depth: string,
+    searches: integer,
+    steps: object({ plan: number, search: { ...number, description: "Each search" }, write: number }),
+    min_monthly_budget_credits: number,
+    estimate: bool,
+  }),
+  description: "Reserves and charges nothing. The same checks as saving a watch (model, Private Mode, context allowance). 120 quotes a minute.",
+});
+route("post", "/api/research-watches", "Create a research watch", {
+  status: 201,
+  body: object(researchWatchFields, ["topic", "model", "depth", "schedule", "monthly_budget_credits"]),
+  response: researchWatch,
+  description:
+    "At most 5 per account (409 watch_limit), apart from the 10 prompt routines. The first run is the next slot after now; saving never runs a watch at once. Each run is Deep Research's steps (a plan, one web search per sub-question and a sourced report; every step's instructions say today's date in UTC, and with only_new the previous report's date goes with its key points), every step held at its maximum before anything runs and settled on its own usage as it finishes. It is refused, with nothing reserved or charged, when the balance, the account's spending limits, the watch's per-run maximum or what is left of the month's budget can't cover the whole run. A step whose output can't be used, or that fails, costs nothing, and the plan is charged only once a search has produced something. The report lands in the Routines inbox with its numbered sources; if the report can't be written, the inbox gets what the searches found instead, and the report step is not charged. One run at a time per watch; after downtime only the latest missed slot runs. 400 invalid_watch, invalid_schedule, invalid_model, private_model_required, watch_budget_too_small or seed_phrase_blocked. 120 changes an hour.",
+});
+route("patch", "/api/research-watches/{id}", "Change, switch on or switch off a research watch", {
+  body: object(researchWatchFields),
+  response: researchWatch,
+  description: "Omitted fields keep their value. Anything but switching off re-prices the watch, so per_run_credits is what a run would hold now. A new schedule, or switching on, moves the next run to the next slot after now.",
+});
+route("delete", "/api/research-watches/{id}", "Delete a research watch and its reports", {
+  response: ref("Ok"),
+  description: "409 routine_running while a run is in flight. The ledger entries stay.",
 });
 // Page Watch (update "pagewatch", which also needs "routines"; a watch on
 // private models needs "private").
@@ -2532,7 +2615,7 @@ route("post", "/api/research", "Run Deep research", {
   body: researchRequest,
   stream: true,
   description:
-    "Workspace only (session). Plans up to 3 or 6 sub-questions (strict JSON; invalid output falls back to the question itself), runs one web search per sub-question and writes a Markdown report whose [n] citations map only to the pages those searches returned; other URLs and out-of-range numbers are removed. Before anything runs, every step is held at its maximum (402 insufficient_credits or spending_limit, 409 research_running for a second run, with nothing charged). Each step settles on its own usage as it finishes; a step that fails, is stopped (closing the stream) or never starts is released, so only finished steps are charged. SSE events: research.stage planning, planned (questions), searching / searched (index, status, sources, credits), writing, then done with message { text, citations, research } and anonyma { credits_charged, request_id, private?, privacy?, memory? }, or error with whatever finished. A saved run adds the question and the report to the conversation as ordinary messages.",
+    "Workspace only (session). Plans up to 3 or 6 sub-questions (strict JSON; invalid output falls back to the question itself; every step's instructions say today's date in UTC and the planner and searches prefer recent items), runs one web search per sub-question and writes a Markdown report whose [n] citations map only to the pages those searches returned; other URLs and out-of-range numbers are removed. Before anything runs, every step is held at its maximum (402 insufficient_credits or spending_limit, 409 research_running for a second run, with nothing charged). Each step settles on its own usage as it finishes; a step that fails, is stopped (closing the stream) or never starts is released, so only finished steps are charged. SSE events: research.stage planning, planned (questions), searching / searched (index, status, sources, credits), writing, then done with message { text, citations, research } and anonyma { credits_charged, request_id, private?, privacy?, memory? }, or error with whatever finished. A saved run adds the question and the report to the conversation as ordinary messages.",
 });
 // Translate Documents (update "doctranslate").
 route("post", "/api/translate/quote", "The most translating a document's parts can cost", {

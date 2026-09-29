@@ -359,7 +359,13 @@ export function AppSidebar({
     .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
     .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
     .filter(([id]) => id !== "photos" || modeReleased(config, "photos"))
-    .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"));
+    .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"))
+    // Research Watch lives on the Routines page, so the tool says so once it's live.
+    .map(([id, label, description]) =>
+      id === "routines" && isReleased(config, "researchwatch") && isReleased(config, "deepresearch") && isReleased(config, "search")
+        ? [id, label, "Schedule prompts and research watches to run automatically with spending limits. Read the results in your inbox."]
+        : [id, label, description],
+    );
   // Recompute translated matching when the language changes, even on Account pages.
   useLanguage();
   const toolAvailable = (id) => id === "models" || (id === "api" ? isReleased(config, "api") : modeReleased(config, id));

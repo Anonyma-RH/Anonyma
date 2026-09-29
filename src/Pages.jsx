@@ -904,6 +904,7 @@ const featureIcons = {
   chatimport: "import",
   phototools: "image",
   filesearch: "filesearch",
+  researchwatch: "research",
 };
 const launch = {
   id: "mvp",

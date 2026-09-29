@@ -1319,6 +1319,24 @@ export const UPDATES = [
     // cache, and the export lists what's open.
     released: false,
   },
+  {
+    id: "researchwatch",
+    title: "Research Watch",
+    tagline: "A sourced briefing on any topic, delivered on your schedule.",
+    points: [
+      "Deep Research that runs itself: daily or weekly, with a monthly budget",
+      "Numbered sources in your Routines inbox, and only what's new since last time",
+      "See the most a run can cost first; a step that fails costs nothing",
+    ],
+    // /api/research-watches (server/routes/research-watch.js): a Routines
+    // routine of kind "research" whose runs are Deep Research's steps
+    // (server/research-watch.js). Its reports land in the Routines inbox, so
+    // it needs "routines", "deepresearch" and "search" released too, and a
+    // watch on private models needs "private" (featuresFor). The topic and
+    // the newest report are stored (erased and exported with Routines);
+    // nothing else is.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1762,6 +1780,16 @@ export function featuresFor(req) {
   // inbox. A watch on Private models only needs Private Mode too.
   if (p === "/api/watches" || p.startsWith("/api/watches/")) {
     const needed = ["pagewatch", "routines"];
+    if ((post || req.method === "PATCH") && body.private_only === true)
+      needed.push("private");
+    return needed;
+  }
+  // Research Watch: watches (Deep Research on a schedule). Its reports are
+  // part of the Routines inbox, its steps are Deep Research's and each needs
+  // Live Web Search, so all four updates are needed; a watch on private
+  // models needs Private Mode too.
+  if (p === "/api/research-watches" || p.startsWith("/api/research-watches/")) {
+    const needed = ["researchwatch", "routines", "deepresearch", "search"];
     if ((post || req.method === "PATCH") && body.private_only === true)
       needed.push("private");
     return needed;

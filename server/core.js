@@ -1378,6 +1378,53 @@ export const MIGRATIONS = [
       // No FTS5 in this SQLite: passages are ranked in JS instead.
     }
   },
+  // Research Watch (server/research-watch.js): a routine of kind 'research'
+  // keeps its topic in `prompt`, its depth (quick or thorough) and whether
+  // each report covers only what is new since the last one. Its run_cap is
+  // the most one run can cost at the time it was saved. A research run's
+  // inbox row records its steps as JSON (`research`, no content: the depth,
+  // how many searches ran, what each step cost). At most 10 prompt routines
+  // and 5 research watches per account, each also enforced here.
+  //
+  // Recorded as additive: only columns with defaults, an index and triggers.
+  // A build from before this one still starts on the database, and it can't
+  // run a watch as a plain prompt routine: a watch's next run is `next_due`
+  // and its `next_run` stays NULL, which the older scheduler never matches.
+  (db) => {
+    addColumn(
+      db,
+      "routines",
+      "kind",
+      "TEXT NOT NULL DEFAULT 'prompt' CHECK(kind IN ('prompt','research'))",
+    );
+    addColumn(
+      db,
+      "routines",
+      "depth",
+      "TEXT CHECK(depth IS NULL OR depth IN ('quick','thorough'))",
+    );
+    addColumn(
+      db,
+      "routines",
+      "new_only",
+      "INTEGER NOT NULL DEFAULT 0 CHECK(new_only IN (0,1))",
+    );
+    addColumn(db, "routines", "next_due", "INTEGER");
+    addColumn(db, "routine_runs", "kind", "TEXT NOT NULL DEFAULT 'prompt'");
+    addColumn(db, "routine_runs", "research", "TEXT");
+    additive(`
+      CREATE INDEX IF NOT EXISTS routines_watch_due ON routines(next_due) WHERE enabled=1 AND kind='research';
+      DROP TRIGGER IF EXISTS routines_per_account;
+      CREATE TRIGGER routines_per_account BEFORE INSERT ON routines
+        WHEN NEW.kind='prompt'
+          AND (SELECT COUNT(*) FROM routines WHERE user_id=NEW.user_id AND kind='prompt')>=10
+        BEGIN SELECT RAISE(ABORT,'routine_limit'); END;
+      CREATE TRIGGER IF NOT EXISTS research_watches_per_account BEFORE INSERT ON routines
+        WHEN NEW.kind='research'
+          AND (SELECT COUNT(*) FROM routines WHERE user_id=NEW.user_id AND kind='research')>=5
+        BEGIN SELECT RAISE(ABORT,'watch_limit'); END;
+    `)(db);
+  },
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

@@ -1,0 +1,194 @@
+/* Research Watch: flat cobalt-on-white, in Routines' own styles
+   (routines.css); only what it adds is here. */
+.research-editor .routine-repeat button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 110px;
+  text-align: left;
+}
+.research-depth-note {
+  font-size: 11px;
+  opacity: 0.75;
+}
+.research-cost {
+  padding: 12px 14px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: var(--work-surface, #f7f9fc);
+}
+.research-cost-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.research-cost-line svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--brand-blue, #0135df);
+}
+.research-updating {
+  opacity: 0.55;
+}
+.research-cost .routine-help {
+  margin: 6px 0 0;
+}
+.research-warn {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #8a3326;
+}
+.research-honest {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 18px 0 0;
+  padding: 11px 13px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  background: #f3f6ff;
+  border-left: 3px solid var(--brand-blue, #0135df);
+  color: var(--work-ink, #142343);
+}
+.research-honest svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--brand-blue, #0135df);
+}
+
+/* A research report in the inbox */
+.run-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.run-kind {
+  font-size: 10.5px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border: 1px solid var(--brand-blue, #0135df);
+  border-radius: 2px;
+  color: var(--brand-blue, #0135df);
+  background: #fff;
+}
+/* A report's own headings and lists, sized for an inbox card rather than a
+   page (as Deep Research's reply is in deep-research.css). */
+.app-shell .run-card.research .run-answer h1 {
+  margin: 12px 0 12px;
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: #142343;
+}
+.app-shell .run-card.research .run-answer h2 {
+  margin: 20px 0 8px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: #142343;
+}
+.app-shell .run-card.research .run-answer p {
+  margin: 10px 0;
+}
+.app-shell .run-card.research .run-answer ul {
+  list-style: square;
+  margin: 6px 0 10px;
+  padding-left: 20px;
+}
+.app-shell .run-card.research .run-answer li {
+  margin: 5px 0;
+}
+.app-shell .run-card.research .run-answer li::marker {
+  color: #0135df;
+}
+.run-sources ol {
+  margin: 0;
+  padding-left: 22px;
+}
+.research-steps {
+  margin-top: 12px;
+  font-size: 12.5px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: var(--work-surface, #f7f9fc);
+}
+.research-steps summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 9px 12px;
+  cursor: pointer;
+  color: var(--work-ink, #142343);
+}
+.research-steps summary span:not(:first-child) {
+  color: var(--work-muted, #68748a);
+}
+.research-steps summary span:not(:first-child)::before {
+  content: "· ";
+}
+.research-steps ul {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+  background: var(--work-line, #e3e8f0);
+}
+.research-step {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 12px;
+  background: #fff;
+}
+.research-step-status {
+  font-size: 10.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--brand-blue, #0135df);
+}
+.research-step.failed .research-step-status,
+.research-step.stopped .research-step-status {
+  color: #8a3326;
+}
+.research-step.skipped .research-step-status {
+  color: var(--work-muted, #68748a);
+}
+.research-step-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+.research-step-label small {
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
+}
+.research-step-credits {
+  font-variant-numeric: tabular-nums;
+  color: var(--work-muted, #68748a);
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .app-shell .run-card.research .run-answer h1 {
+    font-size: 22px;
+  }
+  .research-step {
+    grid-template-columns: 56px minmax(0, 1fr);
+  }
+  .research-step-credits {
+    grid-column: 2;
+  }
+}

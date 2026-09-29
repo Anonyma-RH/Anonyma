@@ -57,6 +57,7 @@ import { canvasRoutes } from "./routes/canvas.js";
 import { slideRoutes } from "./routes/slides.js";
 import { shareRoutes } from "./routes/shares.js";
 import { routineRoutes } from "./routes/routines.js";
+import { researchWatchRoutes } from "./routes/research-watch.js";
 import { pageWatchRoutes } from "./routes/page-watch.js";
 import { sealedRoutes } from "./routes/sealed.js";
 import { accountRoutes } from "./routes/account.js";
@@ -233,6 +234,9 @@ export function createApp(overrides = {}) {
   holderRoutes(ctx);
   // Routines run from the worker, through runChat (registered above).
   ctx.routines = routineRoutes(ctx);
+  // Research Watch: Deep Research's steps on a routine's schedule (its runs
+  // are Routines' runs; these routes make and change the watches).
+  researchWatchRoutes(ctx);
   // Page Watch checks run from the worker too; changes are summarised
   // through runChat and land in the Routines inbox.
   ctx.pageWatch = pageWatchRoutes(ctx);
@@ -290,6 +294,9 @@ export function createApp(overrides = {}) {
     routines: ctx.routines,
     // Page Watch's checker (server/page-watch.js), for tests and tooling.
     pageWatch: ctx.pageWatch,
+    // Push Alerts' hook, when that update is wired in: a delivered research
+    // report calls ctx.pushAlerts.notify (server/routines.js). For tests.
+    setPushAlerts: (hook) => (ctx.pushAlerts = hook),
     // Sealed Mode's reconciler (server/sealed.js), for tests and tooling.
     sealed: ctx.sealed,
     // Model Status' in-memory window (server/model-status.js), for tests.

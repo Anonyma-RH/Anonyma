@@ -19,7 +19,7 @@ const TAGS = {
   notes: 'meeting meetings recording minutes transcript transcription decisions actions summary 会议 纪要 录音 转录 待办 决策',
   import: 'import chatgpt claude openai anthropic history conversations export migrate move switch bring transfer archive backup 导入 迁移 聊天记录 历史 导出 备份',
   filesearch: 'files saved uploads documents search find ask question passages citations cite sources across contracts notes 文件 搜索 查找 提问 引用 来源 文档 保存',
-  routines: 'schedule scheduled recurring automatic automate automation daily weekly monitor watch reminders inbox 定时 自动 每日 每周 监控 提醒',
+  routines: 'schedule scheduled recurring automatic automate automation daily weekly monitor watch reminders inbox briefing briefings 定时 自动 每日 每周 监控 提醒 简报',
   projects: 'organise organize organisation organization folder folders files instructions context group 项目 文件夹 整理 指令',
   library: 'saved media creations images pictures photos videos audio history gallery downloads 保存 媒体 图片 视频 作品',
   models: 'model models catalog catalogue providers pricing prices capabilities compare 模型 目录 提供商 价格 能力',

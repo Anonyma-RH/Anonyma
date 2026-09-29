@@ -10,6 +10,12 @@ export default function DataControls() {
   const routines = !!config && isReleased(config, "routines");
   // And Page Watch, whose reports are part of the Routines inbox.
   const pageWatch = routines && isReleased(config, "pagewatch");
+  // And Research Watch: Deep Research on a Routines schedule.
+  const researchWatch =
+    routines &&
+    isReleased(config, "researchwatch") &&
+    isReleased(config, "deepresearch") &&
+    isReleased(config, "search");
   // And Sealed Share, which builds on Share a Chat.
   const sealedShares = shares && isReleased(config, "sealedshare");
   // And Projects.
@@ -183,6 +189,19 @@ export default function DataControls() {
             signed receipts. The model is sent only the changed lines, a
             little context and the site’s name. Deleting a watch deletes its
             copy of the page and its reports; Panic Wipe and closing your
+            account delete every watch.
+          </li>
+        )}
+        {researchWatch && (
+          <li>
+            Research Watch: each watch’s topic, depth, model, schedule and
+            budget, and its reports in the Routines inbox: the newest 50 per
+            watch, with their sources and charges. With “Only what’s new”, the
+            last report’s key findings (at most 3,000 characters) are sent
+            with the next run, and deleting that report makes the watch forget
+            it. Runs happen on the server, so Veil can’t mask the topic: it
+            goes to the model and, as searches, to web search as written.
+            Deleting a watch deletes its reports; Panic Wipe and closing your
             account delete every watch.
           </li>
         )}

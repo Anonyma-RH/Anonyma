@@ -13,18 +13,20 @@ import {
   EXTEND_UNAVAILABLE,
   hasAlpha,
   holdUnits,
+  imageSize,
   photoIssue,
   photoModels,
   sniff,
   testCutout,
   testOutput,
   toolOf,
+  upscaleMaxSide,
 } from "../server/photo-tools.js";
 import { PHOTO_CHANGED } from "../server/routes/photo-tools.js";
 import { knownPage } from "../src/site-routes.js";
 import { modeReleased } from "../src/lib.js";
 import { rankTools } from "../src/tool-search.js";
-import { TOOLS, TOOL_INFO, dataUrlBlob, price, resultName, shrinkScales, sizeNote, toolFrom } from "../src/photo-tools.js";
+import { TOOLS, TOOL_INFO, dataUrlBlob, fitPlan, price, resultName, shrinkScales, sizeNote, toolFrom } from "../src/photo-tools.js";
 import { compileDictionary, translateText } from "../src/i18n.js";
 
 // Release commits flip `released` on UPDATES entries. These tests cover the
@@ -42,6 +44,35 @@ const RED = readFileSync(new URL("../data/test-image.png", import.meta.url));
 const CUTOUT = testCutout(64);
 const dataUrl = (bytes, type = "image/png") => `data:${type};base64,${Buffer.from(bytes).toString("base64")}`;
 const PHOTO = dataUrl(RED);
+// The test PNG with another size in its header: the server reads sizes from
+// headers and never decodes a photo, so this is enough to be "that big".
+function sized(width, height, bytes = RED) {
+  const b = Buffer.from(bytes);
+  b.writeUInt32BE(width, 16);
+  b.writeUInt32BE(height, 20);
+  return b;
+}
+// A JPEG that is only a start-of-frame header, GIF and WebP headers likewise.
+const jpeg = (width, height) => Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x4a, 0x46, 0xff, 0xc0, 0x00, 0x0b, 0x08]), Buffer.from([height >> 8, height & 255, width >> 8, width & 255]), Buffer.from([0x01, 0x01, 0x11, 0x00, 0xff, 0xd9])]);
+const gif = (width, height) => Buffer.concat([Buffer.from("GIF89a"), Buffer.from([width & 255, width >> 8, height & 255, height >> 8, 0, 0, 0])]);
+function webp(kind, width, height) {
+  const b = Buffer.alloc(40);
+  b.write("RIFF", 0);
+  b.write("WEBP", 8);
+  b.write(kind, 12, "latin1");
+  if (kind === "VP8X") {
+    b.writeUIntLE(width - 1, 24, 3);
+    b.writeUIntLE(height - 1, 27, 3);
+  } else if (kind === "VP8L") {
+    b[20] = 0x2f;
+    b.writeUInt32LE(((width - 1) | ((height - 1) << 14)) >>> 0, 21);
+  } else {
+    b.set([0x9d, 0x01, 0x2a], 23);
+    b.writeUInt16LE(width, 26);
+    b.writeUInt16LE(height, 28);
+  }
+  return b;
+}
 // A recovery phrase with a valid checksum, which Seed Guard must stop.
 const SEED = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
@@ -704,6 +735,121 @@ test("stand-in output: a transparent cut-out for background removal, an opaque p
   assert.equal(sniff(Buffer.from("GIF89a")), "image/gif");
   assert.equal(sniff(Buffer.from([0xff, 0xd8, 0xff, 0xe0])), "image/jpeg");
   assert.equal(sniff(Buffer.from("plain")), null);
+});
+
+// ---- Upscale: the input is capped so its result can be returned ----
+
+test("photo sizes are read from headers: PNG, JPEG, GIF and the three WebP kinds", () => {
+  assert.deepEqual(imageSize(RED), { width: 600, height: 600 });
+  assert.deepEqual(imageSize(sized(1234, 56)), { width: 1234, height: 56 });
+  assert.deepEqual(imageSize(jpeg(1025, 700)), { width: 1025, height: 700 });
+  assert.deepEqual(imageSize(gif(320, 200)), { width: 320, height: 200 });
+  assert.deepEqual(imageSize(webp("VP8X", 3000, 2000)), { width: 3000, height: 2000 });
+  assert.deepEqual(imageSize(webp("VP8L", 1024, 512)), { width: 1024, height: 512 });
+  assert.deepEqual(imageSize(webp("VP8 ", 800, 600)), { width: 800, height: 600 });
+  // Truncated or unknown files have no size.
+  assert.equal(imageSize(RED.subarray(0, 12)), null);
+  assert.equal(imageSize(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x4a, 0x46])), null);
+  assert.equal(imageSize(Buffer.from("plain text")), null);
+});
+
+test("each upscaler's input cap follows its scale: aura-sr is 4x, so 1024 px in for at most 4096 out", () => {
+  assert.equal(upscaleMaxSide("aura-sr"), 1024);
+  // Scales that aren't published are treated as the worst case.
+  assert.equal(upscaleMaxSide("crystal-upscaler"), 1024);
+  assert.equal(upscaleMaxSide("topaz-upscale"), 1024);
+  assert.equal(upscaleMaxSide("anything-else"), 1024);
+  // A model known to scale less takes a bigger input, one that scales more a smaller one.
+  assert.equal(upscaleMaxSide("gentle", { gentle: 2 }), 2048);
+  assert.equal(upscaleMaxSide("huge", { huge: 8 }), 512);
+});
+
+test("an upscale takes a photo up to its model's long side, and is refused before anything is held above it", async (t) => {
+  const g = await gateway(t);
+  const s = fixture(t, { gatewayUrl: g.url });
+  const p = await person(s, "ana");
+  // The page learns the cap from the model list: upscalers only.
+  const d = (await p.agent.get("/api/photo-tools").expect(200)).body;
+  for (const m of d.tools.find((x) => x.id === "upscale").models) assert.equal(m.max_side, 1024, m.id);
+  for (const tool of ["edit", "background"]) for (const m of d.tools.find((x) => x.id === tool).models) assert.equal(m.max_side, undefined, m.id);
+  const q = (await quote(p, { tool: "upscale", model: "aura-sr" })).body;
+  const attempt = (image, model = "aura-sr") =>
+    p.agent.post("/api/photo-tools/run").send({ tool: "upscale", model, image, max_units: q.units, requestId: "up-" + Math.random() });
+  const refused = async (image, model) => {
+    const res = await attempt(image, model);
+    assert.equal(res.status, 400, JSON.stringify(res.body));
+    assert.equal(count(s, "holds"), 0, "nothing was held");
+    assert.equal(g.calls.length, 0, "the provider was never asked");
+    return res;
+  };
+  // 1025 px on either side is one too many, whatever the file type.
+  const wide = await refused(dataUrl(sized(1025, 100)));
+  assert.equal(wide.body.error.code, "image_too_large_for_upscale");
+  assert.match(wide.body.error.message, /up to 1024 px on its long side/);
+  await refused(dataUrl(sized(100, 1025)));
+  await refused(dataUrl(sized(4000, 3000)));
+  await refused(dataUrl(jpeg(2000, 100), "image/jpeg"));
+  await refused(dataUrl(gif(1100, 10), "image/gif"));
+  await refused(dataUrl(webp("VP8X", 1025, 10), "image/webp"));
+  // A photo whose size can't be read isn't sent to a model that will grow it.
+  const blind = await refused(dataUrl(RED.subarray(0, 12)));
+  assert.equal(blind.body.error.code, "invalid_image");
+  // The run route allows ten a minute an account: carry on with another.
+  const q2 = await person(s, "bea");
+  const again = (who, tool, model, image, extra = {}) =>
+    quote(who, { tool, model }).then((r) => who.agent.post("/api/photo-tools/run").send({ tool, model, image, max_units: r.body.units, ...extra }));
+  // Exactly the cap goes through, and so does anything smaller.
+  assert.equal((await again(q2, "upscale", "aura-sr", dataUrl(sized(1024, 1024)))).status, 200);
+  assert.equal((await again(q2, "upscale", "aura-sr", dataUrl(jpeg(1024, 300), "image/jpeg"))).status, 200);
+  assert.equal((await again(q2, "upscale", "aura-sr", PHOTO)).status, 200);
+  assert.equal(g.calls.length, 3);
+  // Every upscaler, not only aura-sr.
+  for (const model of ["crystal-upscaler", "topaz-upscale"]) {
+    const res = await again(q2, "upscale", model, dataUrl(sized(2048, 64)));
+    assert.equal(res.status, 400, model);
+    assert.equal(res.body.error.code, "image_too_large_for_upscale", model);
+  }
+  assert.equal(g.calls.length, 3);
+  // The other tools take a bigger photo: their result isn't 4x bigger.
+  const big = dataUrl(sized(3000, 2000));
+  assert.equal((await again(q2, "edit", "seedream-v5-lite-edit", big, { prompt: "Warmer" })).status, 200);
+  assert.equal((await again(q2, "background", "birefnet-v2", big)).status, 200);
+  // Only the runs that were let through were charged.
+  assert.equal(spends(s, q2.user.id).length, 5);
+  assert.equal(spends(s, p.user.id).length, 0);
+});
+
+test("the page shrinks an upscale's photo to a copy that fits, and says so in the result", () => {
+  // The same rule the server holds it to, read from the model list.
+  assert.deepEqual(fitPlan(4000, 3000, 1024), { width: 1024, height: 768, scaled: true });
+  assert.deepEqual(fitPlan(3000, 4000, 1024), { width: 768, height: 1024, scaled: true });
+  assert.deepEqual(fitPlan(1024, 1024, 1024), { width: 1024, height: 1024, scaled: false });
+  assert.deepEqual(fitPlan(600, 400, 1024), { width: 600, height: 400, scaled: false });
+  assert.deepEqual(fitPlan(10000, 3, 1024), { width: 1024, height: 1, scaled: true });
+  const page = readFileSync(new URL("../src/PhotoTools.jsx", import.meta.url), "utf8");
+  // The copy is made before a run is allowed, sent instead of the photo, and compared with the result.
+  for (const piece of [
+    "  fitLongSide,\n",
+    "list.find((m) => m.id === model)?.max_side || 1024",
+    "fitLongSide(photoUrl, maxSide)",
+    "    copyReady &&\n",
+    "const before = maxSide ? copy.url : photo.url,",
+    "image: before,",
+    "`Upscaled from a ${result.copy} px copy`",
+  ])
+    assert.ok(page.includes(piece), piece);
+  // Chinese for the new lines.
+  const translate = compileDictionary(dict);
+  const han = /\p{Script=Han}/u;
+  for (const en of [
+    "Upscaled from a 1024 px copy",
+    "A photo bigger than 1024 px on its long side is shrunk to a copy that size here first, so the result stays a manageable size.",
+    "Upscaling takes a photo up to 1024 px on its long side. Shrink it and try again.",
+    "Making a smaller copy to upscale…",
+    "A smaller copy of this photo is still too large to send. Use a smaller photo.",
+    "The photo's size couldn't be read.",
+  ])
+    assert.match(translateText(en, translate) || "", han, en);
 });
 
 test("the page's helpers: names, prices, shrink steps, sizes and tools", () => {

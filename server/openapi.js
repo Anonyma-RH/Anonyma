@@ -2459,7 +2459,7 @@ route("post", "/api/meeting-notes", "Start meeting notes", {
     idle_minutes: integer,
   }),
   description:
-    "Workspace only (session). Holds exactly the quote's maximum, one hold per piece and one for the notes, with no extra margin (402 insufficient_credits or spending_limit with nothing held). One run per account: a new one ends the last, releasing what it still held. A run nobody touches for 30 minutes ends the same way. Nothing about the recording is stored; the run keeps only its plan and holds, in memory.",
+    "Workspace only (session). An upscale takes a photo up to max_side px on its long side (400 image_too_large_for_upscale before anything is held; the page shrinks a bigger one to a copy that size first). Holds exactly the quote's maximum, one hold per piece and one for the notes, with no extra margin (402 insufficient_credits or spending_limit with nothing held). One run per account: a new one ends the last, releasing what it still held. A run nobody touches for 30 minutes ends the same way. Nothing about the recording is stored; the run keeps only its plan and holds, in memory.",
 });
 route("post", "/api/meeting-notes/{id}/pieces/{index}", "Transcribe one piece", {
   body: object(
@@ -2506,7 +2506,7 @@ route("get", "/api/photo-tools", "The photo tools, their models and prices", {
       object({
         id: string,
         default: { type: ["string", "null"] },
-        models: array(object({ id: string, name: string, provider: { type: ["string", "null"] }, credits: { ...number, description: "The most one run can cost: exactly what a run holds" }, units: { ...integer, description: "The same in ledger units (credits x 10,000)" }, private: bool })),
+        models: array(object({ id: string, name: string, provider: { type: ["string", "null"] }, credits: { ...number, description: "The most one run can cost: exactly what a run holds" }, units: { ...integer, description: "The same in ledger units (credits x 10,000)" }, private: bool, max_side: { ...integer, description: "Upscalers only: the longest side, in pixels, a photo may have (an upscaler makes it 4x bigger, and its result must stay a returnable size)" } })),
       }),
     ),
     unavailable: array(object({ tool: string, reason: string })),

@@ -5869,7 +5869,14 @@
     "The provider returned something that isn't a picture, so nothing was saved or charged.": "服务提供商返回的不是图片，因此未保存也未扣费。",
     "The provider returned a picture without a transparent background, so nothing was saved or charged.": "服务提供商返回的图片没有透明背景，因此未保存也未扣费。",
     "The result is too large to hand back without saving it, so nothing was charged. Save it to your library instead.": "结果太大，无法在不保存的情况下返回，因此未扣费。请改为保存到媒体库。",
-    "The model took too long, so nothing was charged. Try again, or choose another model.": "模型耗时过长，因此未扣费。请重试，或选择其他模型。"
+    "The model took too long, so nothing was charged. Try again, or choose another model.": "模型耗时过长，因此未扣费。请重试，或选择其他模型。",
+    "Making a smaller copy to upscale…": "正在制作用于放大的较小副本……",
+    "This photo couldn't be opened to make a smaller copy.": "无法打开这张照片来制作较小的副本。",
+    "A smaller copy of this photo is still too large to send. Use a smaller photo.": "这张照片的较小副本仍然太大，无法发送。请使用更小的照片。",
+    "The smaller copy couldn't be read.": "无法读取较小的副本。",
+    "A smaller copy of this photo couldn't be made.": "无法制作这张照片的较小副本。",
+    "That picture couldn't be read.": "无法读取那张图片。",
+    "The photo's size couldn't be read.": "无法读取照片的尺寸。"
   },
   "patterns": [
     {
@@ -9499,6 +9506,18 @@
     {
       "en": "From {0} credits",
       "zh": "{0} 积分起"
+    },
+    {
+      "en": "Upscaled from a {0} px copy",
+      "zh": "由 {0} px 的副本放大"
+    },
+    {
+      "en": "A photo bigger than {0} px on its long side is shrunk to a copy that size here first, so the result stays a manageable size.",
+      "zh": "长边超过 {0} px 的照片会先在此处缩小为该尺寸的副本，使结果保持在合理大小。"
+    },
+    {
+      "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
+      "zh": "放大最多支持长边 {0} px 的照片。请缩小后再试。"
     }
   ]
 }

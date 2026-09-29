@@ -19,6 +19,7 @@ import {
   TOOL_INFO,
   price,
   dataUrlBlob,
+  fitLongSide,
   resultName,
   shrinkToFit,
   sizeNote,
@@ -94,7 +95,9 @@ export default function PhotoTools({ demo, user, models = [], config, refresh, v
     [error, setError] = useState(""),
     [seedOk, setSeedOk] = useState(false),
     [redacting, setRedacting] = useState(false),
-    [picking, setPicking] = useState(false);
+    [picking, setPicking] = useState(false),
+    // An upscale goes from a copy no bigger than the model takes.
+    [copy, setCopy] = useState(null);
   const input = useRef(null),
     controller = useRef(null),
     mounted = useRef(true),
@@ -139,9 +142,28 @@ export default function PhotoTools({ demo, user, models = [], config, refresh, v
   const privacyOn = privateLive && privateOn && canPrivate;
   const list = (toolData?.models || []).filter((m) => !privacyOn || m.private);
   const model = list.find((m) => m.id === chosen[tool])?.id || list.find((m) => m.id === toolData?.default)?.id || list[0]?.id || "";
+  // An upscaler makes the photo 4x bigger on each side, so it takes a photo
+  // only up to this long side (the server names it per model).
+  const maxSide = tool === "upscale" ? list.find((m) => m.id === model)?.max_side || 1024 : null;
   // Private Mode keeps nothing; otherwise the person's choice.
   const offRecord = privacyOn || (save === "none" && offRecordLive);
   const info = TOOL_INFO[tool];
+
+  // ---- The copy an upscale goes from ----
+  const photoUrl = photo?.url || null;
+  useEffect(() => {
+    if (!maxSide || !photoUrl) return setCopy(null);
+    let alive = true;
+    setCopy({ for: photoUrl, max: maxSide, status: "working" });
+    fitLongSide(photoUrl, maxSide).then(
+      (c) => alive && setCopy({ for: photoUrl, max: maxSide, status: "ready", ...c }),
+      (e) => alive && setCopy({ for: photoUrl, max: maxSide, status: "error", message: e instanceof PhotoError ? e.message : "A smaller copy of this photo couldn't be made." }),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [photoUrl, maxSide]);
+  const copyReady = !maxSide || (copy?.for === photoUrl && copy.max === maxSide && copy.status === "ready");
 
   // ---- The quote: exactly what a run would hold ----
   const body = useMemo(
@@ -258,6 +280,7 @@ export default function PhotoTools({ demo, user, models = [], config, refresh, v
     !running &&
     !reading &&
     !!photo?.url &&
+    copyReady &&
     !!model &&
     quote.status === "ready" &&
     !over &&
@@ -275,8 +298,11 @@ export default function PhotoTools({ demo, user, models = [], config, refresh, v
     setResult(null);
     setRunning(true);
     controller.current = new AbortController();
-    const before = photo.url,
-      name = photo.name;
+    // What's sent, and what the result is compared with: for an upscale, the
+    // copy that fits the model.
+    const before = maxSide ? copy.url : photo.url,
+      name = photo.name,
+      shrunkTo = maxSide && copy.scaled ? maxSide : null;
     try {
       const r = await api("/api/photo-tools/run", {
         method: "POST",
@@ -304,6 +330,7 @@ export default function PhotoTools({ demo, user, models = [], config, refresh, v
         privacy: r.privacy || null,
         before,
         name,
+        copy: shrunkTo,
       });
       if (r.saved) patch({ result: r.media.id });
     } catch (e) {
@@ -460,6 +487,15 @@ export default function PhotoTools({ demo, user, models = [], config, refresh, v
               {info.label}
             </h2>
             <p className="photo-blurb">{info.blurb}</p>
+            {maxSide && (
+              <p className="photo-note">
+                {copy?.status === "error"
+                  ? copy.message
+                  : photo && !copyReady
+                    ? "Making a smaller copy to upscale…"
+                    : `A photo bigger than ${maxSide} px on its long side is shrunk to a copy that size here first, so the result stays a manageable size.`}
+              </p>
+            )}
             {tool === "edit" && (
               <label className="photo-field">
                 <span>What should change?</span>
@@ -733,6 +769,7 @@ function Result({ result, photo, models, trailLive, onUse, onNew, busy }) {
           <p className="photo-meta">
             <span>{sizeNote(beforeSize, afterSize) || (afterSize ? sizeNote(afterSize, afterSize) : "")}</span>
             {result.mime && <span>{result.mime.replace("image/", "").toUpperCase()}</span>}
+            {result.copy && <span>{`Upscaled from a ${result.copy} px copy`}</span>}
             <span data-i18n="off">{model?.name || result.model}</span>
           </p>
         </div>

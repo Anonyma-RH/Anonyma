@@ -3,6 +3,7 @@ import { isReleased } from "./releases.js";
 import { chatPrice, fail, now, transaction } from "./core.js";
 import { cleanText, findPhrases, projectVisible, scanInvisible } from "../src/shield.js";
 import {
+  CHUNKER_EPOCH,
   FILE_SEARCH_BUDGET,
   LIMITS,
   bm25Rank,
@@ -21,10 +22,11 @@ import {
 // The index is file_chunks (each file's text as passages, with a section
 // label) and file_index (which files have been read into it), filled the
 // first time someone searches or lists their files and kept per account:
-// every query names the account. SQLite's FTS5 ranks the passages where
-// Node's SQLite has it (file_chunks_fts, with each account's passages under
-// one scope word), else bm25Rank in src/file-search.js does, over the same
-// stored passages. Deleting a file, its expiry and every erase remove its
+// every query names the account. SQLite's FTS5 finds the passages that have
+// a word of the question where Node's SQLite has it (file_chunks_fts, with
+// each account's passages under one scope word), else every stored passage is
+// a candidate; bm25Rank in src/file-search.js then ranks them, the same way
+// for both. Deleting a file, its expiry and every erase remove its
 // passages (a foreign key) and, by a trigger, its words from the FTS index.
 // Hidden characters are taken out of a file's text before it is cut up
 // (Injection Shield's own check), so a passage is exactly what is shown and
@@ -40,7 +42,8 @@ export const engineOf = (db, cfg) =>
       : "js";
 
 // Reads every one of the account's saved documents that isn't in the index
-// yet (or isn't in the full-text index under the FTS5 engine) into it. One
+// yet (or isn't in the full-text index under the FTS5 engine, or was read
+// before the passages were cut as they are now) into it. One
 // transaction per file, each checked again inside, so it's safe to repeat.
 export function ensureIndexed(db, cfg, user) {
   const engine = engineOf(db, cfg);
@@ -48,18 +51,19 @@ export function ensureIndexed(db, cfg, user) {
     .prepare(
       `SELECT u.id FROM uploads u LEFT JOIN file_index i ON i.upload_id=u.id
        WHERE u.user_id=? AND u.kind='document' AND u.text IS NOT NULL AND u.expires>?
-         AND (i.upload_id IS NULL OR (i.fts=0 AND ?=1))`,
+         AND (i.upload_id IS NULL OR i.indexed<? OR (i.fts=0 AND ?=1))`,
     )
-    .all(user, now(), engine === "fts5" ? 1 : 0);
+    .all(user, now(), CHUNKER_EPOCH, engine === "fts5" ? 1 : 0);
   for (const { id } of todo)
     transaction(db, () => {
       const up = db
         .prepare("SELECT id,name,text FROM uploads WHERE id=? AND user_id=? AND kind='document' AND text IS NOT NULL AND expires>?")
         .get(id, user, now());
       if (!up) return;
-      const have = db.prepare("SELECT fts FROM file_index WHERE upload_id=?").get(id);
-      if (have && (have.fts === 1 || engine !== "fts5")) return;
-      // A file read before under another engine is read again from scratch.
+      const have = db.prepare("SELECT fts,indexed FROM file_index WHERE upload_id=?").get(id);
+      if (have && have.indexed >= CHUNKER_EPOCH && (have.fts === 1 || engine !== "fts5")) return;
+      // A file read before under another engine, or before passages were cut
+      // as they are now, is read again from scratch.
       db.prepare("DELETE FROM file_chunks WHERE upload_id=?").run(id);
       const text = cleanText(up.text, { text: up.text, invisible: scanInvisible(up.text) });
       const insert = db.prepare("INSERT INTO file_chunks(upload_id,user_id,ord,kind,section,text) VALUES(?,?,?,?,?,?)");
@@ -107,7 +111,13 @@ const inList = (list) => list.map(() => "?").join(",");
 const view = (r) => ({ id: r.id, file_id: r.file_id, file: r.file, kind: r.kind, section: r.section, text: r.text });
 
 // The best passages for a question among the account's files (or only the
-// named ones), most relevant first. Never more than `limit`.
+// named ones), most relevant first. Never more than `limit`. The engine finds
+// the passages that have any word of the question (FTS5: up to CANDIDATES of
+// them, best first by its own BM25; JS: all of the scope's passages); the
+// same scoring then ranks them (bm25Rank in src/file-search.js), so a rare
+// word outweighs a common one and a match in a heading counts, whichever
+// engine found them.
+const CANDIDATES = 500;
 export function searchPassages(db, cfg, user, question, { files = null, limit = LIMITS.top } = {}) {
   ensureIndexed(db, cfg, user);
   if (files && !files.length) return [];
@@ -119,7 +129,7 @@ export function searchPassages(db, cfg, user, question, { files = null, limit = 
         .prepare(
           `SELECT c.id,c.upload_id file_id,u.name file,c.kind,c.section,c.text
            FROM file_chunks c JOIN uploads u ON u.id=c.upload_id
-           WHERE c.user_id=? AND u.user_id=? AND u.expires>?${filter}`,
+           WHERE c.user_id=? AND u.user_id=? AND u.expires>?${filter} ORDER BY c.id`,
         )
         .all(...args),
       question,
@@ -130,14 +140,15 @@ export function searchPassages(db, cfg, user, question, { files = null, limit = 
     const match = ftsMatch(question, scopeOf(user));
     if (!match) return [];
     try {
-      rows = db
+      const found = db
         .prepare(
-          `SELECT c.id,c.upload_id file_id,u.name file,c.kind,c.section,c.text,bm25(file_chunks_fts,1.0,0.0) sc
+          `SELECT c.id,c.upload_id file_id,u.name file,c.kind,c.section,c.text
            FROM file_chunks_fts f JOIN file_chunks c ON c.id=f.rowid JOIN uploads u ON u.id=c.upload_id
            WHERE file_chunks_fts MATCH ? AND c.user_id=? AND u.user_id=? AND u.expires>?${filter}
-           ORDER BY sc,c.id LIMIT ?`,
+           ORDER BY bm25(file_chunks_fts,1.0,0.0),c.id LIMIT ?`,
         )
-        .all(match, ...args, limit);
+        .all(match, ...args, CANDIDATES);
+      rows = bm25Rank(found, question, limit, { total: scopeSize(db, user, files).passages, keepUnscored: true });
     } catch {
       // A query the index can't read: the same passages, ranked in JS.
       rows = scan();

@@ -1,7 +1,8 @@
 // File Search (update "filesearch"): the part the server shares with the
 // browser. A saved file's text is cut into passages (chunkText), the
-// server ranks them for a question (server/file-search.js: SQLite FTS5, or
-// bm25Rank below when FTS5 isn't there), and only the few passages the
+// server finds those with a word of a question (server/file-search.js:
+// SQLite FTS5, or every passage when FTS5 isn't there), bm25Rank below ranks
+// them the same way for both, and only the few passages the
 // person keeps go to the model, as numbered data. The messages are built
 // here, so the server (server/routes/file-search.js) and the page's "What
 // the AI sees" view produce exactly the same text, and a quote and a run
@@ -15,13 +16,16 @@ export const LIMITS = {
   top: 6,
   most: 8,
   // One passage as sent (Veil's tags can make it a little longer than its
-  // stored text, which is at most CHUNK.max).
-  passage: 1600,
+  // stored text: at most CHUNK.max and a heading path of up to 160).
+  passage: 1800,
   // Files one search can name.
   files: 50,
 };
 // Where a file's text is cut. A passage is about `target` characters, never
 // more than `max`, and a heading, slide, worksheet or page starts a new one.
+// When passages were last cut differently: files read into the index before
+// this are read again on the next search (server/file-search.js).
+export const CHUNKER_EPOCH = 1790659440000;
 export const CHUNK = { target: 900, max: 1200, min: 200, soft: 120, forced: 300, cap: 400 };
 // The reply room, in tokens: the model's own answer is short, but reasoning
 // models spend hidden tokens from the same budget first (and the answer is
@@ -32,7 +36,7 @@ export const FILE_SEARCH_BUDGET = 8000;
 
 // ---- Cutting a file's text into passages ----
 
-const HEADING = /^\s{0,3}#{1,6}\s+(.+?)(?:\s+#+)?\s*$/;
+const HEADING = /^\s{0,3}(#{1,6})\s+(.+?)(?:\s+#+)?\s*$/;
 const SLIDE = /^Slide (\d{1,4})$/;
 const SHEET = /^Worksheet (\d{1,3})(?: \(.*\))?$/;
 const SENTENCE = /(?<=[.!?;])\s+|(?<=[。！？；])/u;
@@ -77,38 +81,48 @@ const headingLike = (line, next) =>
   !!next &&
   next.length > line.length * 1.5;
 
-// A file's text as passages: [{ ord, kind, section, text }]. `kind` says
-// what `section` is: "heading" (a Markdown heading's own words, or a short
-// line that reads as a heading when `plain` says the file is prose, the
-// file's text), "slide", "sheet", "page" (a form feed in the text) or "part"
-// (the passage's place in the file, "Part 3 of 12", when nothing else names
-// it).
+// A file's text as passages: [{ ord, kind, section, text }]. Headings, slide
+// and worksheet markers and page breaks never make a passage of their own:
+// they name the passage that follows, as its path ("Plan › Launch"), and
+// that path is the first line of its text, so the words of a heading help a
+// passage match. `kind` says what `section` is: "heading" (a path with a
+// heading's own words in it: a Markdown heading, or a short line that reads
+// as a heading when `plain` says the file is prose), "slide", "sheet", "page"
+// (a form feed in the text) or "part" (the passage's place in the file,
+// "Part 3 of 12", when nothing names it).
 export function chunkText(input, { plain = false } = {}) {
   const source = String(input ?? "").replace(/\r\n?/g, "\n");
   const pages = source.split("\f");
   const out = [];
-  let label = null,
+  // The headings above the current line: [{ level, title, kind }], outermost
+  // first. A slide, worksheet or page is level 0.
+  let stack = [],
     buf = [],
     len = 0,
-    bufLabel = null;
+    bufPath = [];
   const flush = () => {
-    const text = buf.join("\n").trim();
-    if (text) out.push({ kind: bufLabel?.kind || "part", section: bufLabel?.section || "", text });
+    const body = buf.join("\n").trim();
+    if (body) out.push({ path: bufPath, body });
     buf = [];
     len = 0;
+    bufPath = [];
   };
-  // A new section. Once a file has plenty of passages, headings stop forcing
-  // new ones; a guessed heading never cuts a passage that is still short.
+  // A new section starts here. Once a file has plenty of passages, headings
+  // stop forcing new ones, and a guessed heading never cuts a passage that is
+  // still short: then its line stays in the passage. Returns whether a new
+  // passage begins (the heading is then only in its path).
   const relabel = (next, soft = false) => {
     if (out.length < CHUNK.forced && (!soft || len >= CHUNK.soft)) flush();
+    while (stack.length && stack.at(-1).level >= next.level) stack.pop();
+    stack.push(next);
     // A passage that began before any heading takes the first one it meets.
-    if (!buf.length || !bufLabel) bufLabel = next;
-    label = next;
+    if (buf.length && !bufPath.length) bufPath = stack.slice();
+    return !buf.length;
   };
   const push = (line) => {
     for (const piece of pieces(line, CHUNK.max)) {
       if (len && (len + piece.length + 1 > CHUNK.max || (len + piece.length + 1 > CHUNK.target && len >= CHUNK.min))) flush();
-      if (!buf.length) bufLabel = label;
+      if (!buf.length) bufPath = stack.slice();
       buf.push(piece);
       len += piece.length + 1;
     }
@@ -116,28 +130,30 @@ export function chunkText(input, { plain = false } = {}) {
   pages.forEach((page, p) => {
     if (pages.length > 1) {
       flush();
-      label = { kind: "page", section: `Page ${p + 1}` };
+      stack = [{ level: 0, title: `Page ${p + 1}`, kind: "page" }];
     }
     const lines = page.split("\n").map((l) => l.trim()).filter(Boolean);
     lines.forEach((line, i) => {
       const h = HEADING.exec(line);
       const slide = SLIDE.exec(line);
       const sheet = SHEET.exec(line);
-      if (h && h[1].trim()) relabel({ kind: "heading", section: h[1].trim().slice(0, 80) });
-      else if (slide) relabel({ kind: "slide", section: `Slide ${slide[1]}` });
-      else if (sheet) relabel({ kind: "sheet", section: `Worksheet ${sheet[1]}` });
-      else if (plain && headingLike(line, lines[i + 1])) relabel({ kind: "heading", section: line }, true);
-      push(line);
+      let starts = null;
+      if (h && h[2].trim()) starts = relabel({ level: h[1].length, title: h[2].trim().slice(0, 80), kind: "heading" });
+      else if (slide) starts = relabel({ level: 0, title: `Slide ${slide[1]}`, kind: "slide" });
+      else if (sheet) starts = relabel({ level: 0, title: `Worksheet ${sheet[1]}`, kind: "sheet" });
+      else if (plain && headingLike(line, lines[i + 1])) starts = relabel({ level: 1, title: line, kind: "heading" }, true);
+      if (starts === null || !starts) push(line);
     });
   });
   flush();
+  // Nothing but headings: keep them as the passage rather than lose the file.
+  if (!out.length && source.replace(/[\f\s]/g, "")) out.push({ path: [], body: source.replace(/\s+/g, " ").trim().slice(0, CHUNK.max) });
   const n = Math.min(out.length, CHUNK.cap);
-  return out.slice(0, CHUNK.cap).map((c, i) => ({
-    ord: i,
-    kind: c.kind,
-    section: c.kind === "part" ? `Part ${i + 1} of ${n}` : c.section,
-    text: c.text,
-  }));
+  return out.slice(0, CHUNK.cap).map((c, i) => {
+    const kind = !c.path.length ? "part" : c.path.length === 1 && c.path[0].kind !== "heading" ? c.path[0].kind : "heading";
+    const section = kind === "part" ? `Part ${i + 1} of ${n}` : c.path.map((e) => e.title).join(" › ").slice(0, 160);
+    return { ord: i, kind, section, text: kind === "part" ? c.body : section + "\n" + c.body };
+  });
 }
 
 // ---- Words, for the index and for the fallback ranking ----
@@ -221,38 +237,58 @@ function tokens(text) {
   }
   return out;
 }
-// BM25 over passages in memory: the fallback when SQLite has no FTS5.
-// `chunks` are anything with an `id` and `text`; the best `limit` come back
-// with a `score` (higher is better), ties by id.
-export function bm25Rank(chunks, question, limit = LIMITS.top) {
+// How passages are scored, for both engines. It is BM25 (Okapi) with three
+// changes, so a rare word decides more than a common one even in a small
+// index: an idf floor (the "+1" form is never negative, and never below
+// `idfFloor`), a match in a passage's heading path counts as `pathWeight`
+// more occurrences, and the score grows with how many of the question's
+// distinct words a passage has (up to `cover` times, at all of them).
+export const RANK = { k1: 1.2, b: 0.75, idfFloor: 0.1, pathWeight: 2, cover: 1 };
+// Ranks passages in memory, best first. `chunks` are anything with an `id`
+// and `text` (and, for a passage named by its headings, `kind` and `section`),
+// in the order the engine found them. The best `limit` come back with a
+// `score` (higher is better), ties in the order given, then by id.
+// - `total`: how many passages the search covers (the idf's N; the chunks
+//   themselves when they are all of them). SQLite's FTS5 gives only the
+//   passages that match, which hold every passage that has any query word, so
+//   their counts are the true ones.
+// - `keepUnscored`: keep a passage the engine matched even if these words
+//   don't (its stemmer knows more than ours), after those that score.
+export function bm25Rank(chunks, question, limit = LIMITS.top, { total = chunks.length, keepUnscored = false } = {}) {
   const { words, runs } = queryTerms(question);
   const wanted = [...new Set([...words.map(stem), ...runs.flatMap((r) => [...r, r.join("")])])];
   if (!wanted.length || !chunks.length) return [];
-  const docs = chunks.map((c) => {
+  const docs = chunks.map((c, order) => {
     const tf = new Map();
     const list = tokens(c.text);
     for (const t of list) tf.set(t, (tf.get(t) || 0) + 1);
-    return { c, tf, length: list.length || 1 };
+    const pathTf = new Map();
+    if (c.kind === "heading") for (const t of tokens(c.section)) pathTf.set(t, (pathTf.get(t) || 0) + 1);
+    return { c, order, tf, pathTf, length: list.length || 1 };
   });
-  const avg = docs.reduce((s, d) => s + d.length, 0) / docs.length;
-  const df = new Map(wanted.map((t) => [t, docs.reduce((s, d) => s + (d.tf.has(t) ? 1 : 0), 0)]));
-  const k1 = 1.2,
-    b = 0.75;
+  const avg = docs.reduce((sum, d) => sum + d.length, 0) / docs.length;
+  const N = Math.max(total, docs.length);
+  const df = new Map(wanted.map((t) => [t, docs.reduce((sum, d) => sum + (d.tf.has(t) || d.pathTf.has(t) ? 1 : 0), 0)]));
+  const { k1, b, idfFloor, pathWeight, cover } = RANK;
   return docs
-    .map(({ c, tf, length }) => {
-      let score = 0;
+    .map(({ c, order, tf, pathTf, length }) => {
+      let base = 0,
+        matched = 0;
       for (const t of wanted) {
-        const f = tf.get(t);
+        const f = (tf.get(t) || 0) + pathWeight * (pathTf.get(t) || 0);
         if (!f) continue;
+        matched++;
         const n = df.get(t);
-        const idf = Math.log(1 + (docs.length - n + 0.5) / (n + 0.5));
-        score += (idf * f * (k1 + 1)) / (f + k1 * (1 - b + (b * length) / avg));
+        const idf = Math.max(idfFloor, Math.log(1 + (N - n + 0.5) / (n + 0.5)));
+        base += (idf * f * (k1 + 1)) / (f + k1 * (1 - b + (b * length) / avg));
       }
-      return { ...c, score };
+      const score = base * (1 + (cover * (matched - 1)) / Math.max(1, wanted.length - 1));
+      return { ...c, score, order };
     })
-    .filter((x) => x.score > 0)
-    .sort((a, z) => z.score - a.score || a.id - z.id)
-    .slice(0, limit);
+    .filter((x) => x.score > 0 || keepUnscored)
+    .sort((a, z) => z.score - a.score || a.order - z.order || a.id - z.id)
+    .slice(0, limit)
+    .map(({ order, ...c }) => c);
 }
 
 // ---- What is sent ----

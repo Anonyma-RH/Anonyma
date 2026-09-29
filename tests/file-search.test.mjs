@@ -18,6 +18,7 @@ import { paletteActions } from "../src/command-palette.js";
 import { WIPE_FILE_SEARCH } from "../src/panic-wipe.js";
 import {
   CHUNK,
+  CHUNKER_EPOCH,
   FILE_SEARCH_NOTICE,
   FILE_SEARCH_SYSTEM,
   LIMITS,
@@ -30,6 +31,7 @@ import {
   maskedFrom,
   parseSent,
   queryTerms,
+  RANK,
   questionLanguage,
   scopeOf,
   segment,
@@ -305,13 +307,22 @@ test("headings, slides, worksheets and pages start passages and name them; prose
   const chunks = chunkText(LEASE);
   assert.deepEqual(
     chunks.map((c) => [c.kind, c.section]),
-    [["heading", "Residential lease"], ["heading", "Rent and deposit"], ["heading", "Ending the lease"], ["heading", "Pets"]],
+    [
+      ["heading", "Residential lease"],
+      ["heading", "Residential lease › Rent and deposit"],
+      ["heading", "Residential lease › Ending the lease"],
+      ["heading", "Residential lease › Pets"],
+    ],
   );
-  assert.ok(chunks[2].text.startsWith("## Ending the lease\nThe tenant must give 60 days"));
+  // A passage starts with its heading path, then its own text: the heading line itself is not repeated.
+  assert.ok(chunks[2].text.startsWith("Residential lease › Ending the lease\nThe tenant must give 60 days"));
+  assert.ok(!chunks[2].text.includes("##"));
   assert.deepEqual(chunks.map((c) => c.ord), [0, 1, 2, 3]);
   // What Documents extracts from Office files.
   const office = chunkText("\nSlide 1\nWelcome to the launch\nSlide 2\nPrices go up in March\n\nWorksheet 1 (stored values; formulas are not evaluated)\nA1: Item\tB1: Cost");
   assert.deepEqual(office.map((c) => [c.kind, c.section]), [["slide", "Slide 1"], ["slide", "Slide 2"], ["sheet", "Worksheet 1"]]);
+  assert.equal(office[0].text, "Slide 1\nWelcome to the launch");
+  assert.equal(office[2].text, "Worksheet 1\nA1: Item\tB1: Cost");
   // A form feed is a page break.
   assert.deepEqual(chunkText("First page text.\fSecond page text.").map((c) => c.section), ["Page 1", "Page 2"]);
   // No heading anywhere: the passage's place in the file.
@@ -324,6 +335,34 @@ test("headings, slides, worksheets and pages start passages and name them; prose
   assert.deepEqual(plain.map((c) => c.section), ["Coverage", "Water damage", "Making a claim"]);
   assert.equal(chunkText(INSURANCE).length, 1);
   assert.deepEqual(chunkText("function a() {\n  return 1;\n}\n\nconst b = 2;\n").map((c) => c.kind), ["part"]);
+});
+
+test("a heading never makes a passage of its own: it is merged into the passage after it and heads its path", () => {
+  // The live scenario: "# Title" straight into "## Section".
+  const plan = chunkText("# Plan\n## Launch\nThe launch date is 14 March 2027.\n## Budget\nThe budget is 80,000 dollars.");
+  assert.deepEqual(plan.map((c) => c.section), ["Plan › Launch", "Plan › Budget"]);
+  assert.deepEqual(plan.map((c) => c.text), ["Plan › Launch\nThe launch date is 14 March 2027.", "Plan › Budget\nThe budget is 80,000 dollars."]);
+  // Deeper levels extend the path; a sibling or a higher heading replaces the tail.
+  const deep = chunkText("# A\n\ntext a\n\n## B\n\n### C\n\ntext c\n\n## D\n\ntext d\n\n# E\n\ntext e");
+  assert.deepEqual(deep.map((c) => c.section), ["A", "A › B › C", "A › D", "E"]);
+  // Headings with nothing under them, in a row and at the end, make nothing.
+  assert.deepEqual(chunkText("# One\n## Two\n### Three\n\nbody\n\n## Four\n## Five").map((c) => c.section), ["One › Two › Three"]);
+  // Nothing but headings: kept as the passage, not lost.
+  const bare = chunkText("# Only\n## Headings");
+  assert.equal(bare.length, 1);
+  assert.equal(bare[0].kind, "part");
+  assert.match(bare[0].text, /Only/);
+  // Every passage has words of its own under its path, in every kind of file.
+  for (const text of [LEASE, INSURANCE, "Slide 1\nSlide 2\nSlide 3\nBody", "# H1\n## H2\n\nx"])
+    for (const c of chunkText(text, { plain: true })) {
+      const lines = c.text.split("\n");
+      assert.ok(lines.length > 1 || c.kind === "part", JSON.stringify(c.text));
+      assert.ok(lines.slice(c.kind === "part" ? 0 : 1).join("").trim().length > 0, JSON.stringify(c.text));
+    }
+  // A path can't grow without limit, and a passage with it still fits what a search sends.
+  const long = chunkText(`# ${"a".repeat(200)}\n## ${"b".repeat(200)}\n${"word ".repeat(400)}`);
+  for (const c of long) assert.ok(c.text.length <= CHUNK.max + 200, `${c.text.length} characters`);
+  assert.ok(CHUNK.max + 161 < LIMITS.passage);
 });
 
 test("passages stay within their size, lose nothing and stay in order", () => {
@@ -413,7 +452,7 @@ for (const engine of ["fts5", "js"]) {
     const top = async (q, extra) => (await find(a, q, extra).expect(200)).body;
     const r = await top(QUESTION);
     assert.equal(r.passages[0].file, "Lease.md");
-    assert.equal(r.passages[0].section, "Ending the lease");
+    assert.equal(r.passages[0].section, "Residential lease › Ending the lease");
     assert.match(r.passages[0].text, /60 days written notice/);
     assert.ok(r.passages.every((p) => p.file !== "Bo.txt"), "another account's file is never found");
     assert.deepEqual(Object.keys(r.passages[0]).sort(), ["file", "file_id", "flagged", "id", "kind", "section", "text"]);
@@ -426,7 +465,7 @@ for (const engine of ["fts5", "js"]) {
     // Chinese is found by its own characters.
     const zh = await top("押金什么时候退还");
     assert.equal(zh.passages[0].file, "合同.md");
-    assert.equal(zh.passages[0].section, "押金");
+    assert.equal(zh.passages[0].section, "租赁合同 › 押金");
     // Only matches: no match, no passages.
     assert.deepEqual((await top("quantum entanglement")).passages, []);
     // Named files narrow it; so does a project's pinned files.
@@ -441,6 +480,111 @@ for (const engine of ["fts5", "js"]) {
     assert.equal(files.projects[0].privacy, "normal");
   });
 }
+
+// The live scenario: three documents, one with "# Title / ## Section" structure.
+const PLAN = `# Product plan
+
+## Launch
+
+The launch date is 14 March 2027. The team ships on that date, once the checklist is signed off.
+
+## Budget
+
+The budget for the launch is 80,000 dollars, including marketing and the launch event.`;
+const INVOICES = `Invoice rules
+Submit the invoice date and the payment date by Friday. The date on the invoice must match the date of the order, and every date is checked by the finance team.`;
+const OFFSITE = `# Offsite notes
+
+We picked a date for the offsite after the call. Nobody knows the date of the next retreat yet, so the date stays open until the vote.`;
+
+for (const engine of ["fts5", "js"]) {
+  test(`${engine}: "What is the launch date and the budget?" retrieves the plan's passages that have them, ahead of passages with only "date"`, async (t) => {
+    const g = await gateway(t);
+    const s = fixture(t, { gatewayUrl: g.url, fileSearchEngine: engine === "js" ? "js" : undefined });
+    const a = await person(s, "ana");
+    const plan = await upload(a, "Product plan.md", PLAN);
+    await upload(a, "Invoices.txt", INVOICES);
+    await upload(a, "Offsite.md", OFFSITE);
+    const files = (await a.agent.get("/api/file-search/files").expect(200)).body.files;
+    // No heading-only passage: the plan's "# Product plan" and "## Launch" are merged into what follows.
+    const rows = chunkRows(s, a.user.id).filter((c) => c.upload_id === plan);
+    assert.deepEqual(rows.map((c) => c.section), ["Product plan › Launch", "Product plan › Budget"]);
+    assert.equal(files.find((f) => f.id === plan).passages, 2);
+    for (const c of chunkRows(s, a.user.id)) assert.ok(c.text.split("\n").slice(c.kind === "part" ? 0 : 1).join("").trim().length > 20, c.text);
+    const found = (await find(a, "What is the launch date and the budget?").expect(200)).body.passages;
+    const at = (name) => found.findIndex((p) => p.section === name);
+    // Both plan passages are the first two, whichever order; the date-only ones follow.
+    assert.deepEqual(found.slice(0, 2).map((p) => p.section).sort(), ["Product plan › Budget", "Product plan › Launch"]);
+    assert.ok(found.slice(0, 2).every((p) => p.file === "Product plan.md"));
+    assert.ok(found.length >= 3 && found.slice(2).every((p) => p.file !== "Product plan.md"));
+    assert.ok(at("Product plan › Launch") < 2 && at("Product plan › Budget") < 2);
+    assert.ok(found.every((p) => p.text.split("\n").length > 1), "every passage has text under its path");
+    // The passage with the launch date and the one with the budget both reach the model.
+    const asked = await ask(a, { question: "What is the launch date and the budget?", passages: found.slice(0, 2).map((p) => ({ id: p.id, text: p.text })) });
+    assert.equal(asked.status, 200, JSON.stringify(asked.body));
+    const sent = parseSent(g.calls[0].messages[1].content).passages.map((p) => p.text).join("\n");
+    assert.match(sent, /The launch date is 14 March 2027/);
+    assert.match(sent, /The budget for the launch is 80,000 dollars/);
+    // Asking about the budget alone puts the budget passage first; the launch date alone, the launch one.
+    assert.equal((await find(a, "What is the budget?").expect(200)).body.passages[0].section, "Product plan › Budget");
+    assert.equal((await find(a, "When is the launch date?").expect(200)).body.passages[0].section, "Product plan › Launch");
+    // A word in a heading finds its passage even when the body never says it.
+    await upload(a, "Roadmap.md", "# Roadmap\n\n## Hiring\n\nWe will add two engineers and a designer before the summer.");
+    assert.equal((await find(a, "hiring").expect(200)).body.passages[0].section, "Roadmap › Hiring");
+  });
+}
+
+test("the scoring: a rare word outweighs a common one, a heading match counts, more of the question's words rank higher", () => {
+  const rank = (chunks, q, extra) => bm25Rank(chunks, q, 6, extra);
+  // "date" is in most passages, "launch" in one: the passage with both is first, however often another says "date".
+  const rows = [
+    { id: 1, kind: "part", section: "Part 1 of 4", text: "date date date date date" },
+    { id: 2, kind: "part", section: "Part 2 of 4", text: "The date of the invoice and the date it was paid." },
+    { id: 3, kind: "part", section: "Part 3 of 4", text: "The launch is set and the date is fixed." },
+    { id: 4, kind: "part", section: "Part 4 of 4", text: "Nothing to see here." },
+  ];
+  assert.deepEqual(rank(rows, "launch date").map((r) => r.id), [3, 1, 2]);
+  assert.equal(rank(rows, "launch date")[0].id, 3, "the passage with more of the words comes first");
+  assert.deepEqual(rank(rows, "quantum"), []);
+  // The idf never falls below its floor, however many passages have the word.
+  const all = Array.from({ length: 100 }, (_, i) => ({ id: i + 1, kind: "part", section: "", text: "date" }));
+  const floor = bm25Rank(all, "date", 100);
+  assert.equal(floor.length, 100, "every passage has it");
+  assert.ok(floor.every((r) => Math.abs(r.score - RANK.idfFloor) < 1e-9), String(floor[0].score));
+  assert.ok(rank([{ id: 1, kind: "part", section: "", text: "the date" }, { id: 2, kind: "part", section: "", text: "the date" }], "date").every((r) => r.score > 0));
+  // A match in the heading path counts more than the same word once in the body.
+  const heads = [
+    { id: 1, kind: "part", section: "Part 1 of 2", text: "Plan wording aaa bbb ccc launch launch ddd eee" },
+    { id: 2, kind: "heading", section: "Plan › Launch", text: "Plan › Launch\nPlan wording aaa bbb ccc ddd eee fff" },
+  ];
+  assert.deepEqual(rank(heads, "launch").map((r) => r.id), [2, 1]);
+  // Passages the engine matched but these words don't are kept after those that score, in its order.
+  const engine = [
+    { id: 9, kind: "part", section: "", text: "Nothing alike" },
+    { id: 4, kind: "part", section: "", text: "launch it" },
+    { id: 7, kind: "part", section: "", text: "Something else" },
+  ];
+  assert.deepEqual(rank(engine, "launch", { keepUnscored: true }).map((r) => r.id), [4, 9, 7]);
+  assert.deepEqual(rank(engine, "launch").map((r) => r.id), [4]);
+  assert.equal(RANK.pathWeight > 0 && RANK.cover > 0 && RANK.idfFloor >= 0.1, true);
+});
+
+test("files read into the index before the passages were cut this way are read again", async (t) => {
+  const s = fixture(t);
+  const a = await person(s, "ana");
+  const id = await upload(a, "Product plan.md", PLAN);
+  await a.agent.get("/api/file-search/files").expect(200);
+  // As an earlier build left it: a heading-only passage, indexed before the change.
+  s.db.prepare("DELETE FROM file_chunks WHERE upload_id=?").run(id);
+  s.db.prepare("INSERT INTO file_chunks(upload_id,user_id,ord,kind,section,text) VALUES(?,?,?,?,?,?)").run(id, a.user.id, 0, "heading", "Product plan", "# Product plan");
+  s.db.prepare("UPDATE file_index SET indexed=? WHERE upload_id=?").run(CHUNKER_EPOCH - 1, id);
+  await a.agent.get("/api/file-search/files").expect(200);
+  assert.deepEqual(chunkRows(s, a.user.id).map((c) => c.section), ["Product plan › Launch", "Product plan › Budget"]);
+  const first = chunkRows(s, a.user.id).map((c) => c.id);
+  await a.agent.get("/api/file-search/files").expect(200);
+  assert.deepEqual(chunkRows(s, a.user.id).map((c) => c.id), first, "once is enough");
+  assert.equal(ftsCount(s), 2);
+});
 
 test("a search checks its question and its scope, and finds hidden instructions without acting on them", async (t) => {
   const s = fixture(t);
@@ -535,7 +679,7 @@ test("account closure, Panic Wipe and the account export cover the index", async
   assert.deepEqual(exported.fileSearch.indexedFiles.map((f) => f.name).sort(), ["Insurance.txt", "Lease.md", "合同.md"]);
   const lease = exported.fileSearch.indexedFiles.find((f) => f.name === "Lease.md");
   assert.equal(lease.file_id, a.lease);
-  assert.deepEqual(lease.passages.map((p) => p.section), ["Residential lease", "Rent and deposit", "Ending the lease", "Pets"]);
+  assert.deepEqual(lease.passages.map((p) => p.section), ["Residential lease", "Residential lease › Rent and deposit", "Residential lease › Ending the lease", "Residential lease › Pets"]);
   assert.match(lease.passages[2].text, /60 days written notice/);
   assert.deepEqual(Object.keys(lease.passages[0]).sort(), ["kind", "position", "section", "text"]);
   assert.ok(exported.uploads.some((u) => u.id === a.lease), "the files themselves are exported too");

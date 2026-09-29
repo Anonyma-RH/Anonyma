@@ -16,7 +16,7 @@ const TAGS = {
   study: 'learn learning studying flashcards quiz quizzes revision exam practice remember memorise memorize 学习 复习 记忆 抽认卡 测验 考试',
   slides: 'presentation presentations slides slideshow deck powerpoint pitch 演示 幻灯片 汇报',
   notes: 'meeting meetings recording minutes transcript transcription decisions actions summary 会议 纪要 录音 转录 待办 决策',
-  routines: 'schedule scheduled recurring automatic automate automation daily weekly monitor watch reminders inbox 定时 自动 每日 每周 监控 提醒',
+  routines: 'schedule scheduled recurring automatic automate automation daily weekly monitor watch reminders inbox briefing briefings 定时 自动 每日 每周 监控 提醒 简报',
   projects: 'organise organize organisation organization folder folders files instructions context group 项目 文件夹 整理 指令',
   library: 'saved media creations images pictures photos videos audio history gallery downloads 保存 媒体 图片 视频 作品',
   models: 'model models catalog catalogue providers pricing prices capabilities compare 模型 目录 提供商 价格 能力',

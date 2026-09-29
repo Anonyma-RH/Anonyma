@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import { Button, Icon, Notice, Empty, CopyButton } from "./ui.jsx";
@@ -17,6 +17,15 @@ import {
 } from "./routines.js";
 import { WatchesTab, WatchReportCard, demoWatchState, markWatchesSeen } from "./PageWatch.jsx";
 import { MAX_WATCHES, mergeInbox, shortUrl } from "./page-watch.js";
+import {
+  ResearchRunDetails,
+  ResearchTab,
+  RESEARCH_NOTES,
+  RESEARCH_REASONS,
+  demoResearchState,
+  researchWatchLive,
+} from "./ResearchWatch.jsx";
+import { MAX_WATCHES as MAX_RESEARCH } from "./research-watch.js";
 import "./routines.css";
 
 // Routines: saved prompts that run on a schedule with their own budget, and
@@ -27,7 +36,10 @@ import "./routines.css";
 //
 // Once Page Watch is released (src/PageWatch.jsx) the page gets a third tab
 // for watched pages, and their reports join the inbox, newest first with
-// the runs.
+// the runs. Once Research Watch is released (src/ResearchWatch.jsx) it gets a
+// tab for research watches, whose reports are runs in this inbox. The tab
+// and the inbox filter are in the URL (?tab=, ?show=), so a reload opens
+// what's on screen.
 
 const fmtCredits = (v) =>
   Number(v).toLocaleString(undefined, { maximumFractionDigits: 4 });
@@ -81,7 +93,10 @@ const REASONS = {
   interrupted: "The service restarted during this run.",
 };
 const reasonFor = (run) =>
-  REASONS[run.code] || run.message || "The run didn't complete.";
+  (run.kind === "research" && RESEARCH_REASONS[run.code]) ||
+  REASONS[run.code] ||
+  run.message ||
+  "The run didn't complete.";
 
 // The sample account's routines and inbox (?demo=1): nothing is sent.
 export function demoState() {
@@ -559,10 +574,12 @@ export function RoutineCard({ r, modelName, busy, onEdit, onToggle, onDelete, on
 // (src/Shield.jsx) a remote image waits for the user and links show their host.
 export function RunCard({ run, modelName, onDelete, busy, markdown }) {
   const skipped = run.skipped || 0;
+  const research = run.kind === "research";
   return (
-    <article className={"run-card " + run.status}>
+    <article className={"run-card " + run.status + (research ? " research" : "")}>
       <div className="run-head">
         <span className={"run-status " + run.status}>{STATUS_LABEL[run.status]}</span>
+        {research && <span className="run-kind">Research watch</span>}
         <b data-i18n="off">{run.routine_name}</b>
         <time dateTime={new Date(run.started_at).toISOString()}>{when(run.started_at)}</time>
         <span className="run-credits">{`${fmtCredits(run.credits_charged)} credits`}</span>
@@ -572,7 +589,7 @@ export function RunCard({ run, modelName, onDelete, busy, markdown }) {
         <span className="run-model" data-i18n="off">
           {modelName}
         </span>
-        {run.web_search && <span>Web search</span>}
+        {run.web_search && !research && <span>Web search</span>}
         {run.private_only && <span>Private models only</span>}
         {skipped > 0 && (
           <span>
@@ -589,11 +606,14 @@ export function RunCard({ run, modelName, onDelete, busy, markdown }) {
               {run.answer || ""}
             </ReplyMarkdown>
           </div>
-          {run.finish_reason === "length" && (
+          {run.finish_reason === "length" && !research && (
             <p className="run-note">
               The reply reached this routine's length limit. Raise the per-run
               maximum for longer answers.
             </p>
+          )}
+          {research && run.code && (
+            <p className="run-note">{RESEARCH_NOTES[run.code] || run.message}</p>
           )}
         </>
       ) : run.status === "running" ? (
@@ -604,17 +624,21 @@ export function RunCard({ run, modelName, onDelete, busy, markdown }) {
       {run.citations?.length > 0 && (
         <div className="run-sources">
           <p>Sources</p>
-          <ul>
-            {run.citations.map((c) => (
+          {/* A research report's [n] citations are these numbers. */}
+          {React.createElement(
+            research ? "ol" : "ul",
+            null,
+            run.citations.map((c) => (
               <li key={c.url}>
                 <a href={c.url} target="_blank" rel="noreferrer noopener" data-i18n="off">
                   {c.title || c.url}
                 </a>
               </li>
-            ))}
-          </ul>
+            )),
+          )}
         </div>
       )}
+      {research && <ResearchRunDetails run={run} />}
       <div className="run-actions">
         {run.signed_receipt && <SignedReceipt signedReceipt={run.signed_receipt} />}
         {run.status === "done" && run.answer && (
@@ -632,11 +656,29 @@ export function RunCard({ run, modelName, onDelete, busy, markdown }) {
 }
 
 export default function Routines({ demo, user, models, config, refresh, markdown }) {
-  const [tab, setTab] = useState("inbox"),
+  const [params, setParams] = useSearchParams();
+  const researchLive = researchWatchLive(config);
+  const [tab, setTabState] = useState(() => {
+      const t = params.get("tab");
+      return t === "routines" ||
+        (t === "watches" && isReleased(config, "pagewatch")) ||
+        (t === "research" && researchLive)
+        ? t
+        : "inbox";
+    }),
     [routines, setRoutines] = useState(() => (demo ? demoState().routines : [])),
-    [runs, setRuns] = useState(() => (demo ? demoState().runs : [])),
+    [runs, setRuns] = useState(() =>
+      demo
+        ? [...demoState().runs, ...(researchLive ? demoResearchState().runs : [])].sort(
+            (a, b) => b.started_at - a.started_at,
+          )
+        : [],
+    ),
+    [researchWatches, setResearchWatches] = useState(() =>
+      demo && researchLive ? demoResearchState().watches : [],
+    ),
     [more, setMore] = useState(false),
-    [filter, setFilter] = useState(""),
+    [filter, setFilterState] = useState(() => params.get("show") || ""),
     [draft, setDraft] = useState(null),
     [loaded, setLoaded] = useState(demo),
     [busy, setBusy] = useState(false),
@@ -648,6 +690,25 @@ export default function Routines({ demo, user, models, config, refresh, markdown
     // Reports that were unread when this page showed them keep their
     // "Unread" tag while it stays open, even once they're marked seen.
     [fresh, setFresh] = useState(() => new Set());
+  // The tab and the inbox filter live in the URL, beside anything else in it
+  // (?demo=1), so a reload opens what's on screen.
+  const syncParams = (changes) =>
+    setParams(
+      (p) => {
+        const n = new URLSearchParams(p);
+        for (const [k, v] of Object.entries(changes)) v ? n.set(k, v) : n.delete(k);
+        return n;
+      },
+      { replace: true },
+    );
+  const setTab = (next) => {
+    setTabState(next);
+    syncParams({ tab: next === "inbox" ? null : next, ...(next === "research" ? {} : { watch: null }) });
+  };
+  const setFilter = (next) => {
+    setFilterState(next);
+    syncParams({ show: next || null });
+  };
   const live = !demo && !!user;
   // Page Watch: its tab, and its reports in this inbox.
   const watchLive = isReleased(config, "pagewatch");
@@ -673,14 +734,16 @@ export default function Routines({ demo, user, models, config, refresh, markdown
       const q = routineFilter ? "?routine=" + encodeURIComponent(routineFilter) : "";
       const wq = watchFilter ? "?watch=" + encodeURIComponent(watchFilter) : "";
       const none = { runs: [], reports: [], more: false };
-      const [list, inbox, watched, reported] = await Promise.all([
+      const [list, inbox, watched, reported, researched] = await Promise.all([
         api("/api/routines"),
         watchFilter ? none : api("/api/routines/runs" + q),
         watchLive ? api("/api/watches") : null,
         watchLive && !routineFilter ? api("/api/watches/reports" + wq) : none,
+        researchLive ? api("/api/research-watches") : null,
       ]);
       if (!mounted.current) return;
       setRoutines(list.routines);
+      if (researched) setResearchWatches(researched.watches);
       setRuns(inbox.runs);
       setMore(inbox.more);
       if (watched) setWatches(watched.watches);
@@ -690,18 +753,21 @@ export default function Routines({ demo, user, models, config, refresh, markdown
       setLoaded(true);
       if (!quiet) setError("");
     } catch (e) {
+      // A filter left in the URL for a routine or watch that's gone.
+      if (mounted.current && filter && /not_found$/.test(e.code || "")) return setFilter("");
       if (mounted.current && !quiet) setError(e.message);
     }
   }
   useEffect(() => {
     load();
-  }, [live, filter, watchLive]);
+  }, [live, filter, watchLive, researchLive]);
   // Keep the inbox current while the page is open: often while a run is in
   // flight, otherwise now and then.
   const anyRunning =
     routines.some((r) => r.running) ||
     runs.some((r) => r.status === "running") ||
-    (watchLive && watches.some((w) => w.running));
+    (watchLive && watches.some((w) => w.running)) ||
+    (researchLive && researchWatches.some((w) => w.running));
   useEffect(() => {
     if (!live) return;
     const timer = setInterval(() => {
@@ -867,7 +933,7 @@ export default function Routines({ demo, user, models, config, refresh, markdown
             answer lands in your inbox.
           </p>
         </div>
-        {(live || demo) && tab !== "watches" && (
+        {(live || demo) && tab !== "watches" && tab !== "research" && (
           <Button type="button" onClick={() => openEditor(null)} disabled={atLimit || busy}>
             New routine <Icon name="plus" size={16} />
           </Button>
@@ -915,6 +981,17 @@ export default function Routines({ demo, user, models, config, refresh, markdown
                 <span className="routines-count">{`${watches.length}/${MAX_WATCHES}`}</span>
               </button>
             )}
+            {researchLive && (
+              <button
+                type="button"
+                aria-pressed={tab === "research"}
+                className={tab === "research" ? "active" : ""}
+                onClick={() => setTab("research")}
+              >
+                Research watch
+                <span className="routines-count">{`${researchWatches.length}/${MAX_RESEARCH}`}</span>
+              </button>
+            )}
           </div>
           {atLimit && tab === "routines" && !draft && (
             <p className="routine-help">
@@ -934,7 +1011,24 @@ export default function Routines({ demo, user, models, config, refresh, markdown
               onDelete={() => remove(routines.find((r) => r.id === draft.id))}
             />
           )}
-          {tab === "watches" && watchLive ? (
+          {tab === "research" && researchLive ? (
+            <ResearchTab
+              demo={demo}
+              live={live}
+              models={choices}
+              config={config}
+              watches={researchWatches}
+              setWatches={setResearchWatches}
+              reload={load}
+              setError={setError}
+              nameOf={nameOf}
+              onRemoved={(id) => filter === id && setFilter("")}
+              onReports={(id) => {
+                setFilter(id);
+                setTab("inbox");
+              }}
+            />
+          ) : tab === "watches" && watchLive ? (
             <WatchesTab
               demo={demo}
               live={live}
@@ -985,10 +1079,11 @@ export default function Routines({ demo, user, models, config, refresh, markdown
                 <label>
                   <span>Show</span>
                   <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-                    <option value="">{watchLive ? "Everything" : "All routines"}</option>
-                    {/* With Page Watch, a heading row before each group (a
-                        plain option, so the language switch translates it). */}
-                    {watchLive && routines.length > 0 && (
+                    <option value="">{watchLive || researchLive ? "Everything" : "All routines"}</option>
+                    {/* With Page Watch or Research Watch, a heading row before
+                        each group (a plain option, so the language switch
+                        translates it). */}
+                    {(watchLive || researchLive) && routines.length > 0 && (
                       <option value="#routines" disabled>
                         Routines
                       </option>
@@ -1007,6 +1102,17 @@ export default function Routines({ demo, user, models, config, refresh, markdown
                       watches.map((w) => (
                         <option key={w.id} value={"w:" + w.id} data-i18n="off">
                           {shortUrl(w.url)}
+                        </option>
+                      ))}
+                    {researchLive && researchWatches.length > 0 && (
+                      <option value="#research" disabled>
+                        Research watch
+                      </option>
+                    )}
+                    {researchLive &&
+                      researchWatches.map((w) => (
+                        <option key={w.id} value={w.id} data-i18n="off">
+                          {w.name}
                         </option>
                       ))}
                   </select>

@@ -48,7 +48,7 @@ export function routineRoutes(ctx) {
     const id = uid("rt_");
     transaction(db, () => {
       const n = db
-        .prepare("SELECT COUNT(*) n FROM routines WHERE user_id=?")
+        .prepare("SELECT COUNT(*) n FROM routines WHERE user_id=? AND kind='prompt'")
         .get(req.user.id).n;
       if (n >= MAX_ROUTINES)
         fail(
@@ -87,6 +87,9 @@ export function routineRoutes(ctx) {
   });
   app.patch("/api/routines/:id", requireUser, write, (req, res) => {
     const row = owned(req.params.id, req.user.id);
+    // A research watch is changed from its own routes (/api/research-watches).
+    if (row.kind === "research")
+      fail(400, "Change a research watch from its own tab.", "invalid_routine");
     const r = routineInput(ctx, req.body, row);
     if (Object.hasOwn(req.body || {}, "model"))
       ctx.earlyModels.check(viewerOf(req), "models", r.model);

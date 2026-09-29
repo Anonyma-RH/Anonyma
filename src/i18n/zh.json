@@ -3104,6 +3104,62 @@
     "This routine's monthly budget couldn't cover this run. Nothing was charged.": "此定时任务的每月预算不足以支付此次运行。未扣费。",
     "The per-run maximum couldn't cover this run with this model and prompt. Nothing was charged.": "使用此模型和提示词时，单次上限不足以支付此次运行。未扣费。",
     "Your spending limits couldn't cover this run. Nothing was charged.": "你的消费上限不足以支付此次运行。未扣费。",
+    "Research Watch": "研究监测",
+    "Research watch": "研究监测",
+    "A sourced briefing on any topic, delivered on your schedule.": "按你的时间表，为任何主题送上附来源的简报。",
+    "Deep Research that runs itself: daily or weekly, with a monthly budget": "会自己运行的深度研究：每天或每周一次，并设有每月预算",
+    "Numbered sources in your Routines inbox, and only what's new since last time": "带编号来源的报告直达定时任务收件箱，还可只看上次以来的新内容",
+    "See the most a run can cost first; a step that fails costs nothing": "先看单次运行的最高花费；失败的步骤不收费",
+    "New research watch": "新建研究监测",
+    "Edit research watch": "编辑研究监测",
+    "Save research watch": "保存研究监测",
+    "Delete research watch": "删除研究监测",
+    "Delete this research watch and its reports? This can't be undone.": "删除这个研究监测及其报告？此操作无法撤销。",
+    "Topic": "主题",
+    "Name (optional)": "名称（可选）",
+    "Defaults to the topic": "默认使用主题",
+    "What is changing in EU AI Act enforcement": "欧盟《人工智能法案》的执行情况有何变化",
+    "Depth": "深度",
+    "Only what's new since last time": "只看上次以来的新内容",
+    "Each report covers what changed since the last one. The last report's key findings are sent with the next run to compare against.": "每份报告只涵盖自上一份以来的变化。上一份报告的要点会随下一次运行一起发送，用来对比。",
+    "Watches run on our server, where Veil can't mask anything: the topic is sent to the model and, as searches, to web search as written.": "研究监测在我们的服务器上运行，Veil 无法在这里遮盖任何内容：主题会按原样发送给模型，并以搜索词的形式发送给联网搜索。",
+    "Choose a model to see the most a run can cost.": "选择模型后即可看到单次运行的最高花费。",
+    "That is the most a run can cost: it is checked against your balance and spending limits, and it is what a run holds. You pay only for steps that finish and give a result, usually far less. A step that fails, or that can't be used, is free.": "这是单次运行的最高花费：它会与你的余额和消费上限核对，也是运行时冻结的金额。只有完成并给出结果的步骤才会收费，通常远低于这个数。失败或无法使用的步骤不收费。",
+    "Over your spending limit right now.": "目前已超出你的消费上限。",
+    "Over your balance right now.": "目前已超出你的余额。",
+    "A run stops before it starts, and nothing is charged, when your balance, your spending limits or what is left of the month's budget can't cover it. The budget resets each calendar month in the watch's time zone.": "当你的余额、消费上限或本月预算的剩余额度无法覆盖一次运行时，该次运行会在开始前停止，且不会扣费。预算按监测所在时区，每个日历月重置。",
+    "ANONYMA keeps the topic, the schedule and your reports (the newest 50) until you delete them. It doesn't use Memory, and Device Vault and Sealed Mode don't apply to scheduled runs. Delete a report and the watch forgets it.": "ANONYMA 会保留主题、时间表和你的报告（最新 50 份），直到你删除它们。它不使用记忆功能，本机保险库和密封模式也不适用于定时运行。删除一份报告，监测就会忘掉它。",
+    "Only what's new": "只看新内容",
+    "Research Watch: each watch’s topic, depth, model, schedule and budget, and its reports in the Routines inbox: the newest 50 per watch, with their sources and charges. With “Only what’s new”, the last report’s key findings (at most 3,000 characters) are sent with the next run, and deleting that report makes the watch forget it. Runs happen on the server, so Veil can’t mask the topic: it goes to the model and, as searches, to web search as written. Deleting a watch deletes its reports; Panic Wipe and closing your account delete every watch.": "研究监测：每个监测的主题、深度、模型、时间表和预算，以及它在定时任务收件箱中的报告：每个监测最新的 50 份，附来源和扣费。开启“只看上次以来的新内容”后，上一份报告的要点（最多 3,000 个字符）会随下一次运行一起发送，删除那份报告后监测就会忘掉它。运行在服务器上进行，因此 Veil 无法遮盖主题：主题会按原样发送给模型，并以搜索词的形式发送给联网搜索。删除监测会删除它的报告；Panic Wipe 和关闭账户会删除所有监测。",
+    "Schedule prompts and research watches to run automatically with spending limits. Read the results in your inbox.": "安排提示词和研究监测按计划自动运行，并设置消费上限。在你的收件箱中查看结果。",
+    "Pick a topic and a schedule. Each run plans, searches the web and writes a sourced report, delivered to your inbox: Deep Research that runs itself. You set a monthly budget, and you see the most a run can cost before you save.": "选择一个主题和时间表。每次运行都会规划、联网搜索并撰写附来源的报告，送到你的收件箱：会自己运行的深度研究。你来设定每月预算，保存前就能看到单次运行的最高花费。",
+    "You have the most research watches an account can keep. Delete one to add another.": "你已达到账户可保留的研究监测数量上限。删除一个后才能再添加。",
+    "No research watches yet.": "还没有研究监测。",
+    "Watch a market, a regulation, a technology or a rival, and get a sourced briefing on your schedule.": "监测一个市场、一项法规、一种技术或一个对手，按你的时间表收到附来源的简报。",
+    "Compared with the last report": "已与上一份报告对比",
+    "First report: nothing to compare with yet": "第一份报告：还没有可对比的内容",
+    "Plan": "规划",
+    "Report": "报告",
+    "The report couldn't be written, so this is what the searches found. The report step wasn't charged.": "报告未能写成，所以这里是搜索找到的内容。报告步骤未扣费。",
+    "The run was stopped before its report was written, so this is what the searches found. Only finished steps were charged.": "运行在报告写成之前被停止，所以这里是搜索找到的内容。只对完成的步骤计费。",
+    "Research stopped unexpectedly, so this is what the searches found. Only finished steps were charged.": "研究意外中断，所以这里是搜索找到的内容。只对完成的步骤计费。",
+    "This watch's monthly budget couldn't cover a whole run. Nothing was charged.": "这个监测的每月预算无法覆盖一次完整运行。未扣费。",
+    "A run of this watch now costs more than the maximum you agreed to. Open the watch and save it to accept the new maximum. Nothing was charged.": "这个监测的单次运行现在超出了你同意的最高花费。打开该监测并保存，即可接受新的最高花费。未扣费。",
+    "None of the web searches finished, so no report was written. Nothing was charged.": "没有一次联网搜索完成，所以未撰写报告。未扣费。",
+    "The run was stopped. Nothing was charged.": "运行已停止。未扣费。",
+    "Research stopped unexpectedly. Nothing was charged.": "研究意外中断。未扣费。",
+    "Research Watch isn't available right now. Nothing was charged.": "研究监测目前不可用。未扣费。",
+    "The topic looks like a wallet seed phrase, so nothing was sent. Nothing was charged.": "该主题看起来像钱包助记词，所以未发送任何内容。未扣费。",
+    "This watch's model can't do research right now. Nothing was charged.": "这个监测的模型目前无法进行研究。未扣费。",
+    "Research watch not found.": "未找到该研究监测。",
+    "Repeat daily or weekly.": "请选择每天或每周重复。",
+    "Choose the day for a weekly watch: 0 (Sunday) to 6 (Saturday).": "请为每周研究监测选择星期：0（星期日）至 6（星期六）。",
+    "This watch is running. Delete it once the run finishes.": "此研究监测正在运行。请在运行结束后再删除。",
+    "Change a research watch from its own tab.": "请在研究监测自己的标签页中修改它。",
+    "This looks like a wallet seed phrase. A watch's topic is saved and sent to web searches on every run, so ANONYMA won't save one. Remove it to continue.": "这看起来像钱包助记词。研究监测的主题会被保存，并在每次运行时发送给联网搜索，因此 ANONYMA 不会保存助记词。请删除后再继续。",
+    "This watch was switched off or deleted before it ran.": "此研究监测在运行前已被关闭或删除。",
+    "Research Watch needs a text model.": "研究监测需要文本模型。",
+    "Send the watch as a JSON object.": "请以 JSON 对象的形式发送研究监测。",
     "This routine was switched off or deleted before it ran. Nothing was charged.": "此定时任务在运行前已被关闭或删除。未扣费。",
     "This routine's model isn't available right now. Nothing was charged.": "此定时任务的模型目前不可用。未扣费。",
     "Private models only is on, and this model isn't a zero-data-retention model. Nothing was charged.": "已开启“仅限私密模型”，但此模型不是零数据保留模型。未扣费。",
@@ -7490,6 +7546,42 @@
     {
       "en": "You can have up to {0} routines. Delete one to add another.",
       "zh": "你最多可以有 {0} 个定时任务。删除一个后才能新增。"
+    },
+    {
+      "en": "Up to {0} credits per run",
+      "zh": "每次运行最多 {0} 积分"
+    },
+    {
+      "en": "At least {0} credits, the most one run can cost. {1} credits covers every run this month at its maximum. It's a cap, not a charge.",
+      "zh": "至少 {0} 积分，即单次运行的最高花费。{1} 积分足以覆盖本月每次运行的最高花费。这只是上限，不是收费。"
+    },
+    {
+      "en": "This budget is below one run's maximum of {0} credits.",
+      "zh": "这个预算低于单次运行的最高花费 {0} 积分。"
+    },
+    {
+      "en": "Give the watch a topic of 1 to {0} characters.",
+      "zh": "请为研究监测设置 1 至 {0} 个字符的主题。"
+    },
+    {
+      "en": "Keep the name to {0} characters or fewer.",
+      "zh": "名称最多 {0} 个字符。"
+    },
+    {
+      "en": "You can have up to {0} research watches. Delete one to add another.",
+      "zh": "你最多可以有 {0} 个研究监测。删除一个后才能新增。"
+    },
+    {
+      "en": "A run can cost up to {0} credits, so the monthly budget must be at least that.",
+      "zh": "单次运行最多可能花费 {0} 积分，因此每月预算至少要达到这个数。"
+    },
+    {
+      "en": "A run of this watch can now cost up to {0} credits, more than the {1} you agreed to. Open the watch and save it to accept the new maximum.",
+      "zh": "这个监测的单次运行现在最多可能花费 {0} 积分，超过了你同意的 {1} 积分。打开该监测并保存，即可接受新的最高花费。"
+    },
+    {
+      "en": "This watch's monthly budget has {0} of {1} credits left, not enough for a run that can cost up to {2}.",
+      "zh": "这个监测的每月预算还剩 {0} / {1} 积分，不足以支付最多可能花费 {2} 积分的一次运行。"
     },
     {
       "en": "Set the per-run maximum in credits, above 0 and up to {0}, with at most four decimals.",

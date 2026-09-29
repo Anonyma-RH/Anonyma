@@ -31,6 +31,7 @@ import {
   monthWindow,
 } from "../src/routines.js";
 import { findSeedPhrase } from "../src/seed-guard.js";
+import { performResearch, watchesLive } from "./research-watch.js";
 const ROUTINE_SEED_MESSAGE =
   "This looks like a wallet seed phrase. A routine's prompt is saved and sent on every run, so ANONYMA won't save one. Remove it to continue.";
 
@@ -61,8 +62,10 @@ const ROUTINE_SEED_MESSAGE =
 
 // Runs at once across the whole service; more wait for the next tick.
 const MAX_CONCURRENT = 4;
+// When a routine is next due: next_run, or next_due for a research watch.
+const DUE = "(CASE WHEN r.kind='research' THEN r.next_due ELSE r.next_run END)";
 const routinesLive = (cfg) => isReleased(cfg, "routines");
-const units = (value, max, what) => {
+export const units = (value, max, what) => {
   const n = Math.round(value * 10000);
   if (
     typeof value !== "number" ||
@@ -78,7 +81,7 @@ const units = (value, max, what) => {
     );
   return n;
 };
-const bool = (value, name) => {
+export const bool = (value, name) => {
   if (typeof value !== "boolean")
     fail(400, `${name} must be true or false.`, "invalid_routine");
   return value ? 1 : 0;
@@ -92,7 +95,7 @@ export const scheduleOf = (row) => ({
 });
 // The hold id for one slot of one routine, and the prefix all its holds
 // share: the monthly budget sums the ledger and open holds by it.
-const requestIdFor = (routine, slot) => `routine_${routine.id}_${slot}`;
+export const requestIdFor = (routine, slot) => `routine_${routine.id}_${slot}`;
 const holdPrefix = (routine) => `${routine.user_id}:routine_${routine.id}_`;
 
 // What a routine has spent in the calendar month (in its own time zone)
@@ -114,6 +117,30 @@ export function monthSpend(db, routine, at = now()) {
 }
 
 // ---- Input ----
+
+// A schedule as sent ({ repeat, time, timezone, day }), as the routine's
+// stored fields. A research watch offers fewer repeats (`repeats`).
+export function parseSchedule(
+  s,
+  { repeats = REPEATS, repeatMessage = "Repeat daily, on weekdays or weekly.", what = "routine" } = {},
+) {
+  if (!s || typeof s !== "object" || Array.isArray(s))
+    fail(400, "Send the schedule as an object.", "invalid_schedule");
+  if (!repeats.includes(s.repeat)) fail(400, repeatMessage, "invalid_schedule");
+  const minute = parseTime(s.time);
+  if (minute == null)
+    fail(400, "Set the time as HH:MM, from 00:00 to 23:59.", "invalid_schedule");
+  const timezone = canonicalZone(s.timezone ?? "UTC");
+  if (!timezone)
+    fail(400, "Choose a time zone such as UTC or Europe/London.", "invalid_schedule");
+  let weekday = null;
+  if (s.repeat === "weekly") {
+    if (!Number.isInteger(s.day) || s.day < 0 || s.day > 6)
+      fail(400, `Choose the day for a weekly ${what}: 0 (Sunday) to 6 (Saturday).`, "invalid_schedule");
+    weekday = s.day;
+  }
+  return { repeat: s.repeat, minute, weekday, timezone };
+}
 
 // A routine's stored fields from a create (every field) or an update (the
 // fields sent; the rest are kept).
@@ -155,26 +182,7 @@ export function routineInput(ctx, body, existing = null) {
     ? bool(body.private_only, "private_only")
     : (next.private_only ?? 0);
   next.enabled = has("enabled") ? bool(body.enabled, "enabled") : (next.enabled ?? 1);
-  if (need("schedule")) {
-    const s = body.schedule;
-    if (!s || typeof s !== "object" || Array.isArray(s))
-      fail(400, "Send the schedule as an object.", "invalid_schedule");
-    if (!REPEATS.includes(s.repeat))
-      fail(400, "Repeat daily, on weekdays or weekly.", "invalid_schedule");
-    const minute = parseTime(s.time);
-    if (minute == null)
-      fail(400, "Set the time as HH:MM, from 00:00 to 23:59.", "invalid_schedule");
-    const timezone = canonicalZone(s.timezone ?? "UTC");
-    if (!timezone)
-      fail(400, "Choose a time zone such as UTC or Europe/London.", "invalid_schedule");
-    let weekday = null;
-    if (s.repeat === "weekly") {
-      if (!Number.isInteger(s.day) || s.day < 0 || s.day > 6)
-        fail(400, "Choose the day for a weekly routine: 0 (Sunday) to 6 (Saturday).", "invalid_schedule");
-      weekday = s.day;
-    }
-    Object.assign(next, { repeat: s.repeat, minute, weekday, timezone });
-  }
+  if (need("schedule")) Object.assign(next, parseSchedule(body.schedule));
   if (need("per_run_credits"))
     next.run_cap = units(body.per_run_credits, MAX_RUN_CREDITS, "per-run maximum");
   if (need("monthly_budget_credits"))
@@ -223,7 +231,7 @@ export function routineView(db, row, at = now()) {
     per_run_credits: credits(row.run_cap),
     monthly_budget_credits: credits(row.monthly_budget),
     enabled: !!row.enabled,
-    next_run_at: row.enabled ? row.next_run : null,
+    next_run_at: row.enabled ? (row.kind === "research" ? row.next_due : row.next_run) : null,
     running: row.running_since != null,
     last_run_at: row.last_run,
     last_status: row.last_status,
@@ -235,6 +243,15 @@ export function routineView(db, row, at = now()) {
     },
     created: row.created,
     updated: row.updated,
+    // A research watch (server/research-watch.js): its topic is the prompt.
+    ...(row.kind === "research"
+      ? {
+          kind: "research",
+          topic: row.prompt,
+          depth: row.depth,
+          new_only: !!row.new_only,
+        }
+      : {}),
   };
 }
 export function runView(row) {
@@ -259,18 +276,26 @@ export function runView(row) {
     signed_receipt: json(row.receipt),
     code: row.code,
     message: row.message,
+    // A research watch's report: what each step did and cost, never content.
+    ...(row.kind === "research"
+      ? { kind: "research", research: json(row.research) }
+      : {}),
   };
 }
-export const listRoutines = (db, user, at = now()) =>
+// One kind's routines ("prompt" routines, or the "research" watches), oldest
+// first; every kind when `kind` is null (the account export).
+export const listRoutines = (db, user, at = now(), kind = "prompt") =>
   db
-    .prepare("SELECT * FROM routines WHERE user_id=? ORDER BY created,rowid")
-    .all(user)
+    .prepare(
+      `SELECT * FROM routines WHERE user_id=? ${kind ? "AND kind=?" : ""} ORDER BY created,rowid`,
+    )
+    .all(user, ...(kind ? [kind] : []))
     .map((r) => routineView(db, r, at));
 
 // Everything a routine keeps, for the account export.
 export function exportRoutines(db, user) {
   return {
-    routines: listRoutines(db, user),
+    routines: listRoutines(db, user, now(), null),
     runs: db
       .prepare(
         "SELECT x.*,r.name routine_name FROM routine_runs x JOIN routines r ON r.id=x.routine_id WHERE x.user_id=? ORDER BY x.started,x.rowid",
@@ -323,6 +348,15 @@ export function createRoutineRunner(ctx) {
   const { db, cfg } = ctx;
   const running = new Map();
   let closed = false;
+  // A research run has a hold per step and settles each as it finishes, so
+  // the steps that had finished before the restart stay charged: say how much.
+  db.prepare(
+    `UPDATE routine_runs SET charged=COALESCE((SELECT SUM(-l.amount) FROM ledger l
+        WHERE l.user_id=routine_runs.user_id AND l.amount<0
+          AND substr(l.ref,1,length(routine_runs.user_id)+length(routine_runs.request_id)+2)
+            =routine_runs.user_id||':'||routine_runs.request_id||':'),0)
+      WHERE status='running' AND kind='research'`,
+  ).run();
   // A run the service was restarting through can't finish: say so, and free
   // its routine. Its hold, if any, is released when it expires (worker.js).
   db.prepare(
@@ -338,19 +372,21 @@ export function createRoutineRunner(ctx) {
     return transaction(db, () => {
       const r = db
         .prepare(
-          "SELECT r.* FROM routines r JOIN users u ON u.id=r.user_id AND u.deleted IS NULL WHERE r.id=? AND r.enabled=1 AND r.running_since IS NULL AND r.next_run<=?",
+          `SELECT r.* FROM routines r JOIN users u ON u.id=r.user_id AND u.deleted IS NULL WHERE r.id=? AND r.enabled=1 AND r.running_since IS NULL AND ${DUE}<=?`,
         )
         .get(id, at);
       if (!r) return null;
       const schedule = scheduleOf(r);
-      const slot = Math.max(r.next_run, latestRunAtOrBefore(schedule, at) ?? r.next_run);
-      const skipped = runsBetween(schedule, r.next_run, slot);
+      const due = r.kind === "research" ? r.next_due : r.next_run;
+      const slot = Math.max(due, latestRunAtOrBefore(schedule, at) ?? due);
+      const skipped = runsBetween(schedule, due, slot);
+      // A research watch keeps its next slot in next_due (see core.js).
       db.prepare(
-        "UPDATE routines SET running_since=?,next_run=? WHERE id=?",
+        `UPDATE routines SET running_since=?,${r.kind === "research" ? "next_due" : "next_run"}=? WHERE id=?`,
       ).run(at, nextRunAfter(schedule, at), r.id);
       const runId = uid("rr_");
       db.prepare(
-        "INSERT INTO routine_runs(id,routine_id,user_id,slot,started,status,skipped,model,web_search,private_only,request_id) VALUES(?,?,?,?,?,'running',?,?,?,?,?)",
+        "INSERT INTO routine_runs(id,routine_id,user_id,slot,started,status,skipped,model,web_search,private_only,request_id,kind) VALUES(?,?,?,?,?,'running',?,?,?,?,?,?)",
       ).run(
         runId,
         r.id,
@@ -362,12 +398,19 @@ export function createRoutineRunner(ctx) {
         r.web_search,
         r.private_only,
         requestIdFor(r, slot),
+        r.kind,
       );
       return { routine: r, slot, runId };
     });
   }
 
   async function perform({ routine, slot }, closeListeners) {
+    // A research watch runs Deep Research's steps (server/research-watch.js).
+    if (routine.kind === "research")
+      return performResearch(ctx, { routine, slot }, closeListeners, {
+        monthSpend,
+        requestIdFor,
+      });
     const user = db
       .prepare("SELECT * FROM users WHERE id=? AND deleted IS NULL")
       .get(routine.user_id);
@@ -467,14 +510,28 @@ export function createRoutineRunner(ctx) {
   }
 
   function finish(claimed, outcome) {
+    const research = claimed.routine.kind === "research";
     const hold = `${claimed.routine.user_id}:${requestIdFor(claimed.routine, claimed.slot)}`;
-    const h = db.prepare("SELECT status,result FROM holds WHERE id=?").get(hold);
-    const charged = h?.status === "settled" ? JSON.parse(h.result).charged || 0 : 0;
+    // A research run has one hold per step: its outcome says what was held
+    // and charged (server/research-watch.js).
+    const h = research
+      ? outcome.held
+        ? { status: "held" }
+        : null
+      : db.prepare("SELECT status,result FROM holds WHERE id=?").get(hold);
+    const charged = research
+      ? outcome.charged || 0
+      : h?.status === "settled"
+        ? JSON.parse(h.result).charged || 0
+        : 0;
     const status = outcome.error ? (h ? "failed" : "refused") : "done";
+    // A run that delivered something can still carry a note (a report that
+    // couldn't be written): its code and message.
+    const note = outcome.error || outcome.note || null;
     const at = now();
     // A routine deleted mid-run took its inbox row with it: nothing to keep.
     db.prepare(
-      "UPDATE routine_runs SET status=?,finished=?,charged=?,answer=?,citations=?,receipt=?,finish_reason=?,reply_budget=?,code=?,message=? WHERE id=?",
+      "UPDATE routine_runs SET status=?,finished=?,charged=?,answer=?,citations=?,receipt=?,finish_reason=?,reply_budget=?,code=?,message=?,research=? WHERE id=?",
     ).run(
       status,
       at,
@@ -484,8 +541,9 @@ export function createRoutineRunner(ctx) {
       outcome.receipt ? JSON.stringify(outcome.receipt) : null,
       outcome.finish_reason ?? null,
       outcome.reply_budget ?? null,
-      outcome.error?.code || null,
-      outcome.error ? String(outcome.error.message || "The run failed.").slice(0, 1000) : null,
+      note?.code || null,
+      note ? String(note.message || "The run failed.").slice(0, 1000) : null,
+      outcome.research ? JSON.stringify(outcome.research) : null,
       claimed.runId,
     );
     db.prepare(
@@ -507,6 +565,17 @@ export function createRoutineRunner(ctx) {
     }
     try {
       finish(claimed, outcome);
+      // A research report is in the inbox: tell Push Alerts, if that update
+      // is live. Only ids go, never the topic or the report.
+      if (claimed.routine.kind === "research" && outcome.answer && !outcome.error)
+        try {
+          ctx.pushAlerts?.notify?.({
+            user: claimed.routine.user_id,
+            kind: "research_report",
+            routine: claimed.routine.id,
+            run: claimed.runId,
+          });
+        } catch {}
     } catch (e) {
       // The database may be closing with the service. A lock left behind
       // is cleared at the next start, like any interrupted run.
@@ -524,9 +593,12 @@ export function createRoutineRunner(ctx) {
   function startDue() {
     if (closed || !routinesLive(cfg)) return;
     const at = now();
+    // Research watches run only while Research Watch, Deep Research and Live
+    // Web Search are all released; a watch left behind waits.
+    const kinds = watchesLive(cfg) ? "r.kind IN ('prompt','research')" : "r.kind='prompt'";
     const due = db
       .prepare(
-        "SELECT r.id FROM routines r JOIN users u ON u.id=r.user_id AND u.deleted IS NULL WHERE r.enabled=1 AND r.next_run<=? AND r.running_since IS NULL ORDER BY r.next_run LIMIT ?",
+        `SELECT r.id FROM routines r JOIN users u ON u.id=r.user_id AND u.deleted IS NULL WHERE r.enabled=1 AND ${kinds} AND ${DUE}<=? AND r.running_since IS NULL ORDER BY ${DUE} LIMIT ?`,
       )
       .all(at, MAX_CONCURRENT * 2);
     for (const { id } of due) {

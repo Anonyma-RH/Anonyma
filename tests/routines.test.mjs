@@ -983,7 +983,8 @@ async function pageModule() {
   const receipt = stub("receipt.mjs", "export default () => null;");
   const router = stub(
     "router.mjs",
-    `export const Link = ({ children, to }) => React.createElement("a", { href: to }, children);`,
+    `export const Link = ({ children, to }) => React.createElement("a", { href: to }, children);
+     export const useSearchParams = () => [new URLSearchParams(), () => {}];`,
   );
   const markdown = stub(
     "markdown.mjs",
@@ -1002,8 +1003,20 @@ async function pageModule() {
      export const demoWatchState = () => ({ watches: [], reports: [] });
      export const markWatchesSeen = () => {};`,
   );
+  // Research Watch's tab and cards (tests/research-watch.test.mjs covers them).
+  const research = stub(
+    "research-watch.mjs",
+    `export const ResearchTab = () => null;
+     export const ResearchRunDetails = () => null;
+     export const RESEARCH_NOTES = {};
+     export const RESEARCH_REASONS = {};
+     export const demoResearchState = () => ({ watches: [], runs: [] });
+     export const researchWatchLive = () => false;`,
+  );
   const out = code
     .replace(/^import "\.\/routines\.css";$/m, "")
+    .replace(/from "\.\/ResearchWatch\.jsx"/g, `from "${research}"`)
+    .replace(/from "\.\/research-watch\.js"/g, `from "${new URL("../src/research-watch.js", import.meta.url)}"`)
     .replace(/from "\.\/PageWatch\.jsx"/g, `from "${watch}"`)
     .replace(/from "\.\/page-watch\.js"/g, `from "${new URL("../src/page-watch.js", import.meta.url)}"`)
     .replace(/from "\.\/ui\.jsx"/g, `from "${ui}"`)

@@ -1,6 +1,9 @@
 import { chatLimits } from "../data/chat-limits.js";
 import { isReleased } from "./releases.js";
-import { chatPrice } from "./core.js";
+import { chatPrice, fail, tokenCost } from "./core.js";
+import { chatStream, reportedProviderCost } from "./provider.js";
+import { FAILOVER_CODES } from "./fallback.js";
+import { ZDR_ROUTING } from "./private-mode.js";
 import { withMemory } from "../src/memory.js";
 import {
   MAX_FINDINGS,
@@ -8,6 +11,7 @@ import {
   MAX_STEP_SOURCES,
   MAX_SUBQUESTION,
   hostOf,
+  stepSources,
   stripUrls,
 } from "../src/deep-research.js";
 
@@ -78,7 +82,7 @@ export const searchMessages = (subQuestion) => [
   { role: "user", content: subQuestion },
 ];
 
-const sourceLine = (s, n) =>
+export const sourceLine = (s, n) =>
   `[${n}] ${(s.title || hostOf(s.url) || "Untitled").slice(0, 160)}${s.title ? ` (${hostOf(s.url).slice(0, 60)})` : ""}`;
 
 // The report step's messages: the question, the numbered sources (titles
@@ -147,4 +151,110 @@ export function researchCosts({ cfg, m, question, cap, memoryMessage, factor }) 
     amounts: { plan, search, write },
     total: plan + search * cap + write,
   };
+}
+
+const validTokens = (value, fallback) =>
+  Number.isSafeInteger(value) && value >= 0 ? value : fallback;
+
+// One model call of a research run, through the same gateway, failover and
+// ZDR rules as a chat: a private step never fails over, and nothing fails
+// over once the provider has accepted it. Shared by Deep Research
+// (routes/research.js) and Research Watch (research-watch.js), so a watch's
+// steps are made and priced exactly like a Deep Research run's.
+//
+// `controller` is the run's: aborting it stops the step in flight. Returns
+// { call(messages, max, web), usedBackup() }; call resolves to the step's
+// text, token counts, the dollars it cost at most `web`'s search fee
+// included, its finish reason and the pages the provider cited.
+export function researchCaller(ctx, { m, isPrivate, controller }) {
+  const { cfg, inflight, fallback } = ctx;
+  let anyBackup = false;
+  async function call(messages, max, web) {
+    const step = new AbortController();
+    const onStop = () => step.abort(controller.signal.reason);
+    controller.signal.addEventListener("abort", onStop, { once: true });
+    const timer = setTimeout(() => step.abort(new Error("Provider timeout")), cfg.requestTimeoutMs || 240000);
+    inflight.controllers.add(step);
+    const upstream = {
+      model: m.id,
+      messages,
+      max_tokens: max,
+      ...(web ? { plugins: [{ id: "web", max_results: 5 }] } : {}),
+      ...(isPrivate ? ZDR_ROUTING : {}),
+    };
+    let accepted = false,
+      route = "primary";
+    const markAccepted = () => (accepted = true);
+    async function* stream() {
+      try {
+        yield* chatStream(cfg, upstream, step.signal, markAccepted);
+      } catch (e) {
+        if (accepted || step.signal.aborted || isPrivate || !FAILOVER_CODES.has(e.code)) throw e;
+        const backupModel = await fallback.modelFor(m.id);
+        if (!backupModel) throw e;
+        route = "backup";
+        yield* chatStream(fallback.cfg, { ...upstream, model: backupModel }, step.signal, markAccepted);
+      }
+    }
+    let text = "",
+      reasoning = "",
+      partUsage = null,
+      upstreamCost = null,
+      finish = null;
+    // The pages the provider cited, as it reports them (deduplicated and
+    // checked in stepSources); never taken from the model's text.
+    const cited = [];
+    const citedUrls = new Set();
+    const cite = (url, title) => {
+      if (typeof url !== "string" || citedUrls.has(url) || cited.length >= 50) return;
+      citedUrls.add(url);
+      cited.push({ url, title });
+    };
+    // Model Status: each step counts as one request to the model.
+    const probe = ctx.modelStatus.start(m.id);
+    probe.sent();
+    try {
+      for await (const part of stream()) {
+        if (part.error) fail(502, part.error.message || "Provider error", "provider_rejected");
+        const choice = part.choices?.[0];
+        if (typeof choice?.finish_reason === "string") finish = choice.finish_reason;
+        const delta = choice?.delta || {};
+        if (typeof delta.content === "string") text += delta.content;
+        if (typeof delta.reasoning === "string" || typeof delta.reasoning_content === "string")
+          reasoning += delta.reasoning || delta.reasoning_content;
+        if (delta.content || delta.reasoning || delta.reasoning_content) probe.first();
+        for (const a of [...(delta.annotations || []), ...(choice?.message?.annotations || [])])
+          cite(a?.url_citation?.url, a?.url_citation?.title);
+        for (const url of part.citations || []) cite(url);
+        if (part.usage) partUsage = part.usage;
+        if (Number.isFinite(part.cost)) upstreamCost = part.cost;
+      }
+      probe.done(!!(text || reasoning));
+    } catch (e) {
+      probe.fail(e, step.signal);
+      throw e;
+    } finally {
+      clearTimeout(timer);
+      controller.signal.removeEventListener("abort", onStop);
+      inflight.controllers.delete(step);
+    }
+    if (route === "backup") anyBackup = true;
+    const input = validTokens(
+      partUsage?.prompt_tokens,
+      validTokens(partUsage?.input_tokens, Math.ceil(JSON.stringify(messages).length / 4)),
+    );
+    const out = validTokens(
+      partUsage?.completion_tokens,
+      validTokens(partUsage?.output_tokens, Math.ceil((text + reasoning).length / 4)),
+    );
+    const fee = route === "backup" ? cfg.gateway2FeePercent : cfg.gatewayFeePercent;
+    const reported = reportedProviderCost(partUsage, upstreamCost, fee);
+    // As in a chat: a searched step costs at least its tokens plus the fee.
+    const dollars = Math.max(
+      reported ?? tokenCost(m, input, out),
+      web ? tokenCost(m, input, out) + cfg.webSearchPrice : 0,
+    );
+    return { text, reasoning, input, out, dollars, finish, route, sources: stepSources(cited) };
+  }
+  return { call, usedBackup: () => anyBackup };
 }

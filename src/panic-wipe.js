@@ -73,13 +73,15 @@ export function walletPaymentPending(storage, userId) {
 // Clears localStorage, sessionStorage, IndexedDB, the service worker's caches
 // and its registration for this origin, which is ANONYMA's alone. Only the
 // language choice is put back. Every step is best effort: a browser that
-// refuses one still gets the rest.
+// refuses one still gets the rest. `names`: databases deleted even where the
+// browser can't list them (Device Vault's, with any decoy: vaultDbNames).
 export async function clearBrowserData({
   local = globalThis.localStorage,
   session = globalThis.sessionStorage,
   idb = globalThis.indexedDB,
   cacheStorage = globalThis.caches,
   serviceWorker = globalThis.navigator?.serviceWorker,
+  names = [],
 } = {}) {
   let language = null;
   try {
@@ -96,18 +98,20 @@ export async function clearBrowserData({
     session?.clear();
   } catch {}
   try {
-    const list = (await idb?.databases?.()) || [];
+    let listed = [];
+    try {
+      listed = ((await idb?.databases?.()) || []).map((d) => d?.name);
+    } catch {}
+    const all = [...new Set([...listed, ...names].filter((n) => typeof n === "string" && n))];
     await Promise.all(
-      list
-        .filter((d) => d?.name)
-        .map(
-          (d) =>
-            new Promise((done) => {
-              const r = idb.deleteDatabase(d.name);
-              if (!r) return done();
-              r.onsuccess = r.onerror = r.onblocked = () => done();
-            }),
-        ),
+      all.map(
+        (name) =>
+          new Promise((done) => {
+            const r = idb.deleteDatabase(name);
+            if (!r) return done();
+            r.onsuccess = r.onerror = r.onblocked = () => done();
+          }),
+      ),
     );
   } catch {}
   try {

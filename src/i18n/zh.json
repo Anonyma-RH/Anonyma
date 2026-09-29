@@ -5776,7 +5776,36 @@
     "Send each piece as a WAV file.": "请以 WAV 文件发送每个片段。",
     "Send each piece as mono 16-bit PCM at 16 kHz.": "请以 16 kHz 单声道 16 位 PCM 发送每个片段。",
     "Timing comes from the transcription provider. Some sections may span up to five minutes.": "时间标记由转录服务提供，部分段落可能长达五分钟。",
-    "Owners only when the transcript names them; timed notes link to transcript sections": "仅在转录明确提及姓名时标注负责人；带时间标记的纪要链接到对应转录段落"
+    "Owners only when the transcript names them; timed notes link to transcript sections": "仅在转录明确提及姓名时标注负责人；带时间标记的纪要链接到对应转录段落",
+    "Decoy Vault": "诱饵保险库",
+    "Made to unlock your vault? A second passphrase opens a harmless decoy.": "被迫解锁保险库？第二个密码短语会打开一个无害的诱饵。",
+    "Set a decoy passphrase in Device Vault; it opens a separate vault of ordinary chats": "在本机保险库中设置诱饵密码短语；它会打开一个装着普通会话的独立保险库",
+    "Either passphrase unlocks the same way, in the same time, with nothing marking the decoy": "两个密码短语的解锁方式和耗时完全相同，没有任何地方标明哪个是诱饵",
+    "A deterrent against casual pressure, not proof against an expert": "它能震慑一般的胁迫，但挡不住专家",
+    "Someone who examines this browser's storage closely could tell that two vaults exist.": "仔细检查此浏览器存储的人，可能看出存在两个保险库。",
+    "Vault Sync syncs only your real vault. The decoy stays on this device, and while it's open, sync is paused and shows as off.": "保险库同步只同步你真正的保险库。诱饵只保留在此设备上；诱饵打开期间，同步会暂停并显示为关闭。",
+    "Your ledger still lists every message's charge, from either vault.": "你的账本仍会列出每条消息的扣费，无论它来自哪个保险库。",
+    "It deters casual pressure. It isn't proof against an expert: for example, inside the decoy a decoy passphrase can't be set.": "它能震慑一般的胁迫，但挡不住专家：例如，在诱饵内无法设置诱饵密码短语。",
+    "Use a decoy passphrase that's different from your vault passphrase.": "诱饵密码短语必须与保险库密码短语不同。",
+    "A decoy passphrase can't be set from here. Nothing was changed.": "无法在这里设置诱饵密码短语。没有做任何更改。",
+    "Decoy passphrase": "诱饵密码短语",
+    "Unlocking with a decoy passphrase opens a separate vault instead of this one. It starts with a few ordinary sample chats you can continue, delete or add to.": "用诱饵密码短语解锁时，会打开一个独立的保险库，而不是这个。它自带几段普通的示例会话，你可以继续、删除或添加新的会话。",
+    "Choose a new decoy passphrase. The decoy starts over with fresh sample chats.": "请设置新的诱饵密码短语。诱饵会重新开始，换上新的示例会话。",
+    "Repeat the decoy passphrase": "再次输入诱饵密码短语",
+    "This vault's passphrase, to confirm": "此保险库的密码短语，用于确认",
+    "Change decoy passphrase": "更改诱饵密码短语",
+    "Set decoy passphrase": "设置诱饵密码短语",
+    "Remove the decoy passphrase? The decoy vault and its chats are deleted from this browser.": "移除诱饵密码短语？诱饵保险库及其会话将从此浏览器中删除。",
+    "Removing…": "正在移除……",
+    "Remove decoy": "移除诱饵",
+    "A decoy passphrase is set. Unlocking with it opens a separate vault instead of this one.": "已设置诱饵密码短语。用它解锁时，会打开一个独立的保险库，而不是这个。",
+    "If someone makes you unlock this vault, a second passphrase can open a separate, harmless vault instead.": "如果有人逼你解锁这个保险库，第二个密码短语可以改为打开一个独立、无害的保险库。",
+    "Set a decoy passphrase": "设置诱饵密码短语",
+    "Decoy passphrase set. Lock the vault and unlock with it to see the decoy.": "诱饵密码短语已设置。锁定保险库后用它解锁，即可看到诱饵。",
+    "Decoy removed. Only this vault's passphrase unlocks now.": "诱饵已移除。现在只有此保险库的密码短语能解锁。",
+    "Sync can't be turned on for this vault.": "无法为此保险库开启同步。",
+    "Decoy Vault, if you set a decoy passphrase: a second, separate vault kept encrypted in this browser only. It's never synced, uploaded or in your account export, and Panic Wipe and deleting Device Vault remove it too.": "诱饵保险库（如果你设置了诱饵密码短语）：第二个独立的保险库，只加密保存在此浏览器中。它从不同步、从不上传，也不包含在账户导出中；紧急抹除和删除本机保险库也会一并删除它。",
+    "Decoy Vault is coming soon.": "诱饵保险库即将推出。"
   },
   "patterns": [
     {
@@ -9366,6 +9395,10 @@
     {
       "en": "{0} can't take a meeting transcript. Pick a model with a longer context.",
       "zh": "{0} 无法读取会议文字稿。请选择上下文更长的模型。"
+    },
+    {
+      "en": "Decoy passphrase (at least {0} characters)",
+      "zh": "诱饵密码短语（至少 {0} 个字符）"
     }
   ]
 }

@@ -8,6 +8,7 @@ import {
   MIN_PASSPHRASE,
   VAULT_LIMITS,
   VaultError,
+  VAULT_ERRORS,
   createVault,
   unlockVault,
   openChat,
@@ -28,8 +29,15 @@ import {
   deleteRecord,
   replaceVault,
   deleteVault,
+  deleteAltVault,
+  altStore,
   exclusive,
 } from "./device-vault-store.js";
+// Decoy Vault: a second passphrase that opens a separate, harmless vault
+// (src/decoy-vault.js). Only when it's released (`decoy`).
+import { openEither, createDecoy, decoyProblem, validSlot, DECOY_ERRORS, DECOY_LIMITS } from "./decoy-vault.js";
+// A new decoy's sample chats are in the language the app is shown in.
+import { getLanguage } from "./i18n.js";
 import "./device-vault.css";
 // Vault Sync: optional, end-to-end-encrypted sync of this vault. Its UI
 // renders only when it's released and passed in (`sync`); it's the only
@@ -47,7 +55,9 @@ const idleLabel = (m) => (m === 60 ? "1 hour" : `${m} minutes`);
 // moving between the workspace and account pages keeps the vault open.
 // Closing or reloading the tab loses it; the idle timer, Lock and a change
 // of account drop it. Watching for idleness runs whichever page is open.
-const session = { account: null, key: null, minutes: DEFAULT_IDLE_MINUTES, last: 0, timer: null };
+// Decoy Vault: `slot` says which of the two vaults the key opens ("main", or
+// "alt" for the decoy). It never reaches the screen.
+const session = { account: null, key: null, slot: "main", minutes: DEFAULT_IDLE_MINUTES, last: 0, timer: null };
 const dropListeners = new Set();
 const bump = () => (session.last = Date.now());
 const checkIdle = () => {
@@ -55,9 +65,10 @@ const checkIdle = () => {
 };
 const onShown = () => document.visibilityState === "visible" && checkIdle();
 const onGone = () => dropKey("closed");
-function holdKey(account, key, minutes) {
+function holdKey(account, key, minutes, slot = "main") {
   session.account = account;
   session.key = key;
+  session.slot = slot;
   session.minutes = minutes;
   session.last = Date.now();
   if (session.timer) return;
@@ -70,6 +81,7 @@ function dropKey(reason) {
   const had = !!session.key;
   session.key = null;
   session.account = null;
+  session.slot = "main";
   if (session.timer) {
     for (const e of ACTIVITY) window.removeEventListener(e, bump, { capture: true });
     window.removeEventListener("pagehide", onGone);
@@ -82,8 +94,17 @@ function dropKey(reason) {
 
 // The vault for the signed-in account in this browser: its state, and the
 // decrypted chats while unlocked (dropped again with the key).
-export function useDeviceVault({ enabled, account, onLock }) {
-  const [state, setState] = useState({ status: "off", meta: null, chats: [], damaged: 0 });
+//
+// Decoy Vault (`decoy`: released): the account may also have a decoy, a
+// second vault opened by its own passphrase. Unlocking then always derives
+// both keys (src/decoy-vault.js) and opens whichever vault the passphrase
+// belongs to; everything below reads and writes only the open one. The
+// returned state is the same shape for either vault: which one is open is
+// kept out of it, apart from `syncable` (Vault Sync syncs only the real one)
+// and `decoy.set`, which the decoy always reports as false.
+const EMPTY = { status: "off", meta: null, main: null, slot: "main", altSet: false, chats: [], damaged: 0 };
+export function useDeviceVault({ enabled, account, onLock, decoy = false }) {
+  const [state, setState] = useState(EMPTY);
   // Counts this tab's own changes, so Vault Sync (src/VaultSync.jsx) knows
   // when there's something to send.
   const [rev, setRev] = useState(0);
@@ -97,10 +118,15 @@ export function useDeviceVault({ enabled, account, onLock }) {
   onLockRef.current = onLock;
   const accountRef = useRef(account);
   accountRef.current = account;
+  const decoyRef = useRef(decoy);
+  decoyRef.current = decoy;
   useEffect(() => {
     const listener = (reason) => {
+      // Locked again: back to the real vault's settings, whichever was open.
       setState((s) =>
-        s.status === "unlocked" ? { status: "locked", meta: s.meta, chats: [], damaged: 0, reason } : s,
+        s.status === "unlocked"
+          ? { ...EMPTY, status: "locked", meta: s.main, main: s.main, reason }
+          : s,
       );
       onLockRef.current?.(reason);
     };
@@ -110,30 +136,37 @@ export function useDeviceVault({ enabled, account, onLock }) {
   useEffect(() => {
     if (!enabled || !account) {
       if (session.key && session.account !== account) dropKey("account");
-      setState({ status: "off", meta: null, chats: [], damaged: 0 });
+      setState(EMPTY);
       return;
     }
     if (session.key && session.account !== account) dropKey("account");
     let live = true;
-    setState({ status: "loading", meta: null, chats: [], damaged: 0 });
+    setState({ ...EMPTY, status: "loading" });
     loadMeta(account)
       .then(async (meta) => {
         if (!live) return;
-        // Still unlocked from another page of this tab.
-        if (meta && session.key && session.account === account)
-          return open(session.key, meta, account);
-        setState({ status: meta ? "locked" : "none", meta, chats: [], damaged: 0 });
+        // Still unlocked from another page of this tab: the vault that was
+        // open, with its own settings.
+        if (meta && session.key && session.account === account) {
+          const slot = session.slot;
+          const opened = slot === "alt" ? await loadMeta(altStore(account)) : meta;
+          if (live && opened) return open(session.key, opened, account, slot, meta);
+          if (live) dropKey("closed");
+        }
+        if (live) setState({ ...EMPTY, status: meta ? "locked" : "none", meta, main: meta });
       })
-      .catch(() => live && setState({ status: "unavailable", meta: null, chats: [], damaged: 0 }));
+      .catch(() => live && setState({ ...EMPTY, status: "unavailable" }));
     return () => {
       live = false;
     };
   }, [enabled, account]);
 
-  // Decrypts every chat with `k` and opens the vault, unless the account
-  // changed meanwhile.
-  async function open(k, meta, forAccount) {
-    const records = await listRecords(forAccount);
+  // The database a slot's chats live in.
+  const storeOf = (forAccount, slot) => (slot === "alt" ? altStore(forAccount) : forAccount);
+  // Decrypts every chat of one vault with `k` and opens it, unless the
+  // account changed meanwhile. `main` is the real vault's settings.
+  async function open(k, meta, forAccount, slot = "main", main = meta) {
+    const records = await listRecords(storeOf(forAccount, slot));
     const chats = [];
     let damaged = 0;
     for (const r of records) {
@@ -143,57 +176,100 @@ export function useDeviceVault({ enabled, account, onLock }) {
         damaged++;
       }
     }
+    // Whether a decoy is set: read whichever vault opened, so both do the
+    // same work; only the real vault is ever told.
+    const alt = decoyRef.current ? await loadMeta(altStore(forAccount)).catch(() => null) : null;
     if (accountRef.current !== forAccount) return;
-    holdKey(forAccount, k, meta.idleMinutes);
-    setState({ status: "unlocked", meta, chats: newestFirst(chats), damaged });
+    holdKey(forAccount, k, meta.idleMinutes, slot);
+    setState({
+      ...EMPTY,
+      status: "unlocked",
+      meta,
+      main,
+      slot,
+      altSet: slot === "main" && validSlot(alt),
+      chats: newestFirst(chats),
+      damaged,
+    });
   }
   const need = () => {
     if (!session.key || session.account !== account)
       throw new VaultError("locked", "Device Vault is locked.");
     return session.key;
   };
+  // Only the real vault: Vault Sync and its re-keying never touch the decoy.
+  const needMain = () => {
+    const k = need();
+    if (session.slot !== "main") throw new VaultError("locked", "Device Vault is locked.");
+    return k;
+  };
+  // The typed passphrase must be the open vault's: checked by deriving both
+  // keys, exactly as unlocking does.
+  async function confirmOpen(passphrase) {
+    need();
+    const slot = session.slot;
+    const main = stateRef.current.main;
+    const alt = await loadMeta(altStore(account)).catch(() => null);
+    const found = await openEither({ main, alt }, passphrase);
+    if (found.slot !== slot || session.slot !== slot)
+      throw new VaultError("wrong_passphrase", VAULT_ERRORS.wrong_passphrase);
+    return slot;
+  }
+  const { slot, main, altSet, ...shown } = state;
   return {
-    ...state,
+    ...shown,
     rev,
     remoteChanges,
     unlocked: state.status === "unlocked",
+    // Vault Sync may run only while the real vault is open (or none is).
+    syncable: !(state.status === "unlocked" && slot === "alt"),
     lock: (reason = "manual") => dropKey(reason),
     async create(passphrase, idle) {
       const forAccount = account;
       const { meta, key } = await createVault(passphrase, { idleMinutes: idle });
+      // A decoy left from a vault deleted some other way goes first.
+      await deleteAltVault(forAccount);
       await replaceVault(forAccount, meta, []);
       await open(key, meta, forAccount);
     },
     async unlock(passphrase) {
       const forAccount = account;
-      const meta = stateRef.current.meta || (await loadMeta(forAccount));
+      const meta = stateRef.current.main || (await loadMeta(forAccount));
       if (!meta) throw new VaultError("missing", "There's no vault on this device yet.");
-      await open(await unlockVault(meta, passphrase), meta, forAccount);
+      if (!decoyRef.current) return open(await unlockVault(meta, passphrase), meta, forAccount);
+      const alt = await loadMeta(altStore(forAccount)).catch(() => null);
+      const found = await openEither({ main: meta, alt }, passphrase);
+      await open(found.key, found.meta, forAccount, found.slot, meta);
     },
     async save(chat) {
       const k = need();
+      const store = storeOf(account, session.slot);
       const record = await sealChat(k, chat);
-      await exclusive(account, () => putRecords(account, [record]));
+      await exclusive(store, () => putRecords(store, [record]));
       if (session.key !== k) return;
       setState((s) => ({ ...s, chats: newestFirst([chat, ...s.chats.filter((c) => c.id !== chat.id)]) }));
       changed();
     },
     async remove(id) {
       need();
-      await exclusive(account, () => deleteRecord(account, id));
+      const store = storeOf(account, session.slot);
+      await exclusive(store, () => deleteRecord(store, id));
       setState((s) => ({ ...s, chats: s.chats.filter((c) => c.id !== id) }));
       changed();
     },
     // ---- Vault Sync (src/VaultSync.jsx); nothing here touches the network ----
     // The unlocked key, for sealing and opening synced records in this tab.
-    key: () => need(),
+    // Never the decoy's.
+    key: () => needMain(),
     // Chats another device changed or deleted, already written to this
-    // vault by the sync: shown without decrypting the vault again.
+    // vault by the sync: shown without decrypting the vault again. Never
+    // into the decoy, if it was opened while a sync ran.
     applyRemote(shown = [], gone = []) {
       if (!shown.length && !gone.length) return;
+      if (session.slot !== "main") return;
       const drop = new Set([...gone, ...shown.map((c) => c.id)]);
       setState((s) =>
-        s.status === "unlocked" && session.account === account
+        s.status === "unlocked" && s.slot === "main" && session.account === account
           ? { ...s, chats: newestFirst([...shown, ...s.chats.filter((c) => !drop.has(c.id))]) }
           : s,
       );
@@ -203,6 +279,7 @@ export function useDeviceVault({ enabled, account, onLock }) {
     // settings, opened with the key its passphrase gave.
     async adopt(meta, key) {
       const forAccount = account;
+      await deleteAltVault(forAccount);
       await exclusive(forAccount, () => replaceVault(forAccount, meta, []));
       await open(key, meta, forAccount);
     },
@@ -211,7 +288,7 @@ export function useDeviceVault({ enabled, account, onLock }) {
     // the synced passphrase. A chat that can't be read here can't be moved.
     async rekey(meta, key) {
       const forAccount = account;
-      need();
+      needMain();
       const records = [];
       for (const c of stateRef.current.chats) records.push(await sealChat(key, c));
       await exclusive(forAccount, () => replaceVault(forAccount, meta, records));
@@ -219,40 +296,72 @@ export function useDeviceVault({ enabled, account, onLock }) {
     },
     async setIdle(minutes) {
       need();
+      const store = storeOf(account, session.slot);
       const meta = { ...stateRef.current.meta, idleMinutes: minutes };
-      await saveMeta(account, meta);
+      await saveMeta(store, meta);
       session.minutes = minutes;
-      setState((s) => ({ ...s, meta }));
+      setState((s) => ({ ...s, meta, ...(s.slot === "main" ? { main: meta } : {}) }));
     },
     async exportFile() {
       need();
-      download(vaultFileName(), vaultFile(stateRef.current.meta, await listRecords(account)));
+      download(vaultFileName(), vaultFile(stateRef.current.meta, await listRecords(storeOf(account, session.slot))));
     },
     // A vault file from another device: adopted whole when this browser has
-    // no vault yet, otherwise re-encrypted with this vault's key and merged.
+    // no vault yet, otherwise re-encrypted with the open vault's key and
+    // merged into it.
     async importFile(text, passphrase) {
       const forAccount = account;
       const parsed = readVaultFile(text);
       const { key: fileKey, chats } = await openVaultFile(parsed, passphrase);
       if (stateRef.current.status === "none") {
+        await deleteAltVault(forAccount);
         await replaceVault(forAccount, parsed.meta, parsed.records);
         await open(fileKey, parsed.meta, forAccount);
         return { added: chats.length, kept: 0 };
       }
       const k = need();
+      const openSlot = session.slot;
+      const store = storeOf(forAccount, openSlot);
       const fresh = mergeChats(stateRef.current.chats, chats);
       const records = [];
       for (const c of fresh) records.push(await sealChat(k, c));
-      await exclusive(forAccount, () => putRecords(forAccount, records));
-      await open(k, stateRef.current.meta, forAccount);
+      await exclusive(store, () => putRecords(store, records));
+      await open(k, stateRef.current.meta, forAccount, openSlot, stateRef.current.main);
       if (fresh.length) changed();
       return { added: fresh.length, kept: chats.length - fresh.length };
     },
+    // Deleting the vault ("Forgot it?") deletes any decoy with it.
     async destroy() {
       const forAccount = account;
       dropKey("deleted");
       await deleteVault(forAccount);
-      setState({ status: "none", meta: null, chats: [], damaged: 0 });
+      setState({ ...EMPTY, status: "none" });
+    },
+    // ---- Decoy Vault (Manage vault → Decoy passphrase) ----
+    // Set, change or remove need the passphrase of the vault that's open.
+    // Inside the decoy nothing is ever written: it reports no decoy, and
+    // setting one is refused once the passphrase checks out.
+    decoy: {
+      live: !!decoy,
+      set: slot === "main" && altSet,
+      async save(decoyPassphrase, vaultPassphrase, { lang = "en", model = null } = {}) {
+        const forAccount = account;
+        const problem = decoyProblem(decoyPassphrase, vaultPassphrase);
+        if (problem) throw new VaultError("decoy_passphrase", problem);
+        const openSlot = await confirmOpen(vaultPassphrase);
+        if (openSlot !== "main") throw new VaultError("decoy_here", DECOY_ERRORS.here);
+        const made = await createDecoy(stateRef.current.main, decoyPassphrase, { lang, model });
+        const store = altStore(forAccount);
+        await exclusive(store, () => replaceVault(store, made.meta, made.records));
+        setState((s) => (s.slot === "main" && s.status === "unlocked" ? { ...s, altSet: true } : s));
+      },
+      async remove(vaultPassphrase) {
+        const forAccount = account;
+        const openSlot = await confirmOpen(vaultPassphrase);
+        if (openSlot !== "main") throw new VaultError("decoy_here", DECOY_ERRORS.here);
+        await exclusive(altStore(forAccount), () => deleteAltVault(forAccount));
+        setState((s) => (s.slot === "main" ? { ...s, altSet: false } : s));
+      },
     },
   };
 }
@@ -498,8 +607,160 @@ function ImportForm({ vault, onDone }) {
   );
 }
 
+// Decoy Vault's honest limits, next to where a decoy passphrase is set.
+export function DecoyLimits() {
+  return (
+    <ul className="vault-limits">
+      {DECOY_LIMITS.map((line) => (
+        <li key={line}>
+          <Icon name="warning" size={14} />
+          <span>{line}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+// Manage vault → Decoy passphrase: set, change or remove it, each confirmed
+// with the open vault's passphrase. The decoy shows this exactly as a real
+// vault without a decoy does (vault.decoy.set is false there).
+export function DecoySection({ vault, sampleModel = null }) {
+  const [view, setView] = useState(""), // "", "set" or "remove"
+    [pass, setPass] = useState(""),
+    [again, setAgain] = useState(""),
+    [current, setCurrent] = useState(""),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState(""),
+    [note, setNote] = useState("");
+  if (!vault.decoy?.live) return null;
+  const set = !!vault.decoy.set;
+  const changing = view === "set" && set;
+  const mismatch = again && pass !== again;
+  const reset = (next = "") => {
+    setView(next);
+    setPass("");
+    setAgain("");
+    setCurrent("");
+    setError("");
+  };
+  async function run(fn, done) {
+    setBusy(true);
+    setError("");
+    setNote("");
+    try {
+      await fn();
+      reset();
+      setNote(done);
+    } catch (err) {
+      setError(err instanceof VaultError ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="vault-block vault-decoy">
+      <h3>Decoy passphrase</h3>
+      {view === "set" ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(
+              () => vault.decoy.save(pass, current, { lang: getLanguage(), model: sampleModel }),
+              "Decoy passphrase set. Lock the vault and unlock with it to see the decoy.",
+            );
+          }}
+        >
+          <p>
+            {changing
+              ? "Choose a new decoy passphrase. The decoy starts over with fresh sample chats."
+              : "Unlocking with a decoy passphrase opens a separate vault instead of this one. It starts with a few ordinary sample chats you can continue, delete or add to."}
+          </p>
+          <PassphraseField
+            label={`Decoy passphrase (at least ${MIN_PASSPHRASE} characters)`}
+            value={pass}
+            onChange={setPass}
+            autoComplete="new-password"
+            autoFocus
+          />
+          <PassphraseField
+            label="Repeat the decoy passphrase"
+            value={again}
+            onChange={setAgain}
+            autoComplete="new-password"
+          />
+          {mismatch && <p className="vault-field-error">The passphrases don't match.</p>}
+          <PassphraseField
+            label="This vault's passphrase, to confirm"
+            value={current}
+            onChange={setCurrent}
+            autoComplete="current-password"
+          />
+          <DecoyLimits />
+          {error && <Notice type="error">{error}</Notice>}
+          <div className="inline-actions">
+            <Button disabled={busy || !!passphraseProblem(pass) || pass !== again || !current}>
+              {busy ? "Saving…" : changing ? "Change decoy passphrase" : "Set decoy passphrase"}
+            </Button>
+            <Button secondary type="button" disabled={busy} onClick={() => reset()}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      ) : view === "remove" ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(() => vault.decoy.remove(current), "Decoy removed. Only this vault's passphrase unlocks now.");
+          }}
+        >
+          <p>
+            Remove the decoy passphrase? The decoy vault and its chats are
+            deleted from this browser.
+          </p>
+          <PassphraseField
+            label="This vault's passphrase, to confirm"
+            value={current}
+            onChange={setCurrent}
+            autoComplete="current-password"
+            autoFocus
+          />
+          {error && <Notice type="error">{error}</Notice>}
+          <div className="inline-actions">
+            <Button disabled={busy || !current}>{busy ? "Removing…" : "Remove decoy"}</Button>
+            <Button secondary type="button" disabled={busy} onClick={() => reset()}>
+              Keep it
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <p>
+            {set
+              ? "A decoy passphrase is set. Unlocking with it opens a separate vault instead of this one."
+              : "If someone makes you unlock this vault, a second passphrase can open a separate, harmless vault instead."}
+          </p>
+          {note && <Notice>{note}</Notice>}
+          {set && <DecoyLimits />}
+          <div className="inline-actions">
+            <button type="button" className="small-button" onClick={() => reset("set")}>
+              <Icon name="key" size={14} />
+              {set ? "Change decoy passphrase" : "Set a decoy passphrase"}
+            </button>
+            {set && (
+              <button type="button" className="small-button danger-text" onClick={() => reset("remove")}>
+                <Icon name="delete" size={14} />
+                Remove decoy
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // Set up, unlock, manage, or delete a chat from the vault.
-export function VaultDialog({ vault, dialog, onClose, onUnlocked, sync = null }) {
+// `sampleModel`: the model picked in the composer, for a new decoy's chats.
+export function VaultDialog({ vault, dialog, onClose, onUnlocked, sync = null, sampleModel = null }) {
   const [pass, setPass] = useState(""),
     [again, setAgain] = useState(""),
     [idle, setIdle] = useState(DEFAULT_IDLE_MINUTES),
@@ -717,6 +978,7 @@ export function VaultDialog({ vault, dialog, onClose, onUnlocked, sync = null })
               onChange={(m) => run(() => vault.setIdle(m))}
             />
             <VaultSyncSection sync={sync} />
+            <DecoySection vault={vault} sampleModel={sampleModel} />
             <div className="vault-block">
               <h3>Move to another device</h3>
               <p>

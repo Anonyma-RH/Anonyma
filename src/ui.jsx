@@ -104,6 +104,7 @@ import {
   ListOrdered,
   Presentation,
   FileAudio,
+  VenetianMask,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -209,6 +210,8 @@ const icons = {
   numbered: ListOrdered,
   present: Presentation,
   meeting: FileAudio,
+  // Decoy Vault: a second face shown instead of the real one.
+  mask: VenetianMask,
 };
 export function Icon({ name, size = 18, ...rest }) {
   if(name === "arrow") return <svg width={size} height={size} viewBox="0 0 15 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="reference-arrow" {...rest}><path className="arrow-shaft" d="M0 5.707H9"/><path className="arrow-head" d="M4 .707L9 5.707L4 10.707"/></svg>;

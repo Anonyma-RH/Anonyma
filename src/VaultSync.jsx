@@ -47,6 +47,11 @@ const syncedAt = (t, now = Date.now()) =>
     ? "Synced just now"
     : `Last synced ${new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 const plural = (n, one, many) => (n === 1 ? one : many.replace("{n}", n));
+// Decoy Vault: sync never runs for the decoy (src/decoy-vault.js).
+export const SYNC_PAUSED = "Sync can't be turned on for this vault.";
+const refusePaused = async () => {
+  throw new VaultError("sync_paused", SYNC_PAUSED);
+};
 
 // The sync state for the signed-in account and its vault in this tab. Runs
 // a sync when the vault unlocks, a moment after each change here, every
@@ -62,6 +67,10 @@ export function useVaultSync({ enabled, account, vault }) {
     again = useRef(false),
     lastRun = useRef(0);
   const store = account ? localSyncStore(account) : null;
+  // Decoy Vault (src/decoy-vault.js): while the decoy is open, sync is
+  // paused. Nothing is read, sent or changed for it, the real vault's sync
+  // setting is left alone, and sync shows as off (see `paused` below).
+  const paused = vault.syncable === false;
   const synced = server?.vault || null;
   const on = !!local?.enabled && !!synced && local.vault === synced.id;
 
@@ -100,18 +109,18 @@ export function useVaultSync({ enabled, account, vault }) {
   // Whether this vault is the synced one (same key), for "Turn on" vs "Join".
   useEffect(() => {
     setMatch(undefined);
-    if (!vault.unlocked || !synced) return;
+    if (!vault.unlocked || !synced || paused) return;
     let live = true;
     sameVault(vault.key(), vault.meta, synced).then((m) => live && setMatch(m));
     return () => {
       live = false;
     };
-  }, [vault.unlocked, vault.meta, synced?.id]);
+  }, [vault.unlocked, vault.meta, synced?.id, paused]);
 
   // One sync at a time; a request while one runs queues one more.
   function sync(opened) {
     const v = vaultRef.current;
-    if (!enabled || !store || (!opened && !v.unlocked)) return null;
+    if (!enabled || !store || (!opened && (!v.unlocked || v.syncable === false))) return null;
     if (running.current) {
       again.current = true;
       return running.current;
@@ -173,6 +182,30 @@ export function useVaultSync({ enabled, account, vault }) {
     const v = vaultRef.current;
     return { key: v.key(), meta: v.meta };
   };
+  const limits = server?.limits || { bytes: SYNC_MAX_BYTES, recordBytes: SYNC_MAX_RECORD_BYTES };
+  // The decoy is open: sync looks as it does for a vault that doesn't sync,
+  // and nothing in it can be turned on, joined or forgotten.
+  if (paused)
+    return {
+      live: !!enabled,
+      server: server && { ...server, vault: null },
+      synced: null,
+      local: null,
+      on: false,
+      match: undefined,
+      busy: false,
+      result: null,
+      error: "",
+      at: 0,
+      limits,
+      refresh: refreshServer,
+      syncNow: () => null,
+      turnOn: refusePaused,
+      turnOff: async () => {},
+      join: refusePaused,
+      adopt: refusePaused,
+      forget: refusePaused,
+    };
   return {
     live: !!enabled,
     server,
@@ -184,7 +217,7 @@ export function useVaultSync({ enabled, account, vault }) {
     result: run.result,
     error: run.error,
     at: run.at || local?.last || 0,
-    limits: server?.limits || { bytes: SYNC_MAX_BYTES, recordBytes: SYNC_MAX_RECORD_BYTES },
+    limits,
     refresh: refreshServer,
     syncNow: () => sync(),
     // This device's vault becomes (or joins, with the same key) the synced one.

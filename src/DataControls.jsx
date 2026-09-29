@@ -51,6 +51,8 @@ export default function DataControls() {
   const gifts = !!config && isReleased(config, "giftlinks");
   // And Vault Sync, which builds on Device Vault.
   const vaultSync = !!config && isReleased(config, "vaultsync") && isReleased(config, "vault");
+  // And Decoy Vault, which builds on Device Vault too.
+  const decoy = !!config && isReleased(config, "decoy") && isReleased(config, "vault");
   // And Canvas.
   const canvas = !!config && isReleased(config, "canvas");
   // And Slides.
@@ -95,6 +97,11 @@ export default function DataControls() {
         {vaultSync && (
           <li>
             Vault Sync, if you turn it on: your browser encrypts each Device Vault chat before it's uploaded, so ANONYMA stores only ciphertext. We keep each chat's random id, version, size and when it changed, plus the vault's salt and an encrypted passphrase check; never the passphrase, the key or a title. Nobody can read these chats without your passphrase, including us. Forget synced copy, Panic Wipe and closing your account delete it; your account export includes the encrypted copy.
+          </li>
+        )}
+        {decoy && (
+          <li>
+            Decoy Vault, if you set a decoy passphrase: a second, separate vault kept encrypted in this browser only. It's never synced, uploaded or in your account export, and Panic Wipe and deleting Device Vault remove it too.
           </li>
         )}
         <li>

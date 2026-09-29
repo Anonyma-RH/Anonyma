@@ -92,6 +92,7 @@ import {
 } from "./DeviceVault.jsx";
 import { vaultChat, vaultTitle } from "./device-vault.js";
 import { useVaultSync, vaultSyncReleased } from "./VaultSync.jsx";
+import { decoyReleased } from "./decoy-vault.js";
 import {
   SealedToggle,
   SealedPanel,
@@ -576,7 +577,14 @@ export default function Workspace() {
   // Ephemeral Chats are released; never in the demo. Locking it (Lock, the
   // idle timer, closing the tab) closes any vault chat on screen.
   const vaultLive = !demo && !!user && vaultReleased(config);
-  const vault = useDeviceVault({ enabled: vaultLive, account: user?.id, onLock: vaultLocked });
+  // Decoy Vault (src/decoy-vault.js): a second passphrase that opens a
+  // separate, harmless vault. The workspace can't tell which one is open.
+  const vault = useDeviceVault({
+    enabled: vaultLive,
+    account: user?.id,
+    onLock: vaultLocked,
+    decoy: vaultLive && decoyReleased(config),
+  });
   // Vault Sync (src/VaultSync.jsx): the vault's end-to-end-encrypted copy
   // for the account's other devices, once released and turned on.
   const vaultSync = useVaultSync({
@@ -5858,6 +5866,7 @@ export default function Workspace() {
           vault={vault}
           dialog={vaultDialog}
           sync={vaultSync}
+          sampleModel={selected?.id || null}
           onClose={(why) => {
             const d = vaultDialog;
             setVaultDialog(null);

@@ -7,6 +7,12 @@ const dbName = (account) => "anonyma-vault:" + account;
 // Vault Sync's own bookkeeping (src/vault-sync-store.js): which version of
 // each chat was last synced. Deleted with the vault.
 export const syncDbName = (account) => "anonyma-vault-sync:" + account;
+// Decoy Vault (src/decoy-vault.js): the second vault, a database of the same
+// shape under its own name, used in place of `account` by every function
+// below. Neutrally named; deleted with the vault.
+export const altStore = (account) => account + ":b";
+// Every database a vault keeps in this browser, for wiping them all.
+export const vaultDbNames = (account) => [dbName(account), syncDbName(account), dbName(altStore(account))];
 
 function request(req) {
   return new Promise((resolve, reject) => {
@@ -86,10 +92,12 @@ function deleteDb(name) {
     req.onblocked = () => resolve();
   });
 }
+// The vault, its sync bookkeeping and any decoy go together.
 export async function deleteVault(account) {
-  await deleteDb(dbName(account));
-  await deleteDb(syncDbName(account));
+  for (const name of vaultDbNames(account)) await deleteDb(name);
 }
+// Only the decoy (removing it, or before a new vault replaces a lost one).
+export const deleteAltVault = (account) => deleteDb(dbName(altStore(account)));
 
 // One writer at a time: this tab's saves and Vault Sync's changes take
 // turns, and so do other tabs of the same account where the browser offers

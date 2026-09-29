@@ -23,6 +23,7 @@ import {
   clearBrowserData,
   walletPaymentPending,
 } from "./panic-wipe.js";
+import { vaultDbNames } from "./device-vault-store.js";
 import "./panic-wipe.css";
 
 // Account → Settings: the one button, and the confirm dialog that lists
@@ -85,7 +86,9 @@ export function PanicWipe({ user }) {
       setError(err.message);
       return;
     }
-    await clearBrowserData();
+    // Device Vault and any decoy go even where the browser can't list its
+    // databases.
+    await clearBrowserData({ names: user?.id ? vaultDbNames(user.id) : [] });
     window.location.replace(WIPED_PATH);
   }
   return (

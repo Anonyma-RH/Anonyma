@@ -1175,6 +1175,21 @@ export const UPDATES = [
     // recording itself is never stored. The page is /workspace/notes.
     released: true,
   },
+  {
+    id: "decoy",
+    title: "Decoy Vault",
+    tagline: "Made to unlock your vault? A second passphrase opens a harmless decoy.",
+    points: [
+      "Set a decoy passphrase in Device Vault; it opens a separate vault of ordinary chats",
+      "Either passphrase unlocks the same way, in the same time, with nothing marking the decoy",
+      "A deterrent against casual pressure, not proof against an expert",
+    ],
+    // Browser only, layered on Device Vault's encryption (src/decoy-vault.js):
+    // the decoy is a second vault in this browser, never synced or uploaded,
+    // so there's no route to gate in featuresFor. The app needs Device Vault
+    // released too (decoyReleased).
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

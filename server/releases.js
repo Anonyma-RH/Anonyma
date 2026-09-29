@@ -1297,7 +1297,7 @@ export const UPDATES = [
     // (/api/file-search, server/routes/file-search.js). A saved answer is an
     // ordinary conversation naming the files and places it cites; off the
     // record and Private Mode keep nothing.
-    released: false,
+    released: true,
   },
   {
     id: "reporeader",

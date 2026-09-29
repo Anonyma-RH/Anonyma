@@ -1079,12 +1079,12 @@ const AT = (extra = {}) =>
 // Transcribes one 92 s piece against a gateway that answers `answer`, then
 // finishes: what the piece came back as, what the notes model was sent and
 // what the notes say.
-async function timedRun(t, answer, username) {
+async function timedRun(t, answer, username, seconds = 92) {
   const g = await gateway(t, { transcribe: () => answer, notes: () => AT() });
   const s = fixture(t, { gatewayUrl: g.url });
   const p = await person(s, username);
-  const run = (await start(p, { duration: 92, chunks: [92] }).expect(201)).body;
-  const part = (await piece(p, run.id, 0, 92).expect(200)).body;
+  const run = (await start(p, { duration: seconds, chunks: [seconds] }).expect(201)).body;
+  const part = (await piece(p, run.id, 0, seconds).expect(200)).body;
   const done = lastEvent((await finish(p, run.id, { segments: part.segments }).expect(200)).body);
   const sent = String(g.calls.chat[0]?.messages?.[1]?.content || "");
   return { g, s, p, part, done, sent, notes: done.result?.notes };
@@ -1240,4 +1240,144 @@ test("untimed lines: how they're marked, sent, kept and read back", () => {
   assert.equal(readNotes(raw, "stop", { duration: 600, timed: false }).notes.decisions[0].at, null);
   // The prompt says what a line without a time means.
   assert.match(notesMessages({ text: "x", duration: 60 })[0].content, /a line with no time in front has none/);
+});
+
+// ---- Fix: lines with the segment's own text, timed by the words ----
+
+// A reply shaped like the live gateway's: one punctuated, cased segment for
+// the whole piece, and words that are lowercase with no punctuation. Each
+// sentence's words are `per` seconds long with 0.06 s between them, and
+// sentences follow each other 0.3 s apart, so no pause is long enough to
+// break a line: only sentence ends and the 10-second limit do.
+const LIVE_SENTENCES = [
+  ["Okay, let's get started with the weekly launch sync.", 0.4],
+  ["Maya will update the pricing page before Thursday.", 0.45],
+  ["Dev, can you size the Markdown export by Monday?", 0.4],
+  ["The top complaint is still the export, and people want Markdown, not just PDF, so we agreed that Markdown ships in two point oh.", 0.5],
+  ["Thanks, everyone.", 0.5],
+  ["The tablet layout moves to the next release because it isn't tested enough yet.", 0.42],
+  ["Priya will review the invite flow.", 0.5],
+];
+function liveReply(sentences = LIVE_SENTENCES, { duration = 72, gap = 0.3 } = {}) {
+  const wordList = [],
+    starts = [];
+  let at = 0.6;
+  for (const [text, per] of sentences) {
+    starts.push(Math.round(at * 100) / 100);
+    for (const raw of text.split(" ")) {
+      const start = Math.round(at * 100) / 100,
+        end = Math.round((at + per) * 100) / 100;
+      wordList.push({ word: raw.toLowerCase().replace(/[^\p{L}\p{N}']/gu, ""), start, end });
+      at += per + 0.06;
+    }
+    at += gap - 0.06;
+  }
+  const text = sentences.map(([x]) => x).join(" ");
+  return { reply: { text, duration, segments: [{ id: 0, start: 0, end: duration, text }], words: wordList }, starts, text, wordList };
+}
+const squash = (v) => v.replace(/\s+/g, " ").trim();
+
+test("a coarse punctuated segment with lowercase, unpunctuated words: the lines keep the segment's text, timed by the words", () => {
+  const { reply, starts, text, wordList } = liveReply();
+  // Nothing in the words gives a line break, and the segment is one 72-second line.
+  assert.ok(wordList.every((w) => w.word === w.word.toLowerCase() && !/[.,?!]/.test(w.word)));
+  const lines = transcriptSegments(reply);
+  assert.equal(lines.length, 7);
+  // Nothing is lost or respelled: the lines are the segment's text, cut.
+  assert.equal(squash(lines.map((l) => l.text).join(" ")), text);
+  // The first three sentences each run 3 seconds or more, so each is a line,
+  // cased and punctuated, starting at its first word.
+  assert.deepEqual(lines.slice(0, 3).map((l) => [l.start, l.text]), [0, 1, 2].map((i) => [starts[i], LIVE_SENTENCES[i][0]]));
+  // Every line starts where its first word does, and none runs past about 10 s.
+  for (const l of lines) {
+    const first = l.text.split(" ")[0].toLowerCase().replace(/[^\p{L}\p{N}']/gu, "");
+    assert.ok(wordList.some((w) => w.start === l.start && w.word === first), `${l.start} ${l.text}`);
+    assert.ok(l.end - l.start <= 10.6, `${l.start}-${l.end} ${l.text}`);
+  }
+  assert.ok(lines.every((l, i) => i === 0 || l.start >= lines[i - 1].end - 0.001));
+  // The 13-second sentence is cut at the limit, and the rest of it stays a
+  // line of its own, not the start of the next sentence.
+  const long = lines.filter((l) => l.start >= starts[3] && l.start < starts[4]);
+  assert.ok(long.length >= 2);
+  assert.match(long[0].text, /^The top complaint/);
+  assert.match(long.at(-1).text, /two point oh\.$|Thanks, everyone\.$/);
+  // A sentence shorter than 3 seconds ("Thanks, everyone.") joins the line
+  // after it rather than standing alone.
+  assert.ok(lines.every((l) => l.end - l.start >= 3));
+  assert.ok(lines.some((l) => l.text.startsWith("Thanks, everyone. The tablet layout")));
+});
+
+test("the same reply through a piece: cased lines with sentence-start times reach the notes model", async (t) => {
+  const { reply, starts } = liveReply();
+  const r = await timedRun(t, reply, "livereply", 72);
+  assert.equal(r.part.segments.length, 7);
+  assert.ok(r.part.segments.every((x) => !x.untimed));
+  assert.deepEqual(r.part.segments.slice(0, 3).map((x) => x.start), starts.slice(0, 3));
+  assert.equal(r.part.segments[1].text, LIVE_SENTENCES[1][0]);
+  assert.match(r.sent, /\[00:04\] Maya will update the pricing page before Thursday\./);
+  assert.match(r.sent, /\[00:09\] Dev, can you size the Markdown export by Monday\?/);
+  assert.doesNotMatch(r.sent, /\] maya /);
+});
+
+test("lines break at pauses of 0.8 s or more, and at sentence ends only once a line has run 3 s", () => {
+  const w = (list) => list.map(([word, start, end]) => ({ word, start, end }));
+  const text = "we agreed to keep the free tier for now";
+  const at = (gap) =>
+    transcriptSegments({
+      segments: [{ start: 0, end: 60, text }],
+      words: w([["we", 0, 0.3], ["agreed", 0.4, 0.8], ["to", 0.9, 1], ["keep", 1 + gap, 1.5 + gap], ["the", 1.6 + gap, 1.7 + gap], ["free", 1.8 + gap, 2 + gap], ["tier", 2.1 + gap, 2.4 + gap], ["for", 2.5 + gap, 2.6 + gap], ["now", 2.7 + gap, 3 + gap]]),
+    });
+  assert.equal(at(0.7).length, 1);
+  assert.deepEqual(at(0.8).map((l) => l.text), ["we agreed to", "keep the free tier for now"]);
+  assert.deepEqual(at(0.8).map((l) => l.start), [0, 1.8]);
+  // Two short sentences make one line; a sentence that has run 3 seconds ends its line.
+  const two = transcriptSegments({
+    segments: [{ start: 0, end: 60, text: "Okay. Right. Now the pricing page." }],
+    words: w([["okay", 0, 0.5], ["right", 0.6, 1], ["now", 1.1, 1.4], ["the", 1.5, 1.6], ["pricing", 1.7, 2.2], ["page", 2.3, 2.8]]),
+  });
+  assert.deepEqual(two.map((l) => l.text), ["Okay. Right. Now the pricing page."]);
+  const slow = transcriptSegments({
+    segments: [{ start: 0, end: 60, text: "Okay so here is the plan. Now the pricing page." }],
+    words: w([["okay", 0, 0.7], ["so", 0.8, 1.2], ["here", 1.3, 1.9], ["is", 2, 2.2], ["the", 2.3, 2.5], ["plan", 2.6, 3.2], ["now", 3.3, 3.6], ["the", 3.7, 3.8], ["pricing", 3.9, 4.4], ["page", 4.5, 5]]),
+  });
+  assert.deepEqual(slow.map((l) => [l.start, l.text]), [[0, "Okay so here is the plan."], [3.3, "Now the pricing page."]]);
+  // An abbreviation's full stop is not a sentence end.
+  const abbr = transcriptSegments({
+    segments: [{ start: 0, end: 60, text: "Talk to Dr. Ramos about it." }],
+    words: w([["talk", 0, 1.2], ["to", 1.3, 2.2], ["dr", 2.3, 3.3], ["ramos", 3.4, 4], ["about", 4.1, 4.5], ["it", 4.6, 5]]),
+  });
+  assert.equal(abbr.length, 1);
+});
+
+test("words are matched to the text by their letters, so numbers, contractions and stray words don't misplace lines", () => {
+  const w = (list) => list.map(([word, start, end]) => ({ word, start, end }));
+  // "1,000" is spoken as two words, "isn't" comes back as "isnt", "um" isn't
+  // in the text, and "export" is missing from the words.
+  const text = "We kept the free tier at 1,000 credits. The tablet layout isn't ready for the export team.";
+  const lines = transcriptSegments({
+    segments: [{ start: 0, end: 70, text }],
+    words: w([
+      ["we", 0, 0.3], ["kept", 0.4, 0.7], ["the", 0.8, 0.9], ["free", 1, 1.3], ["tier", 1.4, 1.8], ["at", 1.9, 2], ["one", 2.1, 2.3], ["thousand", 2.4, 3], ["credits", 3.1, 3.7],
+      ["um", 4, 4.2], ["the", 4.4, 4.5], ["tablet", 4.6, 5], ["layout", 5.1, 5.6], ["isnt", 5.7, 6], ["ready", 6.1, 6.5], ["for", 6.6, 6.7], ["the", 6.8, 6.9], ["team", 7, 7.4],
+    ]),
+  });
+  assert.deepEqual(lines.map((l) => [l.start, l.text]), [[0, "We kept the free tier at 1,000 credits."], [4.4, "The tablet layout isn't ready for the export team."]]);
+  // Words that match none of the text can't time it: the words' own lines are used.
+  const unrelated = transcriptSegments({
+    segments: [{ start: 0, end: 70, text: "Completely different sentence about budgets." }],
+    words: w([["hello", 0, 0.4], ["there", 0.5, 0.9], ["general", 5, 5.4], ["kenobi", 5.5, 5.9]]),
+  });
+  assert.deepEqual(unrelated.map((l) => [l.start, l.text]), [[0, "hello there"], [5, "general kenobi"]]);
+  // Chinese, with no spaces: the text is kept whole and cut at the sentence end.
+  const zh = transcriptSegments({
+    segments: [{ start: 0, end: 70, text: "我们决定保留免费套餐。张三会更新定价页面。" }],
+    words: w([["我们", 0, 0.6], ["决定", 0.7, 1.4], ["保留", 1.5, 2.2], ["免费", 2.3, 3], ["套餐", 3.1, 3.8], ["张三", 4, 4.6], ["会", 4.7, 4.9], ["更新", 5, 5.6], ["定价", 5.7, 6.3], ["页面", 6.4, 7]]),
+  });
+  assert.deepEqual(zh.map((l) => [l.start, l.text]), [[0, "我们决定保留免费套餐。"], [4, "张三会更新定价页面。"]]);
+  // A speaker on the segment carries to every line cut from it.
+  const spoken = transcriptSegments({
+    segments: [{ start: 0, end: 70, text: "Okay so here is the plan. Now the pricing page.", speaker: 0 }],
+    words: w([["okay", 0, 0.7], ["so", 0.8, 1.2], ["here", 1.3, 1.9], ["is", 2, 2.2], ["the", 2.3, 2.5], ["plan", 2.6, 3.2], ["now", 5, 5.3], ["the", 5.4, 5.5], ["pricing", 5.6, 6], ["page", 6.1, 6.5]]),
+  });
+  assert.deepEqual(spoken.map((l) => l.speaker), ["Speaker 1", "Speaker 1"]);
 });

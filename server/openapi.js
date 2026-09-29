@@ -2476,7 +2476,7 @@ route("post", "/api/meeting-notes/{id}/pieces/{index}", "Transcribe one piece", 
     of: integer,
   }),
   description:
-    "Sends the piece to the transcription model and settles its hold on its length (or the provider's, if shorter). Segment times are in the whole recording; speaker appears only when the provider returns one. Word and segment timings are requested; a coarse line (over 30 seconds) is split by the reply's word timings where it has them, else marked untimed, as is a piece the provider returned no timings for. A failed piece is charged nothing and stays open for a retry (409 piece_done once it's transcribed, 409 meeting_busy while another step runs, 404 meeting_not_found once the run ended).",
+    "Sends the piece to the transcription model and settles its hold on its length (or the provider's, if shorter). Segment times are in the whole recording; speaker appears only when the provider returns one. Word and segment timings are requested; a coarse line (over 30 seconds) is split into lines of about 10 seconds at most (at sentence ends and pauses) by the reply's word timings where it has them, keeping the segment's own punctuated text and using the words only for time, else marked untimed, as is a piece the provider returned no timings for. A failed piece is charged nothing and stays open for a retry (409 piece_done once it's transcribed, 409 meeting_busy while another step runs, 404 meeting_not_found once the run ended).",
 });
 route("post", "/api/meeting-notes/{id}/finish", "Write and save the notes", {
   body: object({

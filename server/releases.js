@@ -1175,6 +1175,22 @@ export const UPDATES = [
     // recording itself is never stored. The page is /workspace/notes.
     released: true,
   },
+  {
+    id: "quotecards",
+    title: "Quote Cards",
+    tagline: "Turn a great answer into a clean image card to share. Made on your device; no link back to your chat.",
+    points: [
+      "Select text in a reply, or press Card on the whole reply",
+      "Cobalt, White, Dark or Column, as a 1:1, 4:5 or 16:9 PNG to save or copy",
+      "Nothing is uploaded and there is no share link; Veil's masked details stay masked unless you show them",
+    ],
+    // Browser only: no server route, nothing stored, so nothing to erase or
+    // export. The dialog (src/QuoteCards.jsx) draws the card on a canvas with
+    // the site's fonts (src/quote-card-render.js); the selection path is
+    // Highlight & Ask's toolbar, so it needs "highlight" to be live too,
+    // while a reply's own Card button does not.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

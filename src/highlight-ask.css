@@ -323,6 +323,9 @@
   background: #eef2ff;
   color: var(--hl-blue);
 }
+.hl-sheet .hl-actions > .hl-card {
+  grid-column: 1 / -1;
+}
 .hl-sheet .hl-actions > .hl-check {
   grid-column: 1 / -1;
   justify-content: center;

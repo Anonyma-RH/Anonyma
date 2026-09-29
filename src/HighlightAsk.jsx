@@ -144,7 +144,9 @@ function useQuote(check, claim, model, on) {
 // { clipped })` puts a quote in the composer; `factCheck`, when offered, is
 // { modelName(model), block(claim, model), quote(claim, model, signal),
 // run(claim, model) }, where `model` is the reply's own model if it says.
-export function HighlightToolbar({ root, enabled = true, onQuote, factCheck = null }) {
+// `onCard({ text, model })`, when Quote Cards is live, opens the card editor
+// on the selection (src/QuoteCards.jsx): nothing is sent anywhere.
+export function HighlightToolbar({ root, enabled = true, onQuote, onCard = null, factCheck = null }) {
   const [sel, setSel] = useState(null);
   const [step, setStep] = useState("actions");
   const [menu, setMenu] = useState(false);
@@ -333,6 +335,20 @@ export function HighlightToolbar({ root, enabled = true, onQuote, factCheck = nu
           <Icon name="down" size={13} />
         </button>
       </span>
+      {onCard && (
+        <button
+          type="button"
+          className="hl-card"
+          title="Make an image card of this text, on this device"
+          onClick={() => {
+            onCard({ text: sel.text, model: sel.model || null });
+            close(true);
+          }}
+        >
+          <Icon name="imagedown" size={15} />
+          <span>Card</span>
+        </button>
+      )}
       {factCheck && (
         <button
           type="button"

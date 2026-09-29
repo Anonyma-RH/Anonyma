@@ -9,27 +9,42 @@ import {
 } from "./i18n.js";
 import "./i18n.css";
 
-// Everything here waits for the "zh" release: until then the switch is
-// hidden and the translator never runs, whatever was stored.
-export const languageReleased = (config) => isReleased(config, "zh");
+// Each language waits for its own release ("zh" for Chinese, "es" for
+// Spanish): until then its button is hidden and its translator never runs,
+// whatever was stored. English is always on.
+const RELEASE = { en: null, es: "es", zh: "zh" };
+// With a language: whether that one is released. Without: whether the
+// switch has anything to offer at all.
+export const languageReleased = (config, lang) =>
+  lang
+    ? !RELEASE[lang] || isReleased(config, RELEASE[lang])
+    : isReleased(config, "zh") || isReleased(config, "es");
 
 const CHOICES = [
   ["en", "EN", "English", "en"],
+  ["es", "ES", "Español", "es"],
   ["zh", "中文", "简体中文", "zh-CN"],
 ];
 
-// "EN / 中文". Its own labels are never translated (data-i18n="off").
-export function LanguageSwitch({ config, className = "" }) {
+// The stored language, or English while it isn't released.
+export function useShownLanguage(config) {
   const language = useLanguage();
+  return languageReleased(config, language) ? language : "en";
+}
+
+// "EN / ES / 中文". Its own labels are never translated (data-i18n="off").
+export function LanguageSwitch({ config, className = "" }) {
+  const language = useShownLanguage(config);
   if (!languageReleased(config)) return null;
+  const choices = CHOICES.filter(([id]) => languageReleased(config, id));
   return (
     <div
-      className={"language-switch " + className}
+      className={"language-switch " + className + (choices.length > 2 ? " three" : "")}
       role="group"
-      aria-label="Language / 语言"
+      aria-label={choices.length > 2 ? "Language / Idioma / 语言" : "Language / 语言"}
       data-i18n="off"
     >
-      {CHOICES.map(([id, label, name, lang]) => (
+      {choices.map(([id, label, name, lang]) => (
         <button
           key={id}
           type="button"
@@ -45,13 +60,14 @@ export function LanguageSwitch({ config, className = "" }) {
   );
 }
 
-// Mounted once for the whole app: runs the translator while 中文 is chosen.
+// Mounted once for the whole app: runs the translator while Español or 中文
+// is chosen (and released). The dictionary loads on demand.
 export function Translation({ config }) {
-  const on = useLanguage() === "zh" && languageReleased(config);
+  const lang = useShownLanguage(config);
   useEffect(() => {
-    if (!on) return;
+    if (lang === "en") return;
     let current = true;
-    loadDictionary().then(
+    loadDictionary(lang).then(
       (dict) => current && startTranslator(dict),
       () => current && setLanguage("en"),
     );
@@ -59,7 +75,7 @@ export function Translation({ config }) {
       current = false;
       stopTranslator();
     };
-  }, [on]);
+  }, [lang]);
   return null;
 }
 
@@ -71,8 +87,9 @@ export function LanguageSettings({ config }) {
       <div>
         <h2>Language.</h2>
         <p>
-          Show the site in English or Simplified Chinese. Your chats stay
-          exactly as written.
+          {isReleased(config, "es")
+            ? "Show the site in English, Spanish or Simplified Chinese. Your chats stay exactly as written."
+            : "Show the site in English or Simplified Chinese. Your chats stay exactly as written."}
         </p>
       </div>
       <LanguageSwitch config={config} className="on-light" />

@@ -685,7 +685,8 @@ test("Chinese: the update and every label translate; math and diagrams stay as w
   // translate themselves (useUiText), like Live Preview's.
   const jsx = src("src/RichMarkdown.jsx");
   assert.equal((jsx.match(/data-i18n="off"/g) || []).length >= 4, true);
-  assert.match(jsx, /language === "zh" \? t\(text\) : text/);
+  // (Chinese and Spanish both: anything but English.)
+  assert.match(jsx, /language !== "en" \? t\(text\) : text/);
   // Where Mermaid draws and where an equation is read for Copy SVG are off
   // limits to the translator too (labels are measured in there).
   assert.match(src("src/diagram-render.js"), /box\.setAttribute\("data-i18n", "off"\)/);

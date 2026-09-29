@@ -1,6 +1,7 @@
-/* EN / 中文 switch. Flat two-part control; on cobalt by default (header,
-   mobile menu, workspace sidebar), .on-light on white (account settings).
-   Both parts keep a fixed width so switching never shifts the layout. */
+/* EN / ES / 中文 switch. Flat two- or three-part control (ES only once
+   Español is released); on cobalt by default (header, mobile menu, workspace
+   sidebar), .on-light on white (account settings). Every part keeps a fixed
+   width so switching never shifts the layout. */
 .language-switch {
   display: inline-flex;
   flex-shrink: 0;
@@ -37,6 +38,9 @@
   outline: 2px solid #ffb21c;
   outline-offset: -2px;
 }
+.language-switch.three button {
+  width: 40px;
+}
 .language-switch.on-light {
   justify-self: start;
   border-color: var(--work-line, #e3e8f0);
@@ -45,6 +49,9 @@
   height: 36px;
   width: 56px;
   color: var(--work-ink, #142343);
+}
+.language-switch.on-light.three button {
+  width: 52px;
 }
 .language-switch.on-light button + button {
   border-left-color: var(--work-line, #e3e8f0);

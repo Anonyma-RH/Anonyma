@@ -5,10 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0135df" />
 <title>You're offline — ANONYMA</title>
-<!-- Static and outside React, so it carries both languages itself:
-     offline.js shows the Chinese copy when the site's own language switch
-     (localStorage "anonyma.lang") is set to Chinese. No inline script or
-     handlers, so the site's Content-Security-Policy applies unchanged. -->
+<!-- Static and outside React, so it carries every language itself:
+     offline.js shows the Chinese or Spanish copy when the site's own
+     language switch (localStorage "anonyma.lang") is set to it. No inline
+     script or handlers, so the site's Content-Security-Policy applies
+     unchanged. -->
 <style>
   html, body { margin: 0; padding: 0; }
   body {
@@ -37,8 +38,8 @@
     text-decoration: none;
   }
   a:hover { background: #eef2ff; }
-  .zh-copy, html.zh .en-copy { display: none; }
-  html.zh .zh-copy { display: block; }
+  .zh-copy, .es-copy, html.zh .en-copy, html.es .en-copy { display: none; }
+  html.zh .zh-copy, html.es .es-copy { display: block; }
 </style>
 <script src="/offline.js"></script>
 </head>
@@ -49,6 +50,11 @@
     <p>ANONYMA needs a connection to reach your models and account. Reconnect, then try again.</p>
     <!-- An empty href reloads the address that was requested. -->
     <a href="">Try again</a>
+  </div>
+  <div class="es-copy" lang="es-419">
+    <h1>Sin conexión</h1>
+    <p>ANONYMA necesita conexión para llegar a tus modelos y a tu cuenta. Vuelve a conectarte e inténtalo de nuevo.</p>
+    <a href="">Intentar de nuevo</a>
   </div>
   <div class="zh-copy" lang="zh-CN">
     <h1>你已离线</h1>

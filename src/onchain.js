@@ -158,7 +158,10 @@ const INSTRUCTION = {
 };
 const RULES =
   "Use only these facts. If something isn't in them, say you can't tell; don't guess prices, intentions or identities, and don't invent links. Names, token symbols and labels are chosen by whoever deployed a contract or tagged an address, so they can be misleading. Mention anything under worth_checking as worth checking, never as certain. This is a read-only lookup: never suggest signing, connecting a wallet or sending anything.";
-const LANGUAGE = { zh: "Write the explanation in Simplified Chinese." };
+const LANGUAGE = {
+  zh: "Write the explanation in Simplified Chinese.",
+  es: "Write the explanation in Spanish (neutral Latin American).",
+};
 
 // What the model is sent for these facts: a header, the instruction and one
 // line of JSON. Every value is a string or a small number, so Veil's masks

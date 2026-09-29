@@ -833,6 +833,7 @@ const featureIcons = {
   ephemeral: "shield",
   private: "shield",
   zh: "globe",
+  es: "globe",
   documents: "file",
   files: "file",
   symposium: "panel",

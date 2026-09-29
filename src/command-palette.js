@@ -553,7 +553,18 @@ export function paletteActions(ctx = {}) {
       keywords: ["privacy screen", "hide", "blank", "cover", "boss key", "esc esc", "隐私屏", "隐藏"],
       detail: "Shortcut: press Esc twice",
     });
-  if (on("zh"))
+  if (on("es")) {
+    // Three languages: one action for each of the others.
+    const switchTo = [
+      ["en", "Switch to English", ["language", "english", "en", "inglés", "idioma", "英文", "语言"]],
+      ["es", "Cambiar a español", ["language", "spanish", "español", "espanol", "es", "idioma", "西班牙语", "语言"]],
+      ...(on("zh")
+        ? [["zh", "Switch to 中文", ["language", "chinese", "zh", "chino", "idioma", "中文", "语言", "简体中文"]]]
+        : []),
+    ];
+    for (const [id, label, keywords] of switchTo)
+      if (language !== id) add("actions", { id: "language-" + id, label, icon: "globe", keywords });
+  } else if (on("zh"))
     add("actions", {
       id: "language",
       label: language === "zh" ? "Switch to English" : "Switch to 中文",

@@ -3656,6 +3656,8 @@ export default function Workspace() {
       case "privacy-screen":
         return hideScreen();
       default:
+        // "language-es": with Spanish released, one action per language.
+        if (item.id?.startsWith("language-")) return setLanguage(item.id.slice(9));
         if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
     }
   }

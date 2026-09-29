@@ -1,10 +1,11 @@
 import { useSyncExternalStore } from "react";
 
-// English / 中文. The English source stays the only source: when Chinese is
-// on, the live DOM's rendered text is swapped for dictionary translations and
-// every original is kept so switching back restores it exactly. Only text
-// nodes' values and a few attributes ever change (never nodes themselves),
-// so React keeps working, and values the code reads back stay English.
+// English / Español / 中文. The English source stays the only source: when
+// Spanish or Chinese is on, the live DOM's rendered text is swapped for
+// dictionary translations and every original is kept so switching back
+// restores it exactly. Only text nodes' values and a few attributes ever
+// change (never nodes themselves), so React keeps working, and values the
+// code reads back stay English.
 
 // ---- Pure translation logic (no DOM) ----
 
@@ -23,21 +24,29 @@ const SLOT = /\{(\d+)\}/;
 const CAPTURE = "(\\d[\\d,]*(?:\\.\\d+)?|[\\s\\S]+?)";
 
 // A heading the dictionary can't carry: in Chinese, "The ANONYMA" (over
-// "Platform") drops its article. The dictionary may override it.
-const BUILT_IN = { "The ANONYMA": "ANONYMA" };
+// "Platform") drops its article; in Spanish it reads "La plataforma" (over
+// "ANONYMA", see SCOPED). The dictionary may override it.
+const BUILT_IN = { zh: { "The ANONYMA": "ANONYMA" }, es: { "The ANONYMA": "La plataforma" } };
 
-// zh.json: { strings: { English: 中文 }, patterns: [{ en: "{0} x", zh: "{0}…" }] }.
+// The languages the site is written in besides English, and the ones a
+// visitor can choose. A dictionary is { strings: { English: translation },
+// patterns: [{ en: "{0} x", <lang>: "{0}…" }] } (zh.json, es.json).
+export const LANGUAGES = ["en", "es", "zh"];
+export const isTranslated = (lang) => lang === "es" || lang === "zh";
+// The value of <html lang> while a language is on.
+export const HTML_LANG = { en: null, es: "es-419", zh: "zh-CN" };
+
 // Patterns are tried most-literal first, so "{0} credits available" wins
 // over "{0} credits".
-export function compileDictionary(raw) {
+export function compileDictionary(raw, lang = "zh") {
   const strings = new Map();
   for (const [en, zh] of Object.entries(raw?.strings || {}))
     if (typeof zh === "string") strings.set(normalize(en), zh);
-  for (const [en, zh] of Object.entries(BUILT_IN))
+  for (const [en, zh] of Object.entries(BUILT_IN[lang] || {}))
     if (!strings.has(en)) strings.set(en, zh);
   const patterns = [];
   for (const p of raw?.patterns || []) {
-    if (typeof p?.en !== "string" || typeof p?.zh !== "string") continue;
+    if (typeof p?.en !== "string" || typeof p?.[lang] !== "string") continue;
     const parts = normalize(p.en).split(SLOT);
     const literals = parts.filter((_, i) => i % 2 === 0);
     const weight = literals.join("").trim().length;
@@ -55,12 +64,12 @@ export function compileDictionary(raw) {
       ),
       // A cheap substring check before running the regex.
       hint: literals.reduce((a, b) => (b.length > a.length ? b : a), ""),
-      zh: p.zh,
+      zh: p[lang],
       weight,
     });
   }
   patterns.sort((a, b) => b.weight - a.weight);
-  return { strings, patterns, cache: new Map() };
+  return { strings, patterns, cache: new Map(), lang };
 }
 
 // Fills a pattern's zh template. A capture that is itself Chinese drops the
@@ -88,18 +97,18 @@ function fill(template, values) {
 // Veil) stay as they are. Undefined when none translate.
 // An en-US date or time, possibly followed by a separator ("9/25/2026 ·"),
 // in the zh-CN form with its surroundings kept; undefined when it isn't one.
-function dateIn(s) {
+function dateIn(s, lang) {
   const [lead, inner, trail] = splitSpace(s);
-  const whole = translateDate(normalize(inner));
+  const whole = translateDate(normalize(inner), lang);
   if (whole !== undefined) return lead + whole + trail;
   const m = /^(.*?)(\s*[·•|,;—–]+)$/.exec(inner);
-  const date = m && translateDate(normalize(m[1]));
+  const date = m && translateDate(normalize(m[1]), lang);
   return date === undefined || date === null ? undefined : lead + date + m[2] + trail;
 }
 function parts(list, dict, depth) {
   let any = false;
   const out = list.map((s) => {
-    const t = hasLetters(s) ? translateString(s, dict, depth) : dateIn(s);
+    const t = hasLetters(s) ? translateString(s, dict, depth) : dateIn(s, dict.lang);
     if (t !== undefined) any = true;
     return t ?? s;
   });
@@ -110,13 +119,15 @@ const TRAILING_FULL = { ",": "，", ":": "：", ";": "；" };
 // name or handle, not a phrase: it stays as written inside a pattern.
 export const looksLikeHandle = (s) => /^[\w.@-]+$/.test(s) && /[_@\d]/.test(s);
 // Dates and times the browser rendered in en-US ("9/25/2026, 1:22:31 AM")
-// in the form zh-CN uses ("2026/9/25 01:22:31"); anything else is undefined.
-export function translateDate(s) {
+// in the form zh-CN uses ("2026/9/25 01:22:31") or, for Spanish, the es-419
+// form ("25/9/2026, 1:22:31 a. m."); anything else is undefined.
+export function translateDate(s, lang = "zh", dayFirst) {
   const m =
     /^(?:(\d{1,2})\/(\d{1,2})\/(\d{4}))?(?:,? ?(\d{1,2}):(\d{2})(?::(\d{2}))? ?(AM|PM))?$/.exec(
       s,
     );
   if (!m || (!m[3] && !m[7])) return undefined;
+  if (lang === "es") return spanishDate(m, dayFirst);
   const date = m[3] ? `${m[3]}/${Number(m[1])}/${Number(m[2])}` : "";
   if (!m[7]) return date;
   let h = Number(m[4]) % 12;
@@ -125,11 +136,39 @@ export function translateDate(s) {
     String(h).padStart(2, "0") + ":" + m[5] + (m[6] ? ":" + m[6] : "");
   return date ? date + " " + time : time;
 }
+// Whether this browser writes the day before the month by default (Spanish,
+// French, British English ...): its own "25/9/2026" is not an en-US date.
+let dayFirstCache;
+function browserDayFirst() {
+  if (dayFirstCache === undefined)
+    try {
+      const parts = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "numeric", year: "numeric" }).formatToParts(new Date(2026, 10, 25));
+      dayFirstCache = parts.find((p) => p.type === "day" || p.type === "month")?.type === "day";
+    } catch {
+      dayFirstCache = false;
+    }
+  return dayFirstCache;
+}
+// es-419 writes the day first and keeps the 12-hour clock with "a. m." and
+// "p. m." (no leading zero on the hour). A date with AM/PM is en-US for sure.
+// One without it is left alone when the browser itself writes the day first,
+// or when its first number is above 12 (no en-US month): it is already in
+// the form Spanish uses. A time alone always converts.
+function spanishDate(m, dayFirst = browserDayFirst()) {
+  if (m[3] && (Number(m[1]) > 12 || (!m[7] && dayFirst))) return undefined;
+  const date = m[3] ? `${Number(m[2])}/${Number(m[1])}/${m[3]}` : "";
+  if (!m[7]) return date;
+  const time =
+    Number(m[4]) + ":" + m[5] + (m[6] ? ":" + m[6] : "") + " " + (m[7] === "AM" ? "a.\u00a0m." : "p.\u00a0m.");
+  return date ? date + ", " + time : time;
+}
 // A normalized string's translation, or undefined: an exact string, then a
 // pattern (captures translated the same way when they can be), then known
-// strings inside separators, " · " status lines and ", " lists.
-export function translateString(core, dict, depth = 0) {
-  const date = translateDate(core);
+// strings inside separators, " · " status lines and ", " lists. `strict`
+// keeps to what a dictionary entry says whole: an exact string or a pattern
+// whose captures all translate, never a partial reading.
+export function translateString(core, dict, depth = 0, strict = false) {
+  const date = translateDate(core, dict.lang);
   if (date !== undefined) return date;
   const hit = dict.strings.get(core);
   if (hit !== undefined) return hit;
@@ -143,20 +182,26 @@ export function translateString(core, dict, depth = 0) {
     if (!m) continue;
     const values = {};
     let complete = true;
+    let sentence = false;
     p.slots.forEach((slot, i) => {
       const v = m[i + 1];
       const [lead, inner, trail] = splitSpace(v);
       const t =
         hasLetters(inner) && !p.raw.has(slot) && !looksLikeHandle(inner)
           ? translateString(inner, dict, depth + 1)
-          : dateIn(inner);
-      if (t === undefined && hasLetters(inner) && !p.raw.has(slot) && !looksLikeHandle(inner))
+          : dateIn(inner, dict.lang);
+      if (t === undefined && hasLetters(inner) && !p.raw.has(slot) && !looksLikeHandle(inner)) {
         complete = false;
+        if (inner.split(" ").length >= 5) sentence = true;
+      }
       values[slot] = t === undefined ? v : lead + t + trail;
     });
     if (complete) return fill(p.zh, values);
-    fallback ??= fill(p.zh, values);
+    // A capture that is a whole sentence the dictionary lacks ("Prices from
+    // the live catalog on every" + " model") is no name: leave it English.
+    if (!sentence) fallback ??= fill(p.zh, values);
   }
+  if (strict) return undefined;
   if (fallback !== undefined) return fallback;
   // "· 2 details masked", "Balance:", "Explore workspace →".
   const m = /^([·•|—–:,;/(→↗\s-]*)([\s\S]*?)([·•|—–:,;/)→↗\s]*)$/.exec(core);
@@ -174,29 +219,31 @@ export function translateString(core, dict, depth = 0) {
     if (out) return out.join(" · ");
   }
   // A list inside a pattern ("Enabled: Chat, Code & Build, Veil") joins with
-  // 、. Only within patterns: at the top level a comma is usually a sentence.
+  // 、 in Chinese and ", " in Spanish. Only within patterns: at the top level
+  // a comma is usually a sentence.
   const items = depth > 0 ? core.split(", ") : [];
   if (items.length > 1) {
     const out = parts(items, dict, depth + 1);
-    if (out) return out.join("、");
+    if (out) return out.join(dict.lang === "es" ? ", " : "、");
   }
   return undefined;
 }
 
 // The translation of rendered text with its leading and trailing whitespace
 // kept, or undefined when there is none (the text then stays English).
-export function translateText(text, dict) {
+export function translateText(text, dict, strict = false) {
   const [lead, body, trail] = splitSpace(String(text));
   const core = normalize(body);
   if (!hasLetters(core)) {
-    const date = translateDate(core);
+    const date = translateDate(core, dict.lang);
     return date === undefined ? undefined : lead + date + trail;
   }
-  let zh = dict.cache.get(core);
+  const key = strict ? "\0" + core : core;
+  let zh = dict.cache.get(key);
   if (zh === undefined) {
-    zh = translateString(core, dict) ?? null;
+    zh = translateString(core, dict, 0, strict) ?? null;
     if (dict.cache.size > 5000) dict.cache.clear();
-    dict.cache.set(core, zh);
+    dict.cache.set(key, zh);
   }
   return zh === null ? undefined : lead + zh + trail;
 }
@@ -222,10 +269,11 @@ const KEY = "anonyma.lang";
 const storage = () => (typeof window === "undefined" ? null : window.localStorage);
 let language;
 const listeners = new Set();
+const known = (v) => (LANGUAGES.includes(v) ? v : "en");
 export function getLanguage() {
   if (language === undefined) {
     try {
-      language = storage()?.getItem(KEY) === "zh" ? "zh" : "en";
+      language = known(storage()?.getItem(KEY));
     } catch {
       language = "en";
     }
@@ -233,7 +281,7 @@ export function getLanguage() {
   return language;
 }
 export function setLanguage(next) {
-  next = next === "zh" ? "zh" : "en";
+  next = known(next);
   if (next === getLanguage()) return;
   language = next;
   try {
@@ -248,17 +296,19 @@ export function subscribeLanguage(fn) {
 export const useLanguage = () =>
   useSyncExternalStore(subscribeLanguage, getLanguage, () => "en");
 
-// Loaded only once Chinese is chosen, so the English bundle is unchanged.
-let dictionary;
-export function loadDictionary() {
-  dictionary ??= import("./i18n/zh.json").then(
-    (m) => compileDictionary(m.default),
+// Each dictionary is loaded only once its language is chosen, so the English
+// bundle is unchanged. Without an argument: the language that is on.
+const dictionaries = {};
+export function loadDictionary(lang = getLanguage()) {
+  if (!isTranslated(lang)) lang = "zh";
+  dictionaries[lang] ??= (lang === "es" ? import("./i18n/es.json") : import("./i18n/zh.json")).then(
+    (m) => compileDictionary(m.default, lang),
     (e) => {
-      dictionary = undefined;
+      dictionaries[lang] = undefined;
       throw e;
     },
   );
-  return dictionary;
+  return dictionaries[lang];
 }
 
 // ---- Translating nodes (works on anything with a nodeValue) ----
@@ -312,7 +362,7 @@ export function createSession(dict) {
     if (run.some((n) => records.has(n))) return false;
     const shown = ens.join("");
     const [lead, core, trail] = splitSpace(shown);
-    const en = CJK.test(core) && reverse.get(normalize(core));
+    const en = (dict.lang !== "zh" || CJK.test(core)) && reverse.get(normalize(core));
     if (!en) return false;
     run.forEach((node, i) => {
       const out = i ? "" : shown;
@@ -335,8 +385,16 @@ export function createSession(dict) {
     if (run.length > 1) {
       const all = ens.join("");
       // A date split across nodes has no letters but still translates.
-      if (hasLetters(all) || translateDate(normalize(all)) !== undefined) {
-        const t = translateText(all, dict);
+      if (hasLetters(all) || translateDate(normalize(all), dict.lang) !== undefined) {
+        // A split heading's words are never read one by one. Otherwise a
+        // whole the dictionary only reads in part ("Connected catalog · …" then
+        // " Updated 9/25/2026") gives way to the pieces that translate alone.
+        const t = whole
+          ? translateText(all, dict)
+          : translateText(all, dict, true) ??
+            (ens.some((en) => hasLetters(en) && translateText(en, dict) !== undefined)
+              ? undefined
+              : translateText(all, dict));
         if (t !== undefined) {
           bases = run.map((_, i) => (i ? "" : t));
           remember(t, all);
@@ -451,16 +509,34 @@ const ATTRS = ["placeholder", "title", "aria-label", "alt"];
 // <model> instead" (Training Labels) reads "改用 <model>", with the model
 // name kept as written. The Privacy Trail chip reads "隐私轨迹" so it isn't
 // confused with the Private Mode toggle, which is also "隐私".
-const SCOPED = [
-  [".flow-word", "works", ""],
-  [".training-switch", "Use", "改用"],
-  [".training-switch", "instead", ""],
-  [".privacy-chip span", "Privacy", "隐私轨迹"],
-  // Study Mode: a flashcard's back is its answer, not a reply.
-  [".study-face > small", "Answer", "答案"],
-];
+// Spanish: "How it works" reads "Cómo funciona" (the last word is left
+// blank), and the two-line "The ANONYMA / Platform" reads "La plataforma /
+// ANONYMA".
+const SCOPED = {
+  zh: [
+    [".flow-word", "works", ""],
+    [".training-switch", "Use", "改用"],
+    [".training-switch", "instead", ""],
+    [".privacy-chip span", "Privacy", "隐私轨迹"],
+    // Study Mode: a flashcard's back is its answer, not a reply.
+    [".study-face > small", "Answer", "答案"],
+  ],
+  es: [
+    [".flow-word", "How", "Cómo"],
+    [".flow-word", "it", "funciona"],
+    [".flow-word", "works", ""],
+    [".outro-text h2", "The ANONYMA", "La plataforma"],
+    [".outro-text h2", "Platform", "ANONYMA"],
+    [".n-flow-outro h2", "The ANONYMA", "La plataforma"],
+    [".n-flow-outro h2", "Platform", "ANONYMA"],
+    [".training-switch", "Use", "Usar"],
+    [".training-switch", "instead", "en su lugar"],
+    [".privacy-chip span", "Privacy", "Rastro"],
+    [".study-face > small", "Answer", "Respuesta"],
+  ],
+};
 const scopedFor = (el) => {
-  const found = SCOPED.filter(([selector]) => el.matches(selector));
+  const found = (SCOPED[state.session.dict.lang] || []).filter(([selector]) => el.matches(selector));
   return found.length ? new Map(found.map(([, en, zh]) => [en, zh])) : undefined;
 };
 let state = null;
@@ -535,6 +611,8 @@ function neighbourChar(node, last) {
   return "";
 }
 function spacingPass(el) {
+  // Only Chinese has spacing rules of its own.
+  if (state.session.dict.lang !== "zh") return;
   if (el.hasAttribute("data-word") || isSplit(el)) return;
   for (let n = el.firstChild; n; n = n.nextSibling)
     if (n.nodeType === 3)
@@ -619,7 +697,7 @@ export function startTranslator(dict) {
     styled: styledValues(),
     lang: document.documentElement.getAttribute("lang"),
   };
-  document.documentElement.setAttribute("lang", "zh-CN");
+  document.documentElement.setAttribute("lang", HTML_LANG[dict.lang] || "zh-CN");
   const title = document.querySelector("title");
   const elements = new Set();
   collect(document.body, elements);

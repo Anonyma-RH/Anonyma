@@ -202,7 +202,8 @@ export function useFindInChat({
   const [wholeWord, setWholeWord] = useState(false);
   const [count, setCount] = useState({ index: -1, total: 0, capped: false });
   const apple = useMemo(() => isApplePlatform(), []);
-  const zh = useLanguage() === "zh" && isReleased(config, "zh");
+  const language = useLanguage();
+  const uiLang = language !== "en" && isReleased(config, language) ? language : false;
   const bar = useRef(null),
     input = useRef(null),
     previous = useRef(null),
@@ -373,7 +374,7 @@ export function useFindInChat({
     };
   }, [open]);
 
-  const label = countLabel({ ...count, query }, zh);
+  const label = countLabel({ ...count, query }, uiLang);
   const barElement =
     live && open ? (
       <FindBar

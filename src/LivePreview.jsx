@@ -342,10 +342,10 @@ function useUiText(text) {
   const language = useLanguage();
   const [, redraw] = useState(0);
   useEffect(() => {
-    if (language !== "zh") return;
+    if (language === "en") return;
     let current = true;
     // After the translator itself has started on the same dictionary.
-    loadDictionary().then(
+    loadDictionary(language).then(
       () => setTimeout(() => current && redraw((n) => n + 1), 0),
       () => {},
     );
@@ -353,7 +353,7 @@ function useUiText(text) {
       current = false;
     };
   }, [language]);
-  return language === "zh" ? t(text) : text;
+  return language !== "en" ? t(text) : text;
 }
 
 const hastText = (node) =>

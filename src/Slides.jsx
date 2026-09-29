@@ -131,6 +131,27 @@ function sampleDeck(lang = getLanguage()) {
         s("section", { title: "演示或导出", subtitle: "带备注的全屏演示、PDF，或一个 HTML 文件" }),
       ],
     };
+  if (lang === "es")
+    return {
+      title: "Cómo funcionan las presentaciones",
+      theme: "cobalt",
+      slides: [
+        s("title", { title: "Cómo funcionan las presentaciones", subtitle: "Una presentación de muestra, escrita a mano. Edita cualquier cosa.", notes: "Haz clic en cualquier texto de una diapositiva para cambiarlo." }),
+        s("bullets", {
+          title: "De una fuente a una presentación",
+          bullets: ["Empieza con un prompt, un documento o un chat guardado", "Elige cuántas diapositivas", "Consulta lo máximo que puede costar antes de que se ejecute algo", "Solo se cobra una presentación utilizable"],
+          notes: "Crear una presentación es una solicitud sin registro.",
+        }),
+        s("two-column", {
+          title: "Dónde se guarda una presentación",
+          left: { heading: "En tu cuenta", bullets: ["Ábrela en cualquier dispositivo", "Se borra con el Borrado de pánico"] },
+          right: { heading: "Sin registro", bullets: ["Solo en este navegador", "Nunca en los servidores de ANONYMA"] },
+        }),
+        s("big-number", { title: "Diseños para elegir", number: "6", label: "Título, sección, viñetas, dos columnas, cita y número grande" }),
+        s("quote", { quote: "La IA puede equivocarse, así que lee una presentación antes de presentarla.", attribution: "Esta muestra" }),
+        s("section", { title: "Presenta o exporta", subtitle: "Pantalla completa con notas, un PDF o un archivo HTML" }),
+      ],
+    };
   return {
     title: "How Slides works",
     theme: "cobalt",

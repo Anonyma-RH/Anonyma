@@ -128,6 +128,7 @@ export default function Account() {
   const language = useLanguage();
   function runPaletteItem(item) {
     if (item.id === "language") return setLanguage(language === "zh" ? "en" : "zh");
+    if (item.id?.startsWith("language-")) return setLanguage(item.id.slice(9));
     if (item.id === "privacy-screen") return hideScreen();
     if (item.to) navigate(item.to, item.state ? { state: item.state } : undefined);
   }

@@ -414,7 +414,7 @@ export function deckHTML(deck, { slideCSS = "", fontCSS = "", notes = true, lang
     .join("\n");
   return [
     "<!doctype html>",
-    `<html lang="${lang === "zh" ? "zh-CN" : "en"}">`,
+    `<html lang="${lang === "zh" ? "zh-CN" : lang === "es" ? "es-419" : "en"}">`,
     "<head>",
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">',

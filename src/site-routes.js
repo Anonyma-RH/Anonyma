@@ -84,6 +84,8 @@ export function knownPage(path, served = {}) {
     (served.canvas === true && path === "/workspace/canvas") ||
     // And Slides'.
     (served.slides === true && path === "/workspace/slides") ||
+    // And Repo Reader's.
+    (served.repos === true && path === "/workspace/repos") ||
     // Translate docs' page, likewise.
     (served.translate === true && path === "/workspace/translate") ||
     // Meeting Notes' page, likewise.

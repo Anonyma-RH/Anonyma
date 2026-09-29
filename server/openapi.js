@@ -2051,6 +2051,90 @@ route("post", "/api/read", "Read a web page for a message", {
   description:
     "Fetched by the server, so the site never sees your browser or IP: no cookies, no Referer, a generic User-Agent. Only public addresses are fetched: the name is resolved once per hop and every address must be public (loopback, private, link-local, CGNAT, multicast, reserved, IPv6 ULA and link-local, their IPv4-mapped forms and cloud metadata addresses are refused, 400 link_blocked), and the connection goes to the checked address. At most 3 redirects, each checked again (502 link_redirects); 10 seconds (504 link_timeout); 5 MB (413 link_too_large); text/html, text/plain and application/pdf only (415 link_type). Other refusals: 400 link_invalid, link_userinfo, link_port; 502 link_unreachable, link_status; 422 link_unreadable; 429 link_busy (2 at once per account) or rate_limit (60 an hour). Free: nothing is charged or stored, and the link is never logged. The browser attaches the text to your message as a document.",
 });
+// Repo Reader (update "reporeader"). Asking is an /api/chat request (and
+// /api/quote estimate) carrying `repo`, described on POST
+// /api/repos/{id}/excerpts below.
+const repoSummary = {
+  id: string,
+  repo: { ...string, description: "owner/name" },
+  ref: { ...nullableString, description: "The branch, tag or commit from a /tree/ link; null for the default branch" },
+  commit: { ...nullableString, description: "The commit the archive was made from, when GitHub says" },
+  url: string,
+  file_count: { ...integer, description: "Text files kept (at most 5,000)" },
+  text_bytes: integer,
+  skipped: object({
+    vendored: { ...integer, description: "Files in vendored, build and tool folders (node_modules, vendor, dist, build, ...)" },
+    generated: { ...integer, description: "Lock files, minified files and source maps" },
+    binary: { ...integer, description: "By extension, a NUL byte or invalid UTF-8" },
+    large: { ...integer, description: "Files over 256 KB" },
+    links: { ...integer, description: "Symbolic and hard links, never followed" },
+    unsafe: { ...integer, description: "Absolute or traversing paths, control characters, or outside the archive's folder" },
+    other: { ...integer, description: "Devices, FIFOs and unknown entry types" },
+    limit: { ...integer, description: "Past 5,000 files or 8 MB of text" },
+  }),
+  skipped_dirs: { ...array(string), description: "Up to 12 of the vendored or build folders skipped" },
+  truncated: { ...bool, description: "The file or text limit was reached, so some files weren't read" },
+  hidden_removed: { ...integer, description: "Injection Shield's invisible characters taken out of the text" },
+  read_at: integer,
+  forgotten_at: { ...integer, description: "When the cache drops it: 30 minutes after it was read" },
+  forgotten_in: { ...integer, description: "Milliseconds until then, by the server's clock" },
+};
+const repoView = object({
+  ...repoSummary,
+  files: array(object({ path: string, lines: integer, bytes: integer })),
+  cached: { ...bool, description: "Already open for this account, so it wasn't fetched again (POST only)" },
+});
+const repoSnippet = object({
+  path: string,
+  start: { ...integer, minimum: 1 },
+  end: integer,
+  text: { ...string, maxLength: 12000, description: "Lines start to end, exactly (end - start + 1 lines), unnumbered" },
+});
+route("post", "/api/repos", "Read a public GitHub repo", {
+  body: object(
+    { url: { ...string, maxLength: 2048, description: "https://github.com/<owner>/<repo>, optionally /tree/<branch, tag or commit>" } },
+    ["url"],
+  ),
+  status: 201,
+  response: repoView,
+  description:
+    "The server downloads the repo's tarball from codeload.github.com (GitHub sees this server, never your browser or IP: no token, no cookies, a generic User-Agent) through Link Reader's SSRF-safe fetcher in host allowlist mode: every hop, redirects included, must be https on codeload.github.com, and every address it resolves to must be public. 50 MB (413 repo_too_large), 30 seconds (504 repo_timeout). Unpacked in memory, never on disk: more than 300 MB unpacked (413 repo_unpacked_too_large), more than 60,000 entries (413 repo_too_many_entries) or a damaged archive (422 repo_corrupt) is refused whole; links, unsafe paths, vendored and build folders, lock and minified files, binaries and files over 256 KB are skipped and counted; 5,000 files and 8 MB of text at most. Public repos only: a private or missing repo, branch or tag is 404 repo_not_found. Other refusals: 400 repo_url; 422 repo_no_text; 502 repo_unavailable, repo_unreachable, repo_redirect, repo_not_archive; 429 repo_busy (one at a time) or rate_limit (20 an hour; a mistyped link or a repo already open doesn't count). Free. Kept in this server's memory for this account for 30 minutes, 3 repos at most (the oldest goes first, and sooner when the server needs the memory), then forgotten; never logged or stored. Returned as it is, with cached: true, when the same repo and ref are already open.",
+});
+route("get", "/api/repos", "Repos open now", {
+  response: object({ data: array(object(repoSummary)), limit: { ...integer, description: "Repos open at once (3)" } }),
+  description: "Newest first. Only this account's, and only for 30 minutes after each was read.",
+});
+route("get", "/api/repos/{id}", "One open repo and its files", {
+  response: repoView,
+  description: "404 repo_gone once it's forgotten (30 minutes after it was read, or after DELETE).",
+});
+route("get", "/api/repos/{id}/file", "One file's text", {
+  query: [{ name: "path", in: "query", required: true, schema: string }],
+  response: object({ path: string, lines: integer, bytes: integer, text: string }),
+  description: "A file that was kept, as read (invisible characters removed). 404 repo_file_not_found or repo_gone.",
+});
+route("post", "/api/repos/{id}/excerpts", "The excerpts a question would send", {
+  body: object({ question: { ...string, maxLength: 2000 } }, ["question"]),
+  response: object({
+    repo: object({
+      repo: string,
+      ref: nullableString,
+      commit: nullableString,
+      question: string,
+      list: { ...array(string), description: "Up to 300 paths (6,000 characters) sent as the file list, shallow first" },
+      total_files: integer,
+      snippets: { ...array(repoSnippet), maxItems: 8 },
+    }),
+    flagged: { ...array(bool), description: "Per excerpt: Injection Shield found text that reads like instructions to an AI (it's sent as data either way)" },
+    fallback: { ...bool, description: "No term matched, so the README and top-level manifest were chosen" },
+  }),
+  description:
+    "Free; nothing is sent to a model. The question's terms are ranked against the files (BM25 over 40-line chunks, plus path and file-name matches): up to 8 excerpts, 3 from one file, 28,000 characters. Asking is then POST /api/chat with ephemeral: true and repo: this `repo` object (the question may be masked by Veil; the rest as returned), and optionally private: true. The server numbers each excerpt's lines and builds the messages: a fixed system prompt, the question, the file list and the excerpts as escaped document blocks with Injection Shield's data notice (400 invalid_repo for a malformed payload, more than 44,000 characters, or one combined with other chat options: a conversation, project, memory, web search, Auto, another task or Seed Guard's override). A seed phrase in the question is refused (400 seed_phrase_blocked, no override); the excerpts aren't scanned. The answer budget is 8,000 tokens, lowered to the model's limits (400 repo_too_long when its context leaves under 2,000). POST /api/quote prices the same body, and the request holds exactly that price; an empty reply is released and charges nothing. Nothing about the question is stored.",
+});
+route("delete", "/api/repos/{id}", "Forget an open repo now", {
+  response: object({ ok: bool }),
+  description: "Drops it from the cache at once. 404 repo_gone when it isn't open.",
+});
 // Blind Compare (update "blind").
 const blindSide = object({
   model: string,

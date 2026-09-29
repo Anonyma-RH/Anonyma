@@ -55,7 +55,10 @@ export function refuseSeedPhrase(cfg, req, api) {
   if (!isReleased(cfg, "seedguard")) return;
   if (api ? apiOptOut(req) : req.body?.allow_seed_phrase === true) return;
   const skipLinks = !api && isReleased(cfg, "linkreader");
-  if (guardedTexts(req.body).some((t) => findSeedPhrase(skipLinks ? stripLinkBlocks(t) : t)))
+  // A Repo Reader question (server/repo-reader.js) sets, in code, the only
+  // text the person typed: the question. The excerpts are a public repo's.
+  const texts = Array.isArray(req.seedTexts) ? req.seedTexts : guardedTexts(req.body);
+  if (texts.some((t) => findSeedPhrase(skipLinks ? stripLinkBlocks(t) : t)))
     fail(400, api ? API_SEED_MESSAGE : SEED_MESSAGE, "seed_phrase_blocked");
 }
 

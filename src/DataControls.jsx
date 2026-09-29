@@ -55,6 +55,8 @@ export default function DataControls() {
   const canvas = !!config && isReleased(config, "canvas");
   // And Slides.
   const slides = !!config && isReleased(config, "slides");
+  // And Repo Reader.
+  const repos = !!config && isReleased(config, "reporeader");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -314,6 +316,16 @@ export default function DataControls() {
             Decks made off the record or in Private Mode are kept only in this
             browser, unencrypted. Panic Wipe erases both; closing the account
             erases the saved ones.
+          </li>
+        )}
+        {repos && (
+          <li>
+            Repo Reader: a repo you read is kept only in the server's memory,
+            for your account, for 30 minutes (or until you forget it), then
+            dropped; it's never written to disk or logged. Questions are asked
+            off the record, so neither they nor the answers are saved. Your
+            data export lists the repos open at the time; Panic Wipe and
+            closing the account forget them at once.
           </li>
         )}
         {nyma && (

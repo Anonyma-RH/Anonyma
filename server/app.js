@@ -41,6 +41,7 @@ import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
 import { linkReaderRoutes } from "./routes/link-reader.js";
+import { repoReaderRoutes } from "./routes/repo-reader.js";
 import { blindRoutes } from "./routes/blind.js";
 import { arenaRoutes } from "./routes/arena.js";
 import { researchRoutes } from "./routes/research.js";
@@ -175,6 +176,9 @@ export function createApp(overrides = {}) {
   bookmarkRoutes(ctx);
   // Link Reader: fetches one public page for a message (reads only).
   linkReaderRoutes(ctx);
+  // Repo Reader: one public GitHub repo, read into a short-lived in-memory
+  // cache (asking about it runs through runChat, registered above).
+  ctx.repoReader = repoReaderRoutes(ctx);
   // Blind Compare: two chat replies through runChat, and the account's
   // votes (after projects, which a saved round can be filed in).
   blindRoutes(ctx);
@@ -267,6 +271,8 @@ export function createApp(overrides = {}) {
     inactivity: ctx.inactivity,
     // Gift Links' expiry (server/routes/gifts.js), for tests and tooling.
     gifts: ctx.gifts,
+    // Repo Reader's in-memory cache (server/repo-reader.js), for tests.
+    repoReader: ctx.repoReader,
     stopWork: async () => {
       for (const c of ctx.inflight.controllers)
         c.abort(new Error("Service restarting"));
@@ -274,6 +280,7 @@ export function createApp(overrides = {}) {
     },
     close: () => {
       worker.close();
+      ctx.repoReader.cache.clear();
       for (const c of ctx.inflight.controllers) c.abort();
       db.close();
     },

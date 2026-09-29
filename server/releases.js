@@ -1175,6 +1175,26 @@ export const UPDATES = [
     // recording itself is never stored. The page is /workspace/notes.
     released: true,
   },
+  {
+    id: "reporeader",
+    title: "Repo Reader",
+    tagline: "Paste a public GitHub repo and ask about it. Answers point to the exact files.",
+    points: [
+      "Public repos only: our server downloads the code, so GitHub sees ANONYMA, not you",
+      "Browse the files, see exactly which excerpts go to the AI, and jump to each cited line",
+      "Reading a repo is free and answers bill like a message; the files are forgotten after 30 minutes",
+    ],
+    // The workspace's Repo Reader page (src/RepoReader.jsx) and /api/repos
+    // (server/routes/repo-reader.js): the tarball comes from
+    // codeload.github.com through Link Reader's fetcher in its host
+    // allowlist mode, unpacked in memory with strict limits into a per-
+    // account cache that lives 30 minutes (server/repo-reader.js). A
+    // question is an off-the-record /api/chat request carrying `repo` (the
+    // excerpts the page showed), priced by /api/quote with the same payload
+    // and held at exactly that price. Nothing is stored; erase clears the
+    // cache, and the export lists what's open.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1413,6 +1433,9 @@ export function featuresFor(req) {
   // Slides: the decks an account keeps (making one is an /api/chat request,
   // gated below).
   if (p === "/api/slides" || p.startsWith("/api/slides/")) return ["slides"];
+  // Repo Reader: reading a public GitHub repo into the short-lived cache,
+  // its files and the excerpts for a question.
+  if (p === "/api/repos" || p.startsWith("/api/repos/")) return ["reporeader"];
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.
@@ -1631,6 +1654,10 @@ export function featuresFor(req) {
   // its estimate. The request is always off the record (pushed below).
   if ((p === "/api/chat" || p === "/api/quote") && post && body.slides !== undefined)
     needed.push("slides");
+  // Repo Reader: a question about a repo (server/repo-reader.js), and its
+  // estimate. The request is always off the record (pushed below).
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.repo !== undefined)
+    needed.push("reporeader");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

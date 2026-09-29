@@ -12,6 +12,7 @@ import { autoHelperTestReply } from "./auto-model-test.js";
 import { canvasTestReply } from "./canvas.js";
 import { slidesTestReply } from "./slides.js";
 import { meetingNotesTestReply } from "./meeting-notes.js";
+import { repoTestReply } from "./repo-reader.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -251,11 +252,12 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
     const factCheck = String(body.messages?.[0]?.content || "").startsWith("You fact-check one claim against the live web.")
       ? JSON.stringify({ verdict: "unverified", reason: "Local test provider: no web search was run.", sources: [] })
       : null;
-    // Slides' deck and slide writer (server/slides.js) finishes the same way.
+    // Slides' deck and slide writer (server/slides.js) finishes the same way,
+    // and so does Repo Reader's answer (server/repo-reader.js).
     // Translate docs' stand-in (server/translate-test.js) can also fail on
     // purpose, as a provider error would.
     const finishing =
-      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? canvasTestReply(body.messages) ?? slidesTestReply(body.messages) ?? translateTestReply(body.messages);
+      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? canvasTestReply(body.messages) ?? slidesTestReply(body.messages) ?? translateTestReply(body.messages) ?? repoTestReply(body.messages);
     if (finishing?.error) {
       yield { error: { message: finishing.error } };
       return;

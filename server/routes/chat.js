@@ -45,6 +45,7 @@ import {
 } from "../auto-model.js";
 import { prepareCanvasRequest, canvasBudget, canvasVerdict } from "../canvas.js";
 import { prepareSlidesRequest, slidesBudget, slidesAcceptor, streamedSlides } from "../slides.js";
+import { prepareRepoRequest, repoBudget } from "../repo-reader.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -105,6 +106,15 @@ export function chatRoutes(ctx) {
     // message modes, each of which refuses ready-made `messages`. Its
     // release gate is in featuresFor.
     const canvasTask = api ? undefined : prepareCanvasRequest(req.body);
+    // Repo Reader: a question's messages are built the same way from its
+    // checked `repo` payload (server/repo-reader.js): the question, a file
+    // list and the excerpts the page showed, as data. After the other
+    // built-message modes, each of which refuses ready-made `messages`. Its
+    // release gate is in featuresFor. Seed Guard reads only the question
+    // (the excerpts are a public repo's files, like a read page), with no
+    // override.
+    const repoTask = api ? undefined : prepareRepoRequest(req.body);
+    if (repoTask) req.seedTexts = [repoTask.question];
     // Seed Guard: refused before anything is validated, reserved or stored.
     refuseSeedPhrase(cfg, req, api);
     if (!api) validateTaskRequest(req.body);
@@ -115,7 +125,7 @@ export function chatRoutes(ctx) {
     const autoAsked = !api && req.body.auto !== undefined;
     if (autoAsked)
       refuseAutoTask(req.body, {
-        task: !!(study || compareTask || sheetsTask || catchupTask),
+        task: !!(study || compareTask || sheetsTask || catchupTask || repoTask),
         blind: !!req.blind,
       });
     const autoSettings = autoAsked ? requestSettings(req.body) : null;
@@ -145,6 +155,11 @@ export function chatRoutes(ctx) {
     if (catchupTask && m?.type === "chat") {
       if (imageCallable(m)) fail(400, "Catch me up needs a text model.", "unsupported_model");
       req.body.max_tokens = catchupBudget(m, req.body.messages);
+    }
+    // A repo answer's budget, fitted to the model (server/repo-reader.js).
+    if (repoTask && m.type === "chat") {
+      if (imageCallable(m)) fail(400, "Repo Reader needs a text model.", "unsupported_model");
+      req.body.max_tokens = repoBudget(m, req.body.messages);
     }
     // A suggestion's reply budget, fitted to the model (refused when the
     // rewrite can't fit), and only a usable reply is paid for: one that
@@ -347,9 +362,10 @@ export function chatRoutes(ctx) {
         guard: team?.guard ?? req.reserveGuard,
       });
     // Auto promises one maximum for its quote, limit check and reservation.
-    // Slides hold exactly the quoted maximum (server/slides.js): the "up to"
-    // figure shown, the balance and limit checks and the hold are one number.
-    const headroom = auto || slidesTask ? amount : Math.ceil(amount * cfg.holdMargin);
+    // Slides and Repo Reader questions hold exactly the quoted maximum
+    // (server/slides.js, server/repo-reader.js): the "up to" figure shown,
+    // the balance and limit checks and the hold are one number.
+    const headroom = auto || slidesTask || repoTask ? amount : Math.ceil(amount * cfg.holdMargin);
     try {
       reservation(headroom);
     } catch (e) {

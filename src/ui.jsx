@@ -103,6 +103,8 @@ import {
   List,
   ListOrdered,
   Presentation,
+  FolderGit2,
+  ChevronRight,
   FileAudio,
 } from "lucide-react";
 const icons = {
@@ -209,6 +211,8 @@ const icons = {
   numbered: ListOrdered,
   present: Presentation,
   meeting: FileAudio,
+  repo: FolderGit2,
+  right: ChevronRight,
 };
 export function Icon({ name, size = 18, ...rest }) {
   if(name === "arrow") return <svg width={size} height={size} viewBox="0 0 15 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="reference-arrow" {...rest}><path className="arrow-shaft" d="M0 5.707H9"/><path className="arrow-head" d="M4 .707L9 5.707L4 10.707"/></svg>;
@@ -251,6 +255,8 @@ const pixels = {
   translate: [".#.....", "###..#.", ".#..#.#", "#.#.###", "....#.#", "....#.#", "......."],
   // A microphone on its stand: a recording turned into notes.
   notes: ["..###..", "..###..", "#.###.#", "#.###.#", ".#...#.", "..###..", ".#####."],
+  // A folder with a branch on it: a repo read file by file.
+  repos: ["###....", "#######", "#.#...#", "#.#.#.#", "#.##..#", "#.#...#", "#######"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

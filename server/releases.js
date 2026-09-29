@@ -1227,7 +1227,7 @@ export const UPDATES = [
     // Browsers, switches and waiting messages are erased with the account's
     // content and exported with endpoints cut to their host. Nothing is
     // charged.
-    released: false,
+    released: true,
   },
   {
     id: "decoy",

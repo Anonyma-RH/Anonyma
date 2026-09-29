@@ -1,0 +1,29 @@
+/* Chat Import: the small mark on a chat brought from ChatGPT or Claude (in
+   the sidebar list and Device Vault), and the note above its messages. The
+   page itself is chat-import.css, loaded only with the page. */
+.chat-imported {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding: 0 2px;
+  color: var(--work-muted, #68748a);
+}
+.app-sidebar .chat-imported {
+  color: #b7c9ff;
+}
+.app-shell .branch-banner.import-banner svg {
+  flex: none;
+  color: var(--brand-blue, #0135df);
+}
+.vault-more {
+  margin: 4px 0 0;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 12px;
+  background: none;
+  border: 0;
+  color: #b7c9ff;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+}

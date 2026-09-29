@@ -1238,6 +1238,21 @@ export const MIGRATIONS = [
         WHEN (SELECT COUNT(*) FROM slide_decks WHERE user_id=NEW.user_id)>=200
         BEGIN SELECT RAISE(ABORT,'slides_limit'); END;
   `),
+  // Chat Import (server/routes/chat-import.js): which saved chats came from a
+  // ChatGPT or Claude export, and the id the export gave each, kept only to
+  // notice the same chat imported twice. Never the file, its name or a hash of
+  // its content. It goes with its conversation (delete, delete all, cap
+  // pruning, auto-delete cleanup, account closure, Panic Wipe).
+  additive(`
+      CREATE TABLE IF NOT EXISTS chat_imports(
+        conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        source TEXT NOT NULL CHECK(source IN ('chatgpt','claude')),
+        source_id TEXT CHECK(source_id IS NULL OR length(source_id)<=100),
+        imported INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS chat_imports_user ON chat_imports(user_id,source);
+      CREATE UNIQUE INDEX IF NOT EXISTS chat_imports_once ON chat_imports(user_id,source,source_id) WHERE source_id IS NOT NULL;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

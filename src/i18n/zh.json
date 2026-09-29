@@ -5776,7 +5776,106 @@
     "Send each piece as a WAV file.": "请以 WAV 文件发送每个片段。",
     "Send each piece as mono 16-bit PCM at 16 kHz.": "请以 16 kHz 单声道 16 位 PCM 发送每个片段。",
     "Timing comes from the transcription provider. Some sections may span up to five minutes.": "时间标记由转录服务提供，部分段落可能长达五分钟。",
-    "Owners only when the transcript names them; timed notes link to transcript sections": "仅在转录明确提及姓名时标注负责人；带时间标记的纪要链接到对应转录段落"
+    "Owners only when the transcript names them; timed notes link to transcript sections": "仅在转录明确提及姓名时标注负责人；带时间标记的纪要链接到对应转录段落",
+    "Chat Import": "会话导入",
+    "Bring your ChatGPT or Claude history with you.": "把你的 ChatGPT 或 Claude 历史记录一起带来。",
+    "Read in your browser from the export you download": "在浏览器中读取你下载的导出文件",
+    "Choose the chats to keep, with search and select all": "选择要保留的会话，支持搜索和全选",
+    "Keep them in Device Vault, on your account, or as Markdown files": "保存到本机保险库、你的账户，或导出为 Markdown 文件",
+    "Import chats": "导入会话",
+    "IMPORT CHATS": "导入会话",
+    "Opening Import chats…": "正在打开导入会话……",
+    "Bring your ChatGPT or Claude history here. Choose which chats to keep and where they go.": "把你的 ChatGPT 或 Claude 历史记录带到这里。选择保留哪些会话，以及保存到哪里。",
+    "Bring your ChatGPT or Claude history with you. It's read in your browser, and you choose what to keep.": "把你的 ChatGPT 或 Claude 历史记录一起带来。文件在你的浏览器中读取，保留什么由你决定。",
+    "Drop your export here": "把导出文件拖到这里",
+    "The ZIP from ChatGPT or Claude, or the conversations.json inside it. Up to 200 MB.": "ChatGPT 或 Claude 发给你的 ZIP，或其中的 conversations.json。最大 200 MB。",
+    "Choose your export": "选择你的导出文件",
+    "In its settings, find Data controls and choose Export data. It emails you a ZIP.": "在其设置中找到“数据控制”并选择“导出数据”。它会通过邮件发给你一个 ZIP。",
+    "In its settings, find Privacy and choose Export data. It emails you a ZIP.": "在其设置中找到“隐私”并选择“导出数据”。它会通过邮件发给你一个 ZIP。",
+    "Your export is opened and read here. It isn't uploaded, and ANONYMA never sees the file.": "你的导出文件在这里打开并读取，不会上传，ANONYMA 永远看不到这个文件。",
+    "You choose what to keep": "保留什么由你决定",
+    "Pick chats one by one, or search and select all. Then choose where they go.": "逐个挑选会话，或搜索后全选，然后选择保存位置。",
+    "Only the words": "只导入文字",
+    "Attachments, images, tool steps and hidden reasoning aren't imported. Projects, memories and custom instructions aren't either.": "附件、图片、工具步骤和隐藏的推理内容不会导入，项目、记忆和自定义指令也不会。",
+    "Opening the file…": "正在打开文件……",
+    "Unzipping it here…": "正在此处解压……",
+    "Reading the chats…": "正在读取会话……",
+    "Checking for seed phrases…": "正在检查助记词……",
+    "This all happens on your device. Nothing is uploaded.": "这一切都在你的设备上进行，不会上传任何内容。",
+    "ChatGPT export": "ChatGPT 导出文件",
+    "Claude export": "Claude 导出文件",
+    "1 chat found": "找到 1 个会话",
+    "1 attachment or image left out": "1 个附件或图片未导入",
+    "1 attachment left out": "1 个附件未导入",
+    "Chats come over exactly as written. Veil doesn't change them.": "会话会按原文导入，Veil 不会改动它们。",
+    "1 empty chat not listed": "1 个空会话未列出",
+    "1. Choose where they go": "1. 选择保存位置",
+    "2. Choose the chats": "2. 选择会话",
+    "Where the chats go": "会话的保存位置",
+    "Encrypted on this device, with your passphrase. ANONYMA's servers never see these chats.": "使用你的密码短语在此设备上加密。ANONYMA 的服务器永远看不到这些会话。",
+    "Device Vault isn't available here.": "此处无法使用本机保险库。",
+    "This browser can't keep a vault.": "此浏览器无法保存保险库。",
+    "Saved with your other chats and marked as imported. Only the chats you choose are uploaded.": "与你的其他会话一起保存，并标记为已导入。只会上传你选择的会话。",
+    "Sign in to save chats to an account.": "登录后才能把会话保存到账户。",
+    "Markdown files": "Markdown 文件",
+    "Downloads readable .md files. Nothing is saved anywhere.": "下载可读的 .md 文件，不会在任何地方保存。",
+    "Set up Device Vault to keep the chats on this device.": "设置本机保险库，把会话保存在此设备上。",
+    "Unlock Device Vault to keep the chats on this device.": "解锁本机保险库，把会话保存在此设备上。",
+    "Vault Sync is on, so these chats also sync, still encrypted, to your other devices.": "保险库同步已开启，因此这些会话也会以加密状态同步到你的其他设备。",
+    "Your auto-delete setting of 1 day applies to imported chats too.": "你的自动删除设置（1 天）同样适用于导入的会话。",
+    "Checking what your account can take…": "正在检查你的账户还能容纳多少……",
+    "Seed Guard checks every chat first. One that holds a wallet seed phrase or private key is held back unless you allow it.": "助记词防护会先检查每个会话。含有钱包助记词或私钥的会话会被拦下，除非你允许。",
+    "Search titles and messages": "搜索标题和消息",
+    "Select all": "全选",
+    "Select all shown": "全选当前显示的",
+    "Select none": "全不选",
+    "No chats match that search.": "没有符合搜索的会话。",
+    "Already in your vault": "已在你的保险库中",
+    "Already imported": "已导入过",
+    "Too large for your account": "对账户来说太大",
+    "Seed Guard: allowed": "助记词防护：已允许",
+    "Import anyway…": "仍要导入……",
+    "Keep it out": "不导入这个",
+    "This chat looks like it holds a wallet seed phrase or private key, so it isn't saved to your account.": "这个会话疑似含有钱包助记词或私钥，因此不会保存到你的账户。",
+    "Anyone with it controls that wallet. Import it only if it's a test phrase with no funds.": "任何人拿到它就能控制那个钱包。只有在它是没有资金的测试助记词时才导入。",
+    "Yes, import it": "是，导入它",
+    "Import 1 chat": "导入 1 个会话",
+    "Download 1 chat as Markdown": "将 1 个会话下载为 Markdown",
+    "Only the chats you chose are uploaded: their words and dates, nothing else. No model is used and nothing is charged.": "只会上传你选择的会话：其中的文字和日期，不含其他任何内容。不会调用模型，也不会扣费。",
+    "Nothing leaves this browser. No model is used and nothing is charged.": "任何内容都不会离开此浏览器。不会调用模型，也不会扣费。",
+    "Nothing leaves this browser and nothing is saved. No model is used and nothing is charged.": "任何内容都不会离开此浏览器，也不会被保存。不会调用模型，也不会扣费。",
+    "Saving to your account…": "正在保存到你的账户……",
+    "Sealing into Device Vault…": "正在加密存入本机保险库……",
+    "Writing Markdown files…": "正在生成 Markdown 文件……",
+    "Stopping keeps what was already done. Nothing is undone.": "停止后已完成的部分会保留，不会撤销任何内容。",
+    "DONE": "完成",
+    "NOTHING IMPORTED": "未导入任何内容",
+    "No chats were imported": "没有导入任何会话",
+    "1 chat downloaded as Markdown": "1 个会话已下载为 Markdown",
+    "1 chat kept in Device Vault": "1 个会话已保存到本机保险库",
+    "1 chat saved to your account": "1 个会话已保存到你的账户",
+    "Open one": "打开其中一个",
+    "The rest are in the Device Vault section of the sidebar.": "其余的在侧边栏的本机保险库部分。",
+    "Find the rest by searching your history in Your library.": "在“你的媒体库”中搜索历史记录即可找到其余的。",
+    "The most recent ones are in the sidebar.": "最近的几个在侧边栏中。",
+    "Import more from this file": "继续从此文件导入",
+    "Search your history": "搜索你的历史记录",
+    "The replies were written by that service, not by an ANONYMA model.": "回复由该服务撰写，而不是 ANONYMA 的模型。",
+    "Written in": "撰写于",
+    "This isn't a ChatGPT or Claude export. Choose the ZIP you were sent, or the conversations.json inside it.": "这不是 ChatGPT 或 Claude 的导出文件。请选择你收到的 ZIP，或其中的 conversations.json。",
+    "This file is over 200 MB. Choose a smaller export, or the conversations.json from inside it.": "这个文件超过 200 MB。请选择更小的导出文件，或其中的 conversations.json。",
+    "This ZIP couldn't be opened. It may be damaged; download the export again.": "无法打开这个 ZIP，它可能已损坏。请重新下载导出文件。",
+    "This ZIP holds too many files.": "这个 ZIP 中的文件太多。",
+    "There's no conversations.json in this ZIP. Choose the export ZIP you were sent by ChatGPT or Claude.": "这个 ZIP 中没有 conversations.json。请选择 ChatGPT 或 Claude 发给你的导出 ZIP。",
+    "The conversations in this export are too large to read here.": "这个导出文件中的会话太大，无法在此读取。",
+    "These files come from different services. Import one export at a time.": "这些文件来自不同的服务。请一次只导入一个导出文件。",
+    "This export holds too many chats to list. Try an export from a shorter period.": "这个导出文件中的会话太多，无法列出。请尝试导出较短时间段的数据。",
+    "There are no chats in this file.": "这个文件中没有会话。",
+    "This export is too large for this browser to read.": "这个导出文件太大，此浏览器无法读取。",
+    "This export is too large for this browser's memory.": "这个导出文件超出了此浏览器的内存限制。",
+    "This export stopped loading. It may be too large for this browser.": "导出文件停止加载，可能是它对此浏览器来说太大了。",
+    "That is too much text for one request. Send fewer chats at a time.": "一次请求的文字太多。请一次少发几个会话。",
+    "Chat Import is coming soon.": "会话导入即将推出。"
   },
   "patterns": [
     {
@@ -9366,6 +9465,130 @@
     {
       "en": "{0} can't take a meeting transcript. Pick a model with a longer context.",
       "zh": "{0} 无法读取会议文字稿。请选择上下文更长的模型。"
+    },
+    {
+      "en": "{0} attachments and images left out",
+      "zh": "{0} 个附件和图片未导入"
+    },
+    {
+      "en": "{0} empty chats not listed",
+      "zh": "{0} 个空会话未列出"
+    },
+    {
+      "en": "{0} chats so far",
+      "zh": "已读取 {0} 个会话"
+    },
+    {
+      "en": "{0} attachments left out",
+      "zh": "{0} 个附件未导入"
+    },
+    {
+      "en": "Your account keeps up to {0} saved chats and has room for {1} more. Older chats are removed first as you add new ones.",
+      "zh": "你的账户最多保存 {0} 个会话，还可再容纳 {1} 个。新增会话时会先删除较早的会话。"
+    },
+    {
+      "en": "Your auto-delete setting of {0} days applies to imported chats too.",
+      "zh": "你的自动删除设置（{0} 天）同样适用于导入的会话。"
+    },
+    {
+      "en": "{0} of {1} chats match. {2} selected.",
+      "zh": "{0} / {1} 个会话匹配，已选 {2} 个。"
+    },
+    {
+      "en": "{0} of {1} chats selected.",
+      "zh": "已选择 {0} / {1} 个会话。"
+    },
+    {
+      "en": "Show {0} more",
+      "zh": "再显示 {0} 个"
+    },
+    {
+      "en": "Device Vault has room for {0} more chats. Choose fewer.",
+      "zh": "本机保险库还可再容纳 {0} 个会话，请少选一些。"
+    },
+    {
+      "en": "Your account has room for {0} more chats. Choose fewer, or use Device Vault or Markdown files.",
+      "zh": "你的账户还可再容纳 {0} 个会话。请少选一些，或使用本机保险库或 Markdown 文件。"
+    },
+    {
+      "en": "Import {0} chats",
+      "zh": "导入 {0} 个会话"
+    },
+    {
+      "en": "Download {0} chats as Markdown",
+      "zh": "将 {0} 个会话下载为 Markdown"
+    },
+    {
+      "en": "{0} of {1} chats",
+      "zh": "{0} / {1} 个会话"
+    },
+    {
+      "en": "{0} chats downloaded as Markdown",
+      "zh": "{0} 个会话已下载为 Markdown"
+    },
+    {
+      "en": "{0} chats kept in Device Vault",
+      "zh": "{0} 个会话已保存到本机保险库"
+    },
+    {
+      "en": "{0} chats saved to your account",
+      "zh": "{0} 个会话已保存到你的账户"
+    },
+    {
+      "en": "Each one is marked as imported from {0}. The replies were written by that service.",
+      "zh": "每个会话都标记为从 {0} 导入。回复由该服务撰写。"
+    },
+    {
+      "en": "{0} already imported",
+      "zh": "{0} 个已导入过"
+    },
+    {
+      "en": "{0} held back by Seed Guard",
+      "zh": "{0} 个被助记词防护拦下"
+    },
+    {
+      "en": "{0} too large for your account",
+      "zh": "{0} 个对账户来说太大"
+    },
+    {
+      "en": "{0} over your account's chat limit",
+      "zh": "{0} 个超出账户会话上限"
+    },
+    {
+      "en": "{0} couldn't be read",
+      "zh": "{0} 个无法读取"
+    },
+    {
+      "en": "{0} skipped",
+      "zh": "已跳过 {0} 个"
+    },
+    {
+      "en": "{0} done; {1} not imported.",
+      "zh": "已完成 {0} 个，{1} 个未导入。"
+    },
+    {
+      "en": "Imported from {0}.",
+      "zh": "已从 {0} 导入。"
+    },
+    {
+      "en": "Imported from {0}",
+      "zh": "从 {0} 导入"
+    },
+    {
+      "en": "Show all {0} chats",
+      "zh": "显示全部 {0} 个会话"
+    },
+    {
+      "en": "No {0} chats with text were found in this file.",
+      "zh": "在这个文件中没有找到包含文字的 {0} 会话。"
+    },
+    {
+      "en": "Send 1 to {0} chats at a time.",
+      "zh": "一次请发送 1 到 {0} 个会话。"
+    },
+    {
+      "en": "{0} chats found",
+      "zh": "找到 {0} 个会话"
     }
   ]
 }

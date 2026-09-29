@@ -1175,6 +1175,22 @@ export const UPDATES = [
     // recording itself is never stored. The page is /workspace/notes.
     released: true,
   },
+  {
+    id: "chatimport",
+    title: "Chat Import",
+    tagline: "Bring your ChatGPT or Claude history with you.",
+    points: [
+      "Read in your browser from the export you download",
+      "Choose the chats to keep, with search and select all",
+      "Keep them in Device Vault, on your account, or as Markdown files",
+    ],
+    // /api/import (server/routes/chat-import.js): the account destination.
+    // The export is read in the browser and only the chats chosen for the
+    // account are ever sent; the Device Vault and Markdown destinations
+    // make no request at all. The page is /workspace/import. Nothing is
+    // charged: no model is called.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1306,6 +1322,9 @@ export function featuresFor(req) {
   if (p === "/api/status" || p.startsWith("/api/status/")) return ["status"];
   // Bookmarks: stars on saved messages, with private notes.
   if (p === "/api/bookmarks" || p.startsWith("/api/bookmarks/")) return ["bookmarks"];
+  // Chat Import: chats read from a ChatGPT or Claude export, saved to the
+  // account only when the person chooses that destination.
+  if (p === "/api/import" || p.startsWith("/api/import/")) return ["chatimport"];
   // Local OCR: the text reader's files (src/ocr-assets.js). What it reads
   // goes as a Documents attachment, so it needs Documents too.
   if (p === "/ocr" || p.startsWith("/ocr/")) return ["ocr", "documents"];

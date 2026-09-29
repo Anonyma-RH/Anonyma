@@ -3,6 +3,7 @@ import { capsFor } from "../holders.js";
 import { BASE_CAPS, HOLDER_CAPS } from "../holder-tiers.js";
 import { isReleased } from "../releases.js";
 import { continuationOf } from "./catchup.js";
+import { importedExport, importedSources, withImported } from "./chat-import.js";
 
 // Use the same membership boundary as conversation reads. A removed member
 // cannot export other members' messages from a shared conversation they created.
@@ -31,6 +32,8 @@ export function exportConversations(db, user) {
       // Summarize & Continue: the chat it continues (its id) and the summary
       // it carries, when it was continued fresh from another.
       ...continuedExport(db, c.id),
+      // Chat Import: which service a chat was brought from.
+      ...importedExport(db, c.id),
     }));
 }
 function continuedExport(db, id) {
@@ -125,20 +128,20 @@ export function conversationRoutes({ app, db, cfg, requireUser }) {
   const projectOf = (id) =>
     db.prepare("SELECT project_id FROM project_chats WHERE conversation_id=?").get(id)
       ?.project_id ?? null;
-  app.get("/api/conversations", requireUser, (req, res) =>
-    res.json({
-      data: db
-        .prepare(
-          // Symposium runs are capped on their own and never shown here, so they
-          // can't crowd ordinary chats out of this list. Everything kept is
-          // listed, up to the Holder tier's larger cap.
-          isReleased(cfg, "projects")
-            ? "SELECT c.*,pc.project_id FROM conversations c LEFT JOIN project_chats pc ON pc.conversation_id=c.id AND pc.user_id=c.user_id WHERE c.user_id=? AND c.collab_id IS NULL AND c.mode IS NOT 'symposium' AND (c.expires IS NULL OR c.expires>=?) ORDER BY c.updated DESC,c.rowid DESC LIMIT ?"
-            : "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium' AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT ?",
-        )
-        .all(req.user.id, now(), HOLDER_CAPS.conversations),
-    }),
-  );
+  app.get("/api/conversations", requireUser, (req, res) => {
+    const rows = db
+      .prepare(
+        // Symposium runs are capped on their own and never shown here, so they
+        // can't crowd ordinary chats out of this list. Everything kept is
+        // listed, up to the Holder tier's larger cap.
+        isReleased(cfg, "projects")
+          ? "SELECT c.*,pc.project_id FROM conversations c LEFT JOIN project_chats pc ON pc.conversation_id=c.id AND pc.user_id=c.user_id WHERE c.user_id=? AND c.collab_id IS NULL AND c.mode IS NOT 'symposium' AND (c.expires IS NULL OR c.expires>=?) ORDER BY c.updated DESC,c.rowid DESC LIMIT ?"
+          : "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium' AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT ?",
+      )
+      .all(req.user.id, now(), HOLDER_CAPS.conversations);
+    // Chat Import: chats brought from ChatGPT or Claude say so.
+    res.json({ data: isReleased(cfg, "chatimport") ? withImported(db, req.user.id, rows) : rows });
+  });
   app.post("/api/conversations", requireUser, (req, res) =>
     res.status(201).json({
       id: newConversation(
@@ -192,9 +195,11 @@ export function conversationRoutes({ app, db, cfg, requireUser }) {
     // Summarize & Continue: where this chat was continued from, and the
     // summary the browser sends as its leading context (routes/catchup.js).
     const continued = continuationOf(db, c.id, visible);
+    const imported = isReleased(cfg, "chatimport") && !c.collab_id ? importedSources(db, req.user.id).get(c.id) : null;
     res.json({
       ...rest,
       ...(isReleased(cfg, "projects") && !c.collab_id ? { project_id: projectOf(c.id) } : {}),
+      ...(imported ? { imported_from: imported } : {}),
       parent: parent ? { id: parent.id, title: parent.title, mode: parent.mode } : null,
       branches,
       ...(continued ? { continued } : {}),

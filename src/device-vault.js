@@ -213,10 +213,16 @@ export function vaultTitle(messages = [], veilMap = {}) {
 // reopen only on that page, never with a server model.
 // Vault Sync: a chat changed on two devices at once keeps both versions;
 // the one kept beside the other is marked as a conflict copy.
-export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, project = null, carried = null, conflictCopy = false, now = Date.now() }) {
+// Chat Import: a chat brought from ChatGPT or Claude keeps its own title, the
+// service it came from and the id the export gave it (to notice the same chat
+// imported twice); all of it stays inside the sealed chat.
+export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, project = null, carried = null, conflictCopy = false, now = Date.now(), title = null, importedFrom = null, importKey = null }) {
   return {
     id,
-    title: vaultTitle(messages, veil?.map),
+    title: typeof title === "string" && title.trim() ? title.trim().slice(0, 80) : vaultTitle(messages, veil?.map),
+    ...(importedFrom === "chatgpt" || importedFrom === "claude"
+      ? { importedFrom, ...(typeof importKey === "string" && importKey ? { importKey } : {}) }
+      : {}),
     mode: ["chat", "code", "uncensored", "device"].includes(mode) ? mode : "chat",
     private: !!privateMode,
     ...(conflictCopy ? { conflictCopy: true } : {}),

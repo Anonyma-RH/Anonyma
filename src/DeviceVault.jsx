@@ -178,6 +178,18 @@ export function useDeviceVault({ enabled, account, onLock }) {
       setState((s) => ({ ...s, chats: newestFirst([chat, ...s.chats.filter((c) => c.id !== chat.id)]) }));
       changed();
     },
+    // Chat Import: several chats sealed and written in one transaction, and
+    // the list re-sorted once, however many there are.
+    async saveMany(list) {
+      const k = need();
+      const records = [];
+      for (const chat of list) records.push(await sealChat(k, chat));
+      await exclusive(account, () => putRecords(account, records));
+      if (session.key !== k) return;
+      const ids = new Set(list.map((c) => c.id));
+      setState((s) => ({ ...s, chats: newestFirst([...list, ...s.chats.filter((c) => !ids.has(c.id))]) }));
+      changed();
+    },
     async remove(id) {
       need();
       await exclusive(account, () => deleteRecord(account, id));
@@ -362,27 +374,7 @@ export function VaultSection({ vault, currentId, onOpen, onDialog, filter = null
         </>
       ) : (
         <>
-          <div className="conversation-list vault-list">
-            {chats.map((c) => (
-              <div className={c.id === currentId ? "current" : ""} key={c.id}>
-                <button onClick={() => onOpen(c)}>
-                  {sync?.live && c.conflictCopy && <ConflictCopyTag />}
-                  <span data-i18n="off">
-                    {mark?.(c)}
-                    {c.title}
-                  </span>
-                </button>
-                <button
-                  className="conversation-options"
-                  aria-label="Delete this vault chat"
-                  title="Delete this vault chat"
-                  onClick={() => onDialog({ kind: "delete", chat: c })}
-                >
-                  <Icon name="close" size={13} />
-                </button>
-              </div>
-            ))}
-          </div>
+          <VaultChatList chats={chats} currentId={currentId} onOpen={onOpen} onDialog={onDialog} mark={mark} sync={sync} />
           {!own.length ? (
             <p className="vault-hint">No device-only chats yet. Turn on Device only in the composer.</p>
           ) : (
@@ -403,6 +395,57 @@ export function VaultSection({ vault, currentId, onOpen, onDialog, filter = null
         </>
       )}
     </section>
+  );
+}
+
+// The vault's chats in the sidebar. A vault that Chat Import has filled would
+// run for thousands of rows, so once it holds imported chats and passes this
+// many, the rest wait behind a button (the open chat always stays in view).
+// A vault with no imported chats lists everything, as it always has.
+const VAULT_LIST_SHOWN = 40;
+function VaultChatList({ chats, currentId, onOpen, onDialog, mark, sync }) {
+  const [everything, setEverything] = useState(false);
+  const capped = !everything && chats.length > VAULT_LIST_SHOWN && chats.some((c) => c.importedFrom);
+  const shown = capped
+    ? chats.filter((c, i) => i < VAULT_LIST_SHOWN || c.id === currentId)
+    : chats;
+  return (
+    <>
+      <div className="conversation-list vault-list">
+        {shown.map((c) => (
+          <div className={c.id === currentId ? "current" : ""} key={c.id}>
+            <button onClick={() => onOpen(c)}>
+              {sync?.live && c.conflictCopy && <ConflictCopyTag />}
+              <span data-i18n="off">
+                {mark?.(c)}
+                {c.title}
+              </span>
+            </button>
+            {c.importedFrom && (
+              <span
+                className="chat-imported"
+                title={"Imported from " + (c.importedFrom === "claude" ? "Claude" : "ChatGPT")}
+              >
+                <Icon name="import" size={12} />
+              </span>
+            )}
+            <button
+              className="conversation-options"
+              aria-label="Delete this vault chat"
+              title="Delete this vault chat"
+              onClick={() => onDialog({ kind: "delete", chat: c })}
+            >
+              <Icon name="close" size={13} />
+            </button>
+          </div>
+        ))}
+      </div>
+      {capped && (
+        <button type="button" className="vault-more" onClick={() => setEverything(true)}>
+          {`Show all ${chats.length} chats`}
+        </button>
+      )}
+    </>
   );
 }
 

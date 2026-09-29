@@ -932,7 +932,7 @@ for (const [path, summary] of [
 route("get", "/api/conversations", "List latest 300 conversations", {
   response: object({ data: array(object()) }),
   description:
-    "Each entry includes expires (epoch ms, or null for no auto-delete). An expired-but-not-yet-purged conversation is already excluded. Once Projects is released each entry also has project_id (null when the chat is in no project); GET /api/conversations/{id} includes it for a personal chat too.",
+    "Each entry includes expires (epoch ms, or null for no auto-delete). An expired-but-not-yet-purged conversation is already excluded. Once Projects is released each entry also has project_id (null when the chat is in no project); GET /api/conversations/{id} includes it for a personal chat too. Once Chat Import is released, a chat brought from an export also has imported_from (chatgpt or claude).",
 });
 route("post", "/api/conversations", "Create conversation", {
   body: object({ title: string, mode: string }),
@@ -1955,6 +1955,79 @@ route("patch", "/api/bookmarks/{id}", "Change a bookmark's note", {
 route("delete", "/api/bookmarks/{id}", "Remove a bookmark", {
   response: ref("Ok"),
   description: "The message itself is unchanged.",
+});
+// Chat Import (update "chatimport"): the account destination.
+const importSource = { enum: ["chatgpt", "claude"] };
+route("get", "/api/import/status", "Chat Import: what the account can take", {
+  response: object({
+    cap: { ...integer, description: "Saved personal chats the account keeps (300; 600 at the Holder tier)" },
+    have: { ...integer, description: "Saved personal chats it holds now" },
+    room: { ...integer, description: "cap minus have: chats an import can still save" },
+    retention_days: { type: ["integer", "null"], description: "The account's auto-delete default, which applies to imported chats too; null for none" },
+    seed_guard: { ...bool, description: "Whether Seed Guard is live, so chats holding a seed phrase are held back" },
+    limits: object({
+      chats_per_request: integer,
+      messages_per_chat: integer,
+      message_chars: integer,
+      chat_chars: integer,
+      request_chars: integer,
+    }),
+    imported: object({ chatgpt: array(string), claude: array(string) }),
+  }),
+  description:
+    "Which chats were already imported, by the id their export gave them (so the same chat isn't imported twice), and how much room is left. The export itself is read in the browser; nothing about it is uploaded until POST /api/import/chats.",
+});
+route("post", "/api/import/chats", "Chat Import: save chosen chats to the account", {
+  body: object(
+    {
+      source: importSource,
+      chats: {
+        ...array(
+          object(
+            {
+              source_id: { ...string, maxLength: 100, description: "The id the export gave the conversation; used only to notice a repeat" },
+              title: { ...string, maxLength: 200, description: "Shortened to 70 characters" },
+              created: { ...integer, description: "Epoch milliseconds" },
+              updated: { ...integer, description: "Epoch milliseconds" },
+              messages: {
+                ...array(
+                  object(
+                    {
+                      role: { enum: ["user", "assistant"] },
+                      text: { ...string, maxLength: 200000 },
+                      created: { ...integer, description: "Epoch milliseconds; never later than now" },
+                    },
+                    ["role", "text"],
+                  ),
+                ),
+                maxItems: 4000,
+              },
+              allow_seed_phrase: { ...bool, description: "Seed Guard: send true only for a chat the person confirmed twice they want saved despite a seed phrase or private key in it" },
+            },
+            ["messages"],
+          ),
+        ),
+        minItems: 1,
+        maxItems: 20,
+      },
+    },
+    ["source", "chats"],
+  ),
+  response: object({
+    saved: array(object({ index: integer, id: string }, ["index", "id"])),
+    skipped: array(
+      object(
+        {
+          index: integer,
+          reason: { enum: ["already_imported", "seed_phrase_blocked", "too_large", "empty", "invalid", "conversation_limit"] },
+        },
+        ["index", "reason"],
+      ),
+    ),
+    room: { ...integer, description: "Chats the account can still keep" },
+  }),
+  description:
+    "Each saved chat becomes an ordinary saved conversation marked as imported (Chat, no model, no charge) and is listed, searched, exported and erased like any other, with the account's auto-delete default applied. A chat is skipped rather than failing the request: already_imported (its export id was imported before), seed_phrase_blocked (Seed Guard is live and it holds a valid seed phrase or private key, unless allow_seed_phrase), too_large (over 4,000 messages, 200,000 characters in a message or 2,000,000 in the chat), empty, invalid, or conversation_limit (the cap is never pruned by an import). At most 20 chats and 4,000,000 characters per request (413 import_too_large). Nothing about titles, text or ids is logged.",
 });
 // Vault Sync (update "vaultsync", which also needs "vault"): Device Vault's
 // end-to-end-encrypted sync. The browser seals every chat before it's sent.

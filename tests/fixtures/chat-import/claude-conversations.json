@@ -1,0 +1,138 @@
+[
+ {
+  "uuid": "claude-conv-1",
+  "name": "Reviewing a contract clause",
+  "summary": "",
+  "created_at": "2025-02-03T10:00:00.000000Z",
+  "updated_at": "2025-02-03T10:20:00.000000Z",
+  "account": {
+   "uuid": "acct"
+  },
+  "chat_messages": [
+   {
+    "uuid": "m1",
+    "text": "Can you review this indemnity clause?",
+    "content": [
+     {
+      "type": "text",
+      "text": "Can you review this indemnity clause?",
+      "citations": []
+     }
+    ],
+    "sender": "human",
+    "created_at": "2025-02-03T10:00:05.000000Z",
+    "updated_at": "2025-02-03T10:00:05.000000Z",
+    "attachments": [
+     {
+      "file_name": "contract.pdf",
+      "file_size": 1000,
+      "file_type": "pdf",
+      "extracted_content": "SECRET CONTRACT BODY"
+     }
+    ],
+    "files": []
+   },
+   {
+    "uuid": "m2",
+    "text": "It is broad. Consider a cap on liability.",
+    "content": [
+     {
+      "type": "thinking",
+      "thinking": "HIDDEN REASONING",
+      "summaries": []
+     },
+     {
+      "type": "text",
+      "text": "It is broad."
+     },
+     {
+      "type": "tool_use",
+      "name": "artifacts",
+      "input": {
+       "content": "ARTIFACT BODY"
+      }
+     },
+     {
+      "type": "text",
+      "text": "Consider a cap on liability."
+     }
+    ],
+    "sender": "assistant",
+    "created_at": "2025-02-03T10:00:30.000000Z",
+    "updated_at": "2025-02-03T10:00:30.000000Z",
+    "attachments": [],
+    "files": []
+   },
+   {
+    "uuid": "m3",
+    "text": "Thanks. Draft the cap.",
+    "content": [
+     {
+      "type": "text",
+      "text": "Thanks. Draft the cap.",
+      "citations": []
+     }
+    ],
+    "sender": "human",
+    "created_at": "2025-02-03T10:05:00.000000Z",
+    "updated_at": "2025-02-03T10:05:00.000000Z",
+    "attachments": [],
+    "files": [
+     {
+      "file_name": "notes.txt"
+     },
+     {
+      "file_name": "more.txt"
+     }
+    ]
+   },
+   {
+    "uuid": "m4",
+    "text": "Liability is capped at fees paid in the prior twelve months.",
+    "content": [
+     {
+      "type": "text",
+      "text": "Liability is capped at fees paid in the prior twelve months.",
+      "citations": []
+     }
+    ],
+    "sender": "assistant",
+    "created_at": "2025-02-03T10:05:40.000000Z",
+    "updated_at": "2025-02-03T10:05:40.000000Z",
+    "attachments": [],
+    "files": []
+   }
+  ]
+ },
+ {
+  "uuid": "claude-conv-2",
+  "name": "",
+  "created_at": "2024-11-20T08:00:00.000Z",
+  "updated_at": "2024-11-20T08:01:00.000Z",
+  "chat_messages": [
+   {
+    "uuid": "o1",
+    "text": "Give me a haiku about rain.",
+    "sender": "human",
+    "created_at": "2024-11-20T08:00:00.000Z",
+    "attachments": [],
+    "files": []
+   },
+   {
+    "uuid": "o2",
+    "text": "Soft rain on the roof,\nthe street forgets its footsteps,\nsilver in the dark.",
+    "sender": "assistant",
+    "created_at": "2024-11-20T08:00:20.000Z",
+    "attachments": [],
+    "files": []
+   }
+  ]
+ },
+ {
+  "uuid": "claude-conv-3",
+  "name": "No messages",
+  "created_at": "2025-01-01T00:00:00Z",
+  "updated_at": "2025-01-01T00:00:00Z",
+  "chat_messages": []
+ }
+]

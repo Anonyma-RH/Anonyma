@@ -508,6 +508,8 @@ export const MODE_FEATURES = {
   translate: "doctranslate",
   // Meeting Notes' page (src/MeetingNotes.jsx), which needs Voice & Audio too.
   notes: "meetingnotes",
+  // Chat Import's page (src/ChatImport.jsx).
+  import: "chatimport",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

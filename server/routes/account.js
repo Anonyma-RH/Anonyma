@@ -7,6 +7,7 @@ import { exportWatches, forgetWatches } from "../page-watch.js";
 import { exportProjects } from "./projects.js";
 import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
+import { forgetChatImports } from "./chat-import.js";
 import { exportBlindVotes, forgetBlindVotes } from "./blind.js";
 import { exportArenaChoice, forgetArenaChoice } from "../arena.js";
 import { exportAudioOverviews, forgetAudioOverviews } from "./audio-overview.js";
@@ -45,7 +46,8 @@ import {
 // - its membership of other collabs, whose shared messages stay;
 // - share links, sealed ones too (Device-only ones included), then personal
 //   conversations and their messages (Symposium runs, branches and
-//   Double-checks are conversations too);
+//   Double-checks are conversations too), and Chat Import's mark on the
+//   chats that came from an export;
 // - every session and pending sign-in code (and sign-in waiting for a
 //   two-step code, and passkey ceremonies it started);
 // - connected apps' tokens and pending codes;
@@ -84,6 +86,8 @@ export function eraseAccountContent(db, user) {
   db.prepare(
     "DELETE FROM chat_continuations WHERE conversation_id IN (SELECT id FROM conversations WHERE user_id=? AND collab_id IS NULL)",
   ).run(id);
+  // Chat Import: which chats came from an export (also goes with each chat).
+  forgetChatImports(db, id);
   db.prepare(
     "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
   ).run(id);

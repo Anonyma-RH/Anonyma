@@ -1335,7 +1335,7 @@ export const UPDATES = [
     // watch on private models needs "private" (featuresFor). The topic and
     // the newest report are stored (erased and exported with Routines);
     // nothing else is.
-    released: false,
+    released: true,
   },
   {
     id: "es",

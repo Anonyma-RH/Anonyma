@@ -207,8 +207,10 @@ const cleanLine = (v, max) =>
 const round2 = (n) => Math.round(n * 100) / 100;
 
 // The server's check of the transcript the browser sends for the notes
-// step: [{ start, end, text, speaker? }], in order, inside the recording.
-// Empty lines are dropped. Throws an Error with a message to show.
+// step: [{ start, end, text, speaker?, untimed? }], in order, inside the
+// recording. `untimed` marks a line the provider gave no usable timing for
+// (its start is only where its piece starts). Empty lines are dropped.
+// Throws an Error with a message to show.
 export function checkSegments(list, duration) {
   if (!Array.isArray(list) || list.length > MAX_SEGMENTS)
     throw Error("Send the transcript as a list of timed lines.");
@@ -224,15 +226,22 @@ export function checkSegments(list, duration) {
     const text = cleanLine(s.text, MAX_SEGMENT_CHARS);
     if (!text) continue;
     const speaker = s.speaker == null ? null : cleanLine(String(s.speaker), 40) || null;
-    out.push({ start: round2(start), end: round2(end), text, ...(speaker ? { speaker } : {}) });
+    out.push({
+      start: round2(start),
+      end: round2(end),
+      text,
+      ...(speaker ? { speaker } : {}),
+      ...(s.untimed === true ? { untimed: true } : {}),
+    });
   }
   return out.sort((a, b) => a.start - b.start);
 }
 
 // One line as the notes model reads it: "[12:04] text", or with the
-// provider's speaker label, "[12:04] Speaker 2: text".
+// provider's speaker label, "[12:04] Speaker 2: text". A line with no
+// usable timing has no time in front: nothing may cite a moment for it.
 export const transcriptLine = (s, duration) =>
-  `[${stamp(s.start, duration)}] ${s.speaker ? s.speaker + ": " : ""}${s.text}`;
+  `${s.untimed ? "" : `[${stamp(s.start, duration)}] `}${s.speaker ? s.speaker + ": " : ""}${s.text}`;
 // How long a line is once it's in the request (escaped for the document
 // block, then for JSON), so a fitted transcript never costs more than the
 // maximum that was held for it.
@@ -248,11 +257,13 @@ const utf8Length = (text) => {
 // The transcript for the notes model, whole lines only, as long as fits in
 // `maxChars` (sent length) and `maxBytes` (the model's context). `cutAt`
 // is where it stops (the first line left out), or null when it's all there.
+// `timed` is whether any line it carries has a time.
 export function fitTranscript(segments, duration, { maxChars = MAX_NOTES_CHARS, maxBytes = Infinity } = {}) {
   const lines = [];
   let chars = 0,
     bytes = 0,
-    cutAt = null;
+    cutAt = null,
+    timed = false;
   for (const s of segments) {
     const line = transcriptLine(s, duration);
     const extra = lines.length ? 1 : 0;
@@ -265,8 +276,9 @@ export function fitTranscript(segments, duration, { maxChars = MAX_NOTES_CHARS, 
     lines.push(line);
     chars += len;
     bytes += size;
+    if (!s.untimed) timed = true;
   }
-  return { text: lines.join("\n"), lines: lines.length, cutAt };
+  return { text: lines.join("\n"), lines: lines.length, cutAt, timed };
 }
 
 // ---- The notes prompt ----
@@ -276,14 +288,14 @@ export function notesPrompt(language = "auto") {
   const lang = language === "auto" ? "the language the transcript is in" : languageName(language);
   return [
     NOTES_PROMPT_START,
-    "Each line of the transcript starts with the time it was said, as [mm:ss] or [h:mm:ss]. A speaker label such as \"Speaker 2:\" follows only when the transcription provider gave one; it is not a name.",
+    "Each line of the transcript starts with the time it was said, as [mm:ss] or [h:mm:ss]; a line with no time in front has none the provider could tell. A speaker label such as \"Speaker 2:\" follows only when the transcription provider gave one; it is not a name.",
     "Use only what is said in the transcript. Add no facts, names, dates, numbers or opinions from anywhere else. Leave out anything unclear.",
     '- "title": a short name for the meeting, from what it was about (at most 8 words).',
     '- "summary": 3 to 6 plain sentences on what the meeting covered and where it landed.',
     '- "decisions": what was decided or agreed, as said. An empty list if nothing was decided.',
     '- "action_items": tasks someone took on or was asked to do. "owner" is the person\'s name only when the transcript says who will do it; otherwise null. Never guess an owner and never use a speaker label as one. "due" is a deadline as said ("by Friday"), or null; don\'t turn it into a date: you don\'t know when the meeting was.',
     '- "open_questions": questions raised and not answered, and points left undecided.',
-    '- "at": the time of the line it comes from, copied from the transcript (for example "12:04"), or null.',
+    '- "at": the time of the line it comes from, copied from the transcript (for example "12:04"), or null (always null for a line with no time in front of it).',
     `Write the notes in ${lang}. Keep people's names exactly as the transcript writes them.`,
     "Placeholders such as [EMAIL_1] or [PRIVATE_2] stand for details hidden from you: copy them exactly, never guess what they hide.",
     "Reply with JSON only, exactly in this shape:",
@@ -391,8 +403,9 @@ function actionItems(v, { duration, transcript }) {
 // asked for, read tolerantly: a summary given as a list of sentences or an
 // object, items given as plain strings or objects, other common key names.
 // `transcript` is the text the model read, for checking owners; `duration`
-// bounds each "at".
-export function parseNotes(raw, { transcript = "", duration = Infinity } = {}) {
+// bounds each "at"; `timed: false` says no line of it had a time, so no "at"
+// is real and every one is null.
+export function parseNotes(raw, { transcript = "", duration = Infinity, timed = true } = {}) {
   const data = firstJsonObject(typeof raw === "string" ? raw : "");
   if (!data) return { problem: "json" };
   const root = data.notes && typeof data.notes === "object" && !Array.isArray(data.notes) ? data.notes : data;
@@ -411,8 +424,9 @@ export function parseNotes(raw, { transcript = "", duration = Infinity } = {}) {
     max: LIMITS.questions,
   });
   if (!summary && !decisions.length && !actions.list.length && !questions.length) return { problem: "empty" };
+  const untimed = (list) => (timed === false ? list.map((x) => ({ ...x, at: null })) : list);
   return {
-    notes: { title, summary, decisions, actions: actions.list, questions },
+    notes: { title, summary, decisions: untimed(decisions), actions: untimed(actions.list), questions: untimed(questions) },
     dropped: actions.dropped,
   };
 }

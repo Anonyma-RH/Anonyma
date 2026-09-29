@@ -1179,7 +1179,7 @@ function NotesView({ result, file = null, models, testMode, navigate }) {
           ) : (
             <p className="meeting-fine">The recording isn't kept, so it can't be played here. The times still match it.</p>
           )}
-          {segments.some((s) => s.end - s.start > 30) && (
+          {segments.some((s) => s.untimed || s.end - s.start > 30) && (
             <p>Timing comes from the transcription provider. Some sections may span up to five minutes.</p>
           )}
           <ol ref={lines} aria-label="Transcript">

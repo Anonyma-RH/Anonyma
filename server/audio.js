@@ -177,9 +177,15 @@ export async function synthesizeSpeech(
   return { bytes, mime };
 }
 
+// `timestamps` (Meeting Notes only) asks for word- and segment-level timings
+// with the transcript, so a long piece comes back as many timed lines rather
+// than one. A gateway that doesn't know the field and refuses the request
+// (400 or 422) is asked again without it: a refused request isn't billed, so
+// nothing is charged twice, and the piece is then timed by whatever the
+// plain reply carries.
 export async function transcribeAudio(
   cfg,
-  { model, bytes, mime, language },
+  { model, bytes, mime, language, timestamps = false },
   signal,
 ) {
   if (cfg.testMode)
@@ -187,21 +193,26 @@ export async function transcribeAudio(
       text: "Local test transcription. No provider was called.",
       duration: 3,
     };
-  const form = new FormData();
   const ext = mime.split("/")[1].replace("mpeg", "mp3").replace("x-wav", "wav");
-  form.append("file", new Blob([bytes], { type: mime }), `recording.${ext}`);
-  form.append("model", model);
-  form.append("response_format", "verbose_json");
-  if (language) form.append("language", language);
-  const r = await fetch(
-    cfg.gateway.replace(/\/$/, "") + "/v1/audio/transcriptions",
-    {
+  const send = (withTimings) => {
+    const form = new FormData();
+    form.append("file", new Blob([bytes], { type: mime }), `recording.${ext}`);
+    form.append("model", model);
+    form.append("response_format", "verbose_json");
+    if (language) form.append("language", language);
+    if (withTimings) {
+      form.append("timestamp_granularities[]", "word");
+      form.append("timestamp_granularities[]", "segment");
+    }
+    return fetch(cfg.gateway.replace(/\/$/, "") + "/v1/audio/transcriptions", {
       method: "POST",
       headers: { authorization: `Bearer ${cfg.gatewayKey}` },
       body: form,
       signal,
-    },
-  );
+    });
+  };
+  let r = await send(timestamps);
+  if (timestamps && (r.status === 400 || r.status === 422)) r = await send(false);
   if (!r.ok) {
     let detail;
     try {

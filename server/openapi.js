@@ -2468,7 +2468,7 @@ route("post", "/api/meeting-notes/{id}/pieces/{index}", "Transcribe one piece", 
   ),
   response: object({
     index: integer,
-    segments: array(object({ start: number, end: number, text: string, speaker: string })),
+    segments: array(object({ start: number, end: number, text: string, speaker: string, untimed: { ...bool, description: "true when the provider gave no usable timing for this line (its start is only where its piece starts); notes never cite a time for it" } })),
     seconds: number,
     credits: number,
     charged: number,
@@ -2476,11 +2476,11 @@ route("post", "/api/meeting-notes/{id}/pieces/{index}", "Transcribe one piece", 
     of: integer,
   }),
   description:
-    "Sends the piece to the transcription model and settles its hold on its length (or the provider's, if shorter). Segment times are in the whole recording; speaker appears only when the provider returns one. A failed piece is charged nothing and stays open for a retry (409 piece_done once it's transcribed, 409 meeting_busy while another step runs, 404 meeting_not_found once the run ended).",
+    "Sends the piece to the transcription model and settles its hold on its length (or the provider's, if shorter). Segment times are in the whole recording; speaker appears only when the provider returns one. Word and segment timings are requested; a coarse line (over 30 seconds) is split by the reply's word timings where it has them, else marked untimed, as is a piece the provider returned no timings for. A failed piece is charged nothing and stays open for a retry (409 piece_done once it's transcribed, 409 meeting_busy while another step runs, 404 meeting_not_found once the run ended).",
 });
 route("post", "/api/meeting-notes/{id}/finish", "Write and save the notes", {
   body: object({
-    segments: { ...array(object({ start: number, end: number, text: string, speaker: string })), description: "The transcript, Veil-masked in the browser when Veil is on" },
+    segments: { ...array(object({ start: number, end: number, text: string, speaker: string, untimed: bool })), description: "The transcript, Veil-masked in the browser when Veil is on; send each line's untimed flag back as received" },
     veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for the transcript (needs trail)" },
     skip_notes: { ...bool, description: "Save the transcript alone: no model call, and the notes' hold is released" },
     headings: { enum: ["en", "zh"], description: "The saved document's headings" },

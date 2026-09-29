@@ -37,7 +37,7 @@ import {
   notesMessages,
   readNotes,
 } from "../../src/meeting-notes.js";
-import { cleanPiece, meetingTestTranscript, notesPlan, sttCharge } from "../meeting-notes.js";
+import { cleanPiece, meetingTestTranscript, notesContextShort, notesPlan, sttCharge, timedLines } from "../meeting-notes.js";
 
 // Meeting Notes (update "meetingnotes", which needs Voice & Audio too; see
 // featuresFor). The browser reads a recording, cuts it into pieces of at
@@ -136,7 +136,7 @@ export function meetingNotesRoutes(ctx) {
     const pieces = seconds.map((s, i) => ({ index: i, start: starts[i], seconds: s, amount: sttCharge(s, stt, factor) }));
     const plan = notesPlan({ cfg, m, duration, language, factor });
     ctx.models.validateMessages(plan.messages, m);
-    if (plan.maxBytes < 2000)
+    if (notesContextShort(plan, duration))
       fail(400, `${m.name} can't take a meeting transcript. Pick a model with a longer context.`, "notes_context");
     const transcription = pieces.reduce((n, p) => n + p.amount, 0);
     return { duration, stt, spoken, language, m, ephemeral, project, factor, pieces, plan, transcription, total: transcription + plan.amount };
@@ -250,7 +250,7 @@ export function meetingNotesRoutes(ctx) {
           ? meetingTestTranscript({ start: piece.start, seconds })
           : await transcribeAudio(
               cfg,
-              { model: run.stt.id, bytes, mime: "audio/wav", language: run.spoken },
+              { model: run.stt.id, bytes, mime: "audio/wav", language: run.spoken, timestamps: true },
               AbortSignal.any([controller.signal, AbortSignal.timeout(180000)]),
             );
         probe.done(!!r.text?.trim());
@@ -260,16 +260,16 @@ export function meetingNotesRoutes(ctx) {
         // Ours has a status (a provider refusal); anything else, a plain one.
         fail(e?.status || 502, `${e?.status ? e.message : "The transcription provider couldn't be reached."} Nothing was charged for this piece.`, e?.code || "provider_down");
       }
-      // The provider's timings, else the whole piece as one line; never
-      // outside the piece, then placed in the recording.
-      let lines = Array.isArray(r.segments) ? r.segments : [];
-      if (!lines.length && typeof r.text === "string" && r.text.trim())
-        lines = [{ start: 0, end: seconds, text: r.text.replace(/\s+/g, " ").trim() }];
-      const segments = lines.map((s) => ({
+      // The provider's timings (a coarse line cut by its word timings), else
+      // the whole piece as one line marked untimed, and any line the
+      // provider couldn't time finely marked so too; never outside the
+      // piece, then placed in the recording.
+      const segments = timedLines(Array.isArray(r.segments) ? r.segments : [], r.text, seconds).map((s) => ({
         start: round2(piece.start + Math.min(seconds, s.start)),
         end: round2(piece.start + Math.min(seconds, Math.max(s.start, s.end))),
         text: s.text,
         ...(s.speaker ? { speaker: s.speaker } : {}),
+        ...(s.untimed ? { untimed: true } : {}),
       }));
       // Charged for the piece's own length, or the provider's if shorter.
       const billed = Number.isFinite(r.duration) && r.duration >= 0 ? Math.min(seconds, r.duration) : seconds;
@@ -442,7 +442,7 @@ export function meetingNotesRoutes(ctx) {
         if (r) {
           finishReason = r.finish;
           route = r.route;
-          const read = readNotes(r.text, r.finish, { transcript: fitted.text, duration: run.duration });
+          const read = readNotes(r.text, r.finish, { transcript: fitted.text, duration: run.duration, timed: fitted.timed });
           if (read.notes) {
             // Usable: charged on its usage (never above what's held).
             const receipt = settle(db, run.notes.hold, usdUnits(r.dollars * run.factor), m.name, {

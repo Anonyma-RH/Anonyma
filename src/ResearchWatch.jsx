@@ -135,11 +135,11 @@ export function demoResearchState() {
           "What changed for general-purpose models?",
         ],
         steps: [
-          { kind: "plan", status: "done", credits: 1.2 },
-          { kind: "search", status: "done", sources: 2, credits: 22.1 },
-          { kind: "search", status: "done", sources: 3, credits: 21.6 },
+          { kind: "plan", status: "done", credits: 1.2, route: "primary" },
+          { kind: "search", status: "done", sources: 2, credits: 22.1, route: "primary" },
+          { kind: "search", status: "done", sources: 3, credits: 21.6, route: "primary" },
           { kind: "search", status: "failed", sources: 0, credits: 0 },
-          { kind: "write", status: "done", credits: 16.5 },
+          { kind: "write", status: "done", credits: 16.5, route: "backup" },
         ],
         credits_charged: 61.4,
       },
@@ -663,8 +663,9 @@ export function ResearchRunDetails({ run }) {
           return (
             <li key={i} className={"research-step " + s.status}>
               <span className="research-step-status">{STEP_STATUS[s.status] || s.status}</span>
-              <span className="research-step-label" data-i18n={s.kind === "search" ? "off" : undefined}>
-                {label}
+              <span className="research-step-label">
+                <span data-i18n={s.kind === "search" ? "off" : undefined}>{label}</span>
+                {s.route && <small>{s.route === "backup" ? "Backup route" : "Primary route"}</small>}
               </span>
               <span className="research-step-credits">{s.credits > 0 ? `${fmtCredits(s.credits)} credits` : "Not charged"}</span>
             </li>

@@ -12,6 +12,7 @@ import {
 import { isReleased } from "./releases.js";
 import { isPrivateModel } from "./private-mode.js";
 import { tagUsage } from "./usage-insights.js";
+import { trailLive } from "./privacy-trail.js";
 import { findSeedPhrase, SEED_MESSAGE } from "../src/seed-guard.js";
 import { buildDocumentBlock, DATA_NOTICE_BLOCK } from "../src/documents.js";
 import {
@@ -313,6 +314,9 @@ export async function performResearch(ctx, { routine, slot }, closeListeners, en
   const stopped = () => controller.signal.aborted;
   const { call } = researchCaller(ctx, { m, isPrivate, controller });
 
+  // Privacy Trail: each finished step records which route served it.
+  const trail = trailLive(cfg);
+  const withRoute = (route) => (trail ? { route } : {});
   let charged = 0;
   const settleStep = (step, r) => {
     const receipt = settle(db, holdId(step), usdUnits(r.dollars * factor), m.name, {
@@ -335,6 +339,7 @@ export async function performResearch(ctx, { routine, slot }, closeListeners, en
     if (!planResult) return;
     planStep.credits = settleStep("plan", planResult);
     planStep.status = "done";
+    Object.assign(planStep, withRoute(planResult.route));
     planResult = null;
   };
   let outcome;
@@ -380,6 +385,7 @@ export async function performResearch(ctx, { routine, slot }, closeListeners, en
             sources: r.sources,
             credits: settleStep(step, r),
             finish: r.finish || "stop",
+            route: r.route,
           };
         } catch {
           releaseStep(step);
@@ -411,6 +417,7 @@ export async function performResearch(ctx, { routine, slot }, closeListeners, en
         if (!report) fail(502, "The report came back empty.", "empty_output");
         writeStep.credits = settleStep("write", r);
         writeStep.status = "done";
+        Object.assign(writeStep, withRoute(r.route));
         outcome = {
           answer: r.finish === "length" ? `${report}\n\n---\n\n${cutShortNote(topic)}` : report,
           citations: sources,
@@ -486,6 +493,7 @@ export async function performResearch(ctx, { routine, slot }, closeListeners, en
           status: r.status,
           sources: r.sources.length,
           credits: r.credits,
+          ...(r.status === "done" ? withRoute(r.route) : {}),
         })),
         writeStep,
       ],

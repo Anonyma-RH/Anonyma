@@ -166,7 +166,14 @@
   color: var(--work-muted, #68748a);
 }
 .research-step-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   overflow-wrap: anywhere;
+}
+.research-step-label small {
+  font-size: 11px;
+  color: var(--work-muted, #68748a);
 }
 .research-step-credits {
   font-variant-numeric: tabular-nums;

@@ -558,6 +558,8 @@ test("a due watch runs Deep Research's steps, held and settled one by one, and l
   // What each step did and cost, never the content.
   assert.equal(run.research.depth, "quick");
   assert.equal(run.research.previous, false);
+  // Privacy Trail: each finished step says which route served it.
+  assert.deepEqual(run.research.steps.map((x) => x.route), ["primary", "primary", "primary", "primary", "primary"]);
   assert.deepEqual(run.research.questions, PLAN.slice(0, 3));
   assert.deepEqual(run.research.steps.map((x) => [x.kind, x.status]), [
     ["plan", "done"],

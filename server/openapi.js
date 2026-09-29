@@ -1634,7 +1634,7 @@ const routineRun = object({
   code: { type: ["string", "null"], description: "Why a run was refused or failed: insufficient_credits, spending_limit, routine_run_cap, routine_budget, routine_gone, model_unavailable, search_unavailable, private_unavailable, private_model_required, interrupted or a provider error code" },
   message: { type: ["string", "null"] },
   kind: { enum: ["research"], description: "Present only on a research watch's report (see /api/research-watches)" },
-  research: { type: ["object", "null"], description: "A research report's record: depth, whether it compared with the last report (previous), the sub-questions searched, what each step did and cost (status done, failed, stopped or skipped), and the total charged. Never the report itself (that is answer). A report that couldn't be written has finish_reason interrupted and a code and message, with the searches' results as its answer." },
+  research: { type: ["object", "null"], description: "A research report's record: depth, whether it compared with the last report (previous), the sub-questions searched, what each step did and cost (status done, failed, stopped or skipped, and with Privacy Trail released the route that served it), and the total charged. Never the report itself (that is answer). A report that couldn't be written has finish_reason interrupted and a code and message, with the searches' results as its answer." },
 });
 route("get", "/api/routines", "Your routines", {
   response: object({ routines: array(routine), max_routines: integer, keep_runs: integer }),

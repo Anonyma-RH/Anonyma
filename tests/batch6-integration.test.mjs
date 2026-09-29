@@ -147,7 +147,7 @@ test("the header's chat tools compact to icons when crowded, and the sidebar fit
   assert.match(ws, /navigation\.filter\(\(\[id\]\) => !primaryModes\.includes\(id\)\)/);
   const order = [...ws.matchAll(/^\s+\["(\w+)", "[^"]+"(?:, "[^"]+")?\],$/gm)].map((m) => m[1]);
   const nav = order.slice(order.indexOf("home"), order.indexOf("library") + 1);
-  assert.deepEqual(nav, ["home", "chat", "uncensored", "symposium", "device", "code", "image", "video", "audio", "collab", "tools", "sheets", "compare", "canvas", "translate", "study", "slides", "notes", "import", "photos", "filesearch", "routines", "projects", "library"]);
+  assert.deepEqual(nav, ["home", "chat", "uncensored", "symposium", "device", "code", "image", "video", "audio", "collab", "tools", "sheets", "compare", "canvas", "translate", "study", "slides", "repos", "notes", "import", "photos", "filesearch", "routines", "projects", "library"]);
   const palette = source("command-palette.js");
   const at = (id) => palette.indexOf(`["${id}", `);
   assert.ok(at("symposium") < at("device") && at("device") < at("code"));

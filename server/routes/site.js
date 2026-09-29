@@ -41,6 +41,8 @@ export function siteRoutes({ app, db, cfg }) {
     gift: isReleased(cfg, "giftlinks"),
     canvas: isReleased(cfg, "canvas"),
     slides: isReleased(cfg, "slides"),
+    // Repo Reader's page.
+    repos: isReleased(cfg, "reporeader"),
     translate: isReleased(cfg, "doctranslate"),
     // Meeting Notes' page, which transcribes with Voice & Audio's models.
     notes: isReleased(cfg, "meetingnotes") && isReleased(cfg, "audio"),

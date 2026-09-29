@@ -28,12 +28,24 @@ import { stripTracking } from "../src/link-reader.js";
 //   application/pdf are accepted.
 // - Errors are LinkError(status, code, message) with fixed messages that
 //   never contain the URL, a host or an address; nothing here logs.
+//
+// Host allowlist mode (`hosts`, Repo Reader's GitHub archives): every hop,
+// the first URL and each redirect alike, must be https on one of the listed
+// host names exactly, or it's refused (link_host) before anything is
+// resolved or sent. Only in this mode may a caller raise the body limit
+// (`maxBytes`, up to maxArchiveBytes, decompressed too) and the time limit
+// (up to archiveTimeoutMs), and choose the accepted media types; without it
+// the limits above can't be changed. Every other rule (public addresses
+// only, vetted per hop, no cookies, 3 redirects) still applies.
 
 export const LINK_LIMITS = Object.freeze({
   maxUrl: 2048,
   maxRedirects: 3,
   timeoutMs: 10000,
   maxBytes: 5 * 1024 * 1024,
+  // Allowlist mode's ceilings.
+  maxArchiveBytes: 50 * 1024 * 1024,
+  archiveTimeoutMs: 30000,
 });
 export const USER_AGENT =
   "Mozilla/5.0 (compatible; ANONYMA-LinkReader/1.0; +https://askanonyma.com)";
@@ -58,6 +70,7 @@ const MESSAGES = {
   link_type: [415, "Only web pages, plain text and PDFs can be read."],
   link_redirects: [502, "That link redirected more than 3 times."],
   link_status: [502, "The site didn't return the page."],
+  link_host: [400, "That link isn't on a host this reader may fetch from."],
 };
 export function linkError(code) {
   const [status, message] = MESSAGES[code];
@@ -258,9 +271,9 @@ function mediaType(header) {
   const charset = /;\s*charset\s*=\s*"?([^";\s]+)"?/i.exec(value)?.[1]?.toLowerCase() || null;
   return { type, charset };
 }
-function decode(buffer, encoding) {
+function decode(buffer, encoding, maxBytes = LINK_LIMITS.maxBytes) {
   const e = String(encoding || "identity").trim().toLowerCase();
-  const opts = { maxOutputLength: LINK_LIMITS.maxBytes };
+  const opts = { maxOutputLength: maxBytes };
   try {
     if (e === "identity" || e === "") return buffer;
     if (e === "gzip" || e === "x-gzip") return zlib.gunzipSync(buffer, opts);
@@ -284,8 +297,10 @@ function decode(buffer, encoding) {
 // `target.address`, and the name is only the Host header and TLS SNI (the
 // certificate is still checked against the name). `route` (local test mode
 // only) sends the connection to a local test server instead, after every
-// check has run.
-export function requestOptions(url, target, route = null) {
+// check has run; a route that answers { plain: true } speaks plain HTTP to
+// that local server even for an https link, since a test server has no
+// certificate for the real name. `accept` replaces the Accept header.
+export function requestOptions(url, target, route = null, accept = null) {
   const secure = url.protocol === "https:";
   const name = url.hostname.replace(/^\[|\]$/g, "");
   const plainName = name.endsWith(".") ? name.slice(0, -1) : name;
@@ -300,29 +315,30 @@ export function requestOptions(url, target, route = null) {
     headers: {
       Host: url.host,
       "User-Agent": USER_AGENT,
-      Accept: "text/html,text/plain;q=0.9,application/pdf;q=0.8",
+      Accept: accept || "text/html,text/plain;q=0.9,application/pdf;q=0.8",
       "Accept-Language": "en-US,en;q=0.9",
       "Accept-Encoding": "gzip, deflate, br",
       Connection: "close",
     },
     ...(secure && !net.isIP(plainName) ? { servername: plainName } : {}),
+    ...(dest?.plain === true ? { plain: true } : {}),
   };
 }
-function requestOnce(url, target, { signal, route }) {
+function requestOnce(url, target, { signal, route, accept }) {
   return new Promise((resolve, reject) => {
-    const options = { ...requestOptions(url, target, route), signal };
-    const req = (url.protocol === "https:" ? https : http).request(options, resolve);
+    const { plain, ...options } = { ...requestOptions(url, target, route, accept), signal };
+    const req = (url.protocol === "https:" && !plain ? https : http).request(options, resolve);
     req.on("error", reject);
     req.end();
   });
 }
-function readBody(res, signal) {
+function readBody(res, signal, maxBytes = LINK_LIMITS.maxBytes) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
     res.on("data", (chunk) => {
       size += chunk.length;
-      if (size > LINK_LIMITS.maxBytes) {
+      if (size > maxBytes) {
         res.destroy();
         reject(linkError("link_too_large"));
         return;
@@ -342,25 +358,49 @@ function readBody(res, signal) {
 }
 const REDIRECTS = new Set([301, 302, 303, 307, 308]);
 
+// Allowlist mode: an https URL on one of `hosts` exactly, or link_host.
+function allowedHost(url, hosts) {
+  const host = url.hostname.toLowerCase().replace(/\.$/, "");
+  if (url.protocol !== "https:" || !hosts.includes(host)) throw linkError("link_host");
+  return url;
+}
+
 // Fetches `input`, following up to 3 redirects, and returns
 // { url (the final URL, tracking parameters removed), type, charset, body,
 //   redirects }. `lookup`, `route` and a shorter `timeoutMs` are for tests.
+// `hosts` turns on allowlist mode (above), which alone may also set
+// `maxBytes`, a longer `timeoutMs`, the accepted `types` and `accept`.
 export async function fetchLink(
   input,
-  { lookup = systemLookup, route = null, timeoutMs = LINK_LIMITS.timeoutMs } = {},
+  {
+    lookup = systemLookup,
+    route = null,
+    timeoutMs = LINK_LIMITS.timeoutMs,
+    hosts = null,
+    maxBytes = LINK_LIMITS.maxBytes,
+    types = ACCEPTED_TYPES,
+    accept = null,
+  } = {},
 ) {
+  const listed = Array.isArray(hosts) && hosts.length ? hosts.map((h) => String(h).toLowerCase()) : null;
+  const limit = listed
+    ? Math.max(1, Math.min(Number(maxBytes) || LINK_LIMITS.maxBytes, LINK_LIMITS.maxArchiveBytes))
+    : LINK_LIMITS.maxBytes;
+  const accepted = listed && Array.isArray(types) && types.length ? types : ACCEPTED_TYPES;
+  const ceiling = listed ? LINK_LIMITS.archiveTimeoutMs : LINK_LIMITS.timeoutMs;
   const controller = new AbortController();
   const deadline = new Promise((_, reject) => {
     const timer = setTimeout(() => {
       controller.abort();
       reject(linkError("link_timeout"));
-    }, Math.min(timeoutMs, LINK_LIMITS.timeoutMs));
+    }, Math.min(timeoutMs, ceiling));
     timer.unref?.();
     controller.signal.addEventListener("abort", () => clearTimeout(timer));
   });
   deadline.catch(() => {});
   const run = async () => {
     let url = checkUrl(input);
+    if (listed) allowedHost(url, listed);
     for (let hop = 0; ; hop++) {
       const targets = await Promise.race([vetHost(url.hostname, lookup), deadline]);
       let res,
@@ -368,7 +408,10 @@ export async function fetchLink(
       // Each vetted address in turn (IPv4 first), only on connection errors.
       for (const target of targets.slice(0, 3)) {
         try {
-          res = await Promise.race([requestOnce(url, target, { signal: controller.signal, route }), deadline]);
+          res = await Promise.race([
+            requestOnce(url, target, { signal: controller.signal, route, accept: listed ? accept : null }),
+            deadline,
+          ]);
           break;
         } catch (e) {
           if (e instanceof LinkError) throw e;
@@ -384,27 +427,29 @@ export async function fetchLink(
         if (!location) throw linkError("link_status");
         if (hop >= LINK_LIMITS.maxRedirects) throw linkError("link_redirects");
         url = checkUrl(String(location), url);
+        if (listed) allowedHost(url, listed);
         continue;
       }
       if (res.statusCode < 200 || res.statusCode > 299) {
         res.destroy();
         throw Object.assign(linkError("link_status"), {
           message: `The site answered ${res.statusCode} instead of the page.`,
+          upstream: res.statusCode,
         });
       }
       const { type, charset } = mediaType(res.headers["content-type"]);
-      if (!ACCEPTED_TYPES.includes(type)) {
+      if (!accepted.includes(type)) {
         res.destroy();
         throw linkError("link_type");
       }
       const declared = Number(res.headers["content-length"]);
-      if (Number.isFinite(declared) && declared > LINK_LIMITS.maxBytes) {
+      if (Number.isFinite(declared) && declared > limit) {
         res.destroy();
         throw linkError("link_too_large");
       }
-      const raw = await Promise.race([readBody(res, controller.signal), deadline]);
-      const body = decode(raw, res.headers["content-encoding"]);
-      if (body.length > LINK_LIMITS.maxBytes) throw linkError("link_too_large");
+      const raw = await Promise.race([readBody(res, controller.signal, limit), deadline]);
+      const body = decode(raw, res.headers["content-encoding"], limit);
+      if (body.length > limit) throw linkError("link_too_large");
       return { url, type, charset, body, redirects: hop };
     }
   };

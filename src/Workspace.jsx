@@ -56,6 +56,8 @@ const Compare = lazy(() => import("./Compare.jsx"));
 const Canvas = lazy(() => import("./Canvas.jsx"));
 // Slides: its editor, presenter, exports and deck storage load only on its page.
 const Slides = lazy(() => import("./Slides.jsx"));
+// Repo Reader: its page, file tree and viewer load only on its page.
+const RepoReader = lazy(() => import("./RepoReader.jsx"));
 // Translate Documents: its readers, part planner and exports load only on its page.
 const Translate = lazy(() => import("./Translate.jsx"));
 // Audio Overview's dialog and player, loaded only when opened.
@@ -335,6 +337,7 @@ export function AppSidebar({
     ["translate", "Translate docs", "Translate documents while keeping headings, lists and tables. Review the translation beside the original."],
     ["study", "Study", "Turn a document or conversation into flashcards and quizzes to practise what you have learned."],
     ["slides", "Slides", "Turn a prompt, document or chat into a slide deck. Edit, present or export it."],
+    ["repos", "Repo Reader", "Paste a public GitHub repo and ask about it. Answers cite the exact files and lines."],
     ["notes", "Meeting notes", "Turn a recording into a timestamped transcript, key decisions and action items."],
     ["import", "Import chats", "Bring your ChatGPT or Claude history here. Choose which chats to keep and where they go."],
     ["photos", "Photo tools", "Edit a photo with words, remove its background or upscale it. See the price first."],
@@ -352,6 +355,7 @@ export function AppSidebar({
     .filter(([id]) => id !== "study" || isReleased(config, "study"))
     .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
     .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
+    .filter(([id]) => id !== "repos" || isReleased(config, "reporeader"))
     .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
     .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
     .filter(([id]) => id !== "photos" || modeReleased(config, "photos"))
@@ -644,6 +648,8 @@ export default function Workspace() {
     (mode === "canvas" && (!config || isReleased(config, "canvas"))) ||
     // And Slides'.
     (mode === "slides" && (!config || isReleased(config, "slides"))) ||
+    // And Repo Reader's.
+    (mode === "repos" && (!config || isReleased(config, "reporeader"))) ||
     // Translate Documents' page, likewise.
     (mode === "translate" && (!config || isReleased(config, "doctranslate"))) ||
     // Meeting Notes' page, the same way (it needs Voice & Audio too).
@@ -3892,6 +3898,7 @@ export default function Workspace() {
                 compare: "Compare docs",
                 canvas: "Canvas",
                 slides: "Slides",
+                repos: "Repo Reader",
                 translate: "Translate docs",
                 notes: "Meeting notes",
                 import: "Import chats",
@@ -4147,6 +4154,12 @@ export default function Workspace() {
             isReleased(config, "slides") && (
               <Suspense fallback={<p className="slides-loading">Opening Slides…</p>}>
                 <Slides key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
+          ) : mode === "repos" ? (
+            isReleased(config, "reporeader") && (
+              <Suspense fallback={<p className="repo-loading">Opening Repo Reader…</p>}>
+                <RepoReader key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
               </Suspense>
             )
           ) : mode === "compare" ? (

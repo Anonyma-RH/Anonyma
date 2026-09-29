@@ -894,6 +894,7 @@ const featureIcons = {
   automodel: "auto",
   canvas: "canvas",
   slides: "present",
+  reporeader: "repo",
   doctranslate: "languages",
   meetingnotes: "meeting",
   quotecards: "quotemark",

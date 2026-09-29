@@ -106,6 +106,8 @@ import {
   ListOrdered,
   Presentation,
   Import as ImportChats,
+  FolderGit2,
+  ChevronRight,
   FileAudio,
   LifeBuoy,
   BellRing,
@@ -228,6 +230,8 @@ const icons = {
   // Chat Import: a history brought in from another service.
   import: ImportChats,
   filesearch: FileSearch,
+  repo: FolderGit2,
+  right: ChevronRight,
 };
 export function Icon({ name, size = 18, ...rest }) {
   if(name === "arrow") return <svg width={size} height={size} viewBox="0 0 15 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" className="reference-arrow" {...rest}><path className="arrow-shaft" d="M0 5.707H9"/><path className="arrow-head" d="M4 .707L9 5.707L4 10.707"/></svg>;
@@ -276,6 +280,8 @@ const pixels = {
   photos: [".......", "#######", "#...#.#", "#.....#", "#..#..#", "#.###.#", "#######"],
   // A magnifier over a line of text: a question asked across saved files.
   filesearch: [".####..", "#....#.", "#.##.#.", "#....#.", ".####..", "....##.", ".....##"],
+  // A folder with a branch on it: a repo read file by file.
+  repos: ["###....", "#######", "#.#...#", "#.#.#.#", "#.##..#", "#.#...#", "#######"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

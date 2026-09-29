@@ -1,0 +1,766 @@
+/* Repo Reader: flat cobalt on white, like Slides and Study. */
+.repo-page {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 34px 30px 100px;
+  color: var(--work-ink, #142343);
+  box-sizing: border-box;
+}
+.repo-loading {
+  padding: 40px 30px;
+  color: var(--work-muted, #68748a);
+}
+.repo-page .notice {
+  margin: 12px 0;
+}
+.repo-page button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.repo-head h1 {
+  font-size: clamp(28px, 4vw, 44px);
+  letter-spacing: -0.045em;
+  margin: 10px 0 8px;
+}
+.repo-head p:not(.eyebrow) {
+  margin: 0;
+  max-width: 680px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+}
+.repo-fine {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--work-muted, #68748a);
+}
+
+.repo-head.compact h1 {
+  font-size: 30px;
+  margin: 6px 0 0;
+}
+
+/* The link */
+.repo-link {
+  display: grid;
+  gap: 8px;
+  margin: 22px 0 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-top: 3px solid var(--brand-blue, #0135df);
+  background: #fff;
+}
+.repo-link label {
+  font-size: 12px;
+  font-weight: 650;
+}
+.repo-link.compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 18px;
+  margin: 14px 0;
+  padding: 12px 16px;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+}
+.repo-link.compact label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.repo-link.compact .repo-link-row input {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.repo-link.compact .repo-fine {
+  grid-column: 2;
+  grid-row: 1;
+  max-width: 300px;
+}
+.repo-link.compact .repo-link-problem {
+  grid-column: 1 / -1;
+}
+.repo-link-row {
+  display: flex;
+  gap: 10px;
+}
+.repo-link-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  font: inherit;
+  font-size: 14px;
+  background: #fff;
+  color: inherit;
+}
+.repo-link-row input:focus,
+.repo-ask-form textarea:focus,
+.repo-field select:focus,
+.repo-filter input:focus {
+  outline: 2px solid var(--brand-blue, #0135df);
+  outline-offset: -1px;
+}
+.repo-link-row .button {
+  flex: none;
+}
+.repo-link-problem {
+  font-size: 12px;
+  color: #b42318;
+}
+.repo-progress {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-left: 3px solid var(--brand-blue, #0135df);
+  background: var(--work-surface, #f7f9fc);
+}
+.repo-progress > span:not(.repo-spinner) {
+  display: grid;
+  gap: 3px;
+}
+.repo-progress b {
+  font-size: 14px;
+}
+.repo-progress small {
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+}
+.repo-spinner {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border: 2px solid #c9d4f5;
+  border-top-color: var(--brand-blue, #0135df);
+  border-radius: 50%;
+  animation: repo-spin 0.8s linear infinite;
+  vertical-align: -2px;
+}
+@keyframes repo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.repo-open {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+}
+.repo-open > span {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--work-muted, #68748a);
+}
+.repo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  color: var(--work-ink, #142343);
+  cursor: pointer;
+}
+.repo-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.repo-chip small {
+  color: var(--work-muted, #68748a);
+}
+.repo-chip:hover,
+.repo-chip.on {
+  border-color: var(--brand-blue, #0135df);
+  color: var(--brand-blue, #0135df);
+}
+.repo-chip.on {
+  background: #f3f6ff;
+}
+
+/* Before a repo is open */
+.repo-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: repo-step;
+}
+.repo-steps li {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 18px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+  counter-increment: repo-step;
+}
+.repo-steps li::before {
+  content: counter(repo-step);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  background: var(--brand-blue, #0135df);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.repo-steps b {
+  font-size: 15px;
+}
+.repo-steps span {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--work-muted, #68748a);
+}
+
+/* A repo: files beside the questions */
+.repo-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.repo-files {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  position: sticky;
+  top: 12px;
+}
+.repo-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-top: 3px solid var(--brand-blue, #0135df);
+  background: #fff;
+}
+.repo-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.repo-card-title svg {
+  flex: none;
+  color: var(--brand-blue, #0135df);
+}
+.repo-card-title a {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--work-ink, #142343);
+  text-decoration: none;
+}
+.repo-card-title a:hover {
+  color: var(--brand-blue, #0135df);
+  text-decoration: underline;
+}
+.repo-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.repo-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: var(--work-surface, #f7f9fc);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #3e5070;
+}
+.repo-tag.warn {
+  border-color: #f0c36b;
+  background: #fff8e8;
+  color: #7a4d00;
+}
+.repo-textbutton {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--brand-blue, #0135df);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.repo-skipped summary {
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.repo-skipped ul {
+  margin: 6px 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--work-muted, #68748a);
+}
+.repo-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid #d2d9e5;
+  background: #fff;
+  color: var(--work-muted, #68748a);
+}
+.repo-filter input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 0;
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  background: transparent;
+  color: var(--work-ink, #142343);
+}
+.repo-filter input:focus {
+  outline: none;
+}
+.repo-tree {
+  max-height: min(62vh, 640px);
+  overflow: auto;
+  padding: 6px 0;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+}
+.repo-tree-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.repo-tree-dir,
+.repo-tree-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 10px 4px 8px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+  color: var(--work-ink, #142343);
+  cursor: pointer;
+}
+.repo-tree-dir {
+  font-weight: 650;
+}
+.repo-tree-dir svg {
+  flex: none;
+  color: var(--work-muted, #68748a);
+}
+.repo-tree-dir:hover,
+.repo-tree-file:hover {
+  background: #f3f6ff;
+  color: var(--brand-blue, #0135df);
+}
+.repo-tree-file span,
+.repo-tree-dir span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.repo-tree-file small {
+  flex: none;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--work-muted, #68748a);
+}
+.repo-empty {
+  padding: 10px 12px;
+}
+
+/* Asking */
+.repo-ask {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.repo-ask-form,
+.repo-sees {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+}
+.repo-ask-form {
+  border-top: 3px solid var(--brand-blue, #0135df);
+}
+.repo-ask-form h2 {
+  margin: 0;
+  font-family: inherit;
+  font-size: 18px;
+  letter-spacing: -0.015em;
+}
+.repo-ask-form textarea {
+  width: 100%;
+  min-height: 84px;
+  padding: 12px;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  resize: vertical;
+  box-sizing: border-box;
+  background: #fff;
+  color: inherit;
+}
+.repo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 14px;
+}
+.repo-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 650;
+}
+.repo-model {
+  flex: 1 1 220px;
+}
+.repo-field select {
+  padding: 8px 10px;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  color: inherit;
+  min-width: 0;
+}
+.repo-send {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.repo-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 12px;
+  border: 1px solid #d2d9e5;
+  border-radius: 2px;
+  background: #fff;
+  color: var(--work-ink, #142343);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.repo-secondary:hover:not(:disabled) {
+  border-color: var(--brand-blue, #0135df);
+  color: var(--brand-blue, #0135df);
+}
+.repo-send .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.repo-sees {
+  border-left: 3px solid var(--brand-blue, #0135df);
+  background: var(--work-surface, #f7f9fc);
+}
+.repo-sees h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  font-family: inherit;
+  font-size: 16px;
+}
+.repo-sees.closed {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.repo-sees-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.repo-sees-toggle svg {
+  color: var(--brand-blue, #0135df);
+}
+.repo-sees h3 span {
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--work-muted, #68748a);
+}
+.repo-excerpts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.repo-excerpts details {
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+}
+.repo-excerpts summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.repo-excerpts summary small {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--work-muted, #68748a);
+}
+.repo-excerpts pre,
+.repo-everything pre {
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+  padding: 10px 12px;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.repo-everything summary {
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.repo-everything pre {
+  margin-top: 8px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+}
+.repo-cite {
+  display: inline;
+  padding: 1px 5px;
+  border: 1px solid #c9d4f5;
+  border-radius: 2px;
+  background: #f3f6ff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86em;
+  color: var(--brand-blue, #0135df);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.repo-cite:hover {
+  border-color: var(--brand-blue, #0135df);
+  background: var(--brand-blue, #0135df);
+  color: #fff;
+}
+
+/* Answers */
+.repo-answer {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+}
+.repo-answer.failed {
+  border-left: 3px solid #b42318;
+}
+.repo-answer header {
+  display: grid;
+  gap: 3px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--work-line, #e3e8f0);
+}
+.repo-answer header b {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.repo-answer header small {
+  font-size: 12px;
+  color: var(--work-muted, #68748a);
+}
+.repo-answer-text {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.repo-answer-text > :first-child {
+  margin-top: 0;
+}
+.repo-answer-text > :last-child {
+  margin-bottom: 0;
+}
+.repo-answer-text pre {
+  overflow: auto;
+  padding: 10px 12px;
+  background: var(--work-surface, #f7f9fc);
+  border: 1px solid var(--work-line, #e3e8f0);
+}
+.repo-answer footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--work-line, #e3e8f0);
+}
+.repo-cites {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.repo-cites > span {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--work-muted, #68748a);
+}
+
+.repo-meta > span + span::before,
+.repo-meta > span + a::before {
+  content: "·";
+  margin: 0 6px;
+  color: var(--work-muted, #68748a);
+}
+.repo-meta > a {
+  display: inline;
+}
+
+/* The file viewer */
+.repo-viewer {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.repo-code {
+  max-height: min(70vh, 720px);
+  overflow: auto;
+  border: 1px solid var(--work-line, #e3e8f0);
+  background: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.repo-code > div {
+  display: flex;
+  min-width: max-content;
+}
+.repo-code > div.hit {
+  background: #eaf0ff;
+  box-shadow: inset 3px 0 0 var(--brand-blue, #0135df);
+}
+.repo-ln {
+  position: sticky;
+  left: 0;
+  flex: none;
+  width: 48px;
+  padding: 0 10px 0 0;
+  text-align: right;
+  background: var(--work-surface, #f7f9fc);
+  border-right: 1px solid var(--work-line, #e3e8f0);
+  color: #8a94a8;
+  user-select: none;
+}
+.hit .repo-ln {
+  background: #dbe5ff;
+  color: var(--brand-blue, #0135df);
+  font-weight: 700;
+}
+.repo-lc {
+  padding: 0 12px;
+  white-space: pre;
+}
+
+@media (max-width: 900px) {
+  .repo-grid {
+    grid-template-columns: 1fr;
+  }
+  .repo-files {
+    position: static;
+  }
+  .repo-tree {
+    max-height: 320px;
+  }
+  .repo-steps {
+    grid-template-columns: 1fr;
+  }
+  .repo-link.compact {
+    grid-template-columns: 1fr;
+  }
+  .repo-link.compact .repo-fine {
+    grid-column: 1;
+    grid-row: auto;
+    max-width: none;
+  }
+}
+@media (max-width: 600px) {
+  .repo-page {
+    padding: 22px 14px 80px;
+  }
+  .repo-link,
+  .repo-ask-form,
+  .repo-sees,
+  .repo-answer {
+    padding: 16px;
+  }
+  .repo-link-row {
+    flex-direction: column;
+  }
+  .repo-ln {
+    width: 38px;
+    padding-right: 6px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .repo-spinner {
+    animation: none;
+  }
+}

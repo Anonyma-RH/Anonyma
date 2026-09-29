@@ -22,6 +22,7 @@ import { limitsLive, spendingRoom } from "../spending-limits.js";
 import { apiBoostInfo } from "../api-boost.js";
 import { prepareStudyRequest, studyBudget } from "../study.js";
 import { prepareSlidesRequest, slidesBudget } from "../slides.js";
+import { prepareRepoRequest, repoBudget } from "../repo-reader.js";
 import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
 import { planAutoRequest, refuseAutoTask, requestSettings } from "../auto-model.js";
 import { prepareCanvasRequest, canvasBudget } from "../canvas.js";
@@ -170,6 +171,10 @@ export function catalogRoutes(ctx) {
     // Canvas: a suggestion's estimate prices the messages and reply budget
     // the suggestion itself will carry (server/canvas.js).
     const canvasTask = prepareCanvasRequest(req.body, { quote: true });
+    // Repo Reader: a question's estimate prices the messages and answer
+    // budget the /api/chat request carries, which holds exactly this
+    // (server/repo-reader.js).
+    const repoTask = prepareRepoRequest(req.body, { quote: true });
     const m = getModel(req.body.model);
     ctx.earlyModels.check(viewerOf(req), "models", m.id);
     if (study && m.type !== "chat") fail(400, "Choose a chat model to make a deck.", "unsupported_model");
@@ -185,6 +190,10 @@ export function catalogRoutes(ctx) {
     if (canvasTask) {
       if (m.type !== "chat" || imageCallable(m)) fail(400, "Canvas needs a text model.", "unsupported_model");
       req.body.max_tokens = canvasBudget(canvasTask, m, req.body.messages);
+    }
+    if (repoTask) {
+      if (m.type !== "chat" || imageCallable(m)) fail(400, "Repo Reader needs a text model.", "unsupported_model");
+      req.body.max_tokens = repoBudget(m, req.body.messages);
     }
     const teamPaid = req.body.treasury === true;
     if (teamPaid && m.type !== "chat") fail(400, "Team pays supports chat requests only.");

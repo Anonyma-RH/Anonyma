@@ -13,6 +13,7 @@ import {
   WIPE_ARENA_STAYS,
   WIPE_STUDY,
   WIPE_SLIDES,
+  WIPE_REPOS,
   WIPE_WATCHES,
   WIPE_GIFTS,
   WIPE_VAULT_SYNC,
@@ -47,6 +48,8 @@ export function PanicWipe({ user }) {
   const studyLive = !!config && isReleased(config, "study");
   // And Slides' decks.
   const slidesLive = !!config && isReleased(config, "slides");
+  // And Repo Reader's open repos.
+  const reposLive = !!config && isReleased(config, "reporeader");
   // And Page Watch's watches.
   const watchesLive = isReleased(config, "pagewatch");
   // And Gift Links' gifts (unclaimed ones come back first).
@@ -134,6 +137,7 @@ export function PanicWipe({ user }) {
                   {arenaLive && <li>{WIPE_ARENA}</li>}
                   {studyLive && <li>{WIPE_STUDY}</li>}
                   {slidesLive && <li>{WIPE_SLIDES}</li>}
+                  {reposLive && <li>{WIPE_REPOS}</li>}
                   {watchesLive && <li>{WIPE_WATCHES}</li>}
                   {giftsLive && <li>{WIPE_GIFTS}</li>}
                   {vaultSyncLive && <li>{WIPE_VAULT_SYNC}</li>}

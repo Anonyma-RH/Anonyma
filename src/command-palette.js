@@ -374,6 +374,7 @@ export const MODE_LABELS = {
   compare: "Compare docs",
   canvas: "Canvas",
   slides: "Slides",
+  repos: "Repo Reader",
   translate: "Translate docs",
   notes: "Meeting notes",
   import: "Import chats",
@@ -408,6 +409,8 @@ const PLACES = [
   ["canvas", "Canvas", ["write", "writing", "document", "editor", "draft", "rewrite", "tracked changes", "docx"]],
   // Slides: only once released, like Study.
   ["slides", "Slides", ["slide deck", "presentation", "deck", "powerpoint", "keynote", "present", "pitch"]],
+  // Repo Reader: only once released, like Slides.
+  ["repos", "Repo Reader", ["github", "repo", "repository", "codebase", "source code", "read code", "ask about code"]],
   // Meeting Notes: only once released, with Voice & Audio.
   ["notes", "Meeting notes", ["meeting", "recording", "transcribe", "transcript", "minutes", "action items", "call notes", "decisions"]],
   // Chat Import: only once released, like the others.

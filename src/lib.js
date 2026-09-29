@@ -521,6 +521,8 @@ export const MODE_FEATURES = {
   // File Search's page (src/FileSearch.jsx), which searches saved files'
   // text, so it needs Files & Reusable Uploads and Documents too.
   filesearch: "filesearch",
+  // Repo Reader's page (src/RepoReader.jsx).
+  repos: "reporeader",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

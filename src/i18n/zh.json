@@ -6250,7 +6250,91 @@
     "The search couldn't run.": "搜索未能运行。",
     "Also read": "也读过",
     "Passages found": "找到的段落",
-    "Ask again in File Search": "再次在文件搜索中提问"
+    "Ask again in File Search": "再次在文件搜索中提问",
+    "CODE": "代码",
+    "Repo Reader": "仓库阅读器",
+    "Paste a public GitHub repo and ask about it. Answers point to the exact files and lines, and you see which excerpts go to the AI before anything is sent.": "粘贴一个公开的 GitHub 仓库，然后就它提问。回答会指向确切的文件和行号；发送任何内容之前，你都能看到哪些片段会交给 AI。",
+    "Read another repo": "读取另一个仓库",
+    "GitHub repo link": "GitHub 仓库链接",
+    "Read repo": "读取仓库",
+    "Public repos only. Free. GitHub sees ANONYMA's server, not you.": "仅限公开仓库。免费。GitHub 看到的是 ANONYMA 的服务器，而不是你。",
+    "Sign in to read a repo.": "登录后即可读取仓库。",
+    "Downloading and unpacking the repo…": "正在下载并解包仓库……",
+    "Up to 50 MB. Vendored folders, binaries and files over 256 KB are skipped.": "最大 50 MB。第三方依赖目录、二进制文件和超过 256 KB 的文件会被跳过。",
+    "Open now": "当前打开",
+    "Open repos": "已打开的仓库",
+    "Read a repo": "读取仓库",
+    "Paste its GitHub link. The server fetches the public code; your browser never contacts GitHub.": "粘贴它的 GitHub 链接。由服务器获取公开代码；你的浏览器不会连接 GitHub。",
+    "See what the AI sees": "查看 AI 看到的内容",
+    "Your question picks the most relevant excerpts. You see every one before anything is sent.": "你的问题会选出最相关的片段。发送之前，你可以逐一查看。",
+    "Follow the citations": "跟随引用",
+    "Answers cite path:line. Click one to open the file at that line.": "回答会以 path:line 的形式引用。点击任意一处，即可在该行打开文件。",
+    "Forgotten. Nothing of that repo is kept.": "已忘记。该仓库的任何内容都不会保留。",
+    "That repo couldn't be opened.": "无法打开该仓库。",
+    "Couldn't read that repo.": "无法读取该仓库。",
+    "Forget now": "立即忘记",
+    "Filter files": "筛选文件",
+    "No files match.": "没有匹配的文件。",
+    "That file couldn't be opened.": "无法打开该文件。",
+    "Open on GitHub": "在 GitHub 上打开",
+    "Ask about this repo": "就这个仓库提问",
+    "Where are requests rate limited? How is the config loaded?": "请求在哪里被限流？配置是如何加载的？",
+    "Finding files…": "正在查找文件……",
+    "Find again": "重新查找",
+    "Find files": "查找文件",
+    "Free. Nothing is sent to a model until you ask.": "免费。在你提问之前，不会向任何模型发送内容。",
+    "None of your words matched the code, so the README and manifest go instead.": "你的用词没有匹配到代码，因此改为发送 README 和清单文件。",
+    "Reads like instructions": "疑似指令",
+    "Injection Shield: this excerpt has text that reads like instructions to an AI. It's sent as data, and the model is told not to follow it.": "注入防护：此片段中有像是写给 AI 的指令。它会作为数据发送，模型也会被告知不要遵循。",
+    "Show everything that's sent": "显示发送的全部内容",
+    "The most this answer can cost, and exactly what's held while it's written: these excerpts and a full answer budget at the model's published rates. You're charged only for what's used, and nothing if the reply is empty.": "这次回答最多可能花费的积分，也正是生成期间冻结的数额：按模型公布的价格计算这些片段和完整的回答预算。你只需为实际用量付费；回复为空则不收费。",
+    "Private Mode: zero-data-retention models only, Veil on, and nothing is saved.": "隐私模式：仅使用零数据保留模型，开启 Veil，不保存任何内容。",
+    "Asked off the record: billed like a message, and neither the question nor the answer is saved. The answer stays on this page until you leave it.": "不留记录地提问：按普通消息计费，问题和回答都不会保存。回答会留在此页面上，直到你离开。",
+    "No answer.": "没有回答。",
+    "Waiting for the first words…": "正在等待回答的开头……",
+    "Stopped. Only what the model had already written is charged, if anything.": "已停止。如有费用，只按模型已写出的内容计费。",
+    "Couldn't find files for that question.": "无法为这个问题找到文件。",
+    "The AI can be wrong about code it only sees in part. Check the cited lines before you rely on an answer.": "AI 只看到部分代码，可能会出错。依赖回答之前，请先核对被引用的行。",
+    "Open this file at that line": "在该行打开这个文件",
+    "The answer was cut short at its length limit.": "回答在达到长度上限时被截断了。",
+    "No path:line citations in this answer.": "此回答中没有 path:line 引用。",
+    "Paste a public GitHub repo and ask about it. Answers cite the exact files and lines.": "粘贴一个公开的 GitHub 仓库并就它提问。回答会引用确切的文件和行号。",
+    "Opening Repo Reader…": "正在打开仓库阅读器……",
+    "Paste a public GitHub repo and ask about it. Answers point to the exact files.": "粘贴一个公开的 GitHub 仓库并就它提问。回答会指向确切的文件。",
+    "Public repos only: our server downloads the code, so GitHub sees ANONYMA, not you": "仅限公开仓库：由我们的服务器下载代码，因此 GitHub 看到的是 ANONYMA，而不是你",
+    "Browse the files, see exactly which excerpts go to the AI, and jump to each cited line": "浏览文件，确切看到哪些片段会交给 AI，并跳转到每一处被引用的行",
+    "Reading a repo is free and answers bill like a message; the files are forgotten after 30 minutes": "读取仓库免费，回答按普通消息计费；文件会在 30 分钟后被忘记",
+    "Repo Reader: a repo you read is kept only in the server's memory, for your account, for 30 minutes (or until you forget it, or sooner when the server needs the memory), then dropped; it's never written to disk or logged. Questions are asked off the record, so neither they nor the answers are saved. Your data export lists the repos open at the time; Panic Wipe and closing the account forget them at once.": "仓库阅读器：你读取的仓库只保存在服务器内存中，仅供你的账户使用，保留 30 分钟（或直到你让它忘记，服务器内存紧张时也可能更早），随后丢弃；它从不写入磁盘，也不记录日志。提问不留记录，因此问题和回答都不会保存。你的数据导出会列出当时打开的仓库；紧急清除和注销账户会立即忘记它们。",
+    "Repos open in Repo Reader": "仓库阅读器中打开的仓库",
+    "Paste a public GitHub repo link, like github.com/owner/repo.": "请粘贴一个公开的 GitHub 仓库链接，例如 github.com/owner/repo。",
+    "Paste the repo's main link, or a /tree/<branch> link for one branch or tag.": "请粘贴仓库的主链接，或指向某个分支或标签的 /tree/<branch> 链接。",
+    "That branch or tag name can't be read.": "无法读取该分支或标签名称。",
+    "Couldn't find that repo, branch or tag on GitHub. Private repos can't be read.": "在 GitHub 上找不到该仓库、分支或标签。私有仓库无法读取。",
+    "GitHub didn't send the repo. Try again in a moment.": "GitHub 没有返回该仓库。请稍后再试。",
+    "Couldn't reach GitHub. Try again in a moment.": "无法连接 GitHub。请稍后再试。",
+    "GitHub took too long to send the repo. Try again, or try a smaller repo.": "GitHub 返回仓库的时间过长。请重试，或换一个较小的仓库。",
+    "GitHub sent the download somewhere unexpected, so it wasn't read.": "GitHub 将下载重定向到了意外的位置，因此没有读取。",
+    "GitHub didn't send the repo's files.": "GitHub 没有返回该仓库的文件。",
+    "That repo's download is larger than 50 MB, so it wasn't read.": "该仓库的下载大小超过 50 MB，因此没有读取。",
+    "That repo unpacks to more than 300 MB, so it wasn't read.": "该仓库解包后超过 300 MB，因此没有读取。",
+    "That repo has more than 60,000 files and folders, so it wasn't read.": "该仓库包含超过 60,000 个文件和文件夹，因此没有读取。",
+    "That download wasn't a readable archive, so it wasn't read.": "该下载不是可读取的压缩包，因此没有读取。",
+    "No readable text files were found in that repo.": "该仓库中没有找到可读取的文本文件。",
+    "That repo took too long to unpack, so it wasn't read.": "该仓库解包耗时过长，因此没有读取。",
+    "This repo was forgotten (30 minutes after it was read, or when you closed it). Paste the link to read it again.": "该仓库已被忘记（读取 30 分钟后，或在你关闭它时）。粘贴链接即可重新读取。",
+    "That file isn't in the files that were read.": "该文件不在已读取的文件中。",
+    "Type a question about the repo.": "请输入一个关于该仓库的问题。",
+    "Another repo is still being read. Try again in a moment.": "另一个仓库仍在读取中。请稍后再试。",
+    "That repo isn't open.": "该仓库没有打开。",
+    "These excerpts are too long for this model. Choose a model with a larger context, or ask a narrower question. Nothing was sent or charged.": "这些片段对该模型来说太长了。请选择上下文更长的模型，或提出更具体的问题。没有发送任何内容，也没有收费。",
+    "These excerpts are too long to send together. Ask a narrower question.": "这些片段太长，无法一起发送。请提出更具体的问题。",
+    "That question couldn't be sent. Find the files again and retry.": "无法发送这个问题。请重新查找文件后再试。",
+    "Questions about a repo are asked off the record: send the request off the record.": "关于仓库的问题都会不留记录地提问：请以不留记录的方式发送请求。",
+    "A repo question can't be combined with other chat options.": "仓库问题不能与其他对话选项同时使用。",
+    "Repo Reader needs a text model.": "仓库阅读器需要文本模型。",
+    "That link isn't on a host this reader may fetch from.": "该链接不在此阅读器允许获取的主机上。",
+    "Busy, try again in a moment.": "繁忙，请稍后再试。",
+    "Whole file": "整个文件"
   },
   "patterns": [
     {
@@ -10092,6 +10176,162 @@
     {
       "en": "Worksheet {0}",
       "zh": "工作表 {0}"
+    },
+    {
+      "en": "Public repos only, no GitHub sign-in. ANONYMA's server downloads the code, so GitHub sees our server, not you. Reading is free ({0} repos an hour), and the files stay in the server's memory for 30 minutes, then they're forgotten. Nothing is saved to your account.",
+      "zh": "仅限公开仓库，无需登录 GitHub。由 ANONYMA 的服务器下载代码，因此 GitHub 看到的是我们的服务器，而不是你。读取免费（每小时 {0} 个仓库），文件会在服务器内存中保留 30 分钟，之后被忘记。不会保存到你的账户。"
+    },
+    {
+      "en": "{0} files",
+      "zh": "{0} 个文件"
+    },
+    {
+      "en": "{0} file",
+      "zh": "{0} 个文件"
+    },
+    {
+      "en": "In memory for {0} more minutes, then forgotten.",
+      "zh": "还会在内存中保留 {0} 分钟，之后被忘记。"
+    },
+    {
+      "en": "In memory for {0} more minute, then forgotten.",
+      "zh": "还会在内存中保留 {0} 分钟，之后被忘记。"
+    },
+    {
+      "en": "{0} entries skipped",
+      "zh": "已跳过 {0} 项"
+    },
+    {
+      "en": "{0} entry skipped",
+      "zh": "已跳过 {0} 项"
+    },
+    {
+      "en": "{0} files in vendored or build folders",
+      "zh": "第三方依赖或构建目录中的 {0} 个文件"
+    },
+    {
+      "en": "{0} file in vendored or build folders",
+      "zh": "第三方依赖或构建目录中的 {0} 个文件"
+    },
+    {
+      "en": "{0} lock or minified files",
+      "zh": "{0} 个锁文件或压缩文件"
+    },
+    {
+      "en": "{0} lock or minified file",
+      "zh": "{0} 个锁文件或压缩文件"
+    },
+    {
+      "en": "{0} binary files",
+      "zh": "{0} 个二进制文件"
+    },
+    {
+      "en": "{0} binary file",
+      "zh": "{0} 个二进制文件"
+    },
+    {
+      "en": "{0} files over 256 KB",
+      "zh": "{0} 个超过 256 KB 的文件"
+    },
+    {
+      "en": "{0} file over 256 KB",
+      "zh": "{0} 个超过 256 KB 的文件"
+    },
+    {
+      "en": "{0} links, never followed",
+      "zh": "{0} 个链接（从不跟随）"
+    },
+    {
+      "en": "{0} link, never followed",
+      "zh": "{0} 个链接（从不跟随）"
+    },
+    {
+      "en": "{0} unsafe paths",
+      "zh": "{0} 个不安全路径"
+    },
+    {
+      "en": "{0} unsafe path",
+      "zh": "{0} 个不安全路径"
+    },
+    {
+      "en": "{0} special entries",
+      "zh": "{0} 个特殊条目"
+    },
+    {
+      "en": "{0} special entry",
+      "zh": "{0} 个特殊条目"
+    },
+    {
+      "en": "{0} files past the 5,000-file or 8 MB limit",
+      "zh": "{0} 个文件超出了 5,000 个文件或 8 MB 的上限"
+    },
+    {
+      "en": "{0} file past the 5,000-file or 8 MB limit",
+      "zh": "{0} 个文件超出了 5,000 个文件或 8 MB 的上限"
+    },
+    {
+      "en": "Injection Shield removed {0} invisible characters.",
+      "zh": "注入防护移除了 {0} 个不可见字符。"
+    },
+    {
+      "en": "Injection Shield removed {0} invisible character.",
+      "zh": "注入防护移除了 {0} 个不可见字符。"
+    },
+    {
+      "en": "{0} line",
+      "zh": "{0} 行"
+    },
+    {
+      "en": "Lines {0}–{1} highlighted",
+      "zh": "已高亮第 {0}–{1} 行"
+    },
+    {
+      "en": "Line {0} highlighted",
+      "zh": "已高亮第 {0} 行"
+    },
+    {
+      "en": "{0} excerpts",
+      "zh": "{0} 个片段"
+    },
+    {
+      "en": "{0} excerpt",
+      "zh": "{0} 个片段"
+    },
+    {
+      "en": "Your question, a list of {0} paths and these excerpts, sent as data with fixed instructions to cite path:line. Nothing else: no other files, chats, memory or instructions.",
+      "zh": "你的问题、一份包含 {0} 个路径的列表和这些片段，会作为数据发送，并附带要求以 path:line 引用的固定说明。除此之外不发送任何内容：没有其他文件、会话、记忆或指令。"
+    },
+    {
+      "en": "Your question, a list of {0} path and these excerpts, sent as data with fixed instructions to cite path:line. Nothing else: no other files, chats, memory or instructions.",
+      "zh": "你的问题、一份包含 {0} 个路径的列表和这些片段，会作为数据发送，并附带要求以 path:line 引用的固定说明。除此之外不发送任何内容：没有其他文件、会话、记忆或指令。"
+    },
+    {
+      "en": "Veil masked {0} details in your question.",
+      "zh": "Veil 遮盖了你问题中的 {0} 处细节。"
+    },
+    {
+      "en": "Veil masked {0} detail in your question.",
+      "zh": "Veil 遮盖了你问题中的 {0} 处细节。"
+    },
+    {
+      "en": "Ask {0}",
+      "zh": "询问 {0}"
+    },
+    {
+      "en": "{0} is answering…",
+      "zh": "{0} 正在回答……"
+    },
+    {
+      "en": "Cited {0} places",
+      "zh": "引用了 {0} 处"
+    },
+    {
+      "en": "Cited {0} place",
+      "zh": "引用了 {0} 处"
+    },
+    {
+      "en": "Keep the question under {0} characters.",
+      "zh": "请将问题控制在 {0} 个字符以内。"
     }
   ]
 }

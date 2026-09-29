@@ -1242,7 +1242,7 @@ export const UPDATES = [
     // the decoy is a second vault in this browser, never synced or uploaded,
     // so there's no route to gate in featuresFor. The app needs Device Vault
     // released too (decoyReleased).
-    released: false,
+    released: true,
   },
   {
     id: "chatimport",

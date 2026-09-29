@@ -508,11 +508,14 @@ export const MODE_FEATURES = {
   translate: "doctranslate",
   // Meeting Notes' page (src/MeetingNotes.jsx), which needs Voice & Audio too.
   notes: "meetingnotes",
+  // Photo Tools' page (src/PhotoTools.jsx), which runs on Image Studio's models.
+  photos: "phototools",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")
     return ["images", "video", "audio"].some((id) => isReleased(config, id));
   if (mode === "notes") return isReleased(config, "meetingnotes") && isReleased(config, "audio");
+  if (mode === "photos") return isReleased(config, "phototools") && isReleased(config, "images");
   return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
 }
 

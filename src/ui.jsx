@@ -251,6 +251,8 @@ const pixels = {
   translate: [".#.....", "###..#.", ".#..#.#", "#.#.###", "....#.#", "....#.#", "......."],
   // A microphone on its stand: a recording turned into notes.
   notes: ["..###..", "..###..", "#.###.#", "#.###.#", ".#...#.", "..###..", ".#####."],
+  // A picture in a frame: a sun over a hill. Photo tools.
+  photos: [".......", "#######", "#...#.#", "#.....#", "#..#..#", "#.###.#", "#######"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

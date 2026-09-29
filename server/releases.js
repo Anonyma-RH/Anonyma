@@ -1175,6 +1175,23 @@ export const UPDATES = [
     // recording itself is never stored. The page is /workspace/notes.
     released: true,
   },
+  {
+    id: "phototools",
+    title: "Photo Tools",
+    tagline: "Edit a photo with words, remove its background, or upscale it. See the price first.",
+    points: [
+      "Say what to change, cut the subject out as a transparent PNG, or enlarge a photo",
+      "Slide between before and after; results save to your library, or stay off the record",
+      "See the most it can cost first; a result you can't use costs nothing",
+    ],
+    // The workspace's Photo tools page (src/PhotoTools.jsx). /api/photo-tools
+    // (server/routes/photo-tools.js) runs the gateway's image-to-image models
+    // on the ordinary hold and settle path; it needs Image Studio's models,
+    // so "images" too (featuresFor). Results are ordinary library images (no
+    // request settings kept); off the record and Private Mode keep nothing.
+    // Extend is not offered: the gateway's outpainting model takes no photo.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1374,6 +1391,20 @@ export function featuresFor(req) {
       else if (body.ephemeral === true) needed.push("ephemeral");
       if (body.project !== undefined) needed.push("projects");
       if (body.veil_masked !== undefined) needed.push("trail");
+    }
+    return needed;
+  }
+  // Photo Tools: runs on the image models, so it needs Image Studio's update
+  // too. What a run turns on needs its own update, as a chat would: off the
+  // record, Private Mode, Privacy Trail's Veil count and Seed Guard's
+  // override.
+  if (p === "/api/photo-tools" || p.startsWith("/api/photo-tools/")) {
+    const needed = ["phototools", "images"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      else if (body.ephemeral === true) needed.push("ephemeral");
+      if (body.veil_masked !== undefined) needed.push("trail");
+      if (body.allow_seed_phrase !== undefined) needed.push("seedguard");
     }
     return needed;
   }

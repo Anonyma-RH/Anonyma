@@ -378,8 +378,10 @@ export async function generateImages(
   if (cfg.testMode) {
     const batch = {
       data: Array.from({ length: n }, () => ({
-        b64_json: readFileSync(
-          new URL("../data/test-image.png", import.meta.url),
+        // Photo Tools passes the picture its tool would give back.
+        b64_json: (
+          options.testImage ??
+          readFileSync(new URL("../data/test-image.png", import.meta.url))
         ).toString("base64"),
       })),
       cost: generationPrice(model, options) * n,
@@ -409,7 +411,8 @@ export async function generateImages(
     const body = dedicated
       ? {
           model: model.id,
-          prompt,
+          // A utility model (background removal, an upscaler) takes no prompt.
+          ...(prompt ? { prompt } : {}),
           ...(model.pricing?.variants?.length
             ? { quality: options.quality || model.pricing.variants[0].quality }
             : {}),
@@ -419,6 +422,8 @@ export async function generateImages(
           ...(options.output_format
             ? { output_format: options.output_format }
             : {}),
+          // Extra routing the caller needs, such as zero-data-retention.
+          ...(options.extraBody || {}),
         }
       : {
           model: model.id,

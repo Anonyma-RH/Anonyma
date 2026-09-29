@@ -376,6 +376,7 @@ export const MODE_LABELS = {
   slides: "Slides",
   translate: "Translate docs",
   notes: "Meeting notes",
+  photos: "Photo tools",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -407,6 +408,8 @@ const PLACES = [
   ["slides", "Slides", ["slide deck", "presentation", "deck", "powerpoint", "keynote", "present", "pitch"]],
   // Meeting Notes: only once released, with Voice & Audio.
   ["notes", "Meeting notes", ["meeting", "recording", "transcribe", "transcript", "minutes", "action items", "call notes", "decisions"]],
+  // Photo Tools: only once released, with Image Studio.
+  ["photos", "Photo tools", ["photo", "picture", "edit photo", "remove background", "cut out", "upscale", "enlarge", "retouch", "transparent"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

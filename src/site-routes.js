@@ -88,6 +88,8 @@ export function knownPage(path, served = {}) {
     (served.translate === true && path === "/workspace/translate") ||
     // Meeting Notes' page, likewise.
     (served.notes === true && path === "/workspace/notes") ||
+    // Photo Tools' page, likewise.
+    (served.photos === true && path === "/workspace/photos") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

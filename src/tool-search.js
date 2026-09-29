@@ -21,6 +21,7 @@ const TAGS = {
   library: 'saved media creations images pictures photos videos audio history gallery downloads 保存 媒体 图片 视频 作品',
   models: 'model models catalog catalogue providers pricing prices capabilities compare 模型 目录 提供商 价格 能力',
   api: 'api key keys sdk endpoint integration integrate cli developer scripts openai compatible 接口 密钥 集成 开发者 脚本',
+  photos: 'photo photos picture pictures image retouch edit background remove removal cutout transparent upscale upscaler enlarge bigger larger sharper enhance resolution 照片 图片 修图 抠图 去背景 放大 高清',
 };
 // Weight likely destinations rather than treating every related tool equally.
 // “Truth” suggests ways to investigate and compare; no model is labelled truthful.
@@ -42,6 +43,7 @@ const INTENTS = [
   ['schedule|scheduled|automate|automatic|recurring|daily|weekly|monitor|watch|定时|自动|每日|每周|监控', { routines: 140 }],
   ['organize|organise|organization|organisation|folders|folder|整理|文件夹', { projects: 140 }],
   ['saved pictures|saved images|saved videos|creations|gallery|media library|已保存|作品|媒体库', { library: 140 }],
+  ['edit photo|edit photos|edit a photo|photo editor|photo editing|retouch|cut out|cutout|remove background|remove the background|background removal|transparent background|upscale|upscaling|enlarge|enhance photo|修图|抠图|去背景|放大图片|高清放大', { photos: 140 }],
 ];
 const STOP = new Set('a an the i me my we our you your it its this that these those to for of in on at with and or is are be do does can could would should want need help please something tool tools how what which find get make create use using into from about'.split(' '));
 const normalize = (s) => String(s ?? '').normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();

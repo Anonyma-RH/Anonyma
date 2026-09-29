@@ -1350,7 +1350,7 @@ export const UPDATES = [
     // src/LanguageSwitch.jsx): the choice lives in this browser, nothing is
     // sent or stored, and until it is released the switch has no Español
     // button and the dictionary never loads.
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

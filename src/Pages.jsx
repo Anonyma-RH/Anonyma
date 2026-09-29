@@ -898,6 +898,7 @@ const featureIcons = {
   meetingnotes: "meeting",
   quotecards: "quotemark",
   recovery: "lifebuoy",
+  pushalerts: "bell",
 };
 const launch = {
   id: "mvp",

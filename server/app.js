@@ -68,6 +68,8 @@ import { allowanceRoutes } from "./routes/allowances.js";
 import { apiBoostRoutes } from "./routes/api-boost.js";
 import { spendingLimitRoutes } from "./routes/spending-limits.js";
 import { balanceAlertRoutes } from "./routes/balance-alerts.js";
+import { pushAlertRoutes } from "./routes/push-alerts.js";
+import { createPushAlerts } from "./push-alerts.js";
 import { connectRoutes } from "./routes/connect.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { nymaRoutes } from "./routes/nyma.js";
@@ -124,6 +126,9 @@ export function createApp(overrides = {}) {
       enabled: () => isReleased(cfg, "status"),
     }),
   };
+  // Push Alerts (server/push-alerts.js): created before the routes so
+  // Routines, Page Watch and Gift Links can queue their notifications.
+  ctx.push = createPushAlerts(ctx);
   // The catalog this process starts with. On a new or just-upgraded
   // database it becomes the baseline: nothing already listed is new.
   earlyModels.recordCatalog(ctx.models.snapshot);
@@ -243,6 +248,9 @@ export function createApp(overrides = {}) {
   spendingLimitRoutes(ctx);
   // Low-Balance Alerts: the account's alert level (a setting only).
   balanceAlertRoutes(ctx);
+  // Push Alerts: the account's browsers and switches (delivery is the
+  // worker's, ctx.push.tick).
+  pushAlertRoutes(ctx);
   connectRoutes(ctx);
   paymentRoutes(ctx);
   // Pay with NYMA: quotes and claims on the wallet-payment address.
@@ -274,6 +282,8 @@ export function createApp(overrides = {}) {
     inactivity: ctx.inactivity,
     // Gift Links' expiry (server/routes/gifts.js), for tests and tooling.
     gifts: ctx.gifts,
+    // Push Alerts' queue, sweeps and delivery, for tests and tooling.
+    push: ctx.push,
     stopWork: async () => {
       for (const c of ctx.inflight.controllers)
         c.abort(new Error("Service restarting"));

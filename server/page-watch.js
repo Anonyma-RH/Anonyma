@@ -588,6 +588,7 @@ export function createPageWatcher(ctx) {
             "UPDATE page_watches SET failures=?,enabled=0,paused='failures',next_check=NULL,running_since=NULL,last_check=?,last_status='paused',last_code=? WHERE id=?",
           ).run(failures, at, outcome.code, row.id);
           report({ status: "paused", code: outcome.code, message: outcome.message });
+          ctx.push?.notify(row.user_id, "pagewatch_paused");
         } else
           db.prepare(
             "UPDATE page_watches SET failures=?,next_check=?,running_since=NULL,last_check=?,last_status='fetch_failed',last_code=? WHERE id=?",
@@ -642,6 +643,7 @@ export function createPageWatcher(ctx) {
             "UPDATE page_watches SET unreadable=?,enabled=0,paused='unreadable',next_check=NULL,running_since=NULL,last_check=?,last_status='paused',last_code=?,last_change=? WHERE id=?",
           ).run(streak, at, code, at, row.id);
           report({ ...common, status: "paused", code, finish_reason: outcome.error.finish_reason });
+          ctx.push?.notify(row.user_id, "pagewatch_paused");
         } else {
           db.prepare(
             "UPDATE page_watches SET unreadable=?,failures=0,next_check=?,running_since=NULL,last_check=?,last_status='unreadable',last_code=?,last_change=? WHERE id=?",
@@ -685,6 +687,9 @@ export function createPageWatcher(ctx) {
         finish_reason: outcome.finish_reason,
         receipt: outcome.receipt,
       });
+      // Push Alerts: "Your page watch found a change." Never the page, the
+      // site or the summary.
+      ctx.push?.notify(row.user_id, "pagewatch");
     });
   }
 

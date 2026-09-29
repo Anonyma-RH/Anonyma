@@ -57,6 +57,8 @@ export default function DataControls() {
   const canvas = !!config && isReleased(config, "canvas");
   // And Slides.
   const slides = !!config && isReleased(config, "slides");
+  // Push Alerts, whose notifications arrive through the app's worker.
+  const push = !!config && isReleased(config, "pushalerts") && isReleased(config, "app");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -234,6 +236,18 @@ export default function DataControls() {
             days before, only if email is set up and only to a verified email.
             Turning it off or closing your account deletes the setting; Panic
             Wipe keeps it.
+          </li>
+        )}
+        {push && (
+          <li>
+            Push Alerts: each browser you turned alerts on in (its push
+            address, the two public values alerts are encrypted to, its push
+            service, its language, when you added it and when it last got an
+            alert) and which kinds you want. An alert is one fixed sentence,
+            never your content; waiting alerts are kept for at most 4 days.
+            Your export lists each browser with its push service only.
+            Removing a browser deletes it; Panic Wipe, Inactivity Wipe and
+            closing your account delete all of it.
           </li>
         )}
         {alerts && (

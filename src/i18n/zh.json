@@ -5876,7 +5876,76 @@
     "Your recovery kit, so you can still get back in": "你的恢复套件，方便你之后仍能找回账户",
     "Recovery kit: when you made it, and each of its ten codes only as a one-way scrypt digest with when it was used; never the codes. A code that was accepted waits 15 minutes for your new password or passkey. Wrong codes are counted for an hour per username and per network address, under keys that don’t contain either. If you dismiss the nudge to make a kit, when you did. Your export says when the kit was made and how many codes are unused. Deleting the kit or closing your account deletes it; Panic Wipe keeps it so you can still get back in.": "恢复套件：保存其创建时间，以及 10 个代码各自的单向 scrypt 摘要和使用时间；从不保存代码本身。通过验证的代码会等待 15 分钟，供你设置新密码或添加通行密钥。输错的代码会按用户名和网络地址分别计数一小时，计数所用的键不包含两者中的任何一个。如果你关闭了生成恢复套件的提醒，会记录关闭时间。导出内容会说明恢复套件的创建时间和未使用代码的数量。删除恢复套件或关闭账户会将其删除；紧急清除会保留它，方便你之后仍能找回账户。",
     "The export also says when your recovery kit was made, how many of its codes are unused and when one was last used. Never the codes: ANONYMA can’t show them again.": "导出内容还会说明恢复套件的创建时间、未使用代码的数量，以及上次使用代码的时间。不包含代码本身：ANONYMA 无法再次显示它们。",
-    "API keys and connected apps weren’t changed. If you don’t recognise one, revoke it in Account.": "API 密钥和已连接的应用没有变化。如有不认识的，请在账户中撤销。"
+    "API keys and connected apps weren’t changed. If you don’t recognise one, revoke it in Account.": "API 密钥和已连接的应用没有变化。如有不认识的，请在账户中撤销。",
+    "Push Alerts": "推送提醒",
+    "Get alerts without giving us an email: browser notifications for your routines, page watches, balance and gifts.": "无需留下邮箱也能收到提醒：为你的定时任务、网页监测、余额和礼物发送浏览器通知。",
+    "Turn it on in Account settings, in each browser you want alerts in": "在账户设置中开启，在每个想接收提醒的浏览器中分别开启",
+    "Every alert is one fixed sentence: never your chats, pages, amounts or names": "每条提醒都是一句固定的话：绝不包含你的对话、网页、金额或姓名",
+    "Your browser's push service carries only encrypted messages it can't read": "浏览器的推送服务只传递它无法读取的加密消息",
+    "Your page watch found a change.": "你的网页监测发现了变化。",
+    "A page watch was paused. Open it to see why.": "一个网页监测已暂停。打开查看原因。",
+    "Your routine has a new result.": "你的定时任务有新结果。",
+    "Your balance is low.": "你的余额不足。",
+    "Your gift was claimed.": "你的礼物已被领取。",
+    "An unclaimed gift came back to your balance.": "一份未领取的礼物已退回你的余额。",
+    "Inactivity Wipe erases your content in 7 days. Sign in to keep it.": "闲置清除将在 7 天后清除你的内容。登录即可保留。",
+    "Notifications from ANONYMA are working.": "ANONYMA 的通知已正常工作。",
+    "Push Alerts.": "推送提醒。",
+    "Browser notifications for your routines, page watches, balance and gifts. No email needed.": "为你的定时任务、网页监测、余额和礼物发送浏览器通知，无需邮箱。",
+    "Page watches": "网页监测",
+    "Routine results": "定时任务结果",
+    "Low balance": "余额不足",
+    "Inactivity Wipe reminder": "闲置清除提醒",
+    "What to send": "发送哪些提醒",
+    "Notify me in this browser": "在此浏览器中通知我",
+    "Send a test": "发送测试",
+    "Stop in this browser": "在此浏览器中停止",
+    "A browser": "一个浏览器",
+    "A push service": "一个推送服务",
+    "Chrome or similar": "Chrome 或同类浏览器",
+    "Google's push service": "Google 推送服务",
+    "Mozilla's push service": "Mozilla 推送服务",
+    "Apple's push service": "Apple 推送服务",
+    "Microsoft's push service": "Microsoft 推送服务",
+    "Turn notifications on again in that browser to keep getting them.": "请在该浏览器中重新开启通知，才能继续接收。",
+    "Browser notifications aren’t available on this server yet.": "此服务器暂不支持浏览器通知。",
+    "Browser notifications aren't available on this server yet.": "此服务器暂不支持浏览器通知。",
+    "Notifications are blocked for this site. Allow them in your browser’s site settings, then reload this page.": "此网站的通知已被屏蔽。请在浏览器的网站设置中允许通知，然后重新加载此页面。",
+    "Notifications are blocked for this site. Allow them in your browser’s site settings, then try again.": "此网站的通知已被屏蔽。请在浏览器的网站设置中允许通知，然后重试。",
+    "Notifications weren’t allowed. Try again and choose Allow.": "未允许通知。请重试并选择“允许”。",
+    "On iPhone and iPad, alerts work only from the Home Screen app. Add ANONYMA to your Home Screen, open it from there and turn this on.": "在 iPhone 和 iPad 上，提醒只能在主屏幕应用中使用。请将 ANONYMA 添加到主屏幕，从那里打开后再开启此功能。",
+    "This browser can’t receive push notifications.": "此浏览器无法接收推送通知。",
+    "No browsers get alerts yet.": "还没有浏览器接收提醒。",
+    "Uses your Low-Balance Alerts level.": "使用你的低余额提醒阈值。",
+    "Set one in Credits.": "在积分页面设置。",
+    "Only while Inactivity Wipe is on.": "仅在闲置清除开启时发送。",
+    "Each alert is one fixed sentence, like the ones above. It never includes your chats, page text, amounts or names.": "每条提醒都是一句固定的话，如上所示，绝不包含你的对话、网页文字、金额或姓名。",
+    "Alerts travel through your browser’s push service (Google, Mozilla, Apple or Microsoft). It sees that this browser gets alerts from ANONYMA and when, not what they say: each one is encrypted and the same size.": "提醒经由浏览器的推送服务（Google、Mozilla、Apple 或 Microsoft）传递。它能看到此浏览器何时收到来自 ANONYMA 的提醒，但看不到内容：每条提醒都经过加密，且大小相同。",
+    "Signing out doesn’t stop alerts in a browser. Remove it here, or block notifications in the browser.": "退出登录不会停止浏览器中的提醒。请在这里移除该浏览器，或在浏览器中屏蔽通知。",
+    "Nothing here costs credits. Panic Wipe, Inactivity Wipe and closing your account remove every browser.": "此功能不消耗积分。紧急清除、闲置清除和关闭账户都会移除所有浏览器。",
+    "This browser will get your alerts. Send a test to see one.": "此浏览器将接收你的提醒。发送一条测试看看效果。",
+    "Stopped. This browser gets no more alerts.": "已停止。此浏览器不会再收到提醒。",
+    "Removed. That browser gets no more alerts.": "已移除。该浏览器不会再收到提醒。",
+    "Sent. It should arrive in a few seconds.": "已发送，几秒内应该就会收到。",
+    "This browser needs to turn notifications on again.": "此浏览器需要重新开启通知。",
+    "This browser didn't start ANONYMA's notification worker. Reload and try again.": "此浏览器未能启动 ANONYMA 的通知服务。请重新加载后再试。",
+    "That isn't a push subscription this browser can use.": "这不是此浏览器可用的推送订阅。",
+    "This browser uses a push service ANONYMA doesn't send to. Chrome, Edge, Firefox and Safari work.": "此浏览器使用的推送服务不在 ANONYMA 的发送范围内。Chrome、Edge、Firefox 和 Safari 均可使用。",
+    "That subscription's keys aren't valid. Turn notifications off and on again in this browser.": "该订阅的密钥无效。请在此浏览器中关闭通知后重新开启。",
+    "That browser isn't on your list.": "该浏览器不在你的列表中。",
+    "Turn on notifications in a browser first.": "请先在一个浏览器中开启通知。",
+    "That notification isn't available.": "该通知暂不可用。",
+    "Browser alert": "浏览器提醒",
+    "Sent to your browsers": "已发送到你的浏览器",
+    "We’ll also send a browser alert 7 days before, through Push Alerts.": "我们还会在 7 天前通过推送提醒发送一条浏览器提醒。",
+    "The notification shows once, when your balance first drops below the level while ANONYMA is open in a tab. There's no email. For an alert when ANONYMA isn't open, turn on Push Alerts in Account settings.": "当 ANONYMA 在标签页中打开、且余额首次低于该阈值时，通知只显示一次。不会发送邮件。如需在未打开 ANONYMA 时也收到提醒，请在账户设置中开启推送提醒。",
+    "Push Alerts: each browser you turned alerts on in (its push address, the two public values alerts are encrypted to, its push service, its language, when you added it and when it last got an alert) and which kinds you want. An alert is one fixed sentence, never your content; waiting alerts are kept for at most 4 days. Your export lists each browser with its push service only. Removing a browser deletes it; Panic Wipe, Inactivity Wipe and closing your account delete all of it.": "推送提醒：你开启了提醒的每个浏览器（它的推送地址、用于加密提醒的两个公开值、它的推送服务、语言、添加时间和最近一次收到提醒的时间），以及你想接收的提醒类型。每条提醒都是一句固定的话，绝不包含你的内容；待发送的提醒最多保留 4 天。你的导出只列出每个浏览器及其推送服务。移除浏览器即会删除相关数据；紧急清除、闲置清除和关闭账户会删除全部数据。",
+    "Push Alerts: every browser that gets your alerts, and your choices": "推送提醒：接收你提醒的所有浏览器，以及你的设置",
+    "Safari": "Safari 浏览器",
+    "Firefox": "Firefox 浏览器",
+    "Edge": "Edge 浏览器",
+    "The push service hasn’t taken it yet. ANONYMA will keep trying for a few hours.": "推送服务暂未接收。ANONYMA 会在几小时内持续重试。",
+    "That browser’s subscription had ended, so it was removed. Turn notifications on again there.": "该浏览器的订阅已失效，因此已被移除。请在该浏览器中重新开启通知。"
   },
   "patterns": [
     {
@@ -9502,6 +9571,26 @@
     {
       "en": "This account already has {0} passkeys. Set a new password instead.",
       "zh": "此账户已有 {0} 个通行密钥。请改为设置新密码。"
+    },
+    {
+      "en": "Added {0} · Last alert {1}",
+      "zh": "添加于 {0} · 上次提醒 {1}"
+    },
+    {
+      "en": "Added {0} · No alert yet",
+      "zh": "添加于 {0} · 尚无提醒"
+    },
+    {
+      "en": "You can have alerts in up to {0} browsers. Remove one first.",
+      "zh": "最多可在 {0} 个浏览器中接收提醒。请先移除一个。"
+    },
+    {
+      "en": "You can have notifications in up to {0} browsers. Remove one first.",
+      "zh": "最多可在 {0} 个浏览器中接收通知。请先移除一个。"
+    },
+    {
+      "en": "To your browsers, {0}",
+      "zh": "发送到你的浏览器，{0}"
     }
   ]
 }

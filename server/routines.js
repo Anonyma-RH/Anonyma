@@ -491,6 +491,10 @@ export function createRoutineRunner(ctx) {
     db.prepare(
       "UPDATE routines SET running_since=NULL,last_run=?,last_status=? WHERE id=?",
     ).run(claimed.slot, status, claimed.routine.id);
+    // Push Alerts: "Your routine has a new result." for an answer in the
+    // inbox (nothing from it goes in the notification). A run that didn't
+    // happen says nothing: Low-Balance Alerts covers the usual reason.
+    if (status === "done") ctx.push?.notify(claimed.routine.user_id, "routine");
     // The inbox keeps each routine's newest KEEP_RUNS runs.
     db.prepare(
       `DELETE FROM routine_runs WHERE routine_id=? AND id NOT IN

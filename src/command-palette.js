@@ -598,6 +598,8 @@ export function paletteActions(ctx = {}) {
     "preferences", "sessions", "export", "sign out",
     // Inactivity Wipe lives in Account settings, once released.
     ...(on("deadswitch") && on("wipe") ? ["inactivity wipe", "auto erase", "dead man's switch"] : []),
+    // Push Alerts too.
+    ...(on("pushalerts") && on("app") ? ["push alerts", "notifications", "browser notifications", "alerts"] : []),
   ], { icon: "settings" });
   add("goto", {
     id: "models",

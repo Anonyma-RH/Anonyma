@@ -101,14 +101,17 @@ function returnGift(db, gift, status, at, description) {
 // The worker: every gift still open at its deadline goes back to its giver,
 // each in its own transaction. Runs whether or not the update is released,
 // so switching it off again never strands credits. Nothing is logged.
-export function expireGifts(db, at = now(), batch = 200) {
+// `onReturn(gift)` runs for each one returned (Push Alerts' notification).
+export function expireGifts(db, at = now(), batch = 200, onReturn = null) {
   let returned = 0;
   for (const g of db
     .prepare("SELECT * FROM gifts WHERE status='open' AND expires<=? ORDER BY expires LIMIT ?")
     .all(at, batch))
     transaction(db, () => {
-      if (returnGift(db, g, "expired", at, `Gift returned: unclaimed after ${GIFT_DAYS} days`))
+      if (returnGift(db, g, "expired", at, `Gift returned: unclaimed after ${GIFT_DAYS} days`)) {
         returned++;
+        onReturn?.(g);
+      }
     });
   db.prepare("DELETE FROM gift_lockouts WHERE window_end<=?").run(at);
   return returned;
@@ -416,6 +419,8 @@ export function giftRoutes(ctx) {
         recordFailure(req);
         notFound();
       }
+      // Push Alerts: the giver learns only that a gift was claimed.
+      ctx.push?.notify(outcome.user_id, "gift_claimed");
       res.json({
         status: "claimed",
         amount: credits(outcome.amount),
@@ -425,5 +430,8 @@ export function giftRoutes(ctx) {
     },
   );
 
-  return { expire: (at) => expireGifts(db, at) };
+  return {
+    expire: (at) =>
+      expireGifts(db, at, 200, (g) => ctx.push?.notify(g.user_id, "gift_returned")),
+  };
 }

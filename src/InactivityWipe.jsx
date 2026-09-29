@@ -14,6 +14,7 @@ import {
   WIPE_ARENA_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPE_KEEPS_RECOVERY_KIT,
+  WIPE_PUSH,
 } from "./panic-wipe.js";
 import {
   ERASES,
@@ -109,6 +110,7 @@ export function WipeLists({ config }) {
           {on("canvas") && <li>{WIPE_CANVAS}</li>}
           {on("slides") && <li>Slide decks saved to your account</li>}
           {on("arena") && <li>{WIPE_ARENA}</li>}
+          {on("pushalerts") && on("app") && <li>{WIPE_PUSH}</li>}
         </ul>
       </div>
       <div>
@@ -168,6 +170,13 @@ export function InactivityStatus({ view }) {
         <span>Reminder</span>
         <b>{reminderText(view)}</b>
       </div>
+      {/* Push Alerts' browser reminder, while a browser has it switched on. */}
+      {view.push && (
+        <div>
+          <span>Browser alert</span>
+          <b>{view.push.sent ? "Sent to your browsers" : `To your browsers, ${when(view.push.remindAt)}`}</b>
+        </div>
+      )}
       {view.paused >= 3_600_000 && (
         <div>
           <span>Offline time added</span>
@@ -356,6 +365,9 @@ export function InactivityWipeSettings({ config, user }) {
             </p>
             <WipeLists config={config} />
             <p className="inactivity-hint">{reminderPromise(view)}</p>
+            {view?.push && (
+              <p className="inactivity-hint">We’ll also send a browser alert 7 days before, through Push Alerts.</p>
+            )}
             {error && <Notice type="error">{error}</Notice>}
             <div className="inline-actions">
               <Button

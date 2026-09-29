@@ -278,6 +278,9 @@ export function createWorker(ctx) {
       // Gift Links: unclaimed gifts past their 30 days go back to their
       // givers, each once, on the ledger (server/routes/gifts.js).
       ctx.gifts?.expire();
+      // Push Alerts (server/push-alerts.js): the low-balance and Inactivity
+      // Wipe sweeps, then the notifications due, sent alongside the rest.
+      ctx.push?.tick();
       if (cfg.rpc && cfg.token) {
         // About daily: each read schedules the next 12 to 36 hours on, at a
         // random time (token_due, server/holders.js). A failed read is
@@ -369,6 +372,7 @@ export function createWorker(ctx) {
       await workerPromise?.catch(() => {});
       await routines?.stop();
       await pageWatch?.stop();
+      await ctx.push?.stop();
     },
     close() {
       closed = true;
@@ -376,6 +380,7 @@ export function createWorker(ctx) {
       workerController.abort();
       routines?.stop();
       pageWatch?.stop();
+      ctx.push?.stop();
     },
   };
 }

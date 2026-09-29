@@ -15,6 +15,7 @@ import { exportGifts, forgetGifts } from "./gifts.js";
 import { exportVaultSync, forgetVaultSync } from "./vault-sync.js";
 import { exportCanvases, forgetCanvases } from "./canvas.js";
 import { exportSlideDecks, forgetSlideDecks } from "./slides.js";
+import { exportRecoveryKit, forgetRecoveryKit } from "../recovery-kit.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -47,7 +48,8 @@ import {
 //   conversations and their messages (Symposium runs, branches and
 //   Double-checks are conversations too);
 // - every session and pending sign-in code (and sign-in waiting for a
-//   two-step code, and passkey ceremonies it started);
+//   two-step code, passkey ceremonies it started, and a Recovery Kit
+//   recovery waiting for its new password or passkey);
 // - connected apps' tokens and pending codes;
 // - projects, with their filed chats and pinned files (the chats go with
 //   the conversations above);
@@ -102,6 +104,10 @@ export function eraseAccountContent(db, user) {
   // password: the caller keeps them (Panic Wipe) or deletes them (closure).
   db.prepare("DELETE FROM passkey_challenges WHERE user_id=?").run(id);
   db.prepare("DELETE FROM passkey_reauth WHERE user_id=?").run(id);
+  // Recovery Kit: a recovery waiting for its new password or passkey goes
+  // with the sessions. The kit itself is a way in, like the password: the
+  // caller keeps it (Panic Wipe) or deletes it (closure).
+  db.prepare("DELETE FROM recovery_pending WHERE user_id=?").run(id);
   db.prepare(
     "DELETE FROM oauth_tokens WHERE connection_id IN (SELECT id FROM oauth_connections WHERE user_id=?)",
   ).run(id);
@@ -221,6 +227,13 @@ export function accountRoutes(ctx) {
       .list(user)
       .map(({ name, created, lastUsed, synced }) => ({ name, created, lastUsed, synced }));
     return list.length || isReleased(cfg, "passkeys") ? { passkeys: list } : {};
+  }
+  // Recovery Kit: when it was made and how many codes are unused (once the
+  // update is live, or while a kit exists; null when there's none). Never
+  // a code or its digest.
+  function recoveryKitExport(user) {
+    const kit = exportRecoveryKit(db, user);
+    return kit || isReleased(cfg, "recovery") ? { recoveryKit: kit } : {};
   }
   // Vault Sync: the synced ciphertext as an importable vault file, with a
   // note that it needs the passphrase (once the update is live, or while a
@@ -613,6 +626,7 @@ export function accountRoutes(ctx) {
       ...projectsExport(req.user.id),
       ...twoStepExport(req.user.id),
       ...passkeysExport(req.user.id),
+      ...recoveryKitExport(req.user.id),
       ...balanceAlertExport(req.user.id),
       // Bookmarks: message ids and notes (once the update is live, or while
       // any exist). The messages are already exported with their
@@ -712,6 +726,8 @@ export function accountRoutes(ctx) {
       db.prepare("DELETE FROM two_step WHERE user_id=?").run(req.user.id);
       // Passkeys: every credential and its public key.
       db.prepare("DELETE FROM passkeys WHERE user_id=?").run(req.user.id);
+      // Recovery Kit: the kit's code digests, its salt and the nudge.
+      forgetRecoveryKit(db, req.user.id);
       forgetAlert(db, req.user.id);
       // Inactivity Wipe: the setting and its activity clock.
       forgetInactivity(db, req.user.id);

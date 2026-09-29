@@ -54,6 +54,7 @@ import { InactivityWipeSettings } from "./InactivityWipe.jsx";
 import { TwoStepSettings } from "./TwoStep.jsx";
 import { twoStepReleased } from "./two-step.js";
 import { PasskeySettings } from "./Passkeys.jsx";
+import { RecoveryKitSettings } from "./RecoveryKit.jsx";
 import { passkeysReleased } from "./passkeys.js";
 import { holdersReleased } from "./holders.js";
 import { ReferralRate } from "./ReferralBoost.jsx";
@@ -780,6 +781,8 @@ export default function Account() {
               {passkeysOn && (
                 <PasskeySettings user={user} demo={demo} config={config} />
               )}
+              {/* Recovery Kit: renders nothing until it's released. */}
+              <RecoveryKitSettings user={user} demo={demo} config={config} />
               <TwoStepSettings user={user} demo={demo} config={config} />
             </>
           )}

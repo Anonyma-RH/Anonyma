@@ -36,6 +36,8 @@ export default function DataControls() {
     !!config && isReleased(config, "audiooverview") && isReleased(config, "audio");
   // Passkeys: listed once that update is live.
   const passkeys = !!config && isReleased(config, "passkeys");
+  // And the Recovery Kit.
+  const recoveryKit = !!config && isReleased(config, "recovery");
   // And the Privacy Screen.
   const privacyScreen = !!config && isReleased(config, "privacyscreen");
   // And Local OCR, which needs Documents.
@@ -207,6 +209,19 @@ export default function DataControls() {
             each passkey’s name and dates, not its keys. Removing a passkey or
             closing your account deletes it; Panic Wipe keeps your passkeys so
             you can still sign in.
+          </li>
+        )}
+        {recoveryKit && (
+          <li>
+            Recovery kit: when you made it, and each of its ten codes only as a
+            one-way scrypt digest with when it was used; never the codes. A
+            code that was accepted waits 15 minutes for your new password or
+            passkey. Wrong codes are counted for an hour per username and per
+            network address, under keys that don’t contain either. If you
+            dismiss the nudge to make a kit, when you did. Your export says
+            when the kit was made and how many codes are unused. Deleting the
+            kit or closing your account deletes it; Panic Wipe keeps it so you
+            can still get back in.
           </li>
         )}
         {inactivity && (
@@ -409,6 +424,13 @@ export default function DataControls() {
         <p>The export also lists your audio overviews’ scripts. Their audio files are listed with your media.</p>
       )}
       {canvas && <p>The export also includes your canvases saved to your account, with their text.</p>}
+      {recoveryKit && (
+        <p>
+          The export also says when your recovery kit was made, how many of its
+          codes are unused and when one was last used. Never the codes: ANONYMA
+          can’t show them again.
+        </p>
+      )}
       {passkeys && (
         <p>
           The export also lists your passkeys: each one’s name, when it was

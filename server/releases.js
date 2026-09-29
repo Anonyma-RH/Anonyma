@@ -1175,6 +1175,23 @@ export const UPDATES = [
     // recording itself is never stored. The page is /workspace/notes.
     released: true,
   },
+  {
+    id: "recovery",
+    title: "Recovery Kit",
+    tagline: "No email? Keep a recovery kit: ten one-time codes that get you back into your account.",
+    points: [
+      "Ten one-time codes, shown once, to download or print; we keep only scrambled copies",
+      "Your username and one code get you back in; then you set a new password or add a passkey",
+      "Every other session is signed out, and wrong codes lock recovery for an hour",
+    ],
+    // Account → Security and the sign-in page's "Use a recovery code"
+    // (server/routes/recovery-kit.js). Making or replacing a kit asks
+    // Two-Step Sign-in's "confirm it's you" (or a passkey's), so the
+    // settings routes need "twostep" too, and adding a passkey while
+    // recovering needs "passkeys" (featuresFor). Switched off again, kits
+    // stay stored but can't be used until it's back.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1440,6 +1457,15 @@ export function featuresFor(req) {
     return post && p === "/api/auth/unlock" && body.method === "passkey"
       ? ["privacyscreen", "passkeys"]
       : ["privacyscreen"];
+  // Recovery Kit: using a code on the sign-in page (adding a passkey while
+  // recovering is Passkeys' ceremony), and Account → Security's kit, whose
+  // "confirm it's you" is Two-Step Sign-in's.
+  if (p === "/api/auth/recovery-kit" || p.startsWith("/api/auth/recovery-kit/"))
+    return p.startsWith("/api/auth/recovery-kit/passkey")
+      ? ["recovery", "passkeys"]
+      : ["recovery"];
+  if (p === "/api/account/recovery-kit" || p.startsWith("/api/account/recovery-kit/"))
+    return ["recovery", "twostep"];
   // Two-Step Sign-in's settings. The sign-in step itself, /api/auth/two-step,
   // is never gated (see the UPDATES entry).
   if (p === "/api/account/two-step" || p.startsWith("/api/account/two-step/"))

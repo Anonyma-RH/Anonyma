@@ -1,0 +1,264 @@
+/* Recovery Kit: Account → Security (RecoveryKitSettings), the sign-in
+   page's "Use a recovery code" (RecoveryKitSignIn), the workspace nudge and
+   the printed sheet, in src/RecoveryKit.jsx. Builds on two-step.css
+   (.settings-stack.two-step, .two-step-codes, .two-step-check) and
+   styles.css (.identity-rows, .notice, .button, .small-button). */
+
+/* Account → Security */
+.recovery-codes ol {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-left: 40px;
+}
+.recovery-codes code {
+  font-size: 14px;
+  letter-spacing: 0.6px;
+}
+.recovery-empty {
+  margin: 0 !important;
+  font-size: 13px !important;
+  color: var(--ink) !important;
+}
+.recovery-kit .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.recovery-kit .button:disabled,
+.recovery-kit .small-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.recovery-ask {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 3px solid #0135df;
+}
+.recovery-ask > p {
+  margin: 0 !important;
+  font-size: 13px !important;
+  color: var(--ink) !important;
+  line-height: 1.55;
+}
+.recovery-kit .button.danger {
+  background: #a2634f;
+  border-color: #a2634f;
+  color: #fff;
+}
+
+/* The sign-in page (the link is recovery-kit-link.css) */
+.recovery-signin {
+  display: grid;
+  gap: 14px;
+  margin-top: 26px;
+}
+.recovery-signin form {
+  display: grid;
+  gap: 14px;
+}
+.recovery-signin label {
+  margin-bottom: 0 !important;
+}
+.recovery-signin h3 {
+  margin: 4px 0 0;
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+.recovery-signin > p:not(.eyebrow):not(.fine-print) {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.recovery-signin .eyebrow {
+  margin: 0;
+}
+.recovery-signin .notice {
+  margin: 0;
+}
+.recovery-signin .fine-print {
+  margin: 0;
+}
+.recovery-signin .button {
+  width: 100%;
+  justify-content: center;
+}
+.recovery-code-input {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 1px;
+}
+.recovery-or {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding-top: 4px;
+}
+.recovery-or > span {
+  font-size: 11px;
+  color: #68748a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.recovery-or .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The workspace nudge */
+.recovery-nudge {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 36px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  border-left: 3px solid #0135df;
+  color: #1c2a55;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.recovery-nudge-mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: #0135df;
+  color: var(--brand-orange, #ffb21c);
+}
+.recovery-nudge p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.recovery-nudge b {
+  font-weight: 700;
+}
+.recovery-nudge-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+}
+.recovery-nudge-actions a {
+  color: #0135df;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.recovery-nudge-dismiss {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.recovery-nudge-dismiss:hover,
+.recovery-nudge-dismiss:focus-visible {
+  opacity: 1;
+}
+
+@media (max-width: 700px) {
+  .recovery-codes ol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .recovery-nudge {
+    flex-wrap: wrap;
+    padding: 10px 18px;
+    gap: 10px;
+    font-size: 12px;
+  }
+  .recovery-nudge p {
+    flex-basis: calc(100% - 40px);
+  }
+  .recovery-nudge-actions {
+    width: 100%;
+  }
+  .recovery-nudge-dismiss {
+    margin-left: auto;
+  }
+}
+
+/* The printed sheet: only it, on white, while the print dialog is open. */
+.recovery-print-root {
+  display: none;
+}
+.recovery-sheet {
+  max-width: 150mm;
+  margin: 0 auto;
+  padding: 10mm 12mm;
+  border: 1px solid #0135df;
+  color: #142343;
+  background: #fff;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.recovery-sheet .eyebrow {
+  margin: 0;
+  color: #0135df;
+}
+.recovery-sheet h2 {
+  margin: 4px 0 12px;
+  font-size: 26px;
+}
+.recovery-sheet dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+  margin: 0 0 14px;
+}
+.recovery-sheet dl div {
+  display: flex;
+  gap: 8px;
+}
+.recovery-sheet dt {
+  color: #4d5d78;
+}
+.recovery-sheet dd {
+  margin: 0;
+  font-weight: 700;
+}
+.recovery-sheet ol {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 12px 12px 12px 34px;
+  border: 1px solid #e3e8f0;
+}
+.recovery-sheet code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 15px;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.recovery-sheet p {
+  margin: 0 0 8px;
+}
+@media print {
+  html.recovery-printing body > *:not(.recovery-print-root) {
+    display: none !important;
+  }
+  html.recovery-printing .recovery-print-root {
+    display: block;
+    padding: 12mm 0 0;
+  }
+  html.recovery-printing .recovery-sheet {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    break-inside: avoid;
+  }
+}

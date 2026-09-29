@@ -78,7 +78,8 @@ export function wipeAccountContent(ctx, user, { check, record } = {}) {
 // revokes every API key and connected app, and signs out every session,
 // this one included. The account, its balance, the ledger, deposits, request
 // records, receipts and settings (spending limits, auto-delete, the memory
-// switch, two-step sign-in, passkeys, Inactivity Wipe) stay. Everything is a
+// switch, two-step sign-in, passkeys, the Recovery Kit, Inactivity Wipe)
+// stay. Everything is a
 // DELETE or a first-time-only UPDATE, so a retry (or a second wipe after
 // signing in again) is safe and changes nothing that is already gone.
 export function wipeRoutes(ctx) {

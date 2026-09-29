@@ -758,6 +758,92 @@ route("delete", "/api/account/passkeys/{id}", "Remove a passkey", {
   description:
     "409 passkey_last_method when it's the account's only way to sign in (no password, email or wallet, and no other passkey). The passkey stays on the device until removed there. 404 passkey_not_found." + passkeyReauth,
 });
+// Recovery Kit (update "recovery"). Ten one-time codes kept only as scrypt
+// digests; the username and one code start a recovery that must set a new
+// password or add a passkey before any session exists.
+const recoveryKitView = {
+  type: ["object", "null"],
+  properties: {
+    created: integer,
+    total: integer,
+    unused: integer,
+    lastUsed: { type: ["integer", "null"] },
+  },
+  description: "The kit, or null without one. Never a code or its digest.",
+};
+const recoveryKitStatus = {
+  kit: recoveryKitView,
+  username: { ...bool, description: "Recovering takes the username, so a kit needs one" },
+  nudge: { ...bool, description: "Show the one-time nudge: no email or wallet, one kind of way in (a password, or passkeys), no kit, never dismissed" },
+  reauthMethods: array({ enum: ["password", "email", "wallet", "passkey"] }),
+  reauthUntil: { type: ["integer", "null"] },
+};
+const recoveryReauth =
+  " Needs this session to have confirmed it's you within the last 10 minutes (POST /api/account/two-step/reauth, or POST /api/account/passkeys/reauth), otherwise 403 recovery_reauth_required: a stolen session can't make itself a way back in.";
+const recoverySession = object({
+  user: ref("User"),
+  recovery: object({
+    method: { enum: ["password", "passkey"] },
+    codesLeft: integer,
+    twoStep: { ...bool, description: "Two-Step Sign-in is still on: the next password sign-in asks for its code" },
+  }),
+});
+const recoveryPending =
+  " Needs the token from /api/auth/recovery-kit/redeem (400 recovery_expired when it's unknown, used or older than 15 minutes; the code stays spent). Sets the HttpOnly session cookie without a two-step or email code, signs out every session again and ends the recovery. API keys and connected apps keep working. 20 per 15 minutes per IP.";
+route("get", "/api/account/recovery-kit", "Your recovery kit", {
+  response: object(recoveryKitStatus),
+});
+route("post", "/api/account/recovery-kit", "Make a recovery kit", {
+  body: object({ replace: { ...bool, description: "true to replace an existing kit; its codes stop working at once" } }),
+  status: 201,
+  response: object({
+    ...recoveryKitStatus,
+    codes: { ...array(string), description: "Ten codes like 7K3Q-M9XD-2HVA-PN4T-8RZC, shown only in this response" },
+  }),
+  description:
+    "Stores each code only as a scrypt digest under a new random salt. A recovery waiting on an old code ends. 409 recovery_kit_exists without replace; 409 recovery_kit_username for an account without a username. 10 an hour." + recoveryReauth,
+});
+route("delete", "/api/account/recovery-kit", "Delete your recovery kit", {
+  response: object(recoveryKitStatus),
+  description: "Its codes stop working at once. 10 an hour." + recoveryReauth,
+});
+route("delete", "/api/account/recovery-kit/nudge", "Dismiss the recovery kit nudge", {
+  response: object(recoveryKitStatus),
+  description: "Stores only when it was dismissed; it isn't shown again.",
+});
+route("post", "/api/auth/recovery-kit/redeem", "Use a recovery kit code", {
+  auth: null,
+  body: object({ username: string, code: { ...string, description: "Case, spaces and dashes are ignored; O reads as 0, I and L as 1" } }, ["username", "code"]),
+  response: object({
+    recovery: object({
+      token: { ...string, description: "Send with a new password or passkey within 15 minutes. Single use." },
+      expires: integer,
+      codesLeft: integer,
+      passkey: { ...bool, description: "The account can finish by adding a passkey here" },
+    }),
+  }),
+  description:
+    "A right, unused code is spent, and every session, sign-in waiting for a two-step code, confirmation and pending email sign-in code of the account is revoked; no session starts yet. 400 recovery_code_format when it isn't a kit code (a two-step recovery code is named as such) and 400 recovery_code_typo when its check symbol is wrong: neither counts as a try. 401 recovery_invalid for an unknown username, a username without a kit or a wrong code, alike; 401 recovery_code_used for a spent code. Five tries per username and ten per IP an hour (a right code gives its try back); past that, 429 recovery_locked with Retry-After, a right code too. 20 requests an hour per IP.",
+});
+route("post", "/api/auth/recovery-kit/password", "Finish a recovery with a new password", {
+  auth: null,
+  body: object({ token: string, password: { ...string, minLength: 10, maxLength: 256 } }, ["token", "password"]),
+  response: recoverySession,
+  description: "400 recovery_password unless 10–256 characters." + recoveryPending,
+});
+route("post", "/api/auth/recovery-kit/passkey/options", "Start finishing a recovery with a passkey", {
+  auth: null,
+  body: object({ token: string }, ["token"]),
+  response: object({ options: webauthnOptions }),
+  description:
+    "Passkeys' own registration options for the account, bound to this recovery. 409 passkey_limit at 10 passkeys; 503 passkeys_unavailable where passkeys can't work. Needs the passkeys update too.",
+});
+route("post", "/api/auth/recovery-kit/passkey", "Finish a recovery with a new passkey", {
+  auth: null,
+  body: object({ token: string, response: webauthnResponse, name: string }, ["token", "response"]),
+  response: object({ ...recoverySession.properties, passkey: object({ name: string }) }),
+  description: "Adds the passkey as Account → Security does." + passkeyCommon + recoveryPending,
+});
 // Privacy Screen (update "privacyscreen"): the idle lock is a screen in the
 // browser; these routes only re-check it's the account's owner.
 const unlockNote =

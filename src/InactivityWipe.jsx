@@ -13,6 +13,7 @@ import {
   WIPE_ARENA,
   WIPE_ARENA_STAYS,
   WIPE_KEEPS_PASSKEYS,
+  WIPE_KEEPS_RECOVERY_KIT,
 } from "./panic-wipe.js";
 import {
   ERASES,
@@ -117,6 +118,7 @@ export function WipeLists({ config }) {
             <li key={t}>{t}</li>
           ))}
           {on("passkeys") && <li>{WIPE_KEEPS_PASSKEYS}</li>}
+          {on("recovery") && <li>{WIPE_KEEPS_RECOVERY_KIT}</li>}
           {on("arena") && <li>{WIPE_ARENA_STAYS}</li>}
           <li>Anything kept in your browsers, such as Device Vault chats</li>
         </ul>

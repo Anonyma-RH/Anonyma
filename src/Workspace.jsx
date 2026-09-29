@@ -164,6 +164,7 @@ import { extractVariables } from "./scrolls.js";
 import { useTeamPays } from "./Treasury.jsx";
 import { LowBalanceBanner, LowBalanceRefusal } from "./BalanceAlerts.jsx";
 import { InactivityWipeBanner } from "./InactivityWipe.jsx";
+import { RecoveryKitNudge } from "./RecoveryKit.jsx";
 import {
   api,
   ApiError,
@@ -3943,6 +3944,8 @@ export default function Workspace() {
         <LowBalanceBanner config={config} user={user} demo={demo} />
         {/* Inactivity Wipe: the clock was reset, or the content was erased. */}
         <InactivityWipeBanner config={config} user={user} demo={demo} />
+        {/* Recovery Kit: a one-time nudge for accounts with no email. */}
+        <RecoveryKitNudge config={config} user={user} demo={demo} />
         {/* Find in Chat: sticks to the top of the chat while it's open. */}
         {find.bar}
         <div

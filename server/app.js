@@ -40,6 +40,7 @@ import { projectRoutes } from "./routes/projects.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
+import { chatImportRoutes } from "./routes/chat-import.js";
 import { linkReaderRoutes } from "./routes/link-reader.js";
 import { blindRoutes } from "./routes/blind.js";
 import { arenaRoutes } from "./routes/arena.js";
@@ -179,6 +180,9 @@ export function createApp(overrides = {}) {
   // Bookmarks: stars on saved messages (after conversations, whose access
   // rules it uses).
   bookmarkRoutes(ctx);
+  // Chat Import: chats brought from a ChatGPT or Claude export, saved as
+  // ordinary conversations when the account destination is chosen.
+  chatImportRoutes(ctx);
   // Link Reader: fetches one public page for a message (reads only).
   linkReaderRoutes(ctx);
   // Blind Compare: two chat replies through runChat, and the account's

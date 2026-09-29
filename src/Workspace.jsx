@@ -44,6 +44,8 @@ const OnDevice = lazy(() => import("./OnDevice.jsx"));
 const Study = lazy(() => import("./Study.jsx"));
 // Meeting Notes: its recording reader and notes view load only on its page.
 const MeetingNotes = lazy(() => import("./MeetingNotes.jsx"));
+// Chat Import: its reader, list and destinations load only on its page.
+const ChatImport = lazy(() => import("./ChatImport.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
@@ -107,6 +109,7 @@ import { rewindPlan, resendContent, promptParts, branchesAt, singleFlight } from
 import "./branches.css";
 // Quote Cards: the Card button's style is needed before its dialog loads.
 import "./quote-cards.css";
+import "./chat-import-mark.css";
 import {
   PrivateModeToggle,
   PrivateModeNotice,
@@ -329,6 +332,7 @@ export function AppSidebar({
     ["study", "Study", "Turn a document or conversation into flashcards and quizzes to practise what you have learned."],
     ["slides", "Slides", "Turn a prompt, document or chat into a slide deck. Edit, present or export it."],
     ["notes", "Meeting notes", "Turn a recording into a timestamped transcript, key decisions and action items."],
+    ["import", "Import chats", "Bring your ChatGPT or Claude history here. Choose which chats to keep and where they go."],
     ["routines", "Routines", "Schedule prompts to run automatically with spending limits. Read the results in your inbox."],
     ["projects", "Projects", "Group related chats, files and instructions in folders. Set defaults for each project."],
     ["library", "Your library", "Find and revisit the images, videos and audio you have created."],
@@ -342,7 +346,8 @@ export function AppSidebar({
     .filter(([id]) => id !== "study" || isReleased(config, "study"))
     .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
     .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
-    .filter(([id]) => id !== "notes" || modeReleased(config, "notes"));
+    .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
+    .filter(([id]) => id !== "import" || isReleased(config, "chatimport"));
   // Recompute translated matching when the language changes, even on Account pages.
   useLanguage();
   const toolAvailable = (id) => id === "models" || (id === "api" ? isReleased(config, "api") : modeReleased(config, id));
@@ -634,7 +639,9 @@ export default function Workspace() {
     // Translate Documents' page, likewise.
     (mode === "translate" && (!config || isReleased(config, "doctranslate"))) ||
     // Meeting Notes' page, the same way (it needs Voice & Audio too).
-    (mode === "notes" && (!config || modeReleased(config, "notes")));
+    (mode === "notes" && (!config || modeReleased(config, "notes"))) ||
+    // Chat Import's page, likewise.
+    (mode === "import" && (!config || isReleased(config, "chatimport")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -682,6 +689,11 @@ export default function Workspace() {
   // Projects (src/Projects.jsx): the account's projects, and the one the open
   // chat is in (or a new chat was started in). Signed in only, never the demo.
   const projectsLive = !demo && !!user && projectsReleased(config);
+  // Chat Import: the service the open chat was brought from, if it was
+  // (a saved chat says so when it opens; a vault chat carries it inside).
+  const importedFrom = !demo && isReleased(config, "chatimport")
+    ? (vaultChatId ? vault.chats.find((c) => c.id === vaultChatId)?.importedFrom : current ? lineage.imported : null) || null
+    : null;
   const projects = useProjects(projectsLive, user?.id);
   const [projectId, setProjectId] = useState(null),
     // The sidebar's chat filter: "all", "none" or a project id.
@@ -1312,6 +1324,7 @@ export default function Workspace() {
           id: ref.id,
           created: ref.created,
           conflictCopy: !!ref.copy,
+          ...(ref.imported ? { title: ref.imported.title, importedFrom: ref.imported.from, importKey: ref.imported.key } : {}),
           now: saving,
           mode,
           privateMode,
@@ -1525,7 +1538,14 @@ export default function Workspace() {
     newChat();
     veilKeyRef.current = "vault-" + chat.id;
     veilStateRef.current = chat.veil ? cloneVeilState(chat.veil) : createVeilState();
-    vaultChatRef.current = { id: chat.id, created: chat.created, updated: chat.updated, copy: !!chat.conflictCopy };
+    vaultChatRef.current = {
+      id: chat.id,
+      created: chat.created,
+      updated: chat.updated,
+      copy: !!chat.conflictCopy,
+      // Chat Import: an imported chat keeps its own title and its mark.
+      imported: chat.importedFrom ? { title: chat.title, from: chat.importedFrom, key: chat.importKey || null } : null,
+    };
     vaultSavedRef.current = JSON.stringify(chat.messages);
     setVaultChatId(chat.id);
     setDeviceOnly(true);
@@ -1626,7 +1646,8 @@ export default function Workspace() {
         setCurrent(c.id);
         setShared(r.collab || null);
         setProjectId(r.project_id ?? null);
-        setLineage({ parent: r.parent || null, branches: r.branches || [] });
+        // Chat Import: a chat brought from ChatGPT or Claude says so.
+        setLineage({ parent: r.parent || null, branches: r.branches || [], imported: r.imported_from || null });
         setCarried(r.continued?.summary ? { ...r.continued, kind: "saved" } : null);
         setMessages(r.messages.map(messageFromServer));
       } catch (e) {
@@ -3759,6 +3780,14 @@ export default function Workspace() {
                 )}
                 {c.title}
               </button>
+              {c.imported_from && (
+                <span
+                  className="chat-imported"
+                  title={"Imported from " + (c.imported_from === "claude" ? "Claude" : "ChatGPT")}
+                >
+                  <Icon name="import" size={12} />
+                </span>
+              )}
               {!demo && isReleased(config, "ephemeral") && (
                 <RetentionIndicator expires={c.expires} />
               )}
@@ -3853,6 +3882,7 @@ export default function Workspace() {
                 slides: "Slides",
                 translate: "Translate docs",
                 notes: "Meeting notes",
+                import: "Import chats",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4131,6 +4161,26 @@ export default function Workspace() {
                 />
               </Suspense>
             )
+          ) : mode === "import" ? (
+            isReleased(config, "chatimport") && (
+              <Suspense fallback={<p className="import-loading">Opening Import chats…</p>}>
+                <ChatImport
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  config={config}
+                  vault={vault}
+                  vaultLive={vaultLive}
+                  onUnlockVault={() => setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })}
+                  // The sidebar's recent chats pick up what was just imported.
+                  onImported={() =>
+                    api("/api/conversations")
+                      .then((r) => setAll(recentConversations(r.data)))
+                      .catch(() => {})
+                  }
+                />
+              </Suspense>
+            )
           ) : mode === "canvas" ? (
             isReleased(config, "canvas") && (
               <Suspense fallback={<p className="canvas-loading">Opening Canvas…</p>}>
@@ -4211,6 +4261,13 @@ export default function Workspace() {
                       {lineage.parent.title || "Untitled"}
                     </button>
                     <span>The original is unchanged.</span>
+                  </div>
+                )}
+                {textMode && importedFrom && (
+                  <div className="branch-banner import-banner">
+                    <Icon name="import" size={14} />
+                    {`Imported from ${importedFrom === "claude" ? "Claude" : "ChatGPT"}.`}
+                    <span>The replies were written by that service, not by an ANONYMA model.</span>
                   </div>
                 )}
                 {highlightLive && (

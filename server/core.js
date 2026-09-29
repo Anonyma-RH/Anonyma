@@ -1320,6 +1320,21 @@ export const MIGRATIONS = [
         UNIQUE(subscription_id,kind));
       CREATE INDEX IF NOT EXISTS push_queue_due ON push_queue(next_try);
       CREATE INDEX IF NOT EXISTS push_queue_user ON push_queue(user_id);
+    `),
+  // Chat Import (server/routes/chat-import.js): which saved chats came from a
+  // ChatGPT or Claude export, and the id the export gave each, kept only to
+  // notice the same chat imported twice. Never the file, its name or a hash of
+  // its content. It goes with its conversation (delete, delete all, cap
+  // pruning, auto-delete cleanup, account closure, Panic Wipe).
+  additive(`
+      CREATE TABLE IF NOT EXISTS chat_imports(
+        conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        source TEXT NOT NULL CHECK(source IN ('chatgpt','claude')),
+        source_id TEXT CHECK(source_id IS NULL OR length(source_id)<=100),
+        imported INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS chat_imports_user ON chat_imports(user_id,source);
+      CREATE UNIQUE INDEX IF NOT EXISTS chat_imports_once ON chat_imports(user_id,source,source_id) WHERE source_id IS NOT NULL;
   `),
 ];
 // The schema versions whose migrations were recorded as additive.

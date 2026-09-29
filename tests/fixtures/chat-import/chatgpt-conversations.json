@@ -1,0 +1,624 @@
+[
+ {
+  "title": "Planning a trip to Lisbon",
+  "create_time": 1710000000,
+  "update_time": 1710000600,
+  "mapping": {
+   "root": {
+    "id": "root",
+    "parent": null,
+    "children": [
+     "sys"
+    ],
+    "message": null
+   },
+   "sys": {
+    "id": "sys",
+    "parent": "root",
+    "children": [
+     "u1"
+    ],
+    "message": {
+     "id": "sys",
+     "author": {
+      "role": "system",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": null,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       ""
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {
+      "is_visually_hidden_from_conversation": true
+     },
+     "recipient": "all"
+    }
+   },
+   "u1": {
+    "id": "u1",
+    "parent": "sys",
+    "children": [
+     "a1-old",
+     "a1-new"
+    ],
+    "message": {
+     "id": "u1",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710000010,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "I have three days in Lisbon. What should I see?"
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "a1-old": {
+    "id": "a1-old",
+    "parent": "u1",
+    "children": [
+     "u2-old"
+    ],
+    "message": {
+     "id": "a1-old",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710000020,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "OLD BRANCH: Just visit the airport."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "u2-old": {
+    "id": "u2-old",
+    "parent": "a1-old",
+    "children": [
+     "a2-old"
+    ],
+    "message": {
+     "id": "u2-old",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710000030,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "OLD BRANCH follow-up"
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "a2-old": {
+    "id": "a2-old",
+    "parent": "u2-old",
+    "children": [],
+    "message": {
+     "id": "a2-old",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710000040,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "OLD BRANCH answer"
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "a1-new": {
+    "id": "a1-new",
+    "parent": "u1",
+    "children": [
+     "u2-new"
+    ],
+    "message": {
+     "id": "a1-new",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710000050,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Start with Alfama, then Belém, then a day trip to Sintra."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "u2-new": {
+    "id": "u2-new",
+    "parent": "a1-new",
+    "children": [
+     "a2-new"
+    ],
+    "message": {
+     "id": "u2-new",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710000060,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Which day for Sintra?"
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "a2-new": {
+    "id": "a2-new",
+    "parent": "u2-new",
+    "children": [],
+    "message": {
+     "id": "a2-new",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710000070,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Day three, and go early to beat the crowds."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   }
+  },
+  "current_node": "a2-new",
+  "conversation_id": "chatgpt-conv-a",
+  "id": "chatgpt-conv-a",
+  "is_archived": false
+ },
+ {
+  "title": "Chart the sales data",
+  "create_time": 1710001000,
+  "update_time": 1710001900,
+  "mapping": {
+   "root": {
+    "id": "root",
+    "parent": null,
+    "children": [
+     "u1"
+    ],
+    "message": null
+   },
+   "u1": {
+    "id": "u1",
+    "parent": "root",
+    "children": [
+     "a-call"
+    ],
+    "message": {
+     "id": "u1",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710001010,
+     "update_time": null,
+     "content": {
+      "content_type": "multimodal_text",
+      "parts": [
+       {
+        "content_type": "image_asset_pointer",
+        "asset_pointer": "file-service://file-abc",
+        "size_bytes": 1234,
+        "width": 10,
+        "height": 10
+       },
+       "Plot this chart and tell me the trend."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {
+      "attachments": [
+       {
+        "id": "file-abc",
+        "name": "sales.png",
+        "mime_type": "image/png",
+        "size": 1234
+       }
+      ]
+     },
+     "recipient": "all"
+    }
+   },
+   "a-call": {
+    "id": "a-call",
+    "parent": "u1",
+    "children": [
+     "tool"
+    ],
+    "message": {
+     "id": "a-call",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710001020,
+     "update_time": null,
+     "content": {
+      "content_type": "code",
+      "language": "python",
+      "text": "plot()"
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "python"
+    }
+   },
+   "tool": {
+    "id": "tool",
+    "parent": "a-call",
+    "children": [
+     "a-text1"
+    ],
+    "message": {
+     "id": "tool",
+     "author": {
+      "role": "tool",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710001030,
+     "update_time": null,
+     "content": {
+      "content_type": "execution_output",
+      "text": "ok"
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "a-text1": {
+    "id": "a-text1",
+    "parent": "tool",
+    "children": [
+     "a-text2"
+    ],
+    "message": {
+     "id": "a-text1",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710001040,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "I plotted it."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "a-text2": {
+    "id": "a-text2",
+    "parent": "a-text1",
+    "children": [],
+    "message": {
+     "id": "a-text2",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710001050,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Sales rise steadily from Marchciteturn0search0 and dip in August."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   }
+  },
+  "current_node": "a-text2",
+  "conversation_id": "chatgpt-conv-b"
+ },
+ {
+  "title": null,
+  "create_time": 1710003000,
+  "update_time": null,
+  "mapping": {
+   "r": {
+    "id": "r",
+    "parent": null,
+    "children": [
+     "u"
+    ],
+    "message": null
+   },
+   "u": {
+    "id": "u",
+    "parent": "r",
+    "children": [
+     "a1",
+     "a2"
+    ],
+    "message": {
+     "id": "u",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710003010,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "What is 2 + 2?"
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "a1": {
+    "id": "a1",
+    "parent": "u",
+    "children": [],
+    "message": {
+     "id": "a1",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710003020,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Three."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "a2": {
+    "id": "a2",
+    "parent": "u",
+    "children": [],
+    "message": {
+     "id": "a2",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710003030,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "Four."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   }
+  },
+  "current_node": null,
+  "id": "chatgpt-conv-c"
+ },
+ {
+  "title": "Empty",
+  "create_time": 1710004000,
+  "update_time": 1710004000,
+  "mapping": {
+   "r": {
+    "id": "r",
+    "parent": null,
+    "children": [
+     "s"
+    ],
+    "message": null
+   },
+   "s": {
+    "id": "s",
+    "parent": "r",
+    "children": [],
+    "message": {
+     "id": "s",
+     "author": {
+      "role": "system",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": null,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "You are helpful."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   }
+  },
+  "current_node": "s",
+  "conversation_id": "chatgpt-conv-d"
+ },
+ {
+  "title": "Wallet notes",
+  "create_time": 1710005000,
+  "update_time": 1710005100,
+  "mapping": {
+   "r": {
+    "id": "r",
+    "parent": null,
+    "children": [
+     "u"
+    ],
+    "message": null
+   },
+   "u": {
+    "id": "u",
+    "parent": "r",
+    "children": [
+     "a"
+    ],
+    "message": {
+     "id": "u",
+     "author": {
+      "role": "user",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710005010,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "My test wallet phrase is: abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about. Remember it."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   },
+   "a": {
+    "id": "a",
+    "parent": "u",
+    "children": [],
+    "message": {
+     "id": "a",
+     "author": {
+      "role": "assistant",
+      "name": null,
+      "metadata": {}
+     },
+     "create_time": 1710005020,
+     "update_time": null,
+     "content": {
+      "content_type": "text",
+      "parts": [
+       "I will not store that. Keep it somewhere safe."
+      ]
+     },
+     "status": "finished_successfully",
+     "end_turn": true,
+     "weight": 1,
+     "metadata": {},
+     "recipient": "all"
+    }
+   }
+  },
+  "current_node": "a",
+  "conversation_id": "chatgpt-conv-e"
+ }
+]

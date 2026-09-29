@@ -376,6 +376,7 @@ export const MODE_LABELS = {
   slides: "Slides",
   translate: "Translate docs",
   notes: "Meeting notes",
+  import: "Import chats",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -407,6 +408,8 @@ const PLACES = [
   ["slides", "Slides", ["slide deck", "presentation", "deck", "powerpoint", "keynote", "present", "pitch"]],
   // Meeting Notes: only once released, with Voice & Audio.
   ["notes", "Meeting notes", ["meeting", "recording", "transcribe", "transcript", "minutes", "action items", "call notes", "decisions"]],
+  // Chat Import: only once released, like the others.
+  ["import", "Import chats", ["import", "chatgpt", "claude", "history", "export", "migrate", "bring my chats", "conversations"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

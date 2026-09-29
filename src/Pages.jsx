@@ -900,6 +900,7 @@ const featureIcons = {
   recovery: "lifebuoy",
   pushalerts: "bell",
   decoy: "mask",
+  chatimport: "import",
 };
 const launch = {
   id: "mvp",

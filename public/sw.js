@@ -145,3 +145,56 @@ async function trim(cache) {
   for (const key of keys.slice(0, Math.max(0, keys.length - MAX_ASSETS)))
     await cache.delete(key);
 }
+
+// ---- Push Alerts ----
+// A notification from ANONYMA's server (server/push-alerts.js), which only
+// arrives once this browser was subscribed in Account settings. Each message
+// is one fixed sentence and a page of this site to open, never anything from
+// the account. The pages a notification may open (PUSH_KINDS' urls in
+// src/push-alerts.js; tests keep the two lists equal):
+const PUSH_PATHS = [
+  "/workspace/routines",
+  "/account/credits",
+  "/account/credits#gift-links",
+  "/account/settings#inactivity-wipe",
+  "/account/settings#push-alerts",
+];
+const pushPath = (url) => (PUSH_PATHS.includes(url) ? url : "/workspace");
+
+self.addEventListener("push", (event) => {
+  let data = null;
+  try {
+    data = event.data ? event.data.json() : null;
+  } catch {
+    data = null;
+  }
+  const ok = data && data.v === 1 && typeof data.body === "string";
+  // A push must always show a notification; one that can't be read shows
+  // the plain name.
+  event.waitUntil(
+    self.registration.showNotification(ok ? String(data.title || "ANONYMA").slice(0, 80) : "ANONYMA", {
+      body: ok ? data.body.slice(0, 200) : "",
+      tag: ok && typeof data.tag === "string" ? data.tag.slice(0, 64) : "anonyma",
+      icon: "/icons/icon-192.png",
+      data: { url: pushPath(ok ? data.url : null) },
+    }),
+  );
+});
+
+// Opens the page in a new window (or focuses a window already on it), so a
+// tab with unsent work is never navigated away.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(pushPath(event.notification.data && event.notification.data.url), self.location.origin);
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const open = windows.find((c) => {
+        const u = new URL(c.url);
+        return u.origin === target.origin && u.pathname === target.pathname && u.hash === target.hash;
+      });
+      if (open) return open.focus();
+      return self.clients.openWindow(target.href);
+    })(),
+  );
+});

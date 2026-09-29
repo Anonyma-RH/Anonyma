@@ -17,6 +17,7 @@ import {
   WIPE_GIFTS,
   WIPE_VAULT_SYNC,
   WIPE_CANVAS,
+  WIPE_PUSH,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPED_PATH,
@@ -51,6 +52,8 @@ export function PanicWipe({ user }) {
   const vaultSyncLive = isReleased(config, "vaultsync");
   // And canvases saved to the account.
   const canvasLive = isReleased(config, "canvas");
+  // And Push Alerts' browsers.
+  const pushLive = isReleased(config, "pushalerts") && isReleased(config, "app");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
   const [open, setOpen] = useState(false),
@@ -127,6 +130,7 @@ export function PanicWipe({ user }) {
                   {giftsLive && <li>{WIPE_GIFTS}</li>}
                   {vaultSyncLive && <li>{WIPE_VAULT_SYNC}</li>}
                   {canvasLive && <li>{WIPE_CANVAS}</li>}
+                  {pushLive && <li>{WIPE_PUSH}</li>}
                 </ul>
               </div>
               <div>

@@ -1500,6 +1500,76 @@ route("patch", "/api/balance-alert", "Turn the low-balance alert on or off, or c
   description:
     "Omitted fields keep their value. threshold null turns the alert off and forgets notify with it. Turning it on needs a threshold (400 invalid_threshold otherwise); notify alone changes an alert that's already on. Stored as integer ledger subunits; never writes the ledger. 400 invalid_threshold, invalid_notify or invalid_alert. 60 changes an hour.",
 });
+// Push Alerts (update "pushalerts", which also needs "app").
+const pushEvents = object({
+  pagewatch: { ...bool, description: "A Page Watch found a change, or paused (needs Page Watch and Routines)" },
+  routines: { ...bool, description: "A routine has a new result (needs Routines)" },
+  lowbalance: { ...bool, description: "The settled balance dropped below the Low-Balance Alerts level (needs Low-Balance Alerts and a level)" },
+  gifts: { ...bool, description: "A gift was claimed, or came back unclaimed (needs Gift Links)" },
+  inactivity: { ...bool, description: "Inactivity Wipe's reminder, 7 days before the deadline (needs Inactivity Wipe on)" },
+});
+const pushView = object({
+  available: { ...bool, description: "This server has a valid VAPID key pair and contact (the same as /api/config's services.push)" },
+  publicKey: { ...nullableString, description: "The VAPID public key (base64url, uncompressed P-256) to subscribe with; null when unavailable" },
+  devices: array(
+    object({
+      id: string,
+      service: { enum: ["google", "mozilla", "apple", "microsoft"] },
+      tag: { ...string, description: "The first 16 hex characters of SHA-256 of the endpoint, so a page can recognise its own browser; the endpoint itself is never returned" },
+      lang: { enum: ["en", "zh"] },
+      created: integer,
+      lastSuccess: { type: ["integer", "null"], description: "When a push service last accepted a notification for it" },
+      stale: { ...bool, description: "Subscribed with an older VAPID key; nothing is sent until that browser subscribes again" },
+    }),
+  ),
+  events: { ...pushEvents, description: "Only the kinds whose updates are live. True by default." },
+  lowBalanceLevel: { ...bool, description: "A Low-Balance Alerts level is set" },
+  inactivityOn: { ...bool, description: "Inactivity Wipe is on" },
+  max: integer,
+});
+route("get", "/api/push", "Your Push Alerts browsers and switches", {
+  response: pushView,
+  description:
+    "Push Alerts sends browser notifications through Web Push, with no email. Each notification is one fixed sentence (a page watch found a change, a routine has a result, the balance is low, a gift was claimed or came back, Inactivity Wipe is 7 days away, or a test) and a link to the page to open: never chat or page text, amounts or names. The push service (Google, Mozilla, Apple or Microsoft) receives only the endpoint and an encrypted, fixed-size message. Account export includes pushAlerts (each browser's push service host, dates and language, and the switches); Panic Wipe, Inactivity Wipe and closing the account delete all of it.",
+});
+route("post", "/api/push/subscriptions", "Turn on notifications in this browser", {
+  body: object(
+    {
+      endpoint: { ...string, description: "PushSubscription.endpoint: https, on a known push service" },
+      keys: object({ p256dh: string, auth: string }, ["p256dh", "auth"]),
+      lang: { enum: ["en", "zh"], description: "The language notifications are written in (default en)" },
+    },
+    ["endpoint", "keys"],
+  ),
+  status: 201,
+  response: pushView,
+  description:
+    "Adds this browser, or refreshes it (the same endpoint). An endpoint another account had moves to this one. The response adds device, the new id. 400 push_endpoint, push_service (not Google, Mozilla, Apple or Microsoft), push_keys or push_limit (10 browsers); 503 push_unavailable without VAPID keys. 30 an hour.",
+});
+route("delete", "/api/push/subscriptions/{id}", "Remove a browser", {
+  response: pushView,
+  description: "It gets no more notifications from this account. The switches go with the last browser. 404 push_not_found.",
+});
+route("post", "/api/push/subscriptions/{id}/test", "Send a test notification to a browser", {
+  status: 202,
+  response: {
+    ...pushView,
+    properties: {
+      ...pushView.properties,
+      queued: bool,
+      outcome: {
+        enum: ["accepted", "pending", "gone", "stale"],
+        description: "What the push service said: accepted it; didn't yet (it's retried with backoff); the subscription had ended (the browser was removed); or nothing was sent because the browser subscribed with an older key",
+      },
+    },
+  },
+  description: "Sends one test notification to that browser at once and answers with the outcome and the refreshed list. 404 push_not_found; 503 push_unavailable. 10 an hour.",
+});
+route("patch", "/api/push/settings", "Switch kinds of notification on or off", {
+  body: pushEvents,
+  response: pushView,
+  description: "Omitted switches keep their value. 400 push_no_devices before any browser is subscribed, or invalid_request. 120 changes an hour.",
+});
 // Share a Chat (update "sharelinks").
 const shareLink = object({
   id: string,
@@ -3273,6 +3343,11 @@ const inactivityWipe = object({
   options: array(integer),
   remindDays: integer,
   now: { ...integer, description: "The server's time for this answer" },
+  push: {
+    type: "object",
+    properties: { remindAt: nullableInt, sent: bool },
+    description: "Present only while Push Alerts is available and the account has a browser with the Inactivity Wipe reminder on: when the browser reminder is due (7 days before the deadline) and whether this period's was sent",
+  },
 });
 route("get", "/api/inactivity-wipe", "Your Inactivity Wipe setting", {
   response: inactivityWipe,

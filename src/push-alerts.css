@@ -1,0 +1,184 @@
+/* Push Alerts: Account → Settings (PushAlertsSettings in src/PushAlerts.jsx).
+   Builds on .settings-stack and .allowance-tag; the browser list follows
+   Passkeys' list (src/passkeys.css). */
+.push-body {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.push-start {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.push-start .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.push-devices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  border: 1px solid var(--work-line, var(--line));
+  border-radius: 8px;
+  background: #fff;
+}
+.push-device {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+.push-device + .push-device {
+  border-top: 1px solid var(--work-line, var(--line));
+}
+.push-device-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  background: #0135df;
+  color: var(--brand-orange, #ffb21c);
+}
+.push-device-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.push-device-main b {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.push-device-main small {
+  font-size: 12px;
+  color: var(--work-muted, var(--muted));
+}
+.push-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid;
+  border-radius: 2px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: #0135df;
+  border-color: #c9d6fa;
+  background: #edf2ff;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.push-device-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.push-device-actions .small-button {
+  font-size: 12px;
+  min-height: 32px;
+  padding: 6px 10px;
+}
+.push-empty {
+  margin: 0 !important;
+  padding: 16px;
+  border: 1px dashed #d3dce9;
+  border-radius: 8px;
+  background: #fafbfe;
+  font-size: 13px !important;
+  color: var(--work-muted, #68748a) !important;
+}
+.push-events {
+  display: grid;
+  gap: 12px;
+  padding-top: 4px;
+}
+.push-events h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #142343;
+}
+.push-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  color: #142343;
+}
+.push-event input[type="checkbox"] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #0135df;
+}
+.push-event > span {
+  display: grid;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.push-event b {
+  font-weight: 600;
+}
+.push-event small,
+.push-note,
+.push-notes {
+  font-size: 12px !important;
+  line-height: 1.6;
+  color: #68748a !important;
+}
+.push-event a {
+  color: #0135df;
+}
+.push-sentence q {
+  quotes: "“" "”";
+}
+.push-note {
+  margin: 0 !important;
+}
+.push-notes {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  list-style: disc;
+}
+.push-notes li {
+  display: list-item;
+}
+.push-warn {
+  color: #9c5543 !important;
+}
+.push-saved,
+.push-error {
+  margin: 0 !important;
+  font-size: 12px !important;
+}
+.push-saved {
+  color: #0a7a3e !important;
+}
+.push-error {
+  color: #b42318 !important;
+}
+
+/* Phones: the buttons go under the name. */
+@media (max-width: 700px) {
+  .push-device {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 10px;
+    align-items: start;
+  }
+  .push-device-actions {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

@@ -90,6 +90,12 @@ export function config(overrides = {}) {
     publicUrl: e.PUBLIC_BASE_URL || "",
     smtp: e.SMTP_URL || "",
     smtpFrom: e.SMTP_FROM || "",
+    // Push Alerts (server/web-push.js): the installation's VAPID key pair
+    // (base64url; `node scripts/vapid-keys.mjs` makes one) and the contact
+    // push services see (mailto: or https:). Unset, push is unavailable.
+    vapidPublicKey: e.VAPID_PUBLIC_KEY || "",
+    vapidPrivateKey: e.VAPID_PRIVATE_KEY || "",
+    vapidSubject: e.VAPID_SUBJECT || "",
     walletProject: e.WALLETCONNECT_PROJECT_ID || "",
     rpc: e.TOKEN_RPC_URL || "",
     token: e.TOKEN_CONTRACT || "",
@@ -1237,6 +1243,52 @@ export const MIGRATIONS = [
       CREATE TRIGGER IF NOT EXISTS slide_decks_per_account BEFORE INSERT ON slide_decks
         WHEN (SELECT COUNT(*) FROM slide_decks WHERE user_id=NEW.user_id)>=200
         BEGIN SELECT RAISE(ABORT,'slides_limit'); END;
+  `),
+  // Push Alerts (server/push-alerts.js). push_subscriptions: each browser
+  // an account turned notifications on in: its push endpoint and the two
+  // public values its messages are encrypted to, the push service's name,
+  // the page's language, the VAPID key it was made with (a short hash),
+  // when it was added and last reached. At most 10 per account; an
+  // endpoint belongs to one account. push_settings: the account's switches
+  // (on by default), whether the balance was last seen below the
+  // Low-Balance Alerts level, and the Inactivity Wipe period already
+  // reminded; it goes with the last browser. push_queue: notifications
+  // waiting for delivery (a browser, a kind, when, tries), one per browser
+  // and kind. All erased with the account's content.
+  additive(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        endpoint TEXT NOT NULL UNIQUE CHECK(length(endpoint) BETWEEN 9 AND 2048),
+        p256dh TEXT NOT NULL CHECK(length(p256dh) BETWEEN 80 AND 100),
+        auth TEXT NOT NULL CHECK(length(auth) BETWEEN 16 AND 32),
+        service TEXT NOT NULL CHECK(service IN ('google','mozilla','apple','microsoft')),
+        lang TEXT NOT NULL DEFAULT 'en' CHECK(lang IN ('en','zh')),
+        key_id TEXT NOT NULL,
+        created INTEGER NOT NULL,
+        last_success INTEGER);
+      CREATE INDEX IF NOT EXISTS push_subscriptions_user ON push_subscriptions(user_id);
+      CREATE TRIGGER IF NOT EXISTS push_subscriptions_per_account BEFORE INSERT ON push_subscriptions
+        WHEN (SELECT COUNT(*) FROM push_subscriptions WHERE user_id=NEW.user_id)>=10
+        BEGIN SELECT RAISE(ABORT,'push_limit'); END;
+      CREATE TABLE IF NOT EXISTS push_settings(user_id TEXT PRIMARY KEY REFERENCES users(id),
+        pagewatch INTEGER NOT NULL DEFAULT 1 CHECK(pagewatch IN (0,1)),
+        routines INTEGER NOT NULL DEFAULT 1 CHECK(routines IN (0,1)),
+        lowbalance INTEGER NOT NULL DEFAULT 1 CHECK(lowbalance IN (0,1)),
+        gifts INTEGER NOT NULL DEFAULT 1 CHECK(gifts IN (0,1)),
+        inactivity INTEGER NOT NULL DEFAULT 1 CHECK(inactivity IN (0,1)),
+        low_state INTEGER CHECK(low_state IN (0,1)),
+        inactivity_for INTEGER,
+        updated INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS push_queue(id TEXT PRIMARY KEY,
+        subscription_id TEXT NOT NULL REFERENCES push_subscriptions(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK(length(kind) BETWEEN 1 AND 40),
+        created INTEGER NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        next_try INTEGER NOT NULL,
+        UNIQUE(subscription_id,kind));
+      CREATE INDEX IF NOT EXISTS push_queue_due ON push_queue(next_try);
+      CREATE INDEX IF NOT EXISTS push_queue_user ON push_queue(user_id);
   `),
 ];
 // The schema versions whose migrations were recorded as additive.

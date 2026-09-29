@@ -15,6 +15,7 @@ import { exportGifts, forgetGifts } from "./gifts.js";
 import { exportVaultSync, forgetVaultSync } from "./vault-sync.js";
 import { exportCanvases, forgetCanvases } from "./canvas.js";
 import { exportSlideDecks, forgetSlideDecks } from "./slides.js";
+import { exportPush, forgetPush, pushReleased } from "../push-alerts.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -63,6 +64,7 @@ import {
 //   credited top-up stays as its deposit). Votes already added to the Blind
 //   Arena stay: its aggregate has no account id, so none of it is theirs;
 // - Vault Sync's ciphertext and its synced settings;
+// - Push Alerts' subscribed browsers, switches and waiting notifications;
 //   Audio Overview scripts, Canvas canvases and NYMA top-up quotes (a
 //   credited top-up stays as its deposit);
 //   Audio Overview scripts, Slides decks and NYMA top-up quotes (a credited
@@ -140,6 +142,9 @@ export function eraseAccountContent(db, user) {
   forgetCanvases(db, id);
   // Slides: saved decks (those kept in a browser go with that browser).
   forgetSlideDecks(db, id);
+  // Push Alerts: every subscribed browser, the switches and anything
+  // waiting to be sent. A browser gets nothing more from this account.
+  forgetPush(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -289,6 +294,12 @@ export function accountRoutes(ctx) {
   function slidesExport(user) {
     const list = exportSlideDecks(db, user);
     return list.length || isReleased(cfg, "slides") ? { slideDecks: list } : {};
+  }
+  // Push Alerts: each browser (its push service's host, never the endpoint)
+  // and the switches, once the update is live or while any are kept.
+  function pushExport(user) {
+    const kept = exportPush(db, user);
+    return kept || pushReleased(cfg) ? { pushAlerts: kept } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -634,6 +645,8 @@ export function accountRoutes(ctx) {
       ...canvasExport(req.user.id),
       // Slides: saved decks.
       ...slidesExport(req.user.id),
+      // Push Alerts: subscribed browsers (host only) and switches.
+      ...pushExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

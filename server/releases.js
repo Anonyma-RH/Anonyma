@@ -1175,6 +1175,27 @@ export const UPDATES = [
     // recording itself is never stored. The page is /workspace/notes.
     released: true,
   },
+  {
+    id: "pushalerts",
+    title: "Push Alerts",
+    tagline: "Get alerts without giving us an email: browser notifications for your routines, page watches, balance and gifts.",
+    points: [
+      "Turn it on in Account settings, in each browser you want alerts in",
+      "Every alert is one fixed sentence: never your chats, pages, amounts or names",
+      "Your browser's push service carries only encrypted messages it can't read",
+    ],
+    // Account → Settings (src/PushAlerts.jsx) and /api/push
+    // (server/routes/push-alerts.js), gated here in featuresFor with "app",
+    // whose service worker (public/sw.js) receives the notifications. Web
+    // Push with VAPID and aes128gcm encryption on node:crypto
+    // (server/web-push.js); without VAPID keys it says it isn't available.
+    // Events come from Routines, Page Watch, Gift Links, and the worker's
+    // Low-Balance and Inactivity Wipe sweeps (server/push-alerts.js).
+    // Browsers, switches and waiting messages are erased with the account's
+    // content and exported with endpoints cut to their host. Nothing is
+    // charged.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1542,6 +1563,9 @@ export function featuresFor(req) {
   // Low-Balance Alerts: the account's alert level and notification choice.
   if (p === "/api/balance-alert" || p.startsWith("/api/balance-alert/"))
     return ["balancealerts"];
+  // Push Alerts: the account's browsers and switches. The notifications
+  // arrive through the installable app's service worker, so it needs "app".
+  if (p === "/api/push" || p.startsWith("/api/push/")) return ["pushalerts", "app"];
   // Live Preview's sandboxed frame document (server/routes/preview.js).
   if (p === "/preview-frame.html") return ["preview"];
   // Sealed Share: the browser seals a snapshot before uploading it, so the

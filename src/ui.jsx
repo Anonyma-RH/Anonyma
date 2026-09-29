@@ -104,6 +104,7 @@ import {
   ListOrdered,
   Presentation,
   FileAudio,
+  BellRing,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -197,6 +198,8 @@ const icons = {
   terminal: SquareTerminal,
   // Inactivity Wipe: time running out on a period without sign-ins.
   hourglass: Hourglass,
+  // Push Alerts: browser notifications.
+  bell: BellRing,
   ticket: Ticket,
   printer: Printer,
   podium: Podium,

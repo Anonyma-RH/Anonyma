@@ -51,6 +51,7 @@ import { ShareLinksManager } from "./ShareLinks.jsx";
 import { GiftLinks, giftLinksReleased } from "./GiftLinks.jsx";
 import { PanicWipe } from "./PanicWipe.jsx";
 import { InactivityWipeSettings } from "./InactivityWipe.jsx";
+import { PushAlertsSettings } from "./PushAlerts.jsx";
 import { TwoStepSettings } from "./TwoStep.jsx";
 import { twoStepReleased } from "./two-step.js";
 import { PasskeySettings } from "./Passkeys.jsx";
@@ -1105,6 +1106,9 @@ export default function Account() {
                   />
                 </section>
               )}
+              {/* Push Alerts: browser notifications, turned on per browser
+                  (renders nothing until released). */}
+              {!demo && user && <PushAlertsSettings config={config} user={user} />}
               {/* Inactivity Wipe: Panic Wipe's erase, run for you after a
                   period without sign-ins (off until chosen). */}
               {!demo && user && (

@@ -20,6 +20,13 @@ export function configurationStatus(cfg) {
       ["GATEWAY2_API_KEY", cfg.gateway2Key],
     ],
     walletPayments: [["WALLET_PAYMENT_ADDRESS", cfg.walletPaymentAddress]],
+    // Push Alerts: set means present, not valid (server/web-push.js checks
+    // the pair; /api/config's services.push says whether it's usable).
+    push: [
+      ["VAPID_PUBLIC_KEY", cfg.vapidPublicKey],
+      ["VAPID_PRIVATE_KEY", cfg.vapidPrivateKey],
+      ["VAPID_SUBJECT", cfg.vapidSubject],
+    ],
   };
   const configured = Object.fromEntries(
     Object.entries(groups).map(([service, keys]) => [

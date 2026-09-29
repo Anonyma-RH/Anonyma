@@ -15,6 +15,7 @@ import { isPrivateModel } from "../private-mode.js";
 import { sealedLive } from "../sealed.js";
 import { viewerOf } from "../early-models.js";
 import { passkeysLive } from "../passkeys.js";
+import { pushAvailable } from "../push-alerts.js";
 import { withMemory } from "../../src/memory.js";
 import { trainingFields, liveIds } from "../training.js";
 import { limitsLive, spendingRoom } from "../spending-limits.js";
@@ -72,6 +73,8 @@ export function catalogRoutes(ctx) {
         nymaPayments: !!nymaPaymentInfo(cfg),
         // Passkeys: released, on a domain the browser accepts as an RP ID.
         passkeys: passkeysLive(cfg),
+        // Push Alerts: released, with a valid VAPID key pair and contact.
+        push: pushAvailable(cfg),
       },
       walletPayments: walletPaymentInfo(cfg),
       // Pay with NYMA's public settings, once it's released (null before).

@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { now, fail, transaction } from "./core.js";
 import { isReleased } from "./releases.js";
 import { configurationStatus } from "./readiness.js";
+import { inactivityPush } from "./push-alerts.js";
 import {
   WIPE_DAYS,
   DAY_MS,
@@ -136,7 +137,15 @@ export function inactivityView(db, cfg, user, at = now()) {
     options: WIPE_DAYS,
     remindDays: REMIND_DAYS,
     now: at,
+    // Push Alerts' browser reminder, sent by its own sweep
+    // (server/push-alerts.js), only while the account has a browser with it
+    // switched on: when it's due and whether this period's was sent.
+    ...pushReminder(db, cfg, user.id, row),
   };
+}
+function pushReminder(db, cfg, user, row) {
+  const push = inactivityPush(db, cfg, user, row);
+  return push ? { push } : {};
 }
 
 // PUT /api/inactivity-wipe: { days: 30 | 90 | 180 | 365 | null, api_counts?,

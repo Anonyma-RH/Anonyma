@@ -439,11 +439,20 @@ export function BalanceAlertSettings({ config, user, demo }) {
               and it stays away until your balance drops further, or until
               tomorrow.
             </li>
-            <li>
-              The notification shows once, when your balance first drops below
-              the level while ANONYMA is open in a tab. There's no email and no
-              background push.
-            </li>
+            {isReleased(config, "pushalerts") && isReleased(config, "app") ? (
+              <li>
+                The notification shows once, when your balance first drops
+                below the level while ANONYMA is open in a tab. There's no
+                email. For an alert when ANONYMA isn't open, turn on Push
+                Alerts in Account settings.
+              </li>
+            ) : (
+              <li>
+                The notification shows once, when your balance first drops below
+                the level while ANONYMA is open in a tab. There's no email and no
+                background push.
+              </li>
+            )}
             <li>
               It watches your personal balance only, not a team treasury.
             </li>

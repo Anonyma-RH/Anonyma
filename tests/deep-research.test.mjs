@@ -13,7 +13,7 @@ import { createApp } from "../server/app.js";
 import { addCredit, balance, credits } from "../server/core.js";
 import { UPDATES, featuresFor } from "../server/releases.js";
 import { eraseAccountContent } from "../server/routes/account.js";
-import { BUDGETS, CUT_SHORT_NOTE } from "../server/research.js";
+import { BUDGETS, CUT_SHORT_NOTE, todayLine } from "../server/research.js";
 import {
   DEPTHS,
   MAX_SOURCES,
@@ -340,6 +340,11 @@ test("a quick run plans, searches 3 times, writes, charges each step and saves o
   // The plan was capped at Quick's 3; each search carried one sub-question
   // and the web plugin; only the plan and the report saw the whole question.
   assert.deepEqual(g.calls.map((c) => c.kind).sort(), ["plan", "search", "search", "search", "write"]);
+  // The model has no clock: every step's instructions say today's date, and the
+  // planner and searches are told to prefer recent items.
+  for (const c of g.calls) assert.ok(c.body.messages[0].content.includes(todayLine()), c.kind + " says today's date");
+  assert.match(g.calls.find((c) => c.kind === "plan").body.messages[0].content, /prefer recent items and include the current year/);
+  assert.match(g.calls.find((c) => c.kind === "search").body.messages[0].content, /Prefer recent pages/);
   const searched = g.calls.filter((c) => c.kind === "search").map((c) => c.body.messages[1].content).sort();
   assert.deepEqual(searched, PLAN.slice(0, 3).sort());
   assert.ok(g.calls.filter((c) => c.kind === "search").every((c) => c.body.messages.length === 2));
@@ -395,9 +400,10 @@ test("step budgets leave room for reasoning; the quote, the hold and the maximum
     quotes[depth] = q;
   }
   // gemini-2.5-flash at the published rates (no markup in tests).
-  // Quick 82.13 -> 95.26 and Thorough 154.60 -> 175.23 with the raised budgets.
-  assert.equal(quotes.quick.credits, 95.2568);
-  assert.equal(quotes.thorough.credits, 175.2299);
+  // Quick 82.13 -> 95.30 and Thorough 154.60 -> 175.30 with the raised budgets
+  // and the date line every prompt now carries.
+  assert.equal(quotes.quick.credits, 95.3028);
+  assert.equal(quotes.thorough.credits, 175.3017);
   // Each step asks for its budget, and the hold is 4x the quoted maximum.
   await ask(a).expect(200);
   const asked = Object.fromEntries(g.calls.map((c) => [c.kind, c.body.max_tokens]));

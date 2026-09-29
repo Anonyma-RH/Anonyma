@@ -1,6 +1,6 @@
 import { chatLimits } from "../data/chat-limits.js";
 import { isReleased } from "./releases.js";
-import { chatPrice, fail, tokenCost } from "./core.js";
+import { chatPrice, fail, now, tokenCost } from "./core.js";
 import { chatStream, reportedProviderCost } from "./provider.js";
 import { FAILOVER_CODES } from "./fallback.js";
 import { ZDR_ROUTING } from "./private-mode.js";
@@ -27,28 +27,39 @@ import {
 // report. Each is also capped by the model's own output limit (stepBudget).
 export const BUDGETS = { plan: 4000, search: 4000, write: 8000 };
 
-export const plannerPrompt = (cap) =>
+// The model has no clock: without the date it searches for whatever year it
+// last saw ("latest announcements in 2024"). Every prompt of every step says
+// today's date (UTC, so a run's date doesn't depend on a server's zone), and
+// the planner and the searches are told to prefer recent items. The date is
+// always ten characters, so the quote and the run price the same prompt.
+export const todayLine = (at = now()) => `Today is ${new Date(at).toISOString().slice(0, 10)} (UTC).`;
+
+export const plannerPrompt = (cap, at) =>
   `You plan web research. Split the user's question into at most ${cap} focused sub-questions. ` +
   "Each must be answerable by one web search, and together they must cover the question. " +
+  `${todayLine(at)} When the question asks for the latest or new developments, prefer recent items and include the current year in the sub-questions. ` +
   "Write them in the language of the question. Reply with JSON only, exactly in this shape: " +
   '{"questions": ["...", "..."]}';
 
-export const SEARCH_PROMPT =
+export const searchPrompt = (at) =>
   "Search the web to answer the question below. It is one part of a larger research task. " +
+  `${todayLine(at)} Prefer recent pages, and do not present items from earlier years as current or latest. ` +
   "Report what you find in at most 250 words: facts, figures and dates as the pages state them, " +
   "which page each fact comes from, and where pages disagree or nothing reliable was found. " +
   "No advice and no preamble.";
 
-export const WRITE_PROMPT = [
-  "You write research reports from web search findings. Use only the findings given; add nothing from memory.",
-  "Write in the language of the question, in Markdown:",
-  "# A short title",
-  "**Key findings**, then 3 to 6 bullet points.",
-  "Then 2 to 5 sections, each with a ## heading.",
-  "Cite sources with their numbers in square brackets, such as [2] or [1][4], right after the claim they support.",
-  "Use only numbers from the source list. Never write URLs or a list of sources; the app shows them.",
-  "If the findings are thin, one-sided or disagree, say so plainly. Report what sources say rather than giving financial, legal or medical advice.",
-].join("\n");
+export const writePrompt = (at) =>
+  [
+    "You write research reports from web search findings. Use only the findings given; add nothing from memory.",
+    todayLine(at) + " Findings from earlier years are background, not the latest news: say how old they are.",
+    "Write in the language of the question, in Markdown:",
+    "# A short title",
+    "**Key findings**, then 3 to 6 bullet points.",
+    "Then 2 to 5 sections, each with a ## heading.",
+    "Cite sources with their numbers in square brackets, such as [2] or [1][4], right after the claim they support.",
+    "Use only numbers from the source list. Never write URLs or a list of sources; the app shows them.",
+    "If the findings are thin, one-sided or disagree, say so plainly. Report what sources say rather than giving financial, legal or medical advice.",
+  ].join("\n");
 
 // The line a report cut short by its reply budget ends with: Chinese for a
 // question written in Chinese (the report follows the question's language),
@@ -78,7 +89,7 @@ export const plannerMessages = (question, cap, memoryMessage) =>
   );
 
 export const searchMessages = (subQuestion) => [
-  { role: "system", content: SEARCH_PROMPT },
+  { role: "system", content: searchPrompt() },
   { role: "user", content: subQuestion },
 ];
 
@@ -101,7 +112,7 @@ export function writeMessages({ question, questions, results, sources, numbers, 
   const list = sources.length ? sources.map((s, i) => sourceLine(s, i + 1)).join("\n") : "(none returned)";
   return withMemory(
     [
-      { role: "system", content: WRITE_PROMPT },
+      { role: "system", content: writePrompt() },
       {
         role: "user",
         content: `Question: ${question}\n\nSources (cite by number):\n${list}\n\nFindings:\n\n${findings}`,
@@ -120,7 +131,7 @@ export function worstWriteMessages({ question, cap, memoryMessage }) {
   const filler = "x".repeat(sources * 240 + cap * perSearch + 200);
   return withMemory(
     [
-      { role: "system", content: WRITE_PROMPT },
+      { role: "system", content: writePrompt() },
       { role: "user", content: `Question: ${question}\n\n${filler}` },
     ],
     memoryMessage,

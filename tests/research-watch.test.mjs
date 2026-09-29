@@ -14,7 +14,8 @@ import { createApp } from "../server/app.js";
 import { MIGRATIONS, addCredit, balance, database, migrate, now, reserve, rollbackSchema, settle, uid } from "../server/core.js";
 import { UPDATES, featuresFor } from "../server/releases.js";
 import { eraseAccountContent } from "../server/routes/account.js";
-import { WATCH_WRITE_NEW_PROMPT, WATCH_WRITE_PROMPT, watchCosts } from "../server/research-watch.js";
+import { watchCosts, watchWritePrompt } from "../server/research-watch.js";
+import { todayLine } from "../server/research.js";
 import { MAX_WATCHES, MAX_PREVIOUS, TOPIC_LIMIT, defaultName, keyFindings } from "../src/research-watch.js";
 import { DATA_NOTICE } from "../src/documents.js";
 import { compileDictionary, translateText } from "../src/i18n.js";
@@ -620,7 +621,7 @@ test("only new since last time: the last report's key findings ride along as dat
   assert.equal(first.length, 10, "both watches ran");
   for (const call of first) assert.ok(!JSON.stringify(call.body.messages).includes("Previous report"), JSON.stringify(call.body.messages).slice(0, 1500));
   const [w1] = first.filter((x) => x.kind === "write" && JSON.stringify(x.body.messages).includes(TOPIC));
-  assert.equal(w1.body.messages[0].content, WATCH_WRITE_PROMPT, "the ordinary prompt");
+  assert.equal(w1.body.messages[0].content, watchWritePrompt(false), "the ordinary prompt");
   const firstRun = (await inbox(p, "?routine=" + made.id))[0];
   assert.equal(firstRun.research.previous, false);
   g.calls.length = 0;
@@ -645,8 +646,10 @@ test("only new since last time: the last report's key findings ride along as dat
     assert.ok(!/Providers must document training data/.test(found[1]), "only the key findings");
     assert.ok(text.includes(DATA_NOTICE), "sent as data");
   }
-  assert.match(plan[0].content, /what is new or has changed since then/);
-  assert.equal(write[0].content, WATCH_WRITE_NEW_PROMPT);
+  assert.match(plan[0].content, /what is new or has changed since that date/);
+  // The previous report's date rides with its key findings, in the plan and the report.
+  for (const messages of [plan, write]) assert.match(messages[1].content, /The previous report is from 2026-09-25 \(UTC\)\.\n\n<document name="Previous report: key findings">/);
+  assert.equal(write[0].content, watchWritePrompt(true));
   // Searches carry only their own sub-question, never the previous report.
   for (const x of g.of("search")) assert.ok(!JSON.stringify(x.body.messages).includes("Previous report"));
   // A watch without "only new" never sends one.
@@ -693,6 +696,35 @@ test("key findings are taken from a report's own section, tolerantly", () => {
   assert.ok(cut.length <= MAX_PREVIOUS);
   assert.ok(cut.endsWith("here."));
   assert.equal(keyFindings(long, 100).length <= 100, true);
+});
+
+test("every step's prompt says today's date, and the planner and searches prefer recent items", async (t) => {
+  const g = await gateway(t);
+  const s = fixture(t, { gatewayUrl: g.url });
+  const p = await person(s);
+  const { c, made } = await due(t, s, p, { new_only: true });
+  await s.tick();
+  const today = "Today is 2026-09-25 (UTC).";
+  assert.equal(todayLine(), today, "the clock the run reads");
+  assert.equal(g.calls.length, 5);
+  for (const call of g.calls) assert.ok(call.body.messages[0].content.includes(today), `${call.kind} says today's date`);
+  const [plan] = g.of("plan");
+  assert.match(plan.body.messages[0].content, /prefer recent items and include the current year in the sub-questions/);
+  for (const search of g.of("search")) assert.match(search.body.messages[0].content, /Prefer recent pages, and do not present items from earlier years as current/);
+  assert.match(g.of("write")[0].body.messages[0].content, /Findings from earlier years are background, not the latest news/);
+  // The next day the date moves on, and "only new" tells the model when the previous report was made.
+  g.calls.length = 0;
+  c.set(utc("2026-10-02T08:00:30Z"));
+  await s.tick();
+  for (const call of g.calls) assert.ok(call.body.messages[0].content.includes("Today is 2026-10-02 (UTC)."), call.kind);
+  for (const call of [g.of("plan")[0], g.of("write")[0]]) {
+    assert.match(call.body.messages[1].content, /The previous report is from 2026-09-25 \(UTC\)\./);
+    assert.ok(!call.body.messages[1].content.includes("2026-10-02"), "the report's own date isn't in the data");
+  }
+  assert.match(g.of("write")[0].body.messages[0].content, /with the date of that report\. Report what is new or has changed since that date\./);
+  // The date is always ten characters, so the quote prices the prompt a run sends.
+  assert.equal(todayLine(utc("2026-01-01T00:00:00Z")).length, todayLine(utc("2026-12-31T23:59:59Z")).length);
+  assert.ok(made.id);
 });
 
 // ---- Money ----

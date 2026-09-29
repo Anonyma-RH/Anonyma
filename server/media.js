@@ -36,7 +36,9 @@ export function createMediaStore(db, cfg) {
       .update(`${id}:${expires}`)
       .digest("hex");
   }
-  async function saveMedia(user, kind, source, meta = {}) {
+  // Generated media's bytes and type, from a data URL, bytes or a download
+  // from an allowlisted host. Nothing is written anywhere.
+  async function loadMedia(source, meta = {}) {
     let bytes, mime;
     if (typeof source === "string" && source.startsWith("data:")) {
       const match = source.match(
@@ -99,6 +101,10 @@ export function createMediaStore(db, cfg) {
     }
     if (bytes.length > 100 * 1024 * 1024)
       fail(502, "Generated file too large.");
+    return { bytes, mime };
+  }
+  async function saveMedia(user, kind, source, meta = {}) {
+    const { bytes, mime } = await loadMedia(source, meta);
     // Downloads can outlive source deletion, membership or retention changes.
     // Recheck immediately before synchronous persistence; never create an orphan
     // file/row, a newly permanent copy, or a link for a revoked member.
@@ -198,6 +204,7 @@ export function createMediaStore(db, cfg) {
   return {
     mediaJSON,
     signMedia,
+    loadMedia,
     saveMedia,
     deleteMedia,
     removeMediaFile,

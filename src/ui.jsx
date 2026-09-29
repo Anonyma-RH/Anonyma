@@ -270,6 +270,8 @@ const pixels = {
   notes: ["..###..", "..###..", "#.###.#", "#.###.#", ".#...#.", "..###..", ".#####."],
   // An arrow into a tray: a chat history brought in.
   import: ["...#...", "...#...", ".#.#.#.", "..###..", "...#...", "#.....#", "#######"],
+  // A picture in a frame: a sun over a hill. Photo tools.
+  photos: [".......", "#######", "#...#.#", "#.....#", "#..#..#", "#.###.#", "#######"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

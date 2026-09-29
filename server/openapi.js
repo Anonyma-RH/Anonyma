@@ -2722,6 +2722,72 @@ route("delete", "/api/meeting-notes/{id}", "Discard meeting notes", {
   response: object({ ended: bool, credits_charged: number }),
   description: "Releases everything the run still holds; pieces already transcribed stay charged. Answers the same for a run that already ended.",
 });
+// Photo Tools (update "phototools", which also needs "images").
+const photoRequest = {
+  tool: { enum: ["edit", "background", "upscale"], description: "edit (change a photo with words), background (cut the subject out as a transparent PNG) or upscale. extend is refused with 400 tool_unavailable" },
+  model: { ...string, description: "A model /api/photo-tools lists for the tool" },
+  ephemeral: { ...bool, description: "Off the record: the result is returned in the reply and saved nowhere (needs ephemeral)" },
+  private: { ...bool, description: "Private Mode: only a zero-data-retention model, and off the record (400 private_model_required when the model isn't one; needs private and ephemeral)" },
+};
+route("get", "/api/photo-tools", "The photo tools, their models and prices", {
+  response: object({
+    tools: array(
+      object({
+        id: string,
+        default: { type: ["string", "null"] },
+        models: array(object({ id: string, name: string, provider: { type: ["string", "null"] }, credits: { ...number, description: "The most one run can cost: exactly what a run holds" }, units: { ...integer, description: "The same in ledger units (credits x 10,000)" }, private: bool })),
+      }),
+    ),
+    unavailable: array(object({ tool: string, reason: string })),
+    private_available: bool,
+    limits: object({ image_bytes: integer, prompt_characters: integer }),
+    available: number,
+    testMode: bool,
+  }),
+  description: "Read from the live catalog's own capability fields: a model is listed only when the catalog says it takes a photo (and, for edit, a prompt). Extend is listed as unavailable. Nothing is reserved.",
+});
+route("post", "/api/photo-tools/quote", "The most a photo run can cost", {
+  body: object(photoRequest, ["tool", "model"]),
+  response: object({
+    credits: { ...number, description: "The maximum, and exactly what a run holds: the highest price the catalog publishes for the model, at the account's rate" },
+    units: { ...integer, description: "The same in ledger units: the max_units a run sends" },
+    usd: number,
+    available: number,
+    spending_limit: object({ remaining: number }),
+    tool: string,
+    model: string,
+    estimate: bool,
+  }),
+  description: "Reserves and charges nothing. The same checks as a run, so a quote that succeeds describes exactly what a run would hold.",
+});
+route("post", "/api/photo-tools/run", "Run a photo tool", {
+  body: object(
+    {
+      ...photoRequest,
+      image: { ...string, description: "The photo as a PNG, JPEG, WebP or GIF data URL, at most 1.5 MiB. Metadata is removed and any redaction is done in the browser first" },
+      prompt: { ...string, maxLength: 2000, description: "edit only: what to change. Ignored (never sent) by the other tools" },
+      max_units: { ...integer, description: "The quote's maximum in ledger units (credits x 10,000). A run whose price differs is refused with 409 estimate_changed" },
+      source: { ...string, description: "A library image this photo came from, kept from the library's cap while the result is saved" },
+      veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for the words (needs trail)" },
+      allow_seed_phrase: { ...bool, description: "Seed Guard's \"Send anyway\" (needs seedguard)" },
+      requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+    },
+    ["tool", "model", "image", "max_units"],
+  ),
+  response: object({
+    tool: string,
+    model: string,
+    saved: bool,
+    media: { ...ref("Media"), description: "The saved library image; null off the record" },
+    image: { type: ["string", "null"], description: "Off the record only: the result as a data URL" },
+    mime: string,
+    receipt: object({ charged: number, credits_charged: number, released: number, model: string }),
+    testMode: bool,
+    privacy: { type: "object", description: "Privacy Trail's object for the run, once released" },
+  }),
+  description:
+    "Workspace only (session). Holds exactly the quote's maximum (402 insufficient_credits or spending_limit with nothing held), sends the photo, and checks the result: it must be a picture, and a cut-out must be able to be transparent. Only a checked result is charged, at the provider's reported cost and never above the hold; a provider failure, a timeout, a result that can't be used (photo_unusable, photo_not_transparent, photo_too_large) or one that can't be saved releases the hold and charges nothing. Saved results are library images with no request settings kept. Nothing about the photo or the words is logged.",
+});
 // Highlight & Ask's fact-check (update "highlight", which also needs "search").
 const factCheckRequest = object(
   {

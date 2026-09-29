@@ -46,6 +46,8 @@ const Study = lazy(() => import("./Study.jsx"));
 const MeetingNotes = lazy(() => import("./MeetingNotes.jsx"));
 // Chat Import: its reader, list and destinations load only on its page.
 const ChatImport = lazy(() => import("./ChatImport.jsx"));
+// Photo Tools: its page (and the code that shrinks and reads a photo) loads only there.
+const PhotoTools = lazy(() => import("./PhotoTools.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
@@ -333,6 +335,7 @@ export function AppSidebar({
     ["slides", "Slides", "Turn a prompt, document or chat into a slide deck. Edit, present or export it."],
     ["notes", "Meeting notes", "Turn a recording into a timestamped transcript, key decisions and action items."],
     ["import", "Import chats", "Bring your ChatGPT or Claude history here. Choose which chats to keep and where they go."],
+    ["photos", "Photo tools", "Edit a photo with words, remove its background or upscale it. See the price first."],
     ["routines", "Routines", "Schedule prompts to run automatically with spending limits. Read the results in your inbox."],
     ["projects", "Projects", "Group related chats, files and instructions in folders. Set defaults for each project."],
     ["library", "Your library", "Find and revisit the images, videos and audio you have created."],
@@ -347,7 +350,8 @@ export function AppSidebar({
     .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
     .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
     .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
-    .filter(([id]) => id !== "import" || isReleased(config, "chatimport"));
+    .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
+    .filter(([id]) => id !== "photos" || modeReleased(config, "photos"));
   // Recompute translated matching when the language changes, even on Account pages.
   useLanguage();
   const toolAvailable = (id) => id === "models" || (id === "api" ? isReleased(config, "api") : modeReleased(config, id));
@@ -641,7 +645,9 @@ export default function Workspace() {
     // Meeting Notes' page, the same way (it needs Voice & Audio too).
     (mode === "notes" && (!config || modeReleased(config, "notes"))) ||
     // Chat Import's page, likewise.
-    (mode === "import" && (!config || isReleased(config, "chatimport")));
+    (mode === "import" && (!config || isReleased(config, "chatimport"))) ||
+    // Photo Tools' page, the same way (it needs Image Studio's models too).
+    (mode === "photos" && (!config || modeReleased(config, "photos")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3883,6 +3889,7 @@ export default function Workspace() {
                 translate: "Translate docs",
                 notes: "Meeting notes",
                 import: "Import chats",
+                photos: "Photo tools",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4178,6 +4185,22 @@ export default function Workspace() {
                       .then((r) => setAll(recentConversations(r.data)))
                       .catch(() => {})
                   }
+                />
+              </Suspense>
+            )
+          ) : mode === "photos" ? (
+            modeReleased(config, "photos") && (
+              <Suspense fallback={<p className="photo-loading">Opening Photo tools…</p>}>
+                <PhotoTools
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  models={models}
+                  config={config}
+                  refresh={refresh}
+                  veilOn={veilOn}
+                  setVeilOn={setVeilOn}
+                  veilWords={veilWords}
                 />
               </Suspense>
             )

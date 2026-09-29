@@ -6073,7 +6073,100 @@
     "This export is too large for this browser's memory.": "这个导出文件超出了此浏览器的内存限制。",
     "This export stopped loading. It may be too large for this browser.": "导出文件停止加载，可能是它对此浏览器来说太大了。",
     "That is too much text for one request. Send fewer chats at a time.": "一次请求的文字太多。请一次少发几个会话。",
-    "Chat Import is coming soon.": "会话导入即将推出。"
+    "Chat Import is coming soon.": "会话导入即将推出。",
+    "Photo Tools": "照片工具",
+    "Edit a photo with words, remove its background, or upscale it. See the price first.": "用文字修改照片、去除背景或放大照片。先看价格。",
+    "Say what to change, cut the subject out as a transparent PNG, or enlarge a photo": "说出要改什么，把主体抠成透明 PNG，或放大照片",
+    "Slide between before and after; results save to your library, or stay off the record": "拖动滑块对比修改前后；结果保存到媒体库，或不留记录",
+    "See the most it can cost first; a result you can't use costs nothing": "先看最高费用；无法使用的结果不收费",
+    "PHOTO TOOLS": "照片工具",
+    "Photo tools": "照片工具",
+    "Opening Photo tools…": "正在打开照片工具……",
+    "Edit a photo with words, remove its background, or upscale it.": "用文字修改照片、去除背景或放大照片。",
+    "See the price before anything runs. A result you can't use costs nothing.": "运行前先看价格。无法使用的结果不收费。",
+    "Cleaned here first": "先在此处清理",
+    "Hidden details such as location and camera are removed in your browser, and you can black out parts of a photo before it goes anywhere.": "位置、相机等隐藏信息会先在你的浏览器中移除，你也可以在照片发出之前遮盖其中的部分内容。",
+    "See the most it can cost before you start; that's exactly what's held. A result you can't use costs nothing.": "开始前先看到最高费用，冻结的正是这个金额。无法使用的结果不收费。",
+    "ANONYMA doesn't keep your photo. The result goes to your library, or nowhere if you go off the record.": "ANONYMA 不保存你的照片。结果会保存到媒体库；如果选择不留记录，则不保存。",
+    "The demo doesn't edit photos.": "演示模式不会处理照片。",
+    "Sign in to use Photo tools.": "登录后即可使用照片工具。",
+    "Photos are processed by a model, so this needs an account with credits. Nothing is sent until you press the button, and you see the most it can cost first.": "照片由模型处理，因此需要有积分的账户。点击按钮之前不会发送任何内容，并且你会先看到最高费用。",
+    "Edit with words": "用文字修改",
+    "Remove background": "去除背景",
+    "Upscale": "放大",
+    "Edit the photo": "修改照片",
+    "Remove the background": "去除背景",
+    "Upscale the photo": "放大照片",
+    "Say what to change and the model redraws the photo.": "说出要改什么，模型会重新绘制照片。",
+    "Keep the subject, drop the rest. The result is a transparent PNG.": "保留主体，去掉其余部分。结果是透明背景的 PNG。",
+    "Make the photo larger and sharper. The model sets the new size.": "让照片更大、更清晰。新尺寸由模型决定。",
+    "Extend": "扩图",
+    "isn't offered yet.": "暂未提供。",
+    "The gateway's outpainting model doesn't accept a photo yet.": "网关的扩图模型暂时还不能接收照片。",
+    "The gateway doesn't list an outpainting model right now.": "网关目前没有提供扩图模型。",
+    "Photo": "照片",
+    "From your library": "从媒体库选择",
+    "Reading the photo on this device…": "正在此设备上读取照片……",
+    "Drop a photo here": "将照片拖到这里",
+    "PNG, JPEG, WebP, GIF or HEIC. Bigger than 1.5 MB is shrunk here to fit.": "支持 PNG、JPEG、WebP、GIF 或 HEIC。超过 1.5 MB 的照片会在此处缩小以符合限制。",
+    "Choose a photo": "选择照片",
+    "What should change?": "要改什么？",
+    "Make the sky a warm sunset, keep everything else": "把天空改成温暖的日落，其余保持不变",
+    "None available right now": "目前没有可用的模型",
+    "Turn Veil off": "关闭 Veil",
+    "Veil is on. It can't hide details inside a photo edit, so the edit runs only if your words hold nothing Veil would mask.": "Veil 已开启。它无法在照片修改中隐藏细节，因此只有当你的文字中没有 Veil 会遮盖的内容时，才能进行修改。",
+    "Veil is off: the model sees your words as written.": "Veil 已关闭：模型会看到你输入的原文。",
+    "Veil would mask 1 detail in these words, and a photo edit needs them as written. Remove it, or turn Veil off.": "Veil 会遮盖这段文字中的 1 处细节，而照片修改需要原文。请删除它，或关闭 Veil。",
+    "Keep the result": "结果保存位置",
+    "Where it goes": "保存到哪里",
+    "In your library": "媒体库",
+    "Nowhere: off the record, download only": "不保存：不留记录，仅供下载",
+    "Private mode: only models with zero data retention, nothing saved, Veil on.": "隐私模式：仅使用零数据保留的模型，不保存任何内容，Veil 保持开启。",
+    "Private mode isn't available for photos: no photo model offers zero data retention.": "照片不支持隐私模式：没有任何照片模型提供零数据保留。",
+    "Checking which models offer zero data retention…": "正在检查哪些模型提供零数据保留……",
+    "Photo results are never kept in Device Vault: they're saved to your library or nowhere.": "照片结果不会保存到本机保险库：只会保存到媒体库，或不保存。",
+    "· exactly what's held; you're charged only for a usable result": "· 冻结的正是这个金额；只有可用的结果才会扣费",
+    "Your photo goes to the model with its hidden details removed here first. ANONYMA doesn't keep it; only the result can be saved.": "你的照片会先在此处移除隐藏信息，再发送给模型。ANONYMA 不保存它；只有结果可以保存。",
+    "You can black out parts of it before it's sent.": "发送前，你可以遮盖其中的部分内容。",
+    "A model makes the change, so check the result. A run that gives you nothing usable costs nothing.": "修改由模型完成，请检查结果。没有可用结果的运行不收费。",
+    "Your photo": "你的照片",
+    "Editing your photo…": "正在修改你的照片……",
+    "Removing the background…": "正在去除背景……",
+    "Upscaling your photo…": "正在放大你的照片……",
+    "Nothing is charged unless a usable result comes back.": "只有返回可用结果时才会扣费。",
+    "Slide between before and after": "在修改前后之间拖动",
+    "The original isn't kept, so there's no before to slide to. Choose a photo again to compare.": "原图不会保存，因此没有可对比的修改前画面。重新选择照片即可对比。",
+    "Use as the photo": "用作新照片",
+    "Open in your library": "在媒体库中打开",
+    "New photo": "新照片",
+    "Saved to your library like an image you made. Deleting it there deletes it here.": "已像你生成的图片一样保存到媒体库。在那里删除，这里也会删除。",
+    "Off the record: nothing was saved. Download it before you leave this page.": "不留记录：没有保存任何内容。离开此页面前请先下载。",
+    "The checkerboard shows what's transparent. Check the edges before you use it.": "棋盘格表示透明区域。使用前请检查边缘。",
+    "EDIT WITH WORDS": "用文字修改",
+    "REMOVE BACKGROUND": "去除背景",
+    "UPSCALE": "放大",
+    "Choose from your library": "从媒体库选择",
+    "Your library has no pictures yet.": "你的媒体库中还没有图片。",
+    "Use this picture": "使用这张图片",
+    "Use a PNG, JPEG, WebP or GIF photo, or a HEIC photo.": "请使用 PNG、JPEG、WebP 或 GIF 照片，或 HEIC 照片。",
+    "This photo couldn't be opened in this browser.": "此浏览器无法打开这张照片。",
+    "That library photo couldn't be opened. It may have been deleted.": "无法打开那张媒体库照片，它可能已被删除。",
+    "The result couldn't be opened as a new photo.": "无法将结果作为新照片打开。",
+    "The price changed since it was shown. Check the new one, then try again. Nothing was charged.": "价格自显示以来已变化。请查看新价格后再试。未扣除任何费用。",
+    "Choose a photo tool: edit, background or upscale.": "请选择照片工具：修改、去除背景或放大。",
+    "Extend isn't available yet: the gateway's outpainting model doesn't accept a photo, and publishes no direction or size to ask for.": "扩图暂不可用：网关的扩图模型不接收照片，也没有公布可用的方向或尺寸。",
+    "This model can't do that with a photo right now.": "此模型目前无法对照片执行该操作。",
+    "Private mode needs a model with zero data retention. No photo model offers it right now.": "隐私模式需要零数据保留的模型。目前没有任何照片模型提供。",
+    "Say what to change, in up to 2,000 characters.": "请说明要修改什么，最多 2,000 个字符。",
+    "Send the photo as a PNG, JPEG, WebP or GIF data URL.": "请以 PNG、JPEG、WebP 或 GIF data URL 的形式发送照片。",
+    "The photo is larger than 1.5 MiB. Shrink it and try again.": "照片超过 1.5 MiB。请缩小后再试。",
+    "That file isn't the kind of picture it says it is.": "这个文件不是它所声称的图片类型。",
+    "A photo is already being processed. Wait for it to finish.": "已有一张照片正在处理。请等待其完成。",
+    "The provider returned no picture, so nothing was charged.": "服务提供商没有返回图片，因此未扣费。",
+    "The provider returned something that isn't a picture, so nothing was saved or charged.": "服务提供商返回的不是图片，因此未保存也未扣费。",
+    "The provider returned a picture without a transparent background, so nothing was saved or charged.": "服务提供商返回的图片没有透明背景，因此未保存也未扣费。",
+    "The result is too large to hand back without saving it, so nothing was charged. Save it to your library instead.": "结果太大，无法在不保存的情况下返回，因此未扣费。请改为保存到媒体库。",
+    "The model took too long, so nothing was charged. Try again, or choose another model.": "模型耗时过长，因此未扣费。请重试，或选择其他模型。"
   },
   "patterns": [
     {
@@ -9847,6 +9940,46 @@
     {
       "en": "{0} chats found",
       "zh": "找到 {0} 个会话"
+    },
+    {
+      "en": "{0} · up to {1} credits",
+      "zh": "{0} · 最高 {1} 积分"
+    },
+    {
+      "en": "Shrunk in this browser from {0} to {1} to fit the 1.5 MB limit.",
+      "zh": "已在此浏览器中从 {0} 缩小到 {1}，以符合 1.5 MB 的限制。"
+    },
+    {
+      "en": "Veil would mask {0} details in these words, and a photo edit needs them as written. Remove them, or turn Veil off.",
+      "zh": "Veil 会遮盖这段文字中的 {0} 处细节，而照片修改需要原文。请删除它们，或关闭 Veil。"
+    },
+    {
+      "en": "Test receipt · {0} credits charged",
+      "zh": "测试收据 · 已扣除 {0} 积分"
+    },
+    {
+      "en": "\"{0}\" couldn't be read.",
+      "zh": "“{0}”无法读取。"
+    },
+    {
+      "en": "\"{0}\" is larger than 20 MiB.",
+      "zh": "“{0}”超过 20 MiB。"
+    },
+    {
+      "en": "\"{0}\" is too large to open. Use a photo under 40 MiB.",
+      "zh": "“{0}”太大，无法打开。请使用 40 MiB 以下的照片。"
+    },
+    {
+      "en": "\"{0}\" couldn't be opened in this browser.",
+      "zh": "此浏览器无法打开“{0}”。"
+    },
+    {
+      "en": "\"{0}\" is too large to send even when shrunk. Use a smaller photo.",
+      "zh": "“{0}”即使缩小后仍太大，无法发送。请使用更小的照片。"
+    },
+    {
+      "en": "From {0} credits",
+      "zh": "{0} 积分起"
     }
   ]
 }

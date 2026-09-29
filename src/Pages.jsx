@@ -901,6 +901,7 @@ const featureIcons = {
   pushalerts: "bell",
   decoy: "mask",
   chatimport: "import",
+  phototools: "image",
 };
 const launch = {
   id: "mvp",

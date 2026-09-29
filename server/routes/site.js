@@ -46,6 +46,8 @@ export function siteRoutes({ app, db, cfg }) {
     notes: isReleased(cfg, "meetingnotes") && isReleased(cfg, "audio"),
     // Chat Import's page (/workspace/import).
     chatimport: isReleased(cfg, "chatimport"),
+    // Photo Tools' page, which runs on the image models.
+    photos: isReleased(cfg, "phototools") && isReleased(cfg, "images"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

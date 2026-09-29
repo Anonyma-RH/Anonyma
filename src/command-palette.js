@@ -377,6 +377,7 @@ export const MODE_LABELS = {
   translate: "Translate docs",
   notes: "Meeting notes",
   import: "Import chats",
+  photos: "Photo tools",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -410,6 +411,8 @@ const PLACES = [
   ["notes", "Meeting notes", ["meeting", "recording", "transcribe", "transcript", "minutes", "action items", "call notes", "decisions"]],
   // Chat Import: only once released, like the others.
   ["import", "Import chats", ["import", "chatgpt", "claude", "history", "export", "migrate", "bring my chats", "conversations"]],
+  // Photo Tools: only once released, with Image Studio.
+  ["photos", "Photo tools", ["photo", "picture", "edit photo", "remove background", "cut out", "upscale", "enlarge", "retouch", "transparent"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

@@ -3107,6 +3107,62 @@
     "This routine's monthly budget couldn't cover this run. Nothing was charged.": "El presupuesto mensual de esta rutina no pudo cubrir esta ejecución. No se cobró nada.",
     "The per-run maximum couldn't cover this run with this model and prompt. Nothing was charged.": "El máximo por ejecución no pudo cubrir esta ejecución con este modelo y este prompt. No se cobró nada.",
     "Your spending limits couldn't cover this run. Nothing was charged.": "Tus límites de gasto no pudieron cubrir esta ejecución. No se cobró nada.",
+    "Research Watch": "Seguimiento de investigación",
+    "Research watch": "Seguimiento de investigación",
+    "A sourced briefing on any topic, delivered on your schedule.": "Un informe con fuentes sobre cualquier tema, entregado según tu horario.",
+    "Deep Research that runs itself: daily or weekly, with a monthly budget": "Investigación profunda que se ejecuta sola: a diario o cada semana, con un presupuesto mensual",
+    "Numbered sources in your Routines inbox, and only what's new since last time": "Fuentes numeradas en tu bandeja de Rutinas, y solo lo nuevo desde la última vez",
+    "See the most a run can cost first; a step that fails costs nothing": "Ve primero lo máximo que puede costar una ejecución; un paso que falla no cuesta nada",
+    "New research watch": "Nuevo seguimiento de investigación",
+    "Edit research watch": "Editar seguimiento de investigación",
+    "Save research watch": "Guardar seguimiento de investigación",
+    "Delete research watch": "Eliminar seguimiento de investigación",
+    "Delete this research watch and its reports? This can't be undone.": "¿Eliminar este seguimiento de investigación y sus informes? Esto no se puede deshacer.",
+    "Topic": "Tema",
+    "Name (optional)": "Nombre (opcional)",
+    "Defaults to the topic": "Por defecto, se usa el tema",
+    "What is changing in EU AI Act enforcement": "Qué está cambiando en la aplicación de la Ley de IA de la UE",
+    "Depth": "Profundidad",
+    "Only what's new since last time": "Solo lo nuevo desde la última vez",
+    "Each report covers what changed since the last one. The last report's key findings are sent with the next run to compare against.": "Cada informe cubre lo que cambió desde el anterior. Los hallazgos clave del último informe se envían con la siguiente ejecución para compararlos.",
+    "Watches run on our server, where Veil can't mask anything: the topic is sent to the model and, as searches, to web search as written.": "Los seguimientos se ejecutan en nuestro servidor, donde Veil no puede ocultar nada: el tema se envía tal como está escrito al modelo y, como búsquedas, a la búsqueda web.",
+    "Choose a model to see the most a run can cost.": "Elige un modelo para ver lo máximo que puede costar una ejecución.",
+    "That is the most a run can cost: it is checked against your balance and spending limits, and it is what a run holds. You pay only for steps that finish and give a result, usually far less. A step that fails, or that can't be used, is free.": "Eso es lo máximo que puede costar una ejecución: se compara con tu saldo y tus límites de gasto, y es lo que una ejecución retiene. Solo pagas los pasos que terminan y dan un resultado, normalmente mucho menos. Un paso que falla, o que no se puede usar, es gratis.",
+    "Over your spending limit right now.": "Ahora mismo supera tu límite de gasto.",
+    "Over your balance right now.": "Ahora mismo supera tu saldo.",
+    "A run stops before it starts, and nothing is charged, when your balance, your spending limits or what is left of the month's budget can't cover it. The budget resets each calendar month in the watch's time zone.": "Una ejecución se detiene antes de empezar, y no se cobra nada, cuando tu saldo, tus límites de gasto o lo que queda del presupuesto del mes no la pueden cubrir. El presupuesto se restablece cada mes calendario en la zona horaria del seguimiento.",
+    "ANONYMA keeps the topic, the schedule and your reports (the newest 50) until you delete them. It doesn't use Memory, and Device Vault and Sealed Mode don't apply to scheduled runs. Delete a report and the watch forgets it.": "ANONYMA conserva el tema, el horario y tus informes (los 50 más recientes) hasta que los elimines. No usa la Memoria, y la Bóveda del dispositivo y el Modo sellado no se aplican a las ejecuciones programadas. Si eliminas un informe, el seguimiento lo olvida.",
+    "Only what's new": "Solo lo nuevo",
+    "Research Watch: each watch’s topic, depth, model, schedule and budget, and its reports in the Routines inbox: the newest 50 per watch, with their sources and charges. With “Only what’s new”, the last report’s key findings (at most 3,000 characters) are sent with the next run, and deleting that report makes the watch forget it. Runs happen on the server, so Veil can’t mask the topic: it goes to the model and, as searches, to web search as written. Deleting a watch deletes its reports; Panic Wipe and closing your account delete every watch.": "Seguimiento de investigación: el tema, la profundidad, el modelo, el horario y el presupuesto de cada seguimiento, y sus informes en la bandeja de Rutinas: los 50 más recientes por seguimiento, con sus fuentes y cobros. Con «Solo lo nuevo», los hallazgos clave del último informe (3,000 caracteres como máximo) se envían con la siguiente ejecución, y eliminar ese informe hace que el seguimiento lo olvide. Las ejecuciones se hacen en el servidor, así que Veil no puede ocultar el tema: va tal como está escrito al modelo y, como búsquedas, a la búsqueda web. Eliminar un seguimiento elimina sus informes; el Borrado de pánico y el cierre de tu cuenta eliminan todos los seguimientos.",
+    "Schedule prompts and research watches to run automatically with spending limits. Read the results in your inbox.": "Programa prompts y seguimientos de investigación para que se ejecuten solos con límites de gasto. Lee los resultados en tu bandeja de entrada.",
+    "Pick a topic and a schedule. Each run plans, searches the web and writes a sourced report, delivered to your inbox: Deep Research that runs itself. You set a monthly budget, and you see the most a run can cost before you save.": "Elige un tema y un horario. Cada ejecución planea, busca en la web y escribe un informe con fuentes que llega a tu bandeja de entrada: Investigación profunda que se ejecuta sola. Tú defines un presupuesto mensual y ves lo máximo que puede costar una ejecución antes de guardar.",
+    "You have the most research watches an account can keep. Delete one to add another.": "Tienes el máximo de seguimientos de investigación que puede tener una cuenta. Elimina uno para agregar otro.",
+    "No research watches yet.": "Aún no hay seguimientos de investigación.",
+    "Watch a market, a regulation, a technology or a rival, and get a sourced briefing on your schedule.": "Sigue un mercado, una regulación, una tecnología o a un competidor, y recibe un informe con fuentes según tu horario.",
+    "Compared with the last report": "Comparado con el último informe",
+    "First report: nothing to compare with yet": "Primer informe: aún no hay nada con qué comparar",
+    "Plan": "Planificación",
+    "Report": "Informe",
+    "The report couldn't be written, so this is what the searches found. The report step wasn't charged.": "No se pudo escribir el informe, así que esto es lo que encontraron las búsquedas. El paso del informe no se cobró.",
+    "The run was stopped before its report was written, so this is what the searches found. Only finished steps were charged.": "La ejecución se detuvo antes de escribir su informe, así que esto es lo que encontraron las búsquedas. Solo se cobraron los pasos terminados.",
+    "Research stopped unexpectedly, so this is what the searches found. Only finished steps were charged.": "La investigación se detuvo de forma inesperada, así que esto es lo que encontraron las búsquedas. Solo se cobraron los pasos terminados.",
+    "This watch's monthly budget couldn't cover a whole run. Nothing was charged.": "El presupuesto mensual de este seguimiento no pudo cubrir una ejecución completa. No se cobró nada.",
+    "A run of this watch now costs more than the maximum you agreed to. Open the watch and save it to accept the new maximum. Nothing was charged.": "Una ejecución de este seguimiento ahora cuesta más que el máximo que aceptaste. Abre el seguimiento y guárdalo para aceptar el nuevo máximo. No se cobró nada.",
+    "None of the web searches finished, so no report was written. Nothing was charged.": "Ninguna de las búsquedas web terminó, así que no se escribió ningún informe. No se cobró nada.",
+    "The run was stopped. Nothing was charged.": "La ejecución se detuvo. No se cobró nada.",
+    "Research stopped unexpectedly. Nothing was charged.": "La investigación se detuvo de forma inesperada. No se cobró nada.",
+    "Research Watch isn't available right now. Nothing was charged.": "El Seguimiento de investigación no está disponible por ahora. No se cobró nada.",
+    "The topic looks like a wallet seed phrase, so nothing was sent. Nothing was charged.": "El tema parece una frase semilla de billetera, así que no se envió nada. No se cobró nada.",
+    "This watch's model can't do research right now. Nothing was charged.": "El modelo de este seguimiento no puede investigar por ahora. No se cobró nada.",
+    "Research watch not found.": "No se encontró el seguimiento de investigación.",
+    "Repeat daily or weekly.": "Repite a diario o cada semana.",
+    "Choose the day for a weekly watch: 0 (Sunday) to 6 (Saturday).": "Elige el día para un seguimiento semanal: 0 (domingo) a 6 (sábado).",
+    "This watch is running. Delete it once the run finishes.": "Este seguimiento se está ejecutando. Elimínalo cuando termine la ejecución.",
+    "Change a research watch from its own tab.": "Cambia un seguimiento de investigación desde su propia pestaña.",
+    "This looks like a wallet seed phrase. A watch's topic is saved and sent to web searches on every run, so ANONYMA won't save one. Remove it to continue.": "Esto parece una frase semilla de billetera. El tema de un seguimiento se guarda y se envía a las búsquedas web en cada ejecución, así que ANONYMA no guardará una. Quítala para continuar.",
+    "This watch was switched off or deleted before it ran.": "Este seguimiento se desactivó o se eliminó antes de ejecutarse.",
+    "Research Watch needs a text model.": "El Seguimiento de investigación necesita un modelo de texto.",
+    "Send the watch as a JSON object.": "Envía el seguimiento como un objeto JSON.",
     "This routine was switched off or deleted before it ran. Nothing was charged.": "Esta rutina se desactivó o se eliminó antes de ejecutarse. No se cobró nada.",
     "This routine's model isn't available right now. Nothing was charged.": "El modelo de esta rutina no está disponible por ahora. No se cobró nada.",
     "Private models only is on, and this model isn't a zero-data-retention model. Nothing was charged.": "Solo modelos privados está activado y este modelo no tiene retención cero de datos. No se cobró nada.",
@@ -5780,6 +5836,567 @@
     "Send each piece as mono 16-bit PCM at 16 kHz.": "Envía cada fragmento como PCM mono de 16 bits a 16 kHz.",
     "Timing comes from the transcription provider. Some sections may span up to five minutes.": "Los tiempos vienen del proveedor de transcripción. Algunas secciones pueden abarcar hasta cinco minutos.",
     "Owners only when the transcript names them; timed notes link to transcript sections": "Responsables solo cuando la transcripción los nombra; las notas con tiempos enlazan a secciones de la transcripción",
+    "Quote Cards": "Tarjetas de cita",
+    "Turn a great answer into a clean image card to share. Made on your device; no link back to your chat.": "Convierte una gran respuesta en una tarjeta de imagen limpia para compartir. Se crea en tu dispositivo; sin enlace de vuelta a tu chat.",
+    "Select text in a reply, or press Card on the whole reply": "Selecciona texto en una respuesta, o presiona Tarjeta en la respuesta completa",
+    "Cobalt, White, Dark or Column, as a 1:1, 4:5 or 16:9 PNG to save or copy": "Cobalto, Blanco, Oscuro o Columna, como PNG 1:1, 4:5 o 16:9 para guardar o copiar",
+    "Nothing is uploaded and there is no share link; Veil's masked details stay masked unless you show them": "No se sube nada y no hay enlace para compartir; los datos que Veil ocultó siguen ocultos a menos que los muestres",
+    "Quote card": "Tarjeta de cita",
+    "Card preview": "Vista previa de la tarjeta",
+    "Template": "Plantilla",
+    "Column": "Columna",
+    "Card text": "Texto de la tarjeta",
+    "Lines under the quote": "Líneas bajo la cita",
+    "Asked on ANONYMA": "Preguntado en ANONYMA",
+    "The model's name": "El nombre del modelo",
+    "Not known for this text": "Desconocido para este texto",
+    "Show the real details Veil masked": "Mostrar los datos reales que Veil ocultó",
+    "1 masked detail stays as a tag like [EMAIL_1] unless you tick this.": "1 dato oculto se queda como una etiqueta del tipo [EMAIL_1] a menos que marques esto.",
+    "The card now shows the real details. Anyone you send the image to will be able to read them.": "Ahora la tarjeta muestra los datos reales. Cualquier persona a quien le envíes la imagen podrá leerlos.",
+    "Save PNG": "Guardar PNG",
+    "Copy image": "Copiar imagen",
+    "Saved as a PNG.": "Se guardó como PNG.",
+    "The image couldn't be made.": "No se pudo crear la imagen.",
+    "Copied the image.": "Se copió la imagen.",
+    "This browser can't copy an image. Use Save PNG.": "Este navegador no puede copiar una imagen. Usa Guardar PNG.",
+    "Made on this device. Nothing is uploaded, and the image has no link back to your chat.": "Se crea en este dispositivo. No se sube nada y la imagen no tiene ningún enlace de vuelta a tu chat.",
+    "Card": "Tarjeta",
+    "Make an image card of this reply, on this device": "Crear una tarjeta de imagen de esta respuesta, en este dispositivo",
+    "Make an image card of this text, on this device": "Crear una tarjeta de imagen de este texto, en este dispositivo",
+    "This text looks like a wallet seed phrase or key. The card would show it to anyone you send the image to.": "Este texto parece una frase semilla o una clave de billetera. La tarjeta se la mostraría a cualquier persona a quien le envíes la imagen.",
+    "Untick this to mask them again.": "Desmarca esto para volver a ocultarlos.",
+    "Recovery Kit": "Kit de recuperación",
+    "No email? Keep a recovery kit: ten one-time codes that get you back into your account.": "¿No tienes correo? Guarda un kit de recuperación: diez códigos de un solo uso que te permiten volver a entrar en tu cuenta.",
+    "Ten one-time codes, shown once, to download or print; we keep only scrambled copies": "Diez códigos de un solo uso, que se muestran una sola vez, para descargar o imprimir; solo guardamos copias con hash",
+    "Your username and one code get you back in; then you set a new password or add a passkey": "Tu nombre de usuario y un código te permiten volver a entrar; luego defines una contraseña nueva o agregas una llave de acceso",
+    "Every other session is signed out, and wrong codes lock recovery for an hour": "Se cierran todas las demás sesiones, y los códigos incorrectos bloquean la recuperación durante una hora",
+    "Recovery kit": "Kit de recuperación",
+    "Recovery kit.": "Kit de recuperación.",
+    "RECOVERY KIT": "KIT DE RECUPERACIÓN",
+    "ANONYMA recovery kit": "Kit de recuperación de ANONYMA",
+    "Made": "Creado",
+    "Codes": "Códigos",
+    "Each code gets you back into your account once, if you lose your password or passkey.": "Cada código te permite volver a entrar en tu cuenta una vez, si pierdes tu contraseña o tu llave de acceso.",
+    "On the sign-in page, choose “Use a recovery code”, then enter your username and one code.": "En la página de inicio de sesión, elige «Usar un código de recuperación» y luego ingresa tu nombre de usuario y un código.",
+    "Each code gets you back into your account once, if you lose your password or passkey. On the sign-in page, choose “Use a recovery code”, then enter your username and one code.": "Cada código te permite volver a entrar en tu cuenta una vez, si pierdes tu contraseña o tu llave de acceso. En la página de inicio de sesión, elige «Usar un código de recuperación» y luego ingresa tu nombre de usuario y un código.",
+    "Anyone with your username and one of these codes can get in, even with two-step sign-in on. Keep this page private.": "Cualquier persona con tu nombre de usuario y uno de estos códigos puede entrar, incluso con el inicio de sesión en dos pasos activado. Mantén esta página en privado.",
+    "Anyone with your username and one of these codes can get in, even with two-step sign-in on. Keep this offline and private.": "Cualquier persona con tu nombre de usuario y uno de estos códigos puede entrar, incluso con el inicio de sesión en dos pasos activado. Guárdalo sin conexión y en privado.",
+    "Save your recovery kit.": "Guarda tu kit de recuperación.",
+    "Each code gets you back in once if you lose your password or passkey. They’re shown only now; ANONYMA keeps only scrambled copies and can’t show them again.": "Cada código te permite volver a entrar una vez si pierdes tu contraseña o tu llave de acceso. Se muestran solo ahora; ANONYMA guarda únicamente copias con hash y no puede volver a mostrarlos.",
+    "Download (.txt)": "Descargar (.txt)",
+    "Print": "Imprimir",
+    "I’ve saved my kit somewhere safe": "Guardé mi kit en un lugar seguro",
+    "Ten one-time codes that get you back into your account if you lose your password or passkey. No email needed.": "Diez códigos de un solo uso que te permiten volver a entrar en tu cuenta si pierdes tu contraseña o tu llave de acceso. No necesitas correo.",
+    "Anyone with your username and one of these codes can get in, even with two-step sign-in on, so keep the kit offline, like a spare key. Using a code signs out every session and asks for a new password or passkey.": "Cualquier persona con tu nombre de usuario y uno de estos códigos puede entrar, incluso con el inicio de sesión en dos pasos activado, así que guarda el kit sin conexión, como una llave de repuesto. Usar un código cierra todas las sesiones y pide una contraseña nueva o una llave de acceso.",
+    "ANONYMA keeps only scrambled copies of the codes. Making or deleting a kit asks you to confirm it’s you first. It doesn’t replace two-step sign-in’s own recovery codes.": "ANONYMA guarda únicamente copias con hash de los códigos. Para crear o eliminar un kit, primero se te pide confirmar que eres tú. No reemplaza los códigos de recuperación propios del inicio de sesión en dos pasos.",
+    "Making or deleting a recovery kit needs a fresh confirmation from this session.": "Crear o eliminar un kit de recuperación necesita una confirmación reciente en esta sesión.",
+    "A recovery kit needs a username to recover with, and this account doesn’t have one. Use email or wallet sign-in to get back in.": "Un kit de recuperación necesita un nombre de usuario para recuperar la cuenta, y esta cuenta no tiene uno. Usa el inicio de sesión con correo o con billetera para volver a entrar.",
+    "Every code has been used. Make a new kit.": "Ya se usaron todos los códigos. Crea un kit nuevo.",
+    "Only 1 code left. Make a new kit before you run out.": "Solo queda 1 código. Crea un kit nuevo antes de quedarte sin códigos.",
+    "Make a new kit? Your current codes stop working at once.": "¿Crear un kit nuevo? Tus códigos actuales dejan de funcionar de inmediato.",
+    "Delete your recovery kit? Its codes stop working at once, and you’ll need your password or passkey to sign in.": "¿Eliminar tu kit de recuperación? Sus códigos dejan de funcionar de inmediato y necesitarás tu contraseña o tu llave de acceso para iniciar sesión.",
+    "Make a new kit": "Crear un kit nuevo",
+    "Delete kit": "Eliminar kit",
+    "Sign in to a real account to make a recovery kit.": "Inicia sesión en una cuenta real para crear un kit de recuperación.",
+    "No kit yet. Make one now, while you can still sign in.": "Aún no tienes un kit. Crea uno ahora, mientras todavía puedes iniciar sesión.",
+    "Making your kit…": "Creando tu kit…",
+    "Make a recovery kit": "Crear un kit de recuperación",
+    "Your new kit is ready. The old codes no longer work.": "Tu kit nuevo está listo. Los códigos anteriores ya no funcionan.",
+    "Recovery kit deleted. Its codes no longer work.": "Se eliminó el kit de recuperación. Sus códigos ya no funcionan.",
+    "Use a recovery code": "Usar un código de recuperación",
+    "Your kit has no unused codes left. Make a new one in Account → Security.": "A tu kit no le quedan códigos sin usar. Crea uno nuevo en Cuenta → Seguridad.",
+    "Your kit has 1 unused code left.": "A tu kit le queda 1 código sin usar.",
+    "That isn’t a recovery kit code. A code has 20 letters and numbers, like 7K3Q-M9XD-2HVA-PN4T-8RZC.": "Ese no es un código del kit de recuperación. Un código tiene 20 letras y números, como 7K3Q-M9XD-2HVA-PN4T-8RZC.",
+    "That looks like a two-step recovery code. Those work after your password, at the two-step step. A recovery kit code has 20 letters and numbers.": "Eso parece un código de recuperación del inicio de sesión en dos pasos. Esos funcionan después de tu contraseña, en el segundo paso. Un código del kit de recuperación tiene 20 letras y números.",
+    "That code has a typo. Check it against your kit and try again.": "Ese código tiene un error de escritura. Compáralo con tu kit e inténtalo de nuevo.",
+    "The two passwords don’t match.": "Las dos contraseñas no coinciden.",
+    "You’re back in with your new passkey.": "Volviste a entrar con tu nueva llave de acceso.",
+    "You’re back in with your new password.": "Volviste a entrar con tu nueva contraseña.",
+    "Make a new kit in Account → Security before you run out.": "Crea un kit nuevo en Cuenta → Seguridad antes de quedarte sin códigos.",
+    "Two-step sign-in is still on: your next password sign-in asks for your authenticator code.": "El inicio de sesión en dos pasos sigue activado: la próxima vez que inicies sesión con contraseña, se te pedirá el código del autenticador.",
+    "Code accepted. Every session on this account was signed out.": "Código aceptado. Se cerraron todas las sesiones de esta cuenta.",
+    "Choose a new password.": "Elige una contraseña nueva.",
+    "Type it again": "Escríbela de nuevo",
+    "Set password and sign in": "Definir contraseña e iniciar sesión",
+    "or": "o",
+    "Add a passkey instead": "Agregar una llave de acceso en su lugar",
+    "Enter your username and one code from your recovery kit.": "Ingresa tu nombre de usuario y un código de tu kit de recuperación.",
+    "Recovery kit code": "Código del kit de recuperación",
+    "No email on this account?": "¿Esta cuenta no tiene correo?",
+    "Keep a recovery kit: ten one-time codes that get you back in if you lose your password or passkey.": "Guarda un kit de recuperación: diez códigos de un solo uso que te permiten volver a entrar si pierdes tu contraseña o tu llave de acceso.",
+    "That username and code don’t match.": "Ese nombre de usuario y ese código no coinciden.",
+    "That code was already used. Each code works once; try another from your kit.": "Ese código ya se usó. Cada código funciona una vez; prueba otro de tu kit.",
+    "This recovery step expired. The code you used is spent; start again with another code from your kit.": "Este paso de recuperación caducó. El código que usaste ya se gastó; empieza de nuevo con otro código de tu kit.",
+    "Confirm it’s you first. Making or deleting a recovery kit needs your password, a passkey (or a fresh email code or wallet signature) from the last 10 minutes.": "Confirma primero que eres tú. Crear o eliminar un kit de recuperación necesita tu contraseña, una llave de acceso (o un código por correo o una firma de billetera recientes) de los últimos 10 minutos.",
+    "You already have a recovery kit. Make a new one to replace it.": "Ya tienes un kit de recuperación. Crea uno nuevo para reemplazarlo.",
+    "A recovery kit needs a username to recover with, and this account has none.": "Un kit de recuperación necesita un nombre de usuario para recuperar la cuenta, y esta cuenta no tiene ninguno.",
+    "Enter your username.": "Ingresa tu nombre de usuario.",
+    "Back into your account.": "Vuelve a tu cuenta.",
+    "No email needed: your username and one code from your kit.": "No necesitas correo: tu nombre de usuario y un código de tu kit.",
+    "Your recovery kit, so you can still get back in": "Tu kit de recuperación, para que todavía puedas volver a entrar",
+    "Recovery kit: when you made it, and each of its ten codes only as a one-way scrypt digest with when it was used; never the codes. A code that was accepted waits 15 minutes for your new password or passkey. Wrong codes are counted for an hour per username and per network address, under keys that don’t contain either. If you dismiss the nudge to make a kit, when you did. Your export says when the kit was made and how many codes are unused. Deleting the kit or closing your account deletes it; Panic Wipe keeps it so you can still get back in.": "Kit de recuperación: cuándo lo creaste, y cada uno de sus diez códigos solo como un hash scrypt de un solo sentido junto con cuándo se usó; nunca los códigos. Un código aceptado espera 15 minutos a tu contraseña nueva o llave de acceso. Los códigos incorrectos se cuentan durante una hora por nombre de usuario y por dirección de red, con claves que no contienen ninguno de los dos. Si descartas el aviso para crear un kit, cuándo lo hiciste. Tu exportación indica cuándo se creó el kit y cuántos códigos quedan sin usar. Eliminar el kit o cerrar tu cuenta lo elimina; el Borrado de pánico lo conserva para que todavía puedas volver a entrar.",
+    "The export also says when your recovery kit was made, how many of its codes are unused and when one was last used. Never the codes: ANONYMA can’t show them again.": "La exportación también indica cuándo se creó tu kit de recuperación, cuántos de sus códigos quedan sin usar y cuándo se usó uno por última vez. Nunca los códigos: ANONYMA no puede volver a mostrarlos.",
+    "API keys and connected apps weren’t changed. If you don’t recognise one, revoke it in Account.": "Las claves de API y las apps conectadas no cambiaron. Si no reconoces alguna, revócala en Cuenta.",
+    "Push Alerts": "Alertas push",
+    "Get alerts without giving us an email: browser notifications for your routines, page watches, balance and gifts.": "Recibe alertas sin darnos un correo: notificaciones del navegador para tus rutinas, vigilancias de páginas, saldo y regalos.",
+    "Turn it on in Account settings, in each browser you want alerts in": "Actívalas en los ajustes de la cuenta, en cada navegador donde quieras recibir alertas",
+    "Every alert is one fixed sentence: never your chats, pages, amounts or names": "Cada alerta es una frase fija: nunca tus chats, páginas, montos ni nombres",
+    "Your browser's push service carries only encrypted messages it can't read": "El servicio push de tu navegador solo transporta mensajes cifrados que no puede leer",
+    "Your page watch found a change.": "Tu vigilancia de página encontró un cambio.",
+    "A page watch was paused. Open it to see why.": "Se pausó una vigilancia de página. Ábrela para ver por qué.",
+    "Your routine has a new result.": "Tu rutina tiene un resultado nuevo.",
+    "Your balance is low.": "Tu saldo está bajo.",
+    "Your gift was claimed.": "Se reclamó tu regalo.",
+    "An unclaimed gift came back to your balance.": "Un regalo sin reclamar volvió a tu saldo.",
+    "Inactivity Wipe erases your content in 7 days. Sign in to keep it.": "El Borrado por inactividad borrará tu contenido en 7 días. Inicia sesión para conservarlo.",
+    "Your research watch has a new briefing.": "Tu seguimiento de investigación tiene un informe nuevo.",
+    "Notifications from ANONYMA are working.": "Las notificaciones de ANONYMA funcionan.",
+    "Push Alerts.": "Alertas push.",
+    "Browser notifications for your routines, page watches, balance and gifts. No email needed.": "Notificaciones del navegador para tus rutinas, vigilancias de páginas, saldo y regalos. No necesitas correo.",
+    "Page watches": "Vigilancias de páginas",
+    "Routine results": "Resultados de rutinas",
+    "Low balance": "Saldo bajo",
+    "Inactivity Wipe reminder": "Recordatorio del Borrado por inactividad",
+    "Research watch briefings": "Informes del seguimiento de investigación",
+    "What to send": "Qué enviar",
+    "Notify me in this browser": "Avisarme en este navegador",
+    "Send a test": "Enviar una prueba",
+    "Stop in this browser": "Detener en este navegador",
+    "A browser": "Un navegador",
+    "A push service": "Un servicio push",
+    "Chrome or similar": "Chrome o similar",
+    "Google's push service": "Servicio push de Google",
+    "Mozilla's push service": "Servicio push de Mozilla",
+    "Apple's push service": "Servicio push de Apple",
+    "Microsoft's push service": "Servicio push de Microsoft",
+    "Turn notifications on again in that browser to keep getting them.": "Vuelve a activar las notificaciones en ese navegador para seguir recibiéndolas.",
+    "Browser notifications aren’t available on this server yet.": "Las notificaciones del navegador aún no están disponibles en este servidor.",
+    "Browser notifications aren't available on this server yet.": "Las notificaciones del navegador aún no están disponibles en este servidor.",
+    "Notifications are blocked for this site. Allow them in your browser’s site settings, then reload this page.": "Las notificaciones están bloqueadas para este sitio. Permítelas en los ajustes del sitio de tu navegador y luego recarga esta página.",
+    "Notifications are blocked for this site. Allow them in your browser’s site settings, then try again.": "Las notificaciones están bloqueadas para este sitio. Permítelas en los ajustes del sitio de tu navegador y luego inténtalo de nuevo.",
+    "Notifications weren’t allowed. Try again and choose Allow.": "No se permitieron las notificaciones. Inténtalo de nuevo y elige Permitir.",
+    "On iPhone and iPad, alerts work only from the Home Screen app. Add ANONYMA to your Home Screen, open it from there and turn this on.": "En iPhone y iPad, las alertas solo funcionan desde la app de la pantalla de inicio. Agrega ANONYMA a tu pantalla de inicio, ábrelo desde ahí y activa esta opción.",
+    "This browser can’t receive push notifications.": "Este navegador no puede recibir notificaciones push.",
+    "No browsers get alerts yet.": "Todavía ningún navegador recibe alertas.",
+    "Uses your Low-Balance Alerts level.": "Usa tu nivel de Alertas de saldo bajo.",
+    "Set one in Credits.": "Define uno en Créditos.",
+    "Only while Inactivity Wipe is on.": "Solo mientras el Borrado por inactividad esté activado.",
+    "Each alert is one fixed sentence, like the ones above. It never includes your chats, page text, amounts or names.": "Cada alerta es una frase fija, como las de arriba. Nunca incluye tus chats, el texto de las páginas, montos ni nombres.",
+    "Alerts travel through your browser’s push service (Google, Mozilla, Apple or Microsoft). It sees that this browser gets alerts from ANONYMA and when, not what they say: each one is encrypted and the same size.": "Las alertas viajan a través del servicio push de tu navegador (Google, Mozilla, Apple o Microsoft). Ese servicio ve que este navegador recibe alertas de ANONYMA y cuándo, pero no lo que dicen: cada una va cifrada y tiene el mismo tamaño.",
+    "Signing out doesn’t stop alerts in a browser. Remove it here, or block notifications in the browser.": "Cerrar sesión no detiene las alertas en un navegador. Quítalo aquí o bloquea las notificaciones en el navegador.",
+    "Nothing here costs credits. Panic Wipe, Inactivity Wipe and closing your account remove every browser.": "Nada de esto cuesta créditos. El Borrado de pánico, el Borrado por inactividad y el cierre de tu cuenta quitan todos los navegadores.",
+    "This browser will get your alerts. Send a test to see one.": "Este navegador recibirá tus alertas. Envía una prueba para ver una.",
+    "Stopped. This browser gets no more alerts.": "Detenido. Este navegador ya no recibe alertas.",
+    "Removed. That browser gets no more alerts.": "Eliminado. Ese navegador ya no recibe alertas.",
+    "Sent. It should arrive in a few seconds.": "Enviada. Debería llegar en unos segundos.",
+    "This browser needs to turn notifications on again.": "Hay que volver a activar las notificaciones en este navegador.",
+    "This browser didn't start ANONYMA's notification worker. Reload and try again.": "Este navegador no inició el servicio de notificaciones de ANONYMA. Recarga la página e inténtalo de nuevo.",
+    "That isn't a push subscription this browser can use.": "Esa no es una suscripción push que este navegador pueda usar.",
+    "This browser uses a push service ANONYMA doesn't send to. Chrome, Edge, Firefox and Safari work.": "Este navegador usa un servicio push al que ANONYMA no envía alertas. Chrome, Edge, Firefox y Safari funcionan.",
+    "That subscription's keys aren't valid. Turn notifications off and on again in this browser.": "Las claves de esa suscripción no son válidas. Desactiva y vuelve a activar las notificaciones en este navegador.",
+    "That browser isn't on your list.": "Ese navegador no está en tu lista.",
+    "Turn on notifications in a browser first.": "Primero activa las notificaciones en un navegador.",
+    "That notification isn't available.": "Esa notificación no está disponible.",
+    "Browser alert": "Alerta del navegador",
+    "Sent to your browsers": "Enviado a tus navegadores",
+    "We’ll also send a browser alert 7 days before, through Push Alerts.": "También enviaremos una alerta al navegador 7 días antes, a través de Alertas push.",
+    "The notification shows once, when your balance first drops below the level while ANONYMA is open in a tab. There's no email. For an alert when ANONYMA isn't open, turn on Push Alerts in Account settings.": "La notificación se muestra una sola vez, cuando tu saldo baja por primera vez del nivel mientras ANONYMA está abierto en una pestaña. No hay correo. Para recibir una alerta cuando ANONYMA no esté abierto, activa Alertas push en los ajustes de la cuenta.",
+    "Push Alerts: each browser you turned alerts on in (its push address, the two public values alerts are encrypted to, its push service, its language, when you added it and when it last got an alert) and which kinds you want. An alert is one fixed sentence, never your content; waiting alerts are kept for at most 4 days. Your export lists each browser with its push service only. Removing a browser deletes it; Panic Wipe, Inactivity Wipe and closing your account delete all of it.": "Alertas push: cada navegador en el que activaste las alertas (su dirección push, los dos valores públicos con los que se cifran las alertas, su servicio push, su idioma, cuándo lo agregaste y cuándo recibió su última alerta) y qué tipos de alertas quieres. Una alerta es una frase fija, nunca tu contenido; las alertas en espera se guardan como máximo 4 días. Tu exportación lista cada navegador solo con su servicio push. Quitar un navegador lo elimina; el Borrado de pánico, el Borrado por inactividad y el cierre de tu cuenta lo eliminan todo.",
+    "Push Alerts: every browser that gets your alerts, and your choices": "Alertas push: cada navegador que recibe tus alertas y tus preferencias",
+    "Safari": "Safari",
+    "Firefox": "Firefox",
+    "Edge": "Edge",
+    "The push service hasn’t taken it yet. ANONYMA will keep trying for a few hours.": "El servicio push aún no la ha aceptado. ANONYMA seguirá intentándolo durante unas horas.",
+    "That browser’s subscription had ended, so it was removed. Turn notifications on again there.": "La suscripción de ese navegador había vencido, así que se quitó de la lista. Vuelve a activar las notificaciones en ese navegador.",
+    "Decoy Vault": "Bóveda señuelo",
+    "Made to unlock your vault? A second passphrase opens a harmless decoy.": "¿Te obligan a desbloquear tu bóveda? Una segunda frase de contraseña abre un señuelo inofensivo.",
+    "Set a decoy passphrase in Device Vault; it opens a separate vault of ordinary chats": "Define una frase de contraseña señuelo en la Bóveda del dispositivo; abre una bóveda aparte con chats comunes",
+    "Either passphrase unlocks the same way, in the same time, with nothing marking the decoy": "Cualquiera de las dos frases desbloquea igual, en el mismo tiempo, sin nada que delate el señuelo",
+    "A deterrent against casual pressure, not proof against an expert": "Disuasivo ante presiones casuales, no infalible frente a un experto",
+    "Someone who examines this browser's storage closely could tell that two vaults exist.": "Alguien que examine con detalle el almacenamiento de este navegador podría notar que existen dos bóvedas.",
+    "Vault Sync syncs only your real vault. The decoy stays on this device, and while it's open, sync is paused and shows as off.": "La Sincronización de la bóveda sincroniza solo tu bóveda real. El señuelo se queda en este dispositivo y, mientras está abierto, la sincronización se pausa y aparece como desactivada.",
+    "Your ledger still lists every message's charge, from either vault.": "Tu libro contable sigue mostrando el cobro de cada mensaje, de cualquiera de las dos bóvedas.",
+    "It deters casual pressure. It isn't proof against an expert: for example, inside the decoy a decoy passphrase can't be set.": "Disuade ante presiones casuales. No es infalible frente a un experto: por ejemplo, dentro del señuelo no se puede definir una frase de contraseña señuelo.",
+    "Use a decoy passphrase that's different from your vault passphrase.": "Usa una frase de contraseña señuelo distinta de la frase de contraseña de tu bóveda.",
+    "A decoy passphrase can't be set from here. Nothing was changed.": "No se puede definir una frase de contraseña señuelo desde aquí. No se cambió nada.",
+    "Decoy passphrase": "Frase de contraseña señuelo",
+    "Unlocking with a decoy passphrase opens a separate vault instead of this one. It starts with a few ordinary sample chats you can continue, delete or add to.": "Desbloquear con una frase de contraseña señuelo abre una bóveda aparte en lugar de esta. Empieza con algunos chats comunes de muestra que puedes continuar o eliminar, y puedes agregar otros.",
+    "Choose a new decoy passphrase. The decoy starts over with fresh sample chats.": "Elige una nueva frase de contraseña señuelo. El señuelo vuelve a empezar con chats de muestra nuevos.",
+    "Repeat the decoy passphrase": "Repite la frase de contraseña señuelo",
+    "This vault's passphrase, to confirm": "La frase de contraseña de esta bóveda, para confirmar",
+    "Change decoy passphrase": "Cambiar la frase de contraseña señuelo",
+    "Set decoy passphrase": "Definir la frase de contraseña señuelo",
+    "Remove the decoy passphrase? The decoy vault and its chats are deleted from this browser.": "¿Quitar la frase de contraseña señuelo? La bóveda señuelo y sus chats se eliminan de este navegador.",
+    "Removing…": "Quitando…",
+    "Remove decoy": "Quitar el señuelo",
+    "A decoy passphrase is set. Unlocking with it opens a separate vault instead of this one.": "Hay una frase de contraseña señuelo definida. Desbloquear con ella abre una bóveda aparte en lugar de esta.",
+    "If someone makes you unlock this vault, a second passphrase can open a separate, harmless vault instead.": "Si alguien te obliga a desbloquear esta bóveda, una segunda frase de contraseña puede abrir en su lugar una bóveda aparte e inofensiva.",
+    "Set a decoy passphrase": "Definir una frase de contraseña señuelo",
+    "Decoy passphrase set. Lock the vault and unlock with it to see the decoy.": "Frase de contraseña señuelo definida. Bloquea la bóveda y desbloquéala con ella para ver el señuelo.",
+    "Decoy removed. Only this vault's passphrase unlocks now.": "Se quitó el señuelo. Ahora solo la frase de contraseña de esta bóveda sirve para desbloquear.",
+    "Sync can't be turned on for this vault.": "No se puede activar la sincronización para esta bóveda.",
+    "Decoy Vault, if you set a decoy passphrase: a second, separate vault kept encrypted in this browser only. It's never synced, uploaded or in your account export, and Panic Wipe and deleting Device Vault remove it too.": "Bóveda señuelo, si defines una frase de contraseña señuelo: una segunda bóveda aparte, guardada cifrada solo en este navegador. Nunca se sincroniza, no se sube ni aparece en la exportación de tu cuenta, y el Borrado de pánico y eliminar la Bóveda del dispositivo también la quitan.",
+    "Decoy Vault is coming soon.": "Bóveda señuelo: próximamente.",
+    "Chat Import": "Importar chats",
+    "Bring your ChatGPT or Claude history with you.": "Trae contigo tu historial de ChatGPT o Claude.",
+    "Read in your browser from the export you download": "Se lee en tu navegador a partir de la exportación que descargas",
+    "Choose the chats to keep, with search and select all": "Elige los chats que quieres conservar, con búsqueda y selección de todos",
+    "Keep them in Device Vault, on your account, or as Markdown files": "Guárdalos en la Bóveda del dispositivo, en tu cuenta o como archivos Markdown",
+    "Import chats": "Importar chats",
+    "IMPORT CHATS": "IMPORTAR CHATS",
+    "Opening Import chats…": "Abriendo Importar chats…",
+    "Bring your ChatGPT or Claude history here. Choose which chats to keep and where they go.": "Trae aquí tu historial de ChatGPT o Claude. Elige qué chats conservar y dónde guardarlos.",
+    "Bring your ChatGPT or Claude history with you. It's read in your browser, and you choose what to keep.": "Trae contigo tu historial de ChatGPT o Claude. Se lee en tu navegador y tú eliges qué conservar.",
+    "Drop your export here": "Suelta aquí tu exportación",
+    "The ZIP from ChatGPT or Claude, or the conversations.json inside it. Up to 200 MB.": "El ZIP de ChatGPT o Claude, o el conversations.json que contiene. Hasta 200 MB.",
+    "Choose your export": "Elige tu exportación",
+    "In its settings, find Data controls and choose Export data. It emails you a ZIP.": "En sus ajustes, busca Controles de datos y elige Exportar datos. Te envía un ZIP por correo.",
+    "In its settings, find Privacy and choose Export data. It emails you a ZIP.": "En sus ajustes, busca Privacidad y elige Exportar datos. Te envía un ZIP por correo.",
+    "Your export is opened and read here. It isn't uploaded, and ANONYMA never sees the file.": "Tu exportación se abre y se lee aquí. No se sube, y ANONYMA nunca ve el archivo.",
+    "You choose what to keep": "Tú eliges qué conservar",
+    "Pick chats one by one, or search and select all. Then choose where they go.": "Elige los chats uno por uno, o busca y selecciona todos. Luego elige dónde guardarlos.",
+    "Only the words": "Solo el texto",
+    "Attachments, images, tool steps and hidden reasoning aren't imported. Projects, memories and custom instructions aren't either.": "No se importan los adjuntos, las imágenes, los pasos de herramientas ni el razonamiento oculto. Tampoco los proyectos, las memorias ni las instrucciones personalizadas.",
+    "Opening the file…": "Abriendo el archivo…",
+    "Unzipping it here…": "Descomprimiéndolo aquí…",
+    "Reading the chats…": "Leyendo los chats…",
+    "Checking for seed phrases…": "Buscando frases semilla…",
+    "This all happens on your device. Nothing is uploaded.": "Todo esto ocurre en tu dispositivo. No se sube nada.",
+    "ChatGPT export": "Exportación de ChatGPT",
+    "Claude export": "Exportación de Claude",
+    "1 chat found": "1 chat encontrado",
+    "1 attachment or image left out": "1 adjunto o imagen quedó fuera",
+    "1 attachment left out": "1 adjunto quedó fuera",
+    "Chats come over exactly as written. Veil doesn't change them.": "Los chats llegan exactamente como se escribieron. Veil no los cambia.",
+    "1 empty chat not listed": "1 chat vacío no aparece en la lista",
+    "1. Choose where they go": "1. Elige dónde guardarlos",
+    "2. Choose the chats": "2. Elige los chats",
+    "Where the chats go": "Dónde se guardan los chats",
+    "Encrypted on this device, with your passphrase. ANONYMA's servers never see these chats.": "Cifrados en este dispositivo, con tu frase de contraseña. Los servidores de ANONYMA nunca ven estos chats.",
+    "Device Vault isn't available here.": "La Bóveda del dispositivo no está disponible aquí.",
+    "This browser can't keep a vault.": "Este navegador no puede guardar una bóveda.",
+    "Saved with your other chats and marked as imported. Only the chats you choose are uploaded.": "Se guardan con tus otros chats y se marcan como importados. Solo se suben los chats que elijas.",
+    "Sign in to save chats to an account.": "Inicia sesión para guardar chats en una cuenta.",
+    "Markdown files": "Archivos Markdown",
+    "Downloads readable .md files. Nothing is saved anywhere.": "Descarga archivos .md legibles. No se guarda nada en ningún lugar.",
+    "Set up Device Vault to keep the chats on this device.": "Configura la Bóveda del dispositivo para guardar los chats en este dispositivo.",
+    "Unlock Device Vault to keep the chats on this device.": "Desbloquea la Bóveda del dispositivo para guardar los chats en este dispositivo.",
+    "Vault Sync is on, so these chats also sync, still encrypted, to your other devices.": "La Sincronización de la bóveda está activada, así que estos chats también se sincronizan, aún cifrados, con tus otros dispositivos.",
+    "Your auto-delete setting of 1 day applies to imported chats too.": "Tu ajuste de eliminación automática de 1 día también se aplica a los chats importados.",
+    "Checking what your account can take…": "Revisando cuánto admite tu cuenta…",
+    "Seed Guard checks every chat first. One that holds a wallet seed phrase or private key is held back unless you allow it.": "La Protección de frase semilla revisa primero cada chat. Si uno contiene una frase semilla o una clave privada de billetera, se deja fuera a menos que lo permitas.",
+    "Search titles and messages": "Buscar en títulos y mensajes",
+    "Select all": "Seleccionar todo",
+    "Select all shown": "Seleccionar todo lo visible",
+    "Select none": "Quitar la selección",
+    "No chats match that search.": "Ningún chat coincide con esa búsqueda.",
+    "Already in your vault": "Ya está en tu bóveda",
+    "Already imported": "Ya importado",
+    "Too large for your account": "Demasiado grande para tu cuenta",
+    "Seed Guard: allowed": "Protección de frase semilla: permitido",
+    "Import anyway…": "Importar de todos modos…",
+    "Keep it out": "Dejarlo fuera",
+    "This chat looks like it holds a wallet seed phrase or private key, so it isn't saved to your account.": "Este chat parece contener una frase semilla o una clave privada de billetera, así que no se guarda en tu cuenta.",
+    "Anyone with it controls that wallet. Import it only if it's a test phrase with no funds.": "Quien la tenga controla esa billetera. Impórtalo solo si se trata de una frase de prueba sin fondos.",
+    "Yes, import it": "Sí, importarlo",
+    "Import 1 chat": "Importar 1 chat",
+    "Download 1 chat as Markdown": "Descargar 1 chat como Markdown",
+    "Only the chats you chose are uploaded: their words and dates, nothing else. No model is used and nothing is charged.": "Solo se suben los chats que elegiste: su texto y sus fechas, nada más. No se usa ningún modelo y no se cobra nada.",
+    "Nothing leaves this browser. No model is used and nothing is charged.": "Nada sale de este navegador. No se usa ningún modelo y no se cobra nada.",
+    "Nothing leaves this browser and nothing is saved. No model is used and nothing is charged.": "Nada sale de este navegador y no se guarda nada. No se usa ningún modelo y no se cobra nada.",
+    "Saving to your account…": "Guardando en tu cuenta…",
+    "Sealing into Device Vault…": "Sellando en la Bóveda del dispositivo…",
+    "Writing Markdown files…": "Creando archivos Markdown…",
+    "Stopping keeps what was already done. Nothing is undone.": "Al detenerlo, se conserva lo que ya se hizo. No se deshace nada.",
+    "DONE": "LISTO",
+    "NOTHING IMPORTED": "NADA IMPORTADO",
+    "No chats were imported": "No se importó ningún chat",
+    "1 chat downloaded as Markdown": "1 chat descargado como Markdown",
+    "1 chat kept in Device Vault": "1 chat guardado en la Bóveda del dispositivo",
+    "1 chat saved to your account": "1 chat guardado en tu cuenta",
+    "Open one": "Abrir uno",
+    "The rest are in the Device Vault section of the sidebar.": "El resto está en la sección Bóveda del dispositivo de la barra lateral.",
+    "Find the rest by searching your history in Your library.": "Encuentra el resto buscando en tu historial en Tu biblioteca.",
+    "The most recent ones are in the sidebar.": "Los más recientes están en la barra lateral.",
+    "Import more from this file": "Importar más de este archivo",
+    "Search your history": "Buscar en tu historial",
+    "The replies were written by that service, not by an ANONYMA model.": "Las respuestas las escribió ese servicio, no un modelo de ANONYMA.",
+    "Written in": "Escrito en",
+    "This isn't a ChatGPT or Claude export. Choose the ZIP you were sent, or the conversations.json inside it.": "Esta no es una exportación de ChatGPT o Claude. Elige el ZIP que te enviaron o el conversations.json que contiene.",
+    "This file is over 200 MB. Choose a smaller export, or the conversations.json from inside it.": "Este archivo pesa más de 200 MB. Elige una exportación más pequeña o el conversations.json que contiene.",
+    "This ZIP couldn't be opened. It may be damaged; download the export again.": "No se pudo abrir este ZIP. Puede estar dañado; descarga la exportación de nuevo.",
+    "This ZIP holds too many files.": "Este ZIP contiene demasiados archivos.",
+    "There's no conversations.json in this ZIP. Choose the export ZIP you were sent by ChatGPT or Claude.": "Este ZIP no contiene conversations.json. Elige el ZIP de exportación que te envió ChatGPT o Claude.",
+    "The conversations in this export are too large to read here.": "Las conversaciones de esta exportación son demasiado grandes para leerlas aquí.",
+    "These files come from different services. Import one export at a time.": "Estos archivos vienen de servicios distintos. Importa una exportación a la vez.",
+    "This export holds too many chats to list. Try an export from a shorter period.": "Esta exportación contiene demasiados chats para mostrarlos en una lista. Prueba con una exportación de un periodo más corto.",
+    "There are no chats in this file.": "No hay chats en este archivo.",
+    "This export is too large for this browser to read.": "Esta exportación es demasiado grande para que este navegador la lea.",
+    "This export is too large for this browser's memory.": "Esta exportación es demasiado grande para la memoria de este navegador.",
+    "This export stopped loading. It may be too large for this browser.": "Esta exportación dejó de cargarse. Puede ser demasiado grande para este navegador.",
+    "That is too much text for one request. Send fewer chats at a time.": "Es demasiado texto para una sola solicitud. Envía menos chats a la vez.",
+    "Chat Import is coming soon.": "Importar chats: próximamente.",
+    "Photo Tools": "Herramientas de fotos",
+    "Edit a photo with words, remove its background, or upscale it. See the price first.": "Edita una foto con palabras, quítale el fondo o amplíala. Consulta el precio primero.",
+    "Say what to change, cut the subject out as a transparent PNG, or enlarge a photo": "Di qué cambiar, recorta el sujeto como PNG transparente o amplía una foto",
+    "Slide between before and after; results save to your library, or stay off the record": "Desliza entre el antes y el después; los resultados se guardan en tu biblioteca o se quedan sin registro",
+    "See the most it can cost first; a result you can't use costs nothing": "Consulta primero lo máximo que puede costar; un resultado que no puedes usar no cuesta nada",
+    "PHOTO TOOLS": "HERRAMIENTAS DE FOTOS",
+    "Photo tools": "Herramientas de fotos",
+    "Opening Photo tools…": "Abriendo Herramientas de fotos…",
+    "Edit a photo with words, remove its background, or upscale it.": "Edita una foto con palabras, quítale el fondo o amplíala.",
+    "See the price before anything runs. A result you can't use costs nothing.": "Consulta el precio antes de que se ejecute nada. Un resultado que no puedes usar no cuesta nada.",
+    "Cleaned here first": "Se limpia aquí primero",
+    "Hidden details such as location and camera are removed in your browser, and you can black out parts of a photo before it goes anywhere.": "Los datos ocultos, como la ubicación y la cámara, se eliminan en tu navegador, y puedes tapar partes de una foto antes de que salga a cualquier lado.",
+    "See the most it can cost before you start; that's exactly what's held. A result you can't use costs nothing.": "Consulta lo máximo que puede costar antes de empezar; eso es exactamente lo que se retiene. Un resultado que no puedes usar no cuesta nada.",
+    "ANONYMA doesn't keep your photo. The result goes to your library, or nowhere if you go off the record.": "ANONYMA no guarda tu foto. El resultado va a tu biblioteca, o a ningún lado si pasas a sin registro.",
+    "The demo doesn't edit photos.": "La demo no edita fotos.",
+    "Sign in to use Photo tools.": "Inicia sesión para usar Herramientas de fotos.",
+    "Photos are processed by a model, so this needs an account with credits. Nothing is sent until you press the button, and you see the most it can cost first.": "Las fotos las procesa un modelo, así que esto necesita una cuenta con créditos. No se envía nada hasta que presionas el botón, y primero ves lo máximo que puede costar.",
+    "Edit with words": "Editar con palabras",
+    "Remove background": "Quitar el fondo",
+    "Upscale": "Ampliar",
+    "Edit the photo": "Editar la foto",
+    "Remove the background": "Quitar el fondo",
+    "Upscale the photo": "Ampliar la foto",
+    "Say what to change and the model redraws the photo.": "Di qué cambiar y el modelo vuelve a dibujar la foto.",
+    "Keep the subject, drop the rest. The result is a transparent PNG.": "Conserva el sujeto y descarta el resto. El resultado es un PNG transparente.",
+    "Make the photo larger and sharper. The model sets the new size.": "Haz la foto más grande y nítida. El modelo define el nuevo tamaño.",
+    "Extend": "Extender",
+    "isn't offered yet.": "aún no se ofrece.",
+    "The gateway's outpainting model doesn't accept a photo yet.": "El modelo de extensión de imágenes de la pasarela aún no acepta fotos.",
+    "The gateway doesn't list an outpainting model right now.": "La pasarela no ofrece ningún modelo de extensión de imágenes por ahora.",
+    "Photo": "Foto",
+    "From your library": "De tu biblioteca",
+    "Reading the photo on this device…": "Leyendo la foto en este dispositivo…",
+    "Drop a photo here": "Suelta una foto aquí",
+    "PNG, JPEG, WebP, GIF or HEIC. Bigger than 1.5 MB is shrunk here to fit.": "PNG, JPEG, WebP, GIF o HEIC. Si pesa más de 1.5 MB, se reduce aquí para que quepa.",
+    "Choose a photo": "Elige una foto",
+    "What should change?": "¿Qué debería cambiar?",
+    "Make the sky a warm sunset, keep everything else": "Convierte el cielo en un atardecer cálido y conserva todo lo demás",
+    "None available right now": "Ninguno disponible por ahora",
+    "Turn Veil off": "Desactivar Veil",
+    "Veil is on. It can't hide details inside a photo edit, so the edit runs only if your words hold nothing Veil would mask.": "Veil está activado. No puede ocultar datos dentro de una edición de foto, así que la edición solo se ejecuta si tus palabras no contienen nada que Veil ocultaría.",
+    "Veil is off: the model sees your words as written.": "Veil está desactivado: el modelo ve tus palabras tal como las escribiste.",
+    "Veil would mask 1 detail in these words, and a photo edit needs them as written. Remove it, or turn Veil off.": "Veil ocultaría 1 dato en estas palabras, y una edición de foto las necesita tal como están escritas. Quítalo o desactiva Veil.",
+    "Keep the result": "Conservar el resultado",
+    "Where it goes": "A dónde va",
+    "In your library": "En tu biblioteca",
+    "Nowhere: off the record, download only": "En ningún lado: sin registro, solo descarga",
+    "Private mode: only models with zero data retention, nothing saved, Veil on.": "Modo privado: solo modelos con retención cero de datos, nada se guarda, Veil activado.",
+    "Private mode isn't available for photos: no photo model offers zero data retention.": "El Modo privado no está disponible para fotos: ningún modelo de fotos ofrece retención cero de datos.",
+    "Checking which models offer zero data retention…": "Comprobando qué modelos ofrecen retención cero de datos…",
+    "Photo results are never kept in Device Vault: they're saved to your library or nowhere.": "Los resultados de fotos nunca se guardan en la Bóveda del dispositivo: se guardan en tu biblioteca o en ningún lado.",
+    "· exactly what's held; you're charged only for a usable result": "· exactamente lo que se retiene; solo se te cobra por un resultado utilizable",
+    "Your photo goes to the model with its hidden details removed here first. ANONYMA doesn't keep it; only the result can be saved.": "Tu foto llega al modelo después de quitarle aquí sus datos ocultos. ANONYMA no la guarda; solo se puede guardar el resultado.",
+    "You can black out parts of it before it's sent.": "Puedes tapar partes de la foto antes de enviarla.",
+    "A model makes the change, so check the result. A run that gives you nothing usable costs nothing.": "Un modelo hace el cambio, así que revisa el resultado. Una ejecución que no te da nada utilizable no cuesta nada.",
+    "Your photo": "Tu foto",
+    "Editing your photo…": "Editando tu foto…",
+    "Removing the background…": "Quitando el fondo…",
+    "Upscaling your photo…": "Ampliando tu foto…",
+    "Nothing is charged unless a usable result comes back.": "No se cobra nada salvo que llegue un resultado utilizable.",
+    "Slide between before and after": "Desliza entre antes y después",
+    "The original isn't kept, so there's no before to slide to. Choose a photo again to compare.": "El original no se conserva, así que no hay un antes al que deslizar. Vuelve a elegir una foto para comparar.",
+    "Use as the photo": "Usar como foto",
+    "Open in your library": "Abrir en tu biblioteca",
+    "New photo": "Nueva foto",
+    "Saved to your library like an image you made. Deleting it there deletes it here.": "Se guardó en tu biblioteca como una imagen que creaste. Si la eliminas allí, se elimina aquí.",
+    "Off the record: nothing was saved. Download it before you leave this page.": "Sin registro: no se guardó nada. Descárgalo antes de salir de esta página.",
+    "The checkerboard shows what's transparent. Check the edges before you use it.": "El fondo a cuadros muestra lo que es transparente. Revisa los bordes antes de usarlo.",
+    "EDIT WITH WORDS": "EDITAR CON PALABRAS",
+    "REMOVE BACKGROUND": "QUITAR EL FONDO",
+    "UPSCALE": "AMPLIAR",
+    "Choose from your library": "Elegir de tu biblioteca",
+    "Your library has no pictures yet.": "Tu biblioteca aún no tiene imágenes.",
+    "Use this picture": "Usar esta imagen",
+    "Use a PNG, JPEG, WebP or GIF photo, or a HEIC photo.": "Usa una foto PNG, JPEG, WebP o GIF, o una foto HEIC.",
+    "This photo couldn't be opened in this browser.": "No se pudo abrir esta foto en este navegador.",
+    "That library photo couldn't be opened. It may have been deleted.": "No se pudo abrir esa foto de la biblioteca. Es posible que se haya eliminado.",
+    "The result couldn't be opened as a new photo.": "No se pudo abrir el resultado como una foto nueva.",
+    "The price changed since it was shown. Check the new one, then try again. Nothing was charged.": "El precio cambió desde que se mostró. Revisa el nuevo e inténtalo de nuevo. No se cobró nada.",
+    "Choose a photo tool: edit, background or upscale.": "Elige una herramienta de fotos: editar, fondo o ampliar.",
+    "Extend isn't available yet: the gateway's outpainting model doesn't accept a photo, and publishes no direction or size to ask for.": "Extender aún no está disponible: el modelo de extensión de imágenes de la pasarela no acepta fotos y no publica ninguna dirección ni tamaño que se pueda pedir.",
+    "This model can't do that with a photo right now.": "Este modelo no puede hacer eso con una foto por ahora.",
+    "Private mode needs a model with zero data retention. No photo model offers it right now.": "El Modo privado necesita un modelo con retención cero de datos. Ningún modelo de fotos lo ofrece por ahora.",
+    "Say what to change, in up to 2,000 characters.": "Di qué cambiar, en hasta 2,000 caracteres.",
+    "Send the photo as a PNG, JPEG, WebP or GIF data URL.": "Envía la foto como una URL de datos PNG, JPEG, WebP o GIF.",
+    "The photo is larger than 1.5 MiB. Shrink it and try again.": "La foto pesa más de 1.5 MiB. Redúcela e inténtalo de nuevo.",
+    "That file isn't the kind of picture it says it is.": "Ese archivo no es el tipo de imagen que dice ser.",
+    "A photo is already being processed. Wait for it to finish.": "Ya se está procesando una foto. Espera a que termine.",
+    "The provider returned no picture, so nothing was charged.": "El proveedor no devolvió ninguna imagen, así que no se cobró nada.",
+    "The provider returned something that isn't a picture, so nothing was saved or charged.": "El proveedor devolvió algo que no es una imagen, así que no se guardó ni se cobró nada.",
+    "The provider returned a picture without a transparent background, so nothing was saved or charged.": "El proveedor devolvió una imagen sin fondo transparente, así que no se guardó ni se cobró nada.",
+    "The result is too large to hand back without saving it, so nothing was charged. Save it to your library instead.": "El resultado es demasiado grande para entregarlo sin guardarlo, así que no se cobró nada. Guárdalo en tu biblioteca en su lugar.",
+    "The model took too long, so nothing was charged. Try again, or choose another model.": "El modelo tardó demasiado, así que no se cobró nada. Inténtalo de nuevo o elige otro modelo.",
+    "YOUR SAVED FILES": "TUS ARCHIVOS GUARDADOS",
+    "Search files": "Buscar en archivos",
+    "Ask one question across all your saved files. ANONYMA finds the best passages, shows you what would be sent, and the AI answers from those passages only, citing the file and the place.": "Haz una pregunta sobre todos tus archivos guardados. ANONYMA encuentra los mejores pasajes, te muestra lo que se enviaría y la IA responde solo a partir de esos pasajes, citando el archivo y el lugar.",
+    "The demo has no saved files. Sign in to search yours.": "La demo no tiene archivos guardados. Inicia sesión para buscar en los tuyos.",
+    "Sign in to search your saved files.": "Inicia sesión para buscar en tus archivos guardados.",
+    "Reading your saved files…": "Leyendo tus archivos guardados…",
+    "No saved files to search yet": "Aún no hay archivos guardados para buscar",
+    "Save a text, code, Word, Excel or PowerPoint file from the paperclip menu in Chat (Saved files). It stays for the days you choose, up to 30, and you can ask across all of them here.": "Guarda un archivo de texto, código, Word, Excel o PowerPoint desde el menú del clip en el Chat (Archivos guardados). Se conserva los días que elijas, hasta 30, y aquí puedes preguntar sobre todos ellos.",
+    "Only a project's pinned files": "Solo los archivos fijados de un proyecto",
+    "Choose a project…": "Elige un proyecto…",
+    "No text found": "No se encontró texto",
+    "Files are saved from the paperclip menu in Chat and stay for the days you chose, up to 30. Audio, PDFs and images aren't searched.": "Los archivos se guardan desde el menú del clip en el Chat y se conservan los días que elegiste, hasta 30. No se busca en audio, PDF ni imágenes.",
+    "What notice do I have to give before ending the lease?": "¿Con cuánta anticipación debo avisar antes de terminar el contrato de arrendamiento?",
+    "Find passages": "Buscar pasajes",
+    "This looks for the words of your question in your files, on ANONYMA's server. Nothing goes to an AI yet, and your question isn't saved.": "Esto busca las palabras de tu pregunta en tus archivos, en el servidor de ANONYMA. Todavía no se envía nada a una IA, y tu pregunta no se guarda.",
+    "Only passages go": "Solo se envían pasajes",
+    "Only the few best passages you keep are sent to the model. Never whole files, and never their names.": "Solo se envían al modelo los pocos mejores pasajes que conserves. Nunca archivos completos, y nunca sus nombres.",
+    "You see it first": "Lo ves primero",
+    "Look at exactly what the AI will see before you ask. Uncheck any passage to leave it out.": "Mira exactamente lo que verá la IA antes de preguntar. Desmarca cualquier pasaje para dejarlo fuera.",
+    "Every answer cites": "Cada respuesta cita",
+    "Each claim points to a numbered passage, with its file and place. Open it to check the answer yourself.": "Cada afirmación apunta a un pasaje numerado, con su archivo y su lugar. Ábrelo para comprobar la respuesta por tu cuenta.",
+    "Best matches": "Mejores coincidencias",
+    "No matches": "Sin coincidencias",
+    "1 passage": "1 pasaje",
+    "Searched 1 file": "Se buscó en 1 archivo",
+    "Searching your 1 saved file": "Buscando en tu 1 archivo guardado",
+    "No passage matched. This finds the words of your question in your files, not their meaning, so try words the file is likely to use, or fewer of them.": "Ningún pasaje coincidió. Esto busca las palabras de tu pregunta en tus archivos, no su significado, así que prueba con palabras que el archivo probablemente use, o con menos palabras.",
+    "Send this passage": "Enviar este pasaje",
+    "Leave this passage out": "Dejar fuera este pasaje",
+    "Looks like an instruction to an AI": "Parece una instrucción para una IA",
+    "Show the whole passage": "Mostrar el pasaje completo",
+    "Show less": "Mostrar menos",
+    "The question, the passages you kept and fixed instructions go on one request. Never the files, their names or anything else in them.": "La pregunta, los pasajes que conservaste y las instrucciones fijas van en una sola solicitud. Nunca los archivos, sus nombres ni nada más de su contenido.",
+    "Veil is on: details it recognises are masked before sending, as shown, and put back in the answer here.": "Veil está activado: los datos que reconoce se ocultan antes de enviarse, como se muestra, y se restauran aquí en la respuesta.",
+    "Injection Shield: 1 passage has wording that looks like an instruction to an AI. It's sent as data, with a note not to follow it.": "Escudo contra inyección: 1 pasaje tiene una redacción que parece una instrucción para una IA. Se envía como datos, con una nota para no seguirla.",
+    "The passages are marked as data to read, never instructions to follow.": "Los pasajes se marcan como datos para leer, nunca como instrucciones para seguir.",
+    "Keep the answer": "Conservar la respuesta",
+    "Nowhere (Private mode)": "En ningún lado (Modo privado)",
+    "Device Vault isn't offered here. Your saved files live on ANONYMA's server, so an answer built from them can't be kept only on this device. Ask off the record to keep nothing.": "La Bóveda del dispositivo no se ofrece aquí. Tus archivos guardados están en el servidor de ANONYMA, así que una respuesta creada a partir de ellos no se puede conservar solo en este dispositivo. Pregunta sin registro para no conservar nada.",
+    "Ask about 1 passage": "Preguntar sobre 1 pasaje",
+    "Reading the passages… If you stop, nothing is charged.": "Leyendo los pasajes… Si lo detienes, no se cobra nada.",
+    "The most it can cost is held first. You're charged only for what the answer uses, usually a small share of that. An answer that fails or can't be used costs nothing.": "Primero se retiene lo máximo que puede costar. Solo se te cobra lo que usa la respuesta, normalmente una fracción pequeña de eso. Una respuesta que falla o no se puede usar no cuesta nada.",
+    "The answer was cut off at the model's reply limit. You're charged only for what it used.": "La respuesta se cortó en el límite de respuesta del modelo. Solo se te cobra lo que usó.",
+    "AI answers can be wrong. Open a source and check it against your file.": "Las respuestas de IA pueden equivocarse. Abre una fuente y compárala con tu archivo.",
+    "The answer doesn't cite any passage. Read the passages below before you rely on it.": "La respuesta no cita ningún pasaje. Lee los pasajes de abajo antes de confiar en ella.",
+    "Also read, not cited": "También leídos, no citados",
+    "Saved in History": "Guardado en el Historial",
+    "Change the passages": "Cambiar los pasajes",
+    "Ask another question": "Hacer otra pregunta",
+    "Copy the answer": "Copiar la respuesta",
+    "Open in History": "Abrir en el Historial",
+    "The passage's text isn't kept. Ask again to read it.": "El texto del pasaje no se conserva. Pregunta de nuevo para leerlo.",
+    "Opening the answer…": "Abriendo la respuesta…",
+    "This answer isn't in your History any more.": "Esta respuesta ya no está en tu Historial.",
+    "Ask a new question": "Hacer una pregunta nueva",
+    "Opening Search files…": "Abriendo Buscar en archivos…",
+    "Ask one question across all your saved files. Every answer cites the file and the passage it came from.": "Haz una pregunta sobre todos tus archivos guardados. Cada respuesta cita el archivo y el pasaje de donde salió.",
+    "File Search": "Búsqueda en archivos",
+    "Ask across all your files at once. Answers cite the exact file and passage.": "Pregunta sobre todos tus archivos a la vez. Las respuestas citan el archivo y el pasaje exactos.",
+    "One question across every saved file, with each answer citing the file and the passage": "Una pregunta sobre todos los archivos guardados, y cada respuesta cita el archivo y el pasaje",
+    "See the few passages that will be sent first; only those go to the model, never whole files or their names": "Mira primero los pocos pasajes que se enviarán; solo esos van al modelo, nunca archivos completos ni sus nombres",
+    "See the most it can cost first; an answer that can't be used costs nothing": "Consulta primero lo máximo que puede costar; una respuesta que no se puede usar no cuesta nada",
+    "File Search's index of your saved files' text": "El índice que Búsqueda en archivos crea con el texto de tus archivos guardados",
+    "Ask a question of 2 to 1,000 characters.": "Haz una pregunta de 2 a 1,000 caracteres.",
+    "Choose files or a project, not both.": "Elige archivos o un proyecto, no ambos.",
+    "That question has nothing to look for. Add a few words about what you want to find.": "Esa pregunta no tiene nada que buscar. Agrega algunas palabras sobre lo que quieres encontrar.",
+    "Send 1 to 8 passages.": "Envía de 1 a 8 pasajes.",
+    "Each passage needs its id and its text.": "Cada pasaje necesita su id y su texto.",
+    "A passage is no longer there: its file was deleted or has expired. Search again.": "Un pasaje ya no está: su archivo se eliminó o caducó. Vuelve a buscar.",
+    "A passage doesn't match your saved file. Search again.": "Un pasaje no coincide con tu archivo guardado. Vuelve a buscar.",
+    "File Search sends only your question and the passages you keep, so it can't be combined with other chat options.": "Búsqueda en archivos solo envía tu pregunta y los pasajes que conserves, así que no se puede combinar con otras opciones del chat.",
+    "File Search needs a text model.": "Búsqueda en archivos necesita un modelo de texto.",
+    "Sealed Mode models can't search saved files: those live on ANONYMA's server. Choose another model.": "Los modelos del Modo sellado no pueden buscar en archivos guardados: esos están en el servidor de ANONYMA. Elige otro modelo.",
+    "The model ran out of room before it wrote an answer, so there's no result. Nothing was charged. Try again, or choose another model.": "Al modelo se le acabó el espacio antes de escribir una respuesta, así que no hay resultado. No se cobró nada. Inténtalo de nuevo o elige otro modelo.",
+    "The model returned no answer, so there's no result. Nothing was charged. Try again, or choose another model.": "El modelo no devolvió ninguna respuesta, así que no hay resultado. No se cobró nada. Inténtalo de nuevo o elige otro modelo.",
+    "The estimate changed since it was shown. Check the new one, then ask again. Nothing was charged.": "La estimación cambió desde que se mostró. Revisa la nueva y vuelve a preguntar. No se cobró nada.",
+    "The question couldn't be answered. Nothing was charged. Try again, or choose another model.": "No se pudo responder la pregunta. No se cobró nada. Inténtalo de nuevo o elige otro modelo.",
+    "The question couldn't be answered. Nothing was charged.": "No se pudo responder la pregunta. No se cobró nada.",
+    "Choose up to 50 of your saved files.": "Elige hasta 50 de tus archivos guardados.",
+    "Your saved files couldn't be loaded.": "No se pudieron cargar tus archivos guardados.",
+    "The search couldn't run.": "No se pudo ejecutar la búsqueda.",
+    "Also read": "También leídos",
+    "Passages found": "Pasajes encontrados",
+    "Ask again in File Search": "Preguntar de nuevo en Búsqueda en archivos",
+    "CODE": "CÓDIGO",
+    "Repo Reader": "Lector de repositorios",
+    "Paste a public GitHub repo and ask about it. Answers point to the exact files and lines, and you see which excerpts go to the AI before anything is sent.": "Pega un repositorio público de GitHub y pregunta sobre él. Las respuestas apuntan a los archivos y líneas exactos, y ves qué fragmentos van a la IA antes de que se envíe algo.",
+    "Read another repo": "Leer otro repositorio",
+    "GitHub repo link": "Enlace del repositorio de GitHub",
+    "Read repo": "Leer repositorio",
+    "Public repos only. Free. GitHub sees ANONYMA's server, not you.": "Solo repositorios públicos. Gratis. GitHub ve el servidor de ANONYMA, no a ti.",
+    "Sign in to read a repo.": "Inicia sesión para leer un repositorio.",
+    "Downloading and unpacking the repo…": "Descargando y descomprimiendo el repositorio…",
+    "Up to 50 MB. Vendored folders, binaries and files over 256 KB are skipped.": "Hasta 50 MB. Se omiten las carpetas de dependencias de terceros, los binarios y los archivos de más de 256 KB.",
+    "Open now": "Abiertos ahora",
+    "Open repos": "Repositorios abiertos",
+    "Read a repo": "Leer un repositorio",
+    "Paste its GitHub link. The server fetches the public code; your browser never contacts GitHub.": "Pega su enlace de GitHub. El servidor obtiene el código público; tu navegador nunca se conecta con GitHub.",
+    "See what the AI sees": "Ver lo que ve la IA",
+    "Your question picks the most relevant excerpts. You see every one before anything is sent.": "Tu pregunta elige los fragmentos más relevantes. Los ves todos antes de que se envíe nada.",
+    "Follow the citations": "Sigue las citas",
+    "Answers cite path:line. Click one to open the file at that line.": "Las respuestas citan path:line. Haz clic en una para abrir el archivo en esa línea.",
+    "Forgotten. Nothing of that repo is kept.": "Olvidado. No se conserva nada de ese repositorio.",
+    "That repo couldn't be opened.": "No se pudo abrir ese repositorio.",
+    "Couldn't read that repo.": "No se pudo leer ese repositorio.",
+    "Forget now": "Olvidar ahora",
+    "Filter files": "Filtrar archivos",
+    "No files match.": "Ningún archivo coincide.",
+    "That file couldn't be opened.": "No se pudo abrir ese archivo.",
+    "Open on GitHub": "Abrir en GitHub",
+    "Ask about this repo": "Pregunta sobre este repositorio",
+    "Where are requests rate limited? How is the config loaded?": "¿Dónde se limita la frecuencia de las solicitudes? ¿Cómo se carga la configuración?",
+    "Finding files…": "Buscando archivos…",
+    "Find again": "Buscar de nuevo",
+    "Find files": "Buscar archivos",
+    "Free. Nothing is sent to a model until you ask.": "Gratis. No se envía nada a un modelo hasta que preguntes.",
+    "None of your words matched the code, so the README and manifest go instead.": "Ninguna de tus palabras coincidió con el código, así que se envían el README y el manifiesto en su lugar.",
+    "Reads like instructions": "Parece dar instrucciones",
+    "Injection Shield: this excerpt has text that reads like instructions to an AI. It's sent as data, and the model is told not to follow it.": "Escudo contra inyección: este fragmento tiene texto que parece dar instrucciones a una IA. Se envía como datos y se le indica al modelo que no lo siga.",
+    "Show everything that's sent": "Mostrar todo lo que se envía",
+    "The most this answer can cost, and exactly what's held while it's written: these excerpts and a full answer budget at the model's published rates. You're charged only for what's used, and nothing if the reply is empty.": "Lo máximo que puede costar esta respuesta, y exactamente lo que se retiene mientras se escribe: estos fragmentos y un presupuesto de respuesta completo a las tarifas publicadas del modelo. Solo se te cobra por lo que se usa, y nada si la respuesta está vacía.",
+    "Private Mode: zero-data-retention models only, Veil on, and nothing is saved.": "Modo privado: solo modelos con retención cero de datos, Veil activado y no se guarda nada.",
+    "Asked off the record: billed like a message, and neither the question nor the answer is saved. The answer stays on this page until you leave it.": "Preguntado sin registro: se cobra como un mensaje, y no se guardan ni la pregunta ni la respuesta. La respuesta se queda en esta página hasta que salgas de ella.",
+    "No answer.": "Sin respuesta.",
+    "Waiting for the first words…": "Esperando las primeras palabras…",
+    "Stopped. Only what the model had already written is charged, if anything.": "Detenido. Si hay algún cobro, es solo por lo que el modelo ya había escrito.",
+    "Couldn't find files for that question.": "No se encontraron archivos para esa pregunta.",
+    "The AI can be wrong about code it only sees in part. Check the cited lines before you rely on an answer.": "La IA puede equivocarse con código que solo ve en parte. Revisa las líneas citadas antes de confiar en una respuesta.",
+    "Open this file at that line": "Abrir este archivo en esa línea",
+    "The answer was cut short at its length limit.": "La respuesta se cortó al llegar a su límite de longitud.",
+    "No path:line citations in this answer.": "Esta respuesta no tiene citas path:line.",
+    "Paste a public GitHub repo and ask about it. Answers cite the exact files and lines.": "Pega un repositorio público de GitHub y pregunta sobre él. Las respuestas citan los archivos y las líneas exactos.",
+    "Opening Repo Reader…": "Abriendo el Lector de repositorios…",
+    "Paste a public GitHub repo and ask about it. Answers point to the exact files.": "Pega un repositorio público de GitHub y pregunta sobre él. Las respuestas señalan los archivos exactos.",
+    "Public repos only: our server downloads the code, so GitHub sees ANONYMA, not you": "Solo repositorios públicos: nuestro servidor descarga el código, así que GitHub ve a ANONYMA, no a ti",
+    "Browse the files, see exactly which excerpts go to the AI, and jump to each cited line": "Explora los archivos, ve exactamente qué fragmentos llegan a la IA y salta a cada línea citada",
+    "Reading a repo is free and answers bill like a message; the files are forgotten after 30 minutes": "Leer un repositorio es gratis y las respuestas se cobran como un mensaje; los archivos se olvidan después de 30 minutos",
+    "Repo Reader: a repo you read is kept only in the server's memory, for your account, for 30 minutes (or until you forget it, or sooner when the server needs the memory), then dropped; it's never written to disk or logged. Questions are asked off the record, so neither they nor the answers are saved. Your data export lists the repos open at the time; Panic Wipe and closing the account forget them at once.": "Lector de repositorios: un repositorio que lees se conserva solo en la memoria del servidor, para tu cuenta, durante 30 minutos (o hasta que lo olvides, o antes si el servidor necesita la memoria), y luego se descarta; nunca se escribe en disco ni se registra. Las preguntas se hacen sin registro, así que no se guardan ni ellas ni las respuestas. Tu exportación de datos lista los repositorios abiertos en ese momento; el Borrado de pánico y cerrar la cuenta los olvidan de inmediato.",
+    "Repos open in Repo Reader": "Repositorios abiertos en el Lector de repositorios",
+    "Paste a public GitHub repo link, like github.com/owner/repo.": "Pega el enlace de un repositorio público de GitHub, como github.com/owner/repo.",
+    "Paste the repo's main link, or a /tree/<branch> link for one branch or tag.": "Pega el enlace principal del repositorio, o un enlace /tree/<branch> para una rama o etiqueta.",
+    "That branch or tag name can't be read.": "No se puede leer ese nombre de rama o etiqueta.",
+    "Couldn't find that repo, branch or tag on GitHub. Private repos can't be read.": "No se encontró ese repositorio, rama o etiqueta en GitHub. Los repositorios privados no se pueden leer.",
+    "GitHub didn't send the repo. Try again in a moment.": "GitHub no envió el repositorio. Inténtalo de nuevo en un momento.",
+    "Couldn't reach GitHub. Try again in a moment.": "No se pudo contactar a GitHub. Inténtalo de nuevo en un momento.",
+    "GitHub took too long to send the repo. Try again, or try a smaller repo.": "GitHub tardó demasiado en enviar el repositorio. Inténtalo de nuevo o prueba con un repositorio más pequeño.",
+    "GitHub sent the download somewhere unexpected, so it wasn't read.": "GitHub envió la descarga a un lugar inesperado, así que no se leyó.",
+    "GitHub didn't send the repo's files.": "GitHub no envió los archivos del repositorio.",
+    "That repo's download is larger than 50 MB, so it wasn't read.": "La descarga de ese repositorio pesa más de 50 MB, así que no se leyó.",
+    "That repo unpacks to more than 300 MB, so it wasn't read.": "Ese repositorio ocupa más de 300 MB al descomprimirse, así que no se leyó.",
+    "That repo has more than 60,000 files and folders, so it wasn't read.": "Ese repositorio tiene más de 60,000 archivos y carpetas, así que no se leyó.",
+    "That download wasn't a readable archive, so it wasn't read.": "Esa descarga no era un archivo comprimido legible, así que no se leyó.",
+    "No readable text files were found in that repo.": "No se encontraron archivos de texto legibles en ese repositorio.",
+    "That repo took too long to unpack, so it wasn't read.": "Ese repositorio tardó demasiado en descomprimirse, así que no se leyó.",
+    "This repo was forgotten (30 minutes after it was read, or when you closed it). Paste the link to read it again.": "Este repositorio se olvidó (30 minutos después de leerse, o cuando lo cerraste). Pega el enlace para leerlo de nuevo.",
+    "That file isn't in the files that were read.": "Ese archivo no está entre los archivos que se leyeron.",
+    "Type a question about the repo.": "Escribe una pregunta sobre el repositorio.",
+    "Another repo is still being read. Try again in a moment.": "Aún se está leyendo otro repositorio. Inténtalo de nuevo en un momento.",
+    "That repo isn't open.": "Ese repositorio no está abierto.",
+    "These excerpts are too long for this model. Choose a model with a larger context, or ask a narrower question. Nothing was sent or charged.": "Estos fragmentos son demasiado largos para este modelo. Elige un modelo con un contexto mayor o haz una pregunta más concreta. No se envió ni se cobró nada.",
+    "These excerpts are too long to send together. Ask a narrower question.": "Estos fragmentos son demasiado largos para enviarlos juntos. Haz una pregunta más concreta.",
+    "That question couldn't be sent. Find the files again and retry.": "No se pudo enviar esa pregunta. Busca los archivos de nuevo y vuelve a intentarlo.",
+    "Questions about a repo are asked off the record: send the request off the record.": "Las preguntas sobre un repositorio se hacen sin registro: envía la solicitud sin registro.",
+    "A repo question can't be combined with other chat options.": "Una pregunta sobre un repositorio no se puede combinar con otras opciones del chat.",
+    "Repo Reader needs a text model.": "El Lector de repositorios necesita un modelo de texto.",
+    "That link isn't on a host this reader may fetch from.": "Ese enlace no está en un host del que este lector pueda obtener contenido.",
+    "Busy, try again in a moment.": "Ocupado, inténtalo de nuevo en un momento.",
+    "Whole file": "Todo el archivo",
     "Cambiar a español": "Cambiar a español",
     "Prices from the live catalog on every model": "Precios del catálogo en vivo para cada modelo",
     "A gift is waiting.": "Hay un regalo esperando.",
@@ -7497,6 +8114,42 @@
     {
       "en": "You can have up to {0} routines. Delete one to add another.",
       "es": "Puedes tener hasta {0} rutinas. Elimina una para agregar otra."
+    },
+    {
+      "en": "Up to {0} credits per run",
+      "es": "Hasta {0} créditos por ejecución"
+    },
+    {
+      "en": "At least {0} credits, the most one run can cost. {1} credits covers every run this month at its maximum. It's a cap, not a charge.",
+      "es": "Al menos {0} créditos, lo máximo que puede costar una ejecución. Con {1} créditos se cubren todas las ejecuciones de este mes a su costo máximo. Es un tope, no un cobro."
+    },
+    {
+      "en": "This budget is below one run's maximum of {0} credits.",
+      "es": "Este presupuesto está por debajo del máximo de una ejecución, que es de {0} créditos."
+    },
+    {
+      "en": "Give the watch a topic of 1 to {0} characters.",
+      "es": "Ponle al seguimiento un tema de 1 a {0} caracteres."
+    },
+    {
+      "en": "Keep the name to {0} characters or fewer.",
+      "es": "Usa un nombre de {0} caracteres o menos."
+    },
+    {
+      "en": "You can have up to {0} research watches. Delete one to add another.",
+      "es": "Puedes tener hasta {0} seguimientos de investigación. Elimina uno para agregar otro."
+    },
+    {
+      "en": "A run can cost up to {0} credits, so the monthly budget must be at least that.",
+      "es": "Una ejecución puede costar hasta {0} créditos, así que el presupuesto mensual debe ser al menos esa cantidad."
+    },
+    {
+      "en": "A run of this watch can now cost up to {0} credits, more than the {1} you agreed to. Open the watch and save it to accept the new maximum.",
+      "es": "Una ejecución de este seguimiento ahora puede costar hasta {0} créditos, más que los {1} que aceptaste. Abre el seguimiento y guárdalo para aceptar el nuevo máximo."
+    },
+    {
+      "en": "This watch's monthly budget has {0} of {1} credits left, not enough for a run that can cost up to {2}.",
+      "es": "Al presupuesto mensual de este seguimiento le quedan {0} de {1} créditos, lo que no alcanza para una ejecución que puede costar hasta {2}."
     },
     {
       "en": "Set the per-run maximum in credits, above 0 and up to {0}, with at most four decimals.",
@@ -9373,6 +10026,414 @@
     {
       "en": "{0} can't take a meeting transcript. Pick a model with a longer context.",
       "es": "{0} no admite una transcripción de reunión. Elige un modelo con un contexto más largo."
+    },
+    {
+      "en": "Too long for one card. The first {0} characters fit; the rest is left off.",
+      "es": "Demasiado largo para una tarjeta. Caben los primeros {0} caracteres; el resto se deja fuera."
+    },
+    {
+      "en": "{0} masked details stay as tags like [EMAIL_1] unless you tick this.",
+      "es": "{0} datos ocultos se quedan como etiquetas del tipo [EMAIL_1] a menos que marques esta casilla."
+    },
+    {
+      "en": "{0} of {1} unused",
+      "es": "{0} de {1} sin usar"
+    },
+    {
+      "en": "Only {0} codes left. Make a new kit before you run out.",
+      "es": "Solo quedan {0} códigos. Crea un kit nuevo antes de que se te acaben."
+    },
+    {
+      "en": "Your kit has {0} unused codes left.",
+      "es": "A tu kit le quedan {0} códigos sin usar."
+    },
+    {
+      "en": "Finish within {0} minutes. The code is spent either way; until you finish, your current password or passkey still works.",
+      "es": "Termina en un plazo de {0} minutos. El código queda usado de todos modos; hasta que termines, tu contraseña o llave de acceso actual sigue funcionando."
+    },
+    {
+      "en": "Each code works once. After {0} wrong codes, recovery for that username locks for an hour.",
+      "es": "Cada código funciona una sola vez. Después de {0} códigos incorrectos, la recuperación de ese nombre de usuario se bloquea durante una hora."
+    },
+    {
+      "en": "Too many recovery attempts. Try again in {0} min.",
+      "es": "Demasiados intentos de recuperación. Inténtalo de nuevo en {0} min."
+    },
+    {
+      "en": "This account already has {0} passkeys. Set a new password instead.",
+      "es": "Esta cuenta ya tiene {0} llaves de acceso. En su lugar, establece una contraseña nueva."
+    },
+    {
+      "en": "Added {0} · Last alert {1}",
+      "es": "Agregado {0} · Última alerta {1}"
+    },
+    {
+      "en": "Added {0} · No alert yet",
+      "es": "Agregado {0} · Aún sin alertas"
+    },
+    {
+      "en": "You can have alerts in up to {0} browsers. Remove one first.",
+      "es": "Puedes recibir alertas en hasta {0} navegadores. Quita uno primero."
+    },
+    {
+      "en": "You can have notifications in up to {0} browsers. Remove one first.",
+      "es": "Puedes recibir notificaciones en hasta {0} navegadores. Quita uno primero."
+    },
+    {
+      "en": "To your browsers, {0}",
+      "es": "A tus navegadores, {0}"
+    },
+    {
+      "en": "Decoy passphrase (at least {0} characters)",
+      "es": "Frase de contraseña señuelo (al menos {0} caracteres)"
+    },
+    {
+      "en": "{0} attachments and images left out",
+      "es": "Se dejaron fuera {0} adjuntos e imágenes"
+    },
+    {
+      "en": "{0} empty chats not listed",
+      "es": "{0} chats vacíos sin listar"
+    },
+    {
+      "en": "{0} chats so far",
+      "es": "{0} chats hasta ahora"
+    },
+    {
+      "en": "{0} attachments left out",
+      "es": "Se dejaron fuera {0} adjuntos"
+    },
+    {
+      "en": "Your account keeps up to {0} saved chats and has room for {1} more. Older chats are removed first as you add new ones.",
+      "es": "Tu cuenta conserva hasta {0} chats guardados y tiene espacio para {1} más. Al agregar chats nuevos, primero se eliminan los más antiguos."
+    },
+    {
+      "en": "Your auto-delete setting of {0} days applies to imported chats too.",
+      "es": "Tu ajuste de eliminación automática de {0} días también se aplica a los chats importados."
+    },
+    {
+      "en": "{0} of {1} chats match. {2} selected.",
+      "es": "{0} de {1} chats coinciden. Seleccionados: {2}."
+    },
+    {
+      "en": "{0} of {1} chats selected.",
+      "es": "{0} de {1} chats seleccionados."
+    },
+    {
+      "en": "Show {0} more",
+      "es": "Mostrar {0} más"
+    },
+    {
+      "en": "Device Vault has room for {0} more chats. Choose fewer.",
+      "es": "La Bóveda del dispositivo tiene espacio para {0} chats más. Elige menos."
+    },
+    {
+      "en": "Your account has room for {0} more chats. Choose fewer, or use Device Vault or Markdown files.",
+      "es": "Tu cuenta tiene espacio para {0} chats más. Elige menos, o usa la Bóveda del dispositivo o archivos Markdown."
+    },
+    {
+      "en": "Import {0} chats",
+      "es": "Importar {0} chats"
+    },
+    {
+      "en": "Download {0} chats as Markdown",
+      "es": "Descargar {0} chats como Markdown"
+    },
+    {
+      "en": "{0} of {1} chats",
+      "es": "{0} de {1} chats"
+    },
+    {
+      "en": "{0} chats downloaded as Markdown",
+      "es": "{0} chats descargados como Markdown"
+    },
+    {
+      "en": "{0} chats kept in Device Vault",
+      "es": "{0} chats guardados en la Bóveda del dispositivo"
+    },
+    {
+      "en": "{0} chats saved to your account",
+      "es": "{0} chats guardados en tu cuenta"
+    },
+    {
+      "en": "Each one is marked as imported from {0}. The replies were written by that service.",
+      "es": "Cada uno queda marcado como importado de {0}. Las respuestas las escribió ese servicio."
+    },
+    {
+      "en": "{0} already imported",
+      "es": "{0} ya importados"
+    },
+    {
+      "en": "{0} held back by Seed Guard",
+      "es": "{0} retenidos por la Protección de frase semilla"
+    },
+    {
+      "en": "{0} too large for your account",
+      "es": "{0} demasiado grandes para tu cuenta"
+    },
+    {
+      "en": "{0} over your account's chat limit",
+      "es": "{0} por encima del límite de chats de tu cuenta"
+    },
+    {
+      "en": "{0} couldn't be read",
+      "es": "{0} no se pudieron leer"
+    },
+    {
+      "en": "{0} skipped",
+      "es": "{0} omitidos"
+    },
+    {
+      "en": "{0} done; {1} not imported.",
+      "es": "{0} listos; {1} sin importar."
+    },
+    {
+      "en": "Imported from {0}.",
+      "es": "Importado de {0}."
+    },
+    {
+      "en": "Imported from {0}",
+      "es": "Importado de {0}"
+    },
+    {
+      "en": "Show all {0} chats",
+      "es": "Mostrar los {0} chats"
+    },
+    {
+      "en": "No {0} chats with text were found in this file.",
+      "es": "No se encontraron chats de {0} con texto en este archivo."
+    },
+    {
+      "en": "Send 1 to {0} chats at a time.",
+      "es": "Envía de 1 a {0} chats a la vez."
+    },
+    {
+      "en": "{0} chats found",
+      "es": "{0} chats encontrados"
+    },
+    {
+      "en": "{0} · up to {1} credits",
+      "es": "{0} · hasta {1} créditos"
+    },
+    {
+      "en": "Shrunk in this browser from {0} to {1} to fit the 1.5 MB limit.",
+      "es": "Se redujo en este navegador de {0} a {1} para ajustarse al límite de 1.5 MB."
+    },
+    {
+      "en": "Veil would mask {0} details in these words, and a photo edit needs them as written. Remove them, or turn Veil off.",
+      "es": "Veil ocultaría {0} datos en estas palabras, y una edición de foto los necesita tal como están escritos. Quítalos o desactiva Veil."
+    },
+    {
+      "en": "Test receipt · {0} credits charged",
+      "es": "Recibo de prueba · {0} créditos cobrados"
+    },
+    {
+      "en": "\"{0}\" couldn't be read.",
+      "es": "No se pudo leer \"{0}\"."
+    },
+    {
+      "en": "\"{0}\" is larger than 20 MiB.",
+      "es": "\"{0}\" pesa más de 20 MiB."
+    },
+    {
+      "en": "\"{0}\" is too large to open. Use a photo under 40 MiB.",
+      "es": "\"{0}\" es demasiado grande para abrirse. Usa una foto de menos de 40 MiB."
+    },
+    {
+      "en": "\"{0}\" couldn't be opened in this browser.",
+      "es": "No se pudo abrir \"{0}\" en este navegador."
+    },
+    {
+      "en": "\"{0}\" is too large to send even when shrunk. Use a smaller photo.",
+      "es": "\"{0}\" es demasiado grande para enviarse incluso reducido. Usa una foto más pequeña."
+    },
+    {
+      "en": "From {0} credits",
+      "es": "Desde {0} créditos"
+    },
+    {
+      "en": "{0} passages",
+      "es": "{0} pasajes"
+    },
+    {
+      "en": "Searched {0} files",
+      "es": "Se buscó en {0} archivos"
+    },
+    {
+      "en": "Searching all {0} saved files",
+      "es": "Buscando en los {0} archivos guardados"
+    },
+    {
+      "en": "Searching {0} of {1} files",
+      "es": "Buscando en {0} de {1} archivos"
+    },
+    {
+      "en": "Injection Shield: {0} passages have wording that looks like an instruction to an AI. They're sent as data, with a note not to follow them.",
+      "es": "Escudo contra inyección: {0} pasajes tienen una redacción que parece una instrucción para una IA. Se envían como datos, con una nota para no seguirlos."
+    },
+    {
+      "en": "Ask about {0} passages",
+      "es": "Preguntar sobre {0} pasajes"
+    },
+    {
+      "en": "Worksheet {0}",
+      "es": "Hoja {0}"
+    },
+    {
+      "en": "Public repos only, no GitHub sign-in. ANONYMA's server downloads the code, so GitHub sees our server, not you. Reading is free ({0} repos an hour), and the files stay in the server's memory for 30 minutes, then they're forgotten. Nothing is saved to your account.",
+      "es": "Solo repositorios públicos, sin iniciar sesión en GitHub. El servidor de ANONYMA descarga el código, así que GitHub ve nuestro servidor, no a ti. Leer es gratis ({0} repositorios por hora), y los archivos se quedan en la memoria del servidor durante 30 minutos; después se olvidan. No se guarda nada en tu cuenta."
+    },
+    {
+      "en": "{0} files",
+      "es": "{0} archivos"
+    },
+    {
+      "en": "{0} file",
+      "es": "{0} archivo"
+    },
+    {
+      "en": "In memory for {0} more minutes, then forgotten.",
+      "es": "En memoria {0} minutos más; después se olvida."
+    },
+    {
+      "en": "In memory for {0} more minute, then forgotten.",
+      "es": "En memoria {0} minuto más; después se olvida."
+    },
+    {
+      "en": "{0} entries skipped",
+      "es": "{0} entradas omitidas"
+    },
+    {
+      "en": "{0} entry skipped",
+      "es": "{0} entrada omitida"
+    },
+    {
+      "en": "{0} files in vendored or build folders",
+      "es": "{0} archivos en carpetas de dependencias o de compilación"
+    },
+    {
+      "en": "{0} file in vendored or build folders",
+      "es": "{0} archivo en carpetas de dependencias o de compilación"
+    },
+    {
+      "en": "{0} lock or minified files",
+      "es": "{0} archivos de bloqueo o minificados"
+    },
+    {
+      "en": "{0} lock or minified file",
+      "es": "{0} archivo de bloqueo o minificado"
+    },
+    {
+      "en": "{0} binary files",
+      "es": "{0} archivos binarios"
+    },
+    {
+      "en": "{0} binary file",
+      "es": "{0} archivo binario"
+    },
+    {
+      "en": "{0} files over 256 KB",
+      "es": "{0} archivos de más de 256 KB"
+    },
+    {
+      "en": "{0} file over 256 KB",
+      "es": "{0} archivo de más de 256 KB"
+    },
+    {
+      "en": "{0} links, never followed",
+      "es": "{0} enlaces, nunca seguidos"
+    },
+    {
+      "en": "{0} link, never followed",
+      "es": "{0} enlace, nunca seguido"
+    },
+    {
+      "en": "{0} unsafe paths",
+      "es": "{0} rutas inseguras"
+    },
+    {
+      "en": "{0} unsafe path",
+      "es": "{0} ruta insegura"
+    },
+    {
+      "en": "{0} special entries",
+      "es": "{0} entradas especiales"
+    },
+    {
+      "en": "{0} special entry",
+      "es": "{0} entrada especial"
+    },
+    {
+      "en": "{0} files past the 5,000-file or 8 MB limit",
+      "es": "{0} archivos más allá del límite de 5,000 archivos u 8 MB"
+    },
+    {
+      "en": "{0} file past the 5,000-file or 8 MB limit",
+      "es": "{0} archivo más allá del límite de 5,000 archivos u 8 MB"
+    },
+    {
+      "en": "Injection Shield removed {0} invisible characters.",
+      "es": "Escudo contra inyección quitó {0} caracteres invisibles."
+    },
+    {
+      "en": "Injection Shield removed {0} invisible character.",
+      "es": "Escudo contra inyección quitó {0} carácter invisible."
+    },
+    {
+      "en": "{0} line",
+      "es": "{0} línea"
+    },
+    {
+      "en": "Lines {0}–{1} highlighted",
+      "es": "Líneas {0}–{1} resaltadas"
+    },
+    {
+      "en": "Line {0} highlighted",
+      "es": "Línea {0} resaltada"
+    },
+    {
+      "en": "{0} excerpts",
+      "es": "{0} fragmentos"
+    },
+    {
+      "en": "{0} excerpt",
+      "es": "{0} fragmento"
+    },
+    {
+      "en": "Your question, a list of {0} paths and these excerpts, sent as data with fixed instructions to cite path:line. Nothing else: no other files, chats, memory or instructions.",
+      "es": "Tu pregunta, una lista de {0} rutas y estos fragmentos, enviados como datos con instrucciones fijas para citar path:line. Nada más: ni otros archivos, ni chats, ni memoria, ni instrucciones."
+    },
+    {
+      "en": "Your question, a list of {0} path and these excerpts, sent as data with fixed instructions to cite path:line. Nothing else: no other files, chats, memory or instructions.",
+      "es": "Tu pregunta, una lista de {0} ruta y estos fragmentos, enviados como datos con instrucciones fijas para citar path:line. Nada más: ni otros archivos, ni chats, ni memoria, ni instrucciones."
+    },
+    {
+      "en": "Veil masked {0} details in your question.",
+      "es": "Veil ocultó {0} datos en tu pregunta."
+    },
+    {
+      "en": "Veil masked {0} detail in your question.",
+      "es": "Veil ocultó {0} dato en tu pregunta."
+    },
+    {
+      "en": "Ask {0}",
+      "es": "Preguntar a {0}"
+    },
+    {
+      "en": "{0} is answering…",
+      "es": "{0} está respondiendo…"
+    },
+    {
+      "en": "Cited {0} places",
+      "es": "{0} lugares citados"
+    },
+    {
+      "en": "Cited {0} place",
+      "es": "{0} lugar citado"
+    },
+    {
+      "en": "Keep the question under {0} characters.",
+      "es": "Mantén la pregunta por debajo de {0} caracteres."
     },
     {
       "en": "{0} · settled receipt.",

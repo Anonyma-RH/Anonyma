@@ -65,6 +65,8 @@ const ES_ONLY_PATTERNS = [
 ];
 // Brand, product-tier and technical words that read the same in Spanish.
 const SAME = new Set([
+  // Batch 8: browser names Push Alerts lists.
+  "Safari", "Firefox", "Edge",
   "api", "api — ANONYMA", "Audio", "audio", "audio — ANONYMA", "Auto", "Auto →", "App", "Canvas", "Chat", "chat",
   "chat — ANONYMA", "Chats", "Color", "demo", "Error", "Filipino", "Formal", "formal", "Hardware", "Hindi", "Info",
   "Insider", "Insider.", "Lite", "Markdown", "Normal", "Original", "Popular", "Prime", "Pro", "Prompt", "Prompts",

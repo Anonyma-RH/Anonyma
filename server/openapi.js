@@ -2682,7 +2682,7 @@ const searchPassage = object({
   id: { ...integer, description: "The passage's id in the index; send it back with its text to keep it" },
   file_id: string,
   file: string,
-  kind: { enum: ["heading", "slide", "sheet", "page", "part"], description: "What section is: a heading's own words, Slide n, Worksheet n, Page n, or Part n of m" },
+  kind: { enum: ["heading", "slide", "sheet", "page", "part"], description: "What section is: a heading path with the file's own words in it (\"Plan › Launch\"), Slide n, Worksheet n, Page n, or Part n of m. A passage's text starts with its path." },
   section: string,
   text: string,
   flagged: { ...integer, description: "Instruction-like phrases Injection Shield found in the passage (it is still sent, as data)" },
@@ -2691,7 +2691,7 @@ const fileSearchBody = {
   model: { ...string, description: "A callable text model (never Auto, an image or a Sealed Mode model)" },
   question: { ...string, minLength: 2, maxLength: 1000, description: "The question, masked by Veil in the browser when it's on" },
   passages: {
-    ...array(object({ id: integer, text: { ...string, maxLength: 1600 } }, ["id", "text"])),
+    ...array(object({ id: integer, text: { ...string, maxLength: 1800 } }, ["id", "text"])),
     minItems: 1,
     maxItems: 8,
     description: "The passages to send, from a search: each the stored passage exactly, or with details replaced by Veil's tags (400 passage_changed otherwise; 404 passage_unavailable when its file is gone)",
@@ -2725,7 +2725,7 @@ route("post", "/api/file-search/search", "Look up the best passages for a questi
     top: integer,
   }),
   description:
-    "Workspace only (session). Ranks the account's passages with SQLite FTS5 (BM25), or BM25 in JS where FTS5 isn't available. Sends nothing to a model, holds and charges nothing, stores nothing about the question and logs nothing. 400 no_search_terms when the question has nothing to look for.",
+    "Workspace only (session). SQLite FTS5 selects the passages that have a word of the question (every passage, where FTS5 isn't available) and BM25 in JS ranks them: a rare word outweighs a common one, a match in a passage's heading path counts extra, and a passage with more of the question's words ranks higher. Sends nothing to a model, holds and charges nothing, stores nothing about the question and logs nothing. 400 no_search_terms when the question has nothing to look for.",
 });
 route("post", "/api/file-search/quote", "The most an answer can cost", {
   body: object(fileSearchBody, ["model", "question", "passages"]),

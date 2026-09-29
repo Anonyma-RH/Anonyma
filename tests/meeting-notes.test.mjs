@@ -10,14 +10,19 @@ import { addCredit, balance, credits, markupFactor } from "../server/core.js";
 import { UPDATES, featuresFor } from "../server/releases.js";
 import { eraseAccountContent } from "../server/routes/account.js";
 import {
+  COARSE_SECONDS,
   cleanPiece,
+  isCoarse,
   meetingNotesTestReply,
   meetingTestTranscript,
+  notesContextShort,
   notesPlan,
   sttCharge,
+  timedLines,
   transcriptSegments,
   TEST_MEETING,
 } from "../server/meeting-notes.js";
+import { transcribeAudio } from "../server/audio.js";
 import {
   CHUNK_RATE,
   MAX_CHUNKS,
@@ -44,6 +49,7 @@ import {
   srtTranscript,
   stamp,
   transcriptFromMarkdown,
+  transcriptLine,
 } from "../src/meeting-notes.js";
 import {
   adtsStream,
@@ -977,4 +983,261 @@ test("word timings take precedence over a coarse whole-piece segment", () => {
   });
   assert.deepEqual(segments.map((s) => s.start), [0, 30]);
   assert.equal(segments[1].text, "Next topic.");
+});
+
+// ---- Fix: short recordings are never refused for being short ----
+
+test("a recording is refused only when the model's context is too small, never for its length: 10 s, 68 s and 3 h", async (t) => {
+  const g = await gateway(t);
+  const s = fixture(t, { gatewayUrl: g.url });
+  const a = await person(s, "anylength", 200_000_000);
+  const three = (await planChunks(3 * 3600)).map((x) => x.seconds);
+  const recordings = [
+    [10, [10], maxTranscriptChars(10)],
+    [68, [68], maxTranscriptChars(68)],
+    [3 * 3600, three, MAX_NOTES_CHARS],
+  ];
+  // A model with a long context takes all three, each with the transcript
+  // cap its own length gives (never a refusal for being short).
+  assert.equal(maxTranscriptChars(10), 217);
+  assert.equal(maxTranscriptChars(68), 1474);
+  for (const [duration, chunks, chars] of recordings) {
+    const q = await a.agent.post("/api/meeting-notes/quote").send(BODY({ duration, chunks })).expect(200);
+    assert.equal(q.body.max_transcript_characters, chars, `${duration} s`);
+    assert.equal(q.body.covers_seconds, null);
+    const run = (await start(a, { duration, chunks }).expect(201)).body;
+    assert.equal(run.reserved, q.body.credits);
+    await a.agent.delete(`/api/meeting-notes/${run.id}`).expect(200);
+    assert.equal(heldOf(s, a.user.id), 0);
+  }
+  // A 32k-context model takes the short ones whole and reads part of 3 h.
+  const mid = "mistralai/mistral-small-24b-instruct-2501";
+  for (const [duration, chunks, chars] of recordings) {
+    const q = await a.agent.post("/api/meeting-notes/quote").send(BODY({ duration, chunks, model: mid })).expect(200);
+    if (duration < 3600) {
+      assert.equal(q.body.max_transcript_characters, chars);
+      assert.equal(q.body.covers_seconds, null);
+    } else {
+      assert.ok(q.body.max_transcript_characters < chars);
+      assert.ok(q.body.covers_seconds > 0 && q.body.covers_seconds < duration);
+    }
+  }
+  // A model whose context can't hold the reply budget and a transcript is
+  // refused, at any length.
+  for (const [duration, chunks] of recordings) {
+    const r = await a.agent.post("/api/meeting-notes/quote").send(BODY({ duration, chunks, model: "openai/gpt-4" })).expect(400);
+    assert.equal(r.body.error.code, "notes_context");
+    assert.match(r.body.error.message, /can't take a meeting transcript/);
+  }
+  assert.equal(heldOf(s, a.user.id), 0);
+});
+
+test("the context check compares the model's room with what the recording can need, up to 2,000 characters", () => {
+  const cfg = { released: "all" };
+  const wide = { id: "wide", type: "chat", context_length: 20000, pricing: { input_per_1M_tokens: 0.3, output_per_1M_tokens: 2.5 } };
+  const base = notesPlan({ cfg, m: wide, duration: 10, language: "auto", factor: 1 });
+  // A model with room for 500 characters of transcript.
+  const tight = { ...wide, id: "tight", context_length: 20000 - (base.maxBytes - 500) };
+  const of = (duration, m = tight) => notesPlan({ cfg, m, duration, language: "auto", factor: 1 });
+  assert.equal(of(10).maxBytes, 500);
+  // 10 seconds need 217 characters: it fits. 68 seconds need 1,474: it doesn't.
+  assert.equal(notesContextShort(of(10), 10), false);
+  assert.equal(notesContextShort(of(68), 68), true);
+  // No room at all is refused even for the shortest recording.
+  const none = { ...wide, id: "none", context_length: 8191 };
+  assert.equal(notesContextShort(of(2, none), 2), true);
+  // Room for 2,000 characters takes any recording, however long: the length
+  // only limits what is sent.
+  for (const d of [10, 68, 600, 3 * 3600]) {
+    const room = notesPlan({ cfg, m: wide, duration: d, language: "auto", factor: 1 }).maxBytes;
+    const enough = { ...wide, id: "enough", context_length: 20000 - (room - 2100) };
+    assert.equal(notesContextShort(of(d, enough), d), false, `${d} s`);
+    const short = { ...wide, id: "short", context_length: 20000 - (room - 1900) };
+    assert.equal(notesContextShort(of(d, short), d), d >= 600,`${d} s with 1,900 characters of room`);
+  }
+});
+
+// ---- Fix: per-line timestamps ----
+
+const words = (list) => list.map(([word, start, end]) => ({ word, start, end }));
+// Twelve words over 92 seconds, in three runs 30 seconds apart.
+const SPREAD = words([
+  ["Maya", 0.5, 0.9], ["will", 1, 1.2], ["send", 1.3, 1.6], ["the", 1.7, 1.8], ["draft.", 1.9, 2.4],
+  ["Dev", 31, 31.3], ["will", 31.4, 31.6], ["size", 31.7, 32], ["the", 32.1, 32.2], ["export.", 32.3, 33],
+  ["Priya", 62, 62.4], ["reviews", 62.5, 63],
+]);
+const SPREAD_TEXT = "Maya will send the draft. Dev will size the export. Priya reviews";
+const AT = (extra = {}) =>
+  JSON.stringify({
+    title: "Launch sync",
+    summary: "The team split the work.",
+    decisions: [{ text: "Maya sends the draft.", at: "00:01" }],
+    action_items: [{ task: "Size the export", owner: "Dev", due: null, at: "00:31" }],
+    open_questions: [{ text: "Does Priya review?", at: "01:02" }],
+    ...extra,
+  });
+// Transcribes one 92 s piece against a gateway that answers `answer`, then
+// finishes: what the piece came back as, what the notes model was sent and
+// what the notes say.
+async function timedRun(t, answer, username) {
+  const g = await gateway(t, { transcribe: () => answer, notes: () => AT() });
+  const s = fixture(t, { gatewayUrl: g.url });
+  const p = await person(s, username);
+  const run = (await start(p, { duration: 92, chunks: [92] }).expect(201)).body;
+  const part = (await piece(p, run.id, 0, 92).expect(200)).body;
+  const done = lastEvent((await finish(p, run.id, { segments: part.segments }).expect(200)).body);
+  const sent = String(g.calls.chat[0]?.messages?.[1]?.content || "");
+  return { g, s, p, part, done, sent, notes: done.result?.notes };
+}
+const ats = (notes) => [...notes.decisions, ...notes.actions, ...notes.questions].map((x) => x.at);
+
+test("a fine reply keeps its lines and the notes keep the times they cite", async (t) => {
+  const answer = {
+    text: "Maya will send the draft. Dev will size the export. Priya reviews it.",
+    duration: 91.87,
+    segments: [
+      { id: 0, start: 0.5, end: 3, text: "Maya will send the draft." },
+      { id: 1, start: 31, end: 34, text: "Dev will size the export." },
+      { id: 2, start: 62, end: 65, text: "Priya reviews it." },
+    ],
+  };
+  const r = await timedRun(t, answer, "fine");
+  assert.deepEqual(r.part.segments.map((x) => x.start), [0.5, 31, 62]);
+  assert.ok(r.part.segments.every((x) => !("untimed" in x)));
+  assert.match(r.sent, /\[00:31\] Dev will size the export\./);
+  assert.deepEqual(ats(r.notes), [1, 31, 62]);
+  // The provider is asked for word and segment timings.
+  const form = r.g.calls.transcribe[0].toString("latin1");
+  assert.equal(form.match(/name="timestamp_granularities\[\]"/g)?.length, 2);
+  assert.match(form, /\r\nword\r\n/);
+  assert.match(form, /\r\nsegment\r\n/);
+  assert.match(form, /\r\nverbose_json\r\n/);
+});
+
+test("a coarse reply, one segment for the whole piece, is split into lines by its word timings", async (t) => {
+  const answer = { text: SPREAD_TEXT, duration: 91.87, segments: [{ id: 0, start: 0, end: 91.87, text: SPREAD_TEXT }], words: SPREAD };
+  const r = await timedRun(t, answer, "coarsewords");
+  assert.deepEqual(r.part.segments.map((x) => [x.start, x.text]), [
+    [0.5, "Maya will send the draft."],
+    [31, "Dev will size the export."],
+    [62, "Priya reviews"],
+  ]);
+  assert.ok(r.part.segments.every((x) => !x.untimed));
+  assert.match(r.sent, /\[00:31\] Dev will size the export\./);
+  assert.deepEqual(ats(r.notes), [1, 31, 62]);
+  // The same in the other places providers put words: Deepgram's nested
+  // result, and on the segment itself.
+  const one = { start: 0, end: 91.87, text: SPREAD_TEXT };
+  const nested = transcriptSegments({ text: SPREAD_TEXT, segments: [one], results: { channels: [{ alternatives: [{ words: SPREAD }] }] } });
+  assert.deepEqual(nested.map((x) => x.start), [0.5, 31, 62]);
+  const onSegment = transcriptSegments({ text: SPREAD_TEXT, segments: [{ ...one, words: SPREAD }] });
+  assert.deepEqual(onSegment.map((x) => x.start), [0.5, 31, 62]);
+  // Only the coarse segment is cut: a fine one beside it stays as it is.
+  const mixed = transcriptSegments({
+    segments: [{ start: 0, end: 4, text: "Okay." }, { start: 5, end: 95, text: SPREAD_TEXT }],
+    words: words([["Okay.", 0, 0.5], ...SPREAD.map((w) => [w.word, w.start + 5, w.end + 5])]),
+  });
+  assert.deepEqual(mixed.map((x) => x.start), [0, 5.5, 36, 67]);
+  // A speaker on the coarse segment carries to its lines.
+  const spoken = transcriptSegments({ segments: [{ ...one, speaker: 1 }], words: SPREAD });
+  assert.ok(spoken.length === 3 && spoken.every((x) => x.speaker === "Speaker 2"));
+});
+
+test("a coarse reply with no words has no usable times: its lines are untimed and the notes cite none", async (t) => {
+  const answer = { text: SPREAD_TEXT, duration: 91.87, segments: [{ id: 0, start: 0, end: 91.87, text: SPREAD_TEXT }] };
+  const r = await timedRun(t, answer, "coarse");
+  assert.equal(r.part.segments.length, 1);
+  assert.equal(r.part.segments[0].untimed, true);
+  assert.equal(r.part.segments[0].text, SPREAD_TEXT);
+  // The notes model sees no time to copy, and the model's own times are
+  // dropped: null, never 0.
+  assert.doesNotMatch(r.sent, /\[\d\d:\d\d\]/);
+  assert.match(r.sent, /Maya will send the draft\./);
+  assert.deepEqual(ats(r.notes), [null, null, null]);
+  assert.equal(r.done.result.saved, true);
+});
+
+test("a reply with no timestamps at all is one untimed line, and the notes cite none", async (t) => {
+  const r = await timedRun(t, { text: SPREAD_TEXT, duration: 91.87 }, "untimedreply");
+  assert.deepEqual(r.part.segments, [{ start: 0, end: 92, text: SPREAD_TEXT, untimed: true }]);
+  assert.doesNotMatch(r.sent, /\[\d\d:\d\d\]/);
+  assert.deepEqual(ats(r.notes), [null, null, null]);
+  assert.ok(r.done.result.notes.decisions.every((d) => d.at === null));
+});
+
+test("some lines untimed: the untimed ones carry no time to the notes model, the timed ones keep theirs", async (t) => {
+  const answer = {
+    text: "Okay. " + SPREAD_TEXT,
+    duration: 91.87,
+    segments: [
+      { start: 1, end: 4, text: "Okay." },
+      { start: 5, end: 91.87, text: SPREAD_TEXT },
+    ],
+  };
+  const r = await timedRun(t, answer, "mixedlines");
+  assert.deepEqual(r.part.segments.map((x) => [x.start, !!x.untimed]), [[1, false], [5, true]]);
+  assert.match(r.sent, /\[00:01\] Okay\.\n[^\[]*Maya will send/);
+  // A time the model cites is kept: there is a timed line in the transcript.
+  assert.deepEqual(ats(r.notes), [1, 31, 62]);
+});
+
+test("timings the gateway won't take are not required: a refusal is retried without them and charged once", async (t) => {
+  const g = await gateway(t, {
+    transcribe: (i, raw) =>
+      raw.includes("timestamp_granularities")
+        ? { status: 422 }
+        : { text: "Hello there.", duration: 92, segments: [{ start: 0, end: 3, text: "Hello there." }] },
+  });
+  const s = fixture(t, { gatewayUrl: g.url });
+  const p = await person(s, "refusedtimings");
+  const run = (await start(p, { duration: 92, chunks: [92] }).expect(201)).body;
+  const part = (await piece(p, run.id, 0, 92).expect(200)).body;
+  assert.deepEqual(part.segments, [{ start: 0, end: 3, text: "Hello there." }]);
+  assert.equal(g.calls.transcribe.length, 2);
+  assert.ok(g.calls.transcribe[0].toString("latin1").includes("timestamp_granularities"));
+  assert.ok(!g.calls.transcribe[1].toString("latin1").includes("timestamp_granularities"));
+  assert.equal(spends(s, p.user.id).length, 1);
+  // Other refusals, and other endpoints, are untouched.
+  const other = await gateway(t, { transcribe: () => ({ status: 500 }) });
+  const cfg = { gateway: other.url, gatewayKey: "k" };
+  await assert.rejects(transcribeAudio(cfg, { model: "nova-3", bytes: wav(1), mime: "audio/wav", timestamps: true }));
+  assert.equal(other.calls.transcribe.length, 1);
+  const plain = await gateway(t, { transcribe: () => ({ text: "hi", duration: 1 }) });
+  await transcribeAudio({ gateway: plain.url, gatewayKey: "k" }, { model: "nova-3", bytes: wav(1), mime: "audio/wav" });
+  assert.ok(!plain.calls.transcribe[0].toString("latin1").includes("timestamp_granularities"));
+});
+
+test("untimed lines: how they're marked, sent, kept and read back", () => {
+  assert.equal(COARSE_SECONDS, 30);
+  assert.equal(isCoarse({ start: 0, end: 30 }), false);
+  assert.equal(isCoarse({ start: 0, end: 30.5 }), true);
+  assert.deepEqual(timedLines([], "  Some   words. ", 40), [{ start: 0, end: 40, text: "Some words.", untimed: true }]);
+  assert.deepEqual(timedLines([], "  ", 40), []);
+  assert.deepEqual(timedLines([{ start: 1, end: 4, text: "a" }, { start: 5, end: 95, text: "b" }], "", 100), [
+    { start: 1, end: 4, text: "a" },
+    { start: 5, end: 95, text: "b", untimed: true },
+  ]);
+  const lines = [
+    { start: 3, end: 6, text: "Timed." },
+    { start: 65, end: 90, text: "Untimed.", speaker: "Speaker 1", untimed: true },
+  ];
+  assert.equal(transcriptLine(lines[0], 600), "[00:03] Timed.");
+  assert.equal(transcriptLine(lines[1], 600), "Speaker 1: Untimed.");
+  assert.deepEqual(fitTranscript(lines, 600).text, "[00:03] Timed.\nSpeaker 1: Untimed.");
+  assert.equal(fitTranscript(lines, 600).timed, true);
+  assert.equal(fitTranscript([lines[1]], 600).timed, false);
+  // The flag survives the server's check of the transcript; nothing else does.
+  assert.deepEqual(checkSegments([{ ...lines[1], extra: 1 }, { ...lines[0], untimed: "yes" }], 600), [
+    { start: 3, end: 6, text: "Timed." },
+    { start: 65, end: 90, text: "Untimed.", speaker: "Speaker 1", untimed: true },
+  ]);
+  // Notes read with no timed line have no times; with some, they keep them.
+  const raw = JSON.stringify({ summary: "S", decisions: [{ text: "D", at: "00:00" }], action_items: [{ task: "T", at: "01:05" }], open_questions: [{ text: "Q" }] });
+  const none = parseNotes(raw, { duration: 600, timed: false }).notes;
+  assert.deepEqual([none.decisions[0].at, none.actions[0].at, none.questions[0].at], [null, null, null]);
+  const some = parseNotes(raw, { duration: 600, timed: true }).notes;
+  assert.deepEqual([some.decisions[0].at, some.actions[0].at, some.questions[0].at], [0, 65, null]);
+  assert.equal(readNotes(raw, "stop", { duration: 600, timed: false }).notes.decisions[0].at, null);
+  // The prompt says what a line without a time means.
+  assert.match(notesMessages({ text: "x", duration: 60 })[0].content, /a line with no time in front has none/);
 });

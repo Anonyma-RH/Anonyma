@@ -67,6 +67,14 @@ export function notesPlan({ cfg, m, duration, language, factor }) {
   };
 }
 
+// Whether the model's context is too small for the notes: it has less room
+// for a transcript than this recording can have, or than 2,000 characters
+// (about a minute and a half of talk, the least worth making notes from)
+// where that's less. It is the model's room that decides this: how long the
+// recording is only limits what is sent (`plan.maxChars`), so a short
+// recording is never refused for being short.
+export const notesContextShort = (plan, duration) => plan.maxBytes < Math.min(2000, maxTranscriptChars(duration));
+
 // ---- A piece's audio ----
 
 // A piece as the browser sends it: a WAV of mono 16-bit PCM at 16 kHz.
@@ -149,34 +157,76 @@ function fromWords(list) {
   if (cur) out.push(cur);
   return out.map((c) => line(c.start, c.end, c.text, c.speaker)).filter(Boolean);
 }
-// The timed lines in a transcription reply, in the shapes providers use:
-// OpenAI-style verbose_json segments, Deepgram utterances or paragraphs,
-// or words. Speaker labels only where the reply has them. [] when the
-// reply has no timings (the caller then times the piece as one line).
-export function transcriptSegments(j) {
-  if (!j || typeof j !== "object") return [];
+// A line longer than this says little about where in it something was said:
+// it is coarse. (Whisper-style segments and speech utterances are far
+// shorter; the gateway's plain reply for a piece is one line as long as the
+// piece.)
+export const COARSE_SECONDS = 30;
+export const isCoarse = (s) => s.end - s.start > COARSE_SECONDS;
+
+// The reply's word timings, wherever the provider put them: at the top
+// (OpenAI-style word granularity), in Deepgram's nested result, or on each
+// segment.
+function replyWords(j) {
+  for (const list of [j.words, j.results?.channels?.[0]?.alternatives?.[0]?.words])
+    if (Array.isArray(list) && list.length) return list;
+  return Array.isArray(j.segments) ? j.segments.flatMap((s) => (Array.isArray(s?.words) ? s.words : [])) : [];
+}
+// Coarse lines cut into finer ones by the words that fall inside them.
+// Lines with no words to cut them by are left as they are (the caller marks
+// them untimed); times are never invented.
+function splitCoarse(lines, list) {
+  return lines.flatMap((s) => {
+    if (!isCoarse(s)) return [s];
+    const inside = list.filter((w) => {
+      const t = num(w?.start);
+      return t != null && t >= s.start - 0.05 && t <= s.end + 0.05;
+    });
+    const finer = fromWords(inside).map((l) => (l.speaker || !s.speaker ? l : { ...l, speaker: s.speaker }));
+    return finer.length > 1 ? finer : [s];
+  });
+}
+// The lines a reply gives on its own, in the shapes providers use:
+// OpenAI-style verbose_json segments, then Deepgram utterances or
+// paragraphs. [] when it has none.
+function replyLines(j) {
   if (Array.isArray(j.segments) && j.segments.length) {
     const segments = j.segments.map((s) => line(s?.start, s?.end, s?.text, s?.speaker)).filter(Boolean);
-    const wordSource = j.words ?? j.results?.channels?.[0]?.alternatives?.[0]?.words;
-    const finer = Array.isArray(wordSource) ? fromWords(wordSource) : [];
-    // Some gateways include one segment for the entire piece alongside
-    // real word timings. Prefer that finer evidence; never invent times.
-    if (finer.length > segments.length && segments.some((s) => s.end - s.start > 20)) return finer;
     if (segments.length) return segments;
   }
   const results = j.results && typeof j.results === "object" ? j.results : null;
   if (Array.isArray(results?.utterances) && results.utterances.length)
     return results.utterances.map((u) => line(u?.start, u?.end, u?.transcript ?? u?.text, u?.speaker)).filter(Boolean);
-  const alt = results?.channels?.[0]?.alternatives?.[0];
-  const paragraphs = alt?.paragraphs?.paragraphs;
+  const paragraphs = results?.channels?.[0]?.alternatives?.[0]?.paragraphs?.paragraphs;
   if (Array.isArray(paragraphs) && paragraphs.length)
     return paragraphs
       .flatMap((p) =>
         (Array.isArray(p?.sentences) ? p.sentences : []).map((s) => line(s?.start, s?.end, s?.text, p?.speaker)),
       )
       .filter(Boolean);
-  const list = Array.isArray(j.words) && j.words.length ? j.words : Array.isArray(alt?.words) ? alt.words : [];
-  return list.length ? fromWords(list) : [];
+  return [];
+}
+// The timed lines in a transcription reply. Its own lines, with any coarse
+// one (a single segment for a whole piece, say) split into lines by the
+// reply's word timings; or, with no lines at all, lines made from the words.
+// Speaker labels only where the reply has them. [] when the reply has no
+// timings; a coarse line the words can't split stays coarse. The caller
+// then marks what has no usable timing as untimed rather than placing it.
+export function transcriptSegments(j) {
+  if (!j || typeof j !== "object") return [];
+  const lines = replyLines(j);
+  const list = replyWords(j);
+  if (!lines.length) return list.length ? fromWords(list) : [];
+  return list.length ? splitCoarse(lines, list) : lines;
+}
+// A piece's lines as they go on to the transcript. A line with no usable
+// timing is marked `untimed` (its start is only where its piece starts, so
+// nothing may link to a moment inside it): the whole piece as one line when
+// the reply had no timings at all, or a coarse line the words couldn't split.
+export function timedLines(lines, text, seconds) {
+  const clean = typeof text === "string" ? text.replace(/\s+/g, " ").trim() : "";
+  if (!lines.length) return clean ? [{ start: 0, end: seconds, text: clean, untimed: true }] : [];
+  return lines.map((s) => (isCoarse(s) ? { ...s, untimed: true } : s));
 }
 
 // ---- Local test mode ----

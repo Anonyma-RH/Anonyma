@@ -1370,7 +1370,7 @@ export const UPDATES = [
     // programs. The only route is the per-account switch, /api/secret-guard
     // (server/routes/secret-guard.js), gated here in featuresFor; the switch
     // is erased with the account's content and in the export.
-    released: false,
+    released: true,
   },
   {
     id: "burnlinks",

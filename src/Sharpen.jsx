@@ -42,12 +42,14 @@ export const loadSharpenModel = () => {
 export const saveSharpenModel = (id) => saveStore(STORE, id || "");
 
 // Why Sharpen can't run on this prompt right now, or null.
-export function sharpenBlock({ length, seed, model, privateMode }) {
+export function sharpenBlock({ length, seed, secret = false, model, privateMode }) {
   if (!model)
     return privateMode
       ? "No zero-data-retention model is available to sharpen with in Private mode."
       : "No model is available to sharpen with right now.";
   if (seed) return "Seed Guard found what looks like a wallet secret in this prompt, so Sharpen won't send it.";
+  // Secret Guard: a password, key or token is masked or removed first.
+  if (secret) return "Secret Guard found what looks like a password, key or token in this prompt. Mask or remove it first.";
   if (length < SHARPEN_MIN) return `Type at least ${SHARPEN_MIN} characters to sharpen.`;
   if (length > SHARPEN_MAX) return "Sharpen works on prompts up to 6,000 characters.";
   return null;

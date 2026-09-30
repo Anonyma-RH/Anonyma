@@ -6415,7 +6415,52 @@
     "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "使用其他钱包应用？请把页面链接粘贴到它的内置浏览器中。钱包应用有自己独立的登录状态，所以你需要在那里重新登录 ANONYMA。",
     "Open in MetaMask": "在 MetaMask 中打开",
     "Open in Coinbase Wallet": "在 Coinbase Wallet 中打开",
-    "Open in Trust Wallet": "在 Trust Wallet 中打开"
+    "Open in Trust Wallet": "在 Trust Wallet 中打开",
+    "Secret Guard": "密钥防护",
+    "Pasted code with an API key in it? It's caught before it's sent.": "粘贴的代码里有 API 密钥？发送前就会被发现。",
+    "Spots passwords, API keys and tokens in your browser, in what you type, paste or attach": "在你的浏览器中发现你输入、粘贴或附加的内容里的密码、API 密钥和令牌",
+    "Mask and send swaps each one for a placeholder; the reply shows your value again, only to you": "“遮盖并发送”会把每一项换成占位符；回复中会再次显示原值，且只有你能看到",
+    "On by default, and nothing about a match is logged or saved": "默认开启，匹配到的内容不会被记录或保存",
+    "SECRET GUARD": "密钥防护",
+    "Private key": "私钥",
+    "GitHub token": "GitHub 令牌",
+    "GitLab token": "GitLab 令牌",
+    "Slack token": "Slack 令牌",
+    "Stripe live key": "Stripe 正式环境密钥",
+    "Google API key": "Google API 密钥",
+    "Anthropic API key": "Anthropic API 密钥",
+    "OpenAI-style API key": "OpenAI 格式的 API 密钥",
+    "Twilio API key": "Twilio API 密钥",
+    "Twilio auth token": "Twilio 认证令牌",
+    "SendGrid API key": "SendGrid API 密钥",
+    "npm token": "npm 令牌",
+    "AWS access key": "AWS 访问密钥",
+    "AWS secret key": "AWS 私密访问密钥",
+    "JSON Web Token": "JWT 令牌",
+    "Database password": "数据库密码",
+    "Access token": "访问令牌",
+    "Secret": "机密",
+    "Mask and send": "遮盖并发送",
+    "Mask and save": "遮盖并保存",
+    "Remove it": "删除它",
+    "Remove them": "全部删除",
+    "Mask swaps each one for a placeholder like [SECRET_1] before anything leaves this browser. The reply shows your value again, here only.": "遮盖会在任何内容离开此浏览器之前，把每一项换成 [SECRET_1] 这样的占位符。回复中会再次显示你的原值，且仅在这里显示。",
+    "Mask swaps each one for a placeholder like [SECRET_1] before anything leaves this browser. The suggestion comes back with your values in place, in this tab only.": "遮盖会在任何内容离开此浏览器之前，把每一项换成 [SECRET_1] 这样的占位符。建议返回时会填回你的原值，且仅在此标签页中。",
+    "Mask swaps each one for a placeholder like [SECRET_1]. The routine runs on our server with the placeholder, and the real value isn't kept anywhere.": "遮盖会把每一项换成 [SECRET_1] 这样的占位符。定时任务会带着占位符在我们的服务器上运行，真实值不会保存在任何地方。",
+    "A topic becomes web searches, so a secret in it is masked or removed, never saved as it is. Masked, the watch runs with a placeholder like [SECRET_1].": "主题会变成网页搜索，所以其中的机密信息只能遮盖或删除，绝不会原样保存。遮盖后，监测会带着 [SECRET_1] 这样的占位符运行。",
+    "Secret Guard.": "密钥防护。",
+    "Catches passwords, API keys and tokens in what you type, paste or attach, before it’s sent, and offers to mask them. It’s checked in your browser: nothing about a match is saved or sent.": "在发送之前发现你输入、粘贴或附加的内容里的密码、API 密钥和令牌，并可替你遮盖。检查在你的浏览器中完成：匹配到的内容不会被保存或发送。",
+    "It looks for known key formats and labelled values like PASSWORD=, so it can’t catch every secret. It doesn’t check the developer API (/v1) or MCP: those callers are programs, and holding their requests would break them.": "它会查找已知的密钥格式和 PASSWORD= 这类带标签的值，因此无法发现所有机密信息。它不检查开发者 API（/v1）或 MCP：这些调用方是程序，拦下它们的请求会让程序出错。",
+    "Check what I send for secrets": "检查我发送的内容里是否有机密信息",
+    "On by default. The chat composer (and Code & Build), attached text files, Canvas, Routines and Research Watch.": "默认开启。适用于聊天输入框（以及代码与构建）、附加的文本文件、画布、定时任务和研究监测。",
+    "Turn off Secret Guard? Passwords, keys and tokens you paste will be sent as written. Seed Guard still stops wallet seed phrases.": "要关闭密钥防护吗？你粘贴的密码、密钥和令牌将按原样发送。助记词防护仍会拦截钱包助记词。",
+    "Keep it on": "保持开启",
+    "Off: passwords, keys and tokens you paste are sent as written. Seed Guard still stops wallet seed phrases.": "已关闭：你粘贴的密码、密钥和令牌会按原样发送。助记词防护仍会拦截钱包助记词。",
+    "On. Secrets are caught before they're sent.": "已开启。机密信息会在发送前被发现。",
+    "Off. Messages are sent as written.": "已关闭。消息会按原样发送。",
+    "Turn off Secret Guard": "关闭密钥防护",
+    "Secret Guard checks what you send from the workspace for passwords, API keys and tokens in your browser. Masked ones go as placeholders like [SECRET_1]; their real values stay in that tab's memory and are never sent or saved. Only whether you switched it off is kept with your account. It doesn't check the developer API (/v1) or MCP: those callers are programs, and holding their requests would break them.": "密钥防护会在你的浏览器中检查你从工作区发送的内容里是否有密码、API 密钥和令牌。被遮盖的内容以 [SECRET_1] 这样的占位符发送；真实值只留在该标签页的内存中，绝不会被发送或保存。你的账户只记录你是否关闭了它。它不检查开发者 API（/v1）或 MCP：这些调用方是程序，拦下它们的请求会让程序出错。",
+    "Secret Guard found what looks like a password, key or token in this prompt. Mask or remove it first.": "密钥防护在此提示词中发现了疑似密码、密钥或令牌。请先遮盖或删除。"
   },
   "patterns": [
     {
@@ -10461,6 +10506,34 @@
     {
       "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
       "zh": "放大最多支持长边 {0} px 的照片。请缩小后再试。"
+    },
+    {
+      "en": "This looks like a secret ({0}, line {1}).",
+      "zh": "这看起来像机密信息（{0}，第 {1} 行）。"
+    },
+    {
+      "en": "This looks like a secret ({0}, line {1} of {2}).",
+      "zh": "这看起来像机密信息（{0}，{2} 第 {1} 行）。"
+    },
+    {
+      "en": "These look like {0} secrets.",
+      "zh": "这些看起来像 {0} 项机密信息。"
+    },
+    {
+      "en": "line {0}",
+      "zh": "第 {0} 行"
+    },
+    {
+      "en": "line {0} of {1}",
+      "zh": "{1} 第 {0} 行"
+    },
+    {
+      "en": "and {0} more",
+      "zh": "还有 {0} 项"
+    },
+    {
+      "en": "Secret Guard — the model saw [{0}]",
+      "zh": "密钥防护——模型看到的是 [{0}]"
     }
   ]
 }

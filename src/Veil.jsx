@@ -103,7 +103,10 @@ function splitVeilText(text, map) {
               hName: "mark",
               hProperties: {
                 className: "veil-mark",
-                title: `Veiled — the model saw [${m[1]}]`,
+                // Secret Guard's placeholders ([SECRET_n]) are restored the same way.
+                title: /^SECRET_\d+$/.test(m[1])
+                  ? `Secret Guard — the model saw [${m[1]}]`
+                  : `Veiled — the model saw [${m[1]}]`,
                 // Highlight & Ask quotes a veiled value as its placeholder.
                 dataVeilTag: m[1],
               },
@@ -118,10 +121,22 @@ function splitVeilText(text, map) {
   if (cursor < text.length) out.push({ type: "text", value: text.slice(cursor) });
   return out;
 }
+// Secret Guard's placeholders sit in pasted code more often than not, so
+// inside code (where a <mark> can't go) they're put back as plain text.
+// Veil's own tags in code are left as they are.
+const restoreSecrets = (value, map) =>
+  value.replace(/\[(SECRET_\d+)\]/g, (full, tag) =>
+    Object.prototype.hasOwnProperty.call(map, tag) ? map[tag] : full,
+  );
 function replaceVeilTags(node, map) {
   if (!node?.children) return;
   const next = [];
   for (const child of node.children) {
+    if ((child.type === "code" || child.type === "inlineCode") && typeof child.value === "string") {
+      child.value = restoreSecrets(child.value, map);
+      next.push(child);
+      continue;
+    }
     const split = child.type === "text" ? splitVeilText(child.value, map) : null;
     if (split) next.push(...split);
     else {

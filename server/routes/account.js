@@ -20,6 +20,7 @@ import { exportRecoveryKit, forgetRecoveryKit } from "../recovery-kit.js";
 import { exportPush, forgetPush, pushReleased } from "../push-alerts.js";
 import { exportFileIndex, forgetFileIndex } from "../file-search.js";
 import { exportRepos, forgetRepos } from "../repo-reader.js";
+import { exportSecretGuard, forgetSecretGuard } from "../secret-guard.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -166,6 +167,8 @@ export function eraseAccountContent(db, user) {
   // Repo Reader: the repos this account has open in the in-memory cache
   // (nothing of it is in the database).
   forgetRepos(db, id);
+  // Secret Guard: the switch, if it was turned off (it's back on).
+  forgetSecretGuard(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -289,6 +292,12 @@ export function accountRoutes(ctx) {
     return choice || isReleased(cfg, "arena")
       ? { blindArena: choice || { contributing: false, asked: false } }
       : {};
+  }
+  // Secret Guard: whether it's on (once the update is live, or while it's
+  // switched off). Nothing about a match is ever stored to export.
+  function secretGuardExport(user) {
+    const view = exportSecretGuard(db, user);
+    return !view.enabled || isReleased(cfg, "secretguard") ? { secretGuard: view } : {};
   }
   // Audio Overview: each saved overview's title, script and date (once the
   // update is live, or while any exist). The audio files are under media.
@@ -692,6 +701,8 @@ export function accountRoutes(ctx) {
       ...fileSearchExport(req.user.id),
       // Repo Reader: repos open in its short-lived cache.
       ...reposExport(req.user.id),
+      // Secret Guard: the switch only.
+      ...secretGuardExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

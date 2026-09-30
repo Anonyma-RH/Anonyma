@@ -855,6 +855,7 @@ const featureIcons = {
   voice: "audio",
   trail: "route",
   seedguard: "lock",
+  secretguard: "key",
   cleanuploads: "eraser",
   wipe: "delete",
   vault: "lock",

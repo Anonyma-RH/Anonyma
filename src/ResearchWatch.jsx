@@ -12,6 +12,8 @@ import {
   parseTime,
 } from "./routines.js";
 import { MAX_WATCHES, TOPIC_LIMIT, WATCH_REPEATS } from "./research-watch.js";
+import { SecretGuardNotice, useSecretScan } from "./SecretGuard.jsx";
+import { maskSecrets, removeSecrets } from "./secret-guard.js";
 import "./research-watch.css";
 
 // Research Watch (update "researchwatch"): the Research watch tab of the
@@ -280,15 +282,21 @@ export function useQuote(draft, live) {
   return state;
 }
 
-export function WatchEditor({ draft, setDraft, models, config, busy, error, onSave, onCancel, onDelete, live, demo }) {
+export function WatchEditor({ draft, setDraft, models, config, busy, error, onSave, onCancel, onDelete, live, demo, secretLive = false }) {
   const [confirming, setConfirming] = useState(false);
   const set = (k) => (v) => setDraft((d) => ({ ...d, [k]: v }));
+  // Secret Guard: a password, key or token in the topic holds Save until
+  // it's masked or removed. A topic becomes web searches, so there's no
+  // "Save anyway"; and while it's held, the estimate is asked for without
+  // the topic, so the secret isn't posted for a quote either.
+  const secretFinds = useSecretScan(secretLive, draft.topic);
+  const secretHeld = secretFinds.length > 0;
   const choices = models.filter((m) => !draft.private_only || m.private);
   const zones = useMemo(() => zoneList(draft.timezone), [draft.timezone]);
   const privateLive = isReleased(config, "private");
   const minute = parseTime(draft.time);
   const next = minute == null ? null : nextRunAfter(scheduleOfDraft(draft), Date.now());
-  const fetched = useQuote(draft, live);
+  const fetched = useQuote(secretHeld ? { ...draft, topic: "" } : draft, live);
   // The sample account has no server to ask: a fixed sample.
   const state = demo
     ? { status: "ready", credits: draft.depth === "thorough" ? 175.2299 : 95.2568, searches: DEPTHS[draft.depth] }
@@ -308,7 +316,7 @@ export function WatchEditor({ draft, setDraft, models, config, busy, error, onSa
       className="routine-editor research-editor"
       onSubmit={(e) => {
         e.preventDefault();
-        onSave();
+        if (!secretHeld) onSave();
       }}
     >
       <div className="routine-editor-head">
@@ -370,6 +378,18 @@ export function WatchEditor({ draft, setDraft, models, config, busy, error, onSa
               written.
             </span>
           </p>
+          <SecretGuardNotice
+            finds={secretFinds}
+            verb="save"
+            busy={busy}
+            note="A topic becomes web searches, so a secret in it is masked or removed, never saved as it is. Masked, the watch runs with a placeholder like [SECRET_1]."
+            onMask={() => {
+              const topic = maskSecrets(draft.topic, {}).text;
+              setDraft((d) => ({ ...d, topic }));
+              onSave({ ...draft, topic });
+            }}
+            onRemove={() => set("topic")(removeSecrets(draft.topic).text)}
+          />
         </div>
         <div className="routine-editor-col">
           <label className="routine-field">
@@ -537,7 +557,7 @@ export function WatchEditor({ draft, setDraft, models, config, busy, error, onSa
       </p>
       {error && <Notice type="error">{error}</Notice>}
       <div className="routine-editor-actions">
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" disabled={busy || secretHeld}>
           Save research watch
         </Button>
         <Button type="button" secondary onClick={onCancel} disabled={busy}>
@@ -683,7 +703,7 @@ const STEP_STATUS = {
 };
 
 // The Research watch tab of the Routines page.
-export function ResearchTab({ demo, live, models, config, watches, setWatches, reload, onReports, onRemoved, setError, nameOf }) {
+export function ResearchTab({ demo, live, models, config, watches, setWatches, reload, onReports, onRemoved, setError, nameOf, secretLive = false }) {
   const [params, setParams] = useSearchParams();
   // The URL says which watch is being edited (?watch=new or ?watch=<id>), so
   // a reload opens what's on screen.
@@ -740,12 +760,14 @@ export function ResearchTab({ demo, live, models, config, watches, setWatches, r
     setDraft(null);
     mark(null);
   }
-  async function save() {
+  // `d` is the draft to save: Secret Guard's Mask and save passes the
+  // masked one, before the state update lands.
+  async function save(d = draft) {
     setFormError("");
-    const body = bodyOf(draft);
+    const body = bodyOf(d);
     if (demo) {
       const w = {
-        ...(watches.find((x) => x.id === draft.id) || {
+        ...(watches.find((x) => x.id === d.id) || {
           id: "demo-research-" + Date.now(),
           kind: "research",
           web_search: true,
@@ -756,16 +778,16 @@ export function ResearchTab({ demo, live, models, config, watches, setWatches, r
         name: body.name || body.topic.slice(0, 60),
         topic: body.topic,
         per_run_credits: body.depth === "thorough" ? 175.2299 : 95.2568,
-        next_run_at: body.enabled ? nextRunAfter(scheduleOfDraft(draft), Date.now()) : null,
+        next_run_at: body.enabled ? nextRunAfter(scheduleOfDraft(d), Date.now()) : null,
       };
-      setWatches((list) => (draft.id ? list.map((x) => (x.id === draft.id ? w : x)) : [...list, w]));
+      setWatches((list) => (d.id ? list.map((x) => (x.id === d.id ? w : x)) : [...list, w]));
       close();
       return;
     }
     setBusy(true);
     try {
-      await api(draft.id ? "/api/research-watches/" + draft.id : "/api/research-watches", {
-        method: draft.id ? "PATCH" : "POST",
+      await api(d.id ? "/api/research-watches/" + d.id : "/api/research-watches", {
+        method: d.id ? "PATCH" : "POST",
         body,
       });
       close();
@@ -843,6 +865,7 @@ export function ResearchTab({ demo, live, models, config, watches, setWatches, r
           error={formError}
           live={live}
           demo={demo}
+          secretLive={secretLive}
           onSave={save}
           onCancel={close}
           onDelete={() => remove(watches.find((w) => w.id === draft.id))}

@@ -377,8 +377,11 @@ test("the key leaves the address bar before the app runs, and is never sent", ()
       assert.doesNotMatch(code, call);
     assert.doesNotMatch(code.replace(/^\s*\/\/.*$/gm, ""), /location\.(hash|href)/);
   }
-  assert.equal((viewer.match(/\bapi\(/g) || []).length, 1, "one request: the ciphertext, by token");
+  // Two requests, neither with a key: the snapshot by token, and Burn After
+  // Reading's POST that opens a link that opens once, with an empty body.
+  assert.equal((viewer.match(/\bapi\(/g) || []).length, 2, "the ciphertext by token, and the one-time open");
   assert.match(viewer, /api\("\/api\/s\/" \+ token\)/);
+  assert.match(viewer, /api\("\/api\/s\/" \+ token \+ "\/open", \{ method: "POST", body: \{\} \}\)/);
 });
 
 test("expiry, revoke, auto-delete, deletion and account closure work as for open links", async (t) => {

@@ -473,6 +473,12 @@ export default function Whitepaper() {
                 read it.
               </p>
             )}
+            {live("sharelinks") && live("burnlinks") && (
+              <p>
+                A burn-after-reading link opens once: its copy is deleted the
+                first time someone opens it, and only its dates are kept.
+              </p>
+            )}
             <h3>What providers receive</h3>
             <p>
               The model ID, the recent messages of the conversation (up to the

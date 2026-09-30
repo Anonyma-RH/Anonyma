@@ -1427,6 +1427,27 @@ export const MIGRATIONS = [
         BEGIN SELECT RAISE(ABORT,'watch_limit'); END;
     `)(db);
   },
+  // Burn After Reading (routes/shares.js): which share links open only once,
+  // and when that happened. One row per such link, keyed by its share_links
+  // or sealed_shares id and removed with it however it goes (revoke, expiry,
+  // its conversation's deletion, erase). Only the account's own links.
+  // A burn link's token column holds the SHA-256 of its token, never the
+  // token: every build looks ordinary links up by the token as sent, so no
+  // earlier build can serve (or skip the burn of) one. That's what keeps
+  // this additive. Once opened, its snapshot or ciphertext and its title are
+  // overwritten in place, and only the dates stay.
+  additive(`
+      CREATE TABLE IF NOT EXISTS share_burns(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),opened INTEGER);
+      CREATE INDEX IF NOT EXISTS share_burns_user ON share_burns(user_id);
+      CREATE TRIGGER IF NOT EXISTS share_burns_own_link BEFORE INSERT ON share_burns
+        WHEN NOT EXISTS (SELECT 1 FROM share_links WHERE id=NEW.id AND user_id=NEW.user_id)
+          AND NOT EXISTS (SELECT 1 FROM sealed_shares WHERE id=NEW.id AND user_id=NEW.user_id)
+        BEGIN SELECT RAISE(ABORT,'share_burn_own_link'); END;
+      CREATE TRIGGER IF NOT EXISTS share_burns_open_gone AFTER DELETE ON share_links
+        BEGIN DELETE FROM share_burns WHERE id=OLD.id; END;
+      CREATE TRIGGER IF NOT EXISTS share_burns_sealed_gone AFTER DELETE ON sealed_shares
+        BEGIN DELETE FROM share_burns WHERE id=OLD.id; END;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

@@ -9,6 +9,7 @@ import {
   SHARE_BLOCK_MESSAGES,
   MAX_SHARE_TITLE,
   SEALED_FACTS,
+  BURN_FACTS,
   SNAPSHOT_PROBLEMS,
   deviceSnapshot,
   sealedLink,
@@ -27,7 +28,20 @@ import "./share-links.css";
 // only in the link shown once after it's made; nothing here stores it.
 export const sealedShareLive = (config) =>
   isReleased(config, "sharelinks") && isReleased(config, "sealedshare");
+// Burn After Reading: a link, sealed or not, that opens once. The server
+// keeps only its token's SHA-256, so its address is shown once, when it's
+// made; afterwards the list shows only whether and when it was opened.
+export const burnLinksLive = (config) =>
+  isReleased(config, "sharelinks") && isReleased(config, "burnlinks");
 const date = (ms) => new Date(ms).toLocaleDateString();
+const dateTime = (ms) =>
+  new Date(ms).toLocaleString([], {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 const expiryLabel = (days) => (days == null ? "Never" : days === 1 ? "1 day" : `${days} days`);
 function Expires({ link }) {
   if (link.expires == null) return <>Never expires</>;
@@ -39,9 +53,36 @@ function Expires({ link }) {
   );
 }
 
+// Burn After Reading: whether the link has been opened, and when.
+function BurnState({ link }) {
+  return (
+    <small className="share-burn-state">
+      <span className="share-sealed-tag share-burn-tag">
+        <Icon name="flame" size={11} />
+        Burn after reading
+      </span>{" "}
+      <span className="share-burn-when">
+        {link.opened ? <>Opened on {dateTime(link.opened)}</> : "Not opened yet"}
+      </span>
+    </small>
+  );
+}
+
 // One live link: its address, when it ends, and Open / Copy / Revoke. A
-// sealed link's key isn't kept anywhere, so it can only be revoked here.
+// sealed link's key isn't kept anywhere, so it can only be revoked here;
+// nor is a burn link's address. An opened burn link is only its dates.
 function LinkRow({ link, busy, onRevoke, showTitle = false }) {
+  const spent = !!(link.burn && link.opened);
+  const revoke = (
+    <button
+      type="button"
+      className="small-button danger-text"
+      disabled={busy}
+      onClick={() => onRevoke(link)}
+    >
+      {spent ? "Remove" : "Revoke"}
+    </button>
+  );
   if (link.sealed)
     return (
       <li className="share-link-row">
@@ -57,22 +98,44 @@ function LinkRow({ link, busy, onRevoke, showTitle = false }) {
               <Icon name="lock" size={11} />
               Sealed
             </span>{" "}
-            Created {date(link.created)} · <Expires link={link} />
+            {spent ? (
+              <>Created {date(link.created)}</>
+            ) : (
+              <>
+                Created {date(link.created)} · <Expires link={link} />
+              </>
+            )}
           </small>
-          <small className="share-sealed-note">
-            Its key is only in the link you copied.
+          {link.burn && <BurnState link={link} />}
+          {!spent && (
+            <small className="share-sealed-note">
+              Its key is only in the link you copied.
+            </small>
+          )}
+        </div>
+        <div className="share-link-actions">{revoke}</div>
+      </li>
+    );
+  if (link.burn)
+    return (
+      <li className="share-link-row">
+        <div className="share-link-text">
+          {showTitle && (
+            <b data-i18n="off">{link.conversation_title || link.title}</b>
+          )}
+          <small>
+            {spent ? (
+              <>Created {date(link.created)}</>
+            ) : (
+              <>
+                Created {date(link.created)} · <Expires link={link} /> ·{" "}
+                {link.messages === 1 ? "1 message" : `${link.messages} messages`}
+              </>
+            )}
           </small>
+          <BurnState link={link} />
         </div>
-        <div className="share-link-actions">
-          <button
-            type="button"
-            className="small-button danger-text"
-            disabled={busy}
-            onClick={() => onRevoke(link)}
-          >
-            Revoke
-          </button>
-        </div>
+        <div className="share-link-actions">{revoke}</div>
       </li>
     );
   return (
@@ -127,11 +190,17 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
     [days, setDays] = useState(DEFAULT_SHARE_DAYS),
     // Sealed by default wherever it's offered.
     [sealed, setSealed] = useState(sealedOffered),
+    // Burn After Reading: off unless chosen, and only once it's released.
+    [burn, setBurn] = useState(false),
     [created, setCreated] = useState(null),
     [links, setLinks] = useState(null),
     [busy, setBusy] = useState(""),
     [error, setError] = useState("");
   const id = device ? null : conversation?.id;
+  const burnOffered = burnLinksLive(config);
+  const burning = burnOffered && burn;
+  // Sent only when chosen: a link that opens once needs its update.
+  const burnBody = burning ? { burn: true } : {};
   const load = () =>
     api("/api/shares?conversation=" + encodeURIComponent(id)).then(
       (r) => setLinks(r.data),
@@ -161,6 +230,7 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
         ...(device ? { device: true } : { conversationId: id }),
         ciphertext: box.ciphertext,
         expires_in_days: days,
+        ...burnBody,
       },
     });
     // The full link exists only here, in this dialog, until it's closed.
@@ -183,7 +253,7 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
         ? await createSealed()
         : await api("/api/shares", {
             method: "POST",
-            body: { conversationId: id, title, expires_in_days: days },
+            body: { conversationId: id, title, expires_in_days: days, ...burnBody },
           });
       setCreated(r);
       if (id) await load();
@@ -246,17 +316,27 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
                 </span>
               </p>
             )}
+            {created.burn && !created.sealed && (
+              <p className="share-sealed-warning">
+                <Icon name="key" size={14} />
+                <span>{BURN_FACTS.shown}</span>
+              </p>
+            )}
             <div className="inline-actions">
               <CopyButton text={createdUrl} label="Copy link" />
-              <a
-                className="small-button"
-                href={created.sealed ? created.fullPath : created.path}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Icon name="external" size={13} />
-                Open
-              </a>
+              {/* A burn link opens once: no Open here, so it isn't spent by
+                  its own owner. */}
+              {!created.burn && (
+                <a
+                  className="small-button"
+                  href={created.sealed ? created.fullPath : created.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Icon name="external" size={13} />
+                  Open
+                </a>
+              )}
               <button
                 type="button"
                 className="small-button danger-text"
@@ -267,6 +347,18 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
               </button>
             </div>
             <ul className="share-facts">
+              {created.burn && (
+                <>
+                  <li>
+                    <Icon name="flame" size={14} />
+                    <span>{BURN_FACTS.once}</span>
+                  </li>
+                  <li>
+                    <Icon name="eye" size={14} />
+                    <span>{BURN_FACTS.copy}</span>
+                  </li>
+                </>
+              )}
               {created.sealed && (
                 <>
                   <li>
@@ -408,7 +500,42 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
                 Its links end then too.
               </p>
             )}
+            {burnOffered && (
+              <label className={"share-burn" + (burn ? " on" : "")}>
+                <input
+                  type="checkbox"
+                  checked={burn}
+                  onChange={(e) => setBurn(e.target.checked)}
+                />
+                <span className="share-kind-text">
+                  <b>
+                    <Icon name="flame" size={14} />
+                    Burn after reading
+                  </b>
+                  <small>
+                    Opens once, then it's deleted from our servers. Unopened,
+                    it still expires as chosen above.
+                  </small>
+                </span>
+              </label>
+            )}
             <ul className="share-facts">
+              {burning && (
+                <>
+                  <li>
+                    <Icon name="flame" size={14} />
+                    <span>{BURN_FACTS.once}</span>
+                  </li>
+                  <li>
+                    <Icon name="eyeoff" size={14} />
+                    <span>{BURN_FACTS.previews}</span>
+                  </li>
+                  <li>
+                    <Icon name="eye" size={14} />
+                    <span>{BURN_FACTS.copy}</span>
+                  </li>
+                </>
+              )}
               <li>
                 <Icon name="check" size={14} />
                 <span>
@@ -441,7 +568,7 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
                     <span>{SEALED_FACTS.lost}</span>
                   </li>
                 </>
-              ) : (
+              ) : burning ? null : (
                 <li>
                   <Icon name="eye" size={14} />
                   <span>
@@ -511,6 +638,7 @@ export function ShareDialog({ conversation, device, blocked, modelName, onClose 
 export function ShareLinksManager({ onError }) {
   const { config } = useApp() || {};
   const sealed = sealedShareLive(config);
+  const burnLive = burnLinksLive(config);
   const [list, setList] = useState(null),
     [busy, setBusy] = useState("");
   const load = () =>
@@ -545,6 +673,13 @@ export function ShareLinksManager({ onError }) {
           <p>
             Sealed links can only be revoked here: their key is only in the
             link you copied, which ANONYMA never receives.
+          </p>
+        )}
+        {burnLive && (
+          <p>
+            Links that open once show whether and when they were opened.
+            Their address was shown only when you made them, so here they
+            can only be revoked.
           </p>
         )}
       </div>

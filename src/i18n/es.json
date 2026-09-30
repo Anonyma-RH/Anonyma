@@ -6418,7 +6418,33 @@
     "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "¿Otra app de billetera? Pega el enlace de la página en su navegador integrado. Tu app de billetera tiene su propio inicio de sesión, así que ahí vuelves a iniciar sesión en ANONYMA.",
     "Open in MetaMask": "Abrir en MetaMask",
     "Open in Coinbase Wallet": "Abrir en Coinbase Wallet",
-    "Open in Trust Wallet": "Abrir en Trust Wallet"
+    "Open in Trust Wallet": "Abrir en Trust Wallet",
+    "Burn After Reading": "Quemar después de leer",
+    "Share a chat that deletes itself once it's read.": "Comparte un chat que se elimina solo en cuanto se lee.",
+    "The link opens once, then the chat is deleted from our servers": "El enlace se abre una sola vez y luego el chat se elimina de nuestros servidores",
+    "Link previews can't use it up: only a click opens it": "Las vistas previas de enlaces no lo gastan: solo un clic lo abre",
+    "See when it was opened; works with sealed links too": "Ve cuándo se abrió; también funciona con enlaces sellados",
+    "Opens once. When someone opens it, the chat is deleted from our servers.": "Se abre una sola vez. Cuando alguien lo abre, el chat se elimina de nuestros servidores.",
+    "Link previews and prefetchers can't use it up: only a click on Open does.": "Las vistas previas de enlaces y la precarga no lo gastan: solo un clic en Abrir lo hace.",
+    "Whoever opens it can still copy or screenshot what they see.": "Quien lo abra aún puede copiar lo que ve o hacerle capturas de pantalla.",
+    "The link is shown only here, once: ANONYMA keeps only a fingerprint of it. Copy it now.": "El enlace se muestra solo aquí, una vez: ANONYMA guarda solo una huella de él. Cópialo ahora.",
+    "This chat was already opened, or isn't available.": "Este chat ya se abrió o no está disponible.",
+    "A link that opens once can't be opened again. Other links stop working when they expire or are revoked, or when their conversation is deleted.": "Un enlace que se abre una sola vez no puede volver a abrirse. Los demás enlaces dejan de funcionar cuando caducan o se revocan, o cuando se elimina su conversación.",
+    "Burn after reading": "Quemar después de leer",
+    "Not opened yet": "Aún sin abrir",
+    "Opens once, then it's deleted from our servers. Unopened, it still expires as chosen above.": "Se abre una sola vez y luego se elimina de nuestros servidores. Si nadie lo abre, caduca igual según lo que elegiste arriba.",
+    "Links that open once show whether and when they were opened. Their address was shown only when you made them, so here they can only be revoked.": "Los enlaces que se abren una sola vez muestran si se abrieron y cuándo. Su dirección solo se mostró al crearlos, así que aquí solo se pueden revocar.",
+    "Opened once.": "Abierto una vez.",
+    "This chat was deleted from ANONYMA's servers when you opened it. It stays on this page only until you close or reload it.": "Este chat se eliminó de los servidores de ANONYMA cuando lo abriste. Permanece en esta página solo hasta que la cierres o la recargues.",
+    "You can still copy or screenshot what you see.": "Aún puedes copiar lo que ves o hacerle capturas de pantalla.",
+    "BURN AFTER READING": "QUEMAR DESPUÉS DE LEER",
+    "This chat can be opened once. Open it now?": "Este chat se puede abrir una sola vez. ¿Abrirlo ahora?",
+    "It's deleted from our servers as soon as it opens, and this link won't work again. Keep this page open while you read: closing or reloading it ends the chat.": "Se elimina de nuestros servidores en cuanto se abre, y este enlace no volverá a funcionar. Mantén esta página abierta mientras lees: si la cierras o la recargas, el chat termina.",
+    "Opening…": "Abriendo…",
+    "Open it now": "Abrirlo ahora",
+    "Burn-after-reading links: the same copy as any share link, stored under a fingerprint of the link rather than the link itself. The first time someone opens it, the copy and its title are deleted at once, and only the link’s dates are kept (created, opened, expires) so you can see when it was read. Opening the page alone never counts: only a click on Open does.": "Enlaces que se queman después de leer: la misma copia que cualquier enlace compartido, guardada con una huella del enlace en lugar del enlace mismo. La primera vez que alguien lo abre, la copia y su título se eliminan de inmediato, y solo se guardan las fechas del enlace (creación, apertura, caducidad) para que veas cuándo se leyó. Cargar la página no cuenta: solo un clic en Abrir.",
+    "Burn-after-reading links are exported as their dates only: when each was made, when it expires and when it was opened. Never their address or their copy.": "Los enlaces que se queman después de leer se exportan solo con sus fechas: cuándo se creó cada uno, cuándo caduca y cuándo se abrió. Nunca su dirección ni su copia.",
+    "A burn-after-reading link opens once: its copy is deleted the first time someone opens it, and only its dates are kept.": "Un enlace que se quema después de leer se abre una sola vez: su copia se elimina la primera vez que alguien lo abre, y solo se guardan sus fechas."
   },
   "patterns": [
     {
@@ -10464,6 +10490,10 @@
     {
       "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
       "es": "Ampliar admite fotos de hasta {0} px en su lado largo. Redúcela e intenta de nuevo."
+    },
+    {
+      "en": "Opened on {0}",
+      "es": "Abierto el {0}"
     },
     {
       "en": "{0} · settled receipt.",

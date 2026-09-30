@@ -348,3 +348,23 @@ export function readSealedPayload(value) {
   }
   return { title: shareTitle(value.title), messages };
 }
+
+// ---- Burn After Reading (update "burnlinks") ----
+// A link, sealed or not, that opens once. Visiting it shows an interstitial;
+// only an explicit click on Open (a POST) opens it, and the snapshot (or
+// ciphertext) is deleted from the server in the same step, so link previews
+// and prefetchers, which only GET, can't use it up. The server keeps only its
+// token's SHA-256, so the link is shown once, when it's made.
+export const BURN_FACTS = {
+  once: "Opens once. When someone opens it, the chat is deleted from our servers.",
+  previews: "Link previews and prefetchers can't use it up: only a click on Open does.",
+  copy: "Whoever opens it can still copy or screenshot what they see.",
+  shown: "The link is shown only here, once: ANONYMA keeps only a fingerprint of it. Copy it now.",
+};
+// The page every link shows once it's gone, whatever the reason: opened
+// already, revoked, expired or never real. One page, so a guesser learns
+// nothing about which.
+export const BURN_GONE = {
+  title: "This chat was already opened, or isn't available.",
+  body: "A link that opens once can't be opened again. Other links stop working when they expire or are revoked, or when their conversation is deleted.",
+};

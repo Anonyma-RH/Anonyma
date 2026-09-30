@@ -48,7 +48,8 @@ import {
 // - collabs the account owns, with their shared conversations (the caller
 //   checks their Team Treasuries are empty first);
 // - its membership of other collabs, whose shared messages stay;
-// - share links, sealed ones too (Device-only ones included), then personal
+// - share links, sealed ones too (Device-only ones included) and Burn After
+//   Reading's opened dates, then personal
 //   conversations and their messages (Symposium runs, branches and
 //   Double-checks are conversations too), and Chat Import's mark on the
 //   chats that came from an export;
@@ -90,6 +91,8 @@ export function eraseAccountContent(db, user) {
   db.prepare("DELETE FROM collab_members WHERE user_id=?").run(id);
   db.prepare("DELETE FROM share_links WHERE user_id=?").run(id);
   db.prepare("DELETE FROM sealed_shares WHERE user_id=?").run(id);
+  // Burn After Reading's opened dates (they also go with each link).
+  db.prepare("DELETE FROM share_burns WHERE user_id=?").run(id);
   // Summarize & Continue: the summary a personal continued chat carries
   // (it also goes with its conversation, just below).
   db.prepare(
@@ -189,18 +192,26 @@ export function accountRoutes(ctx) {
     return alert || alertsLive(cfg) ? { balanceAlert: alert } : {};
   }
   const { mediaJSON, deleteMedia } = ctx.media;
+  // Burn After Reading: a link that opens once is exported as its dates
+  // only. Its address was never kept (only its token's SHA-256), and once
+  // opened there's no title, count or copy left.
+  const burnFields = (b) =>
+    b.burn ? { burn_after_reading: true, opened: b.opened ?? null } : {};
   function shareLinksExport(user) {
     const t = now();
     const links = db
       .prepare(
-        `SELECT s.id,s.conversation_id,s.token,s.title,s.message_count,s.created,s.expires FROM share_links s JOIN conversations c ON c.id=s.conversation_id
+        `SELECT s.id,s.conversation_id,s.token,s.title,s.message_count,s.created,s.expires,b.id IS NOT NULL burn,b.opened FROM share_links s JOIN conversations c ON c.id=s.conversation_id
+         LEFT JOIN share_burns b ON b.id=s.id
          WHERE s.user_id=? AND (s.expires IS NULL OR s.expires>?) AND (c.expires IS NULL OR c.expires>=?) ORDER BY s.created,s.rowid`,
       )
       .all(user, t, t)
-      .map(({ token, message_count, ...s }) => ({
+      .map(({ token, message_count, burn, opened, ...s }) => ({
         ...s,
-        url: String(cfg.publicUrl || cfg.origin).replace(/\/+$/, "") + "/s/" + token,
+        url: burn ? null : String(cfg.publicUrl || cfg.origin).replace(/\/+$/, "") + "/s/" + token,
         messages: message_count,
+        ...(burn && opened ? { title: null, messages: null } : {}),
+        ...burnFields({ burn, opened }),
       }));
     return {
       ...(links.length || isReleased(cfg, "sharelinks") ? { shareLinks: links } : {}),
@@ -209,19 +220,22 @@ export function accountRoutes(ctx) {
   }
   // Sealed Share: each live sealed link's address (without its key, which
   // only the link itself holds), dates and the ciphertext exactly as stored.
+  // A burn link's, like an open one's, is dates only: never its copy.
   function sealedSharesExport(user, t) {
     const links = db
       .prepare(
-        `SELECT s.id,s.conversation_id,s.token,s.ciphertext,s.created,s.expires FROM sealed_shares s LEFT JOIN conversations c ON c.id=s.conversation_id
+        `SELECT s.id,s.conversation_id,s.token,s.ciphertext,s.created,s.expires,b.id IS NOT NULL burn,b.opened FROM sealed_shares s LEFT JOIN conversations c ON c.id=s.conversation_id
+         LEFT JOIN share_burns b ON b.id=s.id
          WHERE s.user_id=? AND (s.expires IS NULL OR s.expires>?) AND (s.conversation_id IS NULL OR (c.id IS NOT NULL AND (c.expires IS NULL OR c.expires>=?)))
          ORDER BY s.created,s.rowid`,
       )
       .all(user, t, t)
-      .map(({ token, ciphertext, ...s }) => ({
+      .map(({ token, ciphertext, burn, opened, ...s }) => ({
         ...s,
         device_only: s.conversation_id == null,
-        url: String(cfg.publicUrl || cfg.origin).replace(/\/+$/, "") + "/s/" + token,
-        ciphertext: Buffer.from(ciphertext).toString("base64url"),
+        url: burn ? null : String(cfg.publicUrl || cfg.origin).replace(/\/+$/, "") + "/s/" + token,
+        ciphertext: burn ? null : Buffer.from(ciphertext).toString("base64url"),
+        ...burnFields({ burn, opened }),
       }));
     return links.length || isReleased(cfg, "sealedshare")
       ? { sealedShares: links }

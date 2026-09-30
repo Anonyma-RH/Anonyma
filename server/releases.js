@@ -1352,6 +1352,24 @@ export const UPDATES = [
     // button and the dictionary never loads.
     released: true,
   },
+  {
+    id: "burnlinks",
+    title: "Burn After Reading",
+    tagline: "Share a chat that deletes itself once it's read.",
+    points: [
+      "The link opens once, then the chat is deleted from our servers",
+      "Link previews can't use it up: only a click opens it",
+      "See when it was opened; works with sealed links too",
+    ],
+    // An option on Share a Chat and Sealed Share (server/routes/shares.js):
+    // a create with `burn` and the one POST that opens such a link,
+    // /api/s/<token>/open, need it released (featuresFor), and until then a
+    // burn link looks like one that doesn't exist. A GET never opens one.
+    // share_burns keeps which links burn and when each was opened; the
+    // opening deletes the snapshot or ciphertext at once. Erased with the
+    // links, and exported as dates only.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1773,14 +1791,21 @@ export function featuresFor(req) {
   // Sealed Share: the browser seals a snapshot before uploading it, so the
   // draft it seals and a sealed create need both updates.
   if (p === "/api/shares/draft") return ["sharelinks", "sealedshare"];
-  if (
-    p === "/api/shares" &&
-    post &&
-    (body.sealed === true ||
+  // Burn After Reading: a link that opens once (sealed or not), and the one
+  // request that opens it, a POST (a GET never does).
+  if (p === "/api/shares" && post) {
+    const needed = ["sharelinks"];
+    if (
+      body.sealed === true ||
       body.ciphertext !== undefined ||
-      body.device !== undefined)
-  )
-    return ["sharelinks", "sealedshare"];
+      body.device !== undefined
+    )
+      needed.push("sealedshare");
+    if (body.burn !== undefined) needed.push("burnlinks");
+    return needed;
+  }
+  if (p.startsWith("/api/s/") && p.endsWith("/open"))
+    return ["sharelinks", "burnlinks"];
   // Share a Chat: managing links, and the public snapshot page and its data.
   if (
     p === "/api/shares" ||

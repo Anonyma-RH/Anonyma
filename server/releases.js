@@ -1477,7 +1477,7 @@ export const UPDATES = [
   },
   {
     id: "shottosite",
-    released: false,
+    released: true,
     title: "Screenshot to site",
     tagline: "Drop a screenshot, a sketch or a wireframe. Get a working page you can see, change with words and download.",
     points: [

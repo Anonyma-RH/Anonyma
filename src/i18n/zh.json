@@ -6521,7 +6521,9 @@
     "Give each side a position of 2 to 240 characters.": "请为每一方写下 2 到 240 个字符的立场。",
     "Positions belong to a debate with Two positions.": "立场只用于“两种立场”的辩论。",
     "Choose 1 to 4 rounds.": "请选择 1 到 4 轮。",
-    "Open in Debate": "在辩论中打开"
+    "Open in Debate": "在辩论中打开",
+    "Cost by step": "分步费用",
+    "Each figure is the most that step can cost. A turn is priced on the longest debate it could read, so later turns cost more, and the judge reads all of it. The total above is these added up, and it is what is held. You're charged for what each step actually uses.": "每个数字是该步骤最多可能花费的积分。每个回合按它可能读到的最长辩论计价，所以越往后的回合越贵，裁判则要读完全部内容。上面的总额就是这些数字相加，也是被冻结的金额。你只需为每一步的实际用量付费。"
   },
   "patterns": [
     {
@@ -10591,6 +10593,10 @@
     {
       "en": "Each turn is asked to keep under about {0} words.",
       "zh": "每个回合被要求控制在约 {0} 个词以内。"
+    },
+    {
+      "en": "Turn {0}",
+      "zh": "第 {0} 回合"
     }
   ]
 }

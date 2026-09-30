@@ -6524,7 +6524,9 @@
     "Give each side a position of 2 to 240 characters.": "Da a cada lado una postura de 2 a 240 caracteres.",
     "Positions belong to a debate with Two positions.": "Las posturas son para un debate de Dos posturas.",
     "Choose 1 to 4 rounds.": "Elige de 1 a 4 rondas.",
-    "Open in Debate": "Abrir en Debate"
+    "Open in Debate": "Abrir en Debate",
+    "Cost by step": "Costo por paso",
+    "Each figure is the most that step can cost. A turn is priced on the longest debate it could read, so later turns cost more, and the judge reads all of it. The total above is these added up, and it is what is held. You're charged for what each step actually uses.": "Cada cifra es lo máximo que puede costar ese paso. Un turno se calcula sobre el debate más largo que podría leer, así que los turnos posteriores cuestan más, y el juez lee todo. El total de arriba es la suma de estas cifras, y es lo que se retiene. Se te cobra lo que cada paso usa realmente."
   },
   "patterns": [
     {
@@ -10594,6 +10596,10 @@
     {
       "en": "Each turn is asked to keep under about {0} words.",
       "es": "A cada turno se le pide no pasar de unas {0} palabras."
+    },
+    {
+      "en": "Turn {0}",
+      "es": "Turno {0}"
     },
     {
       "en": "{0} · settled receipt.",

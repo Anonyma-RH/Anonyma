@@ -13,10 +13,13 @@ import { DEBATE_CHANGED } from "../server/routes/debate.js";
 import { debateCosts } from "../server/debate.js";
 import { debateTestReply } from "../server/debate-test.js";
 import { knownPage } from "../src/site-routes.js";
-import { messageFromServer, modeReleased } from "../src/lib.js";
+import { messageFromServer, modeReleased, normalizeModel, sortModels } from "../src/lib.js";
+import { pickPreset, usdPrice } from "../src/model-finder.js";
+import { providerKey } from "../src/double-check.js";
 import { paletteActions } from "../src/command-palette.js";
 import {
   JUDGE_BUDGET,
+  JUDGE_FLOOR,
   JUDGE_PROMPT,
   LABELS,
   LIMITS,
@@ -29,6 +32,7 @@ import {
   cleanTurn,
   debateMarkdown,
   defaultModels,
+  startsSettled,
   groupModels,
   judgeMessages,
   judgeText,
@@ -281,6 +285,10 @@ test("the workspace keeps Debate out of sight until it's released, and the page 
   assert.match(page, /<p data-i18n="off">\{unveil\(setup\.question, map\)\}<\/p>/);
   // Auto is never offered on a page with its own model pickers.
   assert.doesNotMatch(page, /AutoModel|\bauto:/);
+  // A big maximum is explained: each step's own maximum, from the quote that is the hold.
+  assert.match(page, /<summary>Cost by step<\/summary>/);
+  assert.match(page, /quote\.turns\.map/);
+  assert.match(page, /quote\.judge != null/);
   assert.match(readFileSync(new URL("../Dockerfile", import.meta.url), "utf8"), /src\/debate\.js/);
   assert.match(readFileSync(new URL("../src/Pages.jsx", import.meta.url), "utf8"), /debate: "scale"/);
   const dc = readFileSync(new URL("../src/DataControls.jsx", import.meta.url), "utf8");
@@ -314,18 +322,86 @@ test("the turns come in order, Side A then Side B in each round: an opening, reb
   assert.deepEqual(turnPlan(4).map((t) => t.n), [1, 2, 3, 4, 5, 6, 7, 8]);
 });
 
-test("models: three makers where there are three, grouped by maker however the catalog spells it", () => {
+test("models are grouped by maker however the catalog spells it", () => {
   const list = [
     { id: "g1", provider: "Google" },
     { id: "g2", provider: "google" },
     { id: "o1", provider: "OpenAI" },
     { id: "a1", provider: "Anthropic" },
   ];
-  assert.deepEqual(defaultModels(list), ["g1", "o1", "a1"]);
-  assert.deepEqual(defaultModels(list.slice(0, 2)), ["g1", "g2"]);
-  assert.deepEqual(defaultModels([]), []);
   const groups = groupModels(list);
   assert.deepEqual(groups.map((g) => [g.label, g.models.map((m) => m.id)]), [["Google", ["g1", "g2"]], ["OpenAI", ["o1"]], ["Anthropic", ["a1"]]]);
+});
+
+// The catalog as the page sees it: every chat model, callable, in the order
+// the workspace lists them.
+const catalog = () => sortModels(snapshot.filter((m) => m.type === "chat").map((m) => ({ ...normalizeModel(m), callable: true })));
+const price = (m) => usdPrice(m, "chat");
+const model = (id, provider, input, output, extra = {}) => ({ id, name: id, provider, callable: true, pricing: { input_per_1M_tokens: input, output_per_1M_tokens: output }, ...extra });
+
+test("the starting models are chosen by price: two middle-priced from different makers, a cheap judge from a third", () => {
+  const list = catalog();
+  const [a, b, judge] = defaultModels(list).map((id) => list.find((m) => m.id === id));
+  // Model Finder's Balanced rule picks Side A: the middle-priced popular model.
+  assert.equal(a.id, pickPreset(list, "balanced", { mode: "chat" }).id);
+  const popular = list.filter((m) => m.popular && price(m) > 0).sort((x, y) => price(x) - price(y));
+  assert.ok(popular.length >= 10);
+  const rank = (m) => popular.findIndex((x) => x.id === m.id);
+  for (const m of [a, b]) assert.ok(rank(m) >= popular.length / 4 && rank(m) <= (popular.length * 3) / 4, `${m.id} is mid-priced`);
+  // Side B is a different maker, at a like price.
+  assert.notEqual(providerKey(a), providerKey(b));
+  assert.ok(Math.abs(rank(a) - rank(b)) <= 2);
+  // The judge is a third maker, cheaper than both sides, but not the smallest model.
+  assert.ok(providerKey(judge) && ![providerKey(a), providerKey(b)].includes(providerKey(judge)));
+  assert.ok(price(judge) < price(a) && price(judge) < price(b));
+  assert.ok(price(judge) >= price(a) * JUDGE_FLOOR);
+  assert.ok(price(judge) > Math.min(...popular.map(price)), "not the cheapest of all");
+  // Nothing dear: the top of the catalog is never the starting point.
+  const dearest = Math.max(...popular.map(price));
+  for (const m of [a, b, judge]) assert.ok(price(m) < dearest / 3, m.id);
+  assert.deepEqual(defaultModels(list), defaultModels([...list]), "the same every time");
+  // The most a two-round debate can cost on these is a fraction of what the
+  // dearest models' maximum was.
+  const cfg = { released: "all" };
+  const cost = (ids) => debateCosts({ cfg, models: { a: list.find((m) => m.id === ids[0]), b: list.find((m) => m.id === ids[1]), judge: list.find((m) => m.id === ids[2]) }, setup: setupOf({ rounds: 2 }), factor: 1.2 }).total;
+  const expensive = cost(["claude-fable-5.1", "gpt-6-astra-pro", "claude-opus-5"]);
+  assert.ok(cost(defaultModels(list)) < expensive / 4, "much less than the dearest three");
+});
+
+test("the starting models skip what isn't settled or isn't there: free, preview, early, not callable, unpriced", () => {
+  const mid = [model("m1", "Alpha", 1, 4, { popular: true }), model("m2", "Beta", 1.2, 5, { popular: true }), model("m3", "Gamma", 0.9, 3.5, { popular: true }), model("m4", "Delta", 1.1, 4.4, { popular: true }), model("m5", "Eps", 0.7, 2.8, { popular: true })];
+  const base = defaultModels(mid);
+  assert.equal(base.length, 3);
+  // Cheaper, dearer and odd ones the list may hold never move the pick.
+  const noise = [
+    model("free-one", "Zed", 0, 0, { popular: true }),
+    model("vendor/model-preview", "Yak", 0.5, 2, { popular: true }),
+    model("vendor/model-exp", "Xen", 0.5, 2, { popular: true }),
+    model("beta-model", "Wat", 0.5, 2, { popular: true }),
+    model("vendor/x:free", "Vex", 0.5, 2, { popular: true }),
+    model("soon", "Uma", 0.5, 2, { popular: true, earlyUntil: Date.now() + 86_400_000 }),
+    model("later", "Tau", 0.5, 2, { popular: true, earlyUntil: Date.now() - 1000 }),
+    model("down", "Sig", 0.5, 2, { popular: true, callable: false }),
+    { id: "unpriced", name: "unpriced", provider: "Rho", callable: true, popular: true },
+  ];
+  const withNoise = defaultModels([...mid, ...noise]);
+  // Only the model whose early days are over may join, so compare without it.
+  for (const bad of ["free-one", "vendor/model-preview", "vendor/model-exp", "beta-model", "vendor/x:free", "soon", "down", "unpriced"]) assert.ok(!withNoise.includes(bad), bad);
+  assert.deepEqual(defaultModels([...mid, ...noise.filter((m) => m.id !== "later")]), base);
+  assert.equal(startsSettled(model("ok", "A", 1, 1)), true);
+  assert.equal(startsSettled(model("x-preview", "A", 1, 1)), false);
+  assert.equal(startsSettled(model("x", "A", 0, 0)), false);
+  // Without three popular models the whole list is the pool, as Balanced does.
+  const few = [model("f1", "A", 1, 4), model("f2", "B", 1.1, 4.4), model("f3", "C", 0.3, 1), model("f4", "D", 4, 16)];
+  assert.deepEqual(defaultModels(few), ["f1", "f3", "f2"]);
+  // Small lists still give a debate: two makers give two sides, one gives one.
+  assert.deepEqual(defaultModels([]), []);
+  assert.equal(defaultModels([model("only", "A", 1, 2)]).length, 1);
+  assert.equal(defaultModels([model("p", "A", 1, 2), model("q", "B", 3, 4)]).length, 2);
+  // The same maker on both sides only when there is no other.
+  assert.deepEqual(defaultModels([model("s1", "A", 1, 2), model("s2", "a", 1.1, 2.2), model("s3", "B", 1.2, 2.4)]), ["s2", "s3", "s1"]);
+  // Only unsettled models: the page still starts with something.
+  assert.equal(defaultModels([model("z-preview", "A", 1, 2), model("y-preview", "B", 2, 3)]).length, 2);
 });
 
 // ---- What each turn is sent ----
@@ -1272,6 +1348,7 @@ test("Chinese and Spanish: the words the page shows, and the release entry", () 
     "Rounds",
     "Judge",
     "No judge",
+    "Cost by step",
     "Start the debate",
     "Side A",
     "Side B",
@@ -1297,6 +1374,8 @@ test("Chinese and Spanish: the words the page shows, and the release entry", () 
     assert.match(translateText(text, zh), /\p{Script=Han}/u, text);
   }
   assert.match(translateText("Up to 3.2 credits", es), /créditos/);
+  assert.match(translateText("Turn 3", zh), /3/);
+  assert.equal(translateText("Turn 3", es), "Turno 3");
   assert.match(translateText("Stopped after 2 of 4 turns.", zh), /2/);
   assert.match(translateText("Side A was Gemini 2.5 Flash, and Side B was Claude Sonnet 5.", es), /Gemini 2\.5 Flash/);
 });

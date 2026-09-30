@@ -528,6 +528,37 @@ export default function Debate({ demo, user, models, config, refresh, veilOn, se
                   turn that fails stops the debate, and what didn't run costs nothing.
                 </small>
               </div>
+              {quote && (
+                <details className="debate-costs">
+                  <summary>Cost by step</summary>
+                  <ol>
+                    {quote.turns.map((t) => (
+                      <li key={t.n}>
+                        <span>{`Turn ${t.n}`}</span>
+                        <span>{roleLabel[turnPlan(rounds).find((x) => x.n === t.n)?.role]}</span>
+                        <span className="debate-cost-who">
+                          <span>{sideName(t.side)}</span> <span data-i18n="off">{nameOf(quote.models?.[t.side])}</span>
+                        </span>
+                        <b>{`${formatCredits(t.credits)} credits`}</b>
+                      </li>
+                    ))}
+                    {quote.judge != null && (
+                      <li>
+                        <span>Judge</span>
+                        <span />
+                        <span className="debate-cost-who">
+                          <span data-i18n="off">{nameOf(quote.models?.judge)}</span>
+                        </span>
+                        <b>{`${formatCredits(quote.judge)} credits`}</b>
+                      </li>
+                    )}
+                  </ol>
+                  <p>
+                    Each figure is the most that step can cost. A turn is priced on the longest debate it could read, so later turns cost more, and the
+                    judge reads all of it. The total above is these added up, and it is what is held. You're charged for what each step actually uses.
+                  </p>
+                </details>
+              )}
               <Promises />
             </form>
           )}

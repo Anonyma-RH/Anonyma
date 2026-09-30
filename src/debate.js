@@ -11,6 +11,7 @@
 import { escapeDocumentText } from "./documents.js";
 import { firstJsonObject } from "./highlight-ask.js";
 import { providerKey } from "./double-check.js";
+import { presetPool, usdPrice } from "./model-finder.js";
 
 export const LIMITS = {
   // The question or claim, and each custom position, in characters.
@@ -658,22 +659,54 @@ export const titleFor = (question, lang = "en") =>
 // ---- Choosing models ----
 
 const makerOf = (m) => providerKey(m) || String(m?.provider || m?.owned_by || m?.id || "").toLowerCase();
-// A sensible starting choice: Side A, Side B and the judge from three
-// different makers where the list has them, so the debate starts between
-// genuinely different voices and the judge is neither of them. Fewer makers
-// fill the rest with the next models in the list's order.
-export function defaultModels(models, count = 3) {
-  const picked = [],
-    makers = new Set();
-  for (const m of models) {
-    const maker = makerOf(m);
-    if (picked.length < count && !makers.has(maker)) {
-      picked.push(m.id);
-      makers.add(maker);
-    }
-  }
-  for (const m of models) if (picked.length < count && !picked.includes(m.id)) picked.push(m.id);
-  return picked;
+// A model a debate starts on: callable, with a published price above zero
+// (no free or unpriced ones), and not a preview, experimental or beta model
+// or one still in its early days (Early Model Access). The page has already
+// left out Uncensored, Sealed and image models. A price says nothing of
+// quality; this only keeps the starting pick to models that are settled.
+const UNSETTLED = /(^|[-_/ .:])(preview|exp|experimental|beta|free)($|[-_/ .:])/i;
+export function startsSettled(m, now = Date.now()) {
+  if (m?.callable === false) return false;
+  if (!(usdPrice(m, "chat") > 0)) return false;
+  if (Number.isFinite(m?.earlyUntil) && m.earlyUntil > now) return false;
+  return !UNSETTLED.test(`${m?.id ?? ""} ${m?.name ?? ""}`);
+}
+// The judge is never cheaper than this share of Side A's price, so the
+// cheapest judge isn't the smallest model in the catalog.
+export const JUDGE_FLOOR = 0.2;
+// The starting choice, [Side A, Side B, judge] as ids, by price, so a debate
+// starts at a middle price, not at the top of the catalog. Model Finder's
+// Balanced rule (src/model-finder.js: the middle-priced of the popular
+// models, or of all when fewer than three are popular) picks Side A. Side B
+// is the nearest to it in price from a different maker (the cheaper one on
+// a tie), so the sides are genuinely different voices at a like price. The
+// judge is the cheapest popular model from a third maker that isn't below
+// JUDGE_FLOOR of Side A's price; failing a third maker, the cheapest that
+// is neither side; failing that, none. With nothing settled to choose from
+// it falls back to the whole list, so the page never starts empty.
+export function defaultModels(models) {
+  const settled = models.filter((m) => startsSettled(m));
+  const pool = presetPool(settled.length ? settled : models, { mode: "chat" });
+  if (!pool.length) return [];
+  const popular = pool.filter((m) => m.popular);
+  const base = popular.length >= 3 ? popular : pool;
+  const middle = Math.floor((base.length - 1) / 2);
+  const byMiddle = base
+    .map((m, i) => [m, i])
+    .sort((x, y) => Math.abs(x[1] - middle) - Math.abs(y[1] - middle) || x[1] - y[1])
+    .map(([m]) => m);
+  const a = byMiddle[0];
+  const b = byMiddle.find((m) => makerOf(m) !== makerOf(a)) || byMiddle.find((m) => m !== a);
+  if (!b) return [a.id];
+  const floor = usdPrice(a, "chat") * JUDGE_FLOOR;
+  const others = [...base, ...pool.filter((m) => !base.includes(m))].filter((m) => m !== a && m !== b);
+  const priced = (m) => usdPrice(m, "chat");
+  const thirdMaker = (m) => makerOf(m) !== makerOf(a) && makerOf(m) !== makerOf(b);
+  const judge =
+    others.find((m) => thirdMaker(m) && priced(m) >= floor) ||
+    others.find((m) => priced(m) >= floor) ||
+    others[0];
+  return judge ? [a.id, b.id, judge.id] : [a.id, b.id];
 }
 // The models grouped by maker for a picker, the maker written once however
 // the catalog spells it ("Google", "google"), in the order makers first

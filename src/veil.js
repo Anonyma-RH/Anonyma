@@ -209,8 +209,21 @@ export function loadVeilState(conversationKey) {
     valueToTag: saved.valueToTag || {},
   };
 }
+// Secret Guard's placeholders ([SECRET_1], src/secret-guard.js) share this
+// state so the reply restores them, but their values live in memory only:
+// they're never written to this browser's storage (or Device Vault). The
+// counter stays, so a later secret never reuses an earlier tag.
+export function withoutSecrets(state) {
+  const keep = (entries, isSecret) => Object.fromEntries(Object.entries(entries || {}).filter((e) => !isSecret(e)));
+  return {
+    ...state,
+    map: keep(state?.map, ([tag]) => /^SECRET_\d+$/.test(tag)),
+    counters: { ...(state?.counters || {}) },
+    valueToTag: keep(state?.valueToTag, ([key]) => key.startsWith("SECRET\u0000")),
+  };
+}
 export function saveVeilState(conversationKey, state) {
-  return saveStore(KEY_PREFIX + conversationKey, state);
+  return saveStore(KEY_PREFIX + conversationKey, withoutSecrets(state));
 }
 // Moves a temporary (pre-send) conversation's veil map to its real id once
 // the server assigns one, so the map is never lost or orphaned.

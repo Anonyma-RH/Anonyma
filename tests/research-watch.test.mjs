@@ -1243,6 +1243,13 @@ async function pageModules(params = "") {
      export const useSearchParams = () => [new URLSearchParams(${JSON.stringify(params)}), () => {}];`,
   );
   const inert = stub("inert.mjs", `export const ReplyMarkdown = ({ children }) => React.createElement("div", null, children); export default () => null;`);
+  // Secret Guard's notice (tests/secret-guard.test.mjs covers it).
+  const secretGuard = stub(
+    "secret-guard-ui.mjs",
+    `export const SecretGuardNotice = () => null;
+     export const useSecretGuard = () => false;
+     export const useSecretScan = () => [];`,
+  );
   const gfm = stub("gfm.mjs", "export default () => {};");
   const watch = stub(
     "page-watch.mjs",
@@ -1257,6 +1264,8 @@ async function pageModules(params = "") {
     const { code } = await transformWithEsbuild(readFileSync(src, "utf8"), src.pathname, { jsx: "transform", format: "esm" });
     const out = code
       .replace(/^import "\.\/[\w-]+\.css";$/gm, "")
+      .replace(/from "\.\/SecretGuard\.jsx"/g, `from "${secretGuard}"`)
+      .replace(/from "\.\/secret-guard\.js"/g, `from "${abs("secret-guard.js")}"`)
       .replace(/from "\.\/ui\.jsx"/g, `from "${ui}"`)
       .replace(/from "react-router-dom"/g, `from "${router}"`)
       .replace(/from "\.\/lib\.js"/g, `from "${abs("lib.js")}"`)

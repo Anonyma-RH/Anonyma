@@ -206,11 +206,14 @@ import {
   createVeilState,
   forgetVeilState,
   unveil,
+  withoutSecrets,
 } from "./veil.js";
 import { buildChatRequest, cloneVeilState, formatCredits, quoteBody, REPLY_BUDGET } from "./estimate.js";
 import { CreditEstimate, useCreditEstimate } from "./CreditEstimate.jsx";
 import CostCompare from "./CostCompare.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
+import { SecretGuardNotice, useSecretGuard, useSecretScan } from "./SecretGuard.jsx";
+import { maskComposer, maskSecrets, removeFromComposer, removeSecrets, scanParts, secretGuardTurn } from "./secret-guard.js";
 import { LinkReaderChips } from "./LinkReader.jsx";
 import { scanSecrets, isSoft, findSeedPhrase, SEED_MESSAGE } from "./seed-guard.js";
 import { OnchainChip, MessageChainFacts, onchainReleased } from "./Onchain.jsx";
@@ -1354,7 +1357,8 @@ export default function Workspace() {
           privateMode,
           sealed: sealedOn || sealedThread,
           messages: kept,
-          veil: veilStateRef.current,
+          // Secret Guard's values stay in memory, never in the vault.
+          veil: withoutSecrets(veilStateRef.current),
           // Projects: grouped with its project inside the vault only.
           project: project?.id || null,
           // Summarize & Continue: the summary it carries, if continued fresh.
@@ -2047,6 +2051,49 @@ export default function Workspace() {
   );
   const seedHit = promptSeed || documentSeed || instructionsSeed;
   const editSeed = useSeedScan(seedLive, editing?.text || "");
+  // Secret Guard (src/SecretGuard.jsx): passwords, API keys and tokens in
+  // the prompt and the attached text files and documents, found in this
+  // browser (a page Link Reader fetched is public text and isn't scanned).
+  // A find holds Send, and the estimate too, since a quote posts the same
+  // text. Seed Guard's notice comes first; this one waits until it's
+  // answered. Mask and send puts [SECRET_n] placeholders in the composer,
+  // recorded in this chat's Veil map (in memory only: withoutSecrets keeps
+  // them out of storage), so the reply shows the values again here.
+  const secretLive = useSecretGuard(config, user, demo);
+  const secretParts = useMemo(
+    () => [
+      { text: sendText },
+      ...(textMode
+        ? sentDocuments.filter((d) => d.source !== "link").map((d) => ({ text: d.text || "", name: d.name || "" }))
+        : []),
+    ],
+    [sendText, sentDocuments, textMode],
+  );
+  const secretFinds = useSecretScan(secretLive, secretParts);
+  const secretHeld = secretFinds.length > 0;
+  const promptSecret = secretFinds.some((f) => f.part === 0);
+  const [seedAnswered, setSeedAnswered] = useState(false);
+  useEffect(() => setSeedAnswered(false), [sendText, documentTexts]);
+  const guardTurn = secretGuardTurn({ seedHit, finds: secretFinds, seedAnswered });
+  const [secretQueued, setSecretQueued] = useState(null);
+  useEffect(() => {
+    if (!secretQueued) return;
+    setSecretQueued(null);
+    send(null, null, secretQueued);
+  }, [secretQueued]);
+  function maskComposerSecrets() {
+    const r = maskComposer({ prompt, documents }, veilStateRef.current);
+    setPrompt(r.prompt);
+    setDocuments(r.documents);
+    // Sent on the next render, once the composer holds the masked text.
+    setSecretQueued({ allowSeed: seedAnswered });
+  }
+  function removeComposerSecrets() {
+    const r = removeFromComposer({ prompt, documents });
+    setPrompt(r.prompt);
+    setDocuments(r.documents);
+  }
+  const editFinds = useSecretScan(secretLive && !!editing, editing?.text || "");
   // Prompt Sharpen (src/Sharpen.jsx): rewrites the typed prompt with a fast
   // model, off the record. Only the prompt goes (never an @mention, the
   // chat, files, memory or instructions). Text modes, signed in, never the
@@ -2065,6 +2112,7 @@ export default function Workspace() {
   const sharpenBlocked = sharpenBlock({
     length: sendText.length,
     seed: promptSeed,
+    secret: promptSecret,
     model: sharpenModel,
     privateMode: sharpenPrivate,
   });
@@ -2158,6 +2206,7 @@ export default function Workspace() {
   const estimatesLive = isReleased(config, "estimates");
   const autoEstimate =
     !seedHit &&
+    !secretHeld &&
     estimatesLive &&
     textMode &&
     !demo &&
@@ -2191,7 +2240,7 @@ export default function Workspace() {
       : REPLY_BUDGET;
   const blindReady = blindActive && validPair(blindPair, blindModels);
   const blindEstimateBody = useMemo(() => {
-    if (!blindReady || seedHit || busy || branching || !sendText || !config?.services?.generation)
+    if (!blindReady || seedHit || secretHeld || busy || branching || !sendText || !config?.services?.generation)
       return null;
     const veiling = veilOn && isReleased(config, "veil");
     const { request } = buildChatRequest({
@@ -2206,7 +2255,7 @@ export default function Workspace() {
         : null,
     });
     return { models: blindPair, messages: request, max_tokens: blindBudget };
-  }, [blindReady, seedHit, busy, branching, sendText, messages, attachments, documents,
+  }, [blindReady, seedHit, secretHeld, busy, branching, sendText, messages, attachments, documents,
     sentInstructions, veilOn, veilWords, longAnswersLive, blindPair.join(" "), blindBudget, config]);
   const blindEstimate = useBlindEstimate(blindEstimateBody);
   // The last turn is a comparison still waiting for its vote: the thread
@@ -2315,6 +2364,7 @@ export default function Workspace() {
     researchOn &&
     !researchBlocked &&
     !seedHit &&
+    !secretHeld &&
     !busy &&
     !!sendText &&
     !!target?.callable &&
@@ -2481,8 +2531,9 @@ export default function Workspace() {
     : null;
   // `redo` resends an earlier turn (edit or regenerate): its own text, the
   // history before it and the conversation to add to, instead of the composer.
-  // `allowSeed` is Seed Guard's confirmed "Send anyway".
-  async function send(e, redo = null, { allowSeed = false, chainFacts = null } = {}) {
+  // `allowSeed` is Seed Guard's confirmed "Send anyway"; `allowSecret` is
+  // Secret Guard's "Send anyway", for this message only.
+  async function send(e, redo = null, { allowSeed = false, allowSecret = false, chainFacts = null } = {}) {
     e?.preventDefault?.();
     if (!(redo ? redo.content.trim() : prompt.trim()) || busy || (!redo && branchFlight.current?.pending)) return;
     // Seed Guard: a new or edited message waits for "Send anyway" (the notice
@@ -2494,6 +2545,13 @@ export default function Workspace() {
         ? scanSecrets(redo.edited ?? redo.content, sentInstructions)
         : seedHit;
     if (seedFound && !allowSeed && (!redo || redo.edited != null)) return;
+    // Secret Guard: a new message holding a password, key or token waits for
+    // its notice (Mask and send, Remove, Send anyway). Seed Guard answered
+    // with "Send anyway" hands over to it.
+    if (!redo && secretHeld && !allowSecret) {
+      if (seedFound && allowSeed) setSeedAnswered(true);
+      return;
+    }
     // The server checks the same text for seed phrases only; one found here
     // was confirmed above or already sent (an edited turn keeps its original
     // attachments). Keys and 64-hex never reach the server's check.
@@ -3414,10 +3472,12 @@ export default function Workspace() {
   // off-the-record and demo chats rewind only here and stay unsaved.
   // `model` regenerates on another model (Auto Model's "Use a different
   // model"); otherwise a regenerate asks the model that answered.
-  async function rewind(index, kind, editedText = null, { allowSeed = false, model = null } = {}) {
+  async function rewind(index, kind, editedText = null, { allowSeed = false, allowSecret = false, model = null } = {}) {
     if (busy) return;
     // Seed Guard: an edit is new text; stop before any branch is made.
     if (editedText != null && !allowSeed && seedLive && scanSecrets(editedText)) return;
+    // Secret Guard likewise, until it's masked, removed or sent anyway.
+    if (editedText != null && !allowSecret && secretLive && scanParts(editedText).length) return;
     const plan = rewindPlan(messages, index, kind);
     if (!plan) return;
     // Synchronous guard: a second click while this one is pending is ignored.
@@ -3497,7 +3557,7 @@ export default function Workspace() {
   }
   async function quoteRequest() {
     setError("");
-    if (seedHit) return;
+    if (seedHit || secretHeld) return;
     if (demo) {
       setQuote({ credits: 0, sample: true });
       return;
@@ -4673,11 +4733,22 @@ export default function Workspace() {
                                 busy={busy || branching}
                                 onProceed={() => rewind(i, "edit", editing.text, { allowSeed: true })}
                               />
+                              <SecretGuardNotice
+                                finds={editSeed ? [] : editFinds}
+                                busy={busy || branching}
+                                onMask={() => {
+                                  const masked = maskSecrets(editing.text, veilStateRef.current).text;
+                                  setEditing({ index: i, text: masked });
+                                  rewind(i, "edit", masked);
+                                }}
+                                onRemove={() => setEditing({ index: i, text: removeSecrets(editing.text).text })}
+                                onProceed={() => rewind(i, "edit", editing.text, { allowSecret: true })}
+                              />
                               <div className="edit-turn-actions">
                                 <button type="button" className="small-button" onClick={() => setEditing(null)}>
                                   Cancel
                                 </button>
-                                <button className="small-button primary" disabled={!editing.text.trim() || busy || branching || !!editSeed}>
+                                <button className="small-button primary" disabled={!editing.text.trim() || busy || branching || !!editSeed || editFinds.length > 0}>
                                   Send edit
                                 </button>
                               </div>
@@ -5017,7 +5088,7 @@ export default function Workspace() {
                   </div>
                 )}
                 <SeedGuardNotice
-                  hit={seedHit}
+                  hit={guardTurn === "seed" ? seedHit : null}
                   busy={busy || onchainLooking}
                   onProceed={() => send(null, null, { allowSeed: true })}
                   onExplain={onchainShown?.kind === "transaction" ? explainOnchain : undefined}
@@ -5029,6 +5100,15 @@ export default function Workspace() {
                     </p>
                   )}
                 </SeedGuardNotice>
+                <SecretGuardNotice
+                  finds={guardTurn === "secret" ? secretFinds : []}
+                  busy={busy || onchainLooking || !!secretQueued}
+                  onMask={maskComposerSecrets}
+                  onRemove={removeComposerSecrets}
+                  // Deep research turns the question into web searches, so a
+                  // secret there is masked or removed, never sent as it is.
+                  onProceed={researchOn ? undefined : () => send(null, null, { allowSeed: seedAnswered, allowSecret: true })}
+                />
                 <OnchainChip
                   hit={onchainShown}
                   choice={onchainChoice}
@@ -5539,6 +5619,7 @@ export default function Workspace() {
                         disabled={
                           !prompt.trim() ||
                           !!seedHit ||
+                          secretHeld ||
                           !!researchBlocked ||
                           (finderLive && !selected && !sealedOn && !blindActive) ||
                           (blindActive && !validPair(blindPair, blindModels)) ||
@@ -5804,7 +5885,7 @@ export default function Workspace() {
                   {textMode && !estimatesLive && (
                     <button
                       onClick={quoteRequest}
-                      disabled={!prompt.trim() || busy || !!seedHit}
+                      disabled={!prompt.trim() || busy || !!seedHit || secretHeld}
                     >
                       Estimate credits
                     </button>

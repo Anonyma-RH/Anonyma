@@ -1352,6 +1352,25 @@ export const UPDATES = [
     // button and the dictionary never loads.
     released: true,
   },
+  {
+    id: "secretguard",
+    title: "Secret Guard",
+    tagline: "Pasted code with an API key in it? It's caught before it's sent.",
+    points: [
+      "Spots passwords, API keys and tokens in your browser, in what you type, paste or attach",
+      "Mask and send swaps each one for a placeholder; the reply shows your value again, only to you",
+      "On by default, and nothing about a match is logged or saved",
+    ],
+    // Browser-side (src/secret-guard.js, src/SecretGuard.jsx), beside Seed
+    // Guard, whose hard block is unchanged and goes first: the chat composer
+    // (and Code & Build, Link Reader questions), attached text files and
+    // documents, Canvas, Routines and Research Watch. A soft guard, so no
+    // server check; never the developer API (/v1) or MCP, whose callers are
+    // programs. The only route is the per-account switch, /api/secret-guard
+    // (server/routes/secret-guard.js), gated here in featuresFor; the switch
+    // is erased with the account's content and in the export.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1479,6 +1498,8 @@ export function featuresFor(req) {
     }
     return needed;
   }
+  // Secret Guard: the account's switch (the guard itself runs in the browser).
+  if (p === "/api/secret-guard" || p.startsWith("/api/secret-guard/")) return ["secretguard"];
   // Model Status: the public, aggregated status of each model family.
   if (p === "/api/status" || p.startsWith("/api/status/")) return ["status"];
   // Bookmarks: stars on saved messages, with private notes.

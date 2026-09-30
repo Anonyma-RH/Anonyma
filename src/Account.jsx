@@ -57,6 +57,7 @@ import { TwoStepSettings } from "./TwoStep.jsx";
 import { twoStepReleased } from "./two-step.js";
 import { PasskeySettings } from "./Passkeys.jsx";
 import { RecoveryKitSettings } from "./RecoveryKit.jsx";
+import { SecretGuardSettings } from "./SecretGuard.jsx";
 import { passkeysReleased } from "./passkeys.js";
 import { holdersReleased } from "./holders.js";
 import { ReferralRate } from "./ReferralBoost.jsx";
@@ -788,6 +789,8 @@ export default function Account() {
               {/* Recovery Kit: renders nothing until it's released. */}
               <RecoveryKitSettings user={user} demo={demo} config={config} />
               <TwoStepSettings user={user} demo={demo} config={config} />
+              {/* Secret Guard: renders nothing until it's released. */}
+              <SecretGuardSettings user={user} demo={demo} config={config} />
             </>
           )}
           {section === "usage" && !insightsOn && (

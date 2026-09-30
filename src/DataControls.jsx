@@ -69,6 +69,8 @@ export default function DataControls() {
   const push = !!config && isReleased(config, "pushalerts") && isReleased(config, "app");
   // And Repo Reader.
   const repos = !!config && isReleased(config, "reporeader");
+  // And Secret Guard.
+  const secretGuard = !!config && isReleased(config, "secretguard");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -101,6 +103,11 @@ export default function DataControls() {
         {python && (
           <li>
             Python Runner: code from a reply runs in your browser, with no network. Its output, and any file you give it, stay on this device and aren't saved with the chat. Python's files come from ANONYMA's own server, and your browser keeps a copy.
+          </li>
+        )}
+        {secretGuard && (
+          <li>
+            Secret Guard checks what you send from the workspace for passwords, API keys and tokens in your browser. Masked ones go as placeholders like [SECRET_1]; their real values stay in that tab's memory and are never sent or saved. Only whether you switched it off is kept with your account. It doesn't check the developer API (/v1) or MCP: those callers are programs, and holding their requests would break them.
           </li>
         )}
         <li>

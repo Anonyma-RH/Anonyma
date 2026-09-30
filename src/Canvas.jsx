@@ -9,6 +9,8 @@ import { VeilToggle } from "./Veil.jsx";
 import { PrivateModeToggle, NoPrivateModelsNotice, privateModeReleased } from "./PrivateMode.jsx";
 import { SeedGuardNotice, seedGuardLive } from "./SeedGuard.jsx";
 import { findSeedPhrase, scanSecrets } from "./seed-guard.js";
+import { SecretGuardNotice, useSecretGuard } from "./SecretGuard.jsx";
+import { maskSecrets, scanParts } from "./secret-guard.js";
 import { useShieldLive, shieldMarkdown, SentAsDataTag } from "./Shield.jsx";
 import { useCreditEstimate, CreditEstimate } from "./CreditEstimate.jsx";
 import { ReplyMarkdown } from "./RichMarkdown.jsx";
@@ -135,6 +137,8 @@ export default function Canvas({ demo, user, models, config, refresh, veilOn, se
     [step, setStep] = useState("idle"),
     [confirm, setConfirm] = useState(null),
     [seedHold, setSeedHold] = useState(null),
+    // Secret Guard: { req, finds, allowSeed } while its notice is open.
+    [secretHold, setSecretHold] = useState(null),
     [panelError, setPanelError] = useState(""),
     [review, setReview] = useState(null),
     [sending, setSending] = useState(null),
@@ -160,6 +164,11 @@ export default function Canvas({ demo, user, models, config, refresh, veilOn, se
   const shieldOn = useShieldLive(config);
   const trailLive = isReleased(config, "trail");
   const seedLive = live && seedGuardLive(config);
+  // Secret Guard: passwords, keys and tokens in what a suggestion would send
+  // (the text, its context and the instruction). Masked, they go as
+  // [SECRET_n] in Veil's in-memory state for this canvas, so the suggestion
+  // comes back with the values in place, in this tab only.
+  const secretLive = useSecretGuard(config, user, demo) && live;
   const vaultOn = !!vaultLive && !!vault && live;
   const vaultCanvases = vaultOn && vault.unlocked ? vault.chats.filter(isVaultCanvas) : [];
   const uncensored = config?.releases?.uncensoredModels || [];
@@ -237,6 +246,7 @@ export default function Canvas({ demo, user, models, config, refresh, veilOn, se
     setSending(null);
     setConfirm(null);
     setSeedHold(null);
+    setSecretHold(null);
     setStep("idle");
     setLog([]);
     setPanelError("");
@@ -406,7 +416,10 @@ export default function Canvas({ demo, user, models, config, refresh, veilOn, se
     }
   }
   // A Seed Guard hold is about the text it read: it goes once that changes.
-  useEffect(() => setSeedHold(null), [text, sel.start, sel.end]);
+  useEffect(() => {
+    setSeedHold(null);
+    setSecretHold(null);
+  }, [text, sel.start, sel.end]);
   // Autosave: a moment after typing stops.
   useEffect(() => {
     if (review || step === "sending") return;
@@ -566,6 +579,7 @@ export default function Canvas({ demo, user, models, config, refresh, veilOn, se
   function ask(req) {
     setPanelError("");
     setSeedHold(null);
+    setSecretHold(null);
     setMenu(null);
     if (!canAsk) return;
     const whole = req.action === "summarize" || req.action === "consistent" || (req.action === "custom" && !selected);
@@ -587,24 +601,31 @@ export default function Canvas({ demo, user, models, config, refresh, veilOn, se
     const copy = structuredClone(veilState.current);
     const built = requestFor(confirm, veiling ? (s) => veil(s, copy, veilWords).text : (s) => s);
     const problem = problemWith(confirm, built);
-    return { built, problem, text: problem ? "" : canvasUserText(built.payload) };
-  }, [confirm, text, veiling, veilWords, chosen]);
+    // Secret Guard: a quote posts this payload, so none is asked for while
+    // it holds a secret the person hasn't answered for.
+    const p = built.payload;
+    const secrets = secretLive ? scanParts([p.text, p.before || "", p.after || "", p.instruction || ""]).length : 0;
+    return { built, problem, secrets, text: problem ? "" : canvasUserText(built.payload) };
+  }, [confirm, text, veiling, veilWords, chosen, secretLive]);
   const quote = useMemo(
-    () => (step === "confirm" && preview && !preview.problem && live && model && isReleased(config, "estimates") ? { canvas: preview.built.payload, model } : null),
+    () => (step === "confirm" && preview && !preview.problem && !preview.secrets && live && model && isReleased(config, "estimates") ? { canvas: preview.built.payload, model } : null),
     [step, preview, live, model, config],
   );
   const estimate = useCreditEstimate(quote);
 
-  async function send(req, { allowSeed = false } = {}) {
+  // `secrets` is Secret Guard's answer: "mask" or "send" (anyway, this once).
+  async function send(req, { allowSeed = false, secrets = null } = {}) {
     if (!canAsk) return;
     let masked = 0;
-    const mask = veiling
+    const veilMask = veiling
       ? (s) => {
           const r = veil(s, veilState.current, veilWords);
           masked += r.count;
           return r.text;
         }
       : (s) => s;
+    // Secrets are masked first, so Veil never sees their values.
+    const mask = secrets === "mask" ? (s) => veilMask(maskSecrets(s, veilState.current).text) : veilMask;
     // Seed Guard reads what would be sent, before anything is.
     if (!allowSeed && seedLive) {
       const plainBuilt = requestFor(req, (s) => s);
@@ -615,10 +636,20 @@ export default function Canvas({ demo, user, models, config, refresh, veilOn, se
         return;
       }
     }
+    if (secretLive && !secrets) {
+      const p = requestFor(req, (s) => s).payload;
+      const finds = scanParts([p.text, p.before || "", p.after || "", p.instruction || ""]);
+      if (finds.length) {
+        setSeedHold(null);
+        setSecretHold({ req, finds, allowSeed });
+        return;
+      }
+    }
     const built = requestFor(req, mask);
     const problem = problemWith(req, built);
     if (problem) return setPanelError(problem);
     setSeedHold(null);
+    setSecretHold(null);
     setConfirm(null);
     setPanelError("");
     const base = text;
@@ -1134,6 +1165,15 @@ export default function Canvas({ demo, user, models, config, refresh, veilOn, se
                     hit={seedHold.hit}
                     busy={busy}
                     onProceed={seedHold.hit.kind === "seed" ? () => send(seedHold.req, { allowSeed: true }) : undefined}
+                  />
+                )}
+                {secretHold && (
+                  <SecretGuardNotice
+                    finds={secretHold.finds}
+                    busy={busy}
+                    note="Mask swaps each one for a placeholder like [SECRET_1] before anything leaves this browser. The suggestion comes back with your values in place, in this tab only."
+                    onMask={() => send(secretHold.req, { allowSeed: secretHold.allowSeed, secrets: "mask" })}
+                    onProceed={() => send(secretHold.req, { allowSeed: secretHold.allowSeed, secrets: "send" })}
                   />
                 )}
                 {panelError && <Notice type="error">{panelError}</Notice>}

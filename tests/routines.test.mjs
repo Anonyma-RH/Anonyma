@@ -1013,8 +1013,17 @@ async function pageModule() {
      export const demoResearchState = () => ({ watches: [], runs: [] });
      export const researchWatchLive = () => false;`,
   );
+  // Secret Guard's notice (tests/secret-guard.test.mjs covers it).
+  const secretGuard = stub(
+    "secret-guard-ui.mjs",
+    `export const SecretGuardNotice = () => null;
+     export const useSecretGuard = () => false;
+     export const useSecretScan = () => [];`,
+  );
   const out = code
     .replace(/^import "\.\/routines\.css";$/m, "")
+    .replace(/from "\.\/SecretGuard\.jsx"/g, `from "${secretGuard}"`)
+    .replace(/from "\.\/secret-guard\.js"/g, `from "${new URL("../src/secret-guard.js", import.meta.url)}"`)
     .replace(/from "\.\/ResearchWatch\.jsx"/g, `from "${research}"`)
     .replace(/from "\.\/research-watch\.js"/g, `from "${new URL("../src/research-watch.js", import.meta.url)}"`)
     .replace(/from "\.\/PageWatch\.jsx"/g, `from "${watch}"`)

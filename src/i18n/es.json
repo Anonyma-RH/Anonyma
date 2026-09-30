@@ -6418,7 +6418,52 @@
     "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "¿Otra app de billetera? Pega el enlace de la página en su navegador integrado. Tu app de billetera tiene su propio inicio de sesión, así que ahí vuelves a iniciar sesión en ANONYMA.",
     "Open in MetaMask": "Abrir en MetaMask",
     "Open in Coinbase Wallet": "Abrir en Coinbase Wallet",
-    "Open in Trust Wallet": "Abrir en Trust Wallet"
+    "Open in Trust Wallet": "Abrir en Trust Wallet",
+    "Secret Guard": "Protección de secretos",
+    "Pasted code with an API key in it? It's caught before it's sent.": "¿Pegaste código con una clave de API? Se detecta antes de enviarse.",
+    "Spots passwords, API keys and tokens in your browser, in what you type, paste or attach": "Detecta contraseñas, claves de API y tokens en tu navegador, en lo que escribes, pegas o adjuntas",
+    "Mask and send swaps each one for a placeholder; the reply shows your value again, only to you": "Ocultar y enviar cambia cada uno por un marcador; la respuesta vuelve a mostrar tu valor, solo a ti",
+    "On by default, and nothing about a match is logged or saved": "Activada por defecto, y no se registra ni se guarda nada sobre una coincidencia",
+    "SECRET GUARD": "PROTECCIÓN DE SECRETOS",
+    "Private key": "Clave privada",
+    "GitHub token": "Token de GitHub",
+    "GitLab token": "Token de GitLab",
+    "Slack token": "Token de Slack",
+    "Stripe live key": "Clave activa de Stripe",
+    "Google API key": "Clave de API de Google",
+    "Anthropic API key": "Clave de API de Anthropic",
+    "OpenAI-style API key": "Clave de API estilo OpenAI",
+    "Twilio API key": "Clave de API de Twilio",
+    "Twilio auth token": "Token de autenticación de Twilio",
+    "SendGrid API key": "Clave de API de SendGrid",
+    "npm token": "Token de npm",
+    "AWS access key": "Clave de acceso de AWS",
+    "AWS secret key": "Clave secreta de AWS",
+    "JSON Web Token": "Token web JSON (JWT)",
+    "Database password": "Contraseña de base de datos",
+    "Access token": "Token de acceso",
+    "Secret": "Secreto",
+    "Mask and send": "Ocultar y enviar",
+    "Mask and save": "Ocultar y guardar",
+    "Remove it": "Quitarlo",
+    "Remove them": "Quitarlos",
+    "Mask swaps each one for a placeholder like [SECRET_1] before anything leaves this browser. The reply shows your value again, here only.": "Ocultar cambia cada uno por un marcador como [SECRET_1] antes de que algo salga de este navegador. La respuesta vuelve a mostrar tu valor, solo aquí.",
+    "Mask swaps each one for a placeholder like [SECRET_1] before anything leaves this browser. The suggestion comes back with your values in place, in this tab only.": "Ocultar cambia cada uno por un marcador como [SECRET_1] antes de que algo salga de este navegador. La sugerencia vuelve con tus valores en su lugar, solo en esta pestaña.",
+    "Mask swaps each one for a placeholder like [SECRET_1]. The routine runs on our server with the placeholder, and the real value isn't kept anywhere.": "Ocultar cambia cada uno por un marcador como [SECRET_1]. La rutina se ejecuta en nuestro servidor con el marcador, y el valor real no se guarda en ningún lado.",
+    "A topic becomes web searches, so a secret in it is masked or removed, never saved as it is. Masked, the watch runs with a placeholder like [SECRET_1].": "Un tema se convierte en búsquedas web, así que un secreto en él se oculta o se quita, nunca se guarda tal cual. Si se oculta, el seguimiento se ejecuta con un marcador como [SECRET_1].",
+    "Secret Guard.": "Protección de secretos.",
+    "Catches passwords, API keys and tokens in what you type, paste or attach, before it’s sent, and offers to mask them. It’s checked in your browser: nothing about a match is saved or sent.": "Detecta contraseñas, claves de API y tokens en lo que escribes, pegas o adjuntas, antes de enviarlo, y te ofrece ocultarlos. Se revisa en tu navegador: no se guarda ni se envía nada sobre una coincidencia.",
+    "It looks for known key formats and labelled values like PASSWORD=, so it can’t catch every secret. It doesn’t check the developer API (/v1) or MCP: those callers are programs, and holding their requests would break them.": "Busca formatos de clave conocidos y valores etiquetados como PASSWORD=, así que no puede detectar todos los secretos. No revisa la API para desarrolladores (/v1) ni MCP: quienes llaman son programas, y retener sus solicitudes los haría fallar.",
+    "Check what I send for secrets": "Revisar si lo que envío tiene secretos",
+    "On by default. The chat composer (and Code & Build), attached text files, Canvas, Routines and Research Watch.": "Activada por defecto. En el editor del chat (y en Código y desarrollo), los archivos de texto adjuntos, Canvas, Rutinas y Seguimiento de investigación.",
+    "Turn off Secret Guard? Passwords, keys and tokens you paste will be sent as written. Seed Guard still stops wallet seed phrases.": "¿Desactivar la protección de secretos? Las contraseñas, claves y tokens que pegues se enviarán tal cual. La protección de frase semilla sigue deteniendo las frases semilla de billetera.",
+    "Keep it on": "Mantenerla activada",
+    "Off: passwords, keys and tokens you paste are sent as written. Seed Guard still stops wallet seed phrases.": "Desactivada: las contraseñas, claves y tokens que pegues se envían tal cual. La protección de frase semilla sigue deteniendo las frases semilla de billetera.",
+    "On. Secrets are caught before they're sent.": "Activada. Los secretos se detectan antes de enviarse.",
+    "Off. Messages are sent as written.": "Desactivada. Los mensajes se envían tal cual.",
+    "Turn off Secret Guard": "Desactivar la protección de secretos",
+    "Secret Guard checks what you send from the workspace for passwords, API keys and tokens in your browser. Masked ones go as placeholders like [SECRET_1]; their real values stay in that tab's memory and are never sent or saved. Only whether you switched it off is kept with your account. It doesn't check the developer API (/v1) or MCP: those callers are programs, and holding their requests would break them.": "La protección de secretos revisa en tu navegador si lo que envías desde el espacio de trabajo tiene contraseñas, claves de API y tokens. Los ocultos se envían como marcadores, por ejemplo [SECRET_1]; sus valores reales se quedan en la memoria de esa pestaña y nunca se envían ni se guardan. Con tu cuenta solo se guarda si la desactivaste. No revisa la API para desarrolladores (/v1) ni MCP: quienes llaman son programas, y retener sus solicitudes los haría fallar.",
+    "Secret Guard found what looks like a password, key or token in this prompt. Mask or remove it first.": "La protección de secretos encontró lo que parece una contraseña, clave o token en este prompt. Ocúltalo o quítalo primero."
   },
   "patterns": [
     {
@@ -10464,6 +10509,34 @@
     {
       "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
       "es": "Ampliar admite fotos de hasta {0} px en su lado largo. Redúcela e intenta de nuevo."
+    },
+    {
+      "en": "This looks like a secret ({0}, line {1}).",
+      "es": "Esto parece un secreto ({0}, línea {1})."
+    },
+    {
+      "en": "This looks like a secret ({0}, line {1} of {2}).",
+      "es": "Esto parece un secreto ({0}, línea {1} de {2})."
+    },
+    {
+      "en": "These look like {0} secrets.",
+      "es": "Parecen {0} secretos."
+    },
+    {
+      "en": "line {0}",
+      "es": "línea {0}"
+    },
+    {
+      "en": "line {0} of {1}",
+      "es": "línea {0} de {1}"
+    },
+    {
+      "en": "and {0} more",
+      "es": "y {0} más"
+    },
+    {
+      "en": "Secret Guard — the model saw [{0}]",
+      "es": "Protección de secretos: el modelo vio [{0}]"
     },
     {
       "en": "{0} · settled receipt.",

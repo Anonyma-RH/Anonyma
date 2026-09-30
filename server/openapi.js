@@ -2578,6 +2578,22 @@ route("put", "/api/arena/consent", "Add your Blind votes to the Arena, or stop",
   description:
     "Yes adds your future Blind votes (saved chat and code rounds) to the anonymous aggregate: the two model ids, the outcome and the UTC day, never the account. No stops future ones; votes already added stay, since nothing in the aggregate says whose they were. round adds that one vote only when answering the question asked after it. Panic Wipe and closing the account erase the choice.",
 });
+// Secret Guard (update "secretguard"; server/secret-guard.js). The guard
+// runs in the browser; these read and change the account's switch.
+const secretGuardView = {
+  enabled: { ...bool, description: "Whether the workspace checks what this account sends for passwords, API keys and tokens. On unless the account switched it off" },
+};
+route("get", "/api/secret-guard", "Your Secret Guard switch", {
+  response: object(secretGuardView),
+  description:
+    "Secret Guard runs in the browser, in the chat composer (and Code & Build), attached text files and documents, Canvas, Routines and Research Watch: a match is masked ([SECRET_1] goes instead and the reply is restored in that browser only), removed, or sent anyway. It's a soft guard: the server never checks messages for secrets and stores nothing about a match. The developer API (/v1) and MCP are never checked, since their callers are programs.",
+});
+route("put", "/api/secret-guard", "Switch Secret Guard on or off", {
+  body: object({ enabled: bool }, ["enabled"]),
+  response: object(secretGuardView),
+  description:
+    "Only an account that switched it off keeps a row (with when). Panic Wipe, Inactivity Wipe and closing the account erase it, which turns the guard back on; the account export includes it as secretGuard.",
+});
 // Deep Research (update "deepresearch", which also needs "search").
 const researchRequest = object(
   {

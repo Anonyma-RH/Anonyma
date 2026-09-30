@@ -1427,6 +1427,15 @@ export const MIGRATIONS = [
         BEGIN SELECT RAISE(ABORT,'watch_limit'); END;
     `)(db);
   },
+  // Secret Guard (server/secret-guard.js): the accounts that switched it off
+  // (it's on by default, so an account that never did has no row) and when.
+  // Nothing about any match is stored. Erased with the account's content
+  // (which turns it back on) and in the account export.
+  (db) =>
+    additive(`
+      CREATE TABLE IF NOT EXISTS secret_guard_off(user_id TEXT PRIMARY KEY REFERENCES users(id),
+        updated INTEGER NOT NULL);
+    `)(db),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

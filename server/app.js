@@ -46,6 +46,7 @@ import { linkReaderRoutes } from "./routes/link-reader.js";
 import { repoReaderRoutes } from "./routes/repo-reader.js";
 import { blindRoutes } from "./routes/blind.js";
 import { arenaRoutes } from "./routes/arena.js";
+import { secretGuardRoutes } from "./routes/secret-guard.js";
 import { researchRoutes } from "./routes/research.js";
 import { translateRoutes } from "./routes/translate.js";
 import { fileSearchRoutes } from "./routes/file-search.js";
@@ -205,6 +206,8 @@ export function createApp(overrides = {}) {
   blindRoutes(ctx);
   // Blind Arena: the public leaderboard from contributed Blind votes.
   arenaRoutes(ctx);
+  // Secret Guard: the account's on/off switch (the guard runs in the browser).
+  secretGuardRoutes(ctx);
   // Deep Research: plan, web searches and a sourced report, each step held
   // and settled on the ordinary billing path (after Memory and Projects,
   // whose checks it uses).

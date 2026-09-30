@@ -26,6 +26,8 @@ import {
   researchWatchLive,
 } from "./ResearchWatch.jsx";
 import { MAX_WATCHES as MAX_RESEARCH } from "./research-watch.js";
+import { SecretGuardNotice, useSecretGuard, useSecretScan } from "./SecretGuard.jsx";
+import { maskSecrets, removeSecrets } from "./secret-guard.js";
 import "./routines.css";
 
 // Routines: saved prompts that run on a schedule with their own budget, and
@@ -259,9 +261,17 @@ function ConfirmDelete({ busy, onConfirm, onCancel }) {
   );
 }
 
-export function Editor({ draft, setDraft, models, config, busy, error, onSave, onCancel, onDelete }) {
+export function Editor({ draft, setDraft, models, config, busy, error, onSave, onCancel, onDelete, secretLive = false }) {
   const [confirming, setConfirming] = useState(false);
   const set = (k) => (v) => setDraft((d) => ({ ...d, [k]: v }));
+  // Secret Guard: a password, key or token in the prompt holds Save until
+  // it's masked, removed or saved anyway (for this save only). A routine
+  // runs on our server, so a masked value stays a placeholder: the real
+  // one isn't kept anywhere.
+  const secretFinds = useSecretScan(secretLive, draft.prompt);
+  const [secretOk, setSecretOk] = useState(false);
+  useEffect(() => setSecretOk(false), [draft.prompt]);
+  const secretHeld = secretFinds.length > 0 && !secretOk;
   const choices = models.filter((m) => !draft.private_only || m.private);
   const zones = useMemo(() => zoneList(draft.timezone), [draft.timezone]);
   const minute = parseTime(draft.time);
@@ -276,7 +286,7 @@ export function Editor({ draft, setDraft, models, config, busy, error, onSave, o
       className="routine-editor"
       onSubmit={(e) => {
         e.preventDefault();
-        onSave();
+        if (!secretHeld) onSave();
       }}
     >
       <div className="routine-editor-head">
@@ -315,6 +325,22 @@ export function Editor({ draft, setDraft, models, config, busy, error, onSave, o
               prompt is sent as written.
             </span>
           </p>
+          <SecretGuardNotice
+            finds={secretHeld ? secretFinds : []}
+            verb="save"
+            busy={busy}
+            note="Mask swaps each one for a placeholder like [SECRET_1]. The routine runs on our server with the placeholder, and the real value isn't kept anywhere."
+            onMask={() => {
+              const prompt = maskSecrets(draft.prompt, {}).text;
+              setDraft((d) => ({ ...d, prompt }));
+              onSave({ ...draft, prompt });
+            }}
+            onRemove={() => set("prompt")(removeSecrets(draft.prompt).text)}
+            onProceed={() => {
+              setSecretOk(true);
+              onSave(draft);
+            }}
+          />
           <label className="routine-field">
             <span>Model</span>
             <select
@@ -462,7 +488,7 @@ export function Editor({ draft, setDraft, models, config, busy, error, onSave, o
       </div>
       {error && <Notice type="error">{error}</Notice>}
       <div className="routine-editor-actions">
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" disabled={busy || secretHeld}>
           Save routine
         </Button>
         <Button type="button" secondary onClick={onCancel} disabled={busy}>
@@ -656,6 +682,8 @@ export function RunCard({ run, modelName, onDelete, busy, markdown }) {
 }
 
 export default function Routines({ demo, user, models, config, refresh, markdown }) {
+  // Secret Guard, for routine prompts and research watch topics.
+  const secretLive = useSecretGuard(config, user, demo);
   const [params, setParams] = useSearchParams();
   const researchLive = researchWatchLive(config);
   const [tab, setTabState] = useState(() => {
@@ -830,28 +858,30 @@ export default function Routines({ demo, user, models, config, refresh, markdown
     setDraft(r ? draftOf(r) : blankDraft(choices));
     setTab("routines");
   }
-  async function save() {
+  // `d` is the draft to save: Secret Guard's Mask and save passes the
+  // masked one, before the state update lands.
+  async function save(d = draft) {
     setFormError("");
-    const body = bodyOf(draft);
+    const body = bodyOf(d);
     if (demo) {
       const r = {
         ...body,
-        id: draft.id || "demo-" + Date.now(),
+        id: d.id || "demo-" + Date.now(),
         schedule: body.schedule,
-        next_run_at: body.enabled ? nextRunAfter(scheduleOfDraft(draft), Date.now()) : null,
+        next_run_at: body.enabled ? nextRunAfter(scheduleOfDraft(d), Date.now()) : null,
         running: false,
-        month: routines.find((x) => x.id === draft.id)?.month || { spent: 0, held: 0, remaining: body.monthly_budget_credits },
+        month: routines.find((x) => x.id === d.id)?.month || { spent: 0, held: 0, remaining: body.monthly_budget_credits },
       };
       setRoutines((list) =>
-        draft.id ? list.map((x) => (x.id === draft.id ? r : x)) : [...list, r],
+        d.id ? list.map((x) => (x.id === d.id ? r : x)) : [...list, r],
       );
       setDraft(null);
       return;
     }
     setBusy(true);
     try {
-      await api(draft.id ? "/api/routines/" + draft.id : "/api/routines", {
-        method: draft.id ? "PATCH" : "POST",
+      await api(d.id ? "/api/routines/" + d.id : "/api/routines", {
+        method: d.id ? "PATCH" : "POST",
         body,
       });
       setDraft(null);
@@ -1009,12 +1039,14 @@ export default function Routines({ demo, user, models, config, refresh, markdown
               onSave={save}
               onCancel={() => setDraft(null)}
               onDelete={() => remove(routines.find((r) => r.id === draft.id))}
+              secretLive={secretLive}
             />
           )}
           {tab === "research" && researchLive ? (
             <ResearchTab
               demo={demo}
               live={live}
+              secretLive={secretLive}
               models={choices}
               config={config}
               watches={researchWatches}

@@ -92,6 +92,7 @@ const LEDGER_KINDS = {
   gift_out: "Gift made",
   gift_in: "Gift claimed",
   gift_return: "Gift returned",
+  welcome: "Welcome credits",
 };
 const ledgerKind = (kind) =>
   LEDGER_KINDS[kind] ||

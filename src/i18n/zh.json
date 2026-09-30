@@ -7283,7 +7283,10 @@
     "Mask swaps each one for a placeholder like [SECRET_1] in what's sent. The translation shows your value again here, and your own subtitles don't change.": "遮盖会在发送的内容中把每一项换成 [SECRET_1] 这样的占位符。译文会在这里重新显示你的真实值，你自己的字幕不会改变。",
     "Characters and their pictures": "角色及其头像",
     "Saved subtitles": "已保存的字幕",
-    "Share links, Burn After Reading links and character copy links never go in a backup.": "分享链接、阅后即焚链接和角色副本链接永远不会放进备份。"
+    "Share links, Burn After Reading links and character copy links never go in a backup.": "分享链接、阅后即焚链接和角色副本链接永远不会放进备份。",
+    "Welcome credits": "欢迎积分",
+    "Free credits to try Anonyma": "用于试用 ANONYMA 的免费积分",
+    "Free welcome credits can only be spent on requests. They can't be sent, gifted or added to a treasury.": "免费欢迎积分只能用于请求，不能发送、赠送或存入金库。"
   },
   "patterns": [
     {
@@ -11745,6 +11748,10 @@
     {
       "en": "{0} came back as ordinary chats because their mode isn’t available on this account: {1}.",
       "zh": "{0} 个会话以普通会话恢复，因为此账户无法使用其模式：{1}。"
+    },
+    {
+      "en": "New accounts start with {0} free credits.",
+      "zh": "新账户开通即送 {0} 免费积分。"
     }
   ]
 }

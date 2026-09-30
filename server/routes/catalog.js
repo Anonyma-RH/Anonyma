@@ -98,6 +98,8 @@ export function catalogRoutes(ctx) {
         timeoutCharge: "base_estimate",
         unreadableResponseCharge: "base_estimate",
       },
+      // Free credits a new account starts with (0 when off).
+      welcomeCredits: cfg.welcomeCredits,
       supportEmail: cfg.supportEmail,
       telegram: cfg.telegram,
       catalogUpdatedAt: models.snapshot.updatedAt,

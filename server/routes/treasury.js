@@ -10,6 +10,7 @@ import {
 } from "../core.js";
 import { isReleased } from "../releases.js";
 import { assertSpendingRoom, limitsLive } from "../spending-limits.js";
+import { assertTransferable } from "../welcome-credits.js";
 
 export const MAX_TREASURY_TRANSFER = 1_000_000; // credits
 export const MAX_TREASURY_LIMIT = 1_000_000_000; // credits
@@ -279,6 +280,8 @@ export function treasuryRoutes(ctx) {
             "Not enough available credits to contribute.",
             "insufficient_credits",
           );
+        // Welcome credits are for requests only (402 welcome_credits_locked).
+        assertTransferable(db, req.user.id, amount);
         // A contribution leaves the personal balance, so it counts against
         // the contributor's own spending limits (402 spending_limit).
         if (limitsLive(cfg)) assertSpendingRoom(db, req.user.id, amount);

@@ -12,6 +12,7 @@ import {
 import { requestIdentifier } from "../middleware.js";
 import { assertSpendingRoom, limitsLive } from "../spending-limits.js";
 import { referralBoostFor } from "../referral-boost.js";
+import { assertTransferable } from "../welcome-credits.js";
 
 export const MIN_TRANSFER = 1; // credits
 export const MAX_TRANSFER = 1_000_000; // credits
@@ -128,6 +129,8 @@ export function creditRoutes(ctx) {
             "Not enough available credits to send.",
             "insufficient_credits",
           );
+        // Welcome credits are for requests only (402 welcome_credits_locked).
+        assertTransferable(db, req.user.id, units);
         // Credits sent spend the balance, so they count against the
         // sender's own spending limits (402 spending_limit).
         if (limitsLive(cfg)) assertSpendingRoom(db, req.user.id, units);

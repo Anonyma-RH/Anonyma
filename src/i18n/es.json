@@ -7286,7 +7286,10 @@
     "Mask swaps each one for a placeholder like [SECRET_1] in what's sent. The translation shows your value again here, and your own subtitles don't change.": "Ocultar cambia cada uno por un marcador como [SECRET_1] en lo que se envía. La traducción vuelve a mostrar tu valor aquí, y tus propios subtítulos no cambian.",
     "Characters and their pictures": "Personajes y sus imágenes",
     "Saved subtitles": "Subtítulos guardados",
-    "Share links, Burn After Reading links and character copy links never go in a backup.": "Los enlaces para compartir, los enlaces de Quemar después de leer y los enlaces de copia de personajes nunca van en una copia de seguridad."
+    "Share links, Burn After Reading links and character copy links never go in a backup.": "Los enlaces para compartir, los enlaces de Quemar después de leer y los enlaces de copia de personajes nunca van en una copia de seguridad.",
+    "Welcome credits": "Créditos de bienvenida",
+    "Free credits to try Anonyma": "Créditos gratis para probar Anonyma",
+    "Free welcome credits can only be spent on requests. They can't be sent, gifted or added to a treasury.": "Los créditos de bienvenida gratuitos solo se pueden gastar en solicitudes. No se pueden enviar, regalar ni añadir a una tesorería."
   },
   "patterns": [
     {
@@ -11748,6 +11751,10 @@
     {
       "en": "{0} came back as ordinary chats because their mode isn’t available on this account: {1}.",
       "es": "{0} volvieron como chats normales porque su modo no está disponible en esta cuenta: {1}."
+    },
+    {
+      "en": "New accounts start with {0} free credits.",
+      "es": "Las cuentas nuevas empiezan con {0} créditos gratis."
     },
     {
       "en": "{0} · settled receipt.",

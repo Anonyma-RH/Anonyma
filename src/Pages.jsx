@@ -1311,6 +1311,10 @@ export function Auth({ register = false }) {
               ? "No email needed: your username and one code from your kit."
               : "Pick up where your last idea left off."}
         </p>
+        {/* Welcome Credits (server/welcome-credits.js). */}
+        {register && config?.welcomeCredits > 0 && (
+          <Notice>{`New accounts start with ${config.welcomeCredits} free credits.`}</Notice>
+        )}
         {next && next !== GIFT_PATH && (
           <Notice>
             An app is asking to connect. Sign in to review it: nothing is

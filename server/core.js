@@ -132,6 +132,13 @@ export function config(overrides = {}) {
     webSearchPrice: Number(e.WEB_SEARCH_PRICE ?? 0.0211),
     // Share of a referred account's deposits credited to its referrer.
     referralPercent: Number(e.REFERRAL_PERCENT ?? 5),
+    // Welcome Credits (server/welcome-credits.js): free credits every account
+    // starts with, and how many new accounts get them a day per network
+    // address and across the site. Unset: 500 in production (live mode), 0
+    // anywhere else; 0 turns them off.
+    welcomeCredits: e.WELCOME_CREDITS ? Number(e.WELCOME_CREDITS) : null,
+    welcomePerAddress: Number(e.WELCOME_PER_ADDRESS_DAILY || 2),
+    welcomeDailyMax: Number(e.WELCOME_DAILY_MAX || 200),
     // Referral Boost: each Holder Program tier's referral percent
     // (server/holder-tiers.js). Unset: the defaults; empty or "off": none.
     holderReferralPercents: e.HOLDER_REFERRAL_PERCENTS,
@@ -213,6 +220,10 @@ export function config(overrides = {}) {
     cfg.sealedMaxHoldUsd > 50
   )
     throw Error("SEALED_MAX_HOLD_USD must be more than 0 and at most 50.");
+  cfg.welcomeCredits ??= cfg.production && !cfg.testMode ? 500 : 0;
+  for (const field of ["welcomeCredits", "welcomePerAddress", "welcomeDailyMax"])
+    if (!Number.isSafeInteger(cfg[field]) || cfg[field] < 0 || cfg[field] > 1_000_000)
+      throw Error(`Invalid ${field}: expected a whole number from 0 to 1000000.`);
   if (!(cfg.released instanceof Set))
     cfg.released = parseReleased(cfg.released);
   if (!Number.isSafeInteger(cfg.serverInstances) || cfg.serverInstances < 1)

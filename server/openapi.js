@@ -3849,7 +3849,7 @@ route("post", "/api/collabs/{id}/treasury/contribute", "Contribute credits to th
   response: treasuryTransfer,
   status: 201,
   description:
-    "Any member. Moves available credits atomically as a linked treasury_contribution ledger pair; the treasury is a hidden ledger account created on the first contribution. Contributed credits belong to the treasury, which its owner controls, and can't be taken back. Repeats return 200. 402 insufficient_credits; 402 spending_limit when the contribution would go over the contributor's own spending limits (contributions count toward them); 409 payment_reconciliation_pending while the contributor has a credited payment under reconciliation.",
+    "Any member. Moves available credits atomically as a linked treasury_contribution ledger pair; the treasury is a hidden ledger account created on the first contribution. Contributed credits belong to the treasury, which its owner controls, and can't be taken back. Repeats return 200. 402 insufficient_credits; 402 welcome_credits_locked when only unspent welcome credits could cover it (they can be spent on requests, not moved); 402 spending_limit when the contribution would go over the contributor's own spending limits (contributions count toward them); 409 payment_reconciliation_pending while the contributor has a credited payment under reconciliation.",
 });
 route("post", "/api/collabs/{id}/treasury/withdraw", "Withdraw treasury credits (owner)", {
   body: treasuryAmount("withdraw"),
@@ -3945,7 +3945,7 @@ route("post", "/api/credits/send", "Send credits to another account", {
   }),
   status: 201,
   description:
-    "Moves available credits atomically as a linked transfer_out/transfer_in ledger pair. Reusing a requestId returns the original transfer instead of sending again. Paused while a credited payment is under reconciliation. Credits sent count toward the sender's own spending limits: 402 spending_limit when a transfer would go over one.",
+    "Moves available credits atomically as a linked transfer_out/transfer_in ledger pair. Reusing a requestId returns the original transfer instead of sending again. 402 welcome_credits_locked when only unspent welcome credits could cover it: they can be spent on requests, not sent. Paused while a credited payment is under reconciliation. Credits sent count toward the sender's own spending limits: 402 spending_limit when a transfer would go over one.",
 });
 // Gift Links (update "giftlinks").
 const giftCode = {
@@ -3993,7 +3993,7 @@ route("post", "/api/gifts", "Make a gift link", {
     },
   },
   description:
-    "The credits leave your balance at once as a gift_out ledger entry and the gift holds them. Same rules as sending credits: 402 insufficient_credits, 402 spending_limit (a gift counts toward your spending limits), 409 payment_reconciliation_pending. At most 25 open gifts (409 gift_limit); 10 an hour per account and 30 per network address. Gift credits have no cash value and can't be refunded to cash.",
+    "The credits leave your balance at once as a gift_out ledger entry and the gift holds them. Same rules as sending credits: 402 insufficient_credits, 402 welcome_credits_locked, 402 spending_limit (a gift counts toward your spending limits), 409 payment_reconciliation_pending. At most 25 open gifts (409 gift_limit); 10 an hour per account and 30 per network address. Gift credits have no cash value and can't be refunded to cash.",
 });
 route("post", "/api/gifts/{id}/revoke", "Cancel an unclaimed gift", {
   response: { ...gift, properties: { ...gift.properties, available: number } },

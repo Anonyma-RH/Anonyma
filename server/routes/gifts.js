@@ -12,6 +12,7 @@ import {
 import { isReleased } from "../releases.js";
 import { requestIdentifier } from "../middleware.js";
 import { assertSpendingRoom, limitsLive } from "../spending-limits.js";
+import { assertTransferable } from "../welcome-credits.js";
 import { findSeedPhrase, SEED_MESSAGE } from "../../src/seed-guard.js";
 import {
   GIFT_DAYS,
@@ -305,6 +306,8 @@ export function giftRoutes(ctx) {
           );
         if (balance(db, user).available < units)
           fail(402, "Not enough available credits for this gift.", "insufficient_credits");
+        // Welcome credits are for requests only (402 welcome_credits_locked).
+        assertTransferable(db, user, units);
         // A gift spends the balance, so it counts against the giver's own
         // spending limits, like sending credits (402 spending_limit).
         if (limitsLive(cfg)) assertSpendingRoom(db, user, units);

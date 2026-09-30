@@ -137,6 +137,7 @@ const CATEGORY = {
   referral: "reward",
   referral_correction: "reward",
   holder_reward: "reward",
+  welcome: "reward",
   treasury_contribution: "team",
   treasury_withdrawal: "team",
   treasury_return: "team",

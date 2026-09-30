@@ -28,6 +28,7 @@ import {
 import { createTwoStep } from "./two-step.js";
 import { isReleased } from "./releases.js";
 import { recordActivity } from "./inactivity-wipe.js";
+import { grantWelcome } from "./welcome-credits.js";
 
 export function sessionCookieOptions(cfg) {
   return {
@@ -172,6 +173,9 @@ export function authRoutes(app, db, cfg, limit) {
         "test_credit",
         "LOCAL TEST credits — no monetary value",
       );
+    // Welcome Credits: free credits to try requests with, within the daily
+    // limits (server/welcome-credits.js).
+    grantWelcome(db, cfg, id, req?.ip);
     return db.prepare("SELECT * FROM users WHERE id=?").get(id);
   }
   const requireUser = (req, res, next) => {

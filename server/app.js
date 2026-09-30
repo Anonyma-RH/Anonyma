@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { config, database, uid } from "./core.js";
 import { assertNoTestCredits } from "./readiness.js";
+import { backfillWelcome } from "./welcome-credits.js";
 import { authRoutes } from "./auth.js";
 import { createLimiter, applyMiddleware, errorHandler } from "./middleware.js";
 import { releaseGuard, isReleased } from "./releases.js";
@@ -101,6 +102,8 @@ export function createApp(overrides = {}) {
     db.close();
     throw e;
   }
+  // Welcome Credits: accounts from before the launch get theirs once.
+  backfillWelcome(db, cfg);
   mkdirSync(cfg.mediaPath, { recursive: true });
   // A persistent installation secret makes signed URLs survive restarts.
   const secretFile = join(cfg.mediaPath, ".secret");

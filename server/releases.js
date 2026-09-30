@@ -1435,7 +1435,7 @@ export const UPDATES = [
     // chat" hands the redacted pages (or the text read from them by Local OCR
     // when that is released) to the next chat's composer in memory; from
     // there they are an ordinary attachment. The page is /workspace/pdfredact.
-    released: false,
+    released: true,
   },
   {
     id: "dictation",

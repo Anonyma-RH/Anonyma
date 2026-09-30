@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon, Button, Modal, Notice } from "./ui.jsx";
-import { api, isReleased } from "./lib.js";
+import { api, isReleased, modeReleased } from "./lib.js";
 import { useApp } from "./context.jsx";
 import {
   WIPE_WORD,
@@ -14,6 +14,7 @@ import {
   WIPE_STUDY,
   WIPE_SLIDES,
   WIPE_REPOS,
+  WIPE_CONTRACTS,
   WIPE_WATCHES,
   WIPE_GIFTS,
   WIPE_VAULT_SYNC,
@@ -52,6 +53,8 @@ export function PanicWipe({ user }) {
   const slidesLive = !!config && isReleased(config, "slides");
   // And Repo Reader's open repos.
   const reposLive = !!config && isReleased(config, "reporeader");
+  // And Contract Reader's open contracts.
+  const contractsLive = !!config && modeReleased(config, "contracts");
   // And Page Watch's watches.
   const watchesLive = isReleased(config, "pagewatch");
   // And Gift Links' gifts (unclaimed ones come back first).
@@ -144,6 +147,7 @@ export function PanicWipe({ user }) {
                   {studyLive && <li>{WIPE_STUDY}</li>}
                   {slidesLive && <li>{WIPE_SLIDES}</li>}
                   {reposLive && <li>{WIPE_REPOS}</li>}
+                  {contractsLive && <li>{WIPE_CONTRACTS}</li>}
                   {watchesLive && <li>{WIPE_WATCHES}</li>}
                   {giftsLive && <li>{WIPE_GIFTS}</li>}
                   {vaultSyncLive && <li>{WIPE_VAULT_SYNC}</li>}

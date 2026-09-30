@@ -6938,7 +6938,153 @@
     "The downloaded file is an ordinary web page, no longer in the sandbox: read its code before you trust it.": "下载后的文件就是一个普通网页，不再受沙箱保护：信任它之前请先阅读其代码。",
     "From a picture": "来自图片",
     "Requested change": "修改要求",
-    "Removed the outside links": "已移除外部链接"
+    "Removed the outside links": "已移除外部链接",
+    "Contract Reader": "合约阅读器",
+    "Paste a token or contract address. See who controls it and what they can do, in plain English.": "粘贴代币或合约地址，用通俗的语言看清谁控制它、他们能做什么。",
+    "Reads the verified code, or the functions its bytecode exposes when the code isn't published": "读取已验证的代码；代码未公开时，读取其字节码暴露的函数",
+    "Who controls it comes from live reads, and every power links to its file and line": "谁控制它来自实时读取，每项权限都链接到对应的文件和行",
+    "Reading is free and the explanation bills like a message. Not an audit, not financial advice": "读取免费，解释按普通消息计费。这不是审计，也不是财务建议",
+    "ONCHAIN": "链上",
+    "Paste a token or contract address. See who controls it and what they can do, in plain English, before you touch it.": "粘贴代币或合约地址。在你动手之前，用通俗的语言看清谁控制它、他们能做什么。",
+    "Read another contract": "读取另一个合约",
+    "Contract address or explorer link": "合约地址或区块浏览器链接",
+    "0x… or an explorer link": "0x… 或区块浏览器链接",
+    "Read contract": "读取合约",
+    "Try USDG on Robinhood Chain": "试试 Robinhood Chain 上的 USDG",
+    "Free and read only. Sourcify, the explorer and the node see ANONYMA's server, not you.": "免费且只读。Sourcify、区块浏览器和节点看到的是 ANONYMA 的服务器，而不是你。",
+    "Free and read only: nothing is signed or sent, and no wallet is connected. ANONYMA's server reads the chain, Sourcify and the explorer, so they see our server, not you. What it reads stays in the server's memory for 30 minutes, then it's forgotten. Veil doesn't apply: an address and public code have nothing of yours to mask.": "免费且只读：不会签名或发送任何内容，也不会连接钱包。ANONYMA 的服务器读取链上数据、Sourcify 和区块浏览器，所以它们看到的是我们的服务器，而不是你。读取的内容会在服务器内存中保留 30 分钟，之后被忘记。Veil 不适用：地址和公开代码中没有你需要遮盖的信息。",
+    "Sign in to read a contract.": "登录后即可读取合约。",
+    "Reading the contract…": "正在读取合约……",
+    "Live reads from the chain, then its verified source from Sourcify or the explorer.": "先从链上实时读取，再从 Sourcify 或区块浏览器获取已验证的源代码。",
+    "Open contracts": "已打开的合约",
+    "Read a contract": "读取一个合约",
+    "Paste its address or explorer link. The server reads the chain; your browser never contacts it.": "粘贴它的地址或区块浏览器链接。由服务器读取链上数据；你的浏览器从不与之联系。",
+    "See who controls it": "看清谁控制它",
+    "Owners, admins and roles come from live reads, not a guess.": "所有者、管理员和角色都来自实时读取，而非猜测。",
+    "Get it in plain English": "用通俗的语言讲清楚",
+    "Every power the code gives someone, with a link to its file and line.": "代码赋予任何人的每项权限，都附有指向对应文件和行的链接。",
+    "Partial match": "部分匹配",
+    "Implementation": "实现合约",
+    "Compiler": "编译器",
+    "Code size": "代码大小",
+    "A saved reading: these are the facts and files as they were when it was explained.": "这是已保存的解读：事实和文件均为解释时的状态。",
+    "Source files": "源文件",
+    "Main": "主文件",
+    "Sent to AI": "已发给 AI",
+    "Injection Shield: this file has text that reads like instructions to an AI. It's sent as data, and the model is told not to follow it.": "注入防护：此文件中有像是写给 AI 的指令。它会作为数据发送，模型也会被告知不要遵循。",
+    "Functions in its bytecode": "其字节码中的函数",
+    "None of the functions ANONYMA knows by name were found.": "没有找到 ANONYMA 能按名称识别的函数。",
+    "Matched against a small built-in list of common functions; nothing is looked up online.": "与一份内置的常见函数小列表比对；不会在线查询任何内容。",
+    "Create new tokens": "铸造新代币",
+    "Destroy tokens": "销毁代币",
+    "Pause or unpause transfers": "暂停或恢复转账",
+    "Block or freeze addresses": "封禁或冻结地址",
+    "Change a fee or tax": "修改手续费或税率",
+    "Change transaction or wallet limits": "修改交易或钱包限额",
+    "Hand over or give up ownership": "转让或放弃所有权",
+    "Replace the contract's code": "替换合约的代码",
+    "Take funds out of the contract": "从合约中取出资金",
+    "Change the exchange router or pool it uses": "更换它使用的交易路由或资金池",
+    "Exempt addresses from fees": "为地址免除手续费",
+    "Give or take away roles": "授予或收回角色",
+    "Switch trading on": "开启交易",
+    "Live reads weren't available, so who controls it couldn't be read.": "暂无法进行实时读取，因此无法读出谁控制它。",
+    "No owner, admin or role was found in its live reads. Powers may still be held in other ways: see what they can do.": "实时读取中没有发现所有者、管理员或角色。权限仍可能以其他方式掌握：请查看他们能做什么。",
+    "Owner": "所有者",
+    "Pending owner": "待接任所有者",
+    "Default admin": "默认管理员",
+    "Upgrade admin": "升级管理员",
+    "Owner of the upgrade admin": "升级管理员的所有者",
+    "Beacon": "信标合约",
+    "Default admin role": "默认管理员角色",
+    "No one": "无人",
+    "Ownership was renounced: it's set to the zero address, so owner-only functions can't be called.": "所有权已放弃：所有者被设为零地址，因此仅限所有者的函数无法再被调用。",
+    "A wallet: one key can use these powers.": "一个钱包：单个密钥即可使用这些权限。",
+    "A contract, such as a multisig or a timelock: who controls it isn't shown here.": "一个合约，例如多签或时间锁：这里不显示谁控制它。",
+    "No one: set to the zero address.": "无人：设为零地址。",
+    "Not an audit, not financial advice. It reads the code; it can't promise what people will do.": "这不是审计，也不是财务建议。它读取的是代码，无法保证人们会做什么。",
+    "Who holds the keys of a controlling wallet or multisig, and any agreements outside the chain, aren't visible here.": "控制钱包或多签的密钥由谁持有，以及链外的任何约定，在这里都看不到。",
+    "In plain English": "通俗解读",
+    "Saved to your chats": "已保存到你的对话",
+    "Who controls it": "谁控制它",
+    "From live reads": "来自实时读取",
+    "What they can do": "他们能做什么",
+    "The reading found no special powers over this contract.": "本次解读没有发现针对该合约的特殊权限。",
+    "Explain it to see each power the code gives someone, linked to its file and line.": "解释后即可看到代码赋予任何人的每项权限，并链接到对应的文件和行。",
+    "Explain it to see what the functions found in its bytecode could let someone do.": "解释后即可看到其字节码中的函数可能让人做什么。",
+    "Things to check": "值得核实的事项",
+    "From the chain": "来自链上",
+    "The code isn't published": "代码未公开",
+    "Its source isn't verified on Sourcify or the explorer, so this reads only the function names its bytecode exposes. Names can mislead.": "它的源代码未在 Sourcify 或区块浏览器上验证，因此这里只能读取其字节码暴露的函数名。函数名可能有误导性。",
+    "It can be upgraded": "它可以被升级",
+    "It's a proxy: whoever controls the upgrade can replace the code behind this address, so what it does today can change.": "它是一个代理合约：控制升级的人可以替换这个地址背后的代码，所以它今天的行为以后可能改变。",
+    "The code behind the proxy isn't published": "代理背后的代码未公开",
+    "The implementation's source isn't verified, so this reads only the function names its bytecode exposes.": "实现合约的源代码未经验证，因此这里只能读取其字节码暴露的函数名。",
+    "It's paused right now": "它目前处于暂停状态",
+    "A live read of paused() says transfers or other actions are stopped at the moment.": "对 paused() 的实时读取显示，转账或其他操作目前已停止。",
+    "One wallet holds the owner's powers": "一个钱包掌握着所有者的全部权限",
+    "The owner is a single wallet, not a contract, so one key can use every owner-only function.": "所有者是单个钱包而不是合约，因此一个密钥就能使用所有仅限所有者的函数。",
+    "One wallet controls upgrades": "一个钱包控制升级",
+    "Whoever can upgrade this contract is a single wallet, so one key can replace its code.": "能升级此合约的是单个钱包，因此一个密钥就能替换它的代码。",
+    "Its bytecode has a mint-style function: new tokens may be created.": "其字节码中有类似 mint 的函数：可能会铸造新代币。",
+    "Its bytecode has pause(): transfers may be stopped.": "其字节码中有 pause()：转账可能被暂停。",
+    "Its bytecode has a blocklist-style function: addresses may be blocked or frozen.": "其字节码中有类似黑名单的函数：地址可能被封禁或冻结。",
+    "Its bytecode has a fee or tax setter: fees may be changed.": "其字节码中有设置手续费或税率的函数：费用可能被修改。",
+    "Its bytecode has limit setters: transaction or wallet limits may be changed.": "其字节码中有设置限额的函数：交易或钱包限额可能被修改。",
+    "Its bytecode has ownership functions: control may be handed over.": "其字节码中有所有权相关函数：控制权可能被转交。",
+    "Its bytecode has upgrade functions: its code may be replaced.": "其字节码中有升级函数：它的代码可能被替换。",
+    "Its bytecode has withdraw or rescue functions: funds held by the contract may be taken out.": "其字节码中有提取或救援函数：合约持有的资金可能被取出。",
+    "Its bytecode has router setters: where trades are routed may be changed.": "其字节码中有设置路由的函数：交易的路由去向可能被修改。",
+    "Its bytecode has fee exemptions: some addresses may pay no fee.": "其字节码中有手续费豁免：某些地址可能无需支付手续费。",
+    "Its bytecode has role functions: powers may be given to other addresses.": "其字节码中有角色函数：权限可能被授予其他地址。",
+    "Its bytecode has a trading switch: transfers through pools may be off until it's switched on.": "其字节码中有交易开关：在开启之前，通过资金池的转账可能无法进行。",
+    "Nothing specific was flagged. That isn't a clean bill of health.": "没有标记出具体问题，但这并不代表一切无虞。",
+    "Explain it to add the points the code raises.": "解释后即可加入代码引出的要点。",
+    "What this can't tell you": "这无法告诉你的事",
+    "Live reads weren't available from this chain's node right now, so owners, roles and paused state aren't shown.": "暂时无法从该链的节点进行实时读取，因此不显示所有者、角色和暂停状态。",
+    "Some live reads didn't answer, so a role may be missing here.": "部分实时读取没有响应，因此这里可能缺少某个角色。",
+    "A source of verified code didn't answer, so \"not published\" may be wrong. Try again in a minute.": "某个已验证代码的来源没有响应，因此“未公开”可能有误。请一分钟后重试。",
+    "The verified source was over 1.5 MB, so only the main contract and what it inherits from were kept.": "已验证的源代码超过 1.5 MB，因此只保留了主合约及其继承的部分。",
+    "This address is a proxy: the reading covers the implementation it points to, not the proxy's own code.": "此地址是代理合约：解读涵盖它指向的实现合约，而不是代理自身的代码。",
+    "Explain it in plain English": "用通俗的语言解释",
+    "The model gets these facts and the functions found in the bytecode, sent as data with fixed instructions. Nothing else: no chats, memory or instructions of yours.": "模型会收到这些事实和字节码中找到的函数，它们作为数据连同固定指令一起发送。除此之外没有别的：不含你的对话、记忆或指令。",
+    "Off the record is on because Private mode is on": "由于隐私模式已开启，已自动不留记录",
+    "The most this reading can cost, and exactly what's held while it's written: these facts and files and a full reply budget at the model's published rates. You're charged only for what's used, and nothing if the reading can't be used.": "这次解读最多花费的积分，也正是撰写期间预留的数额：按模型公布的费率计算这些事实、文件和完整的回复预算。只按实际用量收费；解读无法使用时不收取任何费用。",
+    "Private Mode: zero-data-retention models only, and nothing is saved.": "隐私模式：仅使用零数据保留模型，且不保存任何内容。",
+    "Off the record: billed like a message, and the reading stays on this page only.": "不留记录：按普通消息计费，解读只保留在此页面。",
+    "Billed like a message and saved to your chats, so a reload reopens it and you can ask follow-ups there.": "按普通消息计费并保存到你的对话，因此刷新后会重新打开，你也可以在那里继续追问。",
+    "To explain it again with today's facts, read the contract again above.": "如需用当前的事实重新解释，请在上方重新读取合约。",
+    "What the AI read: comment and blank lines left out": "AI 读取的内容：已省略注释和空行",
+    "Not sent to the AI": "未发送给 AI",
+    "The model's reply couldn't be read as a contract reading.": "无法将模型的回复读取为合约解读。",
+    "That conversation isn't a Contract Reader reading.": "该会话不是合约阅读器的解读。",
+    "That reading couldn't be opened.": "无法打开该解读。",
+    "That contract couldn't be opened.": "无法打开该合约。",
+    "The contract couldn't be read.": "无法读取该合约。",
+    "Forgotten. Nothing of that contract is kept on the server.": "已忘记。服务器上不再保留该合约的任何内容。",
+    "That file isn't in this reading.": "该文件不在这次解读中。",
+    "Paste a contract address (0x and 40 characters) or its explorer link.": "请粘贴合约地址（0x 加 40 个字符）或它的区块浏览器链接。",
+    "That's a transaction link. Paste the contract's address or its explorer page instead.": "这是交易链接。请改为粘贴合约地址或它在区块浏览器中的页面。",
+    "This contract was forgotten (30 minutes after it was read, or when you closed it). Paste the address to read it again.": "该合约已被忘记（读取 30 分钟后，或你关闭它时）。请粘贴地址重新读取。",
+    "This contract was forgotten (30 minutes after it was read, or when you closed it). Read it again to explain it.": "该合约已被忘记（读取 30 分钟后，或你关闭它时）。请重新读取后再解释。",
+    "Another contract is still being read. Try again in a moment.": "另一个合约仍在读取中。请稍后重试。",
+    "The contract couldn't be read right now. Nothing was charged; try again in a minute.": "暂时无法读取该合约。未收取任何费用；请一分钟后重试。",
+    "That contract isn't open.": "该合约未打开。",
+    "Too many contracts are being read right now. Try again in a few minutes.": "当前正在读取的合约过多。请几分钟后重试。",
+    "A contract reading can't be combined with other chat options.": "合约解读不能与其他对话选项同时使用。",
+    "That reading couldn't be sent. Read the contract again and retry.": "无法发送该解读请求。请重新读取合约后再试。",
+    "This contract's code is too long for this model. Choose a model with a larger context. Nothing was sent or charged.": "该合约的代码对这个模型来说太长了。请选择上下文更大的模型。未发送任何内容，也未收取费用。",
+    "Contract Reader needs a text model.": "合约阅读器需要文本模型。",
+    "The model ran out of room before it finished the reading, so there's no result. Nothing was charged. Try again, or choose another model.": "模型在完成解读之前就用完了篇幅，因此没有结果。未收取任何费用。请重试，或选择其他模型。",
+    "The model's reply couldn't be read as a contract reading. Nothing was charged. Try again, or choose another model.": "无法将模型的回复读取为合约解读。未收取任何费用。请重试，或选择其他模型。",
+    "The model didn't read this contract. Nothing was charged.": "模型没有解读这个合约。未收取任何费用。",
+    "Opening Contract Reader…": "正在打开合约阅读器……",
+    "Contracts open in Contract Reader": "合约阅读器中打开的合约",
+    "Contract Reader: a contract you read (its live facts and public source) is kept only in the server's memory, for your account, for 30 minutes, then dropped; it's never written to disk, and the address is never logged. An explanation is saved as an ordinary conversation unless it's off the record or in Private Mode. Your data export lists the contracts open at the time; Panic Wipe and closing the account forget them at once.": "合约阅读器：你读取的合约（其实时事实和公开源代码）只为你的账户保存在服务器内存中 30 分钟，之后丢弃；它从不写入磁盘，地址也从不记录到日志。除非选择不留记录或使用隐私模式，解释会保存为普通会话。你的数据导出会列出当时打开的合约；紧急擦除和关闭账户会立即忘记它们。",
+    "Its code isn't published: live facts and its bytecode's functions were sent as data.": "其代码未公开：实时事实和字节码中的函数已作为数据发送。",
+    "Open in Contract Reader": "在合约阅读器中打开",
+    "Its bytecode has a burn-style function: tokens may be destroyed.": "其字节码中有类似 burn 的函数：代币可能被销毁。",
+    "Live reads": "实时读取来源"
   },
   "patterns": [
     {
@@ -11007,7 +11153,7 @@
     },
     {
       "en": "and {0} more",
-      "zh": "还有 {0} 项"
+      "zh": "以及另外 {0} 个"
     },
     {
       "en": "Secret Guard — the model saw [{0}]",
@@ -11224,6 +11370,94 @@
     {
       "en": "Keep the instruction to {0} characters.",
       "zh": "指令请控制在 {0} 个字符以内。"
+    },
+    {
+      "en": "Verified on {0}",
+      "zh": "已在 {0} 上验证"
+    },
+    {
+      "en": "{0} file sent",
+      "zh": "已发送 {0} 个文件"
+    },
+    {
+      "en": "{0} files sent",
+      "zh": "已发送 {0} 个文件"
+    },
+    {
+      "en": "{0} · {1} sent to the AI",
+      "zh": "{0} · {1} 个已发给 AI"
+    },
+    {
+      "en": "Matched {0} of {1} selectors",
+      "zh": "{1} 个选择器中匹配到 {0} 个"
+    },
+    {
+      "en": "{0} holder",
+      "zh": "{0} 个持有者"
+    },
+    {
+      "en": "{0} holders",
+      "zh": "{0} 个持有者"
+    },
+    {
+      "en": "Explain with {0}",
+      "zh": "用 {0} 解释"
+    },
+    {
+      "en": "The model gets these facts and {0} ({1}, comment lines left out), sent as data with fixed instructions. Nothing else: no chats, memory or instructions of yours.",
+      "zh": "模型会收到这些事实和 {0}（{1}，已省略注释行），它们作为数据连同固定指令一起发送。除此之外没有别的：不含你的对话、记忆或指令。"
+    },
+    {
+      "en": "{0} source file",
+      "zh": "{0} 个源文件"
+    },
+    {
+      "en": "{0} source files",
+      "zh": "{0} 个源文件"
+    },
+    {
+      "en": "{0} is reading… {1} so far",
+      "zh": "{0} 正在解读……目前 {1}"
+    },
+    {
+      "en": "{0} point",
+      "zh": "{0} 个要点"
+    },
+    {
+      "en": "{0} points",
+      "zh": "{0} 个要点"
+    },
+    {
+      "en": "{0} is reading the code…",
+      "zh": "{0} 正在阅读代码……"
+    },
+    {
+      "en": "The model didn't read this contract ({0}). Nothing was charged.",
+      "zh": "模型没有解读这个合约（{0}）。未收取任何费用。"
+    },
+    {
+      "en": "This address is a wallet on {0}, not a contract.",
+      "zh": "此地址在 {0} 上是钱包，而不是合约。"
+    },
+    {
+      "en": "There's no contract at this address on {0}. It's a wallet, or nothing was deployed there.",
+      "zh": "{0} 上的这个地址没有合约。它是一个钱包，或者那里没有部署任何东西。"
+    },
+    {
+      "en": "{0}'s node couldn't be read right now, and nothing verified was found. Nothing was charged; try again in a minute.",
+      "zh": "暂时无法读取 {0} 的节点，也没有找到已验证的代码。未收取任何费用；请一分钟后重试。"
+    },
+    {
+      "en": "{0} verified file and live facts were sent as data.",
+      "zh": "已将 {0} 个已验证文件和实时事实作为数据发送。"
+    },
+    {
+      "en": "{0} verified files and live facts were sent as data.",
+      "zh": "已将 {0} 个已验证文件和实时事实作为数据发送。"
+    },
+    {
+      "en": "{0}'s node answered for another chain, so nothing it said was used. Nothing was charged; try again later.",
+      "zh": "{0} 的节点返回了另一条链的数据，因此没有使用它的任何回复。未收取任何费用；请稍后重试。"
     }
   ]
 }

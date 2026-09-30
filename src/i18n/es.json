@@ -6941,7 +6941,153 @@
     "The downloaded file is an ordinary web page, no longer in the sandbox: read its code before you trust it.": "El archivo descargado es una página web normal y ya no está en el entorno aislado: lee su código antes de confiar en él.",
     "From a picture": "A partir de una imagen",
     "Requested change": "Cambio pedido",
-    "Removed the outside links": "Se quitaron los enlaces externos"
+    "Removed the outside links": "Se quitaron los enlaces externos",
+    "Contract Reader": "Lector de contratos",
+    "Paste a token or contract address. See who controls it and what they can do, in plain English.": "Pega la dirección de un token o contrato. Mira quién lo controla y qué puede hacer, en palabras sencillas.",
+    "Reads the verified code, or the functions its bytecode exposes when the code isn't published": "Lee el código verificado o, si el código no está publicado, las funciones que expone su bytecode",
+    "Who controls it comes from live reads, and every power links to its file and line": "Quién lo controla sale de lecturas en vivo, y cada poder enlaza a su archivo y línea",
+    "Reading is free and the explanation bills like a message. Not an audit, not financial advice": "Leerlo es gratis y la explicación se cobra como un mensaje. No es una auditoría ni asesoría financiera",
+    "ONCHAIN": "EN CADENA",
+    "Paste a token or contract address. See who controls it and what they can do, in plain English, before you touch it.": "Pega la dirección de un token o contrato. Antes de tocarlo, mira quién lo controla y qué puede hacer, en palabras sencillas.",
+    "Read another contract": "Leer otro contrato",
+    "Contract address or explorer link": "Dirección del contrato o enlace del explorador",
+    "0x… or an explorer link": "0x… o un enlace del explorador",
+    "Read contract": "Leer contrato",
+    "Try USDG on Robinhood Chain": "Prueba USDG en Robinhood Chain",
+    "Free and read only. Sourcify, the explorer and the node see ANONYMA's server, not you.": "Gratis y de solo lectura. Sourcify, el explorador y el nodo ven el servidor de ANONYMA, no a ti.",
+    "Free and read only: nothing is signed or sent, and no wallet is connected. ANONYMA's server reads the chain, Sourcify and the explorer, so they see our server, not you. What it reads stays in the server's memory for 30 minutes, then it's forgotten. Veil doesn't apply: an address and public code have nothing of yours to mask.": "Gratis y de solo lectura: no se firma ni se envía nada, y no se conecta ninguna billetera. El servidor de ANONYMA lee la cadena, Sourcify y el explorador, así que ven nuestro servidor, no a ti. Lo que lee queda en la memoria del servidor durante 30 minutos y luego se olvida. Veil no aplica: una dirección y un código público no tienen nada tuyo que ocultar.",
+    "Sign in to read a contract.": "Inicia sesión para leer un contrato.",
+    "Reading the contract…": "Leyendo el contrato…",
+    "Live reads from the chain, then its verified source from Sourcify or the explorer.": "Lecturas en vivo de la cadena y luego su código fuente verificado desde Sourcify o el explorador.",
+    "Open contracts": "Contratos abiertos",
+    "Read a contract": "Lee un contrato",
+    "Paste its address or explorer link. The server reads the chain; your browser never contacts it.": "Pega su dirección o enlace del explorador. El servidor lee la cadena; tu navegador nunca se conecta a ella.",
+    "See who controls it": "Mira quién lo controla",
+    "Owners, admins and roles come from live reads, not a guess.": "Dueños, administradores y roles salen de lecturas en vivo, no de suposiciones.",
+    "Get it in plain English": "Entiéndelo en palabras sencillas",
+    "Every power the code gives someone, with a link to its file and line.": "Cada poder que el código le da a alguien, con un enlace a su archivo y línea.",
+    "Partial match": "Coincidencia parcial",
+    "Implementation": "Implementación",
+    "Compiler": "Compilador",
+    "Code size": "Tamaño del código",
+    "A saved reading: these are the facts and files as they were when it was explained.": "Una lectura guardada: estos son los datos y archivos tal como estaban cuando se explicó.",
+    "Source files": "Archivos fuente",
+    "Main": "Principal",
+    "Sent to AI": "Enviado a la IA",
+    "Injection Shield: this file has text that reads like instructions to an AI. It's sent as data, and the model is told not to follow it.": "Escudo contra inyección: este archivo tiene texto que parece dar instrucciones a una IA. Se envía como datos y se le indica al modelo que no lo siga.",
+    "Functions in its bytecode": "Funciones en su bytecode",
+    "None of the functions ANONYMA knows by name were found.": "No se encontró ninguna de las funciones que ANONYMA reconoce por nombre.",
+    "Matched against a small built-in list of common functions; nothing is looked up online.": "Se compara con una pequeña lista integrada de funciones comunes; no se consulta nada en línea.",
+    "Create new tokens": "Crear tokens nuevos",
+    "Destroy tokens": "Destruir tokens",
+    "Pause or unpause transfers": "Pausar o reanudar transferencias",
+    "Block or freeze addresses": "Bloquear o congelar direcciones",
+    "Change a fee or tax": "Cambiar una comisión o impuesto",
+    "Change transaction or wallet limits": "Cambiar límites de transacción o de billetera",
+    "Hand over or give up ownership": "Transferir o renunciar a la propiedad",
+    "Replace the contract's code": "Reemplazar el código del contrato",
+    "Take funds out of the contract": "Sacar fondos del contrato",
+    "Change the exchange router or pool it uses": "Cambiar el router de intercambio o el pool que usa",
+    "Exempt addresses from fees": "Eximir direcciones de comisiones",
+    "Give or take away roles": "Dar o quitar roles",
+    "Switch trading on": "Habilitar el intercambio",
+    "Live reads weren't available, so who controls it couldn't be read.": "Las lecturas en vivo no estaban disponibles, así que no se pudo leer quién lo controla.",
+    "No owner, admin or role was found in its live reads. Powers may still be held in other ways: see what they can do.": "No se encontró dueño, administrador ni rol en sus lecturas en vivo. Aun así, alguien podría tener poderes de otras formas: mira qué pueden hacer.",
+    "Owner": "Dueño",
+    "Pending owner": "Dueño pendiente",
+    "Default admin": "Administrador predeterminado",
+    "Upgrade admin": "Administrador de actualizaciones",
+    "Owner of the upgrade admin": "Dueño del administrador de actualizaciones",
+    "Beacon": "Contrato beacon",
+    "Default admin role": "Rol de administrador predeterminado",
+    "No one": "Nadie",
+    "Ownership was renounced: it's set to the zero address, so owner-only functions can't be called.": "Se renunció a la propiedad: está asignada a la dirección cero, así que las funciones solo para el dueño no se pueden llamar.",
+    "A wallet: one key can use these powers.": "Una billetera: una sola clave puede usar estos poderes.",
+    "A contract, such as a multisig or a timelock: who controls it isn't shown here.": "Un contrato, como una multifirma o un timelock: aquí no se muestra quién lo controla.",
+    "No one: set to the zero address.": "Nadie: asignado a la dirección cero.",
+    "Not an audit, not financial advice. It reads the code; it can't promise what people will do.": "No es una auditoría ni asesoría financiera. Lee el código; no puede prometer lo que harán las personas.",
+    "Who holds the keys of a controlling wallet or multisig, and any agreements outside the chain, aren't visible here.": "Quién tiene las claves de una billetera o multifirma que lo controla, y cualquier acuerdo fuera de la cadena, no se ven aquí.",
+    "In plain English": "En palabras sencillas",
+    "Saved to your chats": "Guardado en tus chats",
+    "Who controls it": "Quién lo controla",
+    "From live reads": "De lecturas en vivo",
+    "What they can do": "Qué pueden hacer",
+    "The reading found no special powers over this contract.": "La lectura no encontró poderes especiales sobre este contrato.",
+    "Explain it to see each power the code gives someone, linked to its file and line.": "Explícalo para ver cada poder que el código le da a alguien, con enlace a su archivo y línea.",
+    "Explain it to see what the functions found in its bytecode could let someone do.": "Explícalo para ver qué podrían permitirle hacer a alguien las funciones encontradas en su bytecode.",
+    "Things to check": "Cosas que revisar",
+    "From the chain": "De la cadena",
+    "The code isn't published": "El código no está publicado",
+    "Its source isn't verified on Sourcify or the explorer, so this reads only the function names its bytecode exposes. Names can mislead.": "Su código fuente no está verificado en Sourcify ni en el explorador, así que esto solo lee los nombres de funciones que expone su bytecode. Los nombres pueden engañar.",
+    "It can be upgraded": "Se puede actualizar",
+    "It's a proxy: whoever controls the upgrade can replace the code behind this address, so what it does today can change.": "Es un proxy: quien controla la actualización puede reemplazar el código detrás de esta dirección, así que lo que hace hoy puede cambiar.",
+    "The code behind the proxy isn't published": "El código detrás del proxy no está publicado",
+    "The implementation's source isn't verified, so this reads only the function names its bytecode exposes.": "El código fuente de la implementación no está verificado, así que esto solo lee los nombres de funciones que expone su bytecode.",
+    "It's paused right now": "Está en pausa ahora mismo",
+    "A live read of paused() says transfers or other actions are stopped at the moment.": "Una lectura en vivo de paused() indica que las transferencias u otras acciones están detenidas en este momento.",
+    "One wallet holds the owner's powers": "Una sola billetera tiene los poderes del dueño",
+    "The owner is a single wallet, not a contract, so one key can use every owner-only function.": "El dueño es una sola billetera, no un contrato, así que una clave puede usar todas las funciones solo para el dueño.",
+    "One wallet controls upgrades": "Una sola billetera controla las actualizaciones",
+    "Whoever can upgrade this contract is a single wallet, so one key can replace its code.": "Quien puede actualizar este contrato es una sola billetera, así que una clave puede reemplazar su código.",
+    "Its bytecode has a mint-style function: new tokens may be created.": "Su bytecode tiene una función tipo mint: se podrían crear tokens nuevos.",
+    "Its bytecode has pause(): transfers may be stopped.": "Su bytecode tiene pause(): se podrían detener las transferencias.",
+    "Its bytecode has a blocklist-style function: addresses may be blocked or frozen.": "Su bytecode tiene una función tipo lista de bloqueo: se podrían bloquear o congelar direcciones.",
+    "Its bytecode has a fee or tax setter: fees may be changed.": "Su bytecode tiene una función para fijar comisiones o impuestos: las comisiones podrían cambiar.",
+    "Its bytecode has limit setters: transaction or wallet limits may be changed.": "Su bytecode tiene funciones para fijar límites: los límites de transacción o de billetera podrían cambiar.",
+    "Its bytecode has ownership functions: control may be handed over.": "Su bytecode tiene funciones de propiedad: el control se podría transferir.",
+    "Its bytecode has upgrade functions: its code may be replaced.": "Su bytecode tiene funciones de actualización: su código se podría reemplazar.",
+    "Its bytecode has withdraw or rescue functions: funds held by the contract may be taken out.": "Su bytecode tiene funciones de retiro o rescate: se podrían sacar los fondos que guarda el contrato.",
+    "Its bytecode has router setters: where trades are routed may be changed.": "Su bytecode tiene funciones para fijar el router: se podría cambiar por dónde pasan las operaciones.",
+    "Its bytecode has fee exemptions: some addresses may pay no fee.": "Su bytecode tiene exenciones de comisiones: algunas direcciones podrían no pagar comisión.",
+    "Its bytecode has role functions: powers may be given to other addresses.": "Su bytecode tiene funciones de roles: se podrían dar poderes a otras direcciones.",
+    "Its bytecode has a trading switch: transfers through pools may be off until it's switched on.": "Su bytecode tiene un interruptor de intercambio: las transferencias a través de pools podrían estar desactivadas hasta que se active.",
+    "Nothing specific was flagged. That isn't a clean bill of health.": "No se marcó nada en concreto. Eso no significa que todo esté bien.",
+    "Explain it to add the points the code raises.": "Explícalo para sumar los puntos que plantea el código.",
+    "What this can't tell you": "Lo que esto no puede decirte",
+    "Live reads weren't available from this chain's node right now, so owners, roles and paused state aren't shown.": "Las lecturas en vivo del nodo de esta cadena no estaban disponibles por ahora, así que no se muestran dueños, roles ni estado de pausa.",
+    "Some live reads didn't answer, so a role may be missing here.": "Algunas lecturas en vivo no respondieron, así que podría faltar un rol aquí.",
+    "A source of verified code didn't answer, so \"not published\" may be wrong. Try again in a minute.": "Una fuente de código verificado no respondió, así que “no publicado” podría ser incorrecto. Inténtalo de nuevo en un minuto.",
+    "The verified source was over 1.5 MB, so only the main contract and what it inherits from were kept.": "El código fuente verificado superaba 1.5 MB, así que solo se conservaron el contrato principal y lo que hereda.",
+    "This address is a proxy: the reading covers the implementation it points to, not the proxy's own code.": "Esta dirección es un proxy: la lectura cubre la implementación a la que apunta, no el código propio del proxy.",
+    "Explain it in plain English": "Explícalo en palabras sencillas",
+    "The model gets these facts and the functions found in the bytecode, sent as data with fixed instructions. Nothing else: no chats, memory or instructions of yours.": "El modelo recibe estos datos y las funciones encontradas en el bytecode, enviados como datos con instrucciones fijas. Nada más: ni tus chats, ni tu memoria, ni tus instrucciones.",
+    "Off the record is on because Private mode is on": "Sin registro está activado porque el Modo privado está activado",
+    "The most this reading can cost, and exactly what's held while it's written: these facts and files and a full reply budget at the model's published rates. You're charged only for what's used, and nothing if the reading can't be used.": "Lo máximo que puede costar esta lectura, y exactamente lo que se retiene mientras se escribe: estos datos y archivos y un presupuesto de respuesta completo a las tarifas publicadas del modelo. Solo se cobra lo que se usa, y nada si la lectura no se puede usar.",
+    "Private Mode: zero-data-retention models only, and nothing is saved.": "Modo privado: solo modelos con retención cero de datos, y no se guarda nada.",
+    "Off the record: billed like a message, and the reading stays on this page only.": "Sin registro: se cobra como un mensaje, y la lectura se queda solo en esta página.",
+    "Billed like a message and saved to your chats, so a reload reopens it and you can ask follow-ups there.": "Se cobra como un mensaje y se guarda en tus chats, así que al recargar se vuelve a abrir y puedes hacer preguntas de seguimiento ahí.",
+    "To explain it again with today's facts, read the contract again above.": "Para explicarlo de nuevo con los datos de hoy, vuelve a leer el contrato arriba.",
+    "What the AI read: comment and blank lines left out": "Lo que leyó la IA: sin líneas de comentarios ni en blanco",
+    "Not sent to the AI": "No se envió a la IA",
+    "The model's reply couldn't be read as a contract reading.": "La respuesta del modelo no se pudo leer como una lectura del contrato.",
+    "That conversation isn't a Contract Reader reading.": "Esa conversación no es una lectura del Lector de contratos.",
+    "That reading couldn't be opened.": "No se pudo abrir esa lectura.",
+    "That contract couldn't be opened.": "No se pudo abrir ese contrato.",
+    "The contract couldn't be read.": "No se pudo leer el contrato.",
+    "Forgotten. Nothing of that contract is kept on the server.": "Olvidado. No queda nada de ese contrato en el servidor.",
+    "That file isn't in this reading.": "Ese archivo no está en esta lectura.",
+    "Paste a contract address (0x and 40 characters) or its explorer link.": "Pega la dirección de un contrato (0x y 40 caracteres) o su enlace del explorador.",
+    "That's a transaction link. Paste the contract's address or its explorer page instead.": "Ese es un enlace de transacción. Pega en su lugar la dirección del contrato o su página del explorador.",
+    "This contract was forgotten (30 minutes after it was read, or when you closed it). Paste the address to read it again.": "Este contrato se olvidó (30 minutos después de leerlo, o cuando lo cerraste). Pega la dirección para volver a leerlo.",
+    "This contract was forgotten (30 minutes after it was read, or when you closed it). Read it again to explain it.": "Este contrato se olvidó (30 minutos después de leerlo, o cuando lo cerraste). Vuelve a leerlo para explicarlo.",
+    "Another contract is still being read. Try again in a moment.": "Todavía se está leyendo otro contrato. Inténtalo de nuevo en un momento.",
+    "The contract couldn't be read right now. Nothing was charged; try again in a minute.": "No se pudo leer el contrato por ahora. No se cobró nada; inténtalo de nuevo en un minuto.",
+    "That contract isn't open.": "Ese contrato no está abierto.",
+    "Too many contracts are being read right now. Try again in a few minutes.": "Se están leyendo demasiados contratos ahora mismo. Inténtalo de nuevo en unos minutos.",
+    "A contract reading can't be combined with other chat options.": "Una lectura de contrato no se puede combinar con otras opciones del chat.",
+    "That reading couldn't be sent. Read the contract again and retry.": "No se pudo enviar esa lectura. Vuelve a leer el contrato e inténtalo de nuevo.",
+    "This contract's code is too long for this model. Choose a model with a larger context. Nothing was sent or charged.": "El código de este contrato es demasiado largo para este modelo. Elige un modelo con un contexto más grande. No se envió ni se cobró nada.",
+    "Contract Reader needs a text model.": "El Lector de contratos necesita un modelo de texto.",
+    "The model ran out of room before it finished the reading, so there's no result. Nothing was charged. Try again, or choose another model.": "El modelo se quedó sin espacio antes de terminar la lectura, así que no hay resultado. No se cobró nada. Inténtalo de nuevo o elige otro modelo.",
+    "The model's reply couldn't be read as a contract reading. Nothing was charged. Try again, or choose another model.": "La respuesta del modelo no se pudo leer como una lectura del contrato. No se cobró nada. Inténtalo de nuevo o elige otro modelo.",
+    "The model didn't read this contract. Nothing was charged.": "El modelo no leyó este contrato. No se cobró nada.",
+    "Opening Contract Reader…": "Abriendo el Lector de contratos…",
+    "Contracts open in Contract Reader": "Contratos abiertos en el Lector de contratos",
+    "Contract Reader: a contract you read (its live facts and public source) is kept only in the server's memory, for your account, for 30 minutes, then dropped; it's never written to disk, and the address is never logged. An explanation is saved as an ordinary conversation unless it's off the record or in Private Mode. Your data export lists the contracts open at the time; Panic Wipe and closing the account forget them at once.": "Lector de contratos: un contrato que lees (sus datos en vivo y su código público) se guarda solo en la memoria del servidor, para tu cuenta, durante 30 minutos, y luego se descarta; nunca se escribe en disco y la dirección nunca se registra. Una explicación se guarda como una conversación normal, salvo que sea sin registro o en Modo privado. Tu exportación de datos lista los contratos abiertos en ese momento; el Borrado de pánico y el cierre de la cuenta los olvidan de inmediato.",
+    "Its code isn't published: live facts and its bytecode's functions were sent as data.": "Su código no está publicado: los datos en vivo y las funciones de su bytecode se enviaron como datos.",
+    "Open in Contract Reader": "Abrir en el Lector de contratos",
+    "Its bytecode has a burn-style function: tokens may be destroyed.": "Su bytecode tiene una función tipo burn: se podrían destruir tokens.",
+    "Live reads": "Lecturas en vivo"
   },
   "patterns": [
     {
@@ -11283,6 +11429,94 @@
     {
       "en": "Keep the instruction to {0} characters.",
       "es": "Mantén la instrucción por debajo de {0} caracteres."
+    },
+    {
+      "en": "Verified on {0}",
+      "es": "Verificado en {0}"
+    },
+    {
+      "en": "{0} file sent",
+      "es": "{0} archivo enviado"
+    },
+    {
+      "en": "{0} files sent",
+      "es": "{0} archivos enviados"
+    },
+    {
+      "en": "{0} · {1} sent to the AI",
+      "es": "{0} · {1} enviados a la IA"
+    },
+    {
+      "en": "Matched {0} of {1} selectors",
+      "es": "Coinciden {0} de {1} selectores"
+    },
+    {
+      "en": "{0} holder",
+      "es": "{0} titular"
+    },
+    {
+      "en": "{0} holders",
+      "es": "{0} titulares"
+    },
+    {
+      "en": "Explain with {0}",
+      "es": "Explicar con {0}"
+    },
+    {
+      "en": "The model gets these facts and {0} ({1}, comment lines left out), sent as data with fixed instructions. Nothing else: no chats, memory or instructions of yours.",
+      "es": "El modelo recibe estos datos y {0} ({1}, sin líneas de comentarios), enviados como datos con instrucciones fijas. Nada más: ni tus chats, ni tu memoria, ni tus instrucciones."
+    },
+    {
+      "en": "{0} source file",
+      "es": "{0} archivo fuente"
+    },
+    {
+      "en": "{0} source files",
+      "es": "{0} archivos fuente"
+    },
+    {
+      "en": "{0} is reading… {1} so far",
+      "es": "{0} está leyendo… {1} hasta ahora"
+    },
+    {
+      "en": "{0} point",
+      "es": "{0} punto"
+    },
+    {
+      "en": "{0} points",
+      "es": "{0} puntos"
+    },
+    {
+      "en": "{0} is reading the code…",
+      "es": "{0} está leyendo el código…"
+    },
+    {
+      "en": "The model didn't read this contract ({0}). Nothing was charged.",
+      "es": "El modelo no leyó este contrato ({0}). No se cobró nada."
+    },
+    {
+      "en": "This address is a wallet on {0}, not a contract.",
+      "es": "Esta dirección es una billetera en {0}, no un contrato."
+    },
+    {
+      "en": "There's no contract at this address on {0}. It's a wallet, or nothing was deployed there.",
+      "es": "No hay ningún contrato en esta dirección en {0}. Es una billetera o no se desplegó nada ahí."
+    },
+    {
+      "en": "{0}'s node couldn't be read right now, and nothing verified was found. Nothing was charged; try again in a minute.",
+      "es": "No se pudo leer el nodo de {0} por ahora y no se encontró nada verificado. No se cobró nada; inténtalo de nuevo en un minuto."
+    },
+    {
+      "en": "{0} verified file and live facts were sent as data.",
+      "es": "Se enviaron como datos {0} archivo verificado y datos en vivo."
+    },
+    {
+      "en": "{0} verified files and live facts were sent as data.",
+      "es": "Se enviaron como datos {0} archivos verificados y datos en vivo."
+    },
+    {
+      "en": "{0}'s node answered for another chain, so nothing it said was used. Nothing was charged; try again later.",
+      "es": "El nodo de {0} respondió por otra cadena, así que no se usó nada de lo que dijo. No se cobró nada; inténtalo de nuevo más tarde."
     }
   ]
 }

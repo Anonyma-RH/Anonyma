@@ -38,6 +38,10 @@ export const WIPE_SLIDES = "Slides decks, on your account and in this browser";
 // Listed only once Repo Reader is released (PanicWipe.jsx): the repos open
 // in the server's 30-minute memory cache.
 export const WIPE_REPOS = "Repos open in Repo Reader";
+// Listed only once Contract Reader is released (PanicWipe.jsx): the
+// contracts open in the server's 30-minute memory cache. Saved readings are
+// conversations, erased with them.
+export const WIPE_CONTRACTS = "Contracts open in Contract Reader";
 // Listed only once Page Watch is released (PanicWipe.jsx).
 export const WIPE_WATCHES = "Page watches, the copy of each page they keep, and their reports";
 // Listed only once Gift Links is released (PanicWipe.jsx): unclaimed gifts

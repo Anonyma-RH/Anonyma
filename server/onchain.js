@@ -79,7 +79,9 @@ async function readCapped(res, cap) {
 }
 
 // One JSON request to an allowlisted source. 404 is "not found" (null).
-export async function fetchJson(fetchImpl, url, { method = "GET", body } = {}) {
+// Contract Reader (server/contract-reader.js) passes its own fixed host list
+// (these hosts and Sourcify) and a larger cap for verified source files.
+export async function fetchJson(fetchImpl, url, { method = "GET", body, hosts = ALLOWED_HOSTS, maxBytes = MAX_RESPONSE_BYTES } = {}) {
   let target;
   try {
     target = new URL(url);
@@ -88,7 +90,7 @@ export async function fetchJson(fetchImpl, url, { method = "GET", body } = {}) {
   }
   if (
     target.protocol !== "https:" ||
-    !ALLOWED_HOSTS.has(target.host) ||
+    !hosts.has(target.host) ||
     target.username ||
     target.password
   )
@@ -140,11 +142,11 @@ export async function fetchJson(fetchImpl, url, { method = "GET", body } = {}) {
     discard();
     throw new UpstreamError("type");
   }
-  if (Number(res.headers?.get?.("content-length")) > MAX_RESPONSE_BYTES) {
+  if (Number(res.headers?.get?.("content-length")) > maxBytes) {
     discard();
     throw new UpstreamError("size");
   }
-  const text = await readCapped(res, MAX_RESPONSE_BYTES);
+  const text = await readCapped(res, maxBytes);
   try {
     return JSON.parse(text);
   } catch {

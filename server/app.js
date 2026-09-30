@@ -83,6 +83,7 @@ import { connectRoutes } from "./routes/connect.js";
 import { paymentRoutes } from "./routes/payments.js";
 import { nymaRoutes } from "./routes/nyma.js";
 import { onchainRoutes } from "./routes/onchain.js";
+import { contractReaderRoutes } from "./routes/contract-reader.js";
 import { historyLibrary } from "./history-library.js";
 import { previewRoutes } from "./routes/preview.js";
 import { statusRoutes } from "./routes/status.js";
@@ -300,6 +301,9 @@ export function createApp(overrides = {}) {
   nymaRoutes(ctx);
   // Onchain Explainer: read-only chain lookups (the explanation is a chat).
   ctx.onchain = onchainRoutes(ctx).onchain;
+  // Contract Reader: one contract's facts and verified source, read into a
+  // short-lived in-memory cache (explaining it runs through runChat).
+  ctx.contractReader = contractReaderRoutes(ctx);
   // Model Status: the public, aggregated status of each model family.
   statusRoutes(ctx);
   // Live Preview's frame page, before the site's static files and fallback.
@@ -332,6 +336,8 @@ export function createApp(overrides = {}) {
     push: ctx.push,
     // Repo Reader's in-memory cache (server/repo-reader.js), for tests.
     repoReader: ctx.repoReader,
+    // Contract Reader's in-memory cache (server/contract-reader.js), for tests.
+    contractReader: ctx.contractReader,
     stopWork: async () => {
       for (const c of ctx.inflight.controllers)
         c.abort(new Error("Service restarting"));
@@ -340,6 +346,7 @@ export function createApp(overrides = {}) {
     close: () => {
       worker.close();
       ctx.repoReader.cache.clear();
+      ctx.contractReader.cache.clear();
       for (const c of ctx.inflight.controllers) c.abort();
       db.close();
     },

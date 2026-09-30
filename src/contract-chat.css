@@ -1,0 +1,42 @@
+/* Contract Reader: a saved reading in the chat view (src/ContractChat.jsx). */
+.ctr-chat-card {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--work-line, #e3e8f0);
+  border-left: 3px solid var(--brand-blue, #0135df);
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.ctr-chat-card > b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-blue, #0135df);
+}
+.ctr-chat-card small {
+  color: var(--work-muted, #68748a);
+}
+.ctr-chat-card a {
+  justify-self: start;
+  color: var(--brand-blue, #0135df);
+  font-weight: 650;
+}
+.ctr-chat-reply h4 {
+  margin: 14px 0 6px;
+  font-size: 14px;
+}
+.ctr-chat-reply ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.ctr-chat-reply li {
+  margin: 4px 0;
+}
+.ctr-chat-reply small {
+  color: var(--work-muted, #68748a);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+}

@@ -119,6 +119,7 @@ import {
   FileSearch,
   FileX,
   LayoutTemplate,
+  ScrollText,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -245,6 +246,8 @@ const icons = {
   // Screenshot to site: a page laid out in blocks.
   site: LayoutTemplate,
   repo: FolderGit2,
+  // Contract Reader: a contract read line by line.
+  contract: ScrollText,
   right: ChevronRight,
 };
 export function Icon({ name, size = 18, ...rest }) {
@@ -304,6 +307,8 @@ const pixels = {
   repos: ["###....", "#######", "#.#...#", "#.#.#.#", "#.##..#", "#.#...#", "#######"],
   // A page in a window: a header bar, a banner and two blocks. Screenshot to site.
   screenshot: ["#######", "#.#.#.#", "#######", "#.....#", "#.###.#", "#.###.#", "#######"],
+  // A page with a folded corner and its lines: a contract read line by line.
+  contracts: ["#####..", "#...##.", "#.#..##", "#.....#", "#.###.#", "#.....#", "#######"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

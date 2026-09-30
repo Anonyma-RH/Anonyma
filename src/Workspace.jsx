@@ -65,6 +65,14 @@ const Canvas = lazy(() => import("./Canvas.jsx"));
 const Slides = lazy(() => import("./Slides.jsx"));
 // Repo Reader: its page, file tree and viewer load only on its page.
 const RepoReader = lazy(() => import("./RepoReader.jsx"));
+// Contract Reader: its page, facts and code viewer load only on its page,
+// and a saved reading's view in chat only when one is open.
+const ContractReader = lazy(() => import("./ContractReader.jsx"));
+const ContractChat = lazy(() => import("./ContractChat.jsx"));
+// A saved Contract Reader request starts with this line and carries its
+// facts block (src/contract-reader.js: CONTRACT_TITLE_PREFIX and the facts
+// document); checked cheaply here, parsed in ContractChat.
+const CONTRACT_REQUEST = /^Contract Reader · [^\n]*\n\n<document name="Contract facts">ANONYMA contract facts v1\n/;
 // Translate Documents: its readers, part planner and exports load only on its page.
 const Translate = lazy(() => import("./Translate.jsx"));
 // Audio Overview's dialog and player, loaded only when opened.
@@ -363,6 +371,7 @@ export function AppSidebar({
     ["study", "Study", "Turn a document or conversation into flashcards and quizzes to practise what you have learned."],
     ["slides", "Slides", "Turn a prompt, document or chat into a slide deck. Edit, present or export it."],
     ["repos", "Repo Reader", "Paste a public GitHub repo and ask about it. Answers cite the exact files and lines."],
+    ["contracts", "Contract Reader", "Paste a token or contract address. See who controls it and what they can do, in plain English."],
     ["notes", "Meeting notes", "Turn a recording into a timestamped transcript, key decisions and action items."],
     ["subtitles", "Subtitles", "Turn a video into subtitles you can edit, translate and download. Only its sound is sent."],
     ["import", "Import chats", "Bring your ChatGPT or Claude history here. Choose which chats to keep and where they go."],
@@ -384,6 +393,7 @@ export function AppSidebar({
     .filter(([id]) => id !== "canvas" || isReleased(config, "canvas"))
     .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
     .filter(([id]) => id !== "repos" || isReleased(config, "reporeader"))
+    .filter(([id]) => id !== "contracts" || modeReleased(config, "contracts"))
     .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
     .filter(([id]) => id !== "subtitles" || modeReleased(config, "subtitles"))
     .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
@@ -690,6 +700,8 @@ export default function Workspace() {
     (mode === "slides" && (!config || isReleased(config, "slides"))) ||
     // And Repo Reader's.
     (mode === "repos" && (!config || isReleased(config, "reporeader"))) ||
+    // And Contract Reader's (it needs Onchain Explainer too).
+    (mode === "contracts" && (!config || modeReleased(config, "contracts"))) ||
     // Translate Documents' page, likewise.
     (mode === "translate" && (!config || isReleased(config, "doctranslate"))) ||
     // Meeting Notes' page, the same way (it needs Voice & Audio too).
@@ -2334,6 +2346,14 @@ export default function Workspace() {
     setOnchainError("");
   }, [onchainKey]);
   const onchainShown = onchainHit && onchainDismissed !== onchainKey ? onchainHit : null;
+  // Contract Reader: a saved reading opened here shows its request as a
+  // card and its reply as sections (src/ContractChat.jsx), not as source
+  // files and JSON; later turns are ordinary chat.
+  const contractChat =
+    modeReleased(config, "contracts") &&
+    textMode &&
+    messages[0]?.role === "user" &&
+    CONTRACT_REQUEST.test(typeof messages[0].content === "string" ? messages[0].content.slice(0, 400) : "");
   // A seed phrase or key still blocks; a bare 64-hex notice is answered by
   // choosing to explain it as a transaction.
   const onchainBlocked = !!seedHit && !isSoft(seedHit);
@@ -4138,6 +4158,7 @@ export default function Workspace() {
                 canvas: "Canvas",
                 slides: "Slides",
                 repos: "Repo Reader",
+                contracts: "Contract Reader",
                 translate: "Translate docs",
                 notes: "Meeting notes",
                 subtitles: "Subtitles",
@@ -4404,6 +4425,12 @@ export default function Workspace() {
             isReleased(config, "reporeader") && (
               <Suspense fallback={<p className="repo-loading">Opening Repo Reader…</p>}>
                 <RepoReader key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} veilOn={veilOn} setVeilOn={setVeilOn} veilWords={veilWords} />
+              </Suspense>
+            )
+          ) : mode === "contracts" ? (
+            modeReleased(config, "contracts") && (
+              <Suspense fallback={<p className="ctr-loading">Opening Contract Reader…</p>}>
+                <ContractReader key={`${user?.id || "guest"}:${demo}`} demo={demo} user={user} models={models} config={config} refresh={refresh} />
               </Suspense>
             )
           ) : mode === "compare" ? (
@@ -4679,6 +4706,9 @@ export default function Workspace() {
                         m.role === "user"
                           ? parseDocumentBlocks(m.content)
                           : { text: m.content, documents: [] };
+                      // A Contract Reader request: a card instead of its files.
+                      const contractCard = contractChat && i === 0;
+                      if (contractCard) parsed.documents = [];
                       const hasDocuments = parsed.documents.length > 0;
                       // Onchain Explainer's facts are drawn as a card, not a chip.
                       const chainDocs = onchainReleased(config)
@@ -4816,6 +4846,11 @@ export default function Workspace() {
                               <div className="document-prompt" data-i18n="off">
                                 {body}
                               </div>
+                            ) : contractChat && i === 1 && m.role === "assistant" && !(busy && i === messages.length - 1) ? (
+                              // Contract Reader: a saved reading's reply, as sections.
+                              <Suspense fallback={body}>
+                                <ContractChat part="reply" content={m.content} fallback={body} />
+                              </Suspense>
                             ) : (
                               body
                             )}
@@ -4832,6 +4867,11 @@ export default function Workspace() {
                                 documents={chainDocs}
                                 veilMap={veilStateRef.current.map}
                               />
+                            )}
+                            {contractCard && (
+                              <Suspense fallback={null}>
+                                <ContractChat part="card" content={m.content} conversation={current} />
+                              </Suspense>
                             )}
                             {m.images?.map((url, j) => (
                               <img

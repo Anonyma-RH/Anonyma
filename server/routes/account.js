@@ -23,6 +23,7 @@ import { exportPush, forgetPush, pushReleased } from "../push-alerts.js";
 import { exportFileIndex, forgetFileIndex } from "../file-search.js";
 import { exportRepos, forgetRepos } from "../repo-reader.js";
 import { exportSecretGuard, forgetSecretGuard } from "../secret-guard.js";
+import { exportContracts, forgetContracts } from "../contract-reader.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -84,6 +85,8 @@ import {
 // - File Search's passages and index words for the saved files (with the
 //   files, which it leaves to the uploads line below);
 // - Repo Reader's open repos, which live only in this process's memory;
+// - Contract Reader's open reads, likewise (a saved explanation is an
+//   ordinary conversation, erased with the conversations above);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -181,6 +184,9 @@ export function eraseAccountContent(db, user) {
   forgetRepos(db, id);
   // Secret Guard: the switch, if it was turned off (it's back on).
   forgetSecretGuard(db, id);
+  // Contract Reader: the contracts this account has open in its in-memory
+  // cache (nothing of it is in the database).
+  forgetContracts(db, id);
   db.prepare("DELETE FROM media WHERE user_id=?").run(id);
   // Sealed Mode's request records (metadata only). One still waiting for
   // its charge stays until it's settled, like its hold and the ledger.
@@ -385,6 +391,13 @@ export function accountRoutes(ctx) {
   function reposExport(user) {
     const list = exportRepos(db, user);
     return list.length || isReleased(cfg, "reporeader") ? { repoReader: list } : {};
+  }
+  // Contract Reader: the contracts open right now in the 30-minute memory
+  // cache, chain, address, name and times only (once the update is live, or
+  // while any are open). Saved explanations are in `conversations`.
+  function contractsExport(user) {
+    const list = exportContracts(db, user);
+    return list.length || isReleased(cfg, "contractreader") ? { contractReader: list } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -742,6 +755,8 @@ export function accountRoutes(ctx) {
       ...reposExport(req.user.id),
       // Secret Guard: the switch only.
       ...secretGuardExport(req.user.id),
+      // Contract Reader: contracts open in its short-lived cache.
+      ...contractsExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

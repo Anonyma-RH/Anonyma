@@ -47,6 +47,8 @@ import { prepareCanvasRequest, canvasBudget, canvasVerdict } from "../canvas.js"
 import { prepareSlidesRequest, slidesBudget, slidesAcceptor, streamedSlides } from "../slides.js";
 import { prepareRepoRequest, repoBudget } from "../repo-reader.js";
 import { prepareSiteRequest, siteBudget, siteAcceptor, streamedPage } from "../shot-to-site.js";
+import { prepareContractRequest, contractBudget, contractAcceptor } from "../contract-reader.js";
+import { streamedItems } from "../../src/contract-reader.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -124,6 +126,18 @@ export function chatRoutes(ctx) {
     // override.
     const repoTask = api ? undefined : prepareRepoRequest(req.body);
     if (repoTask) req.seedTexts = [repoTask.question];
+    // Contract Reader: an explanation's messages are built the same way from
+    // the read the server holds for `contract.id` (server/contract-reader.js):
+    // the facts it read and the verified source, as data. Its release gate is
+    // in featuresFor. Nothing the person typed is sent (only the address and
+    // public code), so Seed Guard has nothing to read. Only a reply that
+    // reads as a contract reading is paid for, and nothing else of it is sent
+    // (below); an unusable one releases its hold.
+    const contractTask = api ? undefined : prepareContractRequest(req, ctx.contractReader.cache);
+    if (contractTask) {
+      req.seedTexts = [];
+      req.acceptOutput = contractAcceptor();
+    }
     // Seed Guard: refused before anything is validated, reserved or stored.
     refuseSeedPhrase(cfg, req, api);
     if (!api) validateTaskRequest(req.body);
@@ -134,7 +148,7 @@ export function chatRoutes(ctx) {
     const autoAsked = !api && req.body.auto !== undefined;
     if (autoAsked)
       refuseAutoTask(req.body, {
-        task: !!(study || compareTask || sheetsTask || catchupTask || repoTask || siteTask),
+        task: !!(study || compareTask || sheetsTask || catchupTask || repoTask || siteTask || contractTask),
         blind: !!req.blind,
       });
     const autoSettings = autoAsked ? requestSettings(req.body) : null;
@@ -174,6 +188,11 @@ export function chatRoutes(ctx) {
     if (repoTask && m.type === "chat") {
       if (imageCallable(m)) fail(400, "Repo Reader needs a text model.", "unsupported_model");
       req.body.max_tokens = repoBudget(m, req.body.messages);
+    }
+    // A contract reading's reply room, fitted to the model (server/contract-reader.js).
+    if (contractTask && m.type === "chat") {
+      if (imageCallable(m)) fail(400, "Contract Reader needs a text model.", "unsupported_model");
+      req.body.max_tokens = contractBudget(m, req.body.messages);
     }
     // A suggestion's reply budget, fitted to the model (refused when the
     // rewrite can't fit), and only a usable reply is paid for: one that
@@ -400,11 +419,12 @@ export function chatRoutes(ctx) {
         guard: team?.guard ?? req.reserveGuard,
       });
     // Auto promises one maximum for its quote, limit check and reservation.
-    // Slides, Repo Reader and Screenshot to site hold exactly the quoted
-    // maximum (server/slides.js, server/repo-reader.js,
-    // server/shot-to-site.js): the "up to" figure shown, the balance and
+    // Slides, Repo Reader questions, Screenshot to site and Contract Reader
+    // explanations hold exactly the quoted maximum (server/slides.js,
+    // server/repo-reader.js, server/shot-to-site.js,
+    // server/contract-reader.js): the "up to" figure shown, the balance and
     // limit checks and the hold are one number.
-    const headroom = auto || slidesTask || repoTask || siteTask ? amount : Math.ceil(amount * cfg.holdMargin);
+    const headroom = auto || slidesTask || repoTask || siteTask || contractTask ? amount : Math.ceil(amount * cfg.holdMargin);
     try {
       reservation(headroom);
     } catch (e) {
@@ -562,7 +582,8 @@ export function chatRoutes(ctx) {
     const images = [];
     const citations = [];
     let slidesStarted = 0,
-      siteChars = 0;
+      siteChars = 0,
+      contractItems = 0;
     // Sources the provider cited for a web search, deduplicated and capped.
     const addCitation = (url, title) => {
       if (
@@ -715,6 +736,10 @@ export function chatRoutes(ctx) {
           // (every 400 characters or so, not with every chunk).
           const written = streamedPage(output);
           if (written - siteChars >= 400 || (!siteChars && written)) send({ shottosite: { chars: (siteChars = written) } });
+        } else if (contractTask) {
+          // Contract Reader: held back the same way; only a count.
+          const started = streamedItems(output);
+          if (started !== contractItems) send({ contract: { started: (contractItems = started) } });
         } else if (part.choices?.length) {
           const { images: upstreamImages, ...normalizedDelta } = delta;
           send(
@@ -797,8 +822,9 @@ export function chatRoutes(ctx) {
         finish_reason: finishReason || "stop",
       });
       attributeMediaCost(receipt);
-      // Slides: the reply, whole, once it's known to be usable and is paid for.
-      if (slidesTask || siteTask)
+      // Slides, Screenshot to site and Contract Reader: the reply, whole,
+      // once it's known to be usable and is paid for.
+      if (slidesTask || siteTask || contractTask)
         send(chunk({ choices: [{ index: 0, delta: { content: output }, finish_reason: finishReason || "stop" }] }));
       // An Ed25519-signed, independently verifiable copy of this receipt.
       // The signed id is the requestId alone, never the user-prefixed hold.
@@ -941,6 +967,12 @@ export function chatRoutes(ctx) {
         // unusable, failed, timed-out or stopped request releases its hold,
         // whatever the failure-billing policy below would charge.
         release(db, hold);
+        // A Contract Reader explanation always starts its own conversation;
+        // one that ends with no reading isn't kept half-made.
+        if (contractTask && conversation) {
+          db.prepare("DELETE FROM conversations WHERE id=? AND user_id=?").run(conversation, req.user.id);
+          conversation = null;
+        }
         if (timedOut) {
           e.status = 504;
           e.code = "provider_timeout";

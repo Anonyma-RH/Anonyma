@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useApp } from "./context.jsx";
-import { isReleased } from "./lib.js";
+import { isReleased, modeReleased } from "./lib.js";
 
 export default function DataControls() {
   const { config } = useApp() || {};
@@ -77,6 +77,8 @@ export default function DataControls() {
   const secretGuard = !!config && isReleased(config, "secretguard");
   // And Characters.
   const characters = !!config && isReleased(config, "characters");
+  // And Contract Reader.
+  const contracts = !!config && modeReleased(config, "contracts");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -425,6 +427,17 @@ export default function DataControls() {
             written to disk or logged. Questions are asked
             off the record, so neither they nor the answers are saved. Your
             data export lists the repos open at the time; Panic Wipe and
+            closing the account forget them at once.
+          </li>
+        )}
+        {contracts && (
+          <li>
+            Contract Reader: a contract you read (its live facts and public
+            source) is kept only in the server's memory, for your account,
+            for 30 minutes, then dropped; it's never written to disk, and the
+            address is never logged. An explanation is saved as an ordinary
+            conversation unless it's off the record or in Private Mode. Your
+            data export lists the contracts open at the time; Panic Wipe and
             closing the account forget them at once.
           </li>
         )}

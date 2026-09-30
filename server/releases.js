@@ -1387,6 +1387,7 @@ export const UPDATES = [
     // share_burns keeps which links burn and when each was opened; the
     // opening deletes the snapshot or ciphertext at once. Erased with the
     // links, and exported as dates only.
+    released: false,
   },
   {
     id: "characters",
@@ -1413,6 +1414,7 @@ export const UPDATES = [
     // another signed-in account reads in full before adding its own copy: no
     // chats, nothing about its maker. There are no other server routes and no
     // model call of its own, so nothing new to price or hold.
+    released: false,
   },
   {
     id: "pdfredact",
@@ -1432,6 +1434,7 @@ export const UPDATES = [
     // chat" hands the redacted pages (or the text read from them by Local OCR
     // when that is released) to the next chat's composer in memory; from
     // there they are an ordinary attachment. The page is /workspace/pdfredact.
+    released: false,
   },
   {
     id: "dictation",
@@ -1450,6 +1453,7 @@ export const UPDATES = [
     // pinned revisions, checked against pinned SHA-256 hashes, and stay in
     // the browser's Cache Storage; ONNX Runtime's WebAssembly is a Vite
     // build asset from node_modules, served by ANONYMA. Nothing is charged.
+    released: false,
   },
   {
     id: "subtitles",
@@ -1494,6 +1498,26 @@ export const UPDATES = [
     // (server/routes/shot-to-site.js), so it's listed, exported, wiped and
     // closed with the account like any other; the routes for it also need
     // "code" released. Off the record and Private Mode keep nothing.
+  },
+  {
+    id: "contractreader",
+    title: "Contract Reader",
+    tagline: "Paste a token or contract address. See who controls it and what they can do, in plain English.",
+    points: [
+      "Reads the verified code, or the functions its bytecode exposes when the code isn't published",
+      "Who controls it comes from live reads, and every power links to its file and line",
+      "Reading is free and the explanation bills like a message. Not an audit, not financial advice",
+    ],
+    // The workspace's Contract Reader page (src/ContractReader.jsx) and
+    // /api/contracts (server/routes/contract-reader.js): facts from Onchain
+    // Explainer's fixed chain sources plus Sourcify (server/contract-
+    // reader.js), so it needs "onchain" too (featuresFor). A read lives 30
+    // minutes in a per-account memory cache; nothing is stored. The
+    // explanation is an /api/chat request carrying `contract`, priced by
+    // /api/quote with the same payload and held at exactly that price; it's
+    // saved as an ordinary conversation unless off the record or in Private
+    // Mode. Erase clears the cache, and the export lists what's open.
+    released: false,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
@@ -1787,6 +1811,9 @@ export function featuresFor(req) {
   // Repo Reader: reading a public GitHub repo into the short-lived cache,
   // its files and the excerpts for a question.
   if (p === "/api/repos" || p.startsWith("/api/repos/")) return ["reporeader"];
+  // Contract Reader: reading one contract into the short-lived cache, and
+  // its files. It reads from Onchain Explainer's sources, so it needs that.
+  if (p === "/api/contracts" || p.startsWith("/api/contracts/")) return ["contractreader", "onchain"];
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.
@@ -2057,6 +2084,10 @@ export function featuresFor(req) {
   // update is needed too. The request is always off the record (pushed below).
   if ((p === "/api/chat" || p === "/api/quote") && post && body.shottosite !== undefined)
     needed.push("shottosite", "preview");
+  // Contract Reader: a contract's explanation (server/contract-reader.js),
+  // and its estimate. Off the record and Private Mode are gated below.
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.contract !== undefined)
+    needed.push("contractreader", "onchain");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

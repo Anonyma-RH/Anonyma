@@ -566,6 +566,9 @@ export const MODE_FEATURES = {
   // Screenshot to site's page (src/ShotToSite.jsx): its request is always
   // off the record and its result shows in Live Preview, so it needs both.
   screenshot: "shottosite",
+  // Contract Reader's page (src/ContractReader.jsx), which reads from
+  // Onchain Explainer's sources, so it needs that update too.
+  contracts: "contractreader",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")
@@ -575,6 +578,7 @@ export function modeReleased(config, mode) {
   if (mode === "photos") return isReleased(config, "phototools") && isReleased(config, "images");
   if (mode === "filesearch") return ["filesearch", "files", "documents"].every((id) => isReleased(config, id));
   if (mode === "screenshot") return ["shottosite", "preview", "ephemeral"].every((id) => isReleased(config, id));
+  if (mode === "contracts") return isReleased(config, "contractreader") && isReleased(config, "onchain");
   return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
 }
 

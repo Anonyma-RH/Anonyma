@@ -375,6 +375,7 @@ export const MODE_LABELS = {
   canvas: "Canvas",
   slides: "Slides",
   repos: "Repo Reader",
+  contracts: "Contract Reader",
   translate: "Translate docs",
   notes: "Meeting notes",
   subtitles: "Subtitles",
@@ -415,6 +416,8 @@ const PLACES = [
   ["slides", "Slides", ["slide deck", "presentation", "deck", "powerpoint", "keynote", "present", "pitch"]],
   // Repo Reader: only once released, like Slides.
   ["repos", "Repo Reader", ["github", "repo", "repository", "codebase", "source code", "read code", "ask about code"]],
+  // Contract Reader: only once released, with Onchain Explainer.
+  ["contracts", "Contract Reader", ["contract", "smart contract", "token", "address", "owner", "who controls", "verified code", "proxy", "mint"]],
   // Meeting Notes: only once released, with Voice & Audio.
   ["notes", "Meeting notes", ["meeting", "recording", "transcribe", "transcript", "minutes", "action items", "call notes", "decisions"]],
   // Subtitles: only once released, with Voice & Audio.

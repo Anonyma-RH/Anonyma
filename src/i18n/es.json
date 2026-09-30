@@ -6827,7 +6827,121 @@
     "Edit the timing and text with the video playing, then translate the words and keep the timing": "Edita los tiempos y el texto con el video en reproducción; luego traduce las palabras y conserva los tiempos",
     "Download .srt or .vtt. See the most it can cost first; a part that fails costs nothing": "Descarga .srt o .vtt. Mira primero lo máximo que puede costar; una parte que falla no cuesta nada",
     "Turn a video into subtitles you can edit, translate and download. Only its sound is sent.": "Convierte un video en subtítulos que puedes editar, traducir y descargar. Solo se envía su sonido.",
-    "Opening Subtitles…": "Abriendo Subtítulos…"
+    "Opening Subtitles…": "Abriendo Subtítulos…",
+    "SCREENSHOT TO SITE": "CAPTURA A SITIO",
+    "Screenshot to site": "Captura a sitio",
+    "Drop a screenshot. Get a working page.": "Suelta una captura. Obtén una página que funciona.",
+    "A sketch or a wireframe works too. See the page, change it with words and download it. You see the price before anything runs, and a page you can't use costs nothing.": "También sirve un boceto o un wireframe. Ve la página, cámbiala con palabras y descárgala. Ves el precio antes de que se ejecute nada, y una página que no puedas usar no cuesta nada.",
+    "Sign in to use Screenshot to site.": "Inicia sesión para usar Captura a sitio.",
+    "The demo doesn't build pages.": "La demo no crea páginas.",
+    "A model builds the page, so this needs an account with credits. Nothing is sent until you press the button, and you see the most it can cost first.": "Un modelo crea la página, así que necesitas una cuenta con créditos. No se envía nada hasta que pulses el botón, y ves primero lo máximo que puede costar.",
+    "Hidden details such as location and camera are removed in your browser, and you can black out parts of a picture before it goes anywhere.": "Los detalles ocultos, como la ubicación y la cámara, se quitan en tu navegador, y puedes tapar partes de una imagen antes de que salga a cualquier parte.",
+    "Shown in a sandbox": "Se muestra en un entorno aislado",
+    "The page runs with no network and no access to your account. Its forms and links go nowhere.": "La página se ejecuta sin red y sin acceso a tu cuenta. Sus formularios y enlaces no van a ninguna parte.",
+    "ANONYMA doesn't keep your picture. The page goes to your history, or nowhere if you go off the record.": "ANONYMA no guarda tu imagen. La página va a tu historial, o a ninguna parte si vas sin registro.",
+    "Notes and model": "Notas y modelo",
+    "Keep the page": "Guardar la página",
+    "Notes (optional)": "Notas (opcional)",
+    "Use my brand blue, make it responsive": "Usa el azul de mi marca, hazla adaptable",
+    "In your history, to reopen and change": "En tu historial, para reabrir y cambiar",
+    "Pages are never kept in Device Vault: they're saved to your history or nowhere.": "Las páginas nunca se guardan en la Bóveda del dispositivo: se guardan en tu historial o en ninguna parte.",
+    "Private mode isn't available for pictures: no model with zero data retention can read images.": "El modo privado no está disponible para imágenes: ningún modelo con retención cero de datos puede leerlas.",
+    "No private model can read images right now.": "Ahora mismo ningún modelo privado puede leer imágenes.",
+    "No model that can read images is available right now.": "Ahora mismo no hay ningún modelo disponible que pueda leer imágenes.",
+    "Drop a picture here": "Suelta una imagen aquí",
+    "Reading the picture on this device…": "Leyendo la imagen en este dispositivo…",
+    "PNG, JPEG or WebP. Paste one with Ctrl+V or ⌘V. It's redrawn smaller here before it's sent.": "PNG, JPEG o WebP. Pega una con Ctrl+V o ⌘V. Se vuelve a dibujar más pequeña aquí antes de enviarla.",
+    "Choose a picture": "Elige una imagen",
+    "Paste from clipboard": "Pegar del portapapeles",
+    "Redrawing the picture smaller…": "Volviendo a dibujar la imagen más pequeña…",
+    "A smaller copy of this picture couldn't be made.": "No se pudo crear una copia más pequeña de esta imagen.",
+    "This picture couldn't be read.": "No se pudo leer esta imagen.",
+    "The picture couldn't be read.": "No se pudo leer la imagen.",
+    "Use a PNG, JPEG or WebP picture.": "Usa una imagen PNG, JPEG o WebP.",
+    "This picture couldn't be opened here. Try a PNG, JPEG or WebP under 40 MiB.": "No se pudo abrir esta imagen aquí. Prueba con un PNG, JPEG o WebP de menos de 40 MiB.",
+    "This picture couldn't be opened here.": "No se pudo abrir esta imagen aquí.",
+    "This picture couldn't be opened here. Try a PNG, JPEG or WebP.": "No se pudo abrir esta imagen aquí. Prueba con un PNG, JPEG o WebP.",
+    "This picture is too detailed to shrink enough to send. Try a smaller one.": "Esta imagen tiene demasiado detalle para reducirla lo suficiente y enviarla. Prueba con una más pequeña.",
+    "There's no picture on the clipboard.": "No hay ninguna imagen en el portapapeles.",
+    "This browser didn't allow reading the clipboard. Press Ctrl+V or ⌘V on this page instead.": "Este navegador no permitió leer el portapapeles. Pulsa Ctrl+V o ⌘V en esta página.",
+    "YOUR PAGE": "TU PÁGINA",
+    "New page": "Nueva página",
+    "Change it": "Cámbiala",
+    "Make the buttons rounder and the heading blue": "Haz los botones más redondeados y el título azul",
+    "Add a picture (optional)": "Agregar una imagen (opcional)",
+    "Only the page's code and your words are sent, unless you add a picture.": "Solo se envían el código de la página y tus palabras, a menos que agregues una imagen.",
+    "Versions": "Versiones",
+    "1 version": "1 versión",
+    "Your pages": "Tus páginas",
+    "Veil is on. It can't hide details inside a picture, so a page is made only if your words hold nothing Veil would mask.": "Veil está activado. No puede ocultar detalles dentro de una imagen, así que la página se crea solo si tus palabras no contienen nada que Veil ocultaría.",
+    "Veil would mask 1 detail in these words, and a page needs them as written. Remove it, or turn Veil off.": "Veil ocultaría 1 detalle en estas palabras, y una página las necesita tal como están. Quítalo o desactiva Veil.",
+    "The picture (redrawn small), this text and fixed instructions, nothing else: no other chats, memory, project or standing instructions.": "La imagen (vuelta a dibujar más pequeña), este texto y unas instrucciones fijas, nada más: ni otros chats, ni memoria, ni proyectos ni instrucciones permanentes.",
+    "Injection Shield took invisible characters out of the page before it was sent, and the page is sent as data, not instructions.": "El Escudo contra inyección quitó los caracteres invisibles de la página antes de enviarla, y la página se envía como datos, no como instrucciones.",
+    "· exactly what's held; you're charged only for a usable page": "· exactamente lo que se retiene; solo se te cobra por una página utilizable",
+    "Say what to change to see the most it can cost.": "Di qué cambiar para ver lo máximo que puede costar.",
+    "Choose a picture to see the most it can cost.": "Elige una imagen para ver lo máximo que puede costar.",
+    "Make the page": "Crear la página",
+    "Change the page": "Cambiar la página",
+    "Building the page…": "Creando la página…",
+    "Changing the page…": "Cambiando la página…",
+    "The page appears once it's complete. Nothing is charged unless a usable page comes back.": "La página aparece cuando está completa. No se cobra nada a menos que llegue una página utilizable.",
+    "Your picture goes to the model with its hidden details removed here first. ANONYMA doesn't keep it; only the page can be saved.": "Tu imagen llega al modelo con sus detalles ocultos ya quitados aquí. ANONYMA no la guarda; solo se puede guardar la página.",
+    "A model builds the page, so check it. A page you can't use costs nothing.": "Un modelo crea la página, así que revísala. Una página que no puedas usar no cuesta nada.",
+    "Opening your page…": "Abriendo tu página…",
+    "Your picture": "Tu imagen",
+    "Download .html": "Descargar .html",
+    "Copy the page's code": "Copiar el código de la página",
+    "Open in Code & build": "Abrir en Código y desarrollo",
+    "This page reaches for 1 outside resource, such as a font, a script or a picture. It's blocked in the preview and won't load offline.": "Esta página recurre a 1 recurso externo, como una fuente, un script o una imagen. Está bloqueado en la vista previa y no se cargará sin conexión.",
+    "Take them out": "Quitarlos",
+    "Saved to your history as a page you can reopen and change. Deleting it there deletes it here.": "Guardada en tu historial como una página que puedes reabrir y cambiar. Si la eliminas allí, se elimina aquí.",
+    "Off the record: nothing was saved. Download the page before you leave.": "Sin registro: no se guardó nada. Descarga la página antes de irte.",
+    "Not saved to your history yet.": "Aún no se guardó en tu historial.",
+    "Save it now": "Guardarla ahora",
+    "The preview has no network, so nothing in the page can reach out. Go back to an earlier version with Undo.": "La vista previa no tiene red, así que nada de la página puede conectarse. Vuelve a una versión anterior con Deshacer.",
+    "This page holds what looks like a seed phrase, so it wasn't saved. Download it instead.": "Esta página contiene lo que parece una frase semilla, así que no se guardó. Descárgala en su lugar.",
+    "This page couldn't be saved to your history. It's here to download.": "No se pudo guardar esta página en tu historial. Está aquí para descargarla.",
+    "The model's reply wasn't a web page this tool can show.": "La respuesta del modelo no era una página web que esta herramienta pueda mostrar.",
+    "Stopped. The page wasn't changed, and nothing was charged.": "Detenido. La página no cambió y no se cobró nada.",
+    "That page wasn't found. It may have been deleted.": "No se encontró esa página. Puede que se haya eliminado.",
+    "Took the outside links out. Nothing was sent or charged.": "Se quitaron los enlaces externos. No se envió ni se cobró nada.",
+    "Drop a picture": "Suelta una imagen",
+    "A screenshot of a page you like, a sketch on paper or a wireframe from a design tool.": "Una captura de una página que te guste, un boceto en papel o un wireframe de una herramienta de diseño.",
+    "Get one page": "Obtén una página",
+    "One HTML file with its own styles. One page only, with no backend or sign-in. It looks like your picture and works at phone width.": "Un archivo HTML con sus propios estilos. Solo una página, sin servidor ni inicio de sesión. Se parece a tu imagen y funciona en el ancho de un teléfono.",
+    "Change it with words": "Cámbiala con palabras",
+    "Ask for another colour or layout. Every version is kept, and going back is free.": "Pide otro color o diseño. Cada versión se conserva y volver atrás es gratis.",
+    "Drop a screenshot, sketch or wireframe and get a working web page. Change it with words, then download it.": "Suelta una captura, un boceto o un wireframe y obtén una página web que funciona. Cámbiala con palabras y luego descárgala.",
+    "Opening Screenshot to site…": "Abriendo Captura a sitio…",
+    "Drop a screenshot, a sketch or a wireframe. Get a working page you can see, change with words and download.": "Suelta una captura, un boceto o un wireframe. Obtén una página que funciona: la ves, la cambias con palabras y la descargas.",
+    "One picture in, one self-contained page out, shown in Live Preview's sandbox with no network": "Entra una imagen, sale una página autónoma, que se muestra en el entorno aislado de la Vista previa en vivo, sin red",
+    "Change it with words, keep every version, and download the file or open it in Code & Build": "Cámbiala con palabras, conserva cada versión y descarga el archivo o ábrelo en Código y desarrollo",
+    "See the most it can cost first; a page you can't use costs nothing": "Ve primero lo máximo que puede costar; una página que no puedas usar no cuesta nada",
+    "The model ran out of room before the page was finished, so nothing was made and nothing was charged. Try a simpler picture, or another model.": "El modelo se quedó sin espacio antes de terminar la página, así que no se creó nada y no se cobró nada. Prueba con una imagen más sencilla o con otro modelo.",
+    "The model ran out of room before the page was finished, so the page wasn't changed and nothing was charged. Try a smaller change, or another model.": "El modelo se quedó sin espacio antes de terminar la página, así que la página no cambió y no se cobró nada. Prueba con un cambio más pequeño o con otro modelo.",
+    "The model's reply wasn't a web page this tool can show, so nothing was made and nothing was charged. Try again, or choose another model.": "La respuesta del modelo no era una página web que esta herramienta pueda mostrar, así que no se creó nada y no se cobró nada. Inténtalo de nuevo o elige otro modelo.",
+    "The model's reply wasn't a web page this tool can show, so the page wasn't changed and nothing was charged. Try again, or choose another model.": "La respuesta del modelo no era una página web que esta herramienta pueda mostrar, así que la página no cambió y no se cobró nada. Inténtalo de nuevo o elige otro modelo.",
+    "The page came back longer than 40,000 characters, too long to keep and change, so nothing was made and nothing was charged. Try a simpler picture, or another model.": "La página llegó con más de 40,000 caracteres, demasiado larga para conservarla y cambiarla, así que no se creó nada y no se cobró nada. Prueba con una imagen más sencilla o con otro modelo.",
+    "The changed page came back longer than 40,000 characters, too long to keep, so the page wasn't changed and nothing was charged. Try a smaller change, or another model.": "La página cambiada llegó con más de 40,000 caracteres, demasiado larga para conservarla, así que la página no cambió y no se cobró nada. Prueba con un cambio más pequeño o con otro modelo.",
+    "This page is too long to send back for changes. You can still download it, copy its code or open it in Code & Build.": "Esta página es demasiado larga para enviarla de nuevo y cambiarla. Aún puedes descargarla, copiar su código o abrirla en Código y desarrollo.",
+    "Choose a picture first.": "Elige primero una imagen.",
+    "The picture is malformed.": "La imagen no tiene un formato válido.",
+    "The picture is too large to send. Choose a smaller one.": "La imagen es demasiado grande para enviarla. Elige una más pequeña.",
+    "The notes must be text.": "Las notas deben ser texto.",
+    "The instruction must be text.": "La instrucción debe ser texto.",
+    "The page request is malformed.": "La solicitud de página no tiene un formato válido.",
+    "The page to change is missing.": "Falta la página que se va a cambiar.",
+    "Say what to change.": "Di qué cambiar.",
+    "Choose what to do: make a page or change one.": "Elige qué hacer: crear una página o cambiar una.",
+    "Pages are made off the record: send the request off the record.": "Las páginas se crean sin registro: envía la solicitud sin registro.",
+    "Making a page can't be combined with other chat options.": "Crear una página no se puede combinar con otras opciones del chat.",
+    "This picture and page are too long for this model to work with. Choose a model with a larger context, or a smaller picture. Nothing was sent or charged.": "Esta imagen y esta página son demasiado largas para este modelo. Elige un modelo con más contexto o una imagen más pequeña. No se envió ni se cobró nada.",
+    "Screenshot to site needs a text model.": "Captura a sitio necesita un modelo de texto.",
+    "Page not found.": "No se encontró la página.",
+    "The downloaded file is an ordinary web page, no longer in the sandbox: read its code before you trust it.": "El archivo descargado es una página web normal y ya no está en el entorno aislado: lee su código antes de confiar en él.",
+    "From a picture": "A partir de una imagen",
+    "Requested change": "Cambio pedido",
+    "Removed the outside links": "Se quitaron los enlaces externos"
   },
   "patterns": [
     {
@@ -11117,6 +11231,58 @@
     {
       "en": "This video is {0} long; these subtitles were made for {1}.",
       "es": "Este video dura {0}; estos subtítulos se hicieron para {1}."
+    },
+    {
+      "en": "Version {0}",
+      "es": "Versión {0}"
+    },
+    {
+      "en": "The newest {0} versions are kept. Going back to one is free; changing it makes a new version.",
+      "es": "Se conservan las {0} versiones más recientes. Volver a una es gratis; cambiarla crea una versión nueva."
+    },
+    {
+      "en": "VERSION {0} OF {1}",
+      "es": "VERSIÓN {0} DE {1}"
+    },
+    {
+      "en": "{0} versions",
+      "es": "{0} versiones"
+    },
+    {
+      "en": "Veil would mask {0} details in these words, and a page needs them as written. Remove them, or turn Veil off.",
+      "es": "Veil ocultaría {0} detalles en estas palabras, y una página las necesita tal como están. Quítalos o desactiva Veil."
+    },
+    {
+      "en": "Sent to the model as a {0} of {1}.",
+      "es": "Se envía al modelo como {0} de {1}."
+    },
+    {
+      "en": "{0} characters written so far",
+      "es": "{0} caracteres escritos hasta ahora"
+    },
+    {
+      "en": "This page reaches for {0} outside resources, such as fonts, scripts or pictures. They're blocked in the preview and won't load offline.",
+      "es": "Esta página recurre a {0} recursos externos, como fuentes, scripts o imágenes. Están bloqueados en la vista previa y no se cargarán sin conexión."
+    },
+    {
+      "en": "Made with {0}.",
+      "es": "Creada con {0}."
+    },
+    {
+      "en": "Changed with {0}.",
+      "es": "Cambiada con {0}."
+    },
+    {
+      "en": "The model didn't make a page from this: “{0}” Nothing was charged.",
+      "es": "El modelo no creó una página con esto: “{0}” No se cobró nada."
+    },
+    {
+      "en": "Keep the notes to {0} characters.",
+      "es": "Mantén las notas por debajo de {0} caracteres."
+    },
+    {
+      "en": "Keep the instruction to {0} characters.",
+      "es": "Mantén la instrucción por debajo de {0} caracteres."
     }
   ]
 }

@@ -113,6 +113,7 @@ export function refuseAutoTask(body, { task = false, blind = false } = {}) {
     body.taskTool !== undefined ||
     body.canvas !== undefined ||
     body.slides !== undefined ||
+    body.shottosite !== undefined ||
     !AUTO_SECTIONS.includes(body.mode ?? "chat")
   )
     fail(400, AUTO_NOT_OFFERED, "auto_not_offered");

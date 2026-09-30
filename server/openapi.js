@@ -3520,6 +3520,53 @@ route("delete", "/api/slides/{id}", "Delete a saved deck", {
   response: ref("Ok"),
   description: "Deletes it from the server. A copy exported as a PDF or HTML file is yours and isn't affected.",
 });
+// Screenshot to site (update "shottosite", which also needs "preview" and, for
+// saved pages, "code"). Making a page from a picture, or changing one with
+// words, is an /api/chat request (and /api/quote estimate) carrying
+// `shottosite`, described on POST /api/site-pages below.
+const sitePage = object({
+  id: { ...string, description: "The conversation the page is saved as" },
+  title: string,
+  created: integer,
+  updated: integer,
+  versions: integer,
+});
+route("get", "/api/site-pages", "Your saved pages", {
+  response: object({
+    data: array(sitePage),
+    limit: { ...integer, description: "Pages listed (30)" },
+    max_versions: { ...integer, description: "Versions kept per page (12)" },
+  }),
+  description:
+    "Newest edit first. A saved page is an ordinary conversation in Code & Build's mode (open it with GET /api/conversations/{id}, or in the workspace at /workspace/code?c={id}); this lists the ones that Screenshot to site made. Pages made off the record or in Private Mode are never saved.",
+});
+route("post", "/api/site-pages", "Save versions of a page", {
+  status: 201,
+  body: object(
+    {
+      id: { ...string, description: "A saved page to add these versions to; omit to save a new page" },
+      versions: {
+        ...array(
+          object(
+            {
+              label: { ...string, minLength: 1, maxLength: 1100, description: "What asked for it, e.g. \"Change: make it blue\"" },
+              html: { ...string, maxLength: 40000, description: "The page: one HTML document" },
+              request_id: { ...string, description: "The request that made it: its cost is read from the account's own settled hold, never from this body" },
+              from: { ...integer, description: "Optional: the version it was changed from (0-based)" },
+            },
+            ["label", "html"],
+          ),
+        ),
+        minItems: 1,
+        maxItems: 12,
+      },
+    },
+    ["versions"],
+  ),
+  response: object({ id: string, title: string, saved: integer }),
+  description:
+    "Saves pages as one conversation in Code & Build's mode, a message pair per version (what was asked, then the page as one block named index.html). Only words and pages are stored: never the picture, and nothing about the request beyond the model's id and its cost. A page that isn't a document this tool can show is refused (400 invalid_page); so is one holding a seed phrase once Seed Guard is live (400 seed_phrase_blocked, no override). The newest 12 versions stay; the oldest go first. 200 when adding to an existing page, 201 for a new one; 404 page_not_found for another account's page or a conversation this tool didn't make. Erased by account closure and Panic Wipe, and in the account export, as any conversation. Making a page is a POST /api/chat with ephemeral: true and shottosite: { task: \"make\", image: { url }, notes? } (a PNG, JPEG or WebP data URL of at most 600,000 characters; notes up to 1,000) or { task: \"change\", page: { html }, instruction (3 to 1,000 characters), image? }; the current page goes to the model as delimited data. A vision model is required (400 Choose a model that accepts image input.). The server builds the messages and a reply budget of 12,000 tokens, lowered to the model's limits (400 site_too_long when its context leaves too little room); POST /api/quote prices the same body with the picture as { mime, chars } only (its kind and length, never the picture), and the request holds exactly that price. The reply is sent only once it reads as a page (an HTML document, read tolerantly from a code fence or prose around it); until then the stream carries { shottosite: { chars } } counts. A reply that doesn't releases the hold and charges nothing: 502 site_cut_short (out of room), site_too_long (over 40,000 characters), site_refused (the model said the picture had nothing to build) or site_unreadable. 400 invalid_shottosite for a malformed payload or one combined with other chat options (a conversation, project, memory, web search, Auto, another task or Seed Guard's override). Auto Model is never offered here.",
+});
 // Team Treasury (update "treasury", which also needs "collab").
 const treasuryAmount = (verb) =>
   object(

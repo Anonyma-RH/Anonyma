@@ -58,6 +58,9 @@ export function siteRoutes({ app, db, cfg }) {
     filesearch: isReleased(cfg, "filesearch") && isReleased(cfg, "files") && isReleased(cfg, "documents"),
     // Redact a PDF's page, which runs in the browser alone.
     pdfredact: isReleased(cfg, "pdfredact"),
+    // Screenshot to site's page: its requests are off the record and its result
+    // shows in Live Preview.
+    screenshot: isReleased(cfg, "shottosite") && isReleased(cfg, "preview") && isReleased(cfg, "ephemeral"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

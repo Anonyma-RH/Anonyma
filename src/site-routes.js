@@ -102,6 +102,8 @@ export function knownPage(path, served = {}) {
     (served.characters === true && path === "/workspace/characters") ||
     // Redact a PDF's page, likewise.
     (served.pdfredact === true && path === "/workspace/pdfredact") ||
+    // Screenshot to site's page, likewise.
+    (served.screenshot === true && path === "/workspace/screenshot") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

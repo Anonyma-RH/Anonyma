@@ -46,6 +46,7 @@ import {
 import { prepareCanvasRequest, canvasBudget, canvasVerdict } from "../canvas.js";
 import { prepareSlidesRequest, slidesBudget, slidesAcceptor, streamedSlides } from "../slides.js";
 import { prepareRepoRequest, repoBudget } from "../repo-reader.js";
+import { prepareSiteRequest, siteBudget, siteAcceptor, streamedPage } from "../shot-to-site.js";
 
 // Attached documents follow the typed prompt as <document> blocks
 // (src/documents.js): the prompt names the chat, or the first file's name
@@ -87,6 +88,14 @@ export function chatRoutes(ctx) {
     // reads as slides is paid for, and nothing else of it is sent (below).
     const slidesTask = api ? undefined : prepareSlidesRequest(req.body);
     if (slidesTask) req.acceptOutput = slidesAcceptor(slidesTask);
+    // Screenshot to site: a page made from a picture, or changed with words,
+    // built the same way from its checked `shottosite` payload
+    // (server/shot-to-site.js), right after Slides (each refuses ready-made
+    // `messages`, so a request carrying both is refused). Its release gate is
+    // in featuresFor. Only a reply that reads as a page is paid for, and
+    // nothing else of it is sent (below).
+    const siteTask = api ? undefined : prepareSiteRequest(req.body);
+    if (siteTask) req.acceptOutput = siteAcceptor(siteTask);
     // Document Compare: "Summarize changes" builds its messages here from
     // its checked `compare` payload (server/compare.js), before Sheets and
     // Seed Guard read them; after Study, so a request carrying both is
@@ -125,7 +134,7 @@ export function chatRoutes(ctx) {
     const autoAsked = !api && req.body.auto !== undefined;
     if (autoAsked)
       refuseAutoTask(req.body, {
-        task: !!(study || compareTask || sheetsTask || catchupTask || repoTask),
+        task: !!(study || compareTask || sheetsTask || catchupTask || repoTask || siteTask),
         blind: !!req.blind,
       });
     const autoSettings = autoAsked ? requestSettings(req.body) : null;
@@ -147,6 +156,11 @@ export function chatRoutes(ctx) {
     if (slidesTask && m.type === "chat") {
       if (imageCallable(m)) fail(400, "Slides need a text model.", "unsupported_model");
       req.body.max_tokens = slidesBudget(slidesTask, m, req.body.messages);
+    }
+    // A page's reply budget fitted to the model (server/shot-to-site.js).
+    if (siteTask && m.type === "chat") {
+      if (imageCallable(m)) fail(400, "Screenshot to site needs a text model.", "unsupported_model");
+      req.body.max_tokens = siteBudget(siteTask, m, req.body.messages);
     }
     // A summary's reply budget fitted to the chosen model (src/compare-spec.js).
     if (compareTask && m?.type === "chat")
@@ -386,10 +400,11 @@ export function chatRoutes(ctx) {
         guard: team?.guard ?? req.reserveGuard,
       });
     // Auto promises one maximum for its quote, limit check and reservation.
-    // Slides and Repo Reader questions hold exactly the quoted maximum
-    // (server/slides.js, server/repo-reader.js): the "up to" figure shown,
-    // the balance and limit checks and the hold are one number.
-    const headroom = auto || slidesTask || repoTask ? amount : Math.ceil(amount * cfg.holdMargin);
+    // Slides, Repo Reader and Screenshot to site hold exactly the quoted
+    // maximum (server/slides.js, server/repo-reader.js,
+    // server/shot-to-site.js): the "up to" figure shown, the balance and
+    // limit checks and the hold are one number.
+    const headroom = auto || slidesTask || repoTask || siteTask ? amount : Math.ceil(amount * cfg.holdMargin);
     try {
       reservation(headroom);
     } catch (e) {
@@ -546,7 +561,8 @@ export function chatRoutes(ctx) {
     });
     const images = [];
     const citations = [];
-    let slidesStarted = 0;
+    let slidesStarted = 0,
+      siteChars = 0;
     // Sources the provider cited for a web search, deduplicated and capped.
     const addCitation = (url, title) => {
       if (
@@ -694,6 +710,11 @@ export function chatRoutes(ctx) {
         if (slidesTask) {
           const started = streamedSlides(output);
           if (started !== slidesStarted) send({ slides: { started: (slidesStarted = started) } });
+        } else if (siteTask) {
+          // Screenshot to site: only how much has been written so far.
+          // (every 400 characters or so, not with every chunk).
+          const written = streamedPage(output);
+          if (written - siteChars >= 400 || (!siteChars && written)) send({ shottosite: { chars: (siteChars = written) } });
         } else if (part.choices?.length) {
           const { images: upstreamImages, ...normalizedDelta } = delta;
           send(
@@ -777,7 +798,7 @@ export function chatRoutes(ctx) {
       });
       attributeMediaCost(receipt);
       // Slides: the reply, whole, once it's known to be usable and is paid for.
-      if (slidesTask)
+      if (slidesTask || siteTask)
         send(chunk({ choices: [{ index: 0, delta: { content: output }, finish_reason: finishReason || "stop" }] }));
       // An Ed25519-signed, independently verifiable copy of this receipt.
       // The signed id is the requestId alone, never the user-prefixed hold.

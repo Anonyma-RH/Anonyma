@@ -15,6 +15,7 @@ import { slidesTestReply } from "./slides.js";
 import { meetingNotesTestReply } from "./meeting-notes.js";
 import { subtitleTranslateTestReply } from "./subtitles.js";
 import { repoTestReply } from "./repo-reader.js";
+import { siteTestReply } from "./shot-to-site.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -278,11 +279,12 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       ? JSON.stringify({ verdict: "unverified", reason: "Local test provider: no web search was run.", sources: [] })
       : null;
     // Slides' deck and slide writer (server/slides.js) finishes the same way,
-    // and so does Repo Reader's answer (server/repo-reader.js).
+    // and so does Repo Reader's answer (server/repo-reader.js) and Screenshot
+    // to site's page (server/shot-to-site.js).
     // Translate docs' stand-in (server/translate-test.js) can also fail on
     // purpose, as a provider error would.
     const finishing =
-      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? canvasTestReply(body.messages) ?? slidesTestReply(body.messages) ?? translateTestReply(body.messages) ?? repoTestReply(body.messages);
+      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? canvasTestReply(body.messages) ?? slidesTestReply(body.messages) ?? translateTestReply(body.messages) ?? repoTestReply(body.messages) ?? siteTestReply(body.messages);
     if (finishing?.error) {
       yield { error: { message: finishing.error } };
       return;
@@ -308,7 +310,9 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
       : "**Local test provider**\n\nYou asked: " +
         text +
         "\n\nThis response verifies streaming, saved conversations, usage receipts, and the shared credit ledger. Configure your gateway key to receive real model output.";
-    for (const part of answer.match(/.{1,16}|\n/g) || []) {
+    // (A stand-in may ask for bigger pieces, so a very long reply is quick.)
+    const piece = finishing?.chunk > 16 ? new RegExp(`.{1,${finishing.chunk}}|\\n`, "g") : /.{1,16}|\n/g;
+    for (const part of answer.match(piece) || []) {
       signal?.throwIfAborted();
       await new Promise((r) => setTimeout(r, 12));
       yield { choices: [{ delta: { content: part }, index: 0 }] };

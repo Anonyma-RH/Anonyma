@@ -55,6 +55,8 @@ const PdfRedact = lazy(() => import("./PdfRedact.jsx"));
 const FileSearch = lazy(() => import("./FileSearch.jsx"));
 // Characters: its page, editor and picture maker load only on its page.
 const Characters = lazy(() => import("./Characters.jsx"));
+// Screenshot to site: its page (and the code that redraws a picture) loads only there.
+const ShotToSite = lazy(() => import("./ShotToSite.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
@@ -347,6 +349,7 @@ export function AppSidebar({
     // On-Device Model: a chat mode, with the others.
     ["device", "On-device", "Download a small model to chat directly in your browser, without sending your prompts to a provider."],
     ["code", "Code & build", "Write, explain and debug code with AI. Keep generated files together as you build."],
+    ["screenshot", "Screenshot to site", "Drop a screenshot, sketch or wireframe and get a working web page. Change it with words, then download it."],
     ["image", "Images"],
     ["video", "Video"],
     ["audio", "Voice & audio", "Turn text into spoken audio, or transcribe a recording into text."],
@@ -388,6 +391,7 @@ export function AppSidebar({
     .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"))
     .filter(([id]) => id !== "characters" || modeReleased(config, "characters"))
     .filter(([id]) => id !== "pdfredact" || isReleased(config, "pdfredact"))
+    .filter(([id]) => id !== "screenshot" || modeReleased(config, "screenshot"))
     // Research Watch lives on the Routines page, so the tool says so once it's live.
     .map(([id, label, description]) =>
       id === "routines" && isReleased(config, "researchwatch") && isReleased(config, "deepresearch") && isReleased(config, "search")
@@ -701,7 +705,9 @@ export default function Workspace() {
     // Characters' page, likewise.
     (mode === "characters" && (!config || modeReleased(config, "characters"))) ||
     // Redact a PDF's page, likewise (it runs in the browser alone).
-    (mode === "pdfredact" && (!config || isReleased(config, "pdfredact")));
+    (mode === "pdfredact" && (!config || isReleased(config, "pdfredact"))) ||
+    // Screenshot to site's page, the same way (it needs Live Preview too).
+    (mode === "screenshot" && (!config || modeReleased(config, "screenshot")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -4140,6 +4146,7 @@ export default function Workspace() {
                 filesearch: "Search files",
                 characters: "Characters",
                 pdfredact: "Redact a PDF",
+                screenshot: "Screenshot to site",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4488,6 +4495,22 @@ export default function Workspace() {
                   config={config}
                   models={models}
                   characters={characters}
+                />
+              </Suspense>
+            )
+          ) : mode === "screenshot" ? (
+            modeReleased(config, "screenshot") && (
+              <Suspense fallback={<p className="sts-loading">Opening Screenshot to site…</p>}>
+                <ShotToSite
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  models={models}
+                  config={config}
+                  refresh={refresh}
+                  veilOn={veilOn}
+                  setVeilOn={setVeilOn}
+                  veilWords={veilWords}
                 />
               </Suspense>
             )

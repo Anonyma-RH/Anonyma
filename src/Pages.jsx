@@ -909,6 +909,7 @@ const featureIcons = {
   phototools: "image",
   filesearch: "filesearch",
   characters: "users",
+  shottosite: "site",
   researchwatch: "research",
   burnlinks: "flame",
   pdfredact: "pdf",

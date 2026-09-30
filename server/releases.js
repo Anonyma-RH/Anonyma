@@ -1562,7 +1562,7 @@ export const UPDATES = [
     // routines and watches go through their own routes, so restoring each
     // needs its own update (featuresFor). Nothing is charged: no model is
     // called.
-    released: false,
+    released: true,
   },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on

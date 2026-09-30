@@ -1073,6 +1073,12 @@ async function pageModule() {
      export const seedGuardLive = () => false;
      export const useSeedScan = () => null;`,
   );
+  const secret = stub(
+    "secret.mjs",
+    `export const SecretGuardNotice = () => null;
+     export const useSecretGuard = () => false;
+     export const useSecretScan = () => [];`,
+  );
   const router = stub(
     "router.mjs",
     `export const Link = ({ children, to, ...p }) => React.createElement("a", { href: to, ...p }, children);
@@ -1086,6 +1092,8 @@ async function pageModule() {
       .replace(/^import "\.\/[\w-]+\.css";$/gm, "")
       .replace(/from "\.\/ui\.jsx"/g, `from "${ui}"`)
       .replace(/from "\.\/SeedGuard\.jsx"/g, `from "${seed}"`)
+      .replace(/from "\.\/SecretGuard\.jsx"/g, `from "${secret}"`)
+      .replace(/from "\.\/secret-guard\.js"/g, `from "${new URL("../src/secret-guard.js", import.meta.url)}"`)
       .replace(/from "react-router-dom"/g, `from "${router}"`)
       .replace(/from "\.\/CharacterChat\.jsx"/g, `from "${chat}"`)
       .replace(/from "\.\/(lib|characters|character-avatar)\.js"/g, (m, f) => `from "${new URL(`../src/${f}.js`, import.meta.url)}"`)

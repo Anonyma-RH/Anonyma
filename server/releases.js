@@ -1415,7 +1415,7 @@ export const UPDATES = [
     // another signed-in account reads in full before adding its own copy: no
     // chats, nothing about its maker. There are no other server routes and no
     // model call of its own, so nothing new to price or hold.
-    released: false,
+    released: true,
   },
   {
     id: "pdfredact",

@@ -70,6 +70,7 @@ export function useSecretScan(active, parts) {
 const VERBS = {
   send: { mask: "Mask and send", anyway: "Send anyway" },
   save: { mask: "Mask and save", anyway: "Save anyway" },
+  add: { mask: "Mask and add", anyway: "Add anyway" },
 };
 const where = (f) => (f.name ? `line ${f.line} of ${f.name}` : `line ${f.line}`);
 export function secretHeadline(finds) {
@@ -200,8 +201,8 @@ export function SecretGuardSettings({ config, user, demo = false }) {
             <span>
               <b>Check what I send for secrets</b>
               <small>
-                On by default. The chat composer (and Code & Build), attached text files, Canvas, Routines and Research
-                Watch.
+                On by default. The chat composer (and Code & Build), attached text files, Canvas, Routines, Research
+                Watch, Characters, Screenshot to site, Debate and subtitle translations.
               </small>
             </span>
           </label>

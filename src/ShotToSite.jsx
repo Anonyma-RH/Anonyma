@@ -8,6 +8,8 @@ import { RedactChipTools, RedactEditor, redactReleased } from "./Redact.jsx";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import { PrivateModeToggle, privateModeReleased } from "./PrivateMode.jsx";
 import { SeedGuardNotice, seedGuardLive } from "./SeedGuard.jsx";
+import { SecretGuardNotice, useSecretGuard, useSecretScan } from "./SecretGuard.jsx";
+import { maskSecrets, removeSecrets, secretGuardTurn } from "./secret-guard.js";
 import { LivePreview } from "./LivePreview.jsx";
 import { VeilToggle } from "./Veil.jsx";
 import { createVeilState, veil } from "./veil.js";
@@ -249,13 +251,25 @@ export default function ShotToSite({ demo, user, models = [], config, refresh, v
   const seedBlocked = !!seedHit && !(isSoft(seedHit) && seedOk);
   const veiled = useMemo(() => (veiling && words ? veil(words, createVeilState(), veilWords).count : 0), [veiling, words, veilWords]);
   const active = changing ? follow : first;
+  // Secret Guard: a password, key or token in the notes or the change holds
+  // the page (and its estimate, which posts the same words), after Seed
+  // Guard's notice, until it's masked, removed or sent anyway. Masked, the
+  // model and the page see a placeholder like [SECRET_1].
+  const secretLive = useSecretGuard(config, user, demo);
+  const secretFinds = useSecretScan(secretLive, words);
+  const [secretOk, setSecretOk] = useState(false),
+    [secretQueued, setSecretQueued] = useState(null);
+  useEffect(() => setSecretOk(false), [words]);
+  const secretHeld = secretFinds.length > 0 && !secretOk;
+  const secretTurn = secretGuardTurn({ seedHit: seedBlocked ? seedHit : null, finds: secretHeld ? secretFinds : [] });
+  const setWords = changing ? setInstruction : setNotes;
 
   // ---- The quote: exactly what a run would hold ----
   const changeText = instruction.trim();
   const shieldScan = useMemo(() => (shieldOn && html ? scanText(html) : null), [shieldOn, html]);
   const sentHtml = useMemo(() => (shieldScan ? cleanText(html, shieldScan) : html), [html, shieldScan]);
   const quoteBody = useMemo(() => {
-    if (!live || !model || seedBlocked || veiled > 0) return null;
+    if (!live || !model || seedBlocked || secretHeld || veiled > 0) return null;
     if (!changing) {
       if (!first.ready) return null;
       return { model, shottosite: makePayload({ task: "make", image: first.ready, notes, quote: true }) };
@@ -266,7 +280,7 @@ export default function ShotToSite({ demo, user, models = [], config, refresh, v
       model,
       shottosite: makePayload({ task: "change", html: sentHtml, instruction: changeText, image: follow.ready, quote: true }),
     };
-  }, [live, model, seedBlocked, veiled, changing, first.ready, notes, tooBigToChange, changeText, sentHtml, follow.photo, follow.ready]);
+  }, [live, model, seedBlocked, secretHeld, veiled, changing, first.ready, notes, tooBigToChange, changeText, sentHtml, follow.photo, follow.ready]);
   const estimate = useCreditEstimate(quoteBody);
   const over = estimate.status === "ready" && estimate.available != null && estimate.credits > estimate.available;
   const limited = estimate.status === "ready" && !over && estimate.room != null && estimate.credits > estimate.room;
@@ -280,6 +294,7 @@ export default function ShotToSite({ demo, user, models = [], config, refresh, v
     !over &&
     !limited &&
     !seedBlocked &&
+    !secretHeld &&
     veiled === 0 &&
     !!quoteBody &&
     !blocked(active);
@@ -397,6 +412,15 @@ export default function ShotToSite({ demo, user, models = [], config, refresh, v
     }
   }
   const stop = () => controller.current?.abort();
+  // Secret Guard's Mask and send, or Send anyway: the page is made once the
+  // estimate for the words as they now are is in (never on a stale one).
+  useEffect(() => {
+    if (!secretQueued) return;
+    if (canRun && !(secretQueued === "change" && tooBigToChange)) {
+      setSecretQueued(null);
+      run(secretQueued);
+    } else if (busy || estimate.status === "unavailable" || over || limited) setSecretQueued(null);
+  }, [secretQueued, canRun, busy, estimate.status, over, limited]);
 
   // ---- A saved page, opened from the address or the list ----
   const wanted = params.get("page");
@@ -709,6 +733,20 @@ export default function ShotToSite({ demo, user, models = [], config, refresh, v
             </>
           )}
           {seedHit && <SeedGuardNotice hit={seedHit} busy={!!busy} hardOverride={false} onProceed={() => setSeedOk(true)} />}
+          <SecretGuardNotice
+            finds={secretTurn === "secret" ? secretFinds : []}
+            busy={!!busy || !!secretQueued}
+            note="Mask swaps each one for a placeholder like [SECRET_1] in your words before anything is sent. The page keeps the placeholder; put the real value in after you download it."
+            onMask={() => {
+              setWords((w) => maskSecrets(w, {}).text);
+              setSecretQueued(changing ? "change" : "make");
+            }}
+            onRemove={() => setWords((w) => removeSecrets(w).text)}
+            onProceed={() => {
+              setSecretOk(true);
+              setSecretQueued(changing ? "change" : "make");
+            }}
+          />
           {veilLive && (
             <div className="sts-veil">
               <VeilToggle on={veiling} onToggle={() => !privacyOn && setVeilOn?.((v) => !v)} />

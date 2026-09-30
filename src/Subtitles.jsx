@@ -9,6 +9,8 @@ import { getLanguage } from "./i18n.js";
 import { createVeilState, veil, unveil, saveVeilState, loadVeilState } from "./veil.js";
 import { VeilToggle } from "./Veil.jsx";
 import { scanSecrets, seedGuardMessage, isSoft } from "./seed-guard.js";
+import { SecretGuardNotice, useSecretGuard, useSecretScan } from "./SecretGuard.jsx";
+import { maskSecrets } from "./secret-guard.js";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import { PrivateModeToggle, NoPrivateModelsNotice, privateModeReleased } from "./PrivateMode.jsx";
 import { CleanNote } from "./CleanUploads.jsx";
@@ -114,6 +116,8 @@ export default function Subtitles({ demo, user, models = [], config, refresh, ve
   const seedGuard = isReleased(config, "seedguard");
   const offRecordLive = isReleased(config, "ephemeral");
   const cleanLive = isReleased(config, "cleanuploads");
+  // Secret Guard, for the cue text a translation sends.
+  const secretLive = useSecretGuard(config, user, demo);
 
   const [file, setFile] = useState(null),
     [rec, setRec] = useState(null),
@@ -601,6 +605,7 @@ export default function Subtitles({ demo, user, models = [], config, refresh, ve
           onDelete={() => remove(doc.id)}
           mounted={mounted}
           vaultLive={vaultLive}
+          secretLive={secretLive}
         />
       ) : run ? (
         <Progress
@@ -1065,6 +1070,7 @@ function Editor({
   onDelete,
   mounted,
   vaultLive,
+  secretLive = false,
 }) {
   const track = doc.tracks[doc.active] || doc.tracks[0];
   const cues = track.cues;
@@ -1259,6 +1265,7 @@ function Editor({
           veilLive={veilLive}
           trailLive={trailLive}
           mounted={mounted}
+          secretLive={secretLive}
           onDone={(lang, summary) => {
             setTranslated((list) => [...list, { lang, ...summary }]);
             focusTrack(lang);
@@ -1422,7 +1429,7 @@ function Editor({
 
 // ---- Translating ----
 
-function TranslatePanel({ doc, track, update, models, config, refresh, veilOn, setVeilOn, veilWords, veilState, veilLive, trailLive, mounted, onDone }) {
+function TranslatePanel({ doc, track, update, models, config, refresh, veilOn, setVeilOn, veilWords, veilState, veilLive, trailLive, mounted, onDone, secretLive = false }) {
   const remembered = useMemo(() => readStore(CHOICES, {}) || {}, []);
   const privateLive = privateModeReleased(config);
   const uncensored = config?.releases?.uncensoredModels || [];
@@ -1451,35 +1458,52 @@ function TranslatePanel({ doc, track, update, models, config, refresh, veilOn, s
   }, [choices]);
   const chosen = choices.find((m) => m.id === model);
   const noPrivate = privateOn && !choices.length;
+  // Secret Guard: a password, key or token in the cues holds the
+  // translation until it's masked (the default) or sent anyway. Masked, each
+  // goes as a placeholder like [SECRET_1] in the set's tag map, so the
+  // translated cues show the value again here; your own cues don't change.
+  const cueText = useMemo(() => usableCues(track.cues).map((c) => c.text).join("\n"), [track.cues]);
+  const secretFinds = useSecretScan(secretLive, cueText);
+  const [secretChoice, setSecretChoice] = useState(null);
+  useEffect(() => setSecretChoice(null), [cueText]);
+  const secretHeld = secretFinds.length > 0 && !secretChoice && !job;
+  const maskingSecrets = secretFinds.length > 0 && secretChoice === "mask";
+  const [secretQueued, setSecretQueued] = useState(false);
 
   // What would be sent: the track's cues in batches, masked by Veil with a
   // copy of the set's tag map, so a quote and its run send the same text.
   const fresh = useMemo(() => {
     const cues = usableCues(track.cues);
     // The set's own tag map, so a value has the same tag in a quote, a run,
-    // a retry and the saved set (masking is the same every time).
-    const state = veilState.current;
+    // a retry and the saved set (masking is the same every time). Secret
+    // Guard's placeholders go in a copy of it, used by this translation only,
+    // so the set's own map (and what's saved with it) never holds a secret.
+    const base = veilState.current;
+    const state = maskingSecrets
+      ? { map: { ...base.map }, counters: { ...base.counters }, valueToTag: { ...base.valueToTag } }
+      : base;
     let masked = 0;
     const batches = translationBatches(cues).map((b) => ({
       index: b.index,
       items: b.items.map((i) => {
-        if (!veiling) return i;
-        const r = veil(i.text, state, veilWords || []);
+        const text = maskingSecrets ? maskSecrets(i.text, state).text : i.text;
+        if (!veiling) return text === i.text ? i : { n: i.n, text };
+        const r = veil(text, state, veilWords || []);
         masked += r.count;
         return { n: i.n, text: r.text };
       }),
     }));
     return { cues, batches, state, masked };
-  }, [track.cues, veiling, veilWords]);
+  }, [track.cues, veiling, veilWords, maskingSecrets]);
   const plan = job || fresh;
   const of = plan.batches.length;
   const done = job ? job.results : {};
   const todo = plan.batches.map((b) => b.index).filter((i) => !done[i]);
   const sizes = useMemo(() => plan.batches.map((b) => measure(translateMessages({ target: job?.target || target, batch: b, of }))), [plan, target, of]);
   const quoteBody = useMemo(() => {
-    if (run || !todo.length || !chosen) return null;
+    if (run || !todo.length || !chosen || secretHeld) return null;
     return { target: job?.target || target, model, ...(privateOn ? { private: true } : {}), sizes: todo.map((i) => sizes[i]) };
-  }, [run, todo.join(","), chosen, model, target, privateOn, sizes]);
+  }, [run, todo.join(","), chosen, model, target, privateOn, sizes, secretHeld]);
   const quoteKey = quoteBody ? JSON.stringify(quoteBody) : "";
   useEffect(() => {
     if (!quoteBody) return setQuote({ status: "idle" });
@@ -1501,9 +1525,18 @@ function TranslatePanel({ doc, track, update, models, config, refresh, veilOn, s
   const q = quote.status === "ready" ? quote : quote.last;
   const quoteFresh = quote.status === "ready" && quote.key === quoteKey && quote.tick === tick;
   const tone = toneOf(q);
+  // Secret Guard's Mask and send, or Send anyway: the translation starts
+  // once the estimate for what will now be sent is in.
+  useEffect(() => {
+    if (!secretQueued) return;
+    if (quoteFresh && tone === "ready" && !secretHeld) {
+      setSecretQueued(false);
+      translate();
+    } else if (run || quote.status === "unavailable" || (quoteFresh && tone !== "ready")) setSecretQueued(false);
+  }, [secretQueued, quoteFresh, tone, secretHeld, run, quote.status]);
 
   async function translate() {
-    if (run || !quoteFresh || !chosen || noPrivate || !todo.length) return;
+    if (run || !quoteFresh || !chosen || noPrivate || !todo.length || secretHeld) return;
     saveStore(CHOICES, { ...remembered, target, model });
     const snapshot =
       job || {
@@ -1659,6 +1692,19 @@ function TranslatePanel({ doc, track, update, models, config, refresh, veilOn, s
         )}
       </div>
       {noPrivate && <NoPrivateModelsNotice />}
+      <SecretGuardNotice
+        finds={secretHeld ? secretFinds : []}
+        busy={secretQueued}
+        onMask={() => {
+          setSecretChoice("mask");
+          setSecretQueued(true);
+        }}
+        onProceed={() => {
+          setSecretChoice("anyway");
+          setSecretQueued(true);
+        }}
+        note="Mask swaps each one for a placeholder like [SECRET_1] in what's sent. The translation shows your value again here, and your own subtitles don't change."
+      />
       <p className={"subs-cost " + tone} role="status">
         {q ? (
           <>
@@ -1698,7 +1744,7 @@ function TranslatePanel({ doc, track, update, models, config, refresh, veilOn, s
             Stop
           </button>
         ) : (
-          <button type="button" className="button" disabled={!quoteFresh || !chosen || noPrivate || !todo.length || tone !== "ready"} onClick={translate}>
+          <button type="button" className="button" disabled={!quoteFresh || !chosen || noPrivate || !todo.length || secretHeld || tone !== "ready"} onClick={translate}>
             <Icon name="languages" size={15} />
             {job && failedCount ? "Retry those parts" : "Translate"}
           </button>

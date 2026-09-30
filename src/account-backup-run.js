@@ -5,10 +5,12 @@
 import {
   BACKUP_FORMAT,
   BACKUP_VERSION,
+  characterKey,
   memoryKey,
   projectKey,
   restoreShape,
   routineKey,
+  subtitleKey,
   veilState,
   vaultKey,
   watchKey,
@@ -37,7 +39,7 @@ export async function makeBackup({ api, engine, passphrase, include, vaultChats 
     for (const part of await engine.push(items)) pieces.push(part);
   };
   await push([{ t: "manifest", format: BACKUP_FORMAT, version: BACKUP_VERSION, created: new Date(created).toISOString() }]);
-  const settings = ["projects", "scrolls", "instructions", "memory", "routines", "research", "watches", "bookmarks"];
+  const settings = ["projects", "scrolls", "instructions", "memory", "routines", "research", "watches", "bookmarks", "characters", "subtitles"];
   if (settings.some((k) => include.has(k))) {
     onProgress?.({ step: "content" });
     const c = await api("/api/account/backup/content", { signal });
@@ -53,6 +55,10 @@ export async function makeBackup({ api, engine, passphrase, include, vaultChats 
     await add("routines", c.routines, "routine");
     await add("research", c.research, "research");
     await add("watches", c.watches, "watch");
+    // Characters with their pictures (never their copy links), and saved
+    // subtitle sets with their cues.
+    await add("characters", c.characters, "character");
+    await add("subtitles", c.subtitles, "subtitles");
     // Bookmarks point at messages, so they go only with the chats.
     if (include.has("chats")) await add("bookmarks", c.bookmarks, "bookmark");
   }
@@ -102,6 +108,8 @@ const REASONS = {
   watch_limit: "limit",
   memory_full: "limit",
   bookmark_limit: "limit",
+  character_limit: "limit",
+  subtitles_limit: "limit",
 };
 async function all(engine, kind) {
   const out = [];
@@ -366,6 +374,92 @@ export async function restoreBackup({ api, engine, choice, allowSeed = new Set()
           enabled: false,
         }),
       });
+
+    // Characters, through their own route: added, never replacing one that's
+    // here (the same name and words), with their pictures and never a copy
+    // link. A default model or picture this account can't use is left off.
+    if (choice.has("characters")) {
+      const r = tally("characters");
+      const have = new Set(((await api("/api/characters", { signal })).characters || []).map(characterKey));
+      const without = ["invalid_model", "early_model", "feature_unreleased", "private_model_required", "invalid_avatar"];
+      for (const c of await all(engine, "characters")) {
+        check(signal);
+        const key = characterKey(c);
+        if (have.has(key)) {
+          r.duplicate++;
+          continue;
+        }
+        if (held("characters", c)) {
+          r.seed++;
+          continue;
+        }
+        const full = { name: c.name.trim(), description: c.description, instructions: c.instructions, opening: c.opening, model: c.model || null, avatar: c.avatar ?? null };
+        const tries = [full, { ...full, model: null }, { ...full, model: null, avatar: null }];
+        let added = false,
+          accountFull = false;
+        for (const body of tries) {
+          try {
+            await api("/api/characters", { method: "POST", body, signal });
+            added = true;
+            break;
+          } catch (e) {
+            if (fatal(e)) throw e;
+            if (without.includes(e.code) && body !== tries[tries.length - 1]) continue;
+            skip("characters", e);
+            accountFull = REASONS[e.code] === "limit";
+            break;
+          }
+        }
+        if (added) {
+          r.added++;
+          have.add(key);
+        }
+        step("characters");
+        // The account is full: the rest won't fit either.
+        if (accountFull) break;
+      }
+    }
+
+    // Saved subtitle sets, through their own route: added, never replacing
+    // one that's here (the same title, length and cues). Only a set here
+    // with the same title and length is read whole to compare.
+    if (choice.has("subtitles")) {
+      const r = tally("subtitles");
+      const list = (await api("/api/subtitles/sets", { signal })).data || [];
+      const near = (x) => `${String(x.title ?? "").replace(/\s+/g, " ").trim().toLowerCase()}\u0000${Math.round(Number(x.duration) * 1000)}`;
+      const unread = new Map();
+      for (const x of list) unread.set(near(x), [...(unread.get(near(x)) || []), x.id]);
+      const keys = new Set();
+      for (const set of await all(engine, "subtitles")) {
+        check(signal);
+        for (const id of unread.get(near(set)) || [])
+          keys.add(subtitleKey(await api("/api/subtitles/sets/" + encodeURIComponent(id), { signal })));
+        unread.delete(near(set));
+        const key = subtitleKey(set);
+        if (keys.has(key)) {
+          r.duplicate++;
+          continue;
+        }
+        if (held("subtitles", set)) {
+          r.seed++;
+          continue;
+        }
+        try {
+          await api("/api/subtitles/sets", {
+            method: "POST",
+            body: { title: set.title, duration: set.duration, language: set.language, tracks: set.tracks },
+            signal,
+          });
+          r.added++;
+          keys.add(key);
+        } catch (e) {
+          if (fatal(e)) throw e;
+          skip("subtitles", e);
+          if (REASONS[e.code] === "limit") break;
+        }
+        step("subtitles");
+      }
+    }
 
     // Device Vault chats go back into this browser's vault, sealed with its
     // key; nothing is sent.

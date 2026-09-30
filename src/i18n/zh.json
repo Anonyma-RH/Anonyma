@@ -6452,7 +6452,7 @@
     "Catches passwords, API keys and tokens in what you type, paste or attach, before it’s sent, and offers to mask them. It’s checked in your browser: nothing about a match is saved or sent.": "在发送之前发现你输入、粘贴或附加的内容里的密码、API 密钥和令牌，并可替你遮盖。检查在你的浏览器中完成：匹配到的内容不会被保存或发送。",
     "It looks for known key formats and labelled values like PASSWORD=, so it can’t catch every secret. It doesn’t check the developer API (/v1) or MCP: those callers are programs, and holding their requests would break them.": "它会查找已知的密钥格式和 PASSWORD= 这类带标签的值，因此无法发现所有机密信息。它不检查开发者 API（/v1）或 MCP：这些调用方是程序，拦下它们的请求会让程序出错。",
     "Check what I send for secrets": "检查我发送的内容里是否有机密信息",
-    "On by default. The chat composer (and Code & Build), attached text files, Canvas, Routines and Research Watch.": "默认开启。适用于聊天输入框（以及代码与构建）、附加的文本文件、画布、定时任务和研究监测。",
+    "On by default. The chat composer (and Code & Build), attached text files, Canvas, Routines, Research Watch, Characters, Screenshot to site, Debate and subtitle translations.": "默认开启。适用于聊天输入框（以及代码与构建）、附加的文本文件、画布、定时任务、研究监测、角色、截图转网站、辩论和字幕翻译。",
     "Turn off Secret Guard? Passwords, keys and tokens you paste will be sent as written. Seed Guard still stops wallet seed phrases.": "要关闭密钥防护吗？你粘贴的密码、密钥和令牌将按原样发送。助记词防护仍会拦截钱包助记词。",
     "Keep it on": "保持开启",
     "Off: passwords, keys and tokens you paste are sent as written. Seed Guard still stops wallet seed phrases.": "已关闭：你粘贴的密码、密钥和令牌会按原样发送。助记词防护仍会拦截钱包助记词。",
@@ -7273,7 +7273,17 @@
     "Encrypted Backup: a backup is made and opened in your browser and saved as a file wherever you choose. ANONYMA never receives the file, its passphrase or its key; we keep only the day of your last backup (for Account → Settings and one reminder 30 days later) and, for chats a restore added, when and a hash of their words, so the same chat isn’t restored twice. Panic Wipe and closing your account delete both, but not backup files you saved: those are yours to keep or delete.": "加密备份：备份在你的浏览器中制作和打开，并保存为文件，存放在你选择的位置。ANONYMA 永远不会收到这个文件、它的密码短语或密钥；我们只保留你上次备份的日期（用于账户 → 设置，以及 30 天后的一次提醒），以及对于恢复添加的会话，恢复时间和其文字的哈希，以免同一会话被恢复两次。紧急清除和关闭账户会删除这两项，但不会删除你保存的备份文件：它们由你自行保管或删除。",
     "The export also says the day of your last encrypted backup, and which chats came back from one.": "导出内容还会注明你上次加密备份的日期，以及哪些会话是从备份恢复的。",
     "The day of your last encrypted backup": "你上次加密备份的日期",
-    "Backup files you saved. They were never on our servers, so delete them yourself if you need to.": "你保存的备份文件。它们从未存放在我们的服务器上，如有需要请自行删除。"
+    "Backup files you saved. They were never on our servers, so delete them yourself if you need to.": "你保存的备份文件。它们从未存放在我们的服务器上，如有需要请自行删除。",
+    "Mask and add": "遮盖并添加",
+    "Add anyway": "仍然添加",
+    "Mask swaps each one for a placeholder like [SECRET_1]. A character's instructions go to the model with every message, so the placeholder stays and the real value isn't kept anywhere.": "遮盖会把每一项换成 [SECRET_1] 这样的占位符。角色的指令会随每条消息发送给模型，因此占位符会保留，真实值不会保存在任何地方。",
+    "Mask swaps each one for a placeholder like [SECRET_1] in your copy. Its instructions go to the model with every message, so the placeholder stays and the real value isn't kept in your account.": "遮盖会在你的副本中把每一项换成 [SECRET_1] 这样的占位符。它的指令会随每条消息发送给模型，因此占位符会保留，真实值不会保存在你的账户中。",
+    "Mask swaps each one for a placeholder like [SECRET_1] in your words before anything is sent. The page keeps the placeholder; put the real value in after you download it.": "发送前，遮盖会把你文字中的每一项换成 [SECRET_1] 这样的占位符。网页会保留占位符；下载后再填入真实值。",
+    "Mask swaps each one for a placeholder like [SECRET_1] before anything is sent. The models, the judge and the saved debate see only the placeholder.": "发送前，遮盖会把每一项换成 [SECRET_1] 这样的占位符。辩论双方的模型、裁判以及保存的辩论都只会看到占位符。",
+    "Mask swaps each one for a placeholder like [SECRET_1] in what's sent. The translation shows your value again here, and your own subtitles don't change.": "遮盖会在发送的内容中把每一项换成 [SECRET_1] 这样的占位符。译文会在这里重新显示你的真实值，你自己的字幕不会改变。",
+    "Characters and their pictures": "角色及其头像",
+    "Saved subtitles": "已保存的字幕",
+    "Share links, Burn After Reading links and character copy links never go in a backup.": "分享链接、阅后即焚链接和角色副本链接永远不会放进备份。"
   },
   "patterns": [
     {

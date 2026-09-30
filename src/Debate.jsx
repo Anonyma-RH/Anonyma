@@ -7,6 +7,8 @@ import { createVeilState, veil, unveil, saveVeilState, loadVeilState } from "./v
 import { VeilToggle, veilRemarkPlugin } from "./Veil.jsx";
 import { PrivateModeToggle, NoPrivateModelsNotice, privateModeReleased } from "./PrivateMode.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
+import { SecretGuardNotice, useSecretGuard, useSecretScan } from "./SecretGuard.jsx";
+import { maskSecrets, removeSecrets, secretGuardTurn } from "./secret-guard.js";
 import { shieldMarkdown, useShieldLive } from "./Shield.jsx";
 import { PrivacyTrail, privacyTrailReleased } from "./PrivacyTrail.jsx";
 import { ReplyMarkdown } from "./RichMarkdown.jsx";
@@ -215,8 +217,23 @@ export default function Debate({ demo, user, models, config, refresh, veilOn, se
   }, [sent, format, rounds]);
   const noPrivate = privateOn && !choices.length;
   const settled = !!running;
+  // Secret Guard: a password, key or token in the question or a position
+  // holds the debate (and its estimate, which posts the same words), after
+  // Seed Guard's notice, until it's masked, removed or sent anyway. Masked,
+  // the models and the saved debate see a placeholder like [SECRET_1].
+  const secretLive = useSecretGuard(config, user, demo);
+  const secretTexts = useMemo(() => [question, format === "positions" ? stanceA : "", format === "positions" ? stanceB : ""], [question, stanceA, stanceB, format]);
+  const secretFinds = useSecretScan(secretLive && !running && !run, secretTexts);
+  const [secretOk, setSecretOk] = useState(false),
+    [seedAnswered, setSeedAnswered] = useState(false),
+    [secretQueued, setSecretQueued] = useState(null);
+  useEffect(() => {
+    setSecretOk(false);
+    setSeedAnswered(false);
+  }, [secretTexts]);
+  const secretHeld = secretFinds.length > 0 && !secretOk;
   const body = useMemo(() => {
-    if (!live || !setup || !modelA || !modelB || noPrivate || settled || run) return null;
+    if (!live || !setup || !modelA || !modelB || noPrivate || settled || run || secretHeld) return null;
     return {
       question: setup.question,
       format,
@@ -227,14 +244,32 @@ export default function Debate({ demo, user, models, config, refresh, veilOn, se
       ...(judge ? { judge_model: judge } : {}),
       ...(privateOn ? { private: true } : ephemeral ? { ephemeral: true } : {}),
     };
-  }, [live, setup, format, rounds, modelA, modelB, judge, privateOn, ephemeral, noPrivate, settled, run]);
+  }, [live, setup, format, rounds, modelA, modelB, judge, privateOn, ephemeral, noPrivate, settled, run, secretHeld]);
   const estimate = useQuote(body, tick);
   const quote = estimate.status === "ready" ? estimate : estimate.last;
   const quoteFresh = estimate.status === "ready" && estimate.key === JSON.stringify(body) && estimate.tick === tick;
   const seedTexts = useMemo(() => [question, format === "positions" ? stanceA : "", format === "positions" ? stanceB : ""], [question, stanceA, stanceB, format]);
   const seedHit = useSeedScan(live && seedGuardLive(config), seedTexts);
   const short = quote && toneOf(quote) !== "ready";
-  const ready = live && !!body && !noPrivate && quoteFresh && !short && !running && !seedHit;
+  const startable = live && !!body && !noPrivate && quoteFresh && !short && !running;
+  const ready = startable && !seedHit && !secretHeld;
+  const secretTurn = secretGuardTurn({ seedHit, finds: secretHeld ? secretFinds : [], seedAnswered });
+  // Secret Guard's Mask and send, or Send anyway: the debate starts once the
+  // estimate for the words as they now are is in (never on a stale one).
+  useEffect(() => {
+    if (!secretQueued) return;
+    if (startable && !secretHeld) {
+      setSecretQueued(null);
+      start({ allowSeed: secretQueued.allowSeed });
+    } else if (running || noPrivate || short || estimate.status === "unavailable") setSecretQueued(null);
+  }, [secretQueued, startable, secretHeld, running, noPrivate, short, estimate.status]);
+  function maskDebateSecrets() {
+    const state = {};
+    setQuestion((q) => maskSecrets(q, state).text);
+    setStanceA((a) => maskSecrets(a, state).text);
+    setStanceB((b) => maskSecrets(b, state).text);
+    setSecretQueued({ allowSeed: seedAnswered });
+  }
   const judgeIsDebater = !!judge && (judge === modelA || judge === modelB);
 
   // ---- Running ----
@@ -497,7 +532,26 @@ export default function Debate({ demo, user, models, config, refresh, veilOn, se
               )}
               {privateOn && <p className="debate-note">Private mode: only models that keep no data are offered, and nothing is saved.</p>}
               {noPrivate && <NoPrivateModelsNotice />}
-              <SeedGuardNotice hit={!running ? seedHit : null} busy={!!running} onProceed={() => start({ allowSeed: true })} />
+              <SeedGuardNotice
+                hit={!running && secretTurn !== "secret" ? seedHit : null}
+                busy={!!running}
+                onProceed={() => (secretHeld ? setSeedAnswered(true) : start({ allowSeed: true }))}
+              />
+              <SecretGuardNotice
+                finds={!running && secretTurn === "secret" ? secretFinds : []}
+                busy={!!running || !!secretQueued}
+                note="Mask swaps each one for a placeholder like [SECRET_1] before anything is sent. The models, the judge and the saved debate see only the placeholder."
+                onMask={maskDebateSecrets}
+                onRemove={() => {
+                  setQuestion((q) => removeSecrets(q).text);
+                  setStanceA((a) => removeSecrets(a).text);
+                  setStanceB((b) => removeSecrets(b).text);
+                }}
+                onProceed={() => {
+                  setSecretOk(true);
+                  setSecretQueued({ allowSeed: seedAnswered });
+                }}
+              />
               {error && (
                 <Notice type="error">
                   {error}

@@ -6455,7 +6455,7 @@
     "Catches passwords, API keys and tokens in what you type, paste or attach, before it’s sent, and offers to mask them. It’s checked in your browser: nothing about a match is saved or sent.": "Detecta contraseñas, claves de API y tokens en lo que escribes, pegas o adjuntas, antes de enviarlo, y te ofrece ocultarlos. Se revisa en tu navegador: no se guarda ni se envía nada sobre una coincidencia.",
     "It looks for known key formats and labelled values like PASSWORD=, so it can’t catch every secret. It doesn’t check the developer API (/v1) or MCP: those callers are programs, and holding their requests would break them.": "Busca formatos de clave conocidos y valores etiquetados como PASSWORD=, así que no puede detectar todos los secretos. No revisa la API para desarrolladores (/v1) ni MCP: quienes llaman son programas, y retener sus solicitudes los haría fallar.",
     "Check what I send for secrets": "Revisar si lo que envío tiene secretos",
-    "On by default. The chat composer (and Code & Build), attached text files, Canvas, Routines and Research Watch.": "Activada por defecto. En el editor del chat (y en Código y desarrollo), los archivos de texto adjuntos, Canvas, Rutinas y Seguimiento de investigación.",
+    "On by default. The chat composer (and Code & Build), attached text files, Canvas, Routines, Research Watch, Characters, Screenshot to site, Debate and subtitle translations.": "Activada por defecto. En el editor del chat (y en Código y desarrollo), los archivos de texto adjuntos, Canvas, Rutinas, Seguimiento de investigación, Personajes, Captura a sitio, Debate y las traducciones de subtítulos.",
     "Turn off Secret Guard? Passwords, keys and tokens you paste will be sent as written. Seed Guard still stops wallet seed phrases.": "¿Desactivar la protección de secretos? Las contraseñas, claves y tokens que pegues se enviarán tal cual. La protección de frase semilla sigue deteniendo las frases semilla de billetera.",
     "Keep it on": "Mantenerla activada",
     "Off: passwords, keys and tokens you paste are sent as written. Seed Guard still stops wallet seed phrases.": "Desactivada: las contraseñas, claves y tokens que pegues se envían tal cual. La protección de frase semilla sigue deteniendo las frases semilla de billetera.",
@@ -7276,7 +7276,17 @@
     "Encrypted Backup: a backup is made and opened in your browser and saved as a file wherever you choose. ANONYMA never receives the file, its passphrase or its key; we keep only the day of your last backup (for Account → Settings and one reminder 30 days later) and, for chats a restore added, when and a hash of their words, so the same chat isn’t restored twice. Panic Wipe and closing your account delete both, but not backup files you saved: those are yours to keep or delete.": "Copia de seguridad cifrada: una copia se hace y se abre en tu navegador, y se guarda como archivo donde tú elijas. ANONYMA nunca recibe el archivo, su frase de contraseña ni su clave; solo guardamos el día de tu última copia (para Cuenta → Ajustes y un recordatorio 30 días después) y, para los chats que agregó una restauración, cuándo y un hash de sus palabras, para que el mismo chat no se restaure dos veces. El Borrado de pánico y cerrar tu cuenta eliminan ambos, pero no los archivos de copia que guardaste: esos son tuyos para conservar o eliminar.",
     "The export also says the day of your last encrypted backup, and which chats came back from one.": "La exportación también indica el día de tu última copia de seguridad cifrada y qué chats volvieron de una.",
     "The day of your last encrypted backup": "El día de tu última copia de seguridad cifrada",
-    "Backup files you saved. They were never on our servers, so delete them yourself if you need to.": "Los archivos de copia de seguridad que guardaste. Nunca estuvieron en nuestros servidores, así que elimínalos tú si lo necesitas."
+    "Backup files you saved. They were never on our servers, so delete them yourself if you need to.": "Los archivos de copia de seguridad que guardaste. Nunca estuvieron en nuestros servidores, así que elimínalos tú si lo necesitas.",
+    "Mask and add": "Ocultar y agregar",
+    "Add anyway": "Agregar de todos modos",
+    "Mask swaps each one for a placeholder like [SECRET_1]. A character's instructions go to the model with every message, so the placeholder stays and the real value isn't kept anywhere.": "Ocultar cambia cada uno por un marcador como [SECRET_1]. Las instrucciones de un personaje van al modelo con cada mensaje, así que el marcador se queda y el valor real no se guarda en ningún lado.",
+    "Mask swaps each one for a placeholder like [SECRET_1] in your copy. Its instructions go to the model with every message, so the placeholder stays and the real value isn't kept in your account.": "Ocultar cambia cada uno por un marcador como [SECRET_1] en tu copia. Sus instrucciones van al modelo con cada mensaje, así que el marcador se queda y el valor real no se guarda en tu cuenta.",
+    "Mask swaps each one for a placeholder like [SECRET_1] in your words before anything is sent. The page keeps the placeholder; put the real value in after you download it.": "Ocultar cambia cada uno por un marcador como [SECRET_1] en tu texto antes de enviar nada. La página conserva el marcador; pon el valor real después de descargarla.",
+    "Mask swaps each one for a placeholder like [SECRET_1] before anything is sent. The models, the judge and the saved debate see only the placeholder.": "Ocultar cambia cada uno por un marcador como [SECRET_1] antes de enviar nada. Los modelos, el juez y el debate guardado solo ven el marcador.",
+    "Mask swaps each one for a placeholder like [SECRET_1] in what's sent. The translation shows your value again here, and your own subtitles don't change.": "Ocultar cambia cada uno por un marcador como [SECRET_1] en lo que se envía. La traducción vuelve a mostrar tu valor aquí, y tus propios subtítulos no cambian.",
+    "Characters and their pictures": "Personajes y sus imágenes",
+    "Saved subtitles": "Subtítulos guardados",
+    "Share links, Burn After Reading links and character copy links never go in a backup.": "Los enlaces para compartir, los enlaces de Quemar después de leer y los enlaces de copia de personajes nunca van en una copia de seguridad."
   },
   "patterns": [
     {
@@ -11352,62 +11362,6 @@
       "es": "Protección de secretos: el modelo vio [{0}]"
     },
     {
-      "en": "{0} · settled receipt.",
-      "es": "{0} · recibo liquidado."
-    },
-    {
-      "en": "{0} · settled receipt. {1} unused reserved credits released.",
-      "es": "{0} · recibo liquidado. Se liberaron {1} créditos reservados sin usar."
-    },
-    {
-      "en": "{0}, {1} minute ago",
-      "es": "{0}, hace {1} minuto"
-    },
-    {
-      "en": "{0}, {1} minutes ago",
-      "es": "{0}, hace {1} minutos"
-    },
-    {
-      "en": "{0}, {1} hour ago",
-      "es": "{0}, hace {1} hora"
-    },
-    {
-      "en": "{0}, {1} hours ago",
-      "es": "{0}, hace {1} horas"
-    },
-    {
-      "en": "{0}, {1} day ago",
-      "es": "{0}, hace {1} día"
-    },
-    {
-      "en": "{0}, {1} days ago",
-      "es": "{0}, hace {1} días"
-    },
-    {
-      "en": "{0}, {1} week ago",
-      "es": "{0}, hace {1} semana"
-    },
-    {
-      "en": "{0}, {1} weeks ago",
-      "es": "{0}, hace {1} semanas"
-    },
-    {
-      "en": "{0}, {1} month ago",
-      "es": "{0}, hace {1} mes"
-    },
-    {
-      "en": "{0}, {1} months ago",
-      "es": "{0}, hace {1} meses"
-    },
-    {
-      "en": "{0}, {1} year ago",
-      "es": "{0}, hace {1} año"
-    },
-    {
-      "en": "{0}, {1} years ago",
-      "es": "{0}, hace {1} años"
-    },
-    {
       "en": "Opened on {0}",
       "es": "Abierto el {0}"
     },
@@ -11794,6 +11748,62 @@
     {
       "en": "{0} came back as ordinary chats because their mode isn’t available on this account: {1}.",
       "es": "{0} volvieron como chats normales porque su modo no está disponible en esta cuenta: {1}."
+    },
+    {
+      "en": "{0} · settled receipt.",
+      "es": "{0} · recibo liquidado."
+    },
+    {
+      "en": "{0} · settled receipt. {1} unused reserved credits released.",
+      "es": "{0} · recibo liquidado. Se liberaron {1} créditos reservados sin usar."
+    },
+    {
+      "en": "{0}, {1} minute ago",
+      "es": "{0}, hace {1} minuto"
+    },
+    {
+      "en": "{0}, {1} minutes ago",
+      "es": "{0}, hace {1} minutos"
+    },
+    {
+      "en": "{0}, {1} hour ago",
+      "es": "{0}, hace {1} hora"
+    },
+    {
+      "en": "{0}, {1} hours ago",
+      "es": "{0}, hace {1} horas"
+    },
+    {
+      "en": "{0}, {1} day ago",
+      "es": "{0}, hace {1} día"
+    },
+    {
+      "en": "{0}, {1} days ago",
+      "es": "{0}, hace {1} días"
+    },
+    {
+      "en": "{0}, {1} week ago",
+      "es": "{0}, hace {1} semana"
+    },
+    {
+      "en": "{0}, {1} weeks ago",
+      "es": "{0}, hace {1} semanas"
+    },
+    {
+      "en": "{0}, {1} month ago",
+      "es": "{0}, hace {1} mes"
+    },
+    {
+      "en": "{0}, {1} months ago",
+      "es": "{0}, hace {1} meses"
+    },
+    {
+      "en": "{0}, {1} year ago",
+      "es": "{0}, hace {1} año"
+    },
+    {
+      "en": "{0}, {1} years ago",
+      "es": "{0}, hace {1} años"
     }
   ]
 }

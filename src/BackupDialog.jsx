@@ -37,10 +37,12 @@ const LABELS = {
   routines: "Routines (their settings)",
   research: "Research watches (their settings)",
   watches: "Page watches (their settings)",
+  characters: "Characters and their pictures",
+  subtitles: "Saved subtitles",
   bookmarks: "Bookmarks",
   vault: "Device Vault chats",
 };
-const RESTORE_KINDS = ["projects", "chats", "bookmarks", "scrolls", "instructions", "memory", "routines", "research", "watches", "vault"];
+const RESTORE_KINDS = ["projects", "chats", "bookmarks", "scrolls", "instructions", "memory", "routines", "research", "watches", "characters", "subtitles", "vault"];
 // The modes a chat can be saved in, as the restore summary names them.
 const MODE_NAMES = { code: "Code & Build", uncensored: "Uncensored Models", symposium: "Symposium" };
 // Kinds whose held-back items the person may still choose to restore (the
@@ -291,6 +293,7 @@ function MakeBackup({ config, status, vault, onClose }) {
           saved, like off-the-record ones. Routines and watches go in as
           settings, without their results.
         </p>
+        <p className="backup-note">Share links, Burn After Reading links and character copy links never go in a backup.</p>
         <PassphraseInput
           label={`Backup passphrase (at least ${MIN_BACKUP_PASSPHRASE} characters)`}
           value={pass}

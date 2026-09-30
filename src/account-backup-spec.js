@@ -40,8 +40,9 @@ export const validDay = (value) =>
 
 // What a backup can hold, in the order a restore adds them: projects first
 // (so restored chats can be filed in them), then chats with their bookmarks,
-// and the settings-like kinds after. Device Vault chats go back into this
-// browser's vault, never to the server.
+// and the settings-like kinds after. Characters come with their pictures,
+// never their copy links; saved subtitle sets with their cues. Device Vault
+// chats go back into this browser's vault, never to the server.
 export const BACKUP_KINDS = [
   "projects",
   "chats",
@@ -52,6 +53,8 @@ export const BACKUP_KINDS = [
   "routines",
   "research",
   "watches",
+  "characters",
+  "subtitles",
   "vault",
 ];
 // The line type each kind is written as.
@@ -65,6 +68,8 @@ export const KIND_TYPES = {
   routines: "routine",
   research: "research",
   watches: "watch",
+  characters: "character",
+  subtitles: "subtitles",
   vault: "vault",
 };
 const TYPE_KINDS = Object.fromEntries(Object.entries(KIND_TYPES).map(([k, t]) => [t, k]));
@@ -80,12 +85,14 @@ export const KIND_UPDATES = {
   routines: ["routines"],
   research: ["researchwatch", "routines", "deepresearch", "search"],
   watches: ["pagewatch", "routines"],
+  characters: ["characters"],
+  subtitles: ["subtitles", "audio"],
   vault: ["vault", "ephemeral"],
 };
 export const kindLive = (kind, released) => (KIND_UPDATES[kind] || []).every((id) => released(id));
 // "What goes in" when making a backup: the kinds this account has and the
 // server has released, in order. Bookmarks go only with their chats.
-const MAKE_ORDER = ["chats", "bookmarks", "projects", "scrolls", "instructions", "memory", "routines", "research", "watches"];
+const MAKE_ORDER = ["chats", "bookmarks", "projects", "scrolls", "instructions", "memory", "routines", "research", "watches", "characters", "subtitles"];
 export const makeKinds = (counts, released) =>
   MAKE_ORDER.filter((k) => kindLive(k, released) && (counts?.[k] || 0) > 0 && (k !== "bookmarks" || (counts?.chats || 0) > 0));
 
@@ -154,6 +161,20 @@ export const projectKey = (p) => JSON.stringify([oneLine(p?.name).toLowerCase(),
 export const memoryKey = (f) => oneLine(f?.text).toLowerCase();
 export const routineKey = (r) => JSON.stringify([oneLine(r?.name).toLowerCase(), cleanText(r?.prompt ?? r?.topic)]);
 export const watchKey = (w) => String(w?.url ?? "").trim();
+// A character: its name and the words it's given (not its picture or model).
+export const characterKey = (c) =>
+  JSON.stringify([oneLine(c?.name).toLowerCase(), cleanText(c?.instructions), cleanText(c?.opening)]);
+// A saved subtitle set: its title, length and every track's cues.
+export const subtitleKey = (set) =>
+  JSON.stringify([
+    oneLine(set?.title).toLowerCase(),
+    Math.round(Number(set?.duration) * 1000) / 1000,
+    (Array.isArray(set?.tracks) ? set.tracks : []).map((t) => [
+      String(t?.lang ?? ""),
+      t?.source === true,
+      (Array.isArray(t?.cues) ? t.cues : []).map((c) => [Math.round(Number(c?.start) * 1000), Math.round(Number(c?.end) * 1000), cleanText(c?.text)]),
+    ]),
+  ]);
 // A Device Vault chat: its id, or the words of its messages.
 export const vaultKey = (chat) =>
   chatKey((chat?.messages || []).map((m) => ({ role: m?.role, text: typeof m?.content === "string" ? m.content : messageText(m?.content) })));
@@ -181,6 +202,10 @@ export function itemSeedFinding(item) {
       return hit(item.name) || hit(item.topic);
     case "watch":
       return hit(item.hint);
+    case "character":
+      return hit(item.name) || hit(item.description) || hit(item.instructions) || hit(item.opening);
+    case "subtitles":
+      return hit(item.title) || item.tracks.some((t) => t.cues.some((c) => hit(c.text)));
     default:
       return false;
   }
@@ -343,6 +368,46 @@ export function readItem(raw) {
         private_only: flag(raw.private_only),
         every,
         monthly_budget_credits: budget,
+        created: time(raw.created),
+      };
+    }
+    case "character": {
+      const name = str(raw.name, 200);
+      if (!name || !name.trim()) return null;
+      return {
+        t: "character",
+        name,
+        description: str(raw.description ?? "", 2000) ?? "",
+        instructions: str(raw.instructions ?? "", 100000) ?? "",
+        opening: str(raw.opening ?? "", 100000) ?? "",
+        model: optStr(raw.model, 200),
+        // A built-in monogram or a small picture as a data URL; the server
+        // checks it again.
+        avatar: optStr(raw.avatar, 262144),
+        created: time(raw.created),
+      };
+    }
+    case "subtitles": {
+      const title = str(raw.title, 200),
+        duration = Number(raw.duration);
+      if (!title || !title.trim() || !Number.isFinite(duration) || duration <= 0) return null;
+      if (!Array.isArray(raw.tracks) || !raw.tracks.length || JSON.stringify(raw.tracks).length > 1024 * 1024) return null;
+      const tracks = [];
+      for (const t of raw.tracks) {
+        if (!t || typeof t !== "object" || Array.isArray(t) || !Array.isArray(t.cues)) return null;
+        const cues = [];
+        for (const c of t.cues) {
+          if (!c || typeof c !== "object" || typeof c.text !== "string" || !Number.isFinite(c.start) || !Number.isFinite(c.end)) return null;
+          cues.push({ start: c.start, end: c.end, text: c.text });
+        }
+        tracks.push({ lang: typeof t.lang === "string" ? t.lang.slice(0, 40) : "", source: t.source === true, cues });
+      }
+      return {
+        t: "subtitles",
+        title,
+        duration,
+        language: optStr(raw.language, 40) || "",
+        tracks,
         created: time(raw.created),
       };
     }

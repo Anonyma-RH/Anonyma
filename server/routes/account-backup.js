@@ -100,6 +100,7 @@ export function accountBackupRoutes(ctx) {
   const read = limit("account-backup-read", 240, 60000);
   const write = limit("account-backup", 300, 3600000);
   const count = (sql, ...args) => db.prepare(sql).get(...args).n;
+  const subtitlesLive = () => isReleased(cfg, "subtitles") && isReleased(cfg, "audio");
 
   // Account → Data: the last backup's date, the reminder, and how much a
   // backup would hold (counts only).
@@ -123,6 +124,8 @@ export function accountBackupRoutes(ctx) {
         routines: count("SELECT COUNT(*) n FROM routines WHERE user_id=? AND kind='prompt'", user),
         research: count("SELECT COUNT(*) n FROM routines WHERE user_id=? AND kind='research'", user),
         watches: count("SELECT COUNT(*) n FROM page_watches WHERE user_id=?", user),
+        characters: isReleased(cfg, "characters") ? count("SELECT COUNT(*) n FROM characters WHERE user_id=?", user) : 0,
+        subtitles: subtitlesLive() ? count("SELECT COUNT(*) n FROM subtitle_sets WHERE user_id=?", user) : 0,
       },
       seed_guard: isReleased(cfg, "seedguard"),
     });
@@ -131,7 +134,10 @@ export function accountBackupRoutes(ctx) {
   // Everything but the chats, for a backup being made: projects with their
   // instructions, scrolls, standing instructions, memory facts, the
   // settings of routines and watches (never their results or the pages they
-  // read), and bookmarks by message.
+  // read), bookmarks by message, and, once those updates are live, characters
+  // with their pictures (never their copy links or which chats were with
+  // them) and saved subtitle sets with their cues. Burn After Reading links
+  // are never in a backup.
   app.get("/api/account/backup/content", requireUser, read, (req, res) => {
     const user = req.user.id,
       at = now();
@@ -180,6 +186,21 @@ export function accountBackupRoutes(ctx) {
            WHERE b.user_id=? AND ${PERSONAL} ORDER BY b.created,b.rowid`,
         )
         .all(user, user, at),
+      ...(isReleased(cfg, "characters")
+        ? {
+            characters: db
+              .prepare("SELECT name,description,instructions,opening,model,avatar,created FROM characters WHERE user_id=? ORDER BY created,rowid")
+              .all(user),
+          }
+        : {}),
+      ...(subtitlesLive()
+        ? {
+            subtitles: db
+              .prepare("SELECT title,duration,language,tracks,created FROM subtitle_sets WHERE user_id=? ORDER BY created,rowid")
+              .all(user)
+              .map((r) => ({ ...r, tracks: JSON.parse(r.tracks) })),
+          }
+        : {}),
     });
   });
 

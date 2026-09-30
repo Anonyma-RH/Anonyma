@@ -2242,6 +2242,10 @@ route("get", "/api/character-shares/{token}", "Read a copy link", {
 });
 route("post", "/api/character-shares/{token}/import", "Add a copy of a shared character", {
   status: 201,
+  body: object({
+    instructions: { ...string, description: "The copy's instructions with Secret Guard's placeholders (like [SECRET_1]) in place of passwords, keys or tokens. Leave out to keep them as shared." },
+    opening: { ...string, description: "The copy's opening message, masked the same way. Leave out to keep it as shared." },
+  }),
   response: { ...characterDetail, properties: { ...characterDetail.properties, model_kept: bool } },
   description:
     "Adds the character as a new one on this account. A default model this account can't run isn't carried over (model_kept is false). 409 character_limit at 50 characters; Seed Guard applies again.",
@@ -2438,6 +2442,8 @@ route("get", "/api/account/backup", "Encrypted Backup: the last backup and what 
       routines: integer,
       research: integer,
       watches: integer,
+      characters: { ...integer, description: "0 until Characters is live" },
+      subtitles: { ...integer, description: "Saved subtitle sets; 0 until Subtitles is live" },
     }),
     seed_guard: { ...bool, description: "Whether Seed Guard is live, so a restore holds back items with a seed phrase or private key" },
   }),
@@ -2453,8 +2459,16 @@ route("get", "/api/account/backup/content", "Encrypted Backup: everything but th
     research: array(object({ name: string, topic: string, model: string, depth: string, new_only: bool, private_only: bool, schedule: object(), monthly_budget_credits: number, created: integer })),
     watches: array(object({ url: string, hint: nullableString, model: string, private_only: bool, every: string, monthly_budget_credits: number, created: integer })),
     bookmarks: array(object({ message_id: string, conversation_id: string, note: string, created: integer })),
+    characters: {
+      ...array(object({ name: string, description: string, instructions: string, opening: string, model: nullableString, avatar: nullableString, created: integer })),
+      description: "Once Characters is live: each with its picture (a monogram id or a small image data URL), never its copy links or chats",
+    },
+    subtitles: {
+      ...array(object({ title: string, duration: number, language: string, tracks: array(object({ lang: string, source: bool, cues: array(object({ start: number, end: number, text: string })) })), created: integer })),
+      description: "Once Subtitles is live: saved subtitle sets, their cues and times, never a video or its sound",
+    },
   }),
-  description: "Routines and watches are their settings only, never their results or the pages they read. Bookmarks point at messages in the account's own saved chats.",
+  description: "Routines and watches are their settings only, never their results or the pages they read. Bookmarks point at messages in the account's own saved chats. Burn After Reading links are never included.",
 });
 route("get", "/api/account/backup/chats", "Encrypted Backup: saved chats, a page at a time", {
   query: [{ name: "after", in: "query", schema: integer, description: "The previous page's next value" }],
@@ -2874,7 +2888,7 @@ const secretGuardView = {
 route("get", "/api/secret-guard", "Your Secret Guard switch", {
   response: object(secretGuardView),
   description:
-    "Secret Guard runs in the browser, in the chat composer (and Code & Build), attached text files and documents, Canvas, Routines and Research Watch: a match is masked ([SECRET_1] goes instead and the reply is restored in that browser only), removed, or sent anyway. It's a soft guard: the server never checks messages for secrets and stores nothing about a match. The developer API (/v1) and MCP are never checked, since their callers are programs.",
+    "Secret Guard runs in the browser, in the chat composer (and Code & Build), attached text files and documents, Canvas, Routines, Research Watch, Characters (instructions and opening messages, saved or added from a copy link), Screenshot to site, Debate and subtitle translations: a match is masked ([SECRET_1] goes instead and the reply is restored in that browser only), removed, or sent anyway. It's a soft guard: the server never checks messages for secrets and stores nothing about a match. The developer API (/v1) and MCP are never checked, since their callers are programs.",
 });
 route("put", "/api/secret-guard", "Switch Secret Guard on or off", {
   body: object({ enabled: bool }, ["enabled"]),

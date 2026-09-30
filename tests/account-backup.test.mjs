@@ -326,7 +326,7 @@ test("items are read back tolerantly but checked; the reader counts, flags and n
     const session = await loadBackup(bytes, PASS, { seedGuard: true });
     const o = session.overview();
     assert.equal(o.made, "2026-09-01T10:00:00.000Z");
-    assert.deepEqual(o.counts, { projects: 1, chats: 2, bookmarks: 1, scrolls: 1, instructions: 1, memory: 1, routines: 0, research: 0, watches: 1, vault: 1 });
+    assert.deepEqual(o.counts, { projects: 1, chats: 2, bookmarks: 1, scrolls: 1, instructions: 1, memory: 1, routines: 0, research: 0, watches: 1, characters: 0, subtitles: 0, vault: 1 });
     assert.equal(o.seed.chats, 1, "Seed Guard flags the chat with a seed phrase");
     assert.equal(o.unreadable, 2);
     assert.deepEqual(o.range, { from: Date.UTC(2025, 0, 3), to: Date.UTC(2026, 0, 1) });
@@ -494,7 +494,7 @@ test("the content a backup holds: the account's own chats in pages, and settings
     .send({ name: "News", prompt: "Top AI news.", model: MODEL, schedule: { repeat: "weekdays", time: "08:00", timezone: "UTC" }, per_run_credits: 50, monthly_budget_credits: 500 })
     .expect(201);
   const status = (await a.agent.get("/api/account/backup").expect(200)).body;
-  assert.deepEqual(status.counts, { chats: 30, bookmarks: 1, projects: 1, scrolls: 1, instructions: 1, memory: 1, routines: 1, research: 0, watches: 0 });
+  assert.deepEqual(status.counts, { chats: 30, bookmarks: 1, projects: 1, scrolls: 1, instructions: 1, memory: 1, routines: 1, research: 0, watches: 0, characters: 0, subtitles: 0 });
   const content = (await a.agent.get("/api/account/backup/content").expect(200)).body;
   assert.deepEqual(content.projects.map((p) => [p.name, p.instructions]), [["Garden", "Be brief."]]);
   assert.deepEqual(content.scrolls.map((x) => x.title), ["Recipe"]);
@@ -765,7 +765,7 @@ test("making a backup reads only what was chosen, sends nothing, and the file op
   const engine2 = await engineFor();
   const o = await engine2.open(file, PASS);
   assert.equal(o.made, "2026-09-29T12:00:00.000Z");
-  assert.deepEqual(o.counts, { projects: 1, chats: 2, bookmarks: 1, scrolls: 1, instructions: 0, memory: 1, routines: 0, research: 0, watches: 0, vault: 1 });
+  assert.deepEqual(o.counts, { projects: 1, chats: 2, bookmarks: 1, scrolls: 1, instructions: 0, memory: 1, routines: 0, research: 0, watches: 0, characters: 0, subtitles: 0, vault: 1 });
   assert.deepEqual((await engine2.get("vault", 0, 5))[0].chat, vaultChats[0]);
   // Without the vault, the vault's chats aren't in it; the words never
   // appear unencrypted in the file.

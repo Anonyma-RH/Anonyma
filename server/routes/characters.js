@@ -418,14 +418,26 @@ export function characterRoutes(ctx) {
     privatePage(res);
     const s = shared(req.params.token);
     if (!s) missing();
+    // Secret Guard (src/SecretGuard.jsx): the browser may send the copy's
+    // instructions and opening message with passwords, keys or tokens
+    // masked as placeholders like [SECRET_1]. Nothing else can change here.
+    const edits = req.body || {};
+    const own = (key, max, label) => {
+      if (edits[key] === undefined) return s[key];
+      if (typeof edits[key] !== "string" || edits[key].length > max)
+        fail(400, `${label} cannot exceed ${max} characters.`, "invalid_character");
+      return edits[key];
+    };
+    const instructions = own("instructions", MAX_CHARACTER_INSTRUCTIONS, "Instructions");
+    const opening = own("opening", MAX_CHARACTER_OPENING, "The opening message");
     // Seed Guard again: it may have been released since the link was made.
-    seedGuard(s.description, s.instructions, s.opening);
+    seedGuard(s.description, instructions, opening);
     const m = usable(req, s.model);
     const id = insert(req.user.id, {
       name: s.name,
       description: s.description,
-      instructions: s.instructions,
-      opening: s.opening,
+      instructions,
+      opening,
       // A model this account can't run isn't carried over: the copy starts
       // with no default and says so.
       model: m ? m.id : null,

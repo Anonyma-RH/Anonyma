@@ -1364,7 +1364,8 @@ export const UPDATES = [
     // Browser-side (src/secret-guard.js, src/SecretGuard.jsx), beside Seed
     // Guard, whose hard block is unchanged and goes first: the chat composer
     // (and Code & Build, Link Reader questions), attached text files and
-    // documents, Canvas, Routines and Research Watch. A soft guard, so no
+    // documents, Canvas, Routines, Research Watch, Characters, Screenshot to
+    // site, Debate and subtitle translations. A soft guard, so no
     // server check; never the developer API (/v1) or MCP, whose callers are
     // programs. The only route is the per-account switch, /api/secret-guard
     // (server/routes/secret-guard.js), gated here in featuresFor; the switch

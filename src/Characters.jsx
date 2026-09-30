@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, copyText } from "./lib.js";
 import { Button, Empty, Icon, Modal, Notice } from "./ui.jsx";
 import { SeedGuardNotice, seedGuardLive, useSeedScan } from "./SeedGuard.jsx";
+import { SecretGuardNotice, useSecretGuard, useSecretScan } from "./SecretGuard.jsx";
+import { maskSecrets, removeSecrets, secretGuardTurn } from "./secret-guard.js";
 import { CharacterAvatar } from "./CharacterChat.jsx";
 import { AvatarError, prepareAvatar } from "./character-avatar.js";
 import {
@@ -223,21 +225,46 @@ function ModelSelect({ draft, set, models, config }) {
   );
 }
 
-export function CharacterEditor({ draft, setDraft, config, models, busy, error, onSave, onCancel, onDelete }) {
+export function CharacterEditor({ draft, setDraft, config, models, busy, error, onSave, onCancel, onDelete, secretLive = false }) {
   const [confirming, setConfirming] = useState(false);
   const set = (k) => (v) => setDraft((d) => ({ ...d, [k]: v }));
   const texts = useMemo(() => [draft.instructions, draft.opening, draft.description], [draft.instructions, draft.opening, draft.description]);
   const seedHit = useSeedScan(seedGuardLive(config), texts);
+  // Secret Guard: a password, key or token in the instructions or the
+  // opening message holds Save, after Seed Guard, until it's masked, removed
+  // or saved anyway (this save only). The instructions go to the model with
+  // every message in a chat with this character, so a masked value stays a
+  // placeholder like [SECRET_1]: the real one isn't kept anywhere.
+  const secretTexts = useMemo(() => [draft.instructions, draft.opening], [draft.instructions, draft.opening]);
+  const secretFinds = useSecretScan(secretLive, secretTexts);
+  const [secretOk, setSecretOk] = useState(false),
+    [seedAnswered, setSeedAnswered] = useState(false);
+  useEffect(() => {
+    setSecretOk(false);
+    setSeedAnswered(false);
+  }, [draft.instructions, draft.opening, draft.description]);
+  const secretHeld = secretFinds.length > 0 && !secretOk;
+  const turn = secretGuardTurn({ seedHit, finds: secretHeld ? secretFinds : [], seedAnswered });
   const problems = characterProblems(draft);
   const hasProblem = !!(problems.name || problems.description || problems.instructions || problems.opening);
+  function maskAndSave() {
+    const state = {};
+    const next = {
+      ...draft,
+      instructions: maskSecrets(draft.instructions, state).text,
+      opening: maskSecrets(draft.opening, state).text,
+    };
+    setDraft(next);
+    onSave(next);
+  }
   return (
     <form
       className="character-editor"
       onSubmit={(e) => {
         e.preventDefault();
         // Seed Guard holds Save until the find is removed (a seed phrase) or
-        // confirmed with "Save anyway" (a key or 64-hex).
-        if (!seedHit) onSave();
+        // confirmed with "Save anyway" (a key or 64-hex); then Secret Guard.
+        if (!seedHit && !secretHeld) onSave();
       }}
     >
       <div className="character-editor-head">
@@ -288,11 +315,25 @@ export function CharacterEditor({ draft, setDraft, config, models, busy, error, 
             </span>
           </p>
           <SeedGuardNotice
-            hit={seedHit}
+            hit={turn === "seed" || !secretHeld ? seedHit : null}
             verb="save"
             busy={busy}
             hardOverride={seedHit?.kind !== "seed"}
-            onProceed={() => onSave()}
+            onProceed={() => (secretHeld ? setSeedAnswered(true) : onSave())}
+          />
+          <SecretGuardNotice
+            finds={turn === "secret" ? secretFinds : []}
+            verb="save"
+            busy={busy}
+            note="Mask swaps each one for a placeholder like [SECRET_1]. A character's instructions go to the model with every message, so the placeholder stays and the real value isn't kept anywhere."
+            onMask={maskAndSave}
+            onRemove={() =>
+              setDraft((d) => ({ ...d, instructions: removeSecrets(d.instructions).text, opening: removeSecrets(d.opening).text }))
+            }
+            onProceed={() => {
+              setSecretOk(true);
+              onSave(draft);
+            }}
           />
         </div>
         <div className="character-editor-col">
@@ -327,7 +368,7 @@ export function CharacterEditor({ draft, setDraft, config, models, busy, error, 
         </div>
       ) : (
         <div className="character-editor-actions">
-          <Button type="submit" disabled={busy || hasProblem || !!seedHit}>
+          <Button type="submit" disabled={busy || hasProblem || !!seedHit || secretHeld}>
             {draft.id ? "Save character" : "Create character"}
           </Button>
           <button type="button" className="small-button" onClick={onCancel} disabled={busy}>
@@ -475,7 +516,8 @@ export const GONE =
   "This link isn't available. It may have expired or been revoked. Ask the person who sent it for a new one.";
 // What a copy link holds, for reading before anything is added (also what the
 // tests render).
-export function ImportView({ view, gone, error, busy, atLimit, onAdd, onClose }) {
+export function ImportView({ view, gone, error, busy, atLimit, onAdd, onClose, secretFinds = [], onMask, onProceed }) {
+  const secretHeld = secretFinds.length > 0;
   return (
     <div className="character-import">
       {gone ? (
@@ -532,9 +574,19 @@ export function ImportView({ view, gone, error, busy, atLimit, onAdd, onClose })
           {atLimit && (
             <p className="character-help">{`You have the most characters an account can keep (${MAX_CHARACTERS}). Delete one to add this.`}</p>
           )}
+          {!atLimit && (
+            <SecretGuardNotice
+              finds={secretFinds}
+              verb="add"
+              busy={busy}
+              note="Mask swaps each one for a placeholder like [SECRET_1] in your copy. Its instructions go to the model with every message, so the placeholder stays and the real value isn't kept in your account."
+              onMask={onMask}
+              onProceed={onProceed}
+            />
+          )}
           {error && <Notice type="error">{error}</Notice>}
           <div className="character-editor-actions">
-            <Button type="button" onClick={onAdd} disabled={busy || atLimit}>
+            <Button type="button" onClick={onAdd} disabled={busy || atLimit || secretHeld}>
               Add to my characters
             </Button>
             <button type="button" className="small-button" onClick={onClose} disabled={busy}>
@@ -553,11 +605,16 @@ export function ImportView({ view, gone, error, busy, atLimit, onAdd, onClose })
     </div>
   );
 }
-function ImportDialog({ token, atLimit, onDone, onClose }) {
+function ImportDialog({ token, atLimit, onDone, onClose, secretLive = false }) {
   const [view, setView] = useState(null),
     [error, setError] = useState(""),
     [gone, setGone] = useState(false),
     [busy, setBusy] = useState(false);
+  // Secret Guard: a password, key or token in the shared instructions or
+  // opening message would go to the model with every message in a chat with
+  // this character, so adding waits until it's masked or added anyway.
+  const secretTexts = useMemo(() => (view ? [view.instructions, view.opening] : []), [view]);
+  const secretFinds = useSecretScan(secretLive && !!view, secretTexts);
   useEffect(() => {
     let live = true;
     api("/api/character-shares/" + encodeURIComponent(token))
@@ -571,11 +628,11 @@ function ImportDialog({ token, atLimit, onDone, onClose }) {
       live = false;
     };
   }, [token]);
-  async function add() {
+  async function add(body = {}) {
     setBusy(true);
     setError("");
     try {
-      const made = await api(`/api/character-shares/${encodeURIComponent(token)}/import`, { method: "POST", body: {} });
+      const made = await api(`/api/character-shares/${encodeURIComponent(token)}/import`, { method: "POST", body });
       onDone(made);
     } catch (e) {
       if (e.status === 404) setGone(true);
@@ -586,7 +643,21 @@ function ImportDialog({ token, atLimit, onDone, onClose }) {
   }
   return (
     <Modal title="Add a character" onClose={onClose}>
-      <ImportView view={view} gone={gone} error={error} busy={busy} atLimit={atLimit} onAdd={add} onClose={onClose} />
+      <ImportView
+        view={view}
+        gone={gone}
+        error={error}
+        busy={busy}
+        atLimit={atLimit}
+        onAdd={() => add()}
+        onClose={onClose}
+        secretFinds={secretFinds}
+        onMask={() => {
+          const state = {};
+          add({ instructions: maskSecrets(view.instructions, state).text, opening: maskSecrets(view.opening, state).text });
+        }}
+        onProceed={() => add()}
+      />
     </Modal>
   );
 }
@@ -739,6 +810,8 @@ export default function Characters({ demo, user, config, models, characters }) {
     [token, setToken] = useState(() => (captureCopy(), readCopy())),
     [paste, setPaste] = useState(false);
   const live = !demo && !!user && charactersReleased(config);
+  // Secret Guard, for instructions and opening messages (saved and imported).
+  const secretLive = useSecretGuard(config, user, demo);
   // What the list shows (chat counts) is read again on every visit.
   useEffect(() => {
     if (live) characters.reload();
@@ -787,27 +860,29 @@ export default function Characters({ demo, user, config, models, characters }) {
     }
   };
 
-  async function save() {
-    const problems = characterProblems(draft);
+  // `d` is the draft to save: Secret Guard's Mask and save passes the masked
+  // one, before the state update lands.
+  async function save(d = draft) {
+    const problems = characterProblems(d);
     const first = problems.name || problems.description || problems.instructions || problems.opening;
     if (first) return setFormError(first);
     setBusy(true);
     setFormError("");
     const body = {
-      name: draft.name.trim(),
-      description: draft.description,
-      instructions: draft.instructions,
-      opening: draft.opening,
-      model: draft.model || null,
-      avatar: draft.avatar ?? null,
+      name: d.name.trim(),
+      description: d.description,
+      instructions: d.instructions,
+      opening: d.opening,
+      model: d.model || null,
+      avatar: d.avatar ?? null,
     };
     try {
-      const saved = draft.id
-        ? await api("/api/characters/" + encodeURIComponent(draft.id), { method: "PATCH", body })
+      const saved = d.id
+        ? await api("/api/characters/" + encodeURIComponent(d.id), { method: "PATCH", body })
         : await api("/api/characters", { method: "POST", body });
       setDraft(null);
       await characters.reload();
-      if (draft.id) {
+      if (d.id) {
         setDetail(saved);
         const next = new URLSearchParams(params);
         next.delete("edit");
@@ -886,6 +961,7 @@ export default function Characters({ demo, user, config, models, characters }) {
       onSave={save}
       onCancel={closeEditor}
       onDelete={remove}
+      secretLive={secretLive}
     />
   );
   const dialogs = (
@@ -905,6 +981,7 @@ export default function Characters({ demo, user, config, models, characters }) {
         <ImportDialog
           token={token}
           atLimit={atLimit}
+          secretLive={secretLive}
           onClose={dropCopy}
           onDone={async (made) => {
             dropCopy();

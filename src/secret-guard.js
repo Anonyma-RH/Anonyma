@@ -1,6 +1,7 @@
 // Secret Guard: spots passwords, API keys and tokens in text before it leaves
 // the browser, and masks or removes them. Pure and DOM-free (no storage, no
-// network), so the chat composer, Canvas, Routines and Research Watch share
+// network), so the chat composer, Canvas, Routines, Research Watch,
+// Characters, Screenshot to site, Debate and subtitle translations share
 // one detector and node tests run it. Nothing here logs, stores or sends
 // what it finds.
 //

@@ -1387,6 +1387,32 @@ export const UPDATES = [
     // share_burns keeps which links burn and when each was opened; the
     // opening deletes the snapshot or ciphertext at once. Erased with the
     // links, and exported as dates only.
+  },
+  {
+    id: "characters",
+    title: "Characters",
+    tagline: "Make your own AI characters, with a name, a face and a personality.",
+    points: [
+      "Give each one a name, a picture, a personality, an opening message and the model it talks through",
+      "Chat with one from your workspace; its instructions go with every message, and Veil masks them",
+      "Private unless you share a copy: a link another signed-in account can use to add its own, with no chats",
+    ],
+    // The workspace's Characters page (src/Characters.jsx), /workspace/
+    // characters, and /api/characters (server/routes/characters.js). A
+    // character is per account (characters, erased and exported with it):
+    // name, description, instructions, an opening message, a default chat
+    // model (an Uncensored one needs "uncensored" too, featuresFor) and a
+    // picture, a built-in monogram or a small image the browser redraws and
+    // the server checks (no hidden details). Chatting with one is an
+    // ordinary /api/chat request: the browser sends its instructions in the
+    // leading system message, as a project's, so Veil masks them, and the
+    // request carries `character` (gated here) so a new saved chat is filed
+    // with it. The opening message is written once as the chat's first
+    // assistant turn, with no model and no charge; it is never sent as a
+    // reply. "Share a copy" makes a revocable link (30 days by default) that
+    // another signed-in account reads in full before adding its own copy: no
+    // chats, nothing about its maker. There are no other server routes and no
+    // model call of its own, so nothing new to price or hold.
     released: false,
   },
 ];
@@ -1845,6 +1871,14 @@ export function featuresFor(req) {
       needed.push("private");
     return needed;
   }
+  // Characters: the account's own AI characters and their copy links. A
+  // default model in the Uncensored section also needs that update.
+  if (p === "/api/characters" || p.startsWith("/api/characters/") || p.startsWith("/api/character-shares/")) {
+    const needed = ["characters"];
+    if ((post || req.method === "PATCH") && UNCENSORED_MODELS.includes(body.model))
+      needed.push("uncensored");
+    return needed;
+  }
   // Research Watch: watches (Deep Research on a schedule). Its reports are
   // part of the Routines inbox, its steps are Deep Research's and each needs
   // Live Web Search, so all four updates are needed; a watch on private
@@ -1885,6 +1919,8 @@ export function featuresFor(req) {
   // A new saved chat (or Symposium run) filed in a project.
   if (p === "/api/chat" && post && body.project !== undefined) needed.push("projects");
   if (p === "/api/chat" && post && body.taskTool !== undefined) needed.push("tasktools");
+  // A new saved chat filed with one of the account's characters.
+  if (p === "/api/chat" && post && body.character !== undefined) needed.push("characters");
   // Privacy Trail: the browser's Veil mask count (null when Veil was off),
   // kept with the reply's trail.
   if (p === "/api/chat" && post && body.veil_masked !== undefined)

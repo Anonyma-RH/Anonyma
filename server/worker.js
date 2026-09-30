@@ -260,6 +260,9 @@ export function createWorker(ctx) {
       db.prepare(
         "DELETE FROM sealed_shares WHERE expires IS NOT NULL AND expires<=?",
       ).run(now());
+      // Characters: an expired copy link's snapshot goes too. Reading already
+      // refuses it at its deadline; this only reclaims the storage.
+      db.prepare("DELETE FROM character_shares WHERE expires<=?").run(now());
       // Canvas: a canvas past its auto-delete time. Reads already treat it
       // as gone; this reclaims the storage.
       db.prepare(

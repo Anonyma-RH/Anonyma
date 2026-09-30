@@ -73,6 +73,8 @@ export default function DataControls() {
   const repos = !!config && isReleased(config, "reporeader");
   // And Secret Guard.
   const secretGuard = !!config && isReleased(config, "secretguard");
+  // And Characters.
+  const characters = !!config && isReleased(config, "characters");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -236,6 +238,22 @@ export default function DataControls() {
             encrypted vault. Deleting a project keeps its chats; a pin goes when
             its saved file expires or is deleted. Closing your account or Panic
             Wipe deletes every project.
+          </li>
+        )}
+        {characters && (
+          <li>
+            Characters: each character’s name, description, instructions,
+            opening message, default model and picture, and which saved chats
+            are with it. They’re private to your account. A character’s
+            instructions are sent with each chat by your browser and aren’t saved
+            with the chat; its opening message is saved as the chat’s first
+            message, with no model and no charge. Off the record, Private Mode
+            and Device only chats are never saved, so never listed with a
+            character. Deleting a character keeps its chats. A copy link keeps
+            a snapshot of the character for up to 30 days (or until you revoke
+            it, or delete the character), with no chats and nothing about you.
+            Closing your account, Panic Wipe and Inactivity Wipe delete every
+            character and link.
           </li>
         )}
         {twoStep && (
@@ -458,6 +476,12 @@ export default function DataControls() {
         <p>
           The export also includes your projects: their settings, the chats
           and Symposium runs in each, and their pinned files.
+        </p>
+      )}
+      {characters && (
+        <p>
+          The export also includes your characters, with their pictures, the
+          chats with each, and your live copy links.
         </p>
       )}
       {routines && (

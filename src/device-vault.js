@@ -222,7 +222,7 @@ export function vaultTitle(messages = [], veilMap = {}) {
 // Chat Import: a chat brought from ChatGPT or Claude keeps its own title, the
 // service it came from and the id the export gave it (to notice the same chat
 // imported twice); all of it stays inside the sealed chat.
-export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, project = null, carried = null, conflictCopy = false, now = Date.now(), title = null, importedFrom = null, importKey = null }) {
+export function vaultChat({ id, mode, privateMode, sealed = false, messages, veil, created, project = null, character = null, carried = null, conflictCopy = false, now = Date.now(), title = null, importedFrom = null, importKey = null }) {
   return {
     id,
     title: typeof title === "string" && title.trim() ? title.trim().slice(0, 80) : vaultTitle(messages, veil?.map),
@@ -233,6 +233,8 @@ export function vaultChat({ id, mode, privateMode, sealed = false, messages, vei
     private: !!privateMode,
     ...(conflictCopy ? { conflictCopy: true } : {}),
     ...(typeof project === "string" && project ? { project } : {}),
+    // Characters: the one this chat is with, kept inside the sealed chat only.
+    ...(typeof character === "string" && character ? { character } : {}),
     // Sealed Mode: it reopens sealed and only ever goes on sealed.
     ...(sealed ? { sealed: true } : {}),
     // Summarize & Continue: the summary a chat continued fresh carries, and

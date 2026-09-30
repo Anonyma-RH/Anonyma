@@ -1518,7 +1518,7 @@ export const UPDATES = [
     // /api/quote with the same payload and held at exactly that price; it's
     // saved as an ordinary conversation unless off the record or in Private
     // Mode. Erase clears the cache, and the export lists what's open.
-    released: false,
+    released: true,
   },
   {
     id: "debate",

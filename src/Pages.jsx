@@ -907,6 +907,7 @@ const featureIcons = {
   phototools: "image",
   filesearch: "filesearch",
   researchwatch: "research",
+  dictation: "mic",
 };
 const launch = {
   id: "mvp",

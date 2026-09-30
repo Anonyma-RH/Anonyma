@@ -66,6 +66,10 @@ const AudioOverviewDialog = lazy(() => import("./AudioOverview.jsx"));
 const CatchUpDialog = lazy(() => import("./CatchUpDialog.jsx"));
 // Quote Cards' editor and its canvas drawing, loaded when a card is first made.
 const QuoteCardDialog = lazy(() => import("./QuoteCards.jsx"));
+// Private Dictation's panel; its Whisper engine loads only when someone
+// dictates (src/dictation-engine.js). The microphone menu is small.
+const DictationPanel = lazy(() => import("./Dictation.jsx"));
+import DictationMenu from "./DictationMenu.jsx";
 import Routines from "./Routines.jsx";
 import { WatchBadge } from "./PageWatch.jsx";
 import Projects, { useProjects, ProjectsSidebar, ProjectBar, ProjectPicker, ProjectSwatch } from "./Projects.jsx";
@@ -554,6 +558,8 @@ export default function Workspace() {
     [arenaAsk, setArenaAsk] = useState(null),
     [arenaSaving, setArenaSaving] = useState(false),
     [voiceOpen, setVoiceOpen] = useState(false),
+    // Private Dictation: its panel above the composer (on-device Whisper).
+    [dictationOpen, setDictationOpen] = useState(false),
     [readAloud, setReadAloud] = useState(null),
     // Double-check This: the index of the answer whose second-opinion panel is open.
     [checking, setChecking] = useState(null),
@@ -683,6 +689,11 @@ export default function Workspace() {
   // video modes use images as references, not as something to read. Not in
   // the demo, which has no document attachments.
   const ocrLive = !demo && textMode && ocrReleased(config);
+  // Private Dictation: speech to text on this device, free, in every mode
+  // (nothing leaves the browser). Before release: no menu and no panel.
+  const dictationLive = !demo && textMode && isReleased(config, "dictation");
+  // Paid transcription (Voice-assisted chat) beside it, where it's offered.
+  const paidVoiceLive = !demo && isReleased(config, "voice") && isReleased(config, "audio");
   const [shieldPrefs, setShieldPrefs] = useState({}),
     [sendAsData, setSendAsData] = useState(true),
     [shieldOpen, setShieldOpen] = useState(null),
@@ -4855,6 +4866,18 @@ export default function Workspace() {
                 )}
               </div>
               <div className="composer-zone" ref={composerZone}>
+                {dictationOpen && dictationLive && (
+                  <Suspense fallback={null}>
+                    <DictationPanel
+                      onClose={() => setDictationOpen(false)}
+                      onText={(t) => {
+                        // Into the composer for review; nothing is sent.
+                        setPrompt((p) => (p.trim() ? p.trimEnd() + " " + t : t));
+                        promptBox.current?.focus();
+                      }}
+                    />
+                  </Suspense>
+                )}
                 {voiceOpen && !privateMode && !sealedOn && textMode && !demo &&
                   isReleased(config, "voice") && isReleased(config, "audio") && (
                   <VoiceAssist
@@ -5411,6 +5434,28 @@ export default function Workspace() {
                           <Icon name="globe" size={17} />
                           <span>Web</span>
                         </button>
+                      )}
+                      {dictationLive && (
+                        <DictationMenu
+                          active={dictationOpen}
+                          onDevice={() => {
+                            setVoiceOpen(false);
+                            setDictationOpen(true);
+                          }}
+                          paid={
+                            !paidVoiceLive
+                              ? { available: false }
+                              : privateMode
+                                ? { available: false, reason: "Not in Private Mode: no speech provider offers zero data retention." }
+                                : sealedOn
+                                  ? { available: false, reason: "Not available in Sealed Mode." }
+                                  : { available: true }
+                          }
+                          onPaid={() => {
+                            setDictationOpen(false);
+                            setVoiceOpen(true);
+                          }}
+                        />
                       )}
                       <button type="button" className="attachment-control composer-options-toggle"
                         aria-expanded={composerOptionsOpen} aria-controls="composer-options-panel"

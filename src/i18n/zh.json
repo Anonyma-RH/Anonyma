@@ -6415,7 +6415,49 @@
     "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "使用其他钱包应用？请把页面链接粘贴到它的内置浏览器中。钱包应用有自己独立的登录状态，所以你需要在那里重新登录 ANONYMA。",
     "Open in MetaMask": "在 MetaMask 中打开",
     "Open in Coinbase Wallet": "在 Coinbase Wallet 中打开",
-    "Open in Trust Wallet": "在 Trust Wallet 中打开"
+    "Open in Trust Wallet": "在 Trust Wallet 中打开",
+    "Private Dictation": "私密语音输入",
+    "Talk instead of typing. Your voice becomes text on your own device, for free.": "用说话代替打字。你的语音会在你自己的设备上免费转成文字。",
+    "Dictate into any chat: pick On this device (free) from the microphone menu": "在任意会话中语音输入：从麦克风菜单中选择“在本机（免费）”",
+    "Your recording never leaves this device; the text waits in your message until you press Send": "你的录音绝不会离开这台设备；文字会留在你的消息中，直到你按下发送",
+    "One download of the model from Hugging Face, then it works offline; less accurate than paid transcription": "从 Hugging Face 下载一次模型，之后即可离线使用；准确度低于付费转录",
+    "Dictate": "语音输入",
+    "On this device (free)": "在本机（免费）",
+    "Private: your voice never leaves this device. Less accurate.": "私密：你的语音绝不会离开这台设备。准确度较低。",
+    "Paid transcription": "付费转录",
+    "More accurate. The audio goes to a speech provider.": "更准确。音频会发送给语音服务提供商。",
+    "Not in Private Mode: no speech provider offers zero data retention.": "隐私模式下不可用：没有语音服务提供商提供零数据保留。",
+    "Not available in Sealed Mode.": "密封模式下不可用。",
+    "Private dictation": "私密语音输入",
+    "Close private dictation": "关闭私密语音输入",
+    "Dictation model": "语音输入模型",
+    "Detect automatically": "自动检测",
+    "Record": "录音",
+    "Download the model": "下载模型",
+    "Fastest. Fine for short, clear dictation.": "最快。适合简短、清晰的语音输入。",
+    "More accurate, especially with accents and other languages. Slower.": "更准确，尤其是对口音和其他语言。速度较慢。",
+    "Remove from this device": "从这台设备移除",
+    "Partly downloaded": "已部分下载",
+    "Starting the model on this device…": "正在本机启动模型……",
+    "Finishing the recording…": "正在完成录音……",
+    "Transcribing on your device…": "正在你的设备上转录……",
+    "That recording was too short. Record a little longer.": "这段录音太短了。请多录一会儿。",
+    "No speech was heard. Check your microphone, then record again.": "没有听到说话声。请检查麦克风，然后重新录音。",
+    "No words were recognised. Record again, or type instead.": "没有识别出任何文字。请重新录音，或改为打字。",
+    "Stopped. Nothing was added to your message.": "已停止。没有向你的消息添加任何内容。",
+    "Recording stopped when the tab was hidden. Press Record to start again.": "标签页被隐藏时录音已停止。按“录音”重新开始。",
+    "Added to your message. Check it, then press Send: nothing is sent until you do.": "已添加到你的消息中。请检查后按发送：在你按下之前不会发送任何内容。",
+    "Running on this device's graphics processor (WebGPU).": "正在这台设备的图形处理器（WebGPU）上运行。",
+    "Running on this device's processor.": "正在这台设备的处理器上运行。",
+    "It's less accurate than paid transcription, so check the words before you send.": "它的准确度低于付费转录，发送前请检查文字。",
+    "Works in every mode, including Private Mode and off the record.": "适用于所有模式，包括隐私模式和不留记录。",
+    "Whisper is by OpenAI (MIT licence); these ONNX builds are Apache-2.0. The engine is Transformers.js (Apache-2.0) on ONNX Runtime (MIT).": "Whisper 由 OpenAI 开发（MIT 许可证）；这些 ONNX 版本采用 Apache-2.0 许可证。引擎是运行在 ONNX Runtime（MIT）上的 Transformers.js（Apache-2.0）。",
+    "There isn't enough storage space on this device for this model. Free some space or pick the smaller model.": "这台设备的存储空间不足以存放此模型。请释放一些空间，或选择较小的模型。",
+    "This device ran out of memory. Close other tabs, or pick the smaller model.": "这台设备内存不足。请关闭其他标签页，或选择较小的模型。",
+    "The download stopped. Check your connection and try again; files already downloaded are kept.": "下载已中断。请检查网络连接后重试；已下载的文件会保留。",
+    "The model couldn't start on this device. Reload the page and try again, or pick the smaller model.": "模型无法在这台设备上启动。请刷新页面后重试，或选择较小的模型。",
+    "The on-device transcription stopped before finishing. Try again, or type instead.": "本机转录在完成前停止了。请重试，或改为打字。",
+    "Stopped. Files already downloaded are kept.": "已停止。已下载的文件会保留。"
   },
   "patterns": [
     {
@@ -10461,6 +10503,30 @@
     {
       "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
       "zh": "放大最多支持长边 {0} px 的照片。请缩小后再试。"
+    },
+    {
+      "en": "Free. Your recording never leaves this device. The first use downloads the model (about {0}) from Hugging Face; after that it works offline.",
+      "zh": "免费。你的录音绝不会离开这台设备。首次使用时会从 Hugging Face 下载模型（约 {0}）；之后即可离线使用。"
+    },
+    {
+      "en": "Download the model ({0})",
+      "zh": "下载模型（{0}）"
+    },
+    {
+      "en": "Stop · {0}",
+      "zh": "停止 · {0}"
+    },
+    {
+      "en": "Downloading from Hugging Face… {0} of {1}",
+      "zh": "正在从 Hugging Face 下载…… {0} / {1}"
+    },
+    {
+      "en": "Listening… up to {0}. Press Stop when you're done.",
+      "zh": "正在聆听……最长 {0}。说完后按“停止”。"
+    },
+    {
+      "en": "The first use also loads the speech engine ({0}) from ANONYMA.",
+      "zh": "首次使用还会从 ANONYMA 加载语音引擎（{0}）。"
     }
   ]
 }

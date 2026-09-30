@@ -47,11 +47,13 @@
   },
   "devDependencies": {
     "@ffmpeg-installer/ffmpeg": "1.1.0",
+    "@huggingface/transformers": "4.3.0",
     "@vitejs/plugin-react": "5.0.4",
     "concurrently": "10.0.5",
     "dompurify": "3.4.16",
     "katex": "0.16.47",
     "mermaid": "11.17.2",
+    "onnxruntime-web": "1.31.0-dev.20260914-8d85527a0",
     "opentype.js": "2.0.0",
     "prettier": "3.9.8",
     "pyodide": "314.0.7",
@@ -70,6 +72,10 @@
   "overrides": {
     "@freedomofpress/crypto-browser": {
       "@noble/curves": "1.9.7"
+    },
+    "@huggingface/transformers": {
+      "onnxruntime-node": "npm:onnxruntime-common@1.30.0",
+      "sharp": "npm:onnxruntime-common@1.30.0"
     }
   }
 }

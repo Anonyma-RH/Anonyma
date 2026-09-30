@@ -1541,7 +1541,7 @@ export const UPDATES = [
     // reply per turn under its own model, then the judge), so History,
     // Export, Share a Chat, erase and the account export already cover it;
     // off the record and Private Mode keep nothing. No table of its own.
-    released: false,
+    released: true,
   },
   {
     id: "backup",

@@ -1473,7 +1473,7 @@ export const UPDATES = [
     // subtitle tracks (times and text, never the video or the sound), erased
     // and exported with the account; off the record saves nothing. The page
     // is /workspace/subtitles.
-    released: false,
+    released: true,
   },
   {
     id: "shottosite",

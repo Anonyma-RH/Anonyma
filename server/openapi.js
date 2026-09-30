@@ -3962,6 +3962,70 @@ route("post", "/api/onchain/lookup", "Look up a transaction or address", {
   description:
     "Free and read only: nothing is signed, sent or connected. Read on the server from fixed public sources (Robinhood Chain's JSON-RPC node; Blockscout's API for the others), so the user's IP never reaches them; no redirects, JSON only, 8 seconds and 1 MB at most, kept in memory for 60 seconds, never stored or logged. A transaction's facts: status, time, block, from/to with explorer names, the call, value, fee, token transfers, approvals and a created contract; an address's: kind, name and labels, balance, activity counts, tokens held and token details. Hints appear only when the facts show them. 400 invalid_request; 400 onchain_chain_unsupported; 404 onchain_not_found; 502 onchain_unavailable. 20 a minute and 200 an hour per account.",
 });
+// Contract Reader (update "contractreader", with "onchain"; server/contract-
+// reader.js). Explaining is an /api/chat request (and /api/quote estimate)
+// carrying `contract`, described on POST /api/contracts.
+const contractSummary = {
+  id: string,
+  chain: object({ id: integer, name: string }),
+  address: { ...string, description: "The contract's address, checksummed" },
+  name: { ...nullableString, description: "Its verified contract name, or its token name" },
+  read_at: integer,
+  forgotten_at: { ...integer, description: "When the cache drops it: 30 minutes after it was read" },
+  forgotten_in: { ...integer, description: "Milliseconds until then, by the server's clock" },
+};
+const contractView = object({
+  ...contractSummary,
+  facts: {
+    type: "object",
+    description:
+      "kind: contract; chain; address; name; token (name, symbol, decimals, supply); code_size; verified (via Sourcify or Blockscout, match, contract, compiler, files) or unverified: true; proxy (kind: EIP-1967, EIP-1967 beacon, EIP-1167 clone or the verifier's own detection; implementation, implementation_name, implementation_verified); paused; control (who controls it, from live reads: owner, pending_owner, default_admin, upgrade_admin, admin_owner, beacon, role getters and default admin role members, each with address, type wallet, contract or none, renounced, via); bytecode (for unpublished code: size, selectors, and the functions matched in a built-in table with their group); checks (codes: unverified, implementation_unverified, upgradeable, paused, wallet_owner, wallet_admin, group); notes (no_live_reads, reads_incomplete, source_unavailable, sources_trimmed, proxy_source_skipped).",
+  },
+  files: array(
+    object({
+      path: string,
+      lines: integer,
+      bytes: integer,
+      main: bool,
+      flagged: { ...bool, description: "Injection Shield found text that reads like instructions to an AI (sent as data either way)" },
+      sent: { ...bool, description: "Sent to the model when explaining" },
+      functions: { ...array(object({ name: string, start: integer, end: integer })), description: "A sent file's function declarations, for citations" },
+    }),
+  ),
+  sent: object({ files: integer, chars: integer, truncated: bool }),
+  hidden_removed: { ...integer, description: "Injection Shield's invisible characters taken out of the source" },
+  cached: { ...bool, description: "Already open for this account, so it wasn't read again (POST only)" },
+});
+route("post", "/api/contracts", "Read a contract", {
+  body: object(
+    {
+      value: { ...string, maxLength: 2048, description: "A 0x address, or an explorer link to an address or token page (the link names the chain). Sent in the body so no access log records it." },
+      chain: { enum: [4663, 1, 8453, 42161, 10], description: "Needed with a bare address" },
+    },
+    ["value"],
+  ),
+  status: 201,
+  response: contractView,
+  description:
+    "Free and read only: nothing is signed, sent or connected. Read on the server from fixed public sources only (Onchain Explainer's: Robinhood Chain's JSON-RPC node and each other chain's Blockscout, plus sourcify.dev), so the user's IP never reaches them; no user-supplied host, no redirects, JSON only, 8 seconds each. Code, the EIP-1967 slots and standard reads (owner(), getOwner(), pendingOwner(), defaultAdmin(), paused(), name(), symbol(), decimals(), totalSupply()) come from one JSON-RPC batch; a value is reported only when the contract's ABI or bytecode has the function. Live reads on chains other than Robinhood Chain use Blockscout's eth-rpc endpoint when it answers, and are skipped with a note when it doesn't. Verified source from Sourcify's v2 API, then the chain's Blockscout (not for Robinhood Chain); a proxy is followed one hop to its implementation's source. Unpublished code: its bytecode's PUSH4 selectors against a built-in table, never an online lookup. Source at most 1.5 MB and 400 files, the main contract and what it inherits from kept first. 400 contract_address, contract_chain; 404 contract_not_found; 502 contract_unavailable; 503 contract_busy; 429 contract_busy (one at a time) or rate_limit (8 a minute, 40 an hour; a mistyped address or a contract already open doesn't count). Kept in this server's memory for this account for 30 minutes, 3 at most; never logged or stored. Explaining is POST /api/chat with contract: { id, lang: en, zh or es }, a model and optionally ephemeral or private: the server builds the messages from this read (the facts and up to 90,000 characters of numbered code, comment lines left out, as escaped document blocks with Injection Shield's data notice), asks for a JSON reading with an 8,000-token reply budget lowered to the model's limits (400 contract_too_long), and holds exactly what POST /api/quote shows for the same body. Only a reply that reads as a reading is charged; a cut-short, unreadable or refused one is released (502 contract_cut_short, contract_unreadable, contract_refused). 400 invalid_contract when combined with other chat options; 404 contract_gone once forgotten. Saved as an ordinary conversation unless off the record or in Private Mode.",
+});
+route("get", "/api/contracts", "Contracts open now", {
+  response: object({ data: array(object(contractSummary)), limit: { ...integer, description: "Contracts open at once (3)" } }),
+  description: "Newest first. Only this account's, and only for 30 minutes after each was read.",
+});
+route("get", "/api/contracts/{id}", "One open contract", {
+  response: contractView,
+  description: "404 contract_gone once it's forgotten (30 minutes after it was read, or after DELETE).",
+});
+route("get", "/api/contracts/{id}/file", "One source file's text", {
+  query: [{ name: "path", in: "query", required: true, schema: string }],
+  response: object({ path: string, lines: integer, bytes: integer, text: string, sent: bool }),
+  description: "A verified file that was kept, as read (invisible characters removed). 404 contract_file_not_found or contract_gone.",
+});
+route("delete", "/api/contracts/{id}", "Forget an open contract now", {
+  response: object({ ok: bool }),
+  description: "Drops it from the cache at once. 404 contract_gone when it isn't open.",
+});
 // Seed Guard's opt-out header for API clients (server/seed-guard.js).
 const seedGuardHeader = {
   name: "X-Anonyma-Seed-Guard",

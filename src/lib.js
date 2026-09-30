@@ -552,6 +552,9 @@ export const MODE_FEATURES = {
   filesearch: "filesearch",
   // Repo Reader's page (src/RepoReader.jsx).
   repos: "reporeader",
+  // Contract Reader's page (src/ContractReader.jsx), which reads from
+  // Onchain Explainer's sources, so it needs that update too.
+  contracts: "contractreader",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")
@@ -559,6 +562,7 @@ export function modeReleased(config, mode) {
   if (mode === "notes") return isReleased(config, "meetingnotes") && isReleased(config, "audio");
   if (mode === "photos") return isReleased(config, "phototools") && isReleased(config, "images");
   if (mode === "filesearch") return ["filesearch", "files", "documents"].every((id) => isReleased(config, id));
+  if (mode === "contracts") return isReleased(config, "contractreader") && isReleased(config, "onchain");
   return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
 }
 

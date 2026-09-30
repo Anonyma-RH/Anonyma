@@ -1352,6 +1352,26 @@ export const UPDATES = [
     // button and the dictionary never loads.
     released: true,
   },
+  {
+    id: "contractreader",
+    title: "Contract Reader",
+    tagline: "Paste a token or contract address. See who controls it and what they can do, in plain English.",
+    points: [
+      "Reads the verified code, or the functions its bytecode exposes when the code isn't published",
+      "Who controls it comes from live reads, and every power links to its file and line",
+      "Reading is free and the explanation bills like a message. Not an audit, not financial advice",
+    ],
+    // The workspace's Contract Reader page (src/ContractReader.jsx) and
+    // /api/contracts (server/routes/contract-reader.js): facts from Onchain
+    // Explainer's fixed chain sources plus Sourcify (server/contract-
+    // reader.js), so it needs "onchain" too (featuresFor). A read lives 30
+    // minutes in a per-account memory cache; nothing is stored. The
+    // explanation is an /api/chat request carrying `contract`, priced by
+    // /api/quote with the same payload and held at exactly that price; it's
+    // saved as an ordinary conversation unless off the record or in Private
+    // Mode. Erase clears the cache, and the export lists what's open.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1627,6 +1647,9 @@ export function featuresFor(req) {
   // Repo Reader: reading a public GitHub repo into the short-lived cache,
   // its files and the excerpts for a question.
   if (p === "/api/repos" || p.startsWith("/api/repos/")) return ["reporeader"];
+  // Contract Reader: reading one contract into the short-lived cache, and
+  // its files. It reads from Onchain Explainer's sources, so it needs that.
+  if (p === "/api/contracts" || p.startsWith("/api/contracts/")) return ["contractreader", "onchain"];
   // Sealed Mode: the attestation passthrough, the ciphertext relay and a
   // sealed request's billing. Nothing else is needed: a sealed chat is never
   // stored, and its body is never read here.
@@ -1871,6 +1894,10 @@ export function featuresFor(req) {
   // estimate. The request is always off the record (pushed below).
   if ((p === "/api/chat" || p === "/api/quote") && post && body.repo !== undefined)
     needed.push("reporeader");
+  // Contract Reader: a contract's explanation (server/contract-reader.js),
+  // and its estimate. Off the record and Private Mode are gated below.
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.contract !== undefined)
+    needed.push("contractreader", "onchain");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

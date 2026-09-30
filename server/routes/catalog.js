@@ -23,6 +23,7 @@ import { apiBoostInfo } from "../api-boost.js";
 import { prepareStudyRequest, studyBudget } from "../study.js";
 import { prepareSlidesRequest, slidesBudget } from "../slides.js";
 import { prepareRepoRequest, repoBudget } from "../repo-reader.js";
+import { prepareContractRequest, contractBudget } from "../contract-reader.js";
 import { prepareCatchupRequest, catchupBudget } from "../catchup.js";
 import { planAutoRequest, refuseAutoTask, requestSettings } from "../auto-model.js";
 import { prepareCanvasRequest, canvasBudget } from "../canvas.js";
@@ -175,6 +176,10 @@ export function catalogRoutes(ctx) {
     // budget the /api/chat request carries, which holds exactly this
     // (server/repo-reader.js).
     const repoTask = prepareRepoRequest(req.body, { quote: true });
+    // Contract Reader: an explanation's estimate prices the messages and
+    // reply room the /api/chat request carries, built from the same read,
+    // which holds exactly this (server/contract-reader.js).
+    const contractTask = prepareContractRequest(req, ctx.contractReader.cache);
     const m = getModel(req.body.model);
     ctx.earlyModels.check(viewerOf(req), "models", m.id);
     if (study && m.type !== "chat") fail(400, "Choose a chat model to make a deck.", "unsupported_model");
@@ -194,6 +199,10 @@ export function catalogRoutes(ctx) {
     if (repoTask) {
       if (m.type !== "chat" || imageCallable(m)) fail(400, "Repo Reader needs a text model.", "unsupported_model");
       req.body.max_tokens = repoBudget(m, req.body.messages);
+    }
+    if (contractTask) {
+      if (m.type !== "chat" || imageCallable(m)) fail(400, "Contract Reader needs a text model.", "unsupported_model");
+      req.body.max_tokens = contractBudget(m, req.body.messages);
     }
     const teamPaid = req.body.treasury === true;
     if (teamPaid && m.type !== "chat") fail(400, "Team pays supports chat requests only.");

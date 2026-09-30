@@ -43,6 +43,8 @@ export function siteRoutes({ app, db, cfg }) {
     slides: isReleased(cfg, "slides"),
     // Repo Reader's page.
     repos: isReleased(cfg, "reporeader"),
+    // Contract Reader's page, which reads from Onchain Explainer's sources.
+    contracts: isReleased(cfg, "contractreader") && isReleased(cfg, "onchain"),
     translate: isReleased(cfg, "doctranslate"),
     // Meeting Notes' page, which transcribes with Voice & Audio's models.
     notes: isReleased(cfg, "meetingnotes") && isReleased(cfg, "audio"),

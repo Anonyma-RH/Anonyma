@@ -114,6 +114,7 @@ import {
   BellRing,
   VenetianMask,
   FileSearch,
+  ScrollText,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -232,6 +233,8 @@ const icons = {
   import: ImportChats,
   filesearch: FileSearch,
   repo: FolderGit2,
+  // Contract Reader: a contract read line by line.
+  contract: ScrollText,
   right: ChevronRight,
 };
 export function Icon({ name, size = 18, ...rest }) {
@@ -283,6 +286,8 @@ const pixels = {
   filesearch: [".####..", "#....#.", "#.##.#.", "#....#.", ".####..", "....##.", ".....##"],
   // A folder with a branch on it: a repo read file by file.
   repos: ["###....", "#######", "#.#...#", "#.#.#.#", "#.##..#", "#.#...#", "#######"],
+  // A page with a folded corner and its lines: a contract read line by line.
+  contracts: ["#####..", "#...##.", "#.#..##", "#.....#", "#.###.#", "#.....#", "#######"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

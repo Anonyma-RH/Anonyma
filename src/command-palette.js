@@ -377,6 +377,7 @@ export const MODE_LABELS = {
   repos: "Repo Reader",
   translate: "Translate docs",
   notes: "Meeting notes",
+  subtitles: "Subtitles",
   import: "Import chats",
   photos: "Photo tools",
   filesearch: "Search files",
@@ -415,6 +416,8 @@ const PLACES = [
   ["repos", "Repo Reader", ["github", "repo", "repository", "codebase", "source code", "read code", "ask about code"]],
   // Meeting Notes: only once released, with Voice & Audio.
   ["notes", "Meeting notes", ["meeting", "recording", "transcribe", "transcript", "minutes", "action items", "call notes", "decisions"]],
+  // Subtitles: only once released, with Voice & Audio.
+  ["subtitles", "Subtitles", ["subtitles", "captions", "srt", "vtt", "video", "translate video", "closed captions", "transcribe video"]],
   // Chat Import: only once released, like the others.
   ["import", "Import chats", ["import", "chatgpt", "claude", "history", "export", "migrate", "bring my chats", "conversations"]],
   // Photo Tools: only once released, with Image Studio.

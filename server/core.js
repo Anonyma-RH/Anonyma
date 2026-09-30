@@ -1504,6 +1504,27 @@ export const MIGRATIONS = [
         WHEN (SELECT user_id FROM characters WHERE id=NEW.character_id) IS NOT NEW.user_id
         BEGIN SELECT RAISE(ABORT,'character_owner_only'); END;
     `),
+  // Subtitles (server/routes/subtitles.js): a set of subtitle tracks the
+  // account keeps. Its title, the video's length, the spoken language, and
+  // its tracks (each track's language and cues: their times and text, as
+  // JSON, at most 512 KB), with its dates. Never the video, its sound, its
+  // name or anything about the request. At most 100 per account, also
+  // enforced here. Erased with the account's content (closure, Panic Wipe,
+  // Inactivity Wipe) and in its export. Additive: a new table, an index and
+  // a trigger only.
+  additive(`
+      CREATE TABLE IF NOT EXISTS subtitle_sets(id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL REFERENCES users(id),
+        title TEXT NOT NULL CHECK(length(title) BETWEEN 1 AND 120),
+        duration REAL NOT NULL CHECK(duration > 0),
+        language TEXT NOT NULL DEFAULT '',
+        tracks TEXT NOT NULL CHECK(length(tracks) <= 524288),
+        created INTEGER NOT NULL,updated INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS subtitle_sets_user ON subtitle_sets(user_id,updated);
+      CREATE TRIGGER IF NOT EXISTS subtitle_sets_per_account BEFORE INSERT ON subtitle_sets
+        WHEN (SELECT COUNT(*) FROM subtitle_sets WHERE user_id=NEW.user_id)>=100
+        BEGIN SELECT RAISE(ABORT,'subtitles_limit'); END;
+  `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

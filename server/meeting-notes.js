@@ -204,6 +204,20 @@ function fromWords(list, speaker = null) {
 // say) goes with the line before it, so nothing the segment says is lost or
 // respelled. null when too little of the two match to trust it.
 function alignedLines(text, list, speaker = null) {
+  const aligned = placeWords(text, list, speaker);
+  if (!aligned) return null;
+  const { written, placed } = aligned;
+  const groups = groupItems(placed);
+  return groups
+    .map((g, n) =>
+      line(g.start, g.end, written.slice(n ? g.items[0].a : 0, groups[n + 1]?.items[0].a ?? written.length), g.speaker),
+    )
+    .filter(Boolean);
+}
+// The words matched to the written text, in order: { written, placed }, each
+// placed word carrying where it starts (`a`) and ends (`b`) in `written`, and
+// whether it ends a sentence. null when too little of the two match.
+function placeWords(text, list, speaker = null) {
   const written = String(text ?? "").normalize("NFC");
   const items = wordItems(list, speaker).filter((it) => fold(it.text));
   // The text folded to letters and digits, each character kept with its
@@ -248,12 +262,22 @@ function alignedLines(text, list, speaker = null) {
     const token = /^\S*/.exec(written.slice(p.a, placed[n + 1]?.a ?? written.length))[0];
     p.sentenceEnd = sentenceEnd(token);
   });
-  const groups = groupItems(placed);
-  return groups
-    .map((g, n) =>
-      line(g.start, g.end, written.slice(n ? g.items[0].a : 0, groups[n + 1]?.items[0].a ?? written.length), g.speaker),
-    )
-    .filter(Boolean);
+  return { written, placed };
+}
+// The written text as tokens, each with the time of its word: the text
+// between one matched word and the next (punctuation and all), so nothing
+// the segment says is lost or respelled. null when the words don't match.
+function alignedTokens(text, list, speaker = null) {
+  const aligned = placeWords(text, list, speaker);
+  if (!aligned) return null;
+  const { written, placed } = aligned;
+  return placed
+    .map((p, n) => ({
+      text: words(written.slice(n ? p.a : 0, placed[n + 1]?.a ?? written.length)),
+      start: p.start,
+      end: p.end,
+    }))
+    .filter((t) => t.text);
 }
 // A line longer than this says little about where in it something was said:
 // it is coarse. (Whisper-style segments and speech utterances are far
@@ -304,6 +328,43 @@ function replyLines(j) {
       )
       .filter(Boolean);
   return [];
+}
+// The words of a transcription reply as tokens for Subtitles: { text, start,
+// end } with the text as written. Where the reply has lines with their own
+// text (punctuated and cased) each is matched to the words that fall inside
+// it and takes its text from the line, the words supplying only the times;
+// else the words' own text (Deepgram's punctuated_word); else [] (the caller
+// falls back to the lines). Times are never invented.
+export function transcriptTokens(j) {
+  if (!j || typeof j !== "object") return [];
+  const list = replyWords(j);
+  if (!list.length) return [];
+  const lines = replyLines(j);
+  const own = () =>
+    wordItems(list)
+      .filter((it) => it.text)
+      .map((it) => ({ text: it.text, start: it.start, end: it.end }));
+  if (!lines.length) return own();
+  const out = [];
+  let used = 0;
+  for (const s of lines) {
+    const inside = list.filter((w) => {
+      const t = num(w?.start);
+      return t != null && t >= s.start - 0.05 && t <= s.end + 0.05;
+    });
+    used += inside.length;
+    const tokens = alignedTokens(s.text, inside, s.speaker);
+    if (tokens?.length) out.push(...tokens);
+    else
+      out.push(
+        ...wordItems(inside)
+          .filter((it) => it.text)
+          .map((it) => ({ text: it.text, start: it.start, end: it.end })),
+      );
+  }
+  // Words outside every line (a reply whose lines don't cover them all) are
+  // too few to trust the lines: use the words as they are.
+  return used < list.length * 0.8 ? own() : out;
 }
 // The timed lines in a transcription reply. Its own lines, with any coarse
 // one (a single segment for a whole piece, say) split into lines by the

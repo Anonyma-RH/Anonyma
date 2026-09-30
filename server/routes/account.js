@@ -17,6 +17,7 @@ import { exportGifts, forgetGifts } from "./gifts.js";
 import { exportVaultSync, forgetVaultSync } from "./vault-sync.js";
 import { exportCanvases, forgetCanvases } from "./canvas.js";
 import { exportSlideDecks, forgetSlideDecks } from "./slides.js";
+import { exportSubtitleSets, forgetSubtitleSets } from "./subtitles.js";
 import { exportRecoveryKit, forgetRecoveryKit } from "../recovery-kit.js";
 import { exportPush, forgetPush, pushReleased } from "../push-alerts.js";
 import { exportFileIndex, forgetFileIndex } from "../file-search.js";
@@ -170,6 +171,8 @@ export function eraseAccountContent(db, user) {
   forgetCanvases(db, id);
   // Slides: saved decks (those kept in a browser go with that browser).
   forgetSlideDecks(db, id);
+  // Subtitles: saved subtitle sets (their cues and times; never the video).
+  forgetSubtitleSets(db, id);
   // Push Alerts: every subscribed browser, the switches and anything
   // waiting to be sent. A browser gets nothing more from this account.
   forgetPush(db, id);
@@ -358,6 +361,12 @@ export function accountRoutes(ctx) {
   function slidesExport(user) {
     const list = exportSlideDecks(db, user);
     return list.length || isReleased(cfg, "slides") ? { slideDecks: list } : {};
+  }
+  // Subtitles: each saved set with its tracks (once the update is live, or
+  // while any exist). Never the video or its sound, which aren't kept.
+  function subtitlesExport(user) {
+    const list = exportSubtitleSets(db, user);
+    return list.length || isReleased(cfg, "subtitles") ? { subtitleSets: list } : {};
   }
   // Push Alerts: each browser (its push service's host, never the endpoint)
   // and the switches, once the update is live or while any are kept.
@@ -724,6 +733,7 @@ export function accountRoutes(ctx) {
       ...canvasExport(req.user.id),
       // Slides: saved decks.
       ...slidesExport(req.user.id),
+      ...subtitlesExport(req.user.id),
       // Push Alerts: subscribed browsers (host only) and switches.
       ...pushExport(req.user.id),
       // File Search: the passages the index holds for the saved files.
@@ -753,6 +763,7 @@ export function accountRoutes(ctx) {
       );
     // Meeting Notes: a run between steps releases what it holds.
     ctx.meetingNotes?.endFor(req.user.id);
+    ctx.subtitles?.endFor(req.user.id);
     if (
       db
         .prepare("SELECT id FROM holds WHERE user_id=? AND status='held'")

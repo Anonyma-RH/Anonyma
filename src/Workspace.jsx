@@ -44,6 +44,8 @@ const OnDevice = lazy(() => import("./OnDevice.jsx"));
 const Study = lazy(() => import("./Study.jsx"));
 // Meeting Notes: its recording reader and notes view load only on its page.
 const MeetingNotes = lazy(() => import("./MeetingNotes.jsx"));
+// Subtitles: its editor and cue tools load only on its page.
+const Subtitles = lazy(() => import("./Subtitles.jsx"));
 // Chat Import: its reader, list and destinations load only on its page.
 const ChatImport = lazy(() => import("./ChatImport.jsx"));
 // Photo Tools: its page (and the code that shrinks and reads a photo) loads only there.
@@ -359,6 +361,7 @@ export function AppSidebar({
     ["slides", "Slides", "Turn a prompt, document or chat into a slide deck. Edit, present or export it."],
     ["repos", "Repo Reader", "Paste a public GitHub repo and ask about it. Answers cite the exact files and lines."],
     ["notes", "Meeting notes", "Turn a recording into a timestamped transcript, key decisions and action items."],
+    ["subtitles", "Subtitles", "Turn a video into subtitles you can edit, translate and download. Only its sound is sent."],
     ["import", "Import chats", "Bring your ChatGPT or Claude history here. Choose which chats to keep and where they go."],
     ["photos", "Photo tools", "Edit a photo with words, remove its background or upscale it. See the price first."],
     ["filesearch", "Search files", "Ask one question across all your saved files. Every answer cites the file and the passage it came from."],
@@ -379,6 +382,7 @@ export function AppSidebar({
     .filter(([id]) => id !== "slides" || isReleased(config, "slides"))
     .filter(([id]) => id !== "repos" || isReleased(config, "reporeader"))
     .filter(([id]) => id !== "notes" || modeReleased(config, "notes"))
+    .filter(([id]) => id !== "subtitles" || modeReleased(config, "subtitles"))
     .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
     .filter(([id]) => id !== "photos" || modeReleased(config, "photos"))
     .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"))
@@ -686,6 +690,8 @@ export default function Workspace() {
     (mode === "translate" && (!config || isReleased(config, "doctranslate"))) ||
     // Meeting Notes' page, the same way (it needs Voice & Audio too).
     (mode === "notes" && (!config || modeReleased(config, "notes"))) ||
+    // Subtitles' page, likewise (it needs Voice & Audio too).
+    (mode === "subtitles" && (!config || modeReleased(config, "subtitles"))) ||
     // Chat Import's page, likewise.
     (mode === "import" && (!config || isReleased(config, "chatimport"))) ||
     // Photo Tools' page, the same way (it needs Image Studio's models too).
@@ -4128,6 +4134,7 @@ export default function Workspace() {
                 repos: "Repo Reader",
                 translate: "Translate docs",
                 notes: "Meeting notes",
+                subtitles: "Subtitles",
                 import: "Import chats",
                 photos: "Photo tools",
                 filesearch: "Search files",
@@ -4415,6 +4422,23 @@ export default function Workspace() {
                   vaultLive={vaultLive}
                   onUnlockVault={() => setVaultDialog({ kind: vault.status === "none" ? "setup" : "unlock" })}
                   projects={projectsLive ? projects.list : []}
+                />
+              </Suspense>
+            )
+          ) : mode === "subtitles" ? (
+            modeReleased(config, "subtitles") && (
+              <Suspense fallback={<p className="subs-loading">Opening Subtitles…</p>}>
+                <Subtitles
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  models={models}
+                  config={config}
+                  refresh={refresh}
+                  veilOn={veilOn}
+                  setVeilOn={setVeilOn}
+                  veilWords={veilWords}
+                  vaultLive={vaultLive}
                 />
               </Suspense>
             )

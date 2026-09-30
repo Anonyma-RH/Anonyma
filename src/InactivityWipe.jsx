@@ -12,6 +12,7 @@ import {
   WIPE_CANVAS,
   WIPE_FILE_SEARCH,
   WIPE_CHARACTERS,
+  WIPE_SUBTITLES,
   WIPE_ARENA,
   WIPE_ARENA_STAYS,
   WIPE_KEEPS_PASSKEYS,
@@ -112,6 +113,7 @@ export function WipeLists({ config }) {
           {on("canvas") && <li>{WIPE_CANVAS}</li>}
           {on("filesearch") && <li>{WIPE_FILE_SEARCH}</li>}
           {on("characters") && <li>{WIPE_CHARACTERS}</li>}
+          {on("subtitles") && <li>{WIPE_SUBTITLES}</li>}
           {on("slides") && <li>Slide decks saved to your account</li>}
           {on("arena") && <li>{WIPE_ARENA}</li>}
           {on("pushalerts") && on("app") && <li>{WIPE_PUSH}</li>}

@@ -90,6 +90,8 @@ export function knownPage(path, served = {}) {
     (served.translate === true && path === "/workspace/translate") ||
     // Meeting Notes' page, likewise.
     (served.notes === true && path === "/workspace/notes") ||
+    // Subtitles' page, likewise.
+    (served.subtitles === true && path === "/workspace/subtitles") ||
     // Chat Import's page, likewise.
     (served.chatimport === true && path === "/workspace/import") ||
     // Photo Tools' page, likewise.

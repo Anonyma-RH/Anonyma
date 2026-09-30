@@ -21,6 +21,7 @@ import {
   WIPE_PUSH,
   WIPE_FILE_SEARCH,
   WIPE_CHARACTERS,
+  WIPE_SUBTITLES,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPE_KEEPS_RECOVERY_KIT,
@@ -64,6 +65,8 @@ export function PanicWipe({ user }) {
   const fileSearchLive = isReleased(config, "filesearch");
   // And Characters and their copy links.
   const charactersLive = isReleased(config, "characters");
+  // And Subtitles' saved sets.
+  const subtitlesLive = !!config && isReleased(config, "subtitles");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
   // And the Recovery Kit, like the password.
@@ -148,6 +151,7 @@ export function PanicWipe({ user }) {
                   {pushLive && <li>{WIPE_PUSH}</li>}
                   {fileSearchLive && <li>{WIPE_FILE_SEARCH}</li>}
                   {charactersLive && <li>{WIPE_CHARACTERS}</li>}
+                  {subtitlesLive && <li>{WIPE_SUBTITLES}</li>}
                 </ul>
               </div>
               <div>

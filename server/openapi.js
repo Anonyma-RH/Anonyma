@@ -3141,6 +3141,131 @@ route("delete", "/api/meeting-notes/{id}", "Discard meeting notes", {
   response: object({ ended: bool, credits_charged: number }),
   description: "Releases everything the run still holds; pieces already transcribed stay charged. Answers the same for a run that already ended.",
 });
+// Subtitles (update "subtitles", which also needs "audio").
+const subtitlesRequest = object(
+  {
+    duration: { ...number, description: "The video's length in seconds (2 to 10,800), as read in the browser" },
+    chunks: {
+      ...array(number),
+      description: "Each piece's length in seconds, at most 300 (only the last may be under 285), adding up to duration; at most 39 pieces",
+    },
+    stt: { ...string, description: "A transcription model from /api/audio/models (stt); default nova-3" },
+    language: { ...string, description: "The spoken language for the transcription model: en, zh, es, fr, de, pt, it, nl, ja, ko, hi, ru or multi; omit for the model's default" },
+    ephemeral: { ...bool, description: "Off the record: only what billing already shows (needs ephemeral)" },
+    max_units: { ...integer, description: "The quote's units; a start whose maximum differs is refused with 409 estimate_changed" },
+    private: { ...bool, description: "Always refused with 400 subtitles_private_unavailable: no transcription model offers zero data retention" },
+    requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+  },
+  ["duration", "chunks"],
+);
+const subtitleTrack = object({
+  lang: { ...string, description: "The source track's spoken language (or empty), or a translation's language code from Translate docs' list" },
+  source: { ...bool, description: "true for the first track only: the words as they were heard" },
+  cues: array(object({ start: number, end: number, text: { ...string, description: "One to two lines, separated by a line feed" } })),
+});
+route("post", "/api/subtitles/quote", "The most subtitles can cost", {
+  body: subtitlesRequest,
+  response: object({
+    credits: { ...number, description: "The maximum, and exactly what a run holds: every piece at the transcription model's per-minute price" },
+    units: integer,
+    usd: number,
+    available: number,
+    spending_limit: object({ remaining: number }),
+    pieces: integer,
+    minutes: number,
+    credits_per_minute: number,
+    stt: object({ id: string, name: string, provider: { type: ["string", "null"] } }),
+    estimate: bool,
+  }),
+  description: "Reserves and charges nothing. The same checks as a start (plan, model, Private Mode), so a quote that succeeds describes exactly what a start would hold.",
+});
+route("post", "/api/subtitles", "Start subtitles", {
+  body: subtitlesRequest,
+  status: 201,
+  response: object({
+    id: string,
+    pieces: array(object({ index: integer, start: number, seconds: number })),
+    reserved: number,
+    stt: object({ id: string, name: string, provider: { type: ["string", "null"] } }),
+    idle_minutes: integer,
+  }),
+  description:
+    "Workspace only (session). Holds exactly the quote's maximum, one hold per piece, with no extra margin (402 insufficient_credits or spending_limit with nothing held). One run per account: a new one ends the last, releasing what it still held. A run nobody touches for 30 minutes ends the same way. Nothing about the video is stored; the run keeps only its plan and holds, in memory.",
+});
+route("post", "/api/subtitles/{id}/pieces/{index}", "Transcribe one piece", {
+  body: object(
+    { audio: { ...string, description: "data:audio/wav;base64,… mono 16-bit PCM at 16 kHz, under 10 MB, exactly the planned length (±0.05 s). Only its format and samples are forwarded" } },
+    ["audio"],
+  ),
+  response: object({
+    index: integer,
+    tokens: array(object({ text: { ...string, description: "The word as written, punctuation kept" }, start: number, end: number })),
+    seconds: number,
+    credits: number,
+    charged: number,
+    done: integer,
+    of: integer,
+  }),
+  description:
+    "Sends the piece to the transcription model, asking for word and segment timings, and settles its hold on its length (or the provider's, if shorter). Token times are in the whole video. A piece whose reply has no usable timing is refused with 502 subtitles_no_timings and charged nothing, like a failed one; either stays open for a retry (409 piece_done once it's transcribed, 409 subtitles_busy while another step runs, 404 subtitles_not_found once the run ended). The last piece ends the run.",
+});
+route("delete", "/api/subtitles/{id}", "Discard or finish subtitles", {
+  response: object({ ended: bool, credits_charged: number }),
+  description: "Releases everything the run still holds; pieces already transcribed stay charged. Answers the same for a run that already ended.",
+});
+const translateFields = {
+  target: { ...string, description: "A language code from Translate docs' list (35 languages)" },
+  model: { ...string, description: "A callable text model" },
+  private: { ...bool, description: "Private Mode: only a zero-data-retention model (400 private_model_required; needs private and ephemeral)" },
+};
+route("post", "/api/subtitles/translate/quote", "The most a translation can cost", {
+  body: object({ ...translateFields, sizes: { ...array(object({ json: integer, bytes: integer })), description: "Each part's size (never its text), from the same messages a run sends" } }, ["target", "model", "sizes"]),
+  response: object({ credits: number, units: integer, part_units: array(integer), parts: array(number), available: number, spending_limit: object({ remaining: number }), model: string, estimate: bool }),
+  description: "Reserves and charges nothing.",
+});
+route("post", "/api/subtitles/translate", "Translate a subtitle track", {
+  body: object(
+    {
+      ...translateFields,
+      of: { ...integer, description: "How many parts the track is in (1 to 150)" },
+      batches: { ...array(object({ index: integer, items: array(object({ n: integer, text: string })) })), description: "The parts to translate: up to 40 cues each, numbered by their place in the track; Veil-masked in the browser when Veil is on" },
+      max_units: { ...integer, description: "The quote's units; a run whose total differs is refused with 409 estimate_changed" },
+      veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count (needs trail)" },
+    },
+    ["target", "model", "of", "batches", "max_units"],
+  ),
+  stream: true,
+  description:
+    "Holds every part's maximum, exactly the quoted total. One off-the-record model call a part, three at a time; the cues go as one data-only document and come back as strict JSON (read tolerantly), every cue once, timings untouched. A usable part settles on its usage; a part that fails, is cut short, loses a cue or loses a Veil placeholder is released and charged nothing. Seed Guard refuses a cue holding a seed phrase (seed_phrase_blocked). SSE events: translate.stage started, part (running, then done with cues [{ n, text }], failed or stopped), then done, and anonyma { credits_charged, stored: false, privacy? }.",
+});
+route("post", "/api/subtitles/translate/stop", "Stop a translation", {
+  response: object({ stopped: bool }),
+  description: "Aborts the account's running translation; parts not finished are released.",
+});
+route("get", "/api/subtitles/sets", "Your saved subtitle sets", {
+  response: object({ data: array(object({ id: string, title: string, duration: number, language: string, track_list: array(object({ lang: string, source: bool, cues: integer })), created: integer, updated: integer })), limit: integer }),
+  description: "Without the tracks' cues. At most 100 sets.",
+});
+route("post", "/api/subtitles/sets", "Save a subtitle set", {
+  body: object({ title: string, duration: number, language: string, tracks: array(subtitleTrack) }, ["title", "duration", "tracks"]),
+  status: 201,
+  response: object({ id: string, title: string, duration: number, language: string, tracks: array(subtitleTrack), created: integer, updated: integer }),
+  description:
+    "Stores the title, the video's length, the spoken language and the tracks (each cue's times and text, at most 512 KB in all): never the video, its sound or its name. The first track is the one that was heard; each other track is a translation into a language Translate docs knows, once each. Seed Guard refuses a set holding a seed phrase (seed_phrase_blocked). 409 subtitles_limit at 100 sets.",
+});
+route("get", "/api/subtitles/sets/{id}", "Open a subtitle set", {
+  response: object({ id: string, title: string, duration: number, language: string, tracks: array(subtitleTrack), created: integer, updated: integer }),
+  description: "404 subtitles_set_not_found for anyone else's.",
+});
+route("patch", "/api/subtitles/sets/{id}", "Rename or edit a subtitle set", {
+  body: object({ title: string, tracks: array(subtitleTrack) }),
+  response: object({ id: string, title: string, duration: number, language: string, tracks: array(subtitleTrack), created: integer, updated: integer }),
+  description: "Send a title, the tracks, or both.",
+});
+route("delete", "/api/subtitles/sets/{id}", "Delete a subtitle set", {
+  response: object({ ok: bool }),
+  description: "Erases the set. Account closure, Panic Wipe and Inactivity Wipe erase every set; the account export lists them whole.",
+});
 // Photo Tools (update "phototools", which also needs "images").
 const photoRequest = {
   tool: { enum: ["edit", "background", "upscale"], description: "edit (change a photo with words), background (cut the subject out as a transparent PNG) or upscale. extend is refused with 400 tool_unavailable" },

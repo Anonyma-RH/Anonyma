@@ -899,6 +899,7 @@ const featureIcons = {
   slides: "present",
   reporeader: "repo",
   contractreader: "contract",
+  debate: "scale",
   doctranslate: "languages",
   meetingnotes: "meeting",
   subtitles: "captions",

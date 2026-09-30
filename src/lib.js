@@ -219,6 +219,12 @@ export function messageFromServer(m) {
     // Characters: the character's opening message, the first turn of a
     // saved chat with it (no model, no charge; never sent as a reply).
     ...(c?.opening === true ? { opening: true } : {}),
+    // Model Debate: one turn (or the judge) of a saved debate. Such a turn is
+    // not regenerated or continued as a chat, which would answer without
+    // the debate around it (src/Debate.jsx reopens it).
+    ...(c?.debate && typeof c.debate === "object" && !Array.isArray(c.debate)
+      ? { debate: { kind: c.debate.kind } }
+      : {}),
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.
@@ -569,6 +575,8 @@ export const MODE_FEATURES = {
   // Contract Reader's page (src/ContractReader.jsx), which reads from
   // Onchain Explainer's sources, so it needs that update too.
   contracts: "contractreader",
+  // Model Debate's page (src/Debate.jsx), which runs on Symposium's models.
+  debate: "debate",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")
@@ -579,6 +587,7 @@ export function modeReleased(config, mode) {
   if (mode === "filesearch") return ["filesearch", "files", "documents"].every((id) => isReleased(config, id));
   if (mode === "screenshot") return ["shottosite", "preview", "ephemeral"].every((id) => isReleased(config, id));
   if (mode === "contracts") return isReleased(config, "contractreader") && isReleased(config, "onchain");
+  if (mode === "debate") return isReleased(config, "debate") && isReleased(config, "symposium");
   return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
 }
 

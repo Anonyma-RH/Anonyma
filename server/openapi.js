@@ -2839,6 +2839,57 @@ route("post", "/api/translate/stop", "Stop the running translation", {
   response: object({ stopped: bool }),
   description: "Parts in flight and not yet started are released and charged nothing; the run's stream then reports what finished, and ends.",
 });
+// Model Debate (update "debate", which also needs "symposium").
+const debateRequest = object(
+  {
+    question: { ...string, minLength: 2, maxLength: 1000, description: "The question or claim, masked by Veil in the browser when it's on" },
+    format: { enum: ["for_against", "positions"], default: "for_against", description: "for_against: Side A argues for it and Side B against it. positions: each side argues the position given in stance_a and stance_b" },
+    stance_a: { ...string, maxLength: 240, description: "Side A's position (positions only)" },
+    stance_b: { ...string, maxLength: 240, description: "Side B's position (positions only)" },
+    rounds: { ...integer, minimum: 1, maximum: 4, description: "One turn each per round: the first round is the opening, the last (when there are two or more) the closing, any between are rebuttals" },
+    model_a: { ...string, description: "A callable text model for Side A (never Auto, an image or a Sealed Mode model)" },
+    model_b: { ...string, description: "A callable text model for Side B (the same model is allowed)" },
+    judge_model: { ...nullableString, description: "A callable text model to judge, or omitted for no judge" },
+    private: { ...bool, description: "Private Mode: every model must be zero-data-retention, ZDR routing and no failover, nothing saved (needs private and ephemeral)" },
+    ephemeral: { ...bool, description: "Off the record: nothing is saved (needs ephemeral)" },
+    lang: { enum: ["en", "es", "zh"], description: "The language of the labels in the saved conversation" },
+    veil_masked: { type: ["integer", "null"], description: "The browser's Veil mask count for the question and positions (needs trail)" },
+    allow_seed_phrase: { ...bool, description: "Seed Guard's Send anyway (needs seedguard); otherwise a question or position holding a seed phrase is refused with 400 seed_phrase_blocked" },
+  },
+  ["question", "rounds", "model_a", "model_b"],
+);
+route("post", "/api/debate/quote", "The most a debate can cost", {
+  body: debateRequest,
+  response: object({
+    credits: { ...number, description: "The maximum for every turn and the judge: exactly what a run holds" },
+    units: { ...integer, description: "The same maximum in integer ledger units; send it back as max_units" },
+    turns: array(object({ n: integer, side: { enum: ["a", "b"] }, credits: number })),
+    judge: { type: ["number", "null"] },
+    available: number,
+    spending_limit: object({ remaining: number }),
+    models: object({ a: string, b: string, judge: nullableString }),
+    estimate: bool,
+  }),
+  description: "Reserves, charges, stores and sends nothing. Each turn is priced on the largest request it could send (every earlier turn at the 2,400-character limit), with a reply budget of 2,048 tokens; the judge has 8,000. Refuses what a run would refuse (Seed Guard aside): Early Model Access (403 early_model), Private Mode (400 private_model_required), context allowance (400 context_limit_exceeded).",
+});
+route("post", "/api/debate", "Run a debate", {
+  body: object(
+    {
+      ...debateRequest.properties,
+      max_units: { ...integer, description: "The quote's units; any other figure is refused with 409 estimate_changed, nothing held" },
+      requestId: { ...string, maxLength: 200, description: "Or the Idempotency-Key header; a repeat is refused with 409 duplicate_request" },
+    },
+    ["question", "rounds", "model_a", "model_b", "max_units"],
+  ),
+  stream: true,
+  description:
+    "Workspace only (session). Every step is held at its maximum before anything runs, exactly the quoted total (402 insufficient_credits or spending_limit, 409 debate_running for a second run, with nothing charged). Turns run one at a time, Side A then Side B in each round, each one model call on the transcript so far with a word limit; the judge is sent the sides as A and B and never a model name. Each step settles on its own usage when it finishes. A turn that fails, comes back empty, is cut off with nothing usable, is stopped or never starts is released; the debate stops at the first turn that can't be used and releases the turns and the judge after it. A judge reply that can't be read is released. SSE events: debate.stage started (turns, judge, reserved), turn (n, status speaking, done with text and credits, failed with code and message, or stopped), delta (n, text: the turn as it is written), judge (status judging, done with verdict and credits, failed or stopped), then done (status done, partial or stopped; turns_done, turns_planned, judged, credits_charged, saved) with conversationId and anonyma { credits_charged, request_id, stored, private? }. A finished debate is saved as an ordinary conversation (the question, one reply per turn under its own model, then the judge) unless it was off the record or in Private Mode.",
+});
+route("post", "/api/debate/stop", "Stop the running debate", {
+  body: object({ requestId: { ...string, description: "The run to stop; omitted, the account's running debate" } }),
+  response: object({ stopped: bool }),
+  description: "The turn in flight and every step after it are released and charged nothing; the run's stream then reports what finished, saves it, and ends.",
+});
 // File Search (update "filesearch", which also needs "files" and "documents").
 const searchPassage = object({
   id: { ...integer, description: "The passage's id in the index; send it back with its text to keep it" },

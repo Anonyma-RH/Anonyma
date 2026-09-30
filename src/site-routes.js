@@ -106,6 +106,8 @@ export function knownPage(path, served = {}) {
     (served.pdfredact === true && path === "/workspace/pdfredact") ||
     // Screenshot to site's page, likewise.
     (served.screenshot === true && path === "/workspace/screenshot") ||
+    // Model Debate's page, likewise.
+    (served.debate === true && path === "/workspace/debate") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

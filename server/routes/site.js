@@ -63,6 +63,8 @@ export function siteRoutes({ app, db, cfg }) {
     // Screenshot to site's page: its requests are off the record and its result
     // shows in Live Preview.
     screenshot: isReleased(cfg, "shottosite") && isReleased(cfg, "preview") && isReleased(cfg, "ephemeral"),
+    // Model Debate's page, which runs on Symposium's models.
+    debate: isReleased(cfg, "debate") && isReleased(cfg, "symposium"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

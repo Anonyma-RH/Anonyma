@@ -360,6 +360,7 @@ export const MODE_LABELS = {
   chat: "Chat & reason",
   uncensored: "Uncensored",
   symposium: "Symposium",
+  debate: "Debate",
   code: "Code & build",
   image: "Image studio",
   video: "Video studio",
@@ -392,6 +393,8 @@ const PLACES = [
   ["chat", "Chat & reason", ["conversation", "talk", "ask", "reasoning"]],
   ["uncensored", "Uncensored", ["unfiltered", "uncensored models"]],
   ["symposium", "Symposium", ["compare models", "several models", "side by side", "council"]],
+  // Model Debate: only once released (MODE_FEATURES maps it to "debate").
+  ["debate", "Debate", ["debate", "argue", "for and against", "two models", "pros and cons", "judge", "rounds", "opposing"]],
   // On-Device Model: only once released (MODE_FEATURES maps it to "ondevice").
   ["device", "On-device model", ["on device", "local model", "offline", "webgpu", "free", "private", "llama", "qwen"]],
   ["code", "Code & Build", ["programming", "coding", "developer"]],

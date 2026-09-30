@@ -17,6 +17,7 @@ import { subtitleTranslateTestReply } from "./subtitles.js";
 import { repoTestReply } from "./repo-reader.js";
 import { siteTestReply } from "./shot-to-site.js";
 import { contractTestReply } from "./contract-reader-test.js";
+import { debateTestReply } from "./debate-test.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
 // history includes another 0.5% of that upstream charge in the final debit.
@@ -284,9 +285,10 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
     // to site's page (server/shot-to-site.js) and Contract Reader's reading
     // (server/contract-reader-test.js).
     // Translate docs' stand-in (server/translate-test.js) can also fail on
-    // purpose, as a provider error would.
+    // purpose, as a provider error would, and so can Model Debate's
+    // (server/debate-test.js), whose turns and judge finish the same way.
     const finishing =
-      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? canvasTestReply(body.messages) ?? slidesTestReply(body.messages) ?? translateTestReply(body.messages) ?? repoTestReply(body.messages) ?? siteTestReply(body.messages) ?? contractTestReply(body.messages);
+      pageWatchTestReply(body.messages) ?? catchupTestReply(body.messages) ?? canvasTestReply(body.messages) ?? slidesTestReply(body.messages) ?? translateTestReply(body.messages) ?? repoTestReply(body.messages) ?? siteTestReply(body.messages) ?? contractTestReply(body.messages) ?? debateTestReply(body.messages);
     if (finishing?.error) {
       yield { error: { message: finishing.error } };
       return;

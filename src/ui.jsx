@@ -309,6 +309,8 @@ const pixels = {
   screenshot: ["#######", "#.#.#.#", "#######", "#.....#", "#.###.#", "#.###.#", "#######"],
   // A page with a folded corner and its lines: a contract read line by line.
   contracts: ["#####..", "#...##.", "#.#..##", "#.....#", "#.###.#", "#.....#", "#######"],
+  // Two speech bubbles facing each other: two models arguing a question.
+  debate: ["####...", "#..#...", "####.##", "..#.#..", "....###", "....#..", "....###"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

@@ -79,6 +79,8 @@ export default function DataControls() {
   const characters = !!config && isReleased(config, "characters");
   // And Contract Reader.
   const contracts = !!config && modeReleased(config, "contracts");
+  // And Model Debate.
+  const debates = !!config && isReleased(config, "debate");
   return (
     <div className="data-controls">
       <h3>What is retained</h3>
@@ -439,6 +441,16 @@ export default function DataControls() {
             conversation unless it's off the record or in Private Mode. Your
             data export lists the contracts open at the time; Panic Wipe and
             closing the account forget them at once.
+          </li>
+        )}
+        {debates && (
+          <li>
+            Debate: a debate you keep in History is an ordinary conversation:
+            your question, each turn under the model that wrote it, and the
+            judge's summary. It goes with your other conversations when you
+            delete them, and your data export includes it. Off the record and
+            Private mode keep nothing. The judge is sent the sides as A and B,
+            never a model name.
           </li>
         )}
         {nyma && (

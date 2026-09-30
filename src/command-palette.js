@@ -380,6 +380,7 @@ export const MODE_LABELS = {
   import: "Import chats",
   photos: "Photo tools",
   filesearch: "Search files",
+  pdfredact: "Redact a PDF",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -419,6 +420,8 @@ const PLACES = [
   ["photos", "Photo tools", ["photo", "picture", "edit photo", "remove background", "cut out", "upscale", "enlarge", "retouch", "transparent"]],
   // File Search: only once released, with Files and Documents.
   ["filesearch", "Search files", ["search files", "find in files", "ask my files", "saved files", "documents", "citations", "passages", "across files"]],
+  // Redact a PDF: only once released; it runs in the browser alone.
+  ["pdfredact", "Redact a PDF", ["redact", "redaction", "pdf", "black out", "censor", "hide text", "remove text", "blackout", "sanitize"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

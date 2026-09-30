@@ -1352,6 +1352,26 @@ export const UPDATES = [
     // button and the dictionary never loads.
     released: true,
   },
+  {
+    id: "pdfredact",
+    title: "PDF Redact",
+    tagline: "Redact a PDF on your device before you share it. Real removal, not a black box drawn on top.",
+    points: [
+      "Find words, emails, phone numbers and more, or draw boxes by hand",
+      "Every page is redrawn with your boxes solid black, so nothing is left under them",
+      "Done on your device; the copy is pictures, so its text can't be selected or searched",
+    ],
+    // Client-only, like "ondevice" and "redact": the workspace's Redact a PDF
+    // page (src/PdfRedact.jsx) opens the PDF with pdf.js, boxes what the
+    // person chooses and writes a new image-only PDF (src/pdf-writer.js), so
+    // no server route exists and no route is gated on it (featuresFor).
+    // Nothing is uploaded, stored, exported or erased: the file, the boxes
+    // and the copy live in the page's memory until it is left. "Send to
+    // chat" hands the redacted pages (or the text read from them by Local OCR
+    // when that is released) to the next chat's composer in memory; from
+    // there they are an ordinary attachment. The page is /workspace/pdfredact.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.

@@ -907,6 +907,7 @@ const featureIcons = {
   phototools: "image",
   filesearch: "filesearch",
   researchwatch: "research",
+  pdfredact: "pdf",
 };
 const launch = {
   id: "mvp",

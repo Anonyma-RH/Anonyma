@@ -3,7 +3,7 @@
 // fetched once a PDF actually needs reading, so it never lands in the main
 // bundle. The worker URL is resolved the Vite way: a `?url` import hands back
 // the hashed asset path to assign as workerSrc.
-async function loadPdfjs() {
+export async function loadPdfjs() {
   const [pdfjs, workerUrl] = await Promise.all([
     import("pdfjs-dist"),
     import("pdfjs-dist/build/pdf.worker.min.mjs?url"),

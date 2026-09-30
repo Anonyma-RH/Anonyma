@@ -114,6 +114,7 @@ import {
   BellRing,
   VenetianMask,
   FileSearch,
+  FileX,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -231,6 +232,8 @@ const icons = {
   // Chat Import: a history brought in from another service.
   import: ImportChats,
   filesearch: FileSearch,
+  // Redact a PDF: a page with a cross through it.
+  pdf: FileX,
   repo: FolderGit2,
   right: ChevronRight,
 };
@@ -281,6 +284,8 @@ const pixels = {
   photos: [".......", "#######", "#...#.#", "#.....#", "#..#..#", "#.###.#", "#######"],
   // A magnifier over a line of text: a question asked across saved files.
   filesearch: [".####..", "#....#.", "#.##.#.", "#....#.", ".####..", "....##.", ".....##"],
+  // A page with a black bar across its text: a PDF redacted.
+  pdfredact: ["#####..", "#...##.", "#.....#", "#.###.#", "#.###.#", "#.....#", "#######"],
   // A folder with a branch on it: a repo read file by file.
   repos: ["###....", "#######", "#.#...#", "#.#.#.#", "#.##..#", "#.#...#", "#######"],
 };

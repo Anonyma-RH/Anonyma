@@ -48,6 +48,7 @@ const MeetingNotes = lazy(() => import("./MeetingNotes.jsx"));
 const ChatImport = lazy(() => import("./ChatImport.jsx"));
 // Photo Tools: its page (and the code that shrinks and reads a photo) loads only there.
 const PhotoTools = lazy(() => import("./PhotoTools.jsx"));
+const PdfRedact = lazy(() => import("./PdfRedact.jsx"));
 // File Search: its page loads only when opened.
 const FileSearch = lazy(() => import("./FileSearch.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
@@ -138,6 +139,7 @@ import { CleanImageChip } from "./CleanUploads.jsx";
 import { RedactChipTools, RedactEditor, redactReleased } from "./Redact.jsx";
 import { OcrChipTool, OcrDialog, ocrReleased } from "./LocalOcr.jsx";
 import { replaceWithText } from "./ocr.js";
+import { holdForChat, sendBlock, takeForChat } from "./pdf-handoff.js";
 import { IMAGE_TYPES, IMAGE_LIMIT, HEIC_LIMIT, isHeicFile, withKeep } from "./clean-notes.js";
 import { parseDocumentBlocks, MAX_DOCUMENTS } from "./documents.js";
 import { useShieldLive, shieldReleased, ShieldPanel, ShieldPasteNotice, shieldMarkdown } from "./Shield.jsx";
@@ -342,6 +344,7 @@ export function AppSidebar({
     ["import", "Import chats", "Bring your ChatGPT or Claude history here. Choose which chats to keep and where they go."],
     ["photos", "Photo tools", "Edit a photo with words, remove its background or upscale it. See the price first."],
     ["filesearch", "Search files", "Ask one question across all your saved files. Every answer cites the file and the passage it came from."],
+    ["pdfredact", "Redact a PDF", "Black out names, numbers and anything else in a PDF before you share it. Done on your device, and the text under a box is really gone."],
     ["routines", "Routines", "Schedule prompts to run automatically with spending limits. Read the results in your inbox."],
     ["projects", "Projects", "Group related chats, files and instructions in folders. Set defaults for each project."],
     ["library", "Your library", "Find and revisit the images, videos and audio you have created."],
@@ -360,6 +363,7 @@ export function AppSidebar({
     .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
     .filter(([id]) => id !== "photos" || modeReleased(config, "photos"))
     .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"))
+    .filter(([id]) => id !== "pdfredact" || isReleased(config, "pdfredact"))
     // Research Watch lives on the Routines page, so the tool says so once it's live.
     .map(([id, label, description]) =>
       id === "routines" && isReleased(config, "researchwatch") && isReleased(config, "deepresearch") && isReleased(config, "search")
@@ -665,7 +669,9 @@ export default function Workspace() {
     // Photo Tools' page, the same way (it needs Image Studio's models too).
     (mode === "photos" && (!config || modeReleased(config, "photos"))) ||
     // File Search's page, likewise (it needs Files and Documents too).
-    (mode === "filesearch" && (!config || modeReleased(config, "filesearch")));
+    (mode === "filesearch" && (!config || modeReleased(config, "filesearch"))) ||
+    // Redact a PDF's page, likewise (it runs in the browser alone).
+    (mode === "pdfredact" && (!config || isReleased(config, "pdfredact")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -1091,6 +1097,13 @@ export default function Workspace() {
     setResearchDepth(null);
     setAttachments([]);
     setDocuments([]);
+    // Redact a PDF's "Send to chat": the redacted pages arrive in the new
+    // chat's composer, to be sent or not.
+    const pdfPages = takeForChat();
+    if (pdfPages && mode === "chat") {
+      setAttachments(pdfPages.images || []);
+      setDocuments(pdfPages.documents || []);
+    }
     setCurrent(null);
     setMessages([]);
     setMenu(false);
@@ -3912,6 +3925,7 @@ export default function Workspace() {
                 import: "Import chats",
                 photos: "Photo tools",
                 filesearch: "Search files",
+                pdfredact: "Redact a PDF",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4247,6 +4261,23 @@ export default function Workspace() {
                   veilWords={veilWords}
                   vault={vault}
                   vaultLive={vaultLive}
+                />
+              </Suspense>
+            )
+          ) : mode === "pdfredact" ? (
+            isReleased(config, "pdfredact") && (
+              <Suspense fallback={<p className="pdfr-loading">Opening Redact a PDF…</p>}>
+                <PdfRedact
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  config={config}
+                  veilWords={veilWords}
+                  sendBlocked={sendBlock({ demo, signedIn: !!user, sealed: sealedOn })}
+                  onSendToChat={(pages) => {
+                    holdForChat(pages);
+                    navigate("/workspace/chat" + (demo ? "?demo=1" : ""));
+                  }}
                 />
               </Suspense>
             )

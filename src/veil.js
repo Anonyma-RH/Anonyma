@@ -147,6 +147,18 @@ function collectMatches(text, words) {
   withWords.sort((a, b) => a.start - b.start);
   return withWords;
 }
+// Where Veil would mask, without masking: [{ start, end, type, value }] in
+// order, for tools that need the places rather than the tags (PDF Redact
+// boxes what Veil would hide). `types` optionally keeps only those types
+// (EMAIL, KEY, WALLET, IBAN, CARD, PHONE, IP, and PRIVATE for the always-veil
+// words). Veil finds no names of its own: only the person's own list.
+export function detectSensitive(text, words = [], types = null) {
+  if (!text) return [];
+  const keep = types ? new Set(types) : null;
+  return collectMatches(String(text), words)
+    .filter((m) => !keep || keep.has(m.type))
+    .map(({ start, end, type, value }) => ({ start, end, type, value }));
+}
 // A fresh, empty per-conversation veil state: same value -> same tag as long
 // as this object (or its persisted form, see loadVeilState) is reused.
 export function createVeilState() {

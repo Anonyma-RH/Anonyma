@@ -74,6 +74,13 @@ export const EIP1967 = Object.freeze({
   admin: "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103",
   beacon: "0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50",
 });
+// The older ZeppelinOS proxy slots: keccak256("org.zeppelinos.proxy.
+// implementation") and keccak256("org.zeppelinos.proxy.admin") (checked in
+// the tests). USDC's proxy uses them.
+export const ZEPPELINOS = Object.freeze({
+  implementation: "0x7050c9e0f4ca769c69bd3a8ef740bc37934f8e2c036e5a723fd8ee048ed3f8c3",
+  admin: "0x10d6a54a4754c8869d6886b5f5d7fbfa5b4522237ea5c60d11bc4e7a1ff9390b",
+});
 // An EIP-1167 minimal proxy ("clone"): fixed code around one address.
 const CLONE = /^0x363d3d373d3d3d363d73([0-9a-fA-F]{40})5af43d82803e903d91602b57fd5bf3$/;
 export const cloneTarget = (code) => {

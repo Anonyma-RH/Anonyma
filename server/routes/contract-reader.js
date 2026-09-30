@@ -26,7 +26,10 @@ export function contractReaderRoutes(ctx) {
   // Tests inject the fetch (recorded responses) and a clock; only in local
   // test mode, like Onchain Explainer's.
   const hooks = cfg.testMode ? cfg.contractReader || {} : {};
-  const reader = createContractReader({ fetch: hooks.fetch || cfg.onchainFetch || globalThis.fetch });
+  const reader = createContractReader({
+    fetch: hooks.fetch || cfg.onchainFetch || globalThis.fetch,
+    ...(hooks.now ? { now: hooks.now } : {}),
+  });
   const cache = contractCacheFor(db, hooks.now ? { now: hooks.now } : undefined);
   const clock = hooks.now || Date.now;
   const minute = limit("contracts", 8, 60000);

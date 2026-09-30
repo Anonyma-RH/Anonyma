@@ -1,13 +1,14 @@
 import { getAddress, id } from "ethers";
 import { uid, fail, wantsWebSearch } from "./core.js";
 import { chatLimits, contextEstimate } from "../data/chat-limits.js";
-import { ALLOWED_HOSTS, SOURCES, UpstreamError, clip, fetchJson, rpcBatch, rpcTokenMeta, units } from "./onchain.js";
+import { ALLOWED_HOSTS, SOURCES, UpstreamError, clip, fetchJson, rpcTokenMeta, units } from "./onchain.js";
 import { chainById } from "../src/onchain.js";
 import { cleanText, findPhrases, projectVisible, scanInvisible } from "../src/shield.js";
 import {
   BEACON_IMPLEMENTATION,
   CONTRACT_READER,
   EIP1967,
+  ZEPPELINOS,
   ROLE_MEMBER,
   ROLE_MEMBER_COUNT,
   STANDARD_READS,
@@ -33,11 +34,13 @@ import {
 // 0x address), redirects are never followed, responses must be JSON and
 // arrive within 8 seconds, and addresses are never logged.
 //
-// - Code, the EIP-1967 proxy slots and the standard reads (owner(),
-//   paused(), totalSupply() and so on) come from one JSON-RPC batch: the
-//   public node for Robinhood Chain, each other chain's Blockscout eth-rpc
-//   endpoint. When that endpoint doesn't answer, live reads are skipped and
-//   the facts say so.
+// - Code, the proxy slots (EIP-1967 and the older ZeppelinOS ones) and the
+//   standard reads (owner(), paused(), totalSupply() and so on) come from one
+//   JSON-RPC batch to a fixed public node per chain (RPC_NODES), asked only
+//   eth_chainId, eth_getCode, eth_getStorageAt and eth_call. Each node's
+//   chain id is checked once per 30 minutes, and a node that answers for
+//   another chain is refused. When a node doesn't answer, live reads are
+//   skipped and the facts say so; the source can still be read.
 // - Verified source comes from Sourcify's v2 API first, then the chain's
 //   Blockscout (not for Robinhood Chain, whose Blockscout answers servers
 //   with a browser challenge). A proxy's implementation is followed one hop
@@ -50,9 +53,27 @@ import {
 //   instructions; it goes to the model only as data.
 // Read only: nothing here signs, sends or connects a wallet.
 export const SOURCIFY_URL = "https://sourcify.dev/server/v2/contract";
-export const CONTRACT_HOSTS = new Set([...ALLOWED_HOSTS, new URL(SOURCIFY_URL).host]);
-export const rpcUrl = (chainId) =>
-  SOURCES[chainId].type === "rpc" ? SOURCES[chainId].url : SOURCES[chainId].url + "/api/eth-rpc";
+// The public JSON-RPC node read for each chain: Onchain Explainer's own for
+// Robinhood Chain, the chain teams' own nodes for Base, Arbitrum One and
+// OP, and PublicNode's for Ethereum.
+export const RPC_NODES = Object.freeze({
+  4663: SOURCES[4663].url,
+  1: "https://ethereum-rpc.publicnode.com",
+  8453: "https://mainnet.base.org",
+  42161: "https://arb1.arbitrum.io/rpc",
+  10: "https://mainnet.optimism.io",
+});
+export const RPC_METHODS = new Set(["eth_chainId", "eth_getCode", "eth_getStorageAt", "eth_call"]);
+export const RPC_BATCH = 10;
+export const CHAIN_CHECK_MS = CONTRACT_READER.ttlMinutes * 60000;
+export const CONTRACT_HOSTS = new Set([
+  ...ALLOWED_HOSTS,
+  new URL(SOURCIFY_URL).host,
+  ...Object.values(RPC_NODES).map((u) => new URL(u).host),
+]);
+export const rpcUrl = (chainId) => RPC_NODES[chainId];
+// The node a card names: its host.
+export const nodeOf = (chainId) => new URL(RPC_NODES[chainId]).host;
 const ZERO = "0x0000000000000000000000000000000000000000";
 
 export class ContractError extends Error {
@@ -144,12 +165,34 @@ export function roleGetters(abi, max = 6) {
 // and a BOM removed, Injection Shield's invisible characters taken out, and
 // files that read like instructions to an AI flagged. At most maxFiles and
 // maxSourceChars, keeping the main contract and what it inherits from first.
+// Verifiers keep the paths a contract was compiled from, which can start
+// with someone's home folder (Users/<name>/…/contracts/A.sol). The folders
+// those paths share are taken off, down to the last one they have in common
+// (contracts/A.sol), unless that would make two paths the same.
+export function homePrefix(paths) {
+  const home = paths.filter((p) => /^(?:Users|home|root)\//.test(p));
+  if (!home.length) return "";
+  let common = home[0].split("/").slice(0, -1);
+  for (const p of home) {
+    const parts = p.split("/").slice(0, -1);
+    let i = 0;
+    while (i < common.length && i < parts.length && common[i] === parts[i]) i++;
+    common = common.slice(0, i);
+  }
+  const prefix = common.length > 1 ? common.slice(0, -1).join("/") + "/" : "";
+  if (!prefix) return "";
+  const after = paths.map((p) => (p.startsWith(prefix) ? p.slice(prefix.length) : p));
+  return new Set(after).size === paths.length ? prefix : "";
+}
 export function cleanSources(raw, main = {}) {
   const seen = new Set();
   let hidden = 0;
   const files = [];
-  for (const f of Array.isArray(raw) ? raw : []) {
-    const path = cleanSourcePath(f?.path);
+  const list = (Array.isArray(raw) ? raw : []).map((f) => ({ ...f, path: cleanSourcePath(f?.path) })).filter((f) => f.path);
+  const prefix = homePrefix(list.map((f) => f.path));
+  const short = (p) => (p && prefix && p.startsWith(prefix) ? p.slice(prefix.length) : p);
+  for (const f of list) {
+    const path = short(f.path);
     if (!path || seen.has(path) || typeof f?.text !== "string") continue;
     seen.add(path);
     let text = f.text.replace(/\r\n?/g, "\n");
@@ -161,7 +204,7 @@ export function cleanSources(raw, main = {}) {
     }
     files.push({ path, text });
   }
-  const mainPath = cleanSourcePath(main.path);
+  const mainPath = short(cleanSourcePath(main.path));
   const { order, main: first, inherited } = orderFiles(files, { path: mainPath, name: main.name });
   const byPath = new Map(files.map((f) => [f.path, f]));
   // Within the caps, the main contract and everything it inherits from are
@@ -196,9 +239,56 @@ export function cleanSources(raw, main = {}) {
 }
 
 // ---- Reading one contract -------------------------------------------------------
-export function createContractReader({ fetch: fetchImpl = globalThis.fetch } = {}) {
+export function createContractReader({ fetch: fetchImpl = globalThis.fetch, now = Date.now } = {}) {
   const get = (url) => fetchJson(fetchImpl, url, { hosts: CONTRACT_HOSTS, maxBytes: CONTRACT_READER.maxResponseBytes });
-  const rpc = (chainId, calls) => rpcBatch(fetchImpl, rpcUrl(chainId), calls);
+  // JSON-RPC calls to the chain's fixed node, in batches of at most 10 (Base's
+  // node refuses more), each response 1 MB at most: [{ result } | { error:
+  // true }] in the calls' order. Only the four read-only methods are sent.
+  async function rpc(chainId, calls) {
+    if (!calls.length) return [];
+    if (calls.some(([method]) => !RPC_METHODS.has(method))) throw new Error("Contract Reader sends read-only calls only.");
+    await checkChain(chainId);
+    const results = [];
+    for (let start = 0; start < calls.length; start += RPC_BATCH) {
+      const part = calls.slice(start, start + RPC_BATCH);
+      const out = await fetchJson(fetchImpl, rpcUrl(chainId), {
+        method: "POST",
+        hosts: CONTRACT_HOSTS,
+        body: part.map(([method, params], i) => ({ jsonrpc: "2.0", id: start + i, method, params })),
+      });
+      if (!Array.isArray(out)) throw new UpstreamError("rpc");
+      const byId = new Map(out.map((r) => [r?.id, r]));
+      part.forEach((_, i) => {
+        const r = byId.get(start + i);
+        if (!r) throw new UpstreamError("rpc");
+        results.push(r.error ? { error: true } : { result: r.result });
+      });
+    }
+    return results;
+  }
+  // Each node's chain id, checked once per window: a node that answers for
+  // another chain is refused, and nothing it says is used.
+  const checked = new Map();
+  async function checkChain(chainId) {
+    if ((checked.get(chainId) || 0) > now()) return;
+    const r = await fetchJson(fetchImpl, rpcUrl(chainId), {
+      method: "POST",
+      hosts: CONTRACT_HOSTS,
+      body: { jsonrpc: "2.0", id: 0, method: "eth_chainId", params: [] },
+    });
+    let id = null;
+    try {
+      id = typeof r?.result === "string" && /^0x[0-9a-fA-F]{1,16}$/.test(r.result) ? Number(BigInt(r.result)) : null;
+    } catch {}
+    if (id === null) throw new UpstreamError("rpc");
+    if (id !== chainId)
+      throw new ContractError(
+        502,
+        `${chainById(chainId).name}'s node answered for another chain, so nothing it said was used. Nothing was charged; try again later.`,
+        "contract_chain_mismatch",
+      );
+    checked.set(chainId, now() + CHAIN_CHECK_MS);
+  }
 
   async function sourcify(chainId, address) {
     const r = await get(`${SOURCIFY_URL}/${chainId}/${address}?fields=sources,abi,proxyResolution,compilation`);
@@ -277,13 +367,15 @@ export function createContractReader({ fetch: fetchImpl = globalThis.fetch } = {
         ["eth_getStorageAt", [address, EIP1967.implementation, "latest"]],
         ["eth_getStorageAt", [address, EIP1967.admin, "latest"]],
         ["eth_getStorageAt", [address, EIP1967.beacon, "latest"]],
+        ["eth_getStorageAt", [address, ZEPPELINOS.implementation, "latest"]],
+        ["eth_getStorageAt", [address, ZEPPELINOS.admin, "latest"]],
         ...STANDARD_READS.map(([selector]) => ["eth_call", [{ to: address, data: selector }, "latest"]]),
       ]);
     } catch (e) {
       if (!(e instanceof UpstreamError)) throw e;
-      if (SOURCES[chainId].type === "rpc") throw new ContractError(502, `${chain.name} couldn't be reached. Nothing was charged; try again in a minute.`, "contract_unavailable");
       notes.push("no_live_reads");
     }
+    const READS_AT = 6;
     const code = first && !first[0].error ? first[0].result : null;
     if (first && first[0].error) notes.push("no_live_reads");
     if (typeof code === "string" && !hasCode(code))
@@ -299,6 +391,12 @@ export function createContractReader({ fetch: fetchImpl = globalThis.fetch } = {
       admin = slot(2),
       beacon = slot(3),
       proxyKind = implementation ? "EIP-1967" : null;
+    // The older ZeppelinOS slots (USDC's proxy, for one).
+    if (!implementation && !beacon && slot(4)) {
+      implementation = slot(4);
+      admin = slot(5);
+      proxyKind = "ZeppelinOS";
+    }
     const clone = cloneTarget(code);
     if (!implementation && clone) {
       implementation = checksum(clone);
@@ -324,7 +422,7 @@ export function createContractReader({ fetch: fetchImpl = globalThis.fetch } = {
     const impl = implementation ? await sourceFor(chainId, implementation.toLowerCase()) : { found: null, failed: false };
     const logic = implementation ? impl.found : own.found;
     if (!first && !own.found && !impl.found)
-      throw new ContractError(502, `${chain.name}'s explorer couldn't be read right now, and nothing verified was found. Nothing was charged; try again in a minute.`, "contract_unavailable");
+      throw new ContractError(502, `${chain.name}'s node couldn't be read right now, and nothing verified was found. Nothing was charged; try again in a minute.`, "contract_unavailable");
     if (own.failed || impl.failed) notes.push("source_unavailable");
 
     // 3. Implementation code (when its source isn't verified), role getters,
@@ -359,7 +457,7 @@ export function createContractReader({ fetch: fetchImpl = globalThis.fetch } = {
     const implCode = results.get("impl_code");
     const logicCode = implementation ? implCode : code;
     const exposed = logic ? abiSel : pushSelectors(logicCode || "");
-    const readOf = (i) => (first && !first[4 + i].error ? first[4 + i].result : null);
+    const readOf = (i) => (first && !first[READS_AT + i].error ? first[READS_AT + i].result : null);
     const reads = {};
     STANDARD_READS.forEach(([selector, name, type], i) => {
       if (!exposed.has(selector)) return;
@@ -385,7 +483,7 @@ export function createContractReader({ fetch: fetchImpl = globalThis.fetch } = {
     if (owner) control.push({ role: "owner", address: owner, via: reads.owner ? "owner()" : "getOwner()" });
     if (reads.pendingOwner && reads.pendingOwner !== ZERO) control.push({ role: "pending_owner", address: reads.pendingOwner, via: "pendingOwner()" });
     if (reads.defaultAdmin && reads.defaultAdmin !== owner) control.push({ role: "default_admin", address: reads.defaultAdmin, via: "defaultAdmin()" });
-    if (admin) control.push({ role: "upgrade_admin", address: admin, via: "EIP-1967 admin slot" });
+    if (admin) control.push({ role: "upgrade_admin", address: admin, via: proxyKind === "ZeppelinOS" ? "ZeppelinOS admin slot" : "EIP-1967 admin slot" });
     const adminOwner = addressWord(results.get("admin_owner"));
     if (admin && adminOwner && adminOwner !== ZERO) control.push({ role: "admin_owner", address: adminOwner, via: "owner()" });
     if (beacon) control.push({ role: "beacon", address: beacon, via: "EIP-1967 beacon slot" });
@@ -437,6 +535,8 @@ export function createContractReader({ fetch: fetchImpl = globalThis.fetch } = {
       kind: "contract",
       chain: { id: chain.id, name: chain.name },
       address: target,
+      // Where the live reads came from: the fixed node's host.
+      node: first ? nodeOf(chainId) : undefined,
       name: logic?.name || token?.name || undefined,
       token: token || undefined,
       code_size: typeof code === "string" ? Math.floor((code.length - 2) / 2) : undefined,

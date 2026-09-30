@@ -6518,7 +6518,7 @@
     "Nothing specific was flagged. That isn't a clean bill of health.": "没有标记出具体问题，但这并不代表一切无虞。",
     "Explain it to add the points the code raises.": "解释后即可加入代码引出的要点。",
     "What this can't tell you": "这无法告诉你的事",
-    "Live reads weren't available from this chain's explorer right now, so owners, roles and paused state aren't shown.": "暂时无法从该链的区块浏览器进行实时读取，因此不显示所有者、角色和暂停状态。",
+    "Live reads weren't available from this chain's node right now, so owners, roles and paused state aren't shown.": "暂时无法从该链的节点进行实时读取，因此不显示所有者、角色和暂停状态。",
     "Some live reads didn't answer, so a role may be missing here.": "部分实时读取没有响应，因此这里可能缺少某个角色。",
     "A source of verified code didn't answer, so \"not published\" may be wrong. Try again in a minute.": "某个已验证代码的来源没有响应，因此“未公开”可能有误。请一分钟后重试。",
     "The verified source was over 1.5 MB, so only the main contract and what it inherits from were kept.": "已验证的源代码超过 1.5 MB，因此只保留了主合约及其继承的部分。",
@@ -6560,7 +6560,8 @@
     "Contract Reader: a contract you read (its live facts and public source) is kept only in the server's memory, for your account, for 30 minutes, then dropped; it's never written to disk, and the address is never logged. An explanation is saved as an ordinary conversation unless it's off the record or in Private Mode. Your data export lists the contracts open at the time; Panic Wipe and closing the account forget them at once.": "合约阅读器：你读取的合约（其实时事实和公开源代码）只为你的账户保存在服务器内存中 30 分钟，之后丢弃；它从不写入磁盘，地址也从不记录到日志。除非选择不留记录或使用隐私模式，解释会保存为普通会话。你的数据导出会列出当时打开的合约；紧急擦除和关闭账户会立即忘记它们。",
     "Its code isn't published: live facts and its bytecode's functions were sent as data.": "其代码未公开：实时事实和字节码中的函数已作为数据发送。",
     "Open in Contract Reader": "在合约阅读器中打开",
-    "Its bytecode has a burn-style function: tokens may be destroyed.": "其字节码中有类似 burn 的函数：代币可能被销毁。"
+    "Its bytecode has a burn-style function: tokens may be destroyed.": "其字节码中有类似 burn 的函数：代币可能被销毁。",
+    "Live reads": "实时读取来源"
   },
   "patterns": [
     {
@@ -10684,8 +10685,8 @@
       "zh": "{0} 上的这个地址没有合约。它是一个钱包，或者那里没有部署任何东西。"
     },
     {
-      "en": "{0}'s explorer couldn't be read right now, and nothing verified was found. Nothing was charged; try again in a minute.",
-      "zh": "暂时无法读取 {0} 的区块浏览器，也没有找到已验证的代码。未收取任何费用；请一分钟后重试。"
+      "en": "{0}'s node couldn't be read right now, and nothing verified was found. Nothing was charged; try again in a minute.",
+      "zh": "暂时无法读取 {0} 的节点，也没有找到已验证的代码。未收取任何费用；请一分钟后重试。"
     },
     {
       "en": "{0} verified file and live facts were sent as data.",
@@ -10694,6 +10695,10 @@
     {
       "en": "{0} verified files and live facts were sent as data.",
       "zh": "已将 {0} 个已验证文件和实时事实作为数据发送。"
+    },
+    {
+      "en": "{0}'s node answered for another chain, so nothing it said was used. Nothing was charged; try again later.",
+      "zh": "{0} 的节点返回了另一条链的数据，因此没有使用它的任何回复。未收取任何费用；请稍后重试。"
     }
   ]
 }

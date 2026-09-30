@@ -10,8 +10,13 @@ import { balance, credits } from "../server/core.js";
 import { UPDATES, featuresFor } from "../server/releases.js";
 import { ALLOWED_HOSTS, SOURCES, UpstreamError, fetchJson } from "../server/onchain.js";
 import {
+  CHAIN_CHECK_MS,
   CONTRACT_HOSTS,
+  RPC_BATCH,
+  RPC_METHODS,
+  RPC_NODES,
   SOURCIFY_URL,
+  homePrefix,
   abiSelectors,
   cleanSources,
   contractBudget,
@@ -29,6 +34,7 @@ import {
   CONTRACT_SYSTEM,
   CONTRACT_TITLE_PREFIX,
   EIP1967,
+  ZEPPELINOS,
   FIXED_LIMITS,
   FORBIDDEN_WORDS,
   GROUP_CHECKS,
@@ -74,10 +80,11 @@ const MODEL = "google/gemini-2.5-flash";
 const src = (file) => readFileSync(new URL(file, import.meta.url), "utf8");
 
 // Real, read-only responses recorded once from the public sources (see
-// tests/fixtures/contract-reader: USDG, an upgradeable proxy verified on
-// Sourcify; NYMA, not verified anywhere; a Base token verified only on
-// Blockscout, whose eth-rpc endpoint answered 429). No test reaches the
-// network: a fetch answers only recorded requests.
+// tests/fixtures/contract-reader: USDG on Robinhood Chain, an EIP-1967 proxy
+// verified on Sourcify; NYMA, not verified anywhere; a Base token verified
+// only on Blockscout, whose owner renounced; USDC on Ethereum, a ZeppelinOS
+// proxy with an owner, an upgrade admin and role getters). No test reaches
+// the network: a fetch answers only recorded requests.
 const recorded = (name) => JSON.parse(src(`./fixtures/contract-reader/${name}.json`));
 function replay(...names) {
   const exchanges = names.flatMap((n) => recorded(n).exchanges);
@@ -94,6 +101,9 @@ const USDG = "0x5fc5360d0400a0fd4f2af552add042d716f1d168";
 const USDG_IMPL = "0x68184C449E1a8f34fA18d289737129FD27B66f8F";
 const NYMA = "0x968be0c1a394bf1ce239e3b40909ec0f9d4f5583";
 const BASE_CONTRACT = "0xdb94e6a7362d89b381fd0a22fe6f13901f172c31";
+const USDC = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+const methodsOf = (calls) =>
+  calls.filter((c) => c.init.body).flatMap((c) => [JSON.parse(c.init.body)].flat().map((x) => x.method));
 
 // ---- A small fake chain, for shapes the recordings don't have ----
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -106,7 +116,7 @@ const strWord = (s) => {
   return "0x" + "20".padStart(64, "0") + s.length.toString(16).padStart(64, "0") + hex.padEnd(64, "0");
 };
 const sel = (sig) => id(sig).slice(0, 10);
-function fakeChain({ codes = {}, storage = {}, calls = {}, sourcify = {}, sourcifyStatus = null, blockscout = {} } = {}) {
+function fakeChain({ codes = {}, storage = {}, calls = {}, sourcify = {}, sourcifyStatus = null, blockscout = {}, chainId = "0x1237" } = {}) {
   const seen = [];
   const fetch = async (url, init = {}) => {
     seen.push({ url, method: init.method || "GET", body: init.body });
@@ -121,6 +131,7 @@ function fakeChain({ codes = {}, storage = {}, calls = {}, sourcify = {}, sourci
       return hit ? json(hit) : json({ message: "Not found" }, 404);
     }
     const batch = JSON.parse(init.body);
+    if (!Array.isArray(batch)) return json({ jsonrpc: "2.0", id: batch.id, result: chainId });
     return json(
       batch.map(({ id: n, method, params }) => {
         if (method === "eth_getCode") return { jsonrpc: "2.0", id: n, result: codes[params[0].toLowerCase()] ?? "0x" };
@@ -423,11 +434,22 @@ test("an address with a chain, or an explorer link that names one", () => {
 });
 
 test("only fixed hosts: Onchain Explainer's sources and sourcify.dev, never one a user sent", async (t) => {
-  assert.deepEqual([...CONTRACT_HOSTS].sort(), [...ALLOWED_HOSTS, "sourcify.dev"].sort());
-  assert.ok(!ALLOWED_HOSTS.has("sourcify.dev"), "Onchain Explainer's own list is unchanged");
+  assert.deepEqual(RPC_NODES, {
+    1: "https://ethereum-rpc.publicnode.com",
+    10: "https://mainnet.optimism.io",
+    4663: SOURCES[4663].url,
+    8453: "https://mainnet.base.org",
+    42161: "https://arb1.arbitrum.io/rpc",
+  });
+  assert.deepEqual(
+    [...CONTRACT_HOSTS].sort(),
+    [...new Set([...ALLOWED_HOSTS, "sourcify.dev", "ethereum-rpc.publicnode.com", "mainnet.base.org", "arb1.arbitrum.io", "mainnet.optimism.io"])].sort(),
+  );
+  assert.ok(!ALLOWED_HOSTS.has("sourcify.dev") && !ALLOWED_HOSTS.has("mainnet.base.org"), "Onchain Explainer's own list is unchanged");
   assert.equal(SOURCIFY_URL, "https://sourcify.dev/server/v2/contract");
   assert.equal(rpcUrl(4663), SOURCES[4663].url);
-  assert.equal(rpcUrl(8453), "https://base.blockscout.com/api/eth-rpc");
+  assert.equal(rpcUrl(8453), "https://mainnet.base.org");
+  assert.deepEqual([...RPC_METHODS].sort(), ["eth_call", "eth_chainId", "eth_getCode", "eth_getStorageAt"]);
   const spy = async () => {
     throw new Error("must not be called");
   };
@@ -465,7 +487,7 @@ test("a proxy: the EIP-1967 slot is followed one hop to the implementation's ver
   assert.deepEqual(f.chain, { id: 4663, name: "Robinhood Chain" });
   assert.equal(f.address, "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168");
   assert.equal(f.name, "USDG");
-  assert.deepEqual(f.token, { name: "Global Dollar", symbol: "USDG", decimals: 6, supply: "684,302,107.354572" });
+  assert.deepEqual(f.token, { name: "Global Dollar", symbol: "USDG", decimals: 6, supply: "684,292,109.354572" });
   assert.deepEqual(f.proxy, { kind: "EIP-1967", implementation: USDG_IMPL, implementation_name: "USDG", implementation_verified: true });
   assert.equal(f.verified.via, "Sourcify");
   assert.equal(f.verified.contract, "USDG");
@@ -474,16 +496,26 @@ test("a proxy: the EIP-1967 slot is followed one hop to the implementation's ver
   assert.deepEqual(f.control, [{ role: "owner", address: "0xcFA0388f5ddf905FdC08c45c716C15Dc10A14C6F", via: "owner()", type: "contract" }]);
   assert.deepEqual(f.checks, [{ code: "upgradeable" }]);
   assert.deepEqual(f.notes, ["proxy_source_skipped"]);
-  // One batch of reads, the implementation's source (the proxy's own isn't
-  // needed once the slot names an implementation), then the owner's code.
+  // The node's chain id, the reads (in batches of 10), the implementation's
+  // source (the proxy's own isn't needed once the slot names an
+  // implementation), then the owner's code.
   assert.deepEqual(
     calls.map((c) => new URL(c.url).host + " " + (c.init.method || "GET")),
-    ["rpc.mainnet.chain.robinhood.com POST", "sourcify.dev GET", "rpc.mainnet.chain.robinhood.com POST"],
+    [
+      "rpc.mainnet.chain.robinhood.com POST",
+      "rpc.mainnet.chain.robinhood.com POST",
+      "rpc.mainnet.chain.robinhood.com POST",
+      "sourcify.dev GET",
+      "rpc.mainnet.chain.robinhood.com POST",
+    ],
   );
-  assert.match(calls[1].url, new RegExp(`/4663/${USDG_IMPL.toLowerCase()}\\?fields=sources,abi,proxyResolution,compilation$`));
-  const first = JSON.parse(calls[0].init.body);
-  assert.deepEqual(first.slice(0, 4).map((c) => c.method), ["eth_getCode", "eth_getStorageAt", "eth_getStorageAt", "eth_getStorageAt"]);
-  assert.deepEqual(first.slice(1, 4).map((c) => c.params[1]), [EIP1967.implementation, EIP1967.admin, EIP1967.beacon]);
+  assert.deepEqual(JSON.parse(calls[0].init.body), { jsonrpc: "2.0", id: 0, method: "eth_chainId", params: [] });
+  assert.match(calls[3].url, new RegExp(`/4663/${USDG_IMPL.toLowerCase()}\\?fields=sources,abi,proxyResolution,compilation$`));
+  const first = JSON.parse(calls[1].init.body);
+  assert.equal(first.length, RPC_BATCH);
+  assert.deepEqual(first.slice(0, 6).map((c) => c.method), ["eth_getCode", ...Array(5).fill("eth_getStorageAt")]);
+  assert.deepEqual(first.slice(1, 6).map((c) => c.params[1]), [EIP1967.implementation, EIP1967.admin, EIP1967.beacon, ZEPPELINOS.implementation, ZEPPELINOS.admin]);
+  assert.equal(f.node, "rpc.mainnet.chain.robinhood.com");
   // The files, main contract first, then the project's own, then libraries.
   assert.equal(r.main, "contracts/stablecoins/USDG.sol");
   assert.equal(r.files[0].path, "contracts/stablecoins/USDG.sol");
@@ -511,29 +543,93 @@ test("unverified: the bytecode's PUSH4 selectors, matched against the built-in t
   assert.deepEqual(f.control, []);
   assert.deepEqual(f.checks, [{ code: "unverified" }, { code: "group", group: "burn" }]);
   // Sourcify said 404; Robinhood Chain's Blockscout isn't asked; nothing else is looked up.
-  assert.deepEqual(calls.map((c) => new URL(c.url).host), ["rpc.mainnet.chain.robinhood.com", "sourcify.dev"]);
-  const recordedCode = JSON.parse(recorded("rh-nyma").exchanges[0].text).find((x) => x.id === 0).result;
+  assert.deepEqual(calls.map((c) => new URL(c.url).host), [...Array(3).fill("rpc.mainnet.chain.robinhood.com"), "sourcify.dev"]);
+  const recordedCode = JSON.parse(recorded("rh-nyma").exchanges[1].text).find((x) => x.id === 0).result;
   assert.deepEqual(scanBytecode(recordedCode).functions.map((x) => x.signature), ["burn(uint256)", "burnFrom(address,uint256)"]);
 });
 
-test("Sourcify, then Blockscout: a contract verified only on Base's Blockscout, with live reads skipped when its eth-rpc says no", async () => {
+test("Sourcify, then Blockscout: a contract verified only on Base's Blockscout, read live from Base's own node", async () => {
   const { fetch, calls } = replay("base-token2");
   const r = await quietly(() => createContractReader({ fetch }).read({ chain: 8453, address: BASE_CONTRACT }));
   assert.deepEqual(
     calls.map((c) => c.url.replace(/\?.*$/, "")),
     [
-      "https://base.blockscout.com/api/eth-rpc",
+      "https://mainnet.base.org/",
+      "https://mainnet.base.org/",
+      "https://mainnet.base.org/",
       `https://sourcify.dev/server/v2/contract/8453/${BASE_CONTRACT}`,
       `https://base.blockscout.com/api/v2/smart-contracts/${BASE_CONTRACT}`,
     ],
   );
+  assert.ok(methodsOf(calls).every((m) => RPC_METHODS.has(m)));
+  assert.equal(r.facts.node, "mainnet.base.org");
   assert.equal(r.facts.verified.via, "Blockscout");
   assert.equal(r.facts.verified.contract, "Token2");
-  assert.deepEqual(r.facts.notes, ["no_live_reads"]);
-  assert.deepEqual(r.facts.control, []);
+  assert.equal(r.facts.notes, undefined);
+  // Its owner renounced: owner() is the zero address, so no one holds those powers.
+  assert.deepEqual(r.facts.control, [{ role: "owner", address: "0x0000000000000000000000000000000000000000", via: "owner()", type: "none", renounced: true }]);
+  assert.ok(!r.facts.checks.some((c) => c.code === "wallet_owner"));
   assert.equal(r.files.length, 1);
   assert.equal(r.files[0].path, "contracts/main/Token2.sol");
   assert.match(r.files[0].text, /abstract contract Ownable/);
+});
+
+test("a ZeppelinOS proxy on Ethereum (USDC): owner, upgrade admin and role getters from live reads on a fixed public node", async () => {
+  const { fetch, calls } = replay("eth-usdc");
+  const r = await quietly(() => createContractReader({ fetch }).read({ chain: 1, address: USDC }));
+  const f = r.facts;
+  assert.equal(f.node, "ethereum-rpc.publicnode.com");
+  assert.deepEqual(f.proxy, { kind: "ZeppelinOS", implementation: "0x43506849D7C04F9138D1A2050bbF3A0c054402dd", implementation_name: "FiatTokenV2_2", implementation_verified: true });
+  assert.equal(f.verified.via, "Sourcify");
+  assert.equal(f.token.symbol, "USDC");
+  assert.equal(f.paused, false);
+  const rows = Object.fromEntries(f.control.map((c) => [c.name || c.role, [c.address, c.type, c.via]]));
+  assert.deepEqual(rows.owner, ["0xFcb19e6a322b27c06842A71e8c725399f049AE3a", "wallet", "owner()"]);
+  assert.deepEqual(rows.upgrade_admin, ["0x807a96288A1A408dBC13DE2b1d087d10356395d2", "wallet", "ZeppelinOS admin slot"]);
+  assert.deepEqual(rows.masterMinter, ["0xE982615d461DD5cD06575BbeA87624fda4e3de17", "contract", "masterMinter()"]);
+  assert.deepEqual(rows.pauser[1], "wallet");
+  assert.deepEqual(rows.blacklister[1], "wallet");
+  assert.deepEqual(f.checks.map((c) => c.code), ["upgradeable", "wallet_owner", "wallet_admin"]);
+  // The verifier's home-folder paths are shortened to the project's own.
+  assert.ok(r.files.every((x) => !x.path.startsWith("Users/")), r.files.map((x) => x.path).join());
+  assert.equal(r.main, "contracts/v2/FiatTokenV2_2.sol");
+  // Only fixed hosts, only read-only methods, at most 10 calls a batch, and
+  // the node's chain id checked first.
+  assert.ok(calls.every((c) => ["ethereum-rpc.publicnode.com", "sourcify.dev"].includes(new URL(c.url).host)));
+  assert.ok(methodsOf(calls).every((m) => RPC_METHODS.has(m)));
+  assert.ok(calls.filter((c) => c.init.body).every((c) => [JSON.parse(c.init.body)].flat().length <= RPC_BATCH));
+  assert.equal(JSON.parse(calls[0].init.body).method, "eth_chainId");
+  assert.equal(methodsOf(calls).filter((m) => m === "eth_chainId").length, 1);
+});
+
+test("each node's chain id is checked once per window, and a node that answers for another chain is refused", async () => {
+  let clock = 5_000_000;
+  const chain = vaultChain();
+  const reader = createContractReader({ fetch: chain.fetch, now: () => clock });
+  const count = () => chain.seen.filter((x) => x.body && !Array.isArray(JSON.parse(x.body))).length;
+  await reader.read({ chain: 4663, address: VAULT.toLowerCase() });
+  await reader.read({ chain: 4663, address: VAULT.toLowerCase() });
+  assert.equal(count(), 1, "once per window");
+  clock += CHAIN_CHECK_MS + 1;
+  await reader.read({ chain: 4663, address: VAULT.toLowerCase() });
+  assert.equal(count(), 2, "again after the window");
+  const wrong = fakeChain({ codes: { [VAULT.toLowerCase()]: "0x6080" }, chainId: "0x1" });
+  await assert.rejects(
+    createContractReader({ fetch: wrong.fetch }).read({ chain: 4663, address: VAULT.toLowerCase() }),
+    (e) => e.status === 502 && e.code === "contract_chain_mismatch",
+  );
+  assert.equal(wrong.seen.filter((x) => x.body && Array.isArray(JSON.parse(x.body))).length, 0, "nothing else is asked of it");
+  // A node that doesn't answer skips live reads; the source is still read.
+  const quiet = vaultChain();
+  const down = async (url, init) => (new URL(url).host === "sourcify.dev" ? quiet.fetch(url, init) : Promise.reject(new Error("offline")));
+  const r = await createContractReader({ fetch: down }).read({ chain: 4663, address: VAULT.toLowerCase() });
+  assert.deepEqual(r.facts.notes, ["no_live_reads"]);
+  assert.equal(r.facts.node, undefined);
+  assert.equal(r.facts.verified.contract, "Vault");
+  // Verifier paths from someone's home folder are shortened; others aren't.
+  assert.equal(homePrefix(["Users/a/r/contracts/A.sol", "Users/a/r/contracts/v2/B.sol"]), "Users/a/r/");
+  assert.equal(homePrefix(["src/A.sol", "src/B.sol"]), "");
+  assert.equal(homePrefix(["home/x/contracts/A.sol", "contracts/A.sol"]), "");
 });
 
 // ---- Reading: shapes the recordings don't have ---------------------------------------
@@ -621,6 +717,8 @@ test("the tables: every selector and slot is what its name says", () => {
   assert.equal(EIP1967.implementation, slot("eip1967.proxy.implementation"));
   assert.equal(EIP1967.admin, slot("eip1967.proxy.admin"));
   assert.equal(EIP1967.beacon, slot("eip1967.proxy.beacon"));
+  assert.equal(ZEPPELINOS.implementation, keccak256(toUtf8Bytes("org.zeppelinos.proxy.implementation")));
+  assert.equal(ZEPPELINOS.admin, keccak256(toUtf8Bytes("org.zeppelinos.proxy.admin")));
   assert.equal(id("implementation()").slice(0, 10), "0x5c60da1b");
   assert.equal(id("getRoleMemberCount(bytes32)").slice(0, 10), "0xca15c873");
   assert.equal(id("getRoleMember(bytes32,uint256)").slice(0, 10), "0x9010d07c");
@@ -1011,6 +1109,8 @@ test("the copy: honest, plain, never 'safe', 'scam', 'buy' or 'sell', and in Chi
     "Read contract",
     "Explain it in plain English",
     "Sent to AI",
+    "Live reads",
+    "Ethereum's node answered for another chain, so nothing it said was used. Nothing was charged; try again later.",
     "Open in Contract Reader",
     "Verified on Sourcify",
     "Explain with Gemini 2.5 Flash",

@@ -6521,7 +6521,7 @@
     "Nothing specific was flagged. That isn't a clean bill of health.": "No se marcó nada en concreto. Eso no significa que todo esté bien.",
     "Explain it to add the points the code raises.": "Explícalo para sumar los puntos que plantea el código.",
     "What this can't tell you": "Lo que esto no puede decirte",
-    "Live reads weren't available from this chain's explorer right now, so owners, roles and paused state aren't shown.": "Las lecturas en vivo del explorador de esta cadena no estaban disponibles por ahora, así que no se muestran dueños, roles ni estado de pausa.",
+    "Live reads weren't available from this chain's node right now, so owners, roles and paused state aren't shown.": "Las lecturas en vivo del nodo de esta cadena no estaban disponibles por ahora, así que no se muestran dueños, roles ni estado de pausa.",
     "Some live reads didn't answer, so a role may be missing here.": "Algunas lecturas en vivo no respondieron, así que podría faltar un rol aquí.",
     "A source of verified code didn't answer, so \"not published\" may be wrong. Try again in a minute.": "Una fuente de código verificado no respondió, así que “no publicado” podría ser incorrecto. Inténtalo de nuevo en un minuto.",
     "The verified source was over 1.5 MB, so only the main contract and what it inherits from were kept.": "El código fuente verificado superaba 1.5 MB, así que solo se conservaron el contrato principal y lo que hereda.",
@@ -6563,7 +6563,8 @@
     "Contract Reader: a contract you read (its live facts and public source) is kept only in the server's memory, for your account, for 30 minutes, then dropped; it's never written to disk, and the address is never logged. An explanation is saved as an ordinary conversation unless it's off the record or in Private Mode. Your data export lists the contracts open at the time; Panic Wipe and closing the account forget them at once.": "Lector de contratos: un contrato que lees (sus datos en vivo y su código público) se guarda solo en la memoria del servidor, para tu cuenta, durante 30 minutos, y luego se descarta; nunca se escribe en disco y la dirección nunca se registra. Una explicación se guarda como una conversación normal, salvo que sea sin registro o en Modo privado. Tu exportación de datos lista los contratos abiertos en ese momento; el Borrado de pánico y el cierre de la cuenta los olvidan de inmediato.",
     "Its code isn't published: live facts and its bytecode's functions were sent as data.": "Su código no está publicado: los datos en vivo y las funciones de su bytecode se enviaron como datos.",
     "Open in Contract Reader": "Abrir en el Lector de contratos",
-    "Its bytecode has a burn-style function: tokens may be destroyed.": "Su bytecode tiene una función tipo burn: se podrían destruir tokens."
+    "Its bytecode has a burn-style function: tokens may be destroyed.": "Su bytecode tiene una función tipo burn: se podrían destruir tokens.",
+    "Live reads": "Lecturas en vivo"
   },
   "patterns": [
     {
@@ -10687,8 +10688,8 @@
       "es": "No hay ningún contrato en esta dirección en {0}. Es una billetera o no se desplegó nada ahí."
     },
     {
-      "en": "{0}'s explorer couldn't be read right now, and nothing verified was found. Nothing was charged; try again in a minute.",
-      "es": "No se pudo leer el explorador de {0} por ahora y no se encontró nada verificado. No se cobró nada; inténtalo de nuevo en un minuto."
+      "en": "{0}'s node couldn't be read right now, and nothing verified was found. Nothing was charged; try again in a minute.",
+      "es": "No se pudo leer el nodo de {0} por ahora y no se encontró nada verificado. No se cobró nada; inténtalo de nuevo en un minuto."
     },
     {
       "en": "{0} verified file and live facts were sent as data.",
@@ -10697,6 +10698,10 @@
     {
       "en": "{0} verified files and live facts were sent as data.",
       "es": "Se enviaron como datos {0} archivos verificados y datos en vivo."
+    },
+    {
+      "en": "{0}'s node answered for another chain, so nothing it said was used. Nothing was charged; try again later.",
+      "es": "El nodo de {0} respondió por otra cadena, así que no se usó nada de lo que dijo. No se cobró nada; inténtalo de nuevo más tarde."
     },
     {
       "en": "{0} · settled receipt.",

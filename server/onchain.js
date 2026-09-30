@@ -697,8 +697,7 @@ export function rpcAddressFacts({ address, code, balance, nonce, nyma, token = n
 }
 
 // --- Lookups ------------------------------------------------------------------
-// One JSON-RPC batch: [{ result } | { error: true }] in the calls' order.
-export async function rpcBatch(fetchImpl, url, calls) {
+async function rpcBatch(fetchImpl, url, calls) {
   if (!calls.length) return [];
   const out = await fetchJson(fetchImpl, url, {
     method: "POST",

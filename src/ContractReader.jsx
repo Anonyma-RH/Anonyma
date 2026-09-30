@@ -39,7 +39,7 @@ const CHAIN_KEY = "contracts:chain";
 // "Try USDG": the stablecoin ANONYMA takes payments in, an upgradeable proxy.
 const SAMPLE = { value: "0x5fc5360d0400a0fd4f2af552add042d716f1d168", chain: 4663 };
 const NOTES = {
-  no_live_reads: "Live reads weren't available from this chain's explorer right now, so owners, roles and paused state aren't shown.",
+  no_live_reads: "Live reads weren't available from this chain's node right now, so owners, roles and paused state aren't shown.",
   reads_incomplete: "Some live reads didn't answer, so a role may be missing here.",
   source_unavailable: "A source of verified code didn't answer, so \"not published\" may be wrong. Try again in a minute.",
   sources_trimmed: "The verified source was over 1.5 MB, so only the main contract and what it inherits from were kept.",
@@ -430,6 +430,12 @@ function ContractCard({ facts, files, read, savedOnly, expiresIn, onOpen, onForg
                 <Address facts={facts} address={facts.proxy.implementation} />
                 {facts.proxy.implementation_name && <small data-i18n="off"> {facts.proxy.implementation_name}</small>}
               </dd>
+            </>
+          )}
+          {facts.node && (
+            <>
+              <dt>Live reads</dt>
+              <dd data-i18n="off">{facts.node}</dd>
             </>
           )}
           {facts.verified?.compiler && (

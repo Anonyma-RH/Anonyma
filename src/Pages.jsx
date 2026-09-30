@@ -899,6 +899,7 @@ const featureIcons = {
   reporeader: "repo",
   doctranslate: "languages",
   meetingnotes: "meeting",
+  subtitles: "captions",
   quotecards: "quotemark",
   recovery: "lifebuoy",
   pushalerts: "bell",

@@ -1352,6 +1352,25 @@ export const UPDATES = [
     // button and the dictionary never loads.
     released: true,
   },
+  {
+    id: "subtitles",
+    title: "Subtitles",
+    tagline: "Drop a video. Get subtitles you can edit, translate and download. Only the audio leaves your device, never the picture.",
+    points: [
+      "Any video or audio file up to 3 hours, read in your browser; only the sound is sent",
+      "Edit the timing and text with the video playing, then translate the words and keep the timing",
+      "Download .srt or .vtt. See the most it can cost first; a part that fails costs nothing",
+    ],
+    // The workspace's Subtitles page (src/Subtitles.jsx) and /api/subtitles
+    // (server/routes/subtitles.js). Transcribed with Voice & Audio's speech
+    // models, one piece of plain sound at a time, exactly as Meeting Notes
+    // does, so it needs "audio" released too (featuresFor). Translation is a
+    // separate priced step on the cues' text only. What is saved is a set of
+    // subtitle tracks (times and text, never the video or the sound), erased
+    // and exported with the account; off the record saves nothing. The page
+    // is /workspace/subtitles.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1553,6 +1572,21 @@ export function featuresFor(req) {
       if (body.private === true) needed.push("private", "ephemeral");
       else if (body.ephemeral === true) needed.push("ephemeral");
       if (body.project !== undefined) needed.push("projects");
+      if (body.veil_masked !== undefined) needed.push("trail");
+    }
+    return needed;
+  }
+  // Subtitles: transcribed with Voice & Audio's speech models, so it needs
+  // "audio" too. What a run turns on needs its own update, as a chat would:
+  // off the record and Privacy Trail's Veil count. Private Mode is refused for
+  // the transcription (no transcription model offers zero data retention), but
+  // a translation may run on a zero-data-retention model, so it is gated like
+  // a chat's.
+  if (p === "/api/subtitles" || p.startsWith("/api/subtitles/")) {
+    const needed = ["subtitles", "audio"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      else if (body.ephemeral === true) needed.push("ephemeral");
       if (body.veil_masked !== undefined) needed.push("trail");
     }
     return needed;

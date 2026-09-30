@@ -25,7 +25,7 @@ import {
 // Background maintenance: due routines, video completion, payment status
 // checks, expired media and reservations, token holdings and table cleanup.
 export function createWorker(ctx) {
-  const { db, cfg, inflight, routines, sealed, pageWatch, meetingNotes } = ctx;
+  const { db, cfg, inflight, routines, sealed, pageWatch, meetingNotes, subtitles } = ctx;
   const { mediaJSON, saveMedia, deleteMedia, assignCosts } = ctx.media;
   const workerController = new AbortController();
   let workerPromise = null;
@@ -72,6 +72,8 @@ export function createWorker(ctx) {
       sealed?.tick();
       // Meeting Notes: runs left idle (a closed tab) release what they hold.
       meetingNotes?.sweep();
+      // Subtitles: likewise.
+      subtitles?.sweep();
       const jobs = db
         .prepare(
           "SELECT * FROM videos WHERE status IN ('pending','processing') ORDER BY updated ASC,created ASC LIMIT 20",

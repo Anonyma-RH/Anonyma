@@ -46,6 +46,8 @@ export function siteRoutes({ app, db, cfg }) {
     translate: isReleased(cfg, "doctranslate"),
     // Meeting Notes' page, which transcribes with Voice & Audio's models.
     notes: isReleased(cfg, "meetingnotes") && isReleased(cfg, "audio"),
+    // Subtitles' page, which transcribes with Voice & Audio's models.
+    subtitles: isReleased(cfg, "subtitles") && isReleased(cfg, "audio"),
     // Chat Import's page (/workspace/import).
     chatimport: isReleased(cfg, "chatimport"),
     // Photo Tools' page, which runs on the image models.

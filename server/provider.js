@@ -13,6 +13,7 @@ import { autoHelperTestReply } from "./auto-model-test.js";
 import { canvasTestReply } from "./canvas.js";
 import { slidesTestReply } from "./slides.js";
 import { meetingNotesTestReply } from "./meeting-notes.js";
+import { subtitleTranslateTestReply } from "./subtitles.js";
 import { repoTestReply } from "./repo-reader.js";
 // PPQ's BYOK usage.cost is its fee, not the full account debit. The
 // upstream inference charge appears separately in cost_details. Live PPQ
@@ -294,6 +295,8 @@ export async function* chatStream(cfg, body, signal, onAccepted) {
           compareTestReply(body.messages) ??
           overviewTestReply(body.messages) ??
           meetingNotesTestReply(body.messages) ??
+          // Subtitles' translation of a batch of cues (server/subtitles.js).
+          subtitleTranslateTestReply(body.messages) ??
           sharpenTestReply(body.messages) ??
           autoHelperTestReply(body.messages) ??
           factCheck;

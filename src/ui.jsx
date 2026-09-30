@@ -4,6 +4,9 @@ import { reducedMotion } from "./motion.js";
 import { Link } from "react-router-dom";
 import { isMobileBrowser, walletAvailable, walletBrowserLinks } from "./lib.js";
 import {
+  Captions,
+  Scissors,
+  Merge,
   Mic,
   Globe,
   Users,
@@ -224,6 +227,10 @@ const icons = {
   numbered: ListOrdered,
   present: Presentation,
   meeting: FileAudio,
+  // Subtitles: captions on a video, and the editor's cut and join.
+  captions: Captions,
+  split: Scissors,
+  merge: Merge,
   // Recovery Kit: a way back into the account.
   lifebuoy: LifeBuoy,
   // Decoy Vault: a second face shown instead of the real one.
@@ -281,6 +288,8 @@ const pixels = {
   photos: [".......", "#######", "#...#.#", "#.....#", "#..#..#", "#.###.#", "#######"],
   // A magnifier over a line of text: a question asked across saved files.
   filesearch: [".####..", "#....#.", "#.##.#.", "#....#.", ".####..", "....##.", ".....##"],
+  // A screen with a line of caption under it: subtitles.
+  subtitles: ["#######", "#.....#", "#.....#", "#.....#", "#######", ".#####.", "......."],
   // A folder with a branch on it: a repo read file by file.
   repos: ["###....", "#######", "#.#...#", "#.#.#.#", "#.##..#", "#.#...#", "#######"],
 };

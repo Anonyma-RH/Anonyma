@@ -6415,7 +6415,87 @@
     "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "使用其他钱包应用？请把页面链接粘贴到它的内置浏览器中。钱包应用有自己独立的登录状态，所以你需要在那里重新登录 ANONYMA。",
     "Open in MetaMask": "在 MetaMask 中打开",
     "Open in Coinbase Wallet": "在 Coinbase Wallet 中打开",
-    "Open in Trust Wallet": "在 Trust Wallet 中打开"
+    "Open in Trust Wallet": "在 Trust Wallet 中打开",
+    "SUBTITLES": "字幕",
+    "Subtitles": "字幕",
+    "Drop a video. Get subtitles you can edit, translate and download.": "拖入视频，得到可编辑、可翻译、可下载的字幕。",
+    "New video": "新视频",
+    "Opening the subtitles…": "正在打开字幕……",
+    "These subtitles aren't saved in your account any more.": "这些字幕已不在你的账户中。",
+    "Reading the video on this device…": "正在此设备上读取视频……",
+    "Drop a video here": "将视频拖到这里",
+    "MP4, MOV, WebM, MP3, M4A, WAV or OGG. Up to 3 hours.": "支持 MP4、MOV、WebM、MP3、M4A、WAV 或 OGG，最长 3 小时。",
+    "Choose a video": "选择视频",
+    "The video is read in this browser. Its sound goes to the transcription provider in pieces of up to five minutes; the picture, the file and its name stay here.": "视频在此浏览器中读取。其声音分成最长五分钟的片段发送给转录提供商；画面、文件及其名称都留在这里。",
+    "ANONYMA doesn't store the video or its sound. The subtitles are saved to your account, or nowhere.": "ANONYMA 不会保存视频或其声音。字幕会保存到你的账户，或者不保存。",
+    "Your saved subtitles": "你保存的字幕",
+    "Delete these subtitles": "删除这些字幕",
+    "Only the subtitles are saved, never the video.": "只保存字幕，绝不保存视频。",
+    "Keep the subtitles": "字幕保存位置",
+    "In your account": "在你的账户中",
+    "Veil masks emails, numbers and keys in translations and in saved subtitles, and puts them back here.": "Veil 会在翻译和已保存的字幕中遮盖邮箱、号码和密钥，并在这里还原。",
+    "Veil is off: translations and saved subtitles carry the text as it was heard.": "Veil 已关闭：翻译和已保存的字幕会带着原样听到的文字。",
+    "Device Vault keeps chats, not subtitles, so nothing here goes into it.": "设备保险库保存的是会话，而不是字幕，所以这里的内容不会进入其中。",
+    "Make subtitles": "生成字幕",
+    "Use what's transcribed": "使用已转录的部分",
+    "Subtitles so far": "目前的字幕",
+    "Subtitle text": "字幕文字",
+    "Split at the cursor": "在光标处拆分",
+    "Join with the next cue": "与下一条合并",
+    "Delete this cue": "删除这一条",
+    "Name these subtitles": "为这些字幕命名",
+    "Off the record: nothing is saved. Download before you leave this page.": "不留记录：不会保存任何内容。离开此页面前请先下载。",
+    "Saved to your account": "已保存到你的账户",
+    "These subtitles aren't saved or translated, and you can still download them.": "这些字幕不会被保存或翻译，但你仍可以下载。",
+    "What was said": "所说的内容",
+    "Download .srt": "下载 .srt",
+    "Download .vtt": "下载 .vtt",
+    "The video isn't kept, so it can't play here. Choose it again to play it with these subtitles.": "视频不会被保留，所以无法在这里播放。请重新选择它，以便带着这些字幕播放。",
+    "Choose the video": "选择这个视频",
+    "Move all cues by": "将所有字幕条移动",
+    "Only the subtitles are saved, in your account. The video and its sound never are.": "只有字幕会保存在你的账户中，视频及其声音绝不会保存。",
+    "Delete these subtitles from your account? The video isn't touched.": "从你的账户中删除这些字幕？视频不会受影响。",
+    "Cues": "字幕条",
+    "1 cue": "1 条",
+    "1 to check": "1 条待检查",
+    "Click a number to jump to a cue. Times are m:ss.mmm.": "点击序号可跳到该条。时间格式为 m:ss.mmm。",
+    "Subtitle cues": "字幕条",
+    "No cues left in this track.": "这条字幕轨里没有字幕条了。",
+    "Translate these subtitles": "翻译这些字幕",
+    "Only the subtitle text goes to the model, in parts of up to 40 cues. The timing stays as it is.": "只有字幕文字会发送给模型，每部分最多 40 条。时间轴保持不变。",
+    "Translated by": "翻译模型",
+    "1 part didn't go through and wasn't charged.": "有 1 个部分未能完成，也没有扣费。",
+    "Retry those parts": "重试这些部分",
+    "· 1 part": "· 1 个部分",
+    "Empty": "空",
+    "Long line": "行过长",
+    "Too many lines": "行数过多",
+    "Under 1 s": "不足 1 秒",
+    "Over 7 s": "超过 7 秒",
+    "Overlaps": "时间重叠",
+    "Subtitles aren't available in Private Mode: no transcription model offers zero data retention.": "字幕功能在隐私模式下不可用：没有任何转录模型提供零数据保留。",
+    "No speech was found in this video, so there are no subtitles to make.": "此视频中没有检测到语音，因此无法生成字幕。",
+    "The transcription provider returned no word timings for this part, so it can't be timed into subtitles. Nothing was charged for it. Retry, or choose another transcription model.": "转录提供商没有返回这一部分的逐词时间，因此无法生成带时间的字幕。此部分不收费。请重试，或选择其他转录模型。",
+    "The model didn't return every cue of this part, so it wasn't used or charged. Retry, or choose another model.": "模型没有返回这一部分的每一条字幕，因此未被采用，也没有扣费。请重试，或选择其他模型。",
+    "The translation of this part lost a detail Veil masked (such as [EMAIL_1]), so it wasn't used or charged. Retry, or choose another model.": "这一部分的译文丢失了 Veil 遮盖的细节（例如 [EMAIL_1]），因此未被采用，也没有扣费。请重试，或选择其他模型。",
+    "Sign in to make subtitles.": "登录后即可生成字幕。",
+    "The demo doesn't transcribe videos. Sign in to make subtitles.": "演示版不会转录视频。登录后即可生成字幕。",
+    "This transcription has ended. Start again from the video.": "此次转录已结束。请重新从视频开始。",
+    "This piece isn't the length the video was planned with. Start again from the video.": "此片段的长度与视频原先规划的不一致。请重新从视频开始。",
+    "There's no such piece in this video.": "此视频中没有这个片段。",
+    "The estimate changed since it was shown. Check the new one, then start again. Nothing was charged.": "自显示估算以来，估算已变化。请查看新的估算，然后重新开始。未扣费。",
+    "You can keep up to 100 subtitle sets. Delete one to save another.": "你最多可以保存 100 组字幕。请先删除一组再保存新的。",
+    "This subtitle set is too large to keep. Download it instead.": "这组字幕太大，无法保存。请改为下载。",
+    "Subtitle set not found.": "找不到这组字幕。",
+    "A part of this track is too long for this model's context. Choose a model with a larger context.": "这条字幕轨的某个部分超出了此模型的上下文长度。请选择上下文更大的模型。",
+    "Translating subtitles needs a text model.": "翻译字幕需要文本模型。",
+    "Saved subtitles: their cues and timing, never a video": "已保存的字幕：字幕内容和时间轴，绝不含视频",
+    "Drop a video. Get subtitles you can edit, translate and download. Only the audio leaves your device, never the picture.": "拖入视频，得到可编辑、可翻译、可下载的字幕。只有音频会离开你的设备，画面绝不会。",
+    "Any video or audio file up to 3 hours, read in your browser; only the sound is sent": "最长 3 小时的任意视频或音频文件，在你的浏览器中读取；只发送声音",
+    "Edit the timing and text with the video playing, then translate the words and keep the timing": "边播放视频边编辑时间和文字，再翻译文字并保留时间轴",
+    "Download .srt or .vtt. See the most it can cost first; a part that fails costs nothing": "下载 .srt 或 .vtt。先看最高费用；失败的部分不收费",
+    "Turn a video into subtitles you can edit, translate and download. Only its sound is sent.": "把视频变成可编辑、可翻译、可下载的字幕。只发送它的声音。",
+    "Opening Subtitles…": "正在打开字幕……"
   },
   "patterns": [
     {
@@ -10461,6 +10541,42 @@
     {
       "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
       "zh": "放大最多支持长边 {0} px 的照片。请缩小后再试。"
+    },
+    {
+      "en": "{0} cues",
+      "zh": "{0} 条"
+    },
+    {
+      "en": "{0} to check",
+      "zh": "{0} 条待检查"
+    },
+    {
+      "en": "{0} parts didn't go through and weren't charged.",
+      "zh": "有 {0} 个部分未能完成，也没有扣费。"
+    },
+    {
+      "en": "· {0} parts",
+      "zh": "· {0} 个部分"
+    },
+    {
+      "en": "· {0} min at {1} / min",
+      "zh": "· {0} 分钟，每分钟 {1}"
+    },
+    {
+      "en": "The video's sound goes to {0} ({1}) to be transcribed. ANONYMA doesn't keep it.",
+      "zh": "视频的声音会发送给 {0}（{1}）进行转录，ANONYMA 不会保存。"
+    },
+    {
+      "en": "The video's sound goes to the transcription provider ({0}). ANONYMA doesn't keep it.",
+      "zh": "视频的声音会发送给转录提供商（{0}），ANONYMA 不会保存。"
+    },
+    {
+      "en": "Only the first {0} of the video was transcribed, so the subtitles end there.",
+      "zh": "只转录了视频的前 {0}，所以字幕到此为止。"
+    },
+    {
+      "en": "This video is {0} long; these subtitles were made for {1}.",
+      "zh": "此视频长 {0}；这些字幕是为 {1} 的视频制作的。"
     }
   ]
 }

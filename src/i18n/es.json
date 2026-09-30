@@ -6418,7 +6418,87 @@
     "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "¿Otra app de billetera? Pega el enlace de la página en su navegador integrado. Tu app de billetera tiene su propio inicio de sesión, así que ahí vuelves a iniciar sesión en ANONYMA.",
     "Open in MetaMask": "Abrir en MetaMask",
     "Open in Coinbase Wallet": "Abrir en Coinbase Wallet",
-    "Open in Trust Wallet": "Abrir en Trust Wallet"
+    "Open in Trust Wallet": "Abrir en Trust Wallet",
+    "SUBTITLES": "SUBTÍTULOS",
+    "Subtitles": "Subtítulos",
+    "Drop a video. Get subtitles you can edit, translate and download.": "Suelta un video. Obtén subtítulos que puedes editar, traducir y descargar.",
+    "New video": "Nuevo video",
+    "Opening the subtitles…": "Abriendo los subtítulos…",
+    "These subtitles aren't saved in your account any more.": "Estos subtítulos ya no están guardados en tu cuenta.",
+    "Reading the video on this device…": "Leyendo el video en este dispositivo…",
+    "Drop a video here": "Suelta un video aquí",
+    "MP4, MOV, WebM, MP3, M4A, WAV or OGG. Up to 3 hours.": "MP4, MOV, WebM, MP3, M4A, WAV u OGG. Hasta 3 horas.",
+    "Choose a video": "Elegir un video",
+    "The video is read in this browser. Its sound goes to the transcription provider in pieces of up to five minutes; the picture, the file and its name stay here.": "El video se lee en este navegador. Su sonido va al proveedor de transcripción en fragmentos de hasta cinco minutos; la imagen, el archivo y su nombre se quedan aquí.",
+    "ANONYMA doesn't store the video or its sound. The subtitles are saved to your account, or nowhere.": "ANONYMA no guarda el video ni su sonido. Los subtítulos se guardan en tu cuenta, o en ningún lado.",
+    "Your saved subtitles": "Tus subtítulos guardados",
+    "Delete these subtitles": "Eliminar estos subtítulos",
+    "Only the subtitles are saved, never the video.": "Solo se guardan los subtítulos, nunca el video.",
+    "Keep the subtitles": "Conservar los subtítulos",
+    "In your account": "En tu cuenta",
+    "Veil masks emails, numbers and keys in translations and in saved subtitles, and puts them back here.": "Veil oculta correos, números y claves en las traducciones y en los subtítulos guardados, y los devuelve aquí.",
+    "Veil is off: translations and saved subtitles carry the text as it was heard.": "Veil está desactivado: las traducciones y los subtítulos guardados llevan el texto tal como se oyó.",
+    "Device Vault keeps chats, not subtitles, so nothing here goes into it.": "La Bóveda del dispositivo guarda chats, no subtítulos, así que nada de esto entra en ella.",
+    "Make subtitles": "Crear subtítulos",
+    "Use what's transcribed": "Usar lo transcrito",
+    "Subtitles so far": "Subtítulos hasta ahora",
+    "Subtitle text": "Texto del subtítulo",
+    "Split at the cursor": "Dividir en el cursor",
+    "Join with the next cue": "Unir con la siguiente línea",
+    "Delete this cue": "Eliminar esta línea",
+    "Name these subtitles": "Ponle nombre a estos subtítulos",
+    "Off the record: nothing is saved. Download before you leave this page.": "Sin registro: no se guarda nada. Descarga antes de salir de esta página.",
+    "Saved to your account": "Guardado en tu cuenta",
+    "These subtitles aren't saved or translated, and you can still download them.": "Estos subtítulos no se guardan ni se traducen, pero aún puedes descargarlos.",
+    "What was said": "Lo que se dijo",
+    "Download .srt": "Descargar .srt",
+    "Download .vtt": "Descargar .vtt",
+    "The video isn't kept, so it can't play here. Choose it again to play it with these subtitles.": "El video no se conserva, así que no se puede reproducir aquí. Elígelo de nuevo para verlo con estos subtítulos.",
+    "Choose the video": "Elegir el video",
+    "Move all cues by": "Mover todas las líneas",
+    "Only the subtitles are saved, in your account. The video and its sound never are.": "Solo se guardan los subtítulos, en tu cuenta. El video y su sonido nunca.",
+    "Delete these subtitles from your account? The video isn't touched.": "¿Eliminar estos subtítulos de tu cuenta? El video no se toca.",
+    "Cues": "Líneas",
+    "1 cue": "1 línea",
+    "1 to check": "1 por revisar",
+    "Click a number to jump to a cue. Times are m:ss.mmm.": "Haz clic en un número para saltar a esa línea. Los tiempos son m:ss.mmm.",
+    "Subtitle cues": "Líneas de subtítulos",
+    "No cues left in this track.": "Ya no quedan líneas en esta pista.",
+    "Translate these subtitles": "Traducir estos subtítulos",
+    "Only the subtitle text goes to the model, in parts of up to 40 cues. The timing stays as it is.": "Solo el texto de los subtítulos va al modelo, en partes de hasta 40 líneas. Los tiempos se quedan como están.",
+    "Translated by": "Traducido por",
+    "1 part didn't go through and wasn't charged.": "1 parte no se completó y no se cobró.",
+    "Retry those parts": "Reintentar esas partes",
+    "· 1 part": "· 1 parte",
+    "Empty": "Vacío",
+    "Long line": "Línea larga",
+    "Too many lines": "Demasiadas líneas",
+    "Under 1 s": "Menos de 1 s",
+    "Over 7 s": "Más de 7 s",
+    "Overlaps": "Se superpone",
+    "Subtitles aren't available in Private Mode: no transcription model offers zero data retention.": "Los subtítulos no están disponibles en el Modo privado: ningún modelo de transcripción ofrece retención cero de datos.",
+    "No speech was found in this video, so there are no subtitles to make.": "No se encontró voz en este video, así que no hay subtítulos que crear.",
+    "The transcription provider returned no word timings for this part, so it can't be timed into subtitles. Nothing was charged for it. Retry, or choose another transcription model.": "El proveedor de transcripción no devolvió los tiempos de las palabras de esta parte, así que no se puede convertir en subtítulos con tiempos. No se cobró nada por ella. Reintenta, o elige otro modelo de transcripción.",
+    "The model didn't return every cue of this part, so it wasn't used or charged. Retry, or choose another model.": "El modelo no devolvió todas las líneas de esta parte, así que no se usó ni se cobró. Reintenta, o elige otro modelo.",
+    "The translation of this part lost a detail Veil masked (such as [EMAIL_1]), so it wasn't used or charged. Retry, or choose another model.": "La traducción de esta parte perdió un dato que Veil ocultó (como [EMAIL_1]), así que no se usó ni se cobró. Reintenta, o elige otro modelo.",
+    "Sign in to make subtitles.": "Inicia sesión para crear subtítulos.",
+    "The demo doesn't transcribe videos. Sign in to make subtitles.": "La demo no transcribe videos. Inicia sesión para crear subtítulos.",
+    "This transcription has ended. Start again from the video.": "Esta transcripción terminó. Empieza de nuevo desde el video.",
+    "This piece isn't the length the video was planned with. Start again from the video.": "Este fragmento no tiene la duración con la que se planificó el video. Empieza de nuevo desde el video.",
+    "There's no such piece in this video.": "No hay ese fragmento en este video.",
+    "The estimate changed since it was shown. Check the new one, then start again. Nothing was charged.": "La estimación cambió desde que se mostró. Revisa la nueva y vuelve a empezar. No se cobró nada.",
+    "You can keep up to 100 subtitle sets. Delete one to save another.": "Puedes guardar hasta 100 conjuntos de subtítulos. Elimina uno para guardar otro.",
+    "This subtitle set is too large to keep. Download it instead.": "Este conjunto de subtítulos es demasiado grande para guardarlo. Descárgalo en su lugar.",
+    "Subtitle set not found.": "No se encontró el conjunto de subtítulos.",
+    "A part of this track is too long for this model's context. Choose a model with a larger context.": "Una parte de esta pista es demasiado larga para el contexto de este modelo. Elige un modelo con un contexto mayor.",
+    "Translating subtitles needs a text model.": "Traducir subtítulos requiere un modelo de texto.",
+    "Saved subtitles: their cues and timing, never a video": "Subtítulos guardados: sus líneas y tiempos, nunca un video",
+    "Drop a video. Get subtitles you can edit, translate and download. Only the audio leaves your device, never the picture.": "Suelta un video. Obtén subtítulos que puedes editar, traducir y descargar. Solo el audio sale de tu dispositivo, nunca la imagen.",
+    "Any video or audio file up to 3 hours, read in your browser; only the sound is sent": "Cualquier archivo de video o audio de hasta 3 horas, leído en tu navegador; solo se envía el sonido",
+    "Edit the timing and text with the video playing, then translate the words and keep the timing": "Edita los tiempos y el texto con el video en reproducción; luego traduce las palabras y conserva los tiempos",
+    "Download .srt or .vtt. See the most it can cost first; a part that fails costs nothing": "Descarga .srt o .vtt. Mira primero lo máximo que puede costar; una parte que falla no cuesta nada",
+    "Turn a video into subtitles you can edit, translate and download. Only its sound is sent.": "Convierte un video en subtítulos que puedes editar, traducir y descargar. Solo se envía su sonido.",
+    "Opening Subtitles…": "Abriendo Subtítulos…"
   },
   "patterns": [
     {
@@ -10464,6 +10544,42 @@
     {
       "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
       "es": "Ampliar admite fotos de hasta {0} px en su lado largo. Redúcela e intenta de nuevo."
+    },
+    {
+      "en": "{0} cues",
+      "es": "{0} líneas"
+    },
+    {
+      "en": "{0} to check",
+      "es": "{0} por revisar"
+    },
+    {
+      "en": "{0} parts didn't go through and weren't charged.",
+      "es": "{0} partes no se completaron y no se cobraron."
+    },
+    {
+      "en": "· {0} parts",
+      "es": "· {0} partes"
+    },
+    {
+      "en": "· {0} min at {1} / min",
+      "es": "· {0} min a {1} / min"
+    },
+    {
+      "en": "The video's sound goes to {0} ({1}) to be transcribed. ANONYMA doesn't keep it.",
+      "es": "El sonido del video va a {0} ({1}) para transcribirlo. ANONYMA no lo conserva."
+    },
+    {
+      "en": "The video's sound goes to the transcription provider ({0}). ANONYMA doesn't keep it.",
+      "es": "El sonido del video va al proveedor de transcripción ({0}). ANONYMA no lo conserva."
+    },
+    {
+      "en": "Only the first {0} of the video was transcribed, so the subtitles end there.",
+      "es": "Solo se transcribieron los primeros {0} del video, así que los subtítulos terminan ahí."
+    },
+    {
+      "en": "This video is {0} long; these subtitles were made for {1}.",
+      "es": "Este video dura {0}; estos subtítulos se hicieron para {1}."
     },
     {
       "en": "{0} · settled receipt.",

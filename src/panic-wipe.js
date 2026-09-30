@@ -53,6 +53,9 @@ export const WIPE_PUSH = "Push Alerts: every browser that gets your alerts, and 
 // Listed only once File Search is released (PanicWipe.jsx, InactivityWipe.jsx):
 // the index of the saved files' text goes with them.
 export const WIPE_FILE_SEARCH = "File Search's index of your saved files' text";
+// Listed only once Subtitles is released (PanicWipe.jsx, InactivityWipe.jsx):
+// saved subtitle sets, never a video or its sound (those aren't kept).
+export const WIPE_SUBTITLES = "Saved subtitles: their cues and timing, never a video";
 // Shown under "What stays" once Passkeys is live.
 export const WIPE_KEEPS_PASSKEYS = "Your passkeys, so you can still sign in";
 // Shown under "What stays" once Recovery Kit is live.

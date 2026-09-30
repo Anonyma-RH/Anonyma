@@ -41,6 +41,8 @@ export function wipeAccountContent(ctx, user, { check, record } = {}) {
   check?.();
   // Release paused Meeting Notes runs through the shared wipe path.
   ctx.meetingNotes?.endFor(user.id);
+  // Likewise Subtitles' run between steps.
+  ctx.subtitles?.endFor(user.id);
   assertIdle(ctx, user.id);
   for (const m of db
     .prepare("SELECT id,filename FROM media WHERE user_id=?")

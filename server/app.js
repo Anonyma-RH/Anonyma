@@ -29,6 +29,7 @@ import { fileRoutes } from "./files.js";
 import { audioRoutes } from "./routes/audio.js";
 import { audioOverviewRoutes } from "./routes/audio-overview.js";
 import { meetingNotesRoutes } from "./routes/meeting-notes.js";
+import { subtitleRoutes } from "./routes/subtitles.js";
 import { photoToolsRoutes } from "./routes/photo-tools.js";
 import { v1MediaRoutes } from "./routes/v1-media.js";
 import { creditRoutes } from "./routes/credits.js";
@@ -172,6 +173,11 @@ export function createApp(overrides = {}) {
   // a text model; each step held and settled on the ordinary billing path.
   // The worker ends runs left idle (ctx.meetingNotes.sweep).
   ctx.meetingNotes = meetingNotesRoutes(ctx);
+  // Subtitles: a video's sound transcribed piece by piece with word timings,
+  // and cue text translated in batches; each step held and settled on the
+  // ordinary billing path. The worker ends runs left idle
+  // (ctx.subtitles.sweep).
+  ctx.subtitles = subtitleRoutes(ctx);
   // Photo Tools: edit a photo with words, remove its background or upscale
   // it, on the gateway's image models; one held price, charged only for a
   // result that was checked and kept.

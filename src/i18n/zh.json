@@ -6415,7 +6415,89 @@
     "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "使用其他钱包应用？请把页面链接粘贴到它的内置浏览器中。钱包应用有自己独立的登录状态，所以你需要在那里重新登录 ANONYMA。",
     "Open in MetaMask": "在 MetaMask 中打开",
     "Open in Coinbase Wallet": "在 Coinbase Wallet 中打开",
-    "Open in Trust Wallet": "在 Trust Wallet 中打开"
+    "Open in Trust Wallet": "在 Trust Wallet 中打开",
+    "Encrypted Backup": "加密备份",
+    "Take everything with you in one file, locked with a passphrase only you know.": "把一切装进一个文件带走，用只有你知道的密码短语锁住。",
+    "Chats, projects, scrolls, memory and routine settings in one file, encrypted in your browser": "会话、项目、卷轴、记忆和定时任务设置都在一个文件里，在你的浏览器中加密",
+    "Restore it into any ANONYMA account: it adds, skips what's already there, and never replaces": "可恢复到任意 ANONYMA 账户：只添加、跳过已有内容，绝不覆盖",
+    "Lose the passphrase and the backup can't be opened, by you or by us": "忘记密码短语，这份备份就无法打开，你和我们都打不开",
+    "Encrypted backup.": "加密备份。",
+    "Take everything with you in one file, locked with a passphrase only you know. Restore it into any ANONYMA account.": "把一切装进一个文件带走，用只有你知道的密码短语锁住。可恢复到任意 ANONYMA 账户。",
+    "Checking your last backup…": "正在查看你上次的备份……",
+    "No backup made yet.": "还没有做过备份。",
+    "Make a backup": "制作备份",
+    "Restore a backup": "恢复备份",
+    "Lose the passphrase and the backup can’t be opened, by you or by us.": "忘记密码短语，这份备份就无法打开，你和我们都打不开。",
+    "Saved chats": "已保存的会话",
+    "Projects and their instructions": "项目及其指令",
+    "Memory facts": "记忆条目",
+    "Routines (their settings)": "定时任务（仅设置）",
+    "Research watches (their settings)": "研究监测（仅设置）",
+    "Page watches (their settings)": "网页监测（仅设置）",
+    "Device Vault chats": "本机保险库会话",
+    "Device Vault passphrase": "本机保险库密码短语",
+    "Weak": "弱",
+    "Fair": "一般",
+    "Strong": "强",
+    "Very strong": "很强",
+    "At least 12 characters": "至少 12 个字符",
+    "Stopped. No file was saved.": "已停止。没有保存任何文件。",
+    "The backup couldn't be made.": "无法制作这份备份。",
+    "Backup saved": "备份已保存",
+    "Keep it somewhere safe, like a USB drive or your own cloud storage, and keep the passphrase somewhere else. Anyone with both can read it.": "请把它存放在安全的地方，例如 U 盘或你自己的云存储，并把密码短语另外保管。同时拿到两者的人就能读取它。",
+    "Make an encrypted backup": "制作加密备份",
+    "Your account’s content is gathered and encrypted in this browser, then saved as one file. ANONYMA never sees the passphrase or a readable copy.": "你账户中的内容会在此浏览器中收集并加密，然后保存为一个文件。ANONYMA 永远看不到密码短语，也看不到可读的副本。",
+    "What goes in": "包含的内容",
+    "There’s nothing saved on this account yet.": "这个账户里还没有保存任何内容。",
+    "Device Vault is locked. Unlock it to add its chats: they’re decrypted here and encrypted again into the backup.": "本机保险库已锁定。解锁后即可加入其中的会话：它们会在此处解密，再重新加密进备份。",
+    "Not included: files, images, audio and video (download them from Files and your library), shared team chats, and chats that were never saved, like off-the-record ones. Routines and watches go in as settings, without their results.": "不包括：文件、图片、音频和视频（请从文件和你的资料库下载）、团队共享会话，以及从未保存过的会话，例如无记录会话。定时任务和监测只包含设置，不包含其结果。",
+    "Backup passphrase (at least 12 characters)": "备份密码短语（至少 12 个字符）",
+    "Finishing the file…": "正在完成文件……",
+    "Preparing the key… this takes a few seconds.": "正在准备密钥……需要几秒钟。",
+    "Make and save the backup": "制作并保存备份",
+    "Restore stopped": "恢复已停止",
+    "Backup restored": "备份已恢复",
+    "Stopped. What’s listed below was restored.": "已停止。下面列出的内容已恢复。",
+    "Restored chats are marked Restored in your chat list.": "恢复的会话会在会话列表中标记为“已恢复”。",
+    "Restored routines and watches are switched off, so nothing runs or costs anything until you turn them on in Routines.": "恢复的定时任务和监测处于关闭状态，在你到定时任务中开启之前，不会运行，也不会产生任何费用。",
+    "Choose what to restore": "选择要恢复的内容",
+    "In this backup": "此备份包含",
+    "Unlock Device Vault to put its chats back into this browser.": "解锁本机保险库，即可把其中的会话放回此浏览器。",
+    "To restore Device Vault chats, set up Device Vault in this browser first. They go back only into the vault, never to our server.": "要恢复本机保险库会话，请先在此浏览器中设置本机保险库。它们只会回到保险库，绝不会发送到我们的服务器。",
+    "They’ll be saved to your account as they are. Anyone who can read this account could read them.": "它们会按原样保存到你的账户中。任何能读取此账户的人都可以读到它们。",
+    "Yes, restore them": "是的，恢复它们",
+    "Keep them out": "不恢复它们",
+    "Restore chats and scrolls anyway…": "仍然恢复会话和卷轴……",
+    "Restoring adds to what you have. Nothing is replaced or deleted, and anything already here is skipped. Routines and watches come back switched off, and a page watch reads its page once when it’s added.": "恢复只会在你现有内容的基础上添加。不会替换或删除任何内容，已有的内容会被跳过。定时任务和监测恢复后处于关闭状态；网页监测在添加时会读取一次其网页。",
+    "Restoring…": "正在恢复……",
+    "Restore": "恢复",
+    "Choose a backup file and enter its passphrase. It’s opened in this browser, and nothing is sent until you choose what to restore.": "选择一个备份文件并输入它的密码短语。文件会在此浏览器中打开，在你选择要恢复的内容之前，不会发送任何数据。",
+    "Backup file (.anonyma-backup, up to 512 MB)": "备份文件（.anonyma-backup，最大 512 MB）",
+    "Backup passphrase": "备份密码短语",
+    "Checking the passphrase…": "正在检查密码短语……",
+    "Opening…": "正在打开……",
+    "Open backup": "打开备份",
+    "This backup couldn't be opened.": "无法打开这份备份。",
+    "That passphrase doesn't open this backup.": "这个密码短语无法打开这份备份。",
+    "This isn't an ANONYMA backup file.": "这不是 ANONYMA 备份文件。",
+    "A backup can be at most 512 MB. This one is larger.": "备份最大为 512 MB。这份备份超出了上限。",
+    "Use a passphrase of at least 12 characters.": "请使用至少 12 个字符的密码短语。",
+    "Choose a stronger passphrase: a few unrelated words work well.": "请选择更强的密码短语：几个互不相关的词就很好。",
+    "This backup ends early, so it's incomplete. Copy the whole file again.": "这份备份提前结束了，内容不完整。请重新复制完整的文件。",
+    "This browser can't encrypt a backup.": "此浏览器无法加密备份。",
+    "This backup holds more items than a browser can restore at once.": "这份备份包含的项目太多，浏览器无法一次恢复。",
+    "The backup stopped. It may be too large for this browser.": "备份已中止。它可能太大，此浏览器无法处理。",
+    "This backup is too large for this browser's memory.": "这份备份太大，超出了此浏览器的内存。",
+    "Something went wrong with this backup.": "这份备份出了问题。",
+    "It’s been a month since your last backup.": "距离你上次备份已经一个月了。",
+    "Make a fresh one so it has your newest chats.": "再做一份新的，把最新的会话也备份进去。",
+    "Restored from a backup": "从备份恢复",
+    "Restored from a backup.": "从备份恢复。",
+    "Its words and dates came from your backup file.": "其中的文字和日期来自你的备份文件。",
+    "Encrypted Backup: a backup is made and opened in your browser and saved as a file wherever you choose. ANONYMA never receives the file, its passphrase or its key; we keep only the day of your last backup (for Account → Settings and one reminder 30 days later) and, for chats a restore added, when and a hash of their words, so the same chat isn’t restored twice. Panic Wipe and closing your account delete both, but not backup files you saved: those are yours to keep or delete.": "加密备份：备份在你的浏览器中制作和打开，并保存为文件，存放在你选择的位置。ANONYMA 永远不会收到这个文件、它的密码短语或密钥；我们只保留你上次备份的日期（用于账户 → 设置，以及 30 天后的一次提醒），以及对于恢复添加的会话，恢复时间和其文字的哈希，以免同一会话被恢复两次。紧急清除和关闭账户会删除这两项，但不会删除你保存的备份文件：它们由你自行保管或删除。",
+    "The export also says the day of your last encrypted backup, and which chats came back from one.": "导出内容还会注明你上次加密备份的日期，以及哪些会话是从备份恢复的。",
+    "The day of your last encrypted backup": "你上次加密备份的日期",
+    "Backup files you saved. They were never on our servers, so delete them yourself if you need to.": "你保存的备份文件。它们从未存放在我们的服务器上，如有需要请自行删除。"
   },
   "patterns": [
     {
@@ -10461,6 +10543,58 @@
     {
       "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
       "zh": "放大最多支持长边 {0} px 的照片。请缩小后再试。"
+    },
+    {
+      "en": "Last backup: {0}",
+      "zh": "上次备份：{0}"
+    },
+    {
+      "en": "Encrypting your chats… {0} so far",
+      "zh": "正在加密你的会话……已完成 {0} 个"
+    },
+    {
+      "en": "{0} added",
+      "zh": "已添加 {0} 个"
+    },
+    {
+      "en": "{0} already here",
+      "zh": "{0} 个已存在"
+    },
+    {
+      "en": "{0} over your account’s limit",
+      "zh": "{0} 个超出账户上限"
+    },
+    {
+      "en": "{0} not restored",
+      "zh": "{0} 个未恢复"
+    },
+    {
+      "en": "Made on {0}.",
+      "zh": "制作于 {0}。"
+    },
+    {
+      "en": "Chats from {0} to {1}.",
+      "zh": "会话时间从 {0} 到 {1}。"
+    },
+    {
+      "en": "Seed Guard is holding back {0} items that look like they contain a seed phrase or private key. They won’t be restored.",
+      "zh": "助记词防护拦下了 {0} 个看起来包含助记词或私钥的项目。它们不会被恢复。"
+    },
+    {
+      "en": "{0} items in this file couldn’t be read and will be skipped.",
+      "zh": "此文件中有 {0} 个项目无法读取，将被跳过。"
+    },
+    {
+      "en": "Restoring: {0}",
+      "zh": "正在恢复：{0}"
+    },
+    {
+      "en": "Opening… part {0} of {1}",
+      "zh": "正在打开……第 {0} 部分，共 {1} 部分"
+    },
+    {
+      "en": "Part {0} of {1} of this backup can't be opened. The file is damaged or was changed after it was made.",
+      "zh": "这份备份的第 {0} 部分（共 {1} 部分）无法打开。文件已损坏，或在制作后被修改过。"
     }
   ]
 }

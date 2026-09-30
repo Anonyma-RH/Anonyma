@@ -418,7 +418,9 @@ export function destinationRoom(dest, { status = null, vaultCount = 0, vaultMax 
 
 // One uploaded chat, checked and cleaned; { reason } when it can't be saved
 // and { chat } when it can. `at` is now, so no time is in the future.
-export function checkUploadedChat(raw, at = Date.now()) {
+// `carry(message)` may add checked fields to each kept message (Encrypted
+// Backup's restore keeps which model answered and a bookmark's note).
+export function checkUploadedChat(raw, at = Date.now(), { carry = null } = {}) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return { reason: "invalid" };
   if (!Array.isArray(raw.messages)) return { reason: "invalid" };
   if (raw.messages.length > MAX_MESSAGES_PER_CHAT) return { reason: "too_large" };
@@ -433,7 +435,7 @@ export function checkUploadedChat(raw, at = Date.now()) {
     chars += text.length;
     if (chars > MAX_CHAT_CHARS) return { reason: "too_large" };
     const when = Number.isFinite(m.created) ? Math.round(m.created) : 0;
-    messages.push({ role: m.role, text, at: when > 0 && when <= at + DAY ? when : 0 });
+    messages.push({ role: m.role, text, at: when > 0 && when <= at + DAY ? when : 0, ...(carry ? carry(m) : {}) });
   }
   if (!messages.length) return { reason: "empty" };
   const first = messages.find((m) => m.at)?.at || 0;

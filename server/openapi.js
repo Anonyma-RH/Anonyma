@@ -2269,6 +2269,134 @@ route("post", "/api/import/chats", "Chat Import: save chosen chats to the accoun
   description:
     "Each saved chat becomes an ordinary saved conversation marked as imported (Chat, no model, no charge) and is listed, searched, exported and erased like any other, with the account's auto-delete default applied. A chat is skipped rather than failing the request: already_imported (its export id was imported before), seed_phrase_blocked (Seed Guard is live and it holds a valid seed phrase or private key, unless allow_seed_phrase), too_large (over 4,000 messages, 200,000 characters in a message or 2,000,000 in the chat), empty, invalid, or conversation_limit (the cap is never pruned by an import). At most 20 chats and 4,000,000 characters per request (413 import_too_large). Nothing about titles, text or ids is logged.",
 });
+// Encrypted Backup (update "backup"): the file is made and opened in the
+// browser; these routes hand over the account's own content, keep the day
+// of the last backup, and take back what a restore chose.
+const backupDay = { type: ["string", "null"], description: "YYYY-MM-DD (UTC), or null before the first backup" };
+const backupState = {
+  last_backup: backupDay,
+  reminder: { ...bool, description: "Whether the one reminder is due: 30 days after the last backup, until seen" },
+};
+const backupSkip = (reasons) =>
+  array(object({ index: integer, reason: { enum: reasons } }, ["index", "reason"]));
+route("get", "/api/account/backup", "Encrypted Backup: the last backup and what a backup would hold", {
+  response: object({
+    ...backupState,
+    counts: object({
+      chats: integer,
+      bookmarks: integer,
+      projects: integer,
+      scrolls: integer,
+      instructions: { ...integer, description: "1 when standing instructions are saved" },
+      memory: integer,
+      routines: integer,
+      research: integer,
+      watches: integer,
+    }),
+    seed_guard: { ...bool, description: "Whether Seed Guard is live, so a restore holds back items with a seed phrase or private key" },
+  }),
+  description: "Counts only. The backup file is made in the browser; the server never receives it, its passphrase or its key.",
+});
+route("get", "/api/account/backup/content", "Encrypted Backup: everything but the chats", {
+  response: object({
+    projects: array(object({ id: string, name: string, color: string, instructions: string, starts: string, model: nullableString, created: integer })),
+    scrolls: array(object({ title: string, body: string, created: integer })),
+    instructions: { type: ["object", "null"], properties: { body: string, enabled: bool } },
+    memory: array(object({ text: string, enabled: bool, created: integer })),
+    routines: array(object({ name: string, prompt: string, model: string, web_search: bool, private_only: bool, schedule: object(), per_run_credits: number, monthly_budget_credits: number, created: integer })),
+    research: array(object({ name: string, topic: string, model: string, depth: string, new_only: bool, private_only: bool, schedule: object(), monthly_budget_credits: number, created: integer })),
+    watches: array(object({ url: string, hint: nullableString, model: string, private_only: bool, every: string, monthly_budget_credits: number, created: integer })),
+    bookmarks: array(object({ message_id: string, conversation_id: string, note: string, created: integer })),
+  }),
+  description: "Routines and watches are their settings only, never their results or the pages they read. Bookmarks point at messages in the account's own saved chats.",
+});
+route("get", "/api/account/backup/chats", "Encrypted Backup: saved chats, a page at a time", {
+  query: [{ name: "after", in: "query", schema: integer, description: "The previous page's next value" }],
+  response: object({
+    chats: array(
+      object({
+        id: string,
+        title: string,
+        created: integer,
+        updated: integer,
+        project: nullableString,
+        messages: array(object({ id: string, role: { enum: ["user", "assistant"] }, text: string, model: nullableString, created: integer })),
+      }),
+    ),
+    next: { type: ["integer", "null"], description: "Pass as after for the next page; null at the end" },
+  }),
+  description: "The account's own saved personal chats (not shared team chats), up to 25 a page and about 8 MB of words. Each message is its words; images and files are left out.",
+});
+route("post", "/api/account/backup/made", "Encrypted Backup: note that a backup was saved today", {
+  body: object({ day: { ...string, description: "The browser's own day, YYYY-MM-DD; used when it's within a day of the server's, else the server's UTC day" } }),
+  response: object(backupState),
+  description: "Keeps only today's date (UTC), and starts the 30-day reminder over. Nothing about the file is sent.",
+});
+route("post", "/api/account/backup/reminder", "Encrypted Backup: the reminder was seen", {
+  response: object(backupState),
+});
+route("post", "/api/account/backup/restore/chats", "Encrypted Backup: restore chosen chats", {
+  body: object(
+    {
+      chats: {
+        ...array(
+          object(
+            {
+              title: { ...string, maxLength: 200 },
+              created: integer,
+              updated: integer,
+              project: { ...string, description: "A project of this account to file the chat in (needs Projects)" },
+              messages: {
+                ...array(
+                  object(
+                    {
+                      role: { enum: ["user", "assistant"] },
+                      text: { ...string, maxLength: 200000 },
+                      created: integer,
+                      model: { ...string, maxLength: 200, description: "The model that wrote a reply" },
+                      bookmark: { ...string, maxLength: 140, description: "A bookmark's note on this message (needs Bookmarks)" },
+                    },
+                    ["role", "text"],
+                  ),
+                ),
+                maxItems: 4000,
+              },
+              allow_seed_phrase: { ...bool, description: "Seed Guard: true only for a chat the person confirmed they want restored despite a seed phrase or private key in it" },
+            },
+            ["messages"],
+          ),
+        ),
+        minItems: 1,
+        maxItems: 20,
+      },
+    },
+    ["chats"],
+  ),
+  response: object({
+    saved: array(object({ index: integer, id: string, project: string, bookmarks: integer }, ["index", "id"])),
+    skipped: backupSkip(["duplicate", "seed_phrase_blocked", "too_large", "empty", "invalid", "conversation_limit"]),
+    room: integer,
+  }),
+  description:
+    "Each chat is checked and saved the way Chat Import saves one, as an ordinary saved chat marked as restored, with the account's auto-delete default. A restore adds and never replaces: duplicate (its words are already in the account), seed_phrase_blocked, too_large, empty, invalid and conversation_limit (the cap is never pruned) are skipped, not refused. At most 20 chats and 4,000,000 characters per request (413 import_too_large). Nothing about titles, words or hashes is logged.",
+});
+route("post", "/api/account/backup/restore/scrolls", "Encrypted Backup: restore chosen scrolls", {
+  body: object(
+    {
+      scrolls: {
+        ...array(object({ title: { ...string, maxLength: 80 }, body: { ...string, maxLength: 8000 }, created: integer, allow_seed_phrase: bool }, ["title", "body"])),
+        minItems: 1,
+        maxItems: 100,
+      },
+    },
+    ["scrolls"],
+  ),
+  response: object({
+    saved: array(object({ index: integer, id: string }, ["index", "id"])),
+    skipped: backupSkip(["duplicate", "seed_phrase_blocked", "invalid", "scroll_limit"]),
+  }),
+  description: "Scrolls keep the limits of saving one (80-character title, 8,000-character body, 200 per account). Needs Scrolls.",
+});
 // Vault Sync (update "vaultsync", which also needs "vault"): Device Vault's
 // end-to-end-encrypted sync. The browser seals every chat before it's sent.
 const vaultSyncBox = object({ iv: { ...string, description: "Vault Sync: base64 of the 12-byte AES-GCM IV" }, ct: { ...string, description: "Vault Sync: base64 of the AES-GCM ciphertext and tag" } }, ["iv", "ct"]);

@@ -20,6 +20,8 @@ import {
   WIPE_CANVAS,
   WIPE_PUSH,
   WIPE_FILE_SEARCH,
+  WIPE_BACKUP,
+  WIPE_BACKUP_FILES_STAY,
   WIPE_STAYS,
   WIPE_KEEPS_PASSKEYS,
   WIPE_KEEPS_RECOVERY_KIT,
@@ -61,6 +63,8 @@ export function PanicWipe({ user }) {
   // And Push Alerts' browsers.
   const pushLive = isReleased(config, "pushalerts") && isReleased(config, "app");
   const fileSearchLive = isReleased(config, "filesearch");
+  // Encrypted Backup: its date goes, the saved files stay where they are.
+  const backupLive = isReleased(config, "backup");
   // Passkeys stay, like the password: listed once that update is live.
   const passkeysLive = !!config && isReleased(config, "passkeys");
   // And the Recovery Kit, like the password.
@@ -144,6 +148,7 @@ export function PanicWipe({ user }) {
                   {canvasLive && <li>{WIPE_CANVAS}</li>}
                   {pushLive && <li>{WIPE_PUSH}</li>}
                   {fileSearchLive && <li>{WIPE_FILE_SEARCH}</li>}
+                  {backupLive && <li>{WIPE_BACKUP}</li>}
                 </ul>
               </div>
               <div>
@@ -155,6 +160,7 @@ export function PanicWipe({ user }) {
                   {passkeysLive && <li>{WIPE_KEEPS_PASSKEYS}</li>}
                   {recoveryKitLive && <li>{WIPE_KEEPS_RECOVERY_KIT}</li>}
                   {arenaLive && <li>{WIPE_ARENA_STAYS}</li>}
+                  {backupLive && <li>{WIPE_BACKUP_FILES_STAY}</li>}
                 </ul>
                 <p className="fine-print">
                   <Link to="/docs/privacy" onClick={close}>

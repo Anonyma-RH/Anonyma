@@ -4,6 +4,7 @@ import { BASE_CAPS, HOLDER_CAPS } from "../holder-tiers.js";
 import { isReleased } from "../releases.js";
 import { continuationOf } from "./catchup.js";
 import { importedExport, importedSources, withImported } from "./chat-import.js";
+import { isRestored, restoredExport, withRestored } from "./account-backup.js";
 
 // Use the same membership boundary as conversation reads. A removed member
 // cannot export other members' messages from a shared conversation they created.
@@ -34,6 +35,8 @@ export function exportConversations(db, user) {
       ...continuedExport(db, c.id),
       // Chat Import: which service a chat was brought from.
       ...importedExport(db, c.id),
+      // Encrypted Backup: a chat a restore added, when, and its words' hash.
+      ...restoredExport(db, c.id),
     }));
 }
 function continuedExport(db, id) {
@@ -139,8 +142,10 @@ export function conversationRoutes({ app, db, cfg, requireUser }) {
           : "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium' AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT ?",
       )
       .all(req.user.id, now(), HOLDER_CAPS.conversations);
-    // Chat Import: chats brought from ChatGPT or Claude say so.
-    res.json({ data: isReleased(cfg, "chatimport") ? withImported(db, req.user.id, rows) : rows });
+    // Chat Import: chats brought from ChatGPT or Claude say so, and
+    // Encrypted Backup's restored chats say that.
+    const imported = isReleased(cfg, "chatimport") ? withImported(db, req.user.id, rows) : rows;
+    res.json({ data: isReleased(cfg, "backup") ? withRestored(db, req.user.id, imported) : imported });
   });
   app.post("/api/conversations", requireUser, (req, res) =>
     res.status(201).json({
@@ -196,10 +201,12 @@ export function conversationRoutes({ app, db, cfg, requireUser }) {
     // summary the browser sends as its leading context (routes/catchup.js).
     const continued = continuationOf(db, c.id, visible);
     const imported = isReleased(cfg, "chatimport") && !c.collab_id ? importedSources(db, req.user.id).get(c.id) : null;
+    const restored = isReleased(cfg, "backup") && !c.collab_id && isRestored(db, c.id);
     res.json({
       ...rest,
       ...(isReleased(cfg, "projects") && !c.collab_id ? { project_id: projectOf(c.id) } : {}),
       ...(imported ? { imported_from: imported } : {}),
+      ...(restored ? { restored: true } : {}),
       parent: parent ? { id: parent.id, title: parent.title, mode: parent.mode } : null,
       branches,
       ...(continued ? { continued } : {}),

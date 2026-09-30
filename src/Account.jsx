@@ -53,6 +53,7 @@ import { GiftLinks, giftLinksReleased } from "./GiftLinks.jsx";
 import { PanicWipe } from "./PanicWipe.jsx";
 import { InactivityWipeSettings } from "./InactivityWipe.jsx";
 import { PushAlertsSettings } from "./PushAlerts.jsx";
+import { BackupSettings } from "./AccountBackup.jsx";
 import { TwoStepSettings } from "./TwoStep.jsx";
 import { twoStepReleased } from "./two-step.js";
 import { PasskeySettings } from "./Passkeys.jsx";
@@ -1089,6 +1090,9 @@ export default function Account() {
                   <Icon name="download" size={16} />
                 </Button>
               </section>
+              {/* Encrypted Backup: one file, locked with a passphrase, made
+                  and opened in this browser (renders nothing until released). */}
+              {!demo && user && <BackupSettings config={config} user={user} />}
               {!demo && user && isReleased(config, "sharelinks") && (
                 <ShareLinksManager onError={setError} />
               )}

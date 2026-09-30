@@ -1,0 +1,280 @@
+/* Encrypted Backup: Account → Settings' section (src/AccountBackup.jsx) and
+   its dialogs (src/BackupDialog.jsx). Builds on .settings-stack, .modal,
+   .notice, .button and .small-button from styles.css; cobalt and white, flat. */
+.backup-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.settings-stack .backup-last {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: 13px;
+  color: #142343;
+}
+.backup-last svg {
+  flex: none;
+  color: #0135df;
+}
+.backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.settings-stack .backup-fine {
+  margin: 0;
+  font-size: 11px;
+  color: #68748a;
+}
+.modal:has(.backup-dialog) {
+  max-width: 640px;
+}
+.backup-dialog {
+  display: grid;
+  min-width: 0;
+}
+.backup-dialog > p,
+.backup-dialog form > p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #142343;
+  margin: 0 0 18px;
+}
+.backup-kinds {
+  border: 1px solid #e3e8f0;
+  background: #f7f9fc;
+  margin: 0 0 16px;
+  padding: 12px 16px 6px;
+  min-width: 0;
+}
+@media (min-width: 700px) {
+  .backup-kinds {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+  }
+  .backup-kinds > .backup-vault,
+  .backup-kinds > .backup-empty,
+  .backup-kinds > .backup-note {
+    grid-column: 1 / -1;
+  }
+  .modal .backup-kinds > .backup-kind:last-of-type {
+    border-bottom: 1px solid #e3e8f0;
+  }
+}
+.backup-kinds legend {
+  font-size: 12px;
+  font-weight: 600;
+  color: #142343;
+  padding: 0 6px;
+}
+.modal .backup-kind {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 0;
+  font-size: 13px;
+  color: #142343;
+  border-bottom: 1px solid #e3e8f0;
+}
+.modal .backup-kind:last-of-type {
+  border-bottom: 0;
+}
+.modal .backup-kind input {
+  width: auto;
+  margin: 0;
+  accent-color: #0135df;
+}
+.backup-kind span {
+  flex: 1;
+  min-width: 0;
+}
+.backup-kind small {
+  font-size: 12px;
+  color: #0135df;
+  font-variant-numeric: tabular-nums;
+}
+.backup-kind.unavailable {
+  color: #68748a;
+}
+.backup-vault {
+  border-top: 1px solid #e3e8f0;
+  margin-top: 4px;
+  padding-top: 8px;
+}
+.backup-vault .backup-kind {
+  border-bottom: 0;
+}
+.backup-vault-unlock {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 6px 0 10px;
+}
+.modal .backup-vault-unlock label {
+  flex: 1 1 220px;
+  margin-bottom: 0;
+}
+.backup-dialog .backup-note {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #4d5d78;
+  margin: 0 0 16px;
+}
+.backup-kinds .backup-note,
+.backup-kinds .backup-empty {
+  margin: 8px 0;
+  font-size: 12px;
+  color: #4d5d78;
+}
+.backup-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -14px 0 20px;
+  font-size: 11px;
+  color: #68748a;
+}
+.backup-strength-bar {
+  display: inline-flex;
+  gap: 3px;
+}
+.backup-strength-bar i {
+  display: block;
+  width: 26px;
+  height: 4px;
+  background: #e3e8f0;
+}
+.backup-strength.s1 .on {
+  background: #a2634f;
+}
+.backup-strength.s2 .on {
+  background: #ffb21c;
+}
+.backup-strength.s3 .on,
+.backup-strength.s4 .on {
+  background: #0135df;
+}
+.backup-field-error {
+  color: #9c3d2a;
+  font-size: 12px;
+  margin: -14px 0 16px;
+}
+.backup-vault-unlock .backup-field-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+.modal .backup-check {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #142343;
+}
+.modal .backup-check input {
+  width: auto;
+  margin-top: 3px;
+  accent-color: #0135df;
+}
+.backup-progress {
+  font-size: 13px !important;
+  color: #0135df !important;
+}
+.backup-dialog .inline-actions {
+  margin: 4px 0 8px;
+}
+.backup-done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+.backup-done svg {
+  flex: none;
+  color: #0135df;
+}
+.backup-report {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  border: 1px solid #e3e8f0;
+}
+.backup-report li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #142343;
+}
+.backup-report li + li {
+  border-top: 1px solid #e3e8f0;
+}
+.backup-report b {
+  font-weight: 600;
+  color: #0135df;
+}
+.backup-report-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 12px;
+  color: #4d5d78;
+}
+.backup-report-counts span:first-child {
+  color: #0135df;
+  font-weight: 600;
+}
+.backup-report-why {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: #9c3d2a;
+}
+.backup-made span + span {
+  color: #4d5d78;
+}
+.backup-seed {
+  border-left: 3px solid #ffb21c;
+  background: #fff8ec;
+  padding: 12px 14px;
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: #142343;
+}
+.backup-seed p {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+.backup-seed p svg {
+  flex: none;
+  margin-top: 2px;
+}
+.backup-seed-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.backup-seed-confirm p {
+  flex-basis: 100%;
+}
+@media (max-width: 640px) {
+  .backup-actions .button,
+  .backup-actions .small-button {
+    flex: 1 1 auto;
+  }
+  .backup-kinds {
+    padding: 10px 12px 4px;
+  }
+}

@@ -1,8 +1,10 @@
 import { uid, now, fail } from "../core.js";
 
-const MAX_TITLE = 80;
-const MAX_BODY = 8000;
-const MAX_SCROLLS = 200;
+// Encrypted Backup's restore (routes/account-backup.js) keeps to the same
+// limits.
+export const MAX_TITLE = 80;
+export const MAX_BODY = 8000;
+export const MAX_SCROLLS = 200;
 const MAX_INSTRUCTIONS = 4000;
 
 // Scrolls: saved, reusable prompts with {{variable}} placeholders. Standing

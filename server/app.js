@@ -42,6 +42,7 @@ import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
 import { chatImportRoutes } from "./routes/chat-import.js";
+import { accountBackupRoutes } from "./routes/account-backup.js";
 import { linkReaderRoutes } from "./routes/link-reader.js";
 import { repoReaderRoutes } from "./routes/repo-reader.js";
 import { blindRoutes } from "./routes/blind.js";
@@ -195,6 +196,10 @@ export function createApp(overrides = {}) {
   // Chat Import: chats brought from a ChatGPT or Claude export, saved as
   // ordinary conversations when the account destination is chosen.
   chatImportRoutes(ctx);
+  // Encrypted Backup: the content a backup made in the browser holds, the
+  // last backup's date, and a restore's chats (through Chat Import's
+  // checks) and scrolls.
+  accountBackupRoutes(ctx);
   // Link Reader: fetches one public page for a message (reads only).
   linkReaderRoutes(ctx);
   // Repo Reader: one public GitHub repo, read into a short-lived in-memory

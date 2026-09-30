@@ -6418,7 +6418,89 @@
     "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "¿Otra app de billetera? Pega el enlace de la página en su navegador integrado. Tu app de billetera tiene su propio inicio de sesión, así que ahí vuelves a iniciar sesión en ANONYMA.",
     "Open in MetaMask": "Abrir en MetaMask",
     "Open in Coinbase Wallet": "Abrir en Coinbase Wallet",
-    "Open in Trust Wallet": "Abrir en Trust Wallet"
+    "Open in Trust Wallet": "Abrir en Trust Wallet",
+    "Encrypted Backup": "Copia de seguridad cifrada",
+    "Take everything with you in one file, locked with a passphrase only you know.": "Llévate todo en un solo archivo, protegido con una frase de contraseña que solo tú conoces.",
+    "Chats, projects, scrolls, memory and routine settings in one file, encrypted in your browser": "Chats, proyectos, pergaminos, memoria y ajustes de rutinas en un solo archivo, cifrado en tu navegador",
+    "Restore it into any ANONYMA account: it adds, skips what's already there, and never replaces": "Restáurala en cualquier cuenta de ANONYMA: agrega, omite lo que ya está y nunca reemplaza",
+    "Lose the passphrase and the backup can't be opened, by you or by us": "Si pierdes la frase de contraseña, nadie podrá abrir la copia: ni tú ni nosotros",
+    "Encrypted backup.": "Copia de seguridad cifrada.",
+    "Take everything with you in one file, locked with a passphrase only you know. Restore it into any ANONYMA account.": "Llévate todo en un solo archivo, protegido con una frase de contraseña que solo tú conoces. Restáuralo en cualquier cuenta de ANONYMA.",
+    "Checking your last backup…": "Revisando tu última copia de seguridad…",
+    "No backup made yet.": "Todavía no has hecho una copia de seguridad.",
+    "Make a backup": "Hacer una copia de seguridad",
+    "Restore a backup": "Restaurar una copia de seguridad",
+    "Lose the passphrase and the backup can’t be opened, by you or by us.": "Si pierdes la frase de contraseña, nadie podrá abrir la copia: ni tú ni nosotros.",
+    "Saved chats": "Chats guardados",
+    "Projects and their instructions": "Proyectos y sus instrucciones",
+    "Memory facts": "Datos de la memoria",
+    "Routines (their settings)": "Rutinas (sus ajustes)",
+    "Research watches (their settings)": "Seguimientos de investigación (sus ajustes)",
+    "Page watches (their settings)": "Vigilancias de páginas (sus ajustes)",
+    "Device Vault chats": "Chats de la Bóveda del dispositivo",
+    "Device Vault passphrase": "Frase de contraseña de la Bóveda del dispositivo",
+    "Weak": "Débil",
+    "Fair": "Aceptable",
+    "Strong": "Fuerte",
+    "Very strong": "Muy fuerte",
+    "At least 12 characters": "Al menos 12 caracteres",
+    "Stopped. No file was saved.": "Detenido. No se guardó ningún archivo.",
+    "The backup couldn't be made.": "No se pudo hacer la copia de seguridad.",
+    "Backup saved": "Copia de seguridad guardada",
+    "Keep it somewhere safe, like a USB drive or your own cloud storage, and keep the passphrase somewhere else. Anyone with both can read it.": "Guárdala en un lugar seguro, como una memoria USB o tu propio almacenamiento en la nube, y guarda la frase de contraseña en otro lugar. Quien tenga ambas puede leerla.",
+    "Make an encrypted backup": "Hacer una copia de seguridad cifrada",
+    "Your account’s content is gathered and encrypted in this browser, then saved as one file. ANONYMA never sees the passphrase or a readable copy.": "El contenido de tu cuenta se reúne y se cifra en este navegador, y luego se guarda como un solo archivo. ANONYMA nunca ve la frase de contraseña ni una copia legible.",
+    "What goes in": "Qué incluye",
+    "There’s nothing saved on this account yet.": "Todavía no hay nada guardado en esta cuenta.",
+    "Device Vault is locked. Unlock it to add its chats: they’re decrypted here and encrypted again into the backup.": "La Bóveda del dispositivo está bloqueada. Desbloquéala para agregar sus chats: se descifran aquí y se vuelven a cifrar dentro de la copia.",
+    "Not included: files, images, audio and video (download them from Files and your library), shared team chats, and chats that were never saved, like off-the-record ones. Routines and watches go in as settings, without their results.": "No incluye: archivos, imágenes, audio y video (descárgalos desde Archivos y tu biblioteca), chats compartidos del equipo ni chats que nunca se guardaron, como los que son sin registro. Las rutinas y vigilancias se incluyen como ajustes, sin sus resultados.",
+    "Backup passphrase (at least 12 characters)": "Frase de contraseña de la copia (al menos 12 caracteres)",
+    "Finishing the file…": "Terminando el archivo…",
+    "Preparing the key… this takes a few seconds.": "Preparando la clave… tarda unos segundos.",
+    "Make and save the backup": "Hacer y guardar la copia de seguridad",
+    "Restore stopped": "Restauración detenida",
+    "Backup restored": "Copia de seguridad restaurada",
+    "Stopped. What’s listed below was restored.": "Detenido. Lo que aparece abajo se restauró.",
+    "Restored chats are marked Restored in your chat list.": "Los chats restaurados aparecen marcados como restaurados en tu lista de chats.",
+    "Restored routines and watches are switched off, so nothing runs or costs anything until you turn them on in Routines.": "Las rutinas y vigilancias restauradas quedan desactivadas, así que nada se ejecuta ni cuesta nada hasta que las actives en Rutinas.",
+    "Choose what to restore": "Elige qué restaurar",
+    "In this backup": "En esta copia",
+    "Unlock Device Vault to put its chats back into this browser.": "Desbloquea la Bóveda del dispositivo para devolver sus chats a este navegador.",
+    "To restore Device Vault chats, set up Device Vault in this browser first. They go back only into the vault, never to our server.": "Para restaurar los chats de la Bóveda del dispositivo, primero configura la Bóveda en este navegador. Solo vuelven a la bóveda, nunca a nuestro servidor.",
+    "They’ll be saved to your account as they are. Anyone who can read this account could read them.": "Se guardarán en tu cuenta tal como están. Cualquiera que pueda leer esta cuenta podría leerlos.",
+    "Yes, restore them": "Sí, restaurarlos",
+    "Keep them out": "Dejarlos fuera",
+    "Restore chats and scrolls anyway…": "Restaurar chats y pergaminos de todos modos…",
+    "Restoring adds to what you have. Nothing is replaced or deleted, and anything already here is skipped. Routines and watches come back switched off, and a page watch reads its page once when it’s added.": "Restaurar agrega a lo que ya tienes. No se reemplaza ni se elimina nada, y lo que ya está aquí se omite. Las rutinas y vigilancias vuelven desactivadas, y una vigilancia de página lee su página una vez al agregarse.",
+    "Restoring…": "Restaurando…",
+    "Restore": "Restaurar",
+    "Choose a backup file and enter its passphrase. It’s opened in this browser, and nothing is sent until you choose what to restore.": "Elige un archivo de copia de seguridad e ingresa su frase de contraseña. Se abre en este navegador y no se envía nada hasta que elijas qué restaurar.",
+    "Backup file (.anonyma-backup, up to 512 MB)": "Archivo de copia (.anonyma-backup, hasta 512 MB)",
+    "Backup passphrase": "Frase de contraseña de la copia",
+    "Checking the passphrase…": "Verificando la frase de contraseña…",
+    "Opening…": "Abriendo…",
+    "Open backup": "Abrir la copia",
+    "This backup couldn't be opened.": "No se pudo abrir esta copia de seguridad.",
+    "That passphrase doesn't open this backup.": "Esa frase de contraseña no abre esta copia de seguridad.",
+    "This isn't an ANONYMA backup file.": "Este no es un archivo de copia de seguridad de ANONYMA.",
+    "A backup can be at most 512 MB. This one is larger.": "Una copia de seguridad puede pesar como máximo 512 MB. Esta es más grande.",
+    "Use a passphrase of at least 12 characters.": "Usa una frase de contraseña de al menos 12 caracteres.",
+    "Choose a stronger passphrase: a few unrelated words work well.": "Elige una frase de contraseña más fuerte: unas cuantas palabras sin relación entre sí funcionan bien.",
+    "This backup ends early, so it's incomplete. Copy the whole file again.": "Esta copia de seguridad termina antes de tiempo, así que está incompleta. Vuelve a copiar el archivo completo.",
+    "This browser can't encrypt a backup.": "Este navegador no puede cifrar una copia de seguridad.",
+    "This backup holds more items than a browser can restore at once.": "Esta copia de seguridad tiene más elementos de los que un navegador puede restaurar a la vez.",
+    "The backup stopped. It may be too large for this browser.": "La copia de seguridad se detuvo. Puede que sea demasiado grande para este navegador.",
+    "This backup is too large for this browser's memory.": "Esta copia de seguridad es demasiado grande para la memoria de este navegador.",
+    "Something went wrong with this backup.": "Algo salió mal con esta copia de seguridad.",
+    "It’s been a month since your last backup.": "Ya pasó un mes desde tu última copia de seguridad.",
+    "Make a fresh one so it has your newest chats.": "Haz una nueva para que incluya tus chats más recientes.",
+    "Restored from a backup": "Restaurado de una copia de seguridad",
+    "Restored from a backup.": "Restaurado de una copia de seguridad.",
+    "Its words and dates came from your backup file.": "Sus palabras y fechas vienen de tu archivo de copia de seguridad.",
+    "Encrypted Backup: a backup is made and opened in your browser and saved as a file wherever you choose. ANONYMA never receives the file, its passphrase or its key; we keep only the day of your last backup (for Account → Settings and one reminder 30 days later) and, for chats a restore added, when and a hash of their words, so the same chat isn’t restored twice. Panic Wipe and closing your account delete both, but not backup files you saved: those are yours to keep or delete.": "Copia de seguridad cifrada: una copia se hace y se abre en tu navegador, y se guarda como archivo donde tú elijas. ANONYMA nunca recibe el archivo, su frase de contraseña ni su clave; solo guardamos el día de tu última copia (para Cuenta → Ajustes y un recordatorio 30 días después) y, para los chats que agregó una restauración, cuándo y un hash de sus palabras, para que el mismo chat no se restaure dos veces. El Borrado de pánico y cerrar tu cuenta eliminan ambos, pero no los archivos de copia que guardaste: esos son tuyos para conservar o eliminar.",
+    "The export also says the day of your last encrypted backup, and which chats came back from one.": "La exportación también indica el día de tu última copia de seguridad cifrada y qué chats volvieron de una.",
+    "The day of your last encrypted backup": "El día de tu última copia de seguridad cifrada",
+    "Backup files you saved. They were never on our servers, so delete them yourself if you need to.": "Los archivos de copia de seguridad que guardaste. Nunca estuvieron en nuestros servidores, así que elimínalos tú si lo necesitas."
   },
   "patterns": [
     {
@@ -10464,6 +10546,58 @@
     {
       "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
       "es": "Ampliar admite fotos de hasta {0} px en su lado largo. Redúcela e intenta de nuevo."
+    },
+    {
+      "en": "Last backup: {0}",
+      "es": "Última copia de seguridad: {0}"
+    },
+    {
+      "en": "Encrypting your chats… {0} so far",
+      "es": "Cifrando tus chats… {0} hasta ahora"
+    },
+    {
+      "en": "{0} added",
+      "es": "{0} agregados"
+    },
+    {
+      "en": "{0} already here",
+      "es": "{0} ya estaban aquí"
+    },
+    {
+      "en": "{0} over your account’s limit",
+      "es": "{0} superan el límite de tu cuenta"
+    },
+    {
+      "en": "{0} not restored",
+      "es": "{0} sin restaurar"
+    },
+    {
+      "en": "Made on {0}.",
+      "es": "Hecha el {0}."
+    },
+    {
+      "en": "Chats from {0} to {1}.",
+      "es": "Chats del {0} al {1}."
+    },
+    {
+      "en": "Seed Guard is holding back {0} items that look like they contain a seed phrase or private key. They won’t be restored.",
+      "es": "La Protección de frase semilla está reteniendo {0} elementos que parecen contener una frase semilla o una clave privada. No se restaurarán."
+    },
+    {
+      "en": "{0} items in this file couldn’t be read and will be skipped.",
+      "es": "{0} elementos de este archivo no se pudieron leer y se omitirán."
+    },
+    {
+      "en": "Restoring: {0}",
+      "es": "Restaurando: {0}"
+    },
+    {
+      "en": "Opening… part {0} of {1}",
+      "es": "Abriendo… parte {0} de {1}"
+    },
+    {
+      "en": "Part {0} of {1} of this backup can't be opened. The file is damaged or was changed after it was made.",
+      "es": "No se puede abrir la parte {0} de {1} de esta copia de seguridad. El archivo está dañado o se modificó después de hacerse."
     },
     {
       "en": "{0} · settled receipt.",

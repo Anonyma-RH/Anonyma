@@ -1388,7 +1388,7 @@ export const UPDATES = [
     // share_burns keeps which links burn and when each was opened; the
     // opening deletes the snapshot or ciphertext at once. Erased with the
     // links, and exported as dates only.
-    released: false,
+    released: true,
   },
   {
     id: "characters",

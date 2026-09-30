@@ -1454,7 +1454,7 @@ export const UPDATES = [
     // pinned revisions, checked against pinned SHA-256 hashes, and stay in
     // the browser's Cache Storage; ONNX Runtime's WebAssembly is a Vite
     // build asset from node_modules, served by ANONYMA. Nothing is charged.
-    released: false,
+    released: true,
   },
   {
     id: "subtitles",

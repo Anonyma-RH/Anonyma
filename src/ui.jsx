@@ -281,6 +281,8 @@ const pixels = {
   photos: [".......", "#######", "#...#.#", "#.....#", "#..#..#", "#.###.#", "#######"],
   // A magnifier over a line of text: a question asked across saved files.
   filesearch: [".####..", "#....#.", "#.##.#.", "#....#.", ".####..", "....##.", ".....##"],
+  // A face: two eyes and a smile in a round head. Characters.
+  characters: [".#####.", "#.....#", "#.#.#.#", "#.....#", "#.#.#.#", "#..###.", ".#####."],
   // A folder with a branch on it: a repo read file by file.
   repos: ["###....", "#######", "#.#...#", "#.#.#.#", "#.##..#", "#.#...#", "#######"],
 };

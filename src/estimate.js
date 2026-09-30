@@ -44,7 +44,10 @@ export function buildChatRequest({
   const budgeted = documents.length ? fitDocuments(text, documents, undefined, options).documents : [];
   const content = budgeted.length ? composeMessageWithDocuments(text, budgeted, options) : text;
   const asked = { role: "user", content, images: attachments.map((a) => a.url) };
-  const rawNext = [...messages.map(asHistory), asked];
+  // A character's opening message is shown as its chat's first turn but is
+  // never sent as a reply: the model is told about it in the character's
+  // instructions instead (src/characters.js).
+  const rawNext = [...messages.filter((m) => !m?.opening).map(asHistory), asked];
   // Standing instructions (Scrolls) lead the request as a system message in
   // one of the context slots (see historyLimit).
   let standing = instructions || "";

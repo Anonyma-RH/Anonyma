@@ -50,6 +50,8 @@ const ChatImport = lazy(() => import("./ChatImport.jsx"));
 const PhotoTools = lazy(() => import("./PhotoTools.jsx"));
 // File Search: its page loads only when opened.
 const FileSearch = lazy(() => import("./FileSearch.jsx"));
+// Characters: its page, editor and picture maker load only on its page.
+const Characters = lazy(() => import("./Characters.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
@@ -80,6 +82,15 @@ import {
   projectChatPath,
   projectPagePath,
 } from "./projects.js";
+import { useCharacters, CharacterAvatar, CharacterChip, CharacterBar } from "./CharacterChat.jsx";
+import {
+  charactersReleased,
+  hasOpening,
+  openingMessage,
+  withCharacterInstructions,
+  characterRequestFields,
+  characterModelNote,
+} from "./characters.js";
 import AudioStudio, { MicButton } from "./AudioStudio.jsx";
 import CollabHub from "./Collab.jsx";
 import { VeilToggle, VeilPanel, veilRemarkPlugin } from "./Veil.jsx";
@@ -344,6 +355,7 @@ export function AppSidebar({
     ["filesearch", "Search files", "Ask one question across all your saved files. Every answer cites the file and the passage it came from."],
     ["routines", "Routines", "Schedule prompts to run automatically with spending limits. Read the results in your inbox."],
     ["projects", "Projects", "Group related chats, files and instructions in folders. Set defaults for each project."],
+    ["characters", "Characters", "Make AI characters with a name, a picture and a personality, and chat with them on the model you choose."],
     ["library", "Your library", "Find and revisit the images, videos and audio you have created."],
   ]
     // Local Sheets, On-Device Model, Document Compare, Study Mode and
@@ -360,6 +372,7 @@ export function AppSidebar({
     .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
     .filter(([id]) => id !== "photos" || modeReleased(config, "photos"))
     .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"))
+    .filter(([id]) => id !== "characters" || modeReleased(config, "characters"))
     // Research Watch lives on the Routines page, so the tool says so once it's live.
     .map(([id, label, description]) =>
       id === "routines" && isReleased(config, "researchwatch") && isReleased(config, "deepresearch") && isReleased(config, "search")
@@ -665,7 +678,9 @@ export default function Workspace() {
     // Photo Tools' page, the same way (it needs Image Studio's models too).
     (mode === "photos" && (!config || modeReleased(config, "photos"))) ||
     // File Search's page, likewise (it needs Files and Documents too).
-    (mode === "filesearch" && (!config || modeReleased(config, "filesearch")));
+    (mode === "filesearch" && (!config || modeReleased(config, "filesearch"))) ||
+    // Characters' page, likewise.
+    (mode === "characters" && (!config || modeReleased(config, "characters")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -727,6 +742,14 @@ export default function Workspace() {
     // A Device only project chat waiting for the vault's state to load.
     [vaultPrompt, setVaultPrompt] = useState(false);
   const project = projectsLive && textMode ? projects.byId(projectId) : null;
+  // Characters (src/Characters.jsx): the account's characters, and the one the
+  // open chat is with (or a new chat was started with). Signed in only, never
+  // the demo. Its instructions go after the project's, in the one system
+  // message; its opening message is shown as the chat's first turn.
+  const charactersLive = !demo && !!user && charactersReleased(config);
+  const characters = useCharacters(charactersLive, user?.id);
+  const [characterId, setCharacterId] = useState(null);
+  const character = charactersLive && textMode ? characters.byId(characterId) : null;
   // Scrolls (saved prompts, "/" insert and standing instructions) work in
   // every text mode: chat, code and Uncensored.
   const chatControlLive = !demo && textMode && isReleased(config, "chatcontrol");
@@ -804,14 +827,23 @@ export default function Workspace() {
   });
   const instructionsActive =
     scrollsLive && instructions.enabled && !!instructions.body.trim();
-  // Standing instructions (Scrolls), then the project's own: the one leading
-  // system message on every request in this chat, masked by Veil like the rest.
+  // Standing instructions (Scrolls), then the project's, then the character's:
+  // the one leading system message on every request in this chat, masked by
+  // Veil like the rest.
   // A chat continued fresh (Summarize & Continue) leads with the summary it
   // carries, in the same system message, so Veil masks it with the rest.
   const sentInstructions = withCarriedSummary(
-    withProjectInstructions(instructionsActive ? instructions.body.trim() : "", project),
+    withCharacterInstructions(
+      withProjectInstructions(instructionsActive ? instructions.body.trim() : "", project),
+      character,
+    ),
     carried?.summary,
   );
+  // Characters: a fresh chat with one shows its opening message as the first
+  // turn. It isn't in the thread until the chat is sent (the first send adds
+  // it), so everything that reads the thread as empty or started is unchanged.
+  const openingShown = !!character && hasOpening(character) && !messages.length && !current && !carried;
+  const withOpening = (base) => (openingShown ? [openingMessage(character), ...base] : base);
   // Memory Across Models goes with chat, code and Uncensored messages once
   // switched on, never off the record, in Private Mode or in a shared chat
   // (the server refuses those too; see server/routes/memory.js).
@@ -1002,7 +1034,11 @@ export default function Workspace() {
   // are the picker's own (this section, Private Mode, images), less any that
   // are Down; the server checks the same again when it chooses.
   const autoLive = !demo && !!user && textMode && autoModelReleased(config);
-  const autoChosen = autoLive && !modelLinked && autoChoices.modes[mode] === true;
+  // A chat with a character talks through the model chosen for it (its default,
+  // or the picker's choice) until Auto is chosen again inside that chat.
+  const [characterAuto, setCharacterAuto] = useState(false);
+  const autoChosen =
+    autoLive && !modelLinked && (!character || characterAuto) && autoChoices.modes[mode] === true;
   const autoPool = useMemo(
     () => (autoLive ? autoPoolFrom(finderModels, modelStatus) : []),
     [autoLive, finderModels, modelStatus],
@@ -1039,6 +1075,7 @@ export default function Workspace() {
   // this browser, like the model choice it replaces.
   function chooseAuto() {
     setModelLinked(false);
+    setCharacterAuto(true);
     setAutoChoices(withAutoMode(autoChoices, mode, true));
     setQuote(null);
   }
@@ -1216,6 +1253,10 @@ export default function Workspace() {
   const linked = params.get("c");
   useEffect(() => {
     if (!linked || !textMode) return;
+    if (selfLinked.current === linked) {
+      selfLinked.current = null;
+      return;
+    }
     if (demo) {
       const saved = all.find((c) => c.id === linked);
       if (saved) openChat(saved);
@@ -1226,7 +1267,8 @@ export default function Workspace() {
   // so a reload doesn't start another.
   const projectParam = params.get("project");
   useEffect(() => {
-    if (!projectParam || !textMode || !projects.loaded) return;
+    // A character link that names a project starts both together (below).
+    if (!projectParam || !textMode || !projects.loaded || params.get("character")) return;
     const next = new URLSearchParams(location.search);
     next.delete("project");
     const search = next.toString();
@@ -1357,6 +1399,8 @@ export default function Workspace() {
           veil: veilStateRef.current,
           // Projects: grouped with its project inside the vault only.
           project: project?.id || null,
+          // Characters: the one it is with, inside the vault only.
+          character: character?.id || null,
           // Summarize & Continue: the summary it carries, if continued fresh.
           carried: carried?.summary ? { summary: carried.summary, from: carried.from || null } : null,
         }),
@@ -1476,7 +1520,73 @@ export default function Workspace() {
       if (finderLive) setModelChoices((prev) => withChoice(prev, mode, { model: own.id }));
       else setModel(own.id);
     } else if (start.privateMode && !finderLive) setModel(privateModelsCallable[0]?.id || "");
+    return start;
   }
+  // Characters: a new chat with one. It starts the way a project chat does when
+  // a project is named (its privacy, files and model), then the character's own
+  // default model applies for this visit when this section offers it (the
+  // choice the picker remembers is left as it was). Its opening message is shown
+  // as the first turn until the chat is sent, and is never sent as a reply.
+  function startCharacterChat(c, p = null) {
+    let privateNow = privateMode;
+    if (p) privateNow = startProjectChat(p).privateMode;
+    else {
+      newChat();
+      leaveProject();
+    }
+    setCharacterId(c.id);
+    setCharacterAuto(false);
+    const own = c.model && models.find((m) => m.id === c.model);
+    if (
+      own &&
+      own.callable &&
+      (mode === "uncensored") === uncensoredIds.includes(own.id) &&
+      (!privateNow || own.private)
+    ) {
+      if (finderLive) setModelChoices((prev) => withChoice(prev, mode, { model: own.id }));
+      else setModel(own.id);
+    }
+  }
+  // Out of the character before the first message: a plain new chat.
+  function leaveCharacter() {
+    setCharacterId(null);
+    setCharacterAuto(false);
+    if (params.get("character")) {
+      const next = new URLSearchParams(location.search);
+      next.delete("character");
+      next.delete("project");
+      const q = next.toString();
+      navigate(location.pathname + (q ? "?" + q : ""), { replace: true });
+    }
+  }
+  // A ?character=<id> link ("Chat" on the Characters page) starts a fresh chat
+  // with it, and stays in the address while the chat is fresh so a reload
+  // starts it again. ?project=<id> beside it files the chat in that project.
+  const characterParam = params.get("character");
+  const withProject = params.get("project");
+  useEffect(() => {
+    if (!characterParam || !textMode || !charactersLive || !characters.loaded) return;
+    if (withProject && projectsLive && !projects.loaded) return;
+    const c = characters.byId(characterParam);
+    if (!c) {
+      setError("That character wasn't found.");
+      return;
+    }
+    startCharacterChat(c, withProject && projectsLive ? projects.byId(withProject) : null);
+  }, [characterParam, withProject, characters.loaded, projects.loaded, mode]);
+  // Once a chat with a character is saved, the address is its own link (?c=),
+  // so a reload reopens the conversation, character and all. It is written
+  // after the reply, and the link effect above skips this one write.
+  const selfLinked = useRef(null);
+  useEffect(() => {
+    if (!character || !current || busy || ephemeral || deviceOnly || params.get("c") === current) return;
+    const next = new URLSearchParams(location.search);
+    next.set("c", current);
+    next.delete("character");
+    next.delete("project");
+    selfLinked.current = current;
+    navigate(location.pathname + "?" + next, { replace: true });
+  }, [character?.id, current, busy]);
   // Out of the project before the first message: a plain new chat.
   function leaveProject() {
     setProjectId(null);
@@ -1575,6 +1685,7 @@ export default function Workspace() {
     setDeviceOnly(true);
     setEphemeral(true);
     setProjectId(chat.project || null);
+    setCharacterId(chat.character || null);
     const wasPrivate = !!chat.private && privateModeReleased(config);
     setPrivateMode(wasPrivate);
     if (wasPrivate) setVeilOn(true);
@@ -1658,6 +1769,7 @@ export default function Workspace() {
     setChecking(null);
     setCurrent(c.id);
     setProjectId(c.project_id ?? null);
+    setCharacterId(c.character_id ?? null);
     setMessages(c.messages || []);
     setLineage({ parent: null, branches: [] });
     setCarried(null);
@@ -1670,10 +1782,21 @@ export default function Workspace() {
         setCurrent(c.id);
         setShared(r.collab || null);
         setProjectId(r.project_id ?? null);
+        setCharacterId(r.character_id ?? null);
         // Chat Import: a chat brought from ChatGPT or Claude says so.
         setLineage({ parent: r.parent || null, branches: r.branches || [], imported: r.imported_from || null });
         setCarried(r.continued?.summary ? { ...r.continued, kind: "saved" } : null);
         setMessages(r.messages.map(messageFromServer));
+        // Characters: a chat with one goes on with the model that last answered
+        // in it, where this section offers it.
+        if (r.character_id) {
+          const last = r.messages.findLast((m) => m.role === "assistant" && m.model);
+          const used = last && models.find((x) => x.id === last.model);
+          if (used?.callable && (mode === "uncensored") === uncensoredIds.includes(used.id)) {
+            if (finderLive) setModelChoices((prev) => withChoice(prev, mode, { model: used.id }));
+            else setModel(used.id);
+          }
+        }
       } catch (e) {
         setError(e.message);
       }
@@ -2736,7 +2859,7 @@ export default function Workspace() {
     // network; detection and tagging happen only in this browser.
     const veiling = veilOn && !demo && isReleased(config, "veil");
     const built = buildChatRequest({
-      messages: redo ? redo.base : messages,
+      messages: redo ? redo.base : withOpening(messages),
       text,
       attachments: redo ? (redo.images || []).map((url) => ({ url })) : attachments,
       // Onchain Explainer's facts lead the attached documents, so the
@@ -2839,6 +2962,9 @@ export default function Workspace() {
           // Projects: a new saved chat is filed in its project; off the
           // record, Private and Device only chats never name one.
           ...(projectsLive ? projectRequestFields(project, { ephemeral, conversationId }) : {}),
+          // Characters: a new saved chat is filed with its character, which
+          // also writes its opening message as the chat's first turn.
+          ...(charactersLive ? characterRequestFields(character, { ephemeral, conversationId }) : {}),
           ...teamPays.body,
         },
         (event) => {
@@ -2945,6 +3071,8 @@ export default function Workspace() {
           .catch(() => {});
         // A chat just filed in a project changes its counts.
         if (project && !ephemeral) projects.reload();
+        // And with a character, its chat count.
+        if (character && !ephemeral) characters.reload();
       }
     }
   }
@@ -3317,11 +3445,12 @@ export default function Workspace() {
     const text = redo ? redo.content : sendText;
     const veiling = veilOn && isReleased(config, "veil");
     const built = buildChatRequest({
-      messages: redo ? redo.base : messages,
+      messages: redo ? redo.base : withOpening(messages),
       text,
       documents: redo ? [] : sentDocuments,
       asData: !redo && documentsAsData,
-      instructions: instructionsActive ? instructions.body.trim() : "",
+      // A character's instructions go on sealed too (Sealed Mode has no projects).
+      instructions: withCharacterInstructions(instructionsActive ? instructions.body.trim() : "", character),
       preserveHistory: longAnswersLive,
       veilWith: veiling ? { state: veilStateRef.current, words: veilWords } : null,
     });
@@ -3750,6 +3879,7 @@ export default function Workspace() {
           onClick={() => {
             newChat();
             leaveProject();
+            setCharacterId(null);
             navigate("/workspace/chat" + (demo ? "?demo=1" : ""));
             setMenu(false);
           }}
@@ -3805,6 +3935,11 @@ export default function Workspace() {
                   />
                 )}
                 {c.title}
+                {charactersLive && characters.byId(c.character_id) && (
+                  <small className="chat-character-name" data-i18n="off">
+                    {characters.byId(c.character_id).name}
+                  </small>
+                )}
               </button>
               {c.imported_from && (
                 <span
@@ -3912,9 +4047,11 @@ export default function Workspace() {
                 import: "Import chats",
                 photos: "Photo tools",
                 filesearch: "Search files",
+                characters: "Characters",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
+            {character && textMode && <CharacterChip character={character} />}
             <span className="workspace-slash">/</span>
             <small>{demo ? "Demo workspace" : "Personal workspace"}</small>
           </span>
@@ -4050,7 +4187,7 @@ export default function Workspace() {
           key={mode}
           className={
             "workspace-body " +
-            (!messages.length && !carried ? "workspace-start " : "") +
+            (!messages.length && !carried && !openingShown ? "workspace-start " : "") +
             (mode === "home" ? "workspace-home " : "") +
             (hasResults ? "with-results " : "") +
             (mode === "code" && files.length ? "with-code" : "") +
@@ -4232,6 +4369,19 @@ export default function Workspace() {
                 />
               </Suspense>
             )
+          ) : mode === "characters" ? (
+            modeReleased(config, "characters") && (
+              <Suspense fallback={<p className="character-loading">Opening Characters…</p>}>
+                <Characters
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  config={config}
+                  models={models}
+                  characters={characters}
+                />
+              </Suspense>
+            )
           ) : mode === "filesearch" ? (
             modeReleased(config, "filesearch") && (
               <Suspense fallback={<p className="fsearch-loading">Opening Search files…</p>}>
@@ -4361,7 +4511,7 @@ export default function Workspace() {
                     }
                   />
                 )}
-                {(messages.length || carried) && textMode ? (
+                {(messages.length || carried || openingShown) && textMode ? (
                   <div className={"messages" + (highlightLive ? " highlight-live" : "")} ref={threadRef}>
                     {carried && (
                       <CarriedSummary
@@ -4371,7 +4521,7 @@ export default function Workspace() {
                         started={messages.length > 0}
                       />
                     )}
-                    {messages.map((m, i) => {
+                    {(openingShown ? [openingMessage(character)] : messages).map((m, i) => {
                       // A saved user message may carry <document> blocks after
                       // the typed prompt; render those as collapsed chips
                       // instead of a wall of extracted text. Replies are left
@@ -4430,6 +4580,7 @@ export default function Workspace() {
                             ? " streaming"
                             : "") +
                           (highlight && m.id === highlight ? " bookmark-target" : "") +
+                          (m.opening ? " opening" : "") +
                           (m.research && researchAvailable ? " research-report" : "")
                         }
                       >
@@ -4440,17 +4591,23 @@ export default function Workspace() {
                             ) : (
                               "Y"
                             )
+                          ) : character ? (
+                            <CharacterAvatar name={character.name} avatar={character.avatar} size={36} />
                           ) : (
                             <Mark />
                           )}
                         </div>
                         <div>
                           <div className="message-label">
-                            {m.role === "user"
-                              ? m.author && m.author !== user?.username
+                            {m.role === "user" ? (
+                              m.author && m.author !== user?.username
                                 ? m.author
                                 : "You"
-                              : "ANONYMA"}
+                            ) : character ? (
+                              <span data-i18n="off">{character.name}</span>
+                            ) : (
+                              "ANONYMA"
+                            )}
                             {m.sample && <span>PREPARED EXAMPLE</span>}
                             {m.blind && <span>BLIND COMPARE</span>}
                             {m.role === "assistant" && m.model && !m.sample && (
@@ -4636,7 +4793,7 @@ export default function Workspace() {
                               Listen as an audio overview
                             </button>
                           )}
-                          {!(branchesLive && !busy && !branching && editing?.index !== i && !m.sample) &&
+                          {!m.opening && !(branchesLive && !busy && !branching && editing?.index !== i && !m.sample) &&
                             (rememberButton(m) || bookmarks.actions(m, i, messages) || cardButton(m, i)) && (
                               <div className="turn-actions">
                                 {bookmarks.actions(m, i, messages)}
@@ -4683,7 +4840,7 @@ export default function Workspace() {
                               </div>
                             </form>
                           )}
-                          {branchesLive && !busy && !branching && editing?.index !== i && !m.sample && (
+                          {branchesLive && !busy && !branching && editing?.index !== i && !m.sample && !m.opening && (
                             <div className="turn-actions">
                               {bookmarks.actions(m, i, messages)}
                               {m.role === "user" && m.content !== undefined && (
@@ -4906,6 +5063,38 @@ export default function Workspace() {
                           : ""
                     }
                     onLeave={leaveProject}
+                  />
+                )}
+                {character && (
+                  <CharacterBar
+                    character={character}
+                    saved={!!current || messages.length > 0}
+                    fresh={!current && !messages.length}
+                    note={
+                      !current && !messages.length
+                        ? characterModelNote(character, { models, visible: visibleModels, privateMode })
+                        : ""
+                    }
+                    picker={
+                      projectsLive && projects.list.length > 0 ? (
+                        <ProjectPicker
+                          className="inline"
+                          label="File in project"
+                          none="No project"
+                          projects={projects.list}
+                          value={project?.id || null}
+                          onChange={(id) => {
+                            // The link says what the chat is, so a reload starts it again.
+                            const next = new URLSearchParams(location.search);
+                            next.set("character", character.id);
+                            if (id) next.set("project", id);
+                            else next.delete("project");
+                            navigate(location.pathname + "?" + next.toString(), { replace: true });
+                          }}
+                        />
+                      ) : null
+                    }
+                    onLeave={leaveCharacter}
                   />
                 )}
                 {blindActive && (
@@ -5751,7 +5940,7 @@ export default function Workspace() {
                     </details>
                   )}
                 </form>
-                {!messages.length && !carried && (
+                {!messages.length && !carried && !openingShown && (
                   <div className="prompt-suggestions">
                     {(mode === "chat"
                       ? [

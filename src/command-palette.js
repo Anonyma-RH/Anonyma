@@ -380,6 +380,7 @@ export const MODE_LABELS = {
   import: "Import chats",
   photos: "Photo tools",
   filesearch: "Search files",
+  characters: "Characters",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -419,6 +420,8 @@ const PLACES = [
   ["photos", "Photo tools", ["photo", "picture", "edit photo", "remove background", "cut out", "upscale", "enlarge", "retouch", "transparent"]],
   // File Search: only once released, with Files and Documents.
   ["filesearch", "Search files", ["search files", "find in files", "ask my files", "saved files", "documents", "citations", "passages", "across files"]],
+  // Characters: only once released.
+  ["characters", "Characters", ["character", "persona", "roleplay", "role play", "companion", "avatar", "personality", "npc"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

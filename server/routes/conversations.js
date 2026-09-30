@@ -128,14 +128,25 @@ export function conversationRoutes({ app, db, cfg, requireUser }) {
   const projectOf = (id) =>
     db.prepare("SELECT project_id FROM project_chats WHERE conversation_id=?").get(id)
       ?.project_id ?? null;
+  // Characters: which character a saved personal chat is filed with, once
+  // the update is live (character_id, null for none).
+  const characterOf = (id) =>
+    db.prepare("SELECT character_id FROM character_chats WHERE conversation_id=?").get(id)
+      ?.character_id ?? null;
   app.get("/api/conversations", requireUser, (req, res) => {
+    const withProjects = isReleased(cfg, "projects"),
+      withCharacters = isReleased(cfg, "characters");
     const rows = db
       .prepare(
         // Symposium runs are capped on their own and never shown here, so they
         // can't crowd ordinary chats out of this list. Everything kept is
         // listed, up to the Holder tier's larger cap.
-        isReleased(cfg, "projects")
-          ? "SELECT c.*,pc.project_id FROM conversations c LEFT JOIN project_chats pc ON pc.conversation_id=c.id AND pc.user_id=c.user_id WHERE c.user_id=? AND c.collab_id IS NULL AND c.mode IS NOT 'symposium' AND (c.expires IS NULL OR c.expires>=?) ORDER BY c.updated DESC,c.rowid DESC LIMIT ?"
+        withProjects || withCharacters
+          ? `SELECT c.*${withProjects ? ",pc.project_id" : ""}${withCharacters ? ",cc.character_id" : ""} FROM conversations c${
+              withProjects ? " LEFT JOIN project_chats pc ON pc.conversation_id=c.id AND pc.user_id=c.user_id" : ""
+            }${
+              withCharacters ? " LEFT JOIN character_chats cc ON cc.conversation_id=c.id AND cc.user_id=c.user_id" : ""
+            } WHERE c.user_id=? AND c.collab_id IS NULL AND c.mode IS NOT 'symposium' AND (c.expires IS NULL OR c.expires>=?) ORDER BY c.updated DESC,c.rowid DESC LIMIT ?`
           : "SELECT * FROM conversations WHERE user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium' AND (expires IS NULL OR expires>=?) ORDER BY updated DESC,rowid DESC LIMIT ?",
       )
       .all(req.user.id, now(), HOLDER_CAPS.conversations);
@@ -199,6 +210,7 @@ export function conversationRoutes({ app, db, cfg, requireUser }) {
     res.json({
       ...rest,
       ...(isReleased(cfg, "projects") && !c.collab_id ? { project_id: projectOf(c.id) } : {}),
+      ...(isReleased(cfg, "characters") && !c.collab_id ? { character_id: characterOf(c.id) } : {}),
       ...(imported ? { imported_from: imported } : {}),
       parent: parent ? { id: parent.id, title: parent.title, mode: parent.mode } : null,
       branches,
@@ -302,6 +314,10 @@ export function conversationRoutes({ app, db, cfg, requireUser }) {
       // Projects: a branch of a filed chat is filed in the same project.
       db.prepare(
         "INSERT INTO project_chats(conversation_id,project_id,user_id,added) SELECT ?,project_id,user_id,? FROM project_chats WHERE conversation_id=? AND user_id=?",
+      ).run(id, now(), source.id, req.user.id);
+      // Characters: and with the same character.
+      db.prepare(
+        "INSERT INTO character_chats(conversation_id,character_id,user_id,added) SELECT ?,character_id,user_id,? FROM character_chats WHERE conversation_id=? AND user_id=?",
       ).run(id, now(), source.id, req.user.id);
       return id;
     });

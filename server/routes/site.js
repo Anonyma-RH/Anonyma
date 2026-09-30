@@ -50,6 +50,8 @@ export function siteRoutes({ app, db, cfg }) {
     chatimport: isReleased(cfg, "chatimport"),
     // Photo Tools' page, which runs on the image models.
     photos: isReleased(cfg, "phototools") && isReleased(cfg, "images"),
+    // Characters' page.
+    characters: isReleased(cfg, "characters"),
     // File Search's page, which searches saved files' text.
     filesearch: isReleased(cfg, "filesearch") && isReleased(cfg, "files") && isReleased(cfg, "documents"),
   });

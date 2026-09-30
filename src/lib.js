@@ -216,6 +216,9 @@ export function messageFromServer(m) {
     ...(c?.filesearch && typeof c.filesearch === "object" && !Array.isArray(c.filesearch)
       ? { filesearch: c.filesearch }
       : {}),
+    // Characters: the character's opening message, the first turn of a
+    // saved chat with it (no model, no charge; never sent as a reply).
+    ...(c?.opening === true ? { opening: true } : {}),
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.
@@ -515,6 +518,8 @@ export function safeNext(value) {
   // Gift Links' claim page: its code waits in this tab (src/gift-links.js),
   // never in the address.
   if (value === "/gift") return value;
+  // Characters' page: a copy link's token waits in this tab, never the address.
+  if (value === "/workspace/characters") return value;
   return /^\/connect\?[^\\#]*$/.test(value) ? value : null;
 }
 export const isReleased = (config, id) =>
@@ -547,6 +552,8 @@ export const MODE_FEATURES = {
   import: "chatimport",
   // Photo Tools' page (src/PhotoTools.jsx), which runs on Image Studio's models.
   photos: "phototools",
+  // Characters' page (src/Characters.jsx).
+  characters: "characters",
   // File Search's page (src/FileSearch.jsx), which searches saved files'
   // text, so it needs Files & Reusable Uploads and Documents too.
   filesearch: "filesearch",

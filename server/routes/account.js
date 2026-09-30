@@ -5,6 +5,7 @@ import { limitsView } from "../spending-limits.js";
 import { exportRoutines, forgetRoutines } from "../routines.js";
 import { exportWatches, forgetWatches } from "../page-watch.js";
 import { exportProjects } from "./projects.js";
+import { exportCharacters, forgetCharacters } from "./characters.js";
 import { alertsLive, exportAlert, forgetAlert } from "../balance-alerts.js";
 import { exportBookmarks, forgetBookmarks } from "./bookmarks.js";
 import { forgetChatImports } from "./chat-import.js";
@@ -58,6 +59,8 @@ import {
 // - connected apps' tokens and pending codes;
 // - projects, with their filed chats and pinned files (the chats go with
 //   the conversations above);
+// - characters, with their filed chats and copy links (the chats go with
+//   the conversations above);
 // - support requests, video jobs, saved uploads, Scrolls, standing
 //   instructions, memory facts, routines, page watches (with the last
 //   version of each page and their reports), bookmarks, Blind Compare votes,
@@ -104,6 +107,9 @@ export function eraseAccountContent(db, user) {
   db.prepare("DELETE FROM project_chats WHERE user_id=?").run(id);
   db.prepare("DELETE FROM project_files WHERE user_id=?").run(id);
   db.prepare("DELETE FROM projects WHERE user_id=?").run(id);
+  // Characters: their filed chats and copy links go with them (the chats
+  // themselves went with the conversations above).
+  forgetCharacters(db, id);
   db.prepare("DELETE FROM sessions WHERE user_id=?").run(id);
   // Sign-ins waiting for a two-step code, and sessions' "confirm it's you"
   // marks. The two-step setting itself is the caller's to keep (Panic Wipe)
@@ -226,6 +232,13 @@ export function accountRoutes(ctx) {
     return links.length || isReleased(cfg, "sealedshare")
       ? { sealedShares: links }
       : {};
+  }
+  // Characters: each one whole, with its picture, its filed chats (by id;
+  // their messages are exported with the conversations) and its live copy
+  // links (once the update is live, or while any character exists).
+  function charactersExport(user) {
+    const list = exportCharacters(db, user, String(cfg.publicUrl || cfg.origin));
+    return list.length || isReleased(cfg, "characters") ? { characters: list } : {};
   }
   function projectsExport(user) {
     const projects = exportProjects(db, user);
@@ -662,6 +675,8 @@ export function accountRoutes(ctx) {
       // Projects: each one's settings, filed chats and pinned files (once
       // the update is live, or while any project exists).
       ...projectsExport(req.user.id),
+      // Characters: each one with its picture, filed chats and copy links.
+      ...charactersExport(req.user.id),
       ...twoStepExport(req.user.id),
       ...passkeysExport(req.user.id),
       ...recoveryKitExport(req.user.id),

@@ -101,6 +101,11 @@ const chat = object(
       description:
         "Projects: file the new saved conversation this request creates (a Symposium run too) in one of your projects. Needs the projects update released (403 feature_unreleased otherwise); 404 project_not_found for a project that isn't yours. Refused (400 invalid_request) with ephemeral or private, which store nothing and so are never filed, and with conversationId (move a saved chat with POST /api/projects/{id}/chats). The project's instructions aren't added by the server: the workspace sends them as the leading system message, like standing instructions, so Veil can mask them.",
     },
+    character: {
+      ...string,
+      description:
+        "Characters: file the new saved conversation this request creates with one of your characters, and write the character's opening message as its first turn (an assistant message with no model and no charge). Needs the characters update released (403 feature_unreleased otherwise); 404 character_not_found for a character that isn't yours. Refused (400 invalid_request) with ephemeral or private, which store nothing and so are never filed, with conversationId (a saved chat keeps the character it began with) and outside the chat, code and uncensored modes. The character's instructions aren't added by the server: the workspace sends them in the leading system message, after the account's standing instructions and the project's, so Veil can mask them.",
+    },
     memory: {
       ...array(object({ id: string, text: { ...string, maxLength: 2400 }, updated: integer }, ["id", "text"])),
       maxItems: 50,
@@ -1018,7 +1023,7 @@ for (const [path, summary] of [
 route("get", "/api/conversations", "List latest 300 conversations", {
   response: object({ data: array(object()) }),
   description:
-    "Each entry includes expires (epoch ms, or null for no auto-delete). An expired-but-not-yet-purged conversation is already excluded. Once Projects is released each entry also has project_id (null when the chat is in no project); GET /api/conversations/{id} includes it for a personal chat too. Once Chat Import is released, a chat brought from an export also has imported_from (chatgpt or claude).",
+    "Each entry includes expires (epoch ms, or null for no auto-delete). An expired-but-not-yet-purged conversation is already excluded. Once Projects is released each entry also has project_id (null when the chat is in no project); GET /api/conversations/{id} includes it for a personal chat too. Once Characters is released each entry also has character_id (null when the chat is with no character), and GET /api/conversations/{id} includes it too. Once Chat Import is released, a chat brought from an export also has imported_from (chatgpt or claude).",
 });
 route("post", "/api/conversations", "Create conversation", {
   body: object({ title: string, mode: string }),
@@ -2099,6 +2104,129 @@ route("post", "/api/projects/{id}/chats", "Move a saved chat into a project", {
 route("delete", "/api/projects/{id}/chats/{conversation}", "Take a chat out of a project", {
   response: ref("Ok"),
   description: "The chat stays saved, in no project. 404 not_in_project when it isn't in this one.",
+});
+// Characters (update "characters"; a default model in the Uncensored section
+// also needs "uncensored").
+const characterChat = object({
+  id: string,
+  title: string,
+  mode: string,
+  created: integer,
+  updated: integer,
+  expires: { type: ["integer", "null"] },
+});
+const characterFields = {
+  name: { ...string, minLength: 1, maxLength: 60 },
+  description: { ...string, maxLength: 200, default: "" },
+  instructions: {
+    ...string,
+    maxLength: 4000,
+    default: "",
+    description:
+      "The personality. Sent by the workspace with every chat with the character, after the account's standing instructions and the project's, as part of the leading system message; Veil masks them in the browser. Once Seed Guard is released a wallet seed phrase is refused (400 seed_phrase_blocked), with no override.",
+  },
+  opening: {
+    ...string,
+    maxLength: 1000,
+    default: "",
+    description:
+      "The first message of a chat with the character. It is shown as the first assistant turn and written once as a saved chat's first message, with no model and no charge; it is never sent to a model as a reply, and the model is told about it in the character's instructions instead.",
+  },
+  model: { type: ["string", "null"], description: "A default chat model id the account can use, or null for none. A model in the Uncensored section also needs that update released (403 feature_unreleased otherwise)." },
+  avatar: {
+    type: ["string", "null"],
+    description:
+      'null, "mono:<colour>" (cobalt, navy, amber, ink, slate or mist) or a data URL of a PNG, JPEG or WebP picture of at most 256 by 256 pixels and 48 KB. The server reads the bytes, removes every hidden detail (EXIF, text, XMP, comments, timestamps) and refuses anything else (400 invalid_avatar).',
+  },
+};
+const character = object({
+  id: string,
+  name: string,
+  description: string,
+  instructions: string,
+  opening: string,
+  model: { type: ["string", "null"] },
+  avatar: { type: ["string", "null"] },
+  chat_count: integer,
+  created: integer,
+  updated: integer,
+});
+const characterDetail = {
+  ...character,
+  properties: { ...character.properties, chats: array(characterChat) },
+};
+const characterShare = object({
+  id: string,
+  character_id: string,
+  url: { ...string, description: "The copy link. Its token sits after the #, so it never reaches a server log or a referrer." },
+  created: integer,
+  expires: integer,
+});
+route("get", "/api/characters", "Your characters", {
+  response: object({ characters: array(character), max_characters: integer, limits: object() }),
+  description: "Oldest first. Private to the account: there is no public list.",
+});
+route("post", "/api/characters", "Make a character", {
+  status: 201,
+  body: object(characterFields, ["name"]),
+  response: characterDetail,
+  description:
+    "At most 50 per account (409 character_limit). 400 invalid_character, invalid_model or invalid_avatar. 240 changes an hour.",
+});
+route("get", "/api/characters/{id}", "A character with its saved chats", {
+  response: characterDetail,
+  description: "404 character_not_found for a character that isn't yours.",
+});
+route("patch", "/api/characters/{id}", "Change a character", {
+  body: object(characterFields),
+  response: characterDetail,
+  description: "Omitted fields keep their value. A change applies to the next message, in chats already begun too.",
+});
+route("delete", "/api/characters/{id}", "Delete a character", {
+  response: ref("Ok"),
+  description: "Its chats stay saved, as plain chats. Its copy links stop working.",
+});
+route("post", "/api/characters/{id}/duplicate", "Duplicate a character", {
+  status: 201,
+  response: characterDetail,
+  description: 'The same fields, named "… (copy)". No chats and no links come with it.',
+});
+route("get", "/api/characters/{id}/shares", "A character's copy links", {
+  response: object({ data: array(characterShare), limits: object() }),
+  description: "Live links only, newest first.",
+});
+route("post", "/api/characters/{id}/shares", "Share a copy", {
+  status: 201,
+  body: object({ expires_in_days: { enum: [1, 7, 30], default: 30 } }),
+  response: characterShare,
+  description:
+    "Makes a link another signed-in account can use to add a copy of the character as it is now: name, description, instructions, opening message, default model and picture, with no chats and nothing about you. Revocable, and it expires (30 days unless expires_in_days says 1 or 7). Up to 20 active links per account and 5 per character (400 share_limit). Once Seed Guard is released, a character holding a seed phrase or private key is refused (400 seed_phrase_blocked).",
+});
+route("delete", "/api/character-shares/{id}", "Revoke a copy link", {
+  response: ref("Ok"),
+  description: "The link stops working at once and its copy is deleted.",
+});
+route("get", "/api/character-shares/{token}", "Read a copy link", {
+  response: object({
+    name: string,
+    description: string,
+    instructions: string,
+    opening: string,
+    avatar: { type: ["string", "null"] },
+    model: { type: ["string", "null"] },
+    model_name: { type: ["string", "null"] },
+    model_available: bool,
+    created: integer,
+    expires: integer,
+  }),
+  description:
+    "For a signed-in account to read the whole character, instructions included, before adding a copy. 404 share_not_found looks the same for an unknown, revoked, expired or deleted link. Never cached or indexed; nothing about the account that made it.",
+});
+route("post", "/api/character-shares/{token}/import", "Add a copy of a shared character", {
+  status: 201,
+  response: { ...characterDetail, properties: { ...characterDetail.properties, model_kept: bool } },
+  description:
+    "Adds the character as a new one on this account. A default model this account can't run isn't carried over (model_kept is false). 409 character_limit at 50 characters; Seed Guard applies again.",
 });
 // Sealed Mode (update "sealed"; server/sealed.js). The body of a sealed chat
 // is EHBP ciphertext the server can't read: see docs/operations/sealed-mode.md.

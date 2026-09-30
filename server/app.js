@@ -38,6 +38,7 @@ import { treasuryRoutes } from "./routes/treasury.js";
 import { retentionRoutes } from "./routes/retention.js";
 import { scrollsRoutes } from "./routes/scrolls.js";
 import { projectRoutes } from "./routes/projects.js";
+import { characterRoutes } from "./routes/characters.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { costCompareRoutes } from "./routes/cost-compare.js";
 import { bookmarkRoutes } from "./routes/bookmarks.js";
@@ -185,6 +186,9 @@ export function createApp(overrides = {}) {
   scrollsRoutes(ctx);
   // Projects: runChat files a new chat in one (ctx.projects.forChat/file).
   ctx.projects = projectRoutes(ctx);
+  // Characters: runChat files a new chat with one (ctx.characters.forChat/
+  // file); the character, its copy links and the account's own list live here.
+  ctx.characters = characterRoutes(ctx);
   usageInsightRoutes(ctx);
   Object.assign(ctx, memoryRoutes(ctx));
   // Cost Compare: one message's estimate on several models (reads only).

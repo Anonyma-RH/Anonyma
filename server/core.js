@@ -1427,6 +1427,53 @@ export const MIGRATIONS = [
         BEGIN SELECT RAISE(ABORT,'watch_limit'); END;
     `)(db);
   },
+  // Characters (server/routes/characters.js): AI characters an account makes
+  // for itself: a name, a short description, instructions (the browser sends
+  // them with every chat in it, like a project's), an opening message, a
+  // default model and a picture (a built-in monogram, or a small image the
+  // browser redrew and the server checked: no hidden details). At most 50
+  // per account, also enforced here.
+  // character_chats files a saved personal conversation with one character
+  // of its own creator; the row goes with the conversation (delete, delete
+  // all, cap pruning, auto-delete) or the character, whose chats then stay
+  // as plain chats. Off-the-record, Private and Device-only chats are never
+  // saved, so never filed. character_shares are "Share a copy" links: a
+  // snapshot of the character as it was, a random token, and an expiry; they
+  // go with the character, when revoked, at their expiry and on every erase
+  // (closure, Panic Wipe, Inactivity Wipe). Everything is erased and
+  // exported with the account. The triggers keep every row inside one
+  // account, whichever code writes it.
+  additive(`
+      CREATE TABLE IF NOT EXISTS characters(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),
+        name TEXT NOT NULL,description TEXT NOT NULL DEFAULT '',instructions TEXT NOT NULL DEFAULT '',
+        opening TEXT NOT NULL DEFAULT '',model TEXT,avatar TEXT,
+        created INTEGER NOT NULL,updated INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS characters_user ON characters(user_id,created);
+      CREATE TRIGGER IF NOT EXISTS characters_per_account BEFORE INSERT ON characters
+        WHEN (SELECT COUNT(*) FROM characters WHERE user_id=NEW.user_id)>=50
+        BEGIN SELECT RAISE(ABORT,'character_limit'); END;
+      CREATE TABLE IF NOT EXISTS character_chats(
+        conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,
+        character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id),added INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS character_chats_character ON character_chats(character_id,added);
+      CREATE INDEX IF NOT EXISTS character_chats_user ON character_chats(user_id);
+      CREATE TRIGGER IF NOT EXISTS character_chats_own BEFORE INSERT ON character_chats
+        WHEN (SELECT user_id FROM characters WHERE id=NEW.character_id) IS NOT NEW.user_id
+          OR (SELECT user_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NEW.user_id
+          OR (SELECT collab_id FROM conversations WHERE id=NEW.conversation_id) IS NOT NULL
+        BEGIN SELECT RAISE(ABORT,'character_owner_only'); END;
+      CREATE TABLE IF NOT EXISTS character_shares(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id),
+        character_id TEXT NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+        token TEXT UNIQUE NOT NULL,snapshot TEXT NOT NULL,
+        created INTEGER NOT NULL,expires INTEGER NOT NULL);
+      CREATE INDEX IF NOT EXISTS character_shares_user ON character_shares(user_id,created);
+      CREATE INDEX IF NOT EXISTS character_shares_character ON character_shares(character_id);
+      CREATE INDEX IF NOT EXISTS character_shares_expiry ON character_shares(expires);
+      CREATE TRIGGER IF NOT EXISTS character_shares_own BEFORE INSERT ON character_shares
+        WHEN (SELECT user_id FROM characters WHERE id=NEW.character_id) IS NOT NEW.user_id
+        BEGIN SELECT RAISE(ABORT,'character_owner_only'); END;
+    `),
 ];
 // The schema versions whose migrations were recorded as additive.
 const additiveVersions = (db) =>

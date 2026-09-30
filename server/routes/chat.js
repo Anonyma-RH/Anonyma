@@ -340,6 +340,30 @@ export function chatRoutes(ctx) {
         );
       project = ctx.projects.forChat(req.user.id, req.body.project);
     }
+    // Characters: a new saved chat can be filed with one of the account's own
+    // characters, checked before anything is reserved, on the same terms as a
+    // project: an off-the-record, Private or Device-only chat is never saved,
+    // so never named. The character's instructions are not added here: the
+    // workspace sends them in the leading system message (so Veil can mask
+    // them). Only text chats have characters.
+    let character = null;
+    if (!api && req.body.character != null) {
+      if (ephemeral)
+        fail(
+          400,
+          "Off-the-record and Private chats are never saved, so they aren't filed with a character.",
+          "invalid_request",
+        );
+      if (req.body.conversationId)
+        fail(
+          400,
+          "A saved chat keeps the character it began with; a new message can't change it.",
+          "invalid_request",
+        );
+      if (!["chat", "code", "uncensored"].includes(req.body.mode ?? "chat"))
+        fail(400, "Characters are for chat, code and Uncensored conversations.", "invalid_request");
+      character = ctx.characters.forChat(req.user.id, req.body.character);
+    }
     // Team Treasury: with "Team pays" on, a collab conversation's request is
     // held on the collab's treasury account, within the member's limits.
     const team = teamPaid
@@ -452,6 +476,9 @@ export function chatRoutes(ctx) {
             conversation,
           );
         if (project) ctx.projects.file(conversation, project.id, req.user.id);
+        // The character's opening message is the chat's first turn, written
+        // before the person's own (no model, no charge).
+        if (character && !req.body.conversationId) ctx.characters.file(conversation, character, req.user.id);
         db.prepare(
           "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
         ).run(

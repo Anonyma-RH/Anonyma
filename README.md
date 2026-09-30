@@ -256,6 +256,36 @@ with sources and a monthly budget. Includes its launch film.
 [Chat Import](docs/releases/chat-import.md): bring ChatGPT or Claude history, read in your browser; you choose
 where it's kept. Includes its launch film.
 
+[Secret Guard](docs/releases/secret-guard.md): passwords, keys and tokens are caught in your browser before they're sent,
+and masked for you. Includes its launch image.
+
+[Burn After Reading](docs/releases/burn-after-reading.md): a shared chat that deletes itself after it's opened once; link previews
+can't burn it. Includes its launch image.
+
+[Characters](docs/releases/characters.md): your own AI characters with a name, a face, a personality and a model, private
+unless you share a copy. Includes its launch film.
+
+[PDF Redact](docs/releases/pdf-redact.md): redact a PDF on your device; the new copy is page pictures, so hidden text is
+gone. Includes its launch film.
+
+[Private Dictation](docs/releases/private-dictation.md): free speech-to-text on your own device with Whisper; the recording never
+leaves it. Includes its launch film.
+
+[Subtitles](docs/releases/subtitles.md): editable, translatable subtitles for a video; only the audio is uploaded, never
+the picture. Includes its launch image.
+
+[Screenshot to Site](docs/releases/screenshot-to-site.md): turn a screenshot or sketch into a working web page, previewed in a
+sandbox. Includes its launch image.
+
+[Contract Reader](docs/releases/contract-reader.md): who controls a token or contract and what they can do, in plain English with
+file:line. Not an audit. Includes its launch film.
+
+[Model Debate](docs/releases/model-debate.md): two models argue a question in rounds and a third judges blind. Includes its
+launch film.
+
+[Encrypted Backup](docs/releases/encrypted-backup.md): everything in one file, encrypted in your browser with a passphrase only
+you know. Includes its launch film.
+
 ## How it works
 
 1. Create an account and choose an available model.

@@ -381,6 +381,7 @@ export const MODE_LABELS = {
   photos: "Photo tools",
   filesearch: "Search files",
   characters: "Characters",
+  pdfredact: "Redact a PDF",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -422,6 +423,8 @@ const PLACES = [
   ["filesearch", "Search files", ["search files", "find in files", "ask my files", "saved files", "documents", "citations", "passages", "across files"]],
   // Characters: only once released.
   ["characters", "Characters", ["character", "persona", "roleplay", "role play", "companion", "avatar", "personality", "npc"]],
+  // Redact a PDF: only once released; it runs in the browser alone.
+  ["pdfredact", "Redact a PDF", ["redact", "redaction", "pdf", "black out", "censor", "hide text", "remove text", "blackout", "sanitize"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

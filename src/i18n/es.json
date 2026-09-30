@@ -6590,7 +6590,122 @@
     "Leave character": "Salir del personaje",
     "No default model": "Sin modelo predeterminado",
     "Characters: each character’s name, description, instructions, opening message, default model and picture, and which saved chats are with it. They’re private to your account. A character’s instructions are sent with each chat by your browser and aren’t saved with the chat; its opening message is saved as the chat’s first message, with no model and no charge. Off the record, Private Mode and Device only chats are never saved, so never listed with a character. Deleting a character keeps its chats. A copy link keeps a snapshot of the character for up to 30 days (or until you revoke it, or delete the character), with no chats and nothing about you. Closing your account, Panic Wipe and Inactivity Wipe delete every character and link.": "Personajes: el nombre, la descripción, las instrucciones, el mensaje inicial, el modelo predeterminado y la imagen de cada personaje, y qué chats guardados son con él. Son privados de tu cuenta. Tu navegador envía las instrucciones de un personaje con cada chat y no se guardan con el chat; su mensaje inicial se guarda como el primer mensaje del chat, sin modelo y sin costo. Los chats sin registro, en Modo privado y solo del dispositivo nunca se guardan, así que nunca aparecen con un personaje. Eliminar un personaje conserva sus chats. Un enlace de copia guarda una instantánea del personaje hasta 30 días (o hasta que lo revoques o elimines el personaje), sin chats y sin nada sobre ti. Cerrar tu cuenta, el Borrado de pánico y el Borrado por inactividad eliminan todos los personajes y enlaces.",
-    "The export also includes your characters, with their pictures, the chats with each, and your live copy links.": "La exportación también incluye tus personajes, con sus imágenes, los chats con cada uno y tus enlaces de copia activos."
+    "The export also includes your characters, with their pictures, the chats with each, and your live copy links.": "La exportación también incluye tus personajes, con sus imágenes, los chats con cada uno y tus enlaces de copia activos.",
+    "PDF Redact": "Ocultar en PDF",
+    "Redact a PDF on your device before you share it. Real removal, not a black box drawn on top.": "Oculta partes de un PDF en tu dispositivo antes de compartirlo. Se elimina de verdad, no es un recuadro negro dibujado encima.",
+    "Find words, emails, phone numbers and more, or draw boxes by hand": "Busca palabras, correos, números de teléfono y más, o dibuja recuadros a mano",
+    "Every page is redrawn with your boxes solid black, so nothing is left under them": "Cada página se vuelve a dibujar con tus recuadros en negro sólido, así que no queda nada debajo",
+    "Done on your device; the copy is pictures, so its text can't be selected or searched": "Se hace en tu dispositivo; la copia son imágenes, así que su texto no se puede seleccionar ni buscar",
+    "Redact a PDF": "Ocultar en un PDF",
+    "Black out names, numbers and anything else in a PDF before you share it. Done on your device, and the text under a box is really gone.": "Tapa nombres, números y cualquier otra cosa de un PDF antes de compartirlo. Se hace en tu dispositivo, y el texto bajo un recuadro desaparece de verdad.",
+    "Opening Redact a PDF…": "Abriendo Ocultar en un PDF…",
+    "REDACT A PDF": "OCULTAR EN UN PDF",
+    "Black out names, numbers and anything else before you share a PDF. It's done on this device, and it's real removal, not a black box drawn on top.": "Tapa nombres, números y cualquier otra cosa antes de compartir un PDF. Se hace en este dispositivo y es una eliminación real, no un recuadro negro dibujado encima.",
+    "Choose another PDF": "Elegir otro PDF",
+    "Choose a PDF file.": "Elige un archivo PDF.",
+    "This file is larger than 200 MB. Split it first.": "Este archivo pesa más de 200 MB. Divídelo primero.",
+    "This file isn't a PDF.": "Este archivo no es un PDF.",
+    "This file can't be opened as a PDF.": "Este archivo no se puede abrir como PDF.",
+    "This PDF is password-protected. Enter its password to open it.": "Este PDF está protegido con contraseña. Escribe la contraseña para abrirlo.",
+    "Drop a PDF here": "Suelta un PDF aquí",
+    "Up to 200 pages and 200 MB. It's opened on this device; nothing is uploaded.": "Hasta 200 páginas y 200 MB. Se abre en este dispositivo; no se sube nada.",
+    "Choose a PDF": "Elegir un PDF",
+    "Real removal": "Eliminación real",
+    "Each page is redrawn as a picture with your boxes painted solid black, then written into a new PDF. Nothing from the original file is copied, so the text under a box is gone.": "Cada página se vuelve a dibujar como una imagen con tus recuadros en negro sólido y se escribe en un PDF nuevo. No se copia nada del archivo original, así que el texto bajo un recuadro desaparece.",
+    "What it costs you": "Lo que pierdes",
+    "The redacted PDF is pictures of your pages, so its text can't be selected or searched.": "El PDF con partes ocultas son imágenes de tus páginas, así que su texto no se puede seleccionar ni buscar.",
+    "On this device": "En este dispositivo",
+    "Your PDF is opened and redacted here. Nothing is uploaded unless you choose Send to chat.": "Tu PDF se abre y se edita aquí. No se sube nada a menos que elijas Enviar al chat.",
+    "Find it or draw it": "Búscalo o dibújalo",
+    "Search for words, tap a finder for emails, phone numbers and more, or draw boxes yourself.": "Busca palabras, toca un buscador para correos, números de teléfono y más, o dibuja los recuadros tú.",
+    "Check before you share": "Revisa antes de compartir",
+    "Look at every page. Scans and pictures have no text to find, so draw boxes over those.": "Mira cada página. Los escaneos y las imágenes no tienen texto que buscar, así que dibuja recuadros sobre ellos.",
+    "Waiting for the password…": "Esperando la contraseña…",
+    "Reading your PDF on this device…": "Leyendo tu PDF en este dispositivo…",
+    "Word, name or number to find": "Palabra, nombre o número que buscar",
+    "Word, name or number": "Palabra, nombre o número",
+    "No matches.": "Sin coincidencias.",
+    "1 match on 1 page": "1 coincidencia en 1 página",
+    "Redact this match": "Ocultar esta coincidencia",
+    "Show this page": "Mostrar esta página",
+    "Show more matches": "Mostrar más coincidencias",
+    "Listing the first 300. Redact all still covers every match.": "Se muestran las primeras 300. Ocultar todo sigue cubriendo cada coincidencia.",
+    "Words you've redacted": "Palabras que ocultaste",
+    "1 box": "1 recuadro",
+    "Remove the boxes for this find": "Quitar los recuadros de esta búsqueda",
+    "Find automatically": "Buscar automáticamente",
+    "Email addresses": "Direcciones de correo",
+    "Phone numbers": "Números de teléfono",
+    "Card numbers": "Números de tarjeta",
+    "IBANs": "Cuentas IBAN",
+    "Wallet addresses": "Direcciones de billetera",
+    "Keys and secrets": "Claves y secretos",
+    "IP addresses": "Direcciones IP",
+    "Your Veil words": "Tus palabras de Veil",
+    "None found": "Ninguno encontrado",
+    "Boxed": "Con recuadro",
+    "Box all": "Recuadrar todo",
+    "Finders use the same checks as Veil. They don't find names; search for a name above, or add it to Veil's always-veil words.": "Los buscadores usan las mismas comprobaciones que Veil. No encuentran nombres; busca un nombre arriba o agrégalo a las palabras que Veil oculta siempre.",
+    "1 page has no text to search (a scan or a picture). Draw boxes on it yourself.": "1 página no tiene texto que buscar (un escaneo o una imagen). Dibuja recuadros sobre ella tú.",
+    "Boxes": "Recuadros",
+    "No boxes yet. Search, tap a finder or draw on a page.": "Aún no hay recuadros. Busca, toca un buscador o dibuja sobre una página.",
+    "1 box on 1 page": "1 recuadro en 1 página",
+    "Clear all boxes": "Borrar todos los recuadros",
+    "Those places already have boxes.": "Esos lugares ya tienen recuadros.",
+    "Nothing new to box.": "No hay nada nuevo que recuadrar.",
+    "Stopped at 5,000 boxes.": "Se alcanzó el límite de 5,000 recuadros.",
+    "1 box added. Check every page before you share the copy.": "Se agregó 1 recuadro. Revisa cada página antes de compartir la copia.",
+    "Page tools": "Herramientas de página",
+    "Draw": "Dibujar",
+    "Scroll": "Desplazar",
+    "Drag on a page to draw a box": "Arrastra sobre una página para dibujar un recuadro",
+    "Scroll with a finger; tap a box to select it": "Desplázate con el dedo; toca un recuadro para seleccionarlo",
+    "Zoom": "Ampliación",
+    "Fit to width": "Ajustar al ancho",
+    "Drag the box to move it or a corner to resize it. Delete removes it.": "Arrastra el recuadro para moverlo o una esquina para cambiar su tamaño. Suprimir lo elimina.",
+    "Drag on a page to draw a box. Click a box to move, resize or delete it.": "Arrastra sobre una página para dibujar un recuadro. Haz clic en un recuadro para moverlo, cambiar su tamaño o eliminarlo.",
+    "Scroll the pages, and tap a box to select it. Switch to Draw to add or move boxes.": "Desplaza las páginas y toca un recuadro para seleccionarlo. Cambia a Dibujar para agregar o mover recuadros.",
+    "This copy is out of date.": "Esta copia está desactualizada.",
+    "Your redacted PDF is ready.": "Tu PDF con partes ocultas está listo.",
+    "You changed the boxes after making it. Make the copy again before you download or send it.": "Cambiaste los recuadros después de crearla. Vuelve a crear la copia antes de descargarla o enviarla.",
+    "Checked in the file itself: only page pictures. No text, fonts, metadata, annotations, form fields, attachments or scripts.": "Comprobado en el propio archivo: solo imágenes de páginas. Sin texto, fuentes, metadatos, anotaciones, campos de formulario, adjuntos ni scripts.",
+    "1 very large page was drawn a little smaller than the quality you chose.": "1 página muy grande se dibujó un poco más pequeña que la calidad elegida.",
+    "The copy isn't password-protected.": "La copia no está protegida con contraseña.",
+    "File name": "Nombre del archivo",
+    "Send to chat": "Enviar al chat",
+    "Send to chat isn't available here. Download the copy instead.": "Enviar al chat no está disponible aquí. Descarga la copia.",
+    "Send to chat needs a signed-in workspace. Download the copy instead.": "Enviar al chat requiere un espacio de trabajo con sesión iniciada. Descarga la copia.",
+    "Sealed Mode takes no attachments. Turn it off to send pages to a chat, or download the copy.": "El Modo sellado no admite adjuntos. Desactívalo para enviar páginas a un chat, o descarga la copia.",
+    "The text is read from the redacted pages on this device and attached to a new chat as a document. Nothing is sent until you press Send there.": "El texto se lee de las páginas con partes ocultas en este dispositivo y se adjunta a un chat nuevo como documento. No se envía nada hasta que pulses Enviar allí.",
+    "The redacted pages are attached to a new chat as pictures. Nothing is sent until you press Send there.": "Las páginas con partes ocultas se adjuntan a un chat nuevo como imágenes. No se envía nada hasta que pulses Enviar allí.",
+    "Read and attach": "Leer y adjuntar",
+    "Attach pictures": "Adjuntar imágenes",
+    "Send pictures instead": "Enviar imágenes en su lugar",
+    "Send the text instead": "Enviar el texto en su lugar",
+    "The text of up to 20 pages can be read at a time.": "Se puede leer el texto de hasta 20 páginas a la vez.",
+    "A chat takes up to 8 pictures. Choose fewer pages.": "Un chat admite hasta 8 imágenes. Elige menos páginas.",
+    "No text could be read on those pages. Send them as pictures instead.": "No se pudo leer texto en esas páginas. Envíalas como imágenes.",
+    "The pages couldn't be sent to a chat.": "No se pudieron enviar las páginas a un chat.",
+    "The copy didn't pass its own check, so it isn't offered. Nothing was saved. Try again.": "La copia no pasó su propia comprobación, así que no se ofrece. No se guardó nada. Inténtalo de nuevo.",
+    "The redacted copy couldn't be made.": "No se pudo crear la copia con partes ocultas.",
+    "The copy is getting too large. Choose a lower quality, or redact fewer pages.": "La copia se está haciendo demasiado grande. Elige una calidad menor, o menos páginas.",
+    "A page couldn't be made into a picture.": "No se pudo convertir una página en imagen.",
+    "A page couldn't be read.": "No se pudo leer una página.",
+    "There are no pages to copy.": "No hay páginas que copiar.",
+    "This page couldn't be drawn.": "No se pudo dibujar esta página.",
+    "No boxes yet": "Aún no hay recuadros",
+    "Copy quality": "Calidad de la copia",
+    "150 dpi (smaller file)": "150 dpi (archivo más pequeño)",
+    "300 dpi (sharper text)": "300 dpi (texto más nítido)",
+    "Make redacted copy": "Crear copia con partes ocultas",
+    "This PDF is password-protected": "Este PDF está protegido con contraseña",
+    "That password didn't work. Try again.": "Esa contraseña no funcionó. Inténtalo de nuevo.",
+    "The password opens the file here and isn't kept. The redacted copy is not password-protected.": "La contraseña abre el archivo aquí y no se guarda. La copia con partes ocultas no está protegida con contraseña.",
+    "PDF Redact: the PDF is opened, boxed and redrawn in your browser, and the redacted copy is written there. Nothing is uploaded, saved or added to your export unless you choose Send to chat, and then only the redacted pages, as pictures or as the text read from them on this device, go to a new chat.": "Ocultar en PDF: el PDF se abre, se recuadra y se vuelve a dibujar en tu navegador, y la copia con partes ocultas se crea allí. No se sube, guarda ni agrega a tu exportación nada a menos que elijas Enviar al chat, y entonces solo las páginas con partes ocultas, como imágenes o como el texto leído de ellas en este dispositivo, van a un chat nuevo.",
+    "Look at the copy": "Ver la copia",
+    "Back to the original": "Volver al original",
+    "This is the redacted copy as it will be shared: pictures of your pages, with the boxes solid black. Nothing is drawn over it here.": "Esta es la copia con partes ocultas tal como se compartirá: imágenes de tus páginas, con los recuadros en negro sólido. Aquí no se dibuja nada encima.",
+    "The copy couldn't be shown.": "No se pudo mostrar la copia."
   },
   "patterns": [
     {
@@ -10732,6 +10847,94 @@
     {
       "en": "You have the most characters an account can keep ({0}). Delete one to add this.",
       "es": "Tienes el máximo de personajes que puede tener una cuenta ({0}). Elimina uno para agregar este."
+    },
+    {
+      "en": "{0} pages · {1}",
+      "es": "{0} páginas · {1}"
+    },
+    {
+      "en": "1 page · {0}",
+      "es": "1 página · {0}"
+    },
+    {
+      "en": "{0} matches on 1 page",
+      "es": "{0} coincidencias en 1 página"
+    },
+    {
+      "en": "{0} matches on {1} pages",
+      "es": "{0} coincidencias en {1} páginas"
+    },
+    {
+      "en": "Redact all {0} matches",
+      "es": "Ocultar las {0} coincidencias"
+    },
+    {
+      "en": "{0} boxes",
+      "es": "{0} recuadros"
+    },
+    {
+      "en": "{0} found",
+      "es": "{0} encontrados"
+    },
+    {
+      "en": "{0} pages have no text to search (scans or pictures). Draw boxes on them yourself.",
+      "es": "{0} páginas no tienen texto que buscar (escaneos o imágenes). Dibuja recuadros sobre ellas tú."
+    },
+    {
+      "en": "{0} boxes on 1 page",
+      "es": "{0} recuadros en 1 página"
+    },
+    {
+      "en": "{0} boxes on {1} pages",
+      "es": "{0} recuadros en {1} páginas"
+    },
+    {
+      "en": "{0} boxes added. Check every page before you share the copy.",
+      "es": "Se agregaron {0} recuadros. Revisa cada página antes de compartir la copia."
+    },
+    {
+      "en": "{0} pages · {1} · {2} dpi",
+      "es": "{0} páginas · {1} · {2} dpi"
+    },
+    {
+      "en": "1 page · {0} · {1} dpi",
+      "es": "1 página · {0} · {1} dpi"
+    },
+    {
+      "en": "{0} very large pages were drawn a little smaller than the quality you chose.",
+      "es": "{0} páginas muy grandes se dibujaron un poco más pequeñas que la calidad elegida."
+    },
+    {
+      "en": "Pages to send (up to {0})",
+      "es": "Páginas que enviar (hasta {0})"
+    },
+    {
+      "en": "Choose pages between 1 and {0}, like 1-3, 5.",
+      "es": "Elige páginas entre 1 y {0}, como 1-3, 5."
+    },
+    {
+      "en": "Page {0} is too large to attach as a picture.",
+      "es": "La página {0} es demasiado grande para adjuntarla como imagen."
+    },
+    {
+      "en": "Page {0} isn't in this PDF.",
+      "es": "La página {0} no está en este PDF."
+    },
+    {
+      "en": "This PDF has {0} pages. Redact a PDF takes up to 200. Split it first, then redact each part.",
+      "es": "Este PDF tiene {0} páginas. Ocultar en un PDF admite hasta 200. Divídelo primero y luego oculta cada parte."
+    },
+    {
+      "en": "Making page {0} of {1}…",
+      "es": "Creando la página {0} de {1}…"
+    },
+    {
+      "en": "Reading page {0} of {1} on this device…",
+      "es": "Leyendo la página {0} de {1} en este dispositivo…"
+    },
+    {
+      "en": "Preparing page {0} of {1}…",
+      "es": "Preparando la página {0} de {1}…"
     }
   ]
 }

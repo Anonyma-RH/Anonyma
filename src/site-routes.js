@@ -98,6 +98,8 @@ export function knownPage(path, served = {}) {
     (served.filesearch === true && path === "/workspace/filesearch") ||
     // Characters' page, likewise.
     (served.characters === true && path === "/workspace/characters") ||
+    // Redact a PDF's page, likewise.
+    (served.pdfredact === true && path === "/workspace/pdfredact") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

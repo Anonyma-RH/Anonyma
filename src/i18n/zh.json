@@ -6587,7 +6587,122 @@
     "Leave character": "离开角色",
     "No default model": "无默认模型",
     "Characters: each character’s name, description, instructions, opening message, default model and picture, and which saved chats are with it. They’re private to your account. A character’s instructions are sent with each chat by your browser and aren’t saved with the chat; its opening message is saved as the chat’s first message, with no model and no charge. Off the record, Private Mode and Device only chats are never saved, so never listed with a character. Deleting a character keeps its chats. A copy link keeps a snapshot of the character for up to 30 days (or until you revoke it, or delete the character), with no chats and nothing about you. Closing your account, Panic Wipe and Inactivity Wipe delete every character and link.": "角色：每个角色的名称、描述、指令、开场白、默认模型和头像，以及哪些已保存的会话属于它。它们只属于你的账户。角色的指令由你的浏览器随每次会话发送，不会随会话保存；它的开场白会作为会话的第一条消息保存，不带模型，也不收费。不留记录、隐私模式和仅存本机的会话从不保存，因此不会列在角色之下。删除角色会保留它的会话。副本链接会保留角色的一份快照，最长 30 天（或直到你撤销链接或删除该角色），不含会话，也不含任何关于你的信息。关闭账户、紧急清除和闲置清除都会删除所有角色和链接。",
-    "The export also includes your characters, with their pictures, the chats with each, and your live copy links.": "导出还包含你的角色（含头像）、与每个角色的会话，以及你当前有效的副本链接。"
+    "The export also includes your characters, with their pictures, the chats with each, and your live copy links.": "导出还包含你的角色（含头像）、与每个角色的会话，以及你当前有效的副本链接。",
+    "PDF Redact": "PDF 打码",
+    "Redact a PDF on your device before you share it. Real removal, not a black box drawn on top.": "分享 PDF 之前，先在你的设备上打码。真正删除，而不是在上面盖一个黑框。",
+    "Find words, emails, phone numbers and more, or draw boxes by hand": "查找文字、邮箱、电话号码等，也可以手动画框",
+    "Every page is redrawn with your boxes solid black, so nothing is left under them": "每一页都会重新绘制，你的框被涂成纯黑，框下不会留下任何内容",
+    "Done on your device; the copy is pictures, so its text can't be selected or searched": "在你的设备上完成；副本是图片，所以其中的文字无法选中或搜索",
+    "Redact a PDF": "PDF 打码",
+    "Black out names, numbers and anything else in a PDF before you share it. Done on your device, and the text under a box is really gone.": "分享 PDF 之前，把姓名、号码等内容涂黑。全程在你的设备上完成，框下的文字真正消失。",
+    "Opening Redact a PDF…": "正在打开 PDF 打码……",
+    "REDACT A PDF": "PDF 打码",
+    "Black out names, numbers and anything else before you share a PDF. It's done on this device, and it's real removal, not a black box drawn on top.": "分享 PDF 之前，把姓名、号码等内容涂黑。一切都在此设备上完成，是真正的删除，而不是在上面盖一个黑框。",
+    "Choose another PDF": "选择另一个 PDF",
+    "Choose a PDF file.": "请选择一个 PDF 文件。",
+    "This file is larger than 200 MB. Split it first.": "此文件超过 200 MB。请先拆分。",
+    "This file isn't a PDF.": "这个文件不是 PDF。",
+    "This file can't be opened as a PDF.": "无法将此文件作为 PDF 打开。",
+    "This PDF is password-protected. Enter its password to open it.": "此 PDF 有密码保护。请输入密码以打开。",
+    "Drop a PDF here": "把 PDF 拖到这里",
+    "Up to 200 pages and 200 MB. It's opened on this device; nothing is uploaded.": "最多 200 页、200 MB。文件在此设备上打开，不会上传任何内容。",
+    "Choose a PDF": "选择 PDF",
+    "Real removal": "真正删除",
+    "Each page is redrawn as a picture with your boxes painted solid black, then written into a new PDF. Nothing from the original file is copied, so the text under a box is gone.": "每一页都会重新绘制成图片，你的框被涂成纯黑，然后写入一个新的 PDF。原文件里的任何内容都不会被复制，所以框下的文字不复存在。",
+    "What it costs you": "它的代价",
+    "The redacted PDF is pictures of your pages, so its text can't be selected or searched.": "打码后的 PDF 是你页面的图片，所以其中的文字无法选中或搜索。",
+    "On this device": "在此设备上",
+    "Your PDF is opened and redacted here. Nothing is uploaded unless you choose Send to chat.": "你的 PDF 在这里打开并打码。除非你选择“发送到会话”，否则不会上传任何内容。",
+    "Find it or draw it": "查找或手动画框",
+    "Search for words, tap a finder for emails, phone numbers and more, or draw boxes yourself.": "搜索文字，点选查找器找出邮箱、电话号码等，或自己画框。",
+    "Check before you share": "分享前先检查",
+    "Look at every page. Scans and pictures have no text to find, so draw boxes over those.": "请查看每一页。扫描件和图片没有可查找的文字，请自己在上面画框。",
+    "Waiting for the password…": "正在等待输入密码……",
+    "Reading your PDF on this device…": "正在此设备上读取你的 PDF……",
+    "Word, name or number to find": "要查找的词、姓名或号码",
+    "Word, name or number": "词、姓名或号码",
+    "No matches.": "没有匹配项。",
+    "1 match on 1 page": "1 页上有 1 处匹配",
+    "Redact this match": "为这处匹配打码",
+    "Show this page": "显示此页",
+    "Show more matches": "显示更多匹配项",
+    "Listing the first 300. Redact all still covers every match.": "仅列出前 300 项。全部打码仍会覆盖每一处匹配。",
+    "Words you've redacted": "你已打码的词",
+    "1 box": "1 个框",
+    "Remove the boxes for this find": "移除此查找的框",
+    "Find automatically": "自动查找",
+    "Email addresses": "邮箱地址",
+    "Phone numbers": "电话号码",
+    "Card numbers": "银行卡号",
+    "IBANs": "IBAN 账号",
+    "Wallet addresses": "钱包地址",
+    "Keys and secrets": "密钥和机密",
+    "IP addresses": "IP 地址",
+    "Your Veil words": "你的 Veil 词语",
+    "None found": "未找到",
+    "Boxed": "已加框",
+    "Box all": "全部加框",
+    "Finders use the same checks as Veil. They don't find names; search for a name above, or add it to Veil's always-veil words.": "查找器使用与 Veil 相同的检测规则，不会识别姓名；请在上方搜索姓名，或把它加入 Veil 的“始终遮盖”词语。",
+    "1 page has no text to search (a scan or a picture). Draw boxes on it yourself.": "1 页没有可搜索的文字（扫描件或图片）。请自己在上面画框。",
+    "Boxes": "框",
+    "No boxes yet. Search, tap a finder or draw on a page.": "还没有框。请搜索、点选查找器，或在页面上画框。",
+    "1 box on 1 page": "1 页上有 1 个框",
+    "Clear all boxes": "清除所有框",
+    "Those places already have boxes.": "这些位置已经有框了。",
+    "Nothing new to box.": "没有需要新增框的内容。",
+    "Stopped at 5,000 boxes.": "已达到 5,000 个框的上限。",
+    "1 box added. Check every page before you share the copy.": "已添加 1 个框。分享副本之前请检查每一页。",
+    "Page tools": "页面工具",
+    "Draw": "绘制",
+    "Scroll": "滚动",
+    "Drag on a page to draw a box": "在页面上拖动以画框",
+    "Scroll with a finger; tap a box to select it": "用手指滚动；点按框即可选中",
+    "Zoom": "缩放",
+    "Fit to width": "适应宽度",
+    "Drag the box to move it or a corner to resize it. Delete removes it.": "拖动框可移动它，拖动角可调整大小。按 Delete 可将其删除。",
+    "Drag on a page to draw a box. Click a box to move, resize or delete it.": "在页面上拖动以画框。点击框可移动、调整大小或删除。",
+    "Scroll the pages, and tap a box to select it. Switch to Draw to add or move boxes.": "滚动页面，点按框即可选中。切换到“绘制”可添加或移动框。",
+    "This copy is out of date.": "此副本已过时。",
+    "Your redacted PDF is ready.": "你的打码 PDF 已准备好。",
+    "You changed the boxes after making it. Make the copy again before you download or send it.": "你在生成副本之后修改了框。请重新生成副本，再下载或发送。",
+    "Checked in the file itself: only page pictures. No text, fonts, metadata, annotations, form fields, attachments or scripts.": "已在文件本身中检查：只有页面图片。没有文字、字体、元数据、批注、表单字段、附件或脚本。",
+    "1 very large page was drawn a little smaller than the quality you chose.": "1 个超大页面绘制得比你选择的质量略小。",
+    "The copy isn't password-protected.": "副本没有密码保护。",
+    "File name": "文件名",
+    "Send to chat": "发送到会话",
+    "Send to chat isn't available here. Download the copy instead.": "这里无法发送到会话。请改为下载副本。",
+    "Send to chat needs a signed-in workspace. Download the copy instead.": "发送到会话需要已登录的工作区。请改为下载副本。",
+    "Sealed Mode takes no attachments. Turn it off to send pages to a chat, or download the copy.": "密封模式不接受附件。请关闭它以便把页面发送到会话，或下载副本。",
+    "The text is read from the redacted pages on this device and attached to a new chat as a document. Nothing is sent until you press Send there.": "文字会在此设备上从打码后的页面中读取，并作为文档附加到新的会话中。在那里按下发送之前，不会发送任何内容。",
+    "The redacted pages are attached to a new chat as pictures. Nothing is sent until you press Send there.": "打码后的页面会作为图片附加到新的会话中。在那里按下发送之前，不会发送任何内容。",
+    "Read and attach": "读取并附加",
+    "Attach pictures": "附加图片",
+    "Send pictures instead": "改为发送图片",
+    "Send the text instead": "改为发送文字",
+    "The text of up to 20 pages can be read at a time.": "一次最多可读取 20 页的文字。",
+    "A chat takes up to 8 pictures. Choose fewer pages.": "一个会话最多接受 8 张图片。请选择更少的页数。",
+    "No text could be read on those pages. Send them as pictures instead.": "这些页面上没有读取到文字。请改为以图片发送。",
+    "The pages couldn't be sent to a chat.": "无法把这些页面发送到会话。",
+    "The copy didn't pass its own check, so it isn't offered. Nothing was saved. Try again.": "副本没有通过自身检查，因此不会提供。没有保存任何内容。请重试。",
+    "The redacted copy couldn't be made.": "无法生成打码副本。",
+    "The copy is getting too large. Choose a lower quality, or redact fewer pages.": "副本变得太大。请选择较低的质量，或减少打码的页数。",
+    "A page couldn't be made into a picture.": "无法把某一页转成图片。",
+    "A page couldn't be read.": "无法读取某一页。",
+    "There are no pages to copy.": "没有可复制的页面。",
+    "This page couldn't be drawn.": "无法绘制此页。",
+    "No boxes yet": "还没有框",
+    "Copy quality": "副本质量",
+    "150 dpi (smaller file)": "150 dpi（文件更小）",
+    "300 dpi (sharper text)": "300 dpi（文字更清晰）",
+    "Make redacted copy": "生成打码副本",
+    "This PDF is password-protected": "此 PDF 有密码保护",
+    "That password didn't work. Try again.": "密码不对，请重试。",
+    "The password opens the file here and isn't kept. The redacted copy is not password-protected.": "密码仅用于在这里打开文件，不会被保存。打码副本没有密码保护。",
+    "PDF Redact: the PDF is opened, boxed and redrawn in your browser, and the redacted copy is written there. Nothing is uploaded, saved or added to your export unless you choose Send to chat, and then only the redacted pages, as pictures or as the text read from them on this device, go to a new chat.": "PDF 打码：PDF 在你的浏览器中打开、加框并重新绘制，打码副本也在那里生成。除非你选择“发送到会话”，否则不会上传、保存或加入你的导出内容；选择后，也只有打码后的页面（图片，或在此设备上从中读取的文字）会进入新的会话。",
+    "Look at the copy": "查看副本",
+    "Back to the original": "返回原文件",
+    "This is the redacted copy as it will be shared: pictures of your pages, with the boxes solid black. Nothing is drawn over it here.": "这是即将分享的打码副本：你页面的图片，框已被涂成纯黑。这里没有在上面叠加任何内容。",
+    "The copy couldn't be shown.": "无法显示副本。"
   },
   "patterns": [
     {
@@ -10673,6 +10788,94 @@
     {
       "en": "You have the most characters an account can keep ({0}). Delete one to add this.",
       "zh": "你的角色数量已达账户上限（{0}）。删除一个后才能添加它。"
+    },
+    {
+      "en": "{0} pages · {1}",
+      "zh": "{0} 页 · {1}"
+    },
+    {
+      "en": "1 page · {0}",
+      "zh": "1 页 · {0}"
+    },
+    {
+      "en": "{0} matches on 1 page",
+      "zh": "1 页上有 {0} 处匹配"
+    },
+    {
+      "en": "{0} matches on {1} pages",
+      "zh": "{1} 页上有 {0} 处匹配"
+    },
+    {
+      "en": "Redact all {0} matches",
+      "zh": "全部打码（{0} 处匹配）"
+    },
+    {
+      "en": "{0} boxes",
+      "zh": "{0} 个框"
+    },
+    {
+      "en": "{0} found",
+      "zh": "找到 {0} 处"
+    },
+    {
+      "en": "{0} pages have no text to search (scans or pictures). Draw boxes on them yourself.",
+      "zh": "{0} 页没有可搜索的文字（扫描件或图片）。请自己在上面画框。"
+    },
+    {
+      "en": "{0} boxes on 1 page",
+      "zh": "1 页上有 {0} 个框"
+    },
+    {
+      "en": "{0} boxes on {1} pages",
+      "zh": "{1} 页上有 {0} 个框"
+    },
+    {
+      "en": "{0} boxes added. Check every page before you share the copy.",
+      "zh": "已添加 {0} 个框。分享副本之前请检查每一页。"
+    },
+    {
+      "en": "{0} pages · {1} · {2} dpi",
+      "zh": "{0} 页 · {1} · {2} dpi"
+    },
+    {
+      "en": "1 page · {0} · {1} dpi",
+      "zh": "1 页 · {0} · {1} dpi"
+    },
+    {
+      "en": "{0} very large pages were drawn a little smaller than the quality you chose.",
+      "zh": "{0} 个超大页面绘制得比你选择的质量略小。"
+    },
+    {
+      "en": "Pages to send (up to {0})",
+      "zh": "要发送的页面（最多 {0} 页）"
+    },
+    {
+      "en": "Choose pages between 1 and {0}, like 1-3, 5.",
+      "zh": "请选择 1 到 {0} 之间的页码，例如 1-3, 5。"
+    },
+    {
+      "en": "Page {0} is too large to attach as a picture.",
+      "zh": "第 {0} 页太大，无法作为图片附加。"
+    },
+    {
+      "en": "Page {0} isn't in this PDF.",
+      "zh": "此 PDF 中没有第 {0} 页。"
+    },
+    {
+      "en": "This PDF has {0} pages. Redact a PDF takes up to 200. Split it first, then redact each part.",
+      "zh": "此 PDF 有 {0} 页。PDF 打码最多支持 200 页。请先拆分，再分别打码。"
+    },
+    {
+      "en": "Making page {0} of {1}…",
+      "zh": "正在生成第 {0} 页，共 {1} 页……"
+    },
+    {
+      "en": "Reading page {0} of {1} on this device…",
+      "zh": "正在此设备上读取第 {0} 页，共 {1} 页……"
+    },
+    {
+      "en": "Preparing page {0} of {1}…",
+      "zh": "正在准备第 {0} 页，共 {1} 页……"
     }
   ]
 }

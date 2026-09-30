@@ -910,6 +910,7 @@ const featureIcons = {
   characters: "users",
   researchwatch: "research",
   burnlinks: "flame",
+  pdfredact: "pdf",
 };
 const launch = {
   id: "mvp",

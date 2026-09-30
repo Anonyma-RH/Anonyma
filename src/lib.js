@@ -559,6 +559,8 @@ export const MODE_FEATURES = {
   filesearch: "filesearch",
   // Repo Reader's page (src/RepoReader.jsx).
   repos: "reporeader",
+  // Redact a PDF's page (src/PdfRedact.jsx): the browser alone, no server route.
+  pdfredact: "pdfredact",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")

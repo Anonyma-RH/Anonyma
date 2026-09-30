@@ -48,6 +48,8 @@ export default function DataControls() {
   const recoveryKit = !!config && isReleased(config, "recovery");
   // And the Privacy Screen.
   const privacyScreen = !!config && isReleased(config, "privacyscreen");
+  // And PDF Redact.
+  const pdfRedact = !!config && isReleased(config, "pdfredact");
   // And Local OCR, which needs Documents.
   const ocr = !!config && isReleased(config, "ocr") && isReleased(config, "documents");
   // And Study Mode.
@@ -97,6 +99,11 @@ export default function DataControls() {
         {redact && (
           <li>
             Redact Before You Send: the boxes you draw on an image are applied in your browser. Only the redacted copy is sent, and only it is kept in a saved chat. The original isn't uploaded, and ANONYMA isn't told that an image was redacted.
+          </li>
+        )}
+        {pdfRedact && (
+          <li>
+            PDF Redact: the PDF is opened, boxed and redrawn in your browser, and the redacted copy is written there. Nothing is uploaded, saved or added to your export unless you choose Send to chat, and then only the redacted pages, as pictures or as the text read from them on this device, go to a new chat.
           </li>
         )}
         {ocr && (

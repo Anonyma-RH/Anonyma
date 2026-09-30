@@ -1672,6 +1672,8 @@ const shareLink = object({
   sealed: { ...bool, description: "Sealed Share: the snapshot is ciphertext only. title and messages are null (they're sealed inside it) and url has no key: only the link made when it was shared can open it." },
   device_only: { ...bool, description: "Sealed Share: a sealed copy of a Device-only chat, with no conversation on the server (conversation_id null)" },
   bytes: { ...integer, description: "Sealed Share: the stored ciphertext's size" },
+  burn: { ...bool, description: "Burn After Reading: the link opens once. Its url and path are null here: only the reply that created it has them (the server keeps only its token's SHA-256)." },
+  opened: { type: ["integer", "null"], description: "Burn After Reading: when it was opened (null: not yet). Once opened, title and messages are null and nothing of the snapshot is left." },
 });
 const sharedMessage = object({
   role: { enum: ["user", "assistant"] },
@@ -1711,6 +1713,7 @@ route("post", "/api/shares", "Share a saved conversation as a read-only snapshot
       sealed: { ...bool, default: false, description: "Sealed Share (needs sealedshare released): upload ciphertext only. The link's key stays in its #k= fragment and never reaches the server." },
       ciphertext: { ...string, description: "With sealed: base64url of the 12-byte IV, the AES-GCM ciphertext and its 16-byte tag, at most 3 MB (400 share_too_large); an account's live sealed links hold at most 32 MB in all (400 share_limit)." },
       device: { ...bool, default: false, description: "With sealed: a Device-only chat, kept only in the browser and never on the server. Refused without sealed (400 share_device_sealed)." },
+      burn: { ...bool, default: false, description: "Burn After Reading (needs burnlinks released): the link opens once, with POST /api/s/{token}/open, and its snapshot or ciphertext is deleted then. The reply is the only place its url is given." },
     },
   ),
   response: object({ ...shareLink.properties, withheld: integer, masked: { ...integer, description: "Veil tags in the snapshot" } }),
@@ -1729,13 +1732,28 @@ route("get", "/api/s/{token}", "A shared conversation snapshot (public)", {
     messages: array(sharedMessage),
     sealed: { ...bool, description: "Sealed Share: only sealed, created and ciphertext are sent; the page opens the ciphertext with the key in its link" },
     ciphertext: { ...string, description: "Sealed Share: base64url IV + AES-GCM ciphertext + tag" },
+    burn: { ...bool, description: "Burn After Reading: only burn and sealed are sent. A GET never opens the link; POST /api/s/{token}/open does, once." },
   }),
   description:
-    "No sign-in. Rate-limited per address. Unknown, revoked, expired and deleted links all return the same 404 share_not_found. Sent with X-Robots-Tag: noindex, nofollow and Referrer-Policy: no-referrer.",
+    "No sign-in. Rate-limited per address. Unknown, revoked, expired and deleted links (and a Burn After Reading link once opened) all return the same 404 share_not_found. Sent with X-Robots-Tag: noindex, nofollow and Referrer-Policy: no-referrer.",
+});
+route("post", "/api/s/{token}/open", "Open a Burn After Reading link, once (public)", {
+  auth: null,
+  body: object({}),
+  response: object({
+    title: string,
+    created: integer,
+    opened: { ...integer, description: "When this request opened it" },
+    messages: array(sharedMessage),
+    sealed: bool,
+    ciphertext: { ...string, description: "Sealed: base64url IV + AES-GCM ciphertext + tag, for the page to open with the key in its link" },
+  }),
+  description:
+    "Burn After Reading (needs burnlinks released). No sign-in; rate-limited per address. In one transaction the link is marked opened and its snapshot returned (a sealed link's ciphertext); the stored copy and title are then overwritten. Every later request, including one racing this one, gets the same 404 share_not_found as an unknown, revoked or expired link. The viewer can still copy or screenshot what they're shown.",
 });
 route("get", "/s/{token}", "The shared conversation page (public)", {
   auth: null,
-  description: "The web app's page for a share link, with the same headers and the same 404 as /api/s/{token}. The page is the same generic app shell for every link, sealed or not: link previews never show a snapshot's title or text.",
+  description: "The web app's page for a share link, with the same headers and the same 404 as /api/s/{token}. The page is the same generic app shell for every link, sealed or not: link previews never show a snapshot's title or text, and never open a Burn After Reading link.",
 });
 // Routines (update "routines").
 const routineSchedule = object(

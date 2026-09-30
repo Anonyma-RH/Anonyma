@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { uid, now, fail, transaction } from "../core.js";
@@ -37,7 +37,20 @@ import {
 // and uploads only the ciphertext (sealed_shares). The same lifetimes,
 // limits and revocation apply. A Device-only chat can be shared this way
 // only, with no conversation on the server at all.
+//
+// Burn After Reading (update "burnlinks") makes either kind open once. A GET
+// of its page or data never opens it, so link previews, unfurlers and
+// prefetchers can't use it up: they get an interstitial. Only the POST that
+// an explicit click sends (/api/s/<token>/open) opens it, in one transaction
+// that marks it opened and returns the snapshot, which is overwritten at
+// once (secure_delete, as Panic Wipe does). Every later request gets the
+// same 404 as a revoked, expired or unknown link. The token itself is never
+// stored, only its SHA-256, and share_burns keeps which links burn and when
+// each was opened, which is all the owner sees afterwards.
 const MB = 1024 * 1024;
+// A burn link is found by its token's SHA-256, never by the token as sent.
+export const burnFingerprint = (token) =>
+  createHash("sha256").update(token).digest("base64url");
 export function shareRoutes(ctx) {
   const { app, db, cfg, limit, requireUser } = ctx;
   const base = () => String(cfg.publicUrl || cfg.origin).replace(/\/+$/, "");
@@ -52,6 +65,7 @@ export function shareRoutes(ctx) {
   // Viewing is public and needs no sign-in, so it's limited per address.
   const viewLimit = limit("share_view", 120, 60000);
   const sealedLive = () => isReleased(cfg, "sealedshare");
+  const burnLive = () => isReleased(cfg, "burnlinks");
   // Unknown, revoked, expired and deleted all look the same.
   const missing = () =>
     fail(404, "This shared conversation isn't available.", "share_not_found");
@@ -59,38 +73,101 @@ export function shareRoutes(ctx) {
   // hasn't passed its auto-delete (treated as gone at once, as everywhere
   // else), and its account is open.
   const LIVE = `(s.expires IS NULL OR s.expires>?) AND (c.expires IS NULL OR c.expires>=?) AND c.collab_id IS NULL AND u.deleted IS NULL`;
-  const FROM = `FROM share_links s JOIN conversations c ON c.id=s.conversation_id JOIN users u ON u.id=s.user_id`;
+  // b: Burn After Reading, when the link opens only once.
+  const FROM = `FROM share_links s JOIN conversations c ON c.id=s.conversation_id JOIN users u ON u.id=s.user_id LEFT JOIN share_burns b ON b.id=s.id`;
   // A sealed link goes by the same rules; a Device-only one has no
   // conversation, so only its own expiry and its account apply.
   const SEALED_LIVE = `(s.expires IS NULL OR s.expires>?) AND (s.conversation_id IS NULL OR (c.id IS NOT NULL AND (c.expires IS NULL OR c.expires>=?) AND c.collab_id IS NULL)) AND u.deleted IS NULL`;
-  const SEALED_FROM = `FROM sealed_shares s LEFT JOIN conversations c ON c.id=s.conversation_id JOIN users u ON u.id=s.user_id`;
+  const SEALED_FROM = `FROM sealed_shares s LEFT JOIN conversations c ON c.id=s.conversation_id JOIN users u ON u.id=s.user_id LEFT JOIN share_burns b ON b.id=s.id`;
+  // A burn link that hasn't been opened yet (or no burn link at all): what
+  // counts toward the limits. An opened one is only its dates.
+  const UNSPENT = `(b.id IS NULL OR b.opened IS NULL)`;
   function published(token) {
     if (typeof token !== "string" || !SHARE_TOKEN.test(token)) return null;
     const t = now();
     const open = db
-      .prepare(`SELECT s.title,s.snapshot,s.message_count,s.created ${FROM} WHERE s.token=? AND ${LIVE}`)
+      .prepare(`SELECT s.title,s.snapshot,s.message_count,s.created ${FROM} WHERE s.token=? AND b.id IS NULL AND ${LIVE}`)
       .get(token, t, t);
     if (open) return open;
     // Sealed links open only while Sealed Share is released.
+    const sealed =
+      sealedLive() &&
+      db
+        .prepare(`SELECT s.ciphertext,s.created ${SEALED_FROM} WHERE s.token=? AND b.id IS NULL AND ${SEALED_LIVE}`)
+        .get(token, t, t);
+    if (sealed) return { ...sealed, sealed: true };
+    // A burn link that hasn't been opened: only that it is one, and whether
+    // it's sealed (so the page can check its key before opening it).
+    const burn = unopened(token, t);
+    return burn ? { burn: true, sealed: burn.sealed } : null;
+  }
+  // The live, unopened burn link behind a token, while Burn After Reading
+  // (and, for a sealed one, Sealed Share) is released; null otherwise.
+  // `full` also reads what it holds.
+  function unopened(token, t, full = false) {
+    if (!burnLive() || typeof token !== "string" || !SHARE_TOKEN.test(token)) return null;
+    const hash = burnFingerprint(token);
+    const open = db
+      .prepare(
+        `SELECT s.id${full ? ",s.title,s.snapshot,s.created" : ""} ${FROM} WHERE s.token=? AND b.id IS NOT NULL AND b.opened IS NULL AND ${LIVE}`,
+      )
+      .get(hash, t, t);
+    if (open) return { ...open, sealed: false };
     if (!sealedLive()) return null;
     const sealed = db
-      .prepare(`SELECT s.ciphertext,s.created ${SEALED_FROM} WHERE s.token=? AND ${SEALED_LIVE}`)
-      .get(token, t, t);
+      .prepare(
+        `SELECT s.id${full ? ",s.ciphertext,s.created" : ""} ${SEALED_FROM} WHERE s.token=? AND b.id IS NOT NULL AND b.opened IS NULL AND ${SEALED_LIVE}`,
+      )
+      .get(hash, t, t);
     return sealed ? { ...sealed, sealed: true } : null;
+  }
+  // Opens a burn link: in one transaction, marks it opened and returns what
+  // it held, then overwrites the snapshot (or ciphertext) and title in
+  // place, so only the link's id and dates stay. Null for every link that
+  // isn't live and unopened, including one opened a moment ago by a
+  // request that got here first.
+  function reveal(token) {
+    const secure = db.prepare("PRAGMA secure_delete").get().secure_delete;
+    db.exec("PRAGMA secure_delete=ON");
+    try {
+      return transaction(db, () => {
+        const t = now();
+        const s = unopened(token, t, true);
+        if (!s) return null;
+        if (!db.prepare("UPDATE share_burns SET opened=? WHERE id=? AND opened IS NULL").run(t, s.id).changes)
+          return null;
+        if (s.sealed) {
+          db.prepare("UPDATE sealed_shares SET ciphertext=X'' WHERE id=?").run(s.id);
+          return {
+            sealed: true,
+            created: s.created,
+            opened: t,
+            ciphertext: Buffer.from(s.ciphertext).toString("base64url"),
+          };
+        }
+        db.prepare("UPDATE share_links SET title='',snapshot='',message_count=0 WHERE id=?").run(s.id);
+        return { title: s.title, created: s.created, opened: t, messages: JSON.parse(s.snapshot) };
+      });
+    } finally {
+      db.exec(`PRAGMA secure_delete=${Number(secure) || 0}`);
+    }
   }
   const view = (s) => ({
     id: s.id,
-    url: base() + sharePath(s.token),
-    path: sharePath(s.token),
-    title: s.title,
+    // A burn link's address isn't kept: only the reply that made it has it.
+    url: s.burn ? null : base() + sharePath(s.token),
+    path: s.burn ? null : sharePath(s.token),
+    title: s.burn && s.opened ? null : s.title,
     conversation_id: s.conversation_id,
     conversation_title: s.conversation_title,
-    messages: s.message_count,
+    messages: s.burn && s.opened ? null : s.message_count,
     created: s.created,
     expires: s.expires,
     // The conversation's auto-delete is the deadline that applies.
     ends_with_conversation:
       s.conversation_expires != null && s.expires === s.conversation_expires,
+    // Burn After Reading: when it was opened (null: not yet).
+    ...(s.burn ? { burn: true, opened: s.opened ?? null } : {}),
   });
   // A sealed link as its owner sees it: no title and no message count (both
   // are inside the ciphertext), and an address without its key, which only
@@ -105,22 +182,23 @@ export function shareRoutes(ctx) {
     const t = now();
     const open = db
       .prepare(
-        `SELECT s.id,s.token,s.title,s.conversation_id,s.message_count,s.created,s.expires,c.title conversation_title,c.expires conversation_expires ${FROM} WHERE s.user_id=? AND ${LIVE} ${extra} ORDER BY s.created DESC,s.rowid DESC`,
+        `SELECT s.id,s.token,s.title,s.conversation_id,s.message_count,s.created,s.expires,c.title conversation_title,c.expires conversation_expires,b.id IS NOT NULL burn,b.opened ${FROM} WHERE s.user_id=? AND ${LIVE} ${extra} ORDER BY s.created DESC,s.rowid DESC`,
       )
       .all(user, t, t, ...args)
       .map(view);
     const sealed = db
       .prepare(
-        `SELECT s.id,s.token,s.conversation_id,length(s.ciphertext) bytes,s.created,s.expires,c.title conversation_title,c.expires conversation_expires ${SEALED_FROM} WHERE s.user_id=? AND ${SEALED_LIVE} ${extra} ORDER BY s.created DESC,s.rowid DESC`,
+        `SELECT s.id,s.token,s.conversation_id,length(s.ciphertext) bytes,s.created,s.expires,c.title conversation_title,c.expires conversation_expires,b.id IS NOT NULL burn,b.opened ${SEALED_FROM} WHERE s.user_id=? AND ${SEALED_LIVE} ${extra} ORDER BY s.created DESC,s.rowid DESC`,
       )
       .all(user, t, t, ...args)
       .map(sealedView);
     return [...open, ...sealed].sort((a, b) => b.created - a.created);
   };
-  // Live links, sealed or not, for an account or a conversation.
+  // Live links, sealed or not, for an account or a conversation. A burn
+  // link that has been opened no longer counts.
   const activeCount = (column, id, t) =>
-    db.prepare(`SELECT COUNT(*) n ${FROM} WHERE ${column}=? AND ${LIVE}`).get(id, t, t).n +
-    db.prepare(`SELECT COUNT(*) n ${SEALED_FROM} WHERE ${column}=? AND ${SEALED_LIVE}`).get(id, t, t).n;
+    db.prepare(`SELECT COUNT(*) n ${FROM} WHERE ${column}=? AND ${LIVE} AND ${UNSPENT}`).get(id, t, t).n +
+    db.prepare(`SELECT COUNT(*) n ${SEALED_FROM} WHERE ${column}=? AND ${SEALED_LIVE} AND ${UNSPENT}`).get(id, t, t).n;
   function checkLimits(user, conversation, t) {
     if (activeCount("s.user_id", user, t) >= MAX_ACTIVE_SHARES)
       fail(
@@ -239,8 +317,22 @@ export function shareRoutes(ctx) {
         fail(400, "sealed must be true or false.", "invalid_request");
       if (body.device !== undefined && typeof body.device !== "boolean")
         fail(400, "device must be true or false.", "invalid_request");
+      if (body.burn !== undefined && typeof body.burn !== "boolean")
+        fail(400, "burn must be true or false.", "invalid_request");
       const sealed = body.sealed === true,
-        device = body.device === true;
+        device = body.device === true,
+        burn = body.burn === true;
+      // A new link's token. A burn link's is stored only as its SHA-256, so
+      // its address exists only in this reply.
+      const token = randomBytes(SHARE_TOKEN_BYTES).toString("base64url");
+      const stored = burn ? burnFingerprint(token) : token;
+      const burnRow = (id) => {
+        if (burn)
+          db.prepare("INSERT INTO share_burns(id,user_id) VALUES(?,?)").run(id, req.user.id);
+      };
+      // What the reply says about the new link: a burn link's address too.
+      const made = (link) =>
+        burn ? { ...link, url: base() + sharePath(token), path: sharePath(token) } : link;
       // A Device-only chat was never on the server, and never arrives here
       // readable: it can only be shared sealed.
       if (device && !sealed)
@@ -294,15 +386,15 @@ export function shareRoutes(ctx) {
               "share_limit",
             );
           const { expires } = shareExpiry(expiry.days, t, conversation?.expires ?? null);
-          const id = uid("share_"),
-            token = randomBytes(SHARE_TOKEN_BYTES).toString("base64url");
+          const id = uid("share_");
           db.prepare(
             "INSERT INTO sealed_shares(id,user_id,conversation_id,token,ciphertext,created,expires) VALUES(?,?,?,?,?,?,?)",
-          ).run(id, req.user.id, conversation?.id ?? null, token, bytes, t, expires);
+          ).run(id, req.user.id, conversation?.id ?? null, stored, bytes, t, expires);
+          burnRow(id);
           return id;
         });
         const [link] = owned(req.user.id, "AND s.id=?", id);
-        return res.status(201).json(link);
+        return res.status(201).json(made(link));
       }
       const created = transaction(db, () => {
         const { c, messages, title } = snapshotOf(
@@ -313,26 +405,26 @@ export function shareRoutes(ctx) {
         const t = now();
         checkLimits(req.user.id, c.id, t);
         const { expires } = shareExpiry(expiry.days, t, c.expires);
-        const id = uid("share_"),
-          token = randomBytes(SHARE_TOKEN_BYTES).toString("base64url");
+        const id = uid("share_");
         db.prepare(
           "INSERT INTO share_links(id,user_id,conversation_id,token,title,snapshot,message_count,created,expires) VALUES(?,?,?,?,?,?,?,?,?)",
         ).run(
           id,
           req.user.id,
           c.id,
-          token,
+          stored,
           title,
           JSON.stringify(messages),
           messages.length,
           t,
           expires,
         );
+        burnRow(id);
         return { id, summary: snapshotSummary(messages) };
       });
       const [link] = owned(req.user.id, "AND s.id=?", created.id);
       res.status(201).json({
-        ...link,
+        ...made(link),
         withheld: created.summary.withheld,
         masked: created.summary.masked,
       });
@@ -361,6 +453,8 @@ export function shareRoutes(ctx) {
     privatePage(res);
     const s = published(req.params.token);
     if (!s) missing();
+    // Burn After Reading: never the snapshot, only that it opens once.
+    if (s.burn) return res.json({ burn: true, sealed: s.sealed });
     if (s.sealed)
       return res.json({
         sealed: true,
@@ -372,6 +466,18 @@ export function shareRoutes(ctx) {
       created: s.created,
       messages: JSON.parse(s.snapshot),
     });
+  });
+
+  // Burn After Reading: the one request that opens a link that opens once.
+  // A POST with a JSON body, which only the page's Open button sends: link
+  // previews and prefetchers only ever GET. It returns what the link held,
+  // once; the second request (even one racing it) gets the same 404 as a
+  // revoked, expired or unknown link.
+  app.post("/api/s/:token/open", viewLimit, (req, res) => {
+    privatePage(res);
+    const s = reveal(req.params.token);
+    if (!s) missing();
+    res.json(s);
   });
 
   // The shared page itself: the web app, with the same headers, and the

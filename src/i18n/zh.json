@@ -6460,7 +6460,33 @@
     "Off. Messages are sent as written.": "已关闭。消息会按原样发送。",
     "Turn off Secret Guard": "关闭密钥防护",
     "Secret Guard checks what you send from the workspace for passwords, API keys and tokens in your browser. Masked ones go as placeholders like [SECRET_1]; their real values stay in that tab's memory and are never sent or saved. Only whether you switched it off is kept with your account. It doesn't check the developer API (/v1) or MCP: those callers are programs, and holding their requests would break them.": "密钥防护会在你的浏览器中检查你从工作区发送的内容里是否有密码、API 密钥和令牌。被遮盖的内容以 [SECRET_1] 这样的占位符发送；真实值只留在该标签页的内存中，绝不会被发送或保存。你的账户只记录你是否关闭了它。它不检查开发者 API（/v1）或 MCP：这些调用方是程序，拦下它们的请求会让程序出错。",
-    "Secret Guard found what looks like a password, key or token in this prompt. Mask or remove it first.": "密钥防护在此提示词中发现了疑似密码、密钥或令牌。请先遮盖或删除。"
+    "Secret Guard found what looks like a password, key or token in this prompt. Mask or remove it first.": "密钥防护在此提示词中发现了疑似密码、密钥或令牌。请先遮盖或删除。",
+    "Burn After Reading": "阅后即焚",
+    "Share a chat that deletes itself once it's read.": "分享一个读完即自动删除的聊天。",
+    "The link opens once, then the chat is deleted from our servers": "链接只能打开一次，随后聊天即从我们的服务器删除",
+    "Link previews can't use it up: only a click opens it": "链接预览不会把它用掉：只有点击才能打开",
+    "See when it was opened; works with sealed links too": "可查看打开时间；密封链接也适用",
+    "Opens once. When someone opens it, the chat is deleted from our servers.": "只能打开一次。有人打开后，聊天即从我们的服务器删除。",
+    "Link previews and prefetchers can't use it up: only a click on Open does.": "链接预览和预取程序不会把它用掉：只有点击“打开”才会。",
+    "Whoever opens it can still copy or screenshot what they see.": "打开它的人仍可复制或截屏所看到的内容。",
+    "The link is shown only here, once: ANONYMA keeps only a fingerprint of it. Copy it now.": "链接只在这里显示一次：ANONYMA 只保留它的指纹。请立即复制。",
+    "This chat was already opened, or isn't available.": "此聊天已被打开过，或不可用。",
+    "A link that opens once can't be opened again. Other links stop working when they expire or are revoked, or when their conversation is deleted.": "只能打开一次的链接无法再次打开。其他链接会在过期、被撤销或其会话被删除时失效。",
+    "Burn after reading": "阅后即焚",
+    "Not opened yet": "尚未打开",
+    "Opens once, then it's deleted from our servers. Unopened, it still expires as chosen above.": "只能打开一次，之后即从我们的服务器删除。若无人打开，仍按上方所选时间过期。",
+    "Links that open once show whether and when they were opened. Their address was shown only when you made them, so here they can only be revoked.": "只能打开一次的链接会显示是否被打开及打开时间。它们的地址只在创建时显示过，因此在这里只能撤销。",
+    "Opened once.": "已打开一次。",
+    "This chat was deleted from ANONYMA's servers when you opened it. It stays on this page only until you close or reload it.": "你打开时，此聊天已从 ANONYMA 的服务器删除。它只会留在此页面上，直到你关闭或重新加载页面。",
+    "You can still copy or screenshot what you see.": "你仍可复制或截屏所看到的内容。",
+    "BURN AFTER READING": "阅后即焚",
+    "This chat can be opened once. Open it now?": "此聊天只能打开一次。现在打开吗？",
+    "It's deleted from our servers as soon as it opens, and this link won't work again. Keep this page open while you read: closing or reloading it ends the chat.": "一旦打开，它就会从我们的服务器删除，此链接也将失效。阅读时请保持此页面打开：关闭或重新加载页面，聊天即结束。",
+    "Opening…": "正在打开……",
+    "Open it now": "现在打开",
+    "Burn-after-reading links: the same copy as any share link, stored under a fingerprint of the link rather than the link itself. The first time someone opens it, the copy and its title are deleted at once, and only the link’s dates are kept (created, opened, expires) so you can see when it was read. Opening the page alone never counts: only a click on Open does.": "阅后即焚链接：与其他分享链接相同的副本，但以链接的指纹而非链接本身存储。有人首次打开时，副本及其标题会立即删除，只保留链接的日期（创建、打开、过期），让你知道它何时被阅读。仅加载页面不算打开：只有点击“打开”才算。",
+    "Burn-after-reading links are exported as their dates only: when each was made, when it expires and when it was opened. Never their address or their copy.": "阅后即焚链接只导出其日期：创建时间、过期时间和打开时间。绝不导出其地址或副本。",
+    "A burn-after-reading link opens once: its copy is deleted the first time someone opens it, and only its dates are kept.": "阅后即焚链接只能打开一次：有人首次打开时，其副本即被删除，只保留其日期。"
   },
   "patterns": [
     {
@@ -10534,6 +10560,10 @@
     {
       "en": "Secret Guard — the model saw [{0}]",
       "zh": "密钥防护——模型看到的是 [{0}]"
+    },
+    {
+      "en": "Opened on {0}",
+      "zh": "打开于 {0}"
     }
   ]
 }

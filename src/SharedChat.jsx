@@ -1,14 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ReplyMarkdown } from "./RichMarkdown.jsx";
 import remarkGfm from "remark-gfm";
 import { useApp } from "./context.jsx";
-import { Logo, Mark, Icon, Button, CopyButton } from "./ui.jsx";
+import { Logo, Mark, Icon, Button, CopyButton, Notice } from "./ui.jsx";
 import { LanguageSwitch } from "./LanguageSwitch.jsx";
 import { NotFound } from "./Pages.jsx";
 import { api, isReleased } from "./lib.js";
-import { SHARE_TOKEN, SEALED_FACTS, sealedLink } from "./share-links.js";
-import { openSnapshot, shareKeyFor, SEALED_ERRORS, SEALED_KEY_EVENT } from "./sealed-share.js";
+import { SHARE_TOKEN, SEALED_FACTS, BURN_GONE, sealedLink } from "./share-links.js";
+import {
+  openSnapshot,
+  shareKeyFor,
+  forgetShareKey,
+  SEALED_ERRORS,
+  SEALED_KEY_EVENT,
+} from "./sealed-share.js";
 import { shieldMarkdown, useShieldLive } from "./Shield.jsx";
 import "./share-links.css";
 
@@ -23,6 +29,13 @@ import "./share-links.css";
 // with the key from the link's #k= fragment, which src/sealed-boot.js took
 // out of the address bar before the app started. The key is never sent,
 // logged or stored by this page; Copy link rebuilds the full link.
+//
+// Burn After Reading: a link that opens once shows an interstitial first.
+// Loading this page (a GET, as link previews and prefetchers do) never
+// opens it; only the Open button's POST does, and the server deletes its
+// copy in the same step. What it returns is kept only in this page's
+// memory: a reload asks the server again and gets the page for a link
+// that's gone.
 
 // [EMAIL_1]-style tags as <mark> nodes, left as written: the real values
 // were never on the server, so there's nothing to restore.
@@ -139,6 +152,9 @@ export default function SharedChat() {
   const { config, loading } = useApp();
   const shield = useShieldLive(config);
   const [state, setState] = useState({ status: "loading" });
+  // Burn After Reading: once opened, the chat exists only in this page's
+  // memory, so nothing may fetch over it (a pasted link included).
+  const burned = useRef(null);
   // A link pasted over this page (only its #k= differs) opens with its key.
   const [keyArrived, setKeyArrived] = useState(0);
   useEffect(() => {
@@ -166,9 +182,18 @@ export default function SharedChat() {
       setState({ status: "missing" });
       return;
     }
+    if (burned.current === token) return;
     let live = true;
     api("/api/s/" + token)
       .then(async (data) => {
+        // Opens once: ask first. A sealed one needs its key before it's
+        // opened, or the one chance would be spent on nothing.
+        if (data.burn) {
+          const key = data.sealed ? shareKeyFor(token) : null;
+          if (data.sealed && !key)
+            return live && setState({ status: "sealed_error", code: "no_key" });
+          return live && setState({ status: "burn", sealed: !!data.sealed, key });
+        }
         if (!data.sealed) return live && setState({ status: "ready", data });
         const key = shareKeyFor(token);
         if (!key) return live && setState({ status: "sealed_error", code: "no_key" });
@@ -197,6 +222,31 @@ export default function SharedChat() {
       live = false;
     };
   }, [token, keyArrived]);
+  // The one click that opens a link that opens once.
+  async function openOnce() {
+    const { sealed, key } = state;
+    setState({ status: "opening", sealed, key });
+    try {
+      const r = await api("/api/s/" + token + "/open", { method: "POST", body: {} });
+      burned.current = token;
+      let data = r;
+      if (r.sealed) {
+        forgetShareKey(token);
+        try {
+          data = { ...(await openSnapshot(r.ciphertext, key)), created: r.created, sealed: true };
+        } catch (e) {
+          return setState({ status: "sealed_error", code: e?.code in SEALED_ERRORS ? e.code : "damaged" });
+        }
+      }
+      setState({ status: "ready", data: { ...data, opened: r.opened } });
+    } catch (e) {
+      setState(
+        e.status === 404 || e.status === 403
+          ? { status: "missing" }
+          : { status: "burn", sealed, key, error: e.message },
+      );
+    }
+  }
   if (loading)
     return (
       <main id="main" className="loading-page">
@@ -204,6 +254,7 @@ export default function SharedChat() {
       </main>
     );
   if (config && !isReleased(config, "sharelinks")) return <NotFound />;
+  const burnLive = isReleased(config, "burnlinks");
   const data = state.data;
   const when = data ? new Date(data.created).toLocaleDateString() : "";
   return (
@@ -227,7 +278,20 @@ export default function SharedChat() {
               Shared from ANONYMA · snapshot from {when}
             </p>
           </section>
-          {data.sealed && (
+          {data.opened && (
+            <div className="shared-banner shared-burned" role="note">
+              <Icon name="flame" size={16} />
+              <div>
+                <p>
+                  <b>Opened once.</b> This chat was deleted from ANONYMA's
+                  servers when you opened it. It stays on this page only until
+                  you close or reload it.
+                </p>
+                <p>You can still copy or screenshot what you see.</p>
+              </div>
+            </div>
+          )}
+          {data.sealed && !data.opened && (
             <div className="shared-banner shared-sealed" role="note">
               <Icon name="lock" size={16} />
               <div>
@@ -271,6 +335,24 @@ export default function SharedChat() {
             </a>
           </footer>
         </>
+      ) : state.status === "burn" || state.status === "opening" ? (
+        <section className="shared-missing shared-burn" aria-live="polite">
+          <p className="eyebrow">BURN AFTER READING</p>
+          <h1>This chat can be opened once. Open it now?</h1>
+          <p>
+            It's deleted from our servers as soon as it opens, and this link
+            won't work again. Keep this page open while you read: closing or
+            reloading it ends the chat.
+          </p>
+          <p>You can still copy or screenshot what you see.</p>
+          {state.error && <Notice type="error">{state.error}</Notice>}
+          <div className="inline-actions">
+            <Button type="button" onClick={openOnce} disabled={state.status === "opening"}>
+              {state.status === "opening" ? "Opening…" : "Open it now"}
+              <Icon name="flame" size={16} />
+            </Button>
+          </div>
+        </section>
       ) : (
         <section className="shared-missing" aria-live="polite">
           {state.status === "loading" ? (
@@ -284,6 +366,17 @@ export default function SharedChat() {
                   : "This sealed conversation can't be opened."}
               </h1>
               <p>{SEALED_ERRORS[state.code]}</p>
+              <Button to="/">
+                Back to ANONYMA <Icon name="arrow" />
+              </Button>
+            </>
+          ) : state.status === "missing" && burnLive ? (
+            // One page for every link that's gone, so it says nothing about
+            // which: opened already, revoked, expired or never real.
+            <>
+              <p className="eyebrow">SHARED CONVERSATION</p>
+              <h1>{BURN_GONE.title}</h1>
+              <p>{BURN_GONE.body}</p>
               <Button to="/">
                 Back to ANONYMA <Icon name="arrow" />
               </Button>

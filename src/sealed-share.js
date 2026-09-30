@@ -151,3 +151,13 @@ export function shareKeyFor(token, history = globalThis.history) {
   if (captured?.token === token) return captured.key;
   return keptKey(token, history);
 }
+// Burn After Reading: once a sealed link that opens once has been opened,
+// its key opens nothing, so it leaves this tab's history entry too.
+export function forgetShareKey(token, history = globalThis.history) {
+  if (captured?.token === token) captured = null;
+  const state = history?.state;
+  if (state?.[STATE_KEY]?.token !== token) return;
+  const next = { ...state };
+  delete next[STATE_KEY];
+  history.replaceState(next, "");
+}

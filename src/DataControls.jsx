@@ -18,6 +18,8 @@ export default function DataControls() {
     isReleased(config, "search");
   // And Sealed Share, which builds on Share a Chat.
   const sealedShares = shares && isReleased(config, "sealedshare");
+  // And Burn After Reading, an option on both.
+  const burnLinks = shares && isReleased(config, "burnlinks");
   // And Projects.
   const projects = !!config && isReleased(config, "projects");
   // And Two-Step Sign-in.
@@ -172,6 +174,16 @@ export default function DataControls() {
             link. A Device-only chat can be shared only this way; its encrypted
             copy is deleted when the link expires, when you revoke it, and when
             you close your account or use Panic Wipe.
+          </li>
+        )}
+        {burnLinks && (
+          <li>
+            Burn-after-reading links: the same copy as any share link, stored
+            under a fingerprint of the link rather than the link itself. The
+            first time someone opens it, the copy and its title are deleted
+            at once, and only the link’s dates are kept (created, opened,
+            expires) so you can see when it was read. Opening the page alone
+            never counts: only a click on Open does.
           </li>
         )}
         {routines && (
@@ -509,6 +521,13 @@ export default function DataControls() {
         <p>
           Sealed links are exported as their addresses without keys, their
           dates and the encrypted copy exactly as stored.
+        </p>
+      )}
+      {burnLinks && (
+        <p>
+          Burn-after-reading links are exported as their dates only: when
+          each was made, when it expires and when it was opened. Never their
+          address or their copy.
         </p>
       )}
       <p>

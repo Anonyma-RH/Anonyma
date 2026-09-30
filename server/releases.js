@@ -1352,6 +1352,31 @@ export const UPDATES = [
     // button and the dictionary never loads.
     released: true,
   },
+  {
+    id: "shottosite",
+    released: false,
+    title: "Screenshot to site",
+    tagline: "Drop a screenshot, a sketch or a wireframe. Get a working page you can see, change with words and download.",
+    points: [
+      "One picture in, one self-contained page out, shown in Live Preview's sandbox with no network",
+      "Change it with words, keep every version, and download the file or open it in Code & Build",
+      "See the most it can cost first; a page you can't use costs nothing",
+    ],
+    // The workspace's Screenshot to site page (src/ShotToSite.jsx),
+    // /workspace/screenshot. Making a page, or changing one, is an
+    // off-the-record /api/chat request (and /api/quote estimate) carrying
+    // `shottosite` (server/shot-to-site.js): the server builds the messages,
+    // holds exactly the quoted maximum and charges only for a reply that
+    // reads as a page. The picture is cleaned (Clean Uploads) and can be
+    // redacted (Redact Before You Send) in the browser first, is redrawn
+    // small there, and is never stored: an estimate carries only its kind
+    // and length. The page is shown in Live Preview's sandbox, so it needs
+    // "preview" released too (featuresFor). A saved page is an ordinary
+    // conversation in Code & Build's mode, one message pair per version
+    // (server/routes/shot-to-site.js), so it's listed, exported, wiped and
+    // closed with the account like any other; the routes for it also need
+    // "code" released. Off the record and Private Mode keep nothing.
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1770,6 +1795,10 @@ export function featuresFor(req) {
   if (p === "/api/push" || p.startsWith("/api/push/")) return ["pushalerts", "app"];
   // Live Preview's sandboxed frame document (server/routes/preview.js).
   if (p === "/preview-frame.html") return ["preview"];
+  // Screenshot to site's saved pages: ordinary conversations in Code &
+  // Build's mode, shown in Live Preview's sandbox.
+  if (p === "/api/site-pages" || p.startsWith("/api/site-pages/"))
+    return ["shottosite", "preview", "code"];
   // Sealed Share: the browser seals a snapshot before uploading it, so the
   // draft it seals and a sealed create need both updates.
   if (p === "/api/shares/draft") return ["sharelinks", "sealedshare"];
@@ -1871,6 +1900,11 @@ export function featuresFor(req) {
   // estimate. The request is always off the record (pushed below).
   if ((p === "/api/chat" || p === "/api/quote") && post && body.repo !== undefined)
     needed.push("reporeader");
+  // Screenshot to site: making or changing a page (server/shot-to-site.js),
+  // and its estimate. The page is shown in Live Preview's sandbox, so that
+  // update is needed too. The request is always off the record (pushed below).
+  if ((p === "/api/chat" || p === "/api/quote") && post && body.shottosite !== undefined)
+    needed.push("shottosite", "preview");
   // Seed Guard's "Send anyway" override (server/seed-guard.js).
   if (p === "/api/chat" && post && body.allow_seed_phrase !== undefined)
     needed.push("seedguard");

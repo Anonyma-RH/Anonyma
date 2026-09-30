@@ -906,6 +906,7 @@ const featureIcons = {
   chatimport: "import",
   phototools: "image",
   filesearch: "filesearch",
+  shottosite: "site",
   researchwatch: "research",
 };
 const launch = {

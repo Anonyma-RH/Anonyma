@@ -96,6 +96,8 @@ export function knownPage(path, served = {}) {
     (served.photos === true && path === "/workspace/photos") ||
     // File Search's page, likewise.
     (served.filesearch === true && path === "/workspace/filesearch") ||
+    // Screenshot to site's page, likewise.
+    (served.screenshot === true && path === "/workspace/screenshot") ||
     ["/login", "/register", "/workspace", "/account"].includes(path) ||
     ACCOUNT.some((x) => path === "/account/" + x) ||
     MODES.some((x) => path === "/workspace/" + x)

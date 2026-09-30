@@ -6415,7 +6415,122 @@
     "Another wallet app? Paste the page link into its built-in browser. Your wallet app keeps its own sign-in, so you sign in to ANONYMA again there.": "使用其他钱包应用？请把页面链接粘贴到它的内置浏览器中。钱包应用有自己独立的登录状态，所以你需要在那里重新登录 ANONYMA。",
     "Open in MetaMask": "在 MetaMask 中打开",
     "Open in Coinbase Wallet": "在 Coinbase Wallet 中打开",
-    "Open in Trust Wallet": "在 Trust Wallet 中打开"
+    "Open in Trust Wallet": "在 Trust Wallet 中打开",
+    "SCREENSHOT TO SITE": "截图转网站",
+    "Screenshot to site": "截图转网站",
+    "Drop a screenshot. Get a working page.": "拖入截图，得到一个能用的页面。",
+    "A sketch or a wireframe works too. See the page, change it with words and download it. You see the price before anything runs, and a page you can't use costs nothing.": "草图或线框图也可以。查看页面，用文字修改，再下载。运行前先看到价格，用不了的页面不收费。",
+    "Sign in to use Screenshot to site.": "登录后即可使用截图转网站。",
+    "The demo doesn't build pages.": "演示模式不会生成页面。",
+    "A model builds the page, so this needs an account with credits. Nothing is sent until you press the button, and you see the most it can cost first.": "页面由模型生成，因此需要有积分的账户。按下按钮之前不会发送任何内容，你会先看到最高费用。",
+    "Hidden details such as location and camera are removed in your browser, and you can black out parts of a picture before it goes anywhere.": "位置、相机等隐藏信息会在你的浏览器中清除，你还可以在图片发出之前把部分内容涂黑。",
+    "Shown in a sandbox": "在沙箱中显示",
+    "The page runs with no network and no access to your account. Its forms and links go nowhere.": "页面在无网络、无法访问你账户的环境中运行。其中的表单和链接不会指向任何地方。",
+    "ANONYMA doesn't keep your picture. The page goes to your history, or nowhere if you go off the record.": "ANONYMA 不会保存你的图片。页面会保存到你的历史记录；若选择不留记录，则不保存。",
+    "Picture": "图片",
+    "Notes and model": "备注与模型",
+    "Keep the page": "保存页面",
+    "Notes (optional)": "备注（可选）",
+    "Use my brand blue, make it responsive": "使用我的品牌蓝色，做成自适应布局",
+    "In your history, to reopen and change": "保存到你的历史记录，可再次打开和修改",
+    "Pages are never kept in Device Vault: they're saved to your history or nowhere.": "页面不会存入本机保险库：它们要么保存到你的历史记录，要么不保存。",
+    "Private mode isn't available for pictures: no model with zero data retention can read images.": "私密模式不适用于图片：没有零数据保留的模型能读取图片。",
+    "No private model can read images right now.": "目前没有能读取图片的私密模型。",
+    "No model that can read images is available right now.": "目前没有能读取图片的可用模型。",
+    "Drop a picture here": "将图片拖到这里",
+    "Reading the picture on this device…": "正在你的设备上读取图片……",
+    "PNG, JPEG or WebP. Paste one with Ctrl+V or ⌘V. It's redrawn smaller here before it's sent.": "支持 PNG、JPEG 或 WebP。可用 Ctrl+V 或 ⌘V 粘贴。发送前会在这里重绘为较小的图片。",
+    "Choose a picture": "选择图片",
+    "Paste from clipboard": "从剪贴板粘贴",
+    "Redrawing the picture smaller…": "正在把图片重绘为较小尺寸……",
+    "A smaller copy of this picture couldn't be made.": "无法生成这张图片的较小副本。",
+    "This picture couldn't be read.": "无法读取这张图片。",
+    "The picture couldn't be read.": "无法读取图片。",
+    "Use a PNG, JPEG or WebP picture.": "请使用 PNG、JPEG 或 WebP 图片。",
+    "This picture couldn't be opened here. Try a PNG, JPEG or WebP under 40 MiB.": "这里无法打开这张图片。请换一张 40 MiB 以内的 PNG、JPEG 或 WebP。",
+    "This picture couldn't be opened here.": "这里无法打开这张图片。",
+    "This picture couldn't be opened here. Try a PNG, JPEG or WebP.": "这里无法打开这张图片。请换一张 PNG、JPEG 或 WebP。",
+    "This picture is too detailed to shrink enough to send. Try a smaller one.": "这张图片细节太多，缩小后仍无法发送。请换一张更小的。",
+    "There's no picture on the clipboard.": "剪贴板上没有图片。",
+    "This browser didn't allow reading the clipboard. Press Ctrl+V or ⌘V on this page instead.": "此浏览器不允许读取剪贴板。请改在本页按 Ctrl+V 或 ⌘V。",
+    "YOUR PAGE": "你的页面",
+    "New page": "新页面",
+    "Change it": "修改",
+    "Make the buttons rounder and the heading blue": "把按钮做得更圆，标题改成蓝色",
+    "Add a picture (optional)": "添加图片（可选）",
+    "Only the page's code and your words are sent, unless you add a picture.": "只发送页面代码和你的文字，除非你添加图片。",
+    "Versions": "版本",
+    "1 version": "1 个版本",
+    "Your pages": "你的页面",
+    "Veil is on. It can't hide details inside a picture, so a page is made only if your words hold nothing Veil would mask.": "Veil 已开启。它无法遮住图片里的信息，因此只有在你的文字不含 Veil 会遮盖的内容时，才会生成页面。",
+    "Veil would mask 1 detail in these words, and a page needs them as written. Remove it, or turn Veil off.": "Veil 会遮盖这些文字中的 1 处信息，而页面需要原样的文字。请删除它，或关闭 Veil。",
+    "The picture (redrawn small), this text and fixed instructions, nothing else: no other chats, memory, project or standing instructions.": "图片（已重绘为小图）、这段文字和固定指令，仅此而已：没有其他对话、记忆、项目或长期指令。",
+    "Injection Shield took invisible characters out of the page before it was sent, and the page is sent as data, not instructions.": "注入防护在发送前已清除页面中的不可见字符，并且页面是作为数据而非指令发送的。",
+    "· exactly what's held; you're charged only for a usable page": "· 冻结的正是这个金额；只有可用的页面才会扣费",
+    "Say what to change to see the most it can cost.": "说明要修改什么，即可看到最高费用。",
+    "Choose a picture to see the most it can cost.": "选择图片后即可看到最高费用。",
+    "Make the page": "生成页面",
+    "Change the page": "修改页面",
+    "Building the page…": "正在生成页面……",
+    "Changing the page…": "正在修改页面……",
+    "The page appears once it's complete. Nothing is charged unless a usable page comes back.": "页面完成后才会显示。只有拿到可用页面才会扣费。",
+    "Your picture goes to the model with its hidden details removed here first. ANONYMA doesn't keep it; only the page can be saved.": "你的图片会先在这里清除隐藏信息，再发送给模型。ANONYMA 不会保存它；只有页面可以保存。",
+    "A model builds the page, so check it. A page you can't use costs nothing.": "页面由模型生成，请检查。用不了的页面不收费。",
+    "Opening your page…": "正在打开你的页面……",
+    "Your picture": "你的图片",
+    "Download .html": "下载 .html",
+    "Copy the page's code": "复制页面代码",
+    "Open in Code & build": "在代码与构建中打开",
+    "This page reaches for 1 outside resource, such as a font, a script or a picture. It's blocked in the preview and won't load offline.": "此页面引用了 1 个外部资源，例如字体、脚本或图片。预览中已将其拦截，离线时也无法加载。",
+    "Take them out": "移除它们",
+    "Saved to your history as a page you can reopen and change. Deleting it there deletes it here.": "已作为页面保存到你的历史记录，可再次打开和修改。在那里删除，这里也会删除。",
+    "Off the record: nothing was saved. Download the page before you leave.": "不留记录：没有保存任何内容。离开前请先下载页面。",
+    "Not saved to your history yet.": "尚未保存到你的历史记录。",
+    "Save it now": "立即保存",
+    "The preview has no network, so nothing in the page can reach out. Go back to an earlier version with Undo.": "预览没有网络，页面中的任何内容都无法联网。可用“撤销”回到更早的版本。",
+    "This page holds what looks like a seed phrase, so it wasn't saved. Download it instead.": "此页面包含疑似助记词的内容，因此没有保存。请改为下载。",
+    "This page couldn't be saved to your history. It's here to download.": "无法把此页面保存到你的历史记录。你仍可在这里下载。",
+    "The model's reply wasn't a web page this tool can show.": "模型的回复不是此工具能显示的网页。",
+    "Stopped. The page wasn't changed, and nothing was charged.": "已停止。页面未被修改，未扣除任何费用。",
+    "That page wasn't found. It may have been deleted.": "找不到该页面。它可能已被删除。",
+    "Took the outside links out. Nothing was sent or charged.": "已移除外部链接。未发送任何内容，也未扣费。",
+    "Drop a picture": "拖入图片",
+    "A screenshot of a page you like, a sketch on paper or a wireframe from a design tool.": "你喜欢的页面截图、纸上的草图，或设计工具里的线框图。",
+    "Get one page": "得到一个页面",
+    "One HTML file with its own styles. One page only, with no backend or sign-in. It looks like your picture and works at phone width.": "一个自带样式的 HTML 文件。只有一个页面，没有后端，也没有登录。外观接近你的图片，在手机宽度下也能正常使用。",
+    "Change it with words": "用文字修改",
+    "Ask for another colour or layout. Every version is kept, and going back is free.": "要求换个颜色或布局。每个版本都会保留，回到旧版本不收费。",
+    "Drop a screenshot, sketch or wireframe and get a working web page. Change it with words, then download it.": "拖入截图、草图或线框图，得到一个能用的网页。用文字修改，再下载。",
+    "Opening Screenshot to site…": "正在打开截图转网站……",
+    "Drop a screenshot, a sketch or a wireframe. Get a working page you can see, change with words and download.": "拖入截图、草图或线框图，得到一个能用的页面：随时查看，用文字修改，再下载。",
+    "One picture in, one self-contained page out, shown in Live Preview's sandbox with no network": "输入一张图片，输出一个独立的页面，在实时预览的无网络沙箱中显示",
+    "Change it with words, keep every version, and download the file or open it in Code & Build": "用文字修改，保留每个版本，可下载文件或在代码与构建中打开",
+    "See the most it can cost first; a page you can't use costs nothing": "先看到最高费用；用不了的页面不收费",
+    "The model ran out of room before the page was finished, so nothing was made and nothing was charged. Try a simpler picture, or another model.": "模型在页面完成之前用完了空间，因此没有生成任何内容，也没有扣费。请换一张更简单的图片，或换一个模型。",
+    "The model ran out of room before the page was finished, so the page wasn't changed and nothing was charged. Try a smaller change, or another model.": "模型在页面完成之前用完了空间，因此页面没有被修改，也没有扣费。请尝试更小的改动，或换一个模型。",
+    "The model's reply wasn't a web page this tool can show, so nothing was made and nothing was charged. Try again, or choose another model.": "模型的回复不是此工具能显示的网页，因此没有生成任何内容，也没有扣费。请重试，或换一个模型。",
+    "The model's reply wasn't a web page this tool can show, so the page wasn't changed and nothing was charged. Try again, or choose another model.": "模型的回复不是此工具能显示的网页，因此页面没有被修改，也没有扣费。请重试，或换一个模型。",
+    "The page came back longer than 40,000 characters, too long to keep and change, so nothing was made and nothing was charged. Try a simpler picture, or another model.": "页面超过 40,000 个字符，太长而无法保存和修改，因此没有生成任何内容，也没有扣费。请换一张更简单的图片，或换一个模型。",
+    "The changed page came back longer than 40,000 characters, too long to keep, so the page wasn't changed and nothing was charged. Try a smaller change, or another model.": "修改后的页面超过 40,000 个字符，太长而无法保存，因此页面没有被修改，也没有扣费。请尝试更小的改动，或换一个模型。",
+    "This page is too long to send back for changes. You can still download it, copy its code or open it in Code & Build.": "此页面太长，无法再发回去修改。你仍可下载它、复制其代码，或在代码与构建中打开。",
+    "Choose a picture first.": "请先选择一张图片。",
+    "The picture is malformed.": "图片格式有误。",
+    "The picture is too large to send. Choose a smaller one.": "图片太大，无法发送。请选择更小的图片。",
+    "The notes must be text.": "备注必须是文字。",
+    "The instruction must be text.": "指令必须是文字。",
+    "The page request is malformed.": "页面请求格式有误。",
+    "The page to change is missing.": "缺少要修改的页面。",
+    "Say what to change.": "请说明要修改什么。",
+    "Choose what to do: make a page or change one.": "请选择要做什么：生成页面或修改页面。",
+    "Pages are made off the record: send the request off the record.": "页面是不留记录生成的：请以不留记录的方式发送请求。",
+    "Making a page can't be combined with other chat options.": "生成页面不能与其他对话选项同时使用。",
+    "This picture and page are too long for this model to work with. Choose a model with a larger context, or a smaller picture. Nothing was sent or charged.": "这张图片和页面对该模型来说太长。请选择上下文更大的模型，或使用更小的图片。未发送任何内容，也未扣费。",
+    "Screenshot to site needs a text model.": "截图转网站需要文本模型。",
+    "Page not found.": "找不到该页面。",
+    "The downloaded file is an ordinary web page, no longer in the sandbox: read its code before you trust it.": "下载后的文件就是一个普通网页，不再受沙箱保护：信任它之前请先阅读其代码。",
+    "From a picture": "来自图片",
+    "Requested change": "修改要求",
+    "Removed the outside links": "已移除外部链接"
   },
   "patterns": [
     {
@@ -10461,6 +10576,58 @@
     {
       "en": "Upscaling takes a photo up to {0} px on its long side. Shrink it and try again.",
       "zh": "放大最多支持长边 {0} px 的照片。请缩小后再试。"
+    },
+    {
+      "en": "Version {0}",
+      "zh": "版本 {0}"
+    },
+    {
+      "en": "The newest {0} versions are kept. Going back to one is free; changing it makes a new version.",
+      "zh": "保留最新的 {0} 个版本。回到某个版本不收费；修改它会生成新版本。"
+    },
+    {
+      "en": "VERSION {0} OF {1}",
+      "zh": "第 {0} 版，共 {1} 版"
+    },
+    {
+      "en": "{0} versions",
+      "zh": "{0} 个版本"
+    },
+    {
+      "en": "Veil would mask {0} details in these words, and a page needs them as written. Remove them, or turn Veil off.",
+      "zh": "Veil 会遮盖这些文字中的 {0} 处信息，而页面需要原样的文字。请删除它们，或关闭 Veil。"
+    },
+    {
+      "en": "Sent to the model as a {0} of {1}.",
+      "zh": "以 {1} 的 {0} 图片发送给模型。"
+    },
+    {
+      "en": "{0} characters written so far",
+      "zh": "已写入 {0} 个字符"
+    },
+    {
+      "en": "This page reaches for {0} outside resources, such as fonts, scripts or pictures. They're blocked in the preview and won't load offline.",
+      "zh": "此页面引用了 {0} 个外部资源，例如字体、脚本或图片。预览中已将其拦截，离线时也无法加载。"
+    },
+    {
+      "en": "Made with {0}.",
+      "zh": "已使用 {0} 生成。"
+    },
+    {
+      "en": "Changed with {0}.",
+      "zh": "已使用 {0} 修改。"
+    },
+    {
+      "en": "The model didn't make a page from this: “{0}” Nothing was charged.",
+      "zh": "模型没有根据这张图片生成页面：“{0}”未扣费。"
+    },
+    {
+      "en": "Keep the notes to {0} characters.",
+      "zh": "备注请控制在 {0} 个字符以内。"
+    },
+    {
+      "en": "Keep the instruction to {0} characters.",
+      "zh": "指令请控制在 {0} 个字符以内。"
     }
   ]
 }

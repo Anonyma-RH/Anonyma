@@ -24,6 +24,7 @@ const TAGS = {
   library: 'saved media creations images pictures photos videos audio history gallery downloads 保存 媒体 图片 视频 作品',
   models: 'model models catalog catalogue providers pricing prices capabilities compare 模型 目录 提供商 价格 能力',
   api: 'api key keys sdk endpoint integration integrate cli developer scripts openai compatible 接口 密钥 集成 开发者 脚本',
+  screenshot: 'screenshot screenshots website websites webpage web page site html wireframe wireframes sketch mockup mockups landing frontend 截图 网站 网页 页面 草图 线框图 原型 设计稿',
   photos: 'photo photos picture pictures image retouch edit background remove removal cutout transparent upscale upscaler enlarge bigger larger sharper enhance resolution 照片 图片 修图 抠图 去背景 放大 高清',
 };
 // Weight likely destinations rather than treating every related tool equally.
@@ -51,6 +52,7 @@ const INTENTS = [
   ['research watch|research watches|briefing|briefings|keep me updated|keep me posted|track a topic|follow a topic|研究监测|简报|跟踪主题', { routines: 180 }],
   ['organize|organise|organization|organisation|folders|folder|整理|文件夹', { projects: 140 }],
   ['saved pictures|saved images|saved videos|creations|gallery|media library|已保存|作品|媒体库', { library: 140 }],
+  ['screenshot|screenshots|screenshot to site|screenshot to code|image to html|image to website|image to code|design to code|wireframe|wireframes|mockup|mockups|sketch to|from a screenshot|截图|截图转网站|草图|线框图|设计稿', { screenshot: 220 }],
   ['edit photo|edit photos|edit a photo|photo editor|photo editing|retouch|cut out|cutout|remove background|remove the background|background removal|transparent background|upscale|upscaling|enlarge|enhance photo|修图|抠图|去背景|放大图片|高清放大', { photos: 140 }],
 ];
 const STOP = new Set('a an the i me my we our you your it its this that these those to for of in on at with and or is are be do does can could would should want need help please something tool tools how what which find get make create use using into from about'.split(' '));

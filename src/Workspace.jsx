@@ -50,6 +50,8 @@ const ChatImport = lazy(() => import("./ChatImport.jsx"));
 const PhotoTools = lazy(() => import("./PhotoTools.jsx"));
 // File Search: its page loads only when opened.
 const FileSearch = lazy(() => import("./FileSearch.jsx"));
+// Screenshot to site: its page (and the code that redraws a picture) loads only there.
+const ShotToSite = lazy(() => import("./ShotToSite.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
@@ -325,6 +327,7 @@ export function AppSidebar({
     // On-Device Model: a chat mode, with the others.
     ["device", "On-device", "Download a small model to chat directly in your browser, without sending your prompts to a provider."],
     ["code", "Code & build", "Write, explain and debug code with AI. Keep generated files together as you build."],
+    ["screenshot", "Screenshot to site", "Drop a screenshot, sketch or wireframe and get a working web page. Change it with words, then download it."],
     ["image", "Images"],
     ["video", "Video"],
     ["audio", "Voice & audio", "Turn text into spoken audio, or transcribe a recording into text."],
@@ -360,6 +363,7 @@ export function AppSidebar({
     .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
     .filter(([id]) => id !== "photos" || modeReleased(config, "photos"))
     .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"))
+    .filter(([id]) => id !== "screenshot" || modeReleased(config, "screenshot"))
     // Research Watch lives on the Routines page, so the tool says so once it's live.
     .map(([id, label, description]) =>
       id === "routines" && isReleased(config, "researchwatch") && isReleased(config, "deepresearch") && isReleased(config, "search")
@@ -665,7 +669,9 @@ export default function Workspace() {
     // Photo Tools' page, the same way (it needs Image Studio's models too).
     (mode === "photos" && (!config || modeReleased(config, "photos"))) ||
     // File Search's page, likewise (it needs Files and Documents too).
-    (mode === "filesearch" && (!config || modeReleased(config, "filesearch")));
+    (mode === "filesearch" && (!config || modeReleased(config, "filesearch"))) ||
+    // Screenshot to site's page, the same way (it needs Live Preview too).
+    (mode === "screenshot" && (!config || modeReleased(config, "screenshot")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3912,6 +3918,7 @@ export default function Workspace() {
                 import: "Import chats",
                 photos: "Photo tools",
                 filesearch: "Search files",
+                screenshot: "Screenshot to site",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4220,6 +4227,22 @@ export default function Workspace() {
             modeReleased(config, "photos") && (
               <Suspense fallback={<p className="photo-loading">Opening Photo tools…</p>}>
                 <PhotoTools
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  models={models}
+                  config={config}
+                  refresh={refresh}
+                  veilOn={veilOn}
+                  setVeilOn={setVeilOn}
+                  veilWords={veilWords}
+                />
+              </Suspense>
+            )
+          ) : mode === "screenshot" ? (
+            modeReleased(config, "screenshot") && (
+              <Suspense fallback={<p className="sts-loading">Opening Screenshot to site…</p>}>
+                <ShotToSite
                   key={`${user?.id || "guest"}:${demo}`}
                   demo={demo}
                   user={user}

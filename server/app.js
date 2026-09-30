@@ -44,6 +44,7 @@ import { bookmarkRoutes } from "./routes/bookmarks.js";
 import { chatImportRoutes } from "./routes/chat-import.js";
 import { linkReaderRoutes } from "./routes/link-reader.js";
 import { repoReaderRoutes } from "./routes/repo-reader.js";
+import { shotToSiteRoutes } from "./routes/shot-to-site.js";
 import { blindRoutes } from "./routes/blind.js";
 import { arenaRoutes } from "./routes/arena.js";
 import { researchRoutes } from "./routes/research.js";
@@ -200,6 +201,9 @@ export function createApp(overrides = {}) {
   // Repo Reader: one public GitHub repo, read into a short-lived in-memory
   // cache (asking about it runs through runChat, registered above).
   ctx.repoReader = repoReaderRoutes(ctx);
+  // Screenshot to site: the pages an account keeps, as ordinary
+  // conversations (making or changing one runs through runChat, above).
+  shotToSiteRoutes(ctx);
   // Blind Compare: two chat replies through runChat, and the account's
   // votes (after projects, which a saved round can be filed in).
   blindRoutes(ctx);

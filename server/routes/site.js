@@ -52,6 +52,9 @@ export function siteRoutes({ app, db, cfg }) {
     photos: isReleased(cfg, "phototools") && isReleased(cfg, "images"),
     // File Search's page, which searches saved files' text.
     filesearch: isReleased(cfg, "filesearch") && isReleased(cfg, "files") && isReleased(cfg, "documents"),
+    // Screenshot to site's page: its requests are off the record and its result
+    // shows in Live Preview.
+    screenshot: isReleased(cfg, "shottosite") && isReleased(cfg, "preview") && isReleased(cfg, "ephemeral"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

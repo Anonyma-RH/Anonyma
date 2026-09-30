@@ -380,6 +380,7 @@ export const MODE_LABELS = {
   import: "Import chats",
   photos: "Photo tools",
   filesearch: "Search files",
+  screenshot: "Screenshot to site",
 };
 // The workspace's places, in the sidebar's order.
 const PLACES = [
@@ -419,6 +420,8 @@ const PLACES = [
   ["photos", "Photo tools", ["photo", "picture", "edit photo", "remove background", "cut out", "upscale", "enlarge", "retouch", "transparent"]],
   // File Search: only once released, with Files and Documents.
   ["filesearch", "Search files", ["search files", "find in files", "ask my files", "saved files", "documents", "citations", "passages", "across files"]],
+  // Screenshot to site: only once released, with Live Preview.
+  ["screenshot", "Screenshot to site", ["screenshot", "website", "web page", "wireframe", "sketch", "mockup", "html", "design to code", "page from image"]],
 ];
 
 // The actions and places the palette offers, from release flags and the

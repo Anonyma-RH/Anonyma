@@ -114,6 +114,7 @@ import {
   BellRing,
   VenetianMask,
   FileSearch,
+  LayoutTemplate,
 } from "lucide-react";
 const icons = {
   arrow: ArrowRight,
@@ -231,6 +232,8 @@ const icons = {
   // Chat Import: a history brought in from another service.
   import: ImportChats,
   filesearch: FileSearch,
+  // Screenshot to site: a page laid out in blocks.
+  site: LayoutTemplate,
   repo: FolderGit2,
   right: ChevronRight,
 };
@@ -283,6 +286,8 @@ const pixels = {
   filesearch: [".####..", "#....#.", "#.##.#.", "#....#.", ".####..", "....##.", ".....##"],
   // A folder with a branch on it: a repo read file by file.
   repos: ["###....", "#######", "#.#...#", "#.#.#.#", "#.##..#", "#.#...#", "#######"],
+  // A page in a window: a header bar, a banner and two blocks. Screenshot to site.
+  screenshot: ["#######", "#.#.#.#", "#######", "#.....#", "#.###.#", "#.###.#", "#######"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

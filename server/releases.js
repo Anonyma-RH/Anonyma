@@ -1432,6 +1432,24 @@ export const UPDATES = [
     // chat" hands the redacted pages (or the text read from them by Local OCR
     // when that is released) to the next chat's composer in memory; from
     // there they are an ordinary attachment. The page is /workspace/pdfredact.
+  },
+  {
+    id: "dictation",
+    title: "Private Dictation",
+    tagline: "Talk instead of typing. Your voice becomes text on your own device, for free.",
+    points: [
+      "Dictate into any chat: pick On this device (free) from the microphone menu",
+      "Your recording never leaves this device; the text waits in your message until you press Send",
+      "One download of the model from Hugging Face, then it works offline; less accurate than paid transcription",
+    ],
+    // Browser only (src/Dictation.jsx, src/DictationMenu.jsx,
+    // src/dictation.js and src/dictation-engine.js with its worker): Whisper
+    // runs in a worker with Transformers.js, so there are no server routes,
+    // nothing to gate in featuresFor, nothing stored server-side and nothing
+    // to erase or export. The model files come straight from Hugging Face at
+    // pinned revisions, checked against pinned SHA-256 hashes, and stay in
+    // the browser's Cache Storage; ONNX Runtime's WebAssembly is a Vite
+    // build asset from node_modules, served by ANONYMA. Nothing is charged.
     released: false,
   },
 ];

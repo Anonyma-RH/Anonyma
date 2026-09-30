@@ -911,6 +911,7 @@ const featureIcons = {
   researchwatch: "research",
   burnlinks: "flame",
   pdfredact: "pdf",
+  dictation: "mic",
 };
 const launch = {
   id: "mvp",

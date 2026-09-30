@@ -6705,7 +6705,49 @@
     "Look at the copy": "Ver la copia",
     "Back to the original": "Volver al original",
     "This is the redacted copy as it will be shared: pictures of your pages, with the boxes solid black. Nothing is drawn over it here.": "Esta es la copia con partes ocultas tal como se compartirá: imágenes de tus páginas, con los recuadros en negro sólido. Aquí no se dibuja nada encima.",
-    "The copy couldn't be shown.": "No se pudo mostrar la copia."
+    "The copy couldn't be shown.": "No se pudo mostrar la copia.",
+    "Private Dictation": "Dictado privado",
+    "Talk instead of typing. Your voice becomes text on your own device, for free.": "Habla en lugar de escribir. Tu voz se convierte en texto en tu propio dispositivo, gratis.",
+    "Dictate into any chat: pick On this device (free) from the microphone menu": "Dicta en cualquier chat: elige En este dispositivo (gratis) en el menú del micrófono",
+    "Your recording never leaves this device; the text waits in your message until you press Send": "Tu grabación nunca sale de este dispositivo; el texto espera en tu mensaje hasta que presiones Enviar",
+    "One download of the model from Hugging Face, then it works offline; less accurate than paid transcription": "Una sola descarga del modelo desde Hugging Face y luego funciona sin conexión; es menos preciso que la transcripción de pago",
+    "Dictate": "Dictar",
+    "On this device (free)": "En este dispositivo (gratis)",
+    "Private: your voice never leaves this device. Less accurate.": "Privado: tu voz nunca sale de este dispositivo. Menos preciso.",
+    "Paid transcription": "Transcripción de pago",
+    "More accurate. The audio goes to a speech provider.": "Más preciso. El audio va a un proveedor de voz.",
+    "Not in Private Mode: no speech provider offers zero data retention.": "No disponible en Modo privado: ningún proveedor de voz ofrece retención cero de datos.",
+    "Not available in Sealed Mode.": "No disponible en Modo sellado.",
+    "Private dictation": "Dictado privado",
+    "Close private dictation": "Cerrar el dictado privado",
+    "Dictation model": "Modelo de dictado",
+    "Detect automatically": "Detectar automáticamente",
+    "Record": "Grabar",
+    "Download the model": "Descargar el modelo",
+    "Fastest. Fine for short, clear dictation.": "El más rápido. Sirve para dictados cortos y claros.",
+    "More accurate, especially with accents and other languages. Slower.": "Más preciso, sobre todo con acentos y otros idiomas. Más lento.",
+    "Remove from this device": "Quitar de este dispositivo",
+    "Partly downloaded": "Descargado en parte",
+    "Starting the model on this device…": "Iniciando el modelo en este dispositivo…",
+    "Finishing the recording…": "Terminando la grabación…",
+    "Transcribing on your device…": "Transcribiendo en tu dispositivo…",
+    "That recording was too short. Record a little longer.": "La grabación fue demasiado corta. Graba un poco más.",
+    "No speech was heard. Check your microphone, then record again.": "No se escuchó ninguna voz. Revisa tu micrófono y vuelve a grabar.",
+    "No words were recognised. Record again, or type instead.": "No se reconoció ninguna palabra. Vuelve a grabar o escribe.",
+    "Stopped. Nothing was added to your message.": "Detenido. No se agregó nada a tu mensaje.",
+    "Recording stopped when the tab was hidden. Press Record to start again.": "La grabación se detuvo cuando se ocultó la pestaña. Presiona Grabar para empezar de nuevo.",
+    "Added to your message. Check it, then press Send: nothing is sent until you do.": "Se agregó a tu mensaje. Revísalo y presiona Enviar: no se envía nada hasta que lo hagas.",
+    "Running on this device's graphics processor (WebGPU).": "Se ejecuta en el procesador gráfico de este dispositivo (WebGPU).",
+    "Running on this device's processor.": "Se ejecuta en el procesador de este dispositivo.",
+    "It's less accurate than paid transcription, so check the words before you send.": "Es menos preciso que la transcripción de pago, así que revisa el texto antes de enviarlo.",
+    "Works in every mode, including Private Mode and off the record.": "Funciona en todos los modos, incluidos Modo privado y Sin registro.",
+    "Whisper is by OpenAI (MIT licence); these ONNX builds are Apache-2.0. The engine is Transformers.js (Apache-2.0) on ONNX Runtime (MIT).": "Whisper es de OpenAI (licencia MIT); estas versiones ONNX son Apache-2.0. El motor es Transformers.js (Apache-2.0) sobre ONNX Runtime (MIT).",
+    "There isn't enough storage space on this device for this model. Free some space or pick the smaller model.": "No hay suficiente espacio de almacenamiento en este dispositivo para este modelo. Libera espacio o elige el modelo más pequeño.",
+    "This device ran out of memory. Close other tabs, or pick the smaller model.": "Este dispositivo se quedó sin memoria. Cierra otras pestañas o elige el modelo más pequeño.",
+    "The download stopped. Check your connection and try again; files already downloaded are kept.": "La descarga se detuvo. Revisa tu conexión e inténtalo de nuevo; los archivos ya descargados se conservan.",
+    "The model couldn't start on this device. Reload the page and try again, or pick the smaller model.": "El modelo no pudo iniciarse en este dispositivo. Recarga la página e inténtalo de nuevo, o elige el modelo más pequeño.",
+    "The on-device transcription stopped before finishing. Try again, or type instead.": "La transcripción en el dispositivo se detuvo antes de terminar. Inténtalo de nuevo o escribe.",
+    "Stopped. Files already downloaded are kept.": "Detenido. Los archivos ya descargados se conservan."
   },
   "patterns": [
     {
@@ -10935,6 +10977,30 @@
     {
       "en": "Preparing page {0} of {1}…",
       "es": "Preparando la página {0} de {1}…"
+    },
+    {
+      "en": "Free. Your recording never leaves this device. The first use downloads the model (about {0}) from Hugging Face; after that it works offline.",
+      "es": "Gratis. Tu grabación nunca sale de este dispositivo. El primer uso descarga el modelo (unos {0}) desde Hugging Face; después funciona sin conexión."
+    },
+    {
+      "en": "Download the model ({0})",
+      "es": "Descargar el modelo ({0})"
+    },
+    {
+      "en": "Stop · {0}",
+      "es": "Detener · {0}"
+    },
+    {
+      "en": "Downloading from Hugging Face… {0} of {1}",
+      "es": "Descargando desde Hugging Face… {0} de {1}"
+    },
+    {
+      "en": "Listening… up to {0}. Press Stop when you're done.",
+      "es": "Escuchando… hasta {0}. Presiona Detener cuando termines."
+    },
+    {
+      "en": "The first use also loads the speech engine ({0}) from ANONYMA.",
+      "es": "El primer uso también carga el motor de voz ({0}) desde ANONYMA."
     }
   ]
 }

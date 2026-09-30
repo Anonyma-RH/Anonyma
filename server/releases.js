@@ -1352,6 +1352,29 @@ export const UPDATES = [
     // button and the dictionary never loads.
     released: true,
   },
+  {
+    id: "debate",
+    title: "Model Debate",
+    tagline: "Pick a question and two models. They argue it out in rounds, and a third model sums up who made the better case.",
+    points: [
+      "Two models argue For and Against, or two positions of your own, for one to four rounds",
+      "An optional judge reads it blind, as Side A and Side B, and says who made the better case, or that it's too close",
+      "See the most it can cost first, and pay only for the turns that finish",
+    ],
+    // The workspace's Debate page (src/Debate.jsx) and /api/debate
+    // (server/routes/debate.js), built on Symposium's models and billing, so
+    // it needs "symposium" released too (featuresFor). Each turn is one
+    // model call through the same gateway, failover and zero-data-retention
+    // rules as a chat (server/research.js researchCaller, shared with Deep
+    // Research); every step is held at its maximum before anything runs, the
+    // shown maximum is exactly the sum of the holds, and only turns that
+    // finish are charged. The judge is sent the sides as A and B, never a
+    // model name. A finished debate is an ordinary saved conversation (one
+    // reply per turn under its own model, then the judge), so History,
+    // Export, Share a Chat, erase and the account export already cover it;
+    // off the record and Private Mode keep nothing. No table of its own.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1610,6 +1633,21 @@ export function featuresFor(req) {
       if (body.private === true) needed.push("private", "ephemeral");
       else if (body.ephemeral === true) needed.push("ephemeral");
       if (body.project !== undefined) needed.push("projects");
+      if (body.veil_masked !== undefined) needed.push("trail");
+      if (body.allow_seed_phrase !== undefined) needed.push("seedguard");
+    }
+    return needed;
+  }
+  // Model Debate: two models arguing one question in rounds, and an optional
+  // judge. It runs on Symposium's models and billing, so it needs both. What
+  // a run turns on needs its own update, as the same chat would: Private
+  // Mode (which always takes the off-the-record path), off the record,
+  // Privacy Trail's Veil count and Seed Guard's override.
+  if (p === "/api/debate" || p.startsWith("/api/debate/")) {
+    const needed = ["debate", "symposium"];
+    if (post) {
+      if (body.private === true) needed.push("private", "ephemeral");
+      else if (body.ephemeral === true) needed.push("ephemeral");
       if (body.veil_masked !== undefined) needed.push("trail");
       if (body.allow_seed_phrase !== undefined) needed.push("seedguard");
     }

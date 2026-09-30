@@ -174,13 +174,15 @@ const validTokens = (value, fallback) =>
 // steps are made and priced exactly like a Deep Research run's.
 //
 // `controller` is the run's: aborting it stops the step in flight. Returns
-// { call(messages, max, web), usedBackup() }; call resolves to the step's
-// text, token counts, the dollars it cost at most `web`'s search fee
-// included, its finish reason and the pages the provider cited.
+// { call(messages, max, web, onDelta), usedBackup() }; call resolves to the
+// step's text, token counts, the dollars it cost at most `web`'s search fee
+// included, its finish reason and the pages the provider cited. `onDelta`
+// (optional) sees each piece of the reply text as it arrives; Model Debate
+// (routes/debate.js) streams its turns with it.
 export function researchCaller(ctx, { m, isPrivate, controller }) {
   const { cfg, inflight, fallback } = ctx;
   let anyBackup = false;
-  async function call(messages, max, web) {
+  async function call(messages, max, web, onDelta) {
     const step = new AbortController();
     const onStop = () => step.abort(controller.signal.reason);
     controller.signal.addEventListener("abort", onStop, { once: true });
@@ -230,7 +232,10 @@ export function researchCaller(ctx, { m, isPrivate, controller }) {
         const choice = part.choices?.[0];
         if (typeof choice?.finish_reason === "string") finish = choice.finish_reason;
         const delta = choice?.delta || {};
-        if (typeof delta.content === "string") text += delta.content;
+        if (typeof delta.content === "string") {
+          text += delta.content;
+          if (delta.content && onDelta) onDelta(delta.content);
+        }
         if (typeof delta.reasoning === "string" || typeof delta.reasoning_content === "string")
           reasoning += delta.reasoning || delta.reasoning_content;
         if (delta.content || delta.reasoning || delta.reasoning_content) probe.first();

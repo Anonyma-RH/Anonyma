@@ -283,6 +283,8 @@ const pixels = {
   filesearch: [".####..", "#....#.", "#.##.#.", "#....#.", ".####..", "....##.", ".....##"],
   // A folder with a branch on it: a repo read file by file.
   repos: ["###....", "#######", "#.#...#", "#.#.#.#", "#.##..#", "#.#...#", "#######"],
+  // Two speech bubbles facing each other: two models arguing a question.
+  debate: ["####...", "#..#...", "####.##", "..#.#..", "....###", "....#..", "....###"],
 };
 export function PixelIcon({ name, size = 14 }) {
   const rows = pixels[name] || pixels.models;

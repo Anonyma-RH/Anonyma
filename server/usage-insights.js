@@ -162,6 +162,7 @@ export const CHAT_FEATURES = [
   "blind",
   "deep_research",
   "meeting_notes",
+  "debate",
 ];
 // What a settled request was for: the hold's kind, the chat label recorded
 // for it (a chat from before labels were recorded counts as chat), and for

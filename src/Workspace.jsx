@@ -50,6 +50,8 @@ const ChatImport = lazy(() => import("./ChatImport.jsx"));
 const PhotoTools = lazy(() => import("./PhotoTools.jsx"));
 // File Search: its page loads only when opened.
 const FileSearch = lazy(() => import("./FileSearch.jsx"));
+// Model Debate: its page loads only when opened.
+const Debate = lazy(() => import("./Debate.jsx"));
 // Document Compare: its reader, diff worker and redline load only on its page.
 const Compare = lazy(() => import("./Compare.jsx"));
 // Canvas: its editor, tracked changes and exports load only on its page.
@@ -322,6 +324,7 @@ export function AppSidebar({
     ["chat", "Chat & reason"],
     ["uncensored", "Uncensored", "Chat with models from the uncensored collection. Choose the model that suits your conversation."],
     ["symposium", "Symposium", "Ask several models the same question, compare their answers and combine the best parts."],
+    ["debate", "Debate", "Pick a question and two models. They argue it out in rounds, and a third model sums up who made the better case."],
     // On-Device Model: a chat mode, with the others.
     ["device", "On-device", "Download a small model to chat directly in your browser, without sending your prompts to a provider."],
     ["code", "Code & build", "Write, explain and debug code with AI. Keep generated files together as you build."],
@@ -360,6 +363,7 @@ export function AppSidebar({
     .filter(([id]) => id !== "import" || isReleased(config, "chatimport"))
     .filter(([id]) => id !== "photos" || modeReleased(config, "photos"))
     .filter(([id]) => id !== "filesearch" || modeReleased(config, "filesearch"))
+    .filter(([id]) => id !== "debate" || modeReleased(config, "debate"))
     // Research Watch lives on the Routines page, so the tool says so once it's live.
     .map(([id, label, description]) =>
       id === "routines" && isReleased(config, "researchwatch") && isReleased(config, "deepresearch") && isReleased(config, "search")
@@ -665,7 +669,9 @@ export default function Workspace() {
     // Photo Tools' page, the same way (it needs Image Studio's models too).
     (mode === "photos" && (!config || modeReleased(config, "photos"))) ||
     // File Search's page, likewise (it needs Files and Documents too).
-    (mode === "filesearch" && (!config || modeReleased(config, "filesearch")));
+    (mode === "filesearch" && (!config || modeReleased(config, "filesearch"))) ||
+    // Model Debate's page, likewise (it needs Symposium's models too).
+    (mode === "debate" && (!config || modeReleased(config, "debate")));
   // Chat, code and Uncensored all show text conversations; Uncensored keeps
   // its own curated models, which the other text modes leave out.
   const textMode = ["chat", "code", "uncensored"].includes(mode);
@@ -3912,6 +3918,7 @@ export default function Workspace() {
                 import: "Import chats",
                 photos: "Photo tools",
                 filesearch: "Search files",
+                debate: "Debate",
               }[mode]
             }
             {isEarlyAccess(config, MODE_FEATURES[mode]) && <EarlyTag />}
@@ -4229,6 +4236,24 @@ export default function Workspace() {
                   veilOn={veilOn}
                   setVeilOn={setVeilOn}
                   veilWords={veilWords}
+                />
+              </Suspense>
+            )
+          ) : mode === "debate" ? (
+            modeReleased(config, "debate") && (
+              <Suspense fallback={<p className="debate-loading">Opening Debate…</p>}>
+                <Debate
+                  key={`${user?.id || "guest"}:${demo}`}
+                  demo={demo}
+                  user={user}
+                  models={models}
+                  config={config}
+                  refresh={refresh}
+                  veilOn={veilOn}
+                  setVeilOn={setVeilOn}
+                  veilWords={veilWords}
+                  vault={vault}
+                  vaultLive={vaultLive}
                 />
               </Suspense>
             )
@@ -4584,7 +4609,7 @@ export default function Workspace() {
                               alternatives={m.auto.sealed ? sealedAutoTiers : autoTiers}
                               disabled={busy || branching}
                               onUse={
-                                branchesLive && m.content && !m.research && !m.blind && !m.filesearch && !(busy && i === messages.length - 1)
+                                branchesLive && m.content && !m.research && !m.blind && !m.filesearch && !m.debate && !(busy && i === messages.length - 1)
                                   ? (id) => rewind(i, "regenerate", null, { model: id })
                                   : null
                               }
@@ -4612,7 +4637,7 @@ export default function Workspace() {
                           )}
                           {/* A Deep research report says so itself when it was cut short;
                               a continuation would be a chat, not more research. */}
-                          {longAnswersLive && m.role === "assistant" && !m.blind && !m.research && !m.factcheck && !m.filesearch && completionNotice(m) && (
+                          {!m.debate && longAnswersLive && m.role === "assistant" && !m.blind && !m.research && !m.factcheck && !m.filesearch && completionNotice(m) && (
                             <div className="fine-print" role="status">
                               <p>{completionNotice(m)}</p>
                               {i === messages.length - 1 && !busy && (m.content || m.reasoning) && (
@@ -4697,7 +4722,7 @@ export default function Workspace() {
                                 </button>
                               )}
                               {rememberButton(m)}
-                              {m.role === "assistant" && m.content && !m.blind && !m.research && !m.factcheck && !m.filesearch && (
+                              {!m.debate && m.role === "assistant" && m.content && !m.blind && !m.research && !m.factcheck && !m.filesearch && (
                                 <button type="button" onClick={() => rewind(i, "regenerate")}>
                                   Regenerate
                                 </button>
@@ -4718,6 +4743,14 @@ export default function Workspace() {
                                   }}
                                 >
                                   Ask again in File Search
+                                </Link>
+                              )}
+                              {/* A debate's turn can't be regenerated on its own: it was
+                                  written for the transcript around it. Debate reopens the
+                                  whole debate, read from this conversation. */}
+                              {m.role === "assistant" && m.debate && !demo && current && modeReleased(config, "debate") && (
+                                <Link className="turn-link" to={"/workspace/debate?c=" + encodeURIComponent(current)}>
+                                  Open in Debate
                                 </Link>
                               )}
                               {!ephemeral && !demo && current && m.id && (
@@ -4751,6 +4784,8 @@ export default function Workspace() {
                             // A saved File Search answer: a check here would see the
                             // answer without the passages it was written from.
                             !m.filesearch &&
+                            // And a debate's turn, without the debate around it.
+                            !m.debate &&
                             m.model &&
                             !m.sample &&
                             !(busy && i === messages.length - 1) &&

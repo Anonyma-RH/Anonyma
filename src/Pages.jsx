@@ -897,6 +897,7 @@ const featureIcons = {
   canvas: "canvas",
   slides: "present",
   reporeader: "repo",
+  debate: "scale",
   doctranslate: "languages",
   meetingnotes: "meeting",
   quotecards: "quotemark",

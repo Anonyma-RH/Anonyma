@@ -73,7 +73,7 @@ const SAME = new Set([
   "Lite", "Markdown", "Normal", "Original", "Popular", "Prime", "Pro", "Prompt", "Prompts",
   "Robinhood Chain, chain ID 4663", "software", "token", "Token", "tokens ·", "Tokens", "Turbo", "Urdu", "video",
   "Video", "video — ANONYMA", "vs", "Web", "whitepaper", "Whitepaper", "WHITEPAPER", "whitepaper — ANONYMA",
-  "Word (DOCX)", "Español",
+  "Word (DOCX)", "Español", "Debate",
 ]);
 
 // ---------------------------------------------------------------- the update

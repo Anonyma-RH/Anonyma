@@ -216,6 +216,12 @@ export function messageFromServer(m) {
     ...(c?.filesearch && typeof c.filesearch === "object" && !Array.isArray(c.filesearch)
       ? { filesearch: c.filesearch }
       : {}),
+    // Model Debate: one turn (or the judge) of a saved debate. Such a turn is
+    // not regenerated or continued as a chat, which would answer without
+    // the debate around it (src/Debate.jsx reopens it).
+    ...(c?.debate && typeof c.debate === "object" && !Array.isArray(c.debate)
+      ? { debate: { kind: c.debate.kind } }
+      : {}),
   };
 }
 // The server accepts string content, or text plus image_url parts for reference images.
@@ -552,6 +558,8 @@ export const MODE_FEATURES = {
   filesearch: "filesearch",
   // Repo Reader's page (src/RepoReader.jsx).
   repos: "reporeader",
+  // Model Debate's page (src/Debate.jsx), which runs on Symposium's models.
+  debate: "debate",
 };
 export function modeReleased(config, mode) {
   if (mode === "library")
@@ -559,6 +567,7 @@ export function modeReleased(config, mode) {
   if (mode === "notes") return isReleased(config, "meetingnotes") && isReleased(config, "audio");
   if (mode === "photos") return isReleased(config, "phototools") && isReleased(config, "images");
   if (mode === "filesearch") return ["filesearch", "files", "documents"].every((id) => isReleased(config, id));
+  if (mode === "debate") return isReleased(config, "debate") && isReleased(config, "symposium");
   return !MODE_FEATURES[mode] || isReleased(config, MODE_FEATURES[mode]);
 }
 

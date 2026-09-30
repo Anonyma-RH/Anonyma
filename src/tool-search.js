@@ -4,6 +4,7 @@ const TAGS = {
   home: 'dashboard overview balance credits usage activity spending history 仪表盘 概览 余额 积分 用量',
   uncensored: 'uncensored unfiltered unrestricted models 无审查 未审查',
   symposium: 'compare models perspectives consensus answers synthesis debate brainstorm 比较模型 多角度 综合 辩论',
+  debate: 'debate debates argue argument arguments rebuttal opposing sides pros cons for against judge verdict two models decide 辩论 辩 反驳 正反 裁判 论点 两个模型',
   device: 'offline local private privacy browser download free disconnected 离线 本地 隐私 免费',
   code: 'coding programming developer software debug debugging bug javascript python html css website 编程 代码 调试 网站',
   audio: 'voice speech spoken sound audio transcribe transcription recording podcast tts stt 语音 音频 朗读 转录',
@@ -31,6 +32,7 @@ const TAGS = {
 const INTENTS = [
   ['truth|facts|factual|fact check|fact checking|factcheck|verify|verification|evidence|reliable|accuracy|accurate|sources|citations|research|search|lookup|look up|investigate|check claims|真相|事实|求证|查证|核实|搜索|研究|查资料', { tools: 140, symposium: 85, compare: 45 }],
   ['compare|comparison|compare answers|second opinion|different perspectives|consensus|比较|对比|不同观点', { symposium: 80, compare: 75, models: 35 }],
+  ['debate|debates|argue|argue it out|for and against|pros and cons|both sides|rebuttal|辩论|正反|反驳|正反方', { debate: 140 }],
   ['write|rewrite|writing|polish|proofread|proofreading|grammar|tone|draft|写作|改写|润色|校对', { canvas: 120, tools: 45 }],
   ['summarize|summarise|summary|tldr|总结|摘要', { tools: 75, notes: 55, canvas: 40 }],
   ['offline|local|private|privacy|without internet|no internet|without cloud|no cloud|离线|本地|隐私', { device: 140 }],

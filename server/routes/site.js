@@ -52,6 +52,8 @@ export function siteRoutes({ app, db, cfg }) {
     photos: isReleased(cfg, "phototools") && isReleased(cfg, "images"),
     // File Search's page, which searches saved files' text.
     filesearch: isReleased(cfg, "filesearch") && isReleased(cfg, "files") && isReleased(cfg, "documents"),
+    // Model Debate's page, which runs on Symposium's models.
+    debate: isReleased(cfg, "debate") && isReleased(cfg, "symposium"),
   });
   const build = existsSync("dist/client/version.json")
     ? JSON.parse(readFileSync("dist/client/version.json", "utf8"))

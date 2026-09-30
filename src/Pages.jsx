@@ -916,6 +916,7 @@ const featureIcons = {
   burnlinks: "flame",
   pdfredact: "pdf",
   dictation: "mic",
+  backup: "backup",
 };
 const launch = {
   id: "mvp",

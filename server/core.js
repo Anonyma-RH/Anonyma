@@ -1524,6 +1524,23 @@ export const MIGRATIONS = [
       CREATE TRIGGER IF NOT EXISTS subtitle_sets_per_account BEFORE INSERT ON subtitle_sets
         WHEN (SELECT COUNT(*) FROM subtitle_sets WHERE user_id=NEW.user_id)>=100
         BEGIN SELECT RAISE(ABORT,'subtitles_limit'); END;
+    `),
+  // Encrypted Backup (server/routes/account-backup.js): the day of an
+  // account's last backup (a date only; the file is made and kept in the
+  // browser) and the day its one reminder was seen; and which saved chats
+  // came back from a backup, with a SHA-256 of their words so the same chat
+  // isn't restored twice. A mark goes with its chat; both go with every
+  // erase and are exported with the account.
+  additive(`
+    CREATE TABLE IF NOT EXISTS account_backups(user_id TEXT PRIMARY KEY REFERENCES users(id),
+      last_backup TEXT NOT NULL CHECK(last_backup GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
+      reminded TEXT CHECK(reminded IS NULL OR reminded GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'));
+    CREATE TABLE IF NOT EXISTS backup_restores(
+      conversation_id TEXT PRIMARY KEY REFERENCES conversations(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      content_hash TEXT NOT NULL CHECK(length(content_hash)=64),
+      restored INTEGER NOT NULL);
+    CREATE INDEX IF NOT EXISTS backup_restores_user ON backup_restores(user_id,content_hash);
   `),
 ];
 // The schema versions whose migrations were recorded as additive.

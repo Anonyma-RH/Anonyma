@@ -57,18 +57,55 @@ export function forgetChatImports(db, user) {
   db.prepare("DELETE FROM chat_imports WHERE user_id=?").run(user);
 }
 
+// Saved personal chats against the account's cap (Symposium runs have
+// their own cap and are not counted here). Encrypted Backup's restore
+// (routes/account-backup.js) fills the same room.
+const PERSONAL = "user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium'";
+export function chatRoom(db, cfg, user) {
+  const cap = capsFor(db, cfg, user).conversations;
+  const have = db.prepare(`SELECT COUNT(*) n FROM conversations WHERE ${PERSONAL}`).get(user).n;
+  return { cap, have, room: Math.max(0, cap - have) };
+}
+// The account's auto-delete default, as the expiry of a chat saved now.
+export function defaultExpiry(db, user, at) {
+  const days = db.prepare("SELECT days FROM retention_defaults WHERE user_id=?").get(user)?.days;
+  return days ? at + days * 86400000 : null;
+}
+// One checked chat (checkUploadedChat) saved as a conversation: the chat
+// and its words, in order, inside the caller's transaction. An import is an
+// ordinary chat; Encrypted Backup's restore passes the mode it keeps, and a
+// reply keeps the model that wrote it when one is given (an import's
+// replies have none). Returns the new ids.
+export function insertChat(db, user, chat, expires, mode = "chat") {
+  const id = uid("c_");
+  db.prepare(
+    "INSERT INTO conversations(id,user_id,title,mode,created,updated,expires) VALUES(?,?,?,?,?,?,?)",
+  ).run(id, user, chat.title, mode, chat.created, chat.updated, expires);
+  const add = db.prepare(
+    "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
+  );
+  const messages = chat.messages.map((m) => {
+    const mid = uid("m_");
+    add.run(
+      mid,
+      id,
+      m.role,
+      JSON.stringify(m.role === "user" ? m.text : { text: m.text, finish_reason: "stop" }),
+      m.role === "assistant" && typeof m.model === "string" ? m.model : null,
+      0,
+      m.at,
+      m.role === "user" ? user : null,
+    );
+    return mid;
+  });
+  return { id, messages };
+}
+
 export function chatImportRoutes(ctx) {
   const { app, db, cfg, limit, requireUser } = ctx;
   const read = limit("chat-import-read", 120, 60000);
   const write = limit("chat-import", 300, 3600000);
-  const PERSONAL = "user_id=? AND collab_id IS NULL AND mode IS NOT 'symposium'";
-  // Saved personal chats against the account's cap (Symposium runs have
-  // their own cap and are not counted here).
-  const roomFor = (user) => {
-    const cap = capsFor(db, cfg, user).conversations;
-    const have = db.prepare(`SELECT COUNT(*) n FROM conversations WHERE ${PERSONAL}`).get(user).n;
-    return { cap, have, room: Math.max(0, cap - have) };
-  };
+  const roomFor = (user) => chatRoom(db, cfg, user);
 
   app.get("/api/import/status", requireUser, read, (req, res) => {
     const imported = Object.fromEntries(IMPORT_SOURCES.map((s) => [s, []]));
@@ -109,18 +146,11 @@ export function chatImportRoutes(ctx) {
       seedGuard = isReleased(cfg, "seedguard");
     // The account's auto-delete default reaches every chat made after it was
     // set, imported ones too.
-    const days = db.prepare("SELECT days FROM retention_defaults WHERE user_id=?").get(user)?.days;
-    const expires = days ? at + days * 86400000 : null;
+    const expires = defaultExpiry(db, user, at);
     let { room } = roomFor(user);
     const saved = [],
       skipped = [];
     const seen = db.prepare("SELECT 1 FROM chat_imports WHERE user_id=? AND source=? AND source_id=?");
-    const addChat = db.prepare(
-      "INSERT INTO conversations(id,user_id,title,mode,created,updated,expires) VALUES(?,?,?,?,?,?,?)",
-    );
-    const addMessage = db.prepare(
-      "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
-    );
     const mark = db.prepare(
       "INSERT INTO chat_imports(conversation_id,user_id,source,source_id,imported) VALUES(?,?,?,?,?)",
     );
@@ -134,19 +164,7 @@ export function chatImportRoutes(ctx) {
         return skipped.push({ index, reason: "seed_phrase_blocked" });
       if (room <= 0) return skipped.push({ index, reason: "conversation_limit" });
       const id = transaction(db, () => {
-        const id = uid("c_");
-        addChat.run(id, user, chat.title, "chat", chat.created, chat.updated, expires);
-        for (const m of chat.messages)
-          addMessage.run(
-            uid("m_"),
-            id,
-            m.role,
-            JSON.stringify(m.role === "user" ? m.text : { text: m.text, finish_reason: "stop" }),
-            null,
-            0,
-            m.at,
-            m.role === "user" ? user : null,
-          );
+        const { id } = insertChat(db, user, chat, expires);
         mark.run(id, user, source, chat.sourceId, at);
         return id;
       });

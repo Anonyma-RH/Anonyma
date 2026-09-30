@@ -30,6 +30,8 @@ export default function DataControls() {
   const bookmarks = !!config && isReleased(config, "bookmarks");
   // And Pay with NYMA.
   const nyma = !!config && isReleased(config, "paynyma");
+  // And Encrypted Backup.
+  const backup = !!config && isReleased(config, "backup");
   // And Redact Before You Send.
   const redact = !!config && isReleased(config, "redact");
   // And Link Reader, which needs Documents.
@@ -453,6 +455,18 @@ export default function DataControls() {
             never a model name.
           </li>
         )}
+        {backup && (
+          <li>
+            Encrypted Backup: a backup is made and opened in your browser and
+            saved as a file wherever you choose. ANONYMA never receives the
+            file, its passphrase or its key; we keep only the day of your last
+            backup (for Account → Settings and one reminder 30 days later) and,
+            for chats a restore added, when and a hash of their words, so the
+            same chat isn’t restored twice. Panic Wipe and closing your account
+            delete both, but not backup files you saved: those are yours to
+            keep or delete.
+          </li>
+        )}
         {nyma && (
           <li>
             Pay with NYMA quotes: each quote’s NYMA amount, rate, bonus and
@@ -538,6 +552,12 @@ export default function DataControls() {
         </p>
       )}
       {nyma && <p>The export also includes your Pay with NYMA quotes.</p>}
+      {backup && (
+        <p>
+          The export also says the day of your last encrypted backup, and
+          which chats came back from one.
+        </p>
+      )}
       {gifts && (
         <p>
           The export also lists the gifts you made: amount, note, dates and

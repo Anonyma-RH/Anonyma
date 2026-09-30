@@ -24,6 +24,7 @@ import { exportFileIndex, forgetFileIndex } from "../file-search.js";
 import { exportRepos, forgetRepos } from "../repo-reader.js";
 import { exportSecretGuard, forgetSecretGuard } from "../secret-guard.js";
 import { exportContracts, forgetContracts } from "../contract-reader.js";
+import { exportAccountBackup, forgetAccountBackup } from "./account-backup.js";
 import { isReleased } from "../releases.js";
 import { sealedView } from "../sealed.js";
 import {
@@ -87,6 +88,8 @@ import {
 // - Repo Reader's open repos, which live only in this process's memory;
 // - Contract Reader's open reads, likewise (a saved explanation is an
 //   ordinary conversation, erased with the conversations above);
+// - Encrypted Backup's last-backup date and its marks on restored chats
+//   (backup files are made and kept in the browser, so none are here);
 // - saved media rows. Their files can't join a transaction, so the caller
 //   removes them first (deleteMedia or removeMediaFile).
 // The ledger, deposits, request records, receipts and the account row are
@@ -108,6 +111,9 @@ export function eraseAccountContent(db, user) {
   ).run(id);
   // Chat Import: which chats came from an export (also goes with each chat).
   forgetChatImports(db, id);
+  // Encrypted Backup: the last backup's date, and which chats a restore
+  // added (those marks also go with each chat).
+  forgetAccountBackup(db, id);
   db.prepare(
     "DELETE FROM conversations WHERE user_id=? AND collab_id IS NULL",
   ).run(id);
@@ -398,6 +404,13 @@ export function accountRoutes(ctx) {
   function contractsExport(user) {
     const list = exportContracts(db, user);
     return list.length || isReleased(cfg, "contractreader") ? { contractReader: list } : {};
+  }
+  // Encrypted Backup: the day of the last backup and when its reminder was
+  // seen (once the update is live, or while a date is kept; null when
+  // there's none). The backup files themselves were never on the server.
+  function accountBackupExport(user) {
+    const kept = exportAccountBackup(db, user);
+    return kept || isReleased(cfg, "backup") ? { encryptedBackup: kept } : {};
   }
   app.get("/api/account/ledger", requireUser, (req, res) =>
     res.json({
@@ -757,6 +770,9 @@ export function accountRoutes(ctx) {
       ...secretGuardExport(req.user.id),
       // Contract Reader: contracts open in its short-lived cache.
       ...contractsExport(req.user.id),
+      // Encrypted Backup: the last backup's date (restored chats say so in
+      // their conversations above).
+      ...accountBackupExport(req.user.id),
       // Sealed Mode: each sealed request's billing record. The relay never
       // saw the prompt or reply, so there is none to export.
       sealedRequests: db

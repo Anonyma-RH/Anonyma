@@ -64,6 +64,11 @@ export const WIPE_CHARACTERS = "Characters, their pictures and copy links";
 // Listed only once Subtitles is released (PanicWipe.jsx, InactivityWipe.jsx):
 // saved subtitle sets, never a video or its sound (those aren't kept).
 export const WIPE_SUBTITLES = "Saved subtitles: their cues and timing, never a video";
+// Listed only once Encrypted Backup is released (PanicWipe.jsx): the day of
+// the last backup goes; the files themselves were never on the server.
+export const WIPE_BACKUP = "The day of your last encrypted backup";
+export const WIPE_BACKUP_FILES_STAY =
+  "Backup files you saved. They were never on our servers, so delete them yourself if you need to.";
 // Shown under "What stays" once Passkeys is live.
 export const WIPE_KEEPS_PASSKEYS = "Your passkeys, so you can still sign in";
 // Shown under "What stays" once Recovery Kit is live.

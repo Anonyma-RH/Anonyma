@@ -210,6 +210,7 @@ import { useTeamPays } from "./Treasury.jsx";
 import { LowBalanceBanner, LowBalanceRefusal } from "./BalanceAlerts.jsx";
 import { InactivityWipeBanner } from "./InactivityWipe.jsx";
 import { RecoveryKitNudge } from "./RecoveryKit.jsx";
+import { BackupReminder } from "./BackupReminder.jsx";
 import {
   api,
   ApiError,
@@ -783,6 +784,8 @@ export default function Workspace() {
   const importedFrom = !demo && isReleased(config, "chatimport")
     ? (vaultChatId ? vault.chats.find((c) => c.id === vaultChatId)?.importedFrom : current ? lineage.imported : null) || null
     : null;
+  // Encrypted Backup: a saved chat a restore brought back says so.
+  const restoredChat = !demo && isReleased(config, "backup") && !vaultChatId && !!current && lineage.restored === true;
   const projects = useProjects(projectsLive, user?.id);
   const [projectId, setProjectId] = useState(null),
     // The sidebar's chat filter: "all", "none" or a project id.
@@ -1842,7 +1845,7 @@ export default function Workspace() {
         setProjectId(r.project_id ?? null);
         setCharacterId(r.character_id ?? null);
         // Chat Import: a chat brought from ChatGPT or Claude says so.
-        setLineage({ parent: r.parent || null, branches: r.branches || [], imported: r.imported_from || null });
+        setLineage({ parent: r.parent || null, branches: r.branches || [], imported: r.imported_from || null, restored: r.restored === true });
         setCarried(r.continued?.summary ? { ...r.continued, kind: "saved" } : null);
         setMessages(r.messages.map(messageFromServer));
         // Characters: a chat with one goes on with the model that last answered
@@ -4071,6 +4074,11 @@ export default function Workspace() {
                   <Icon name="import" size={12} />
                 </span>
               )}
+              {c.restored && isReleased(config, "backup") && (
+                <span className="chat-imported" title="Restored from a backup">
+                  <Icon name="backup" size={12} />
+                </span>
+              )}
               {!demo && isReleased(config, "ephemeral") && (
                 <RetentionIndicator expires={c.expires} />
               )}
@@ -4308,6 +4316,8 @@ export default function Workspace() {
         <InactivityWipeBanner config={config} user={user} demo={demo} />
         {/* Recovery Kit: a one-time nudge for accounts with no email. */}
         <RecoveryKitNudge config={config} user={user} demo={demo} />
+        {/* Encrypted Backup: one gentle reminder, 30 days after the last backup. */}
+        <BackupReminder config={config} user={user} demo={demo} />
         {/* Find in Chat: sticks to the top of the chat while it's open. */}
         {find.bar}
         <div
@@ -4688,6 +4698,13 @@ export default function Workspace() {
                     <Icon name="import" size={14} />
                     {`Imported from ${importedFrom === "claude" ? "Claude" : "ChatGPT"}.`}
                     <span>The replies were written by that service, not by an ANONYMA model.</span>
+                  </div>
+                )}
+                {textMode && restoredChat && (
+                  <div className="branch-banner import-banner">
+                    <Icon name="backup" size={14} />
+                    Restored from a backup.
+                    <span>Its words and dates came from your backup file.</span>
                   </div>
                 )}
                 {highlightLive && (

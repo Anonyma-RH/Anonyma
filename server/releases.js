@@ -1542,6 +1542,27 @@ export const UPDATES = [
     // off the record and Private Mode keep nothing. No table of its own.
     released: false,
   },
+  {
+    id: "backup",
+    title: "Encrypted Backup",
+    tagline: "Take everything with you in one file, locked with a passphrase only you know.",
+    points: [
+      "Chats, projects, scrolls, memory and routine settings in one file, encrypted in your browser",
+      "Restore it into any ANONYMA account: it adds, skips what's already there, and never replaces",
+      "Lose the passphrase and the backup can't be opened, by you or by us",
+    ],
+    // Account → Settings → Encrypted backup (src/AccountBackup.jsx) and
+    // /api/account/backup (server/routes/account-backup.js). The file is
+    // made and opened in the browser (src/account-backup.js, in a worker):
+    // PBKDF2-SHA-256 with Device Vault's parameters, AES-256-GCM in 4 MB
+    // parts. The server keeps only the day of the last backup and which
+    // chats a restore added (erased and exported with the account). A
+    // restore's chats go through Chat Import's checks; projects, memory,
+    // routines and watches go through their own routes, so restoring each
+    // needs its own update (featuresFor). Nothing is charged: no model is
+    // called.
+    released: false,
+  },
 ];
 // Connect an App issues MCP tokens that spend through an agent allowance on
 // the API's hold/settle path, so it is live only when all four are.
@@ -1678,6 +1699,20 @@ export function featuresFor(req) {
   // Chat Import: chats read from a ChatGPT or Claude export, saved to the
   // account only when the person chooses that destination.
   if (p === "/api/import" || p.startsWith("/api/import/")) return ["chatimport"];
+  // Encrypted Backup: the account's content for a backup made in the
+  // browser, the last backup's date, and a restore's chats and scrolls. A
+  // restored chat filed in a project needs Projects, one with bookmarks
+  // needs Bookmarks, and scrolls need Scrolls.
+  if (p === "/api/account/backup" || p.startsWith("/api/account/backup/")) {
+    const needed = ["backup"];
+    if (post && /^\/api\/account\/backup\/restore\/scrolls\/?$/.test(p)) needed.push("scrolls");
+    if (post && /^\/api\/account\/backup\/restore\/chats\/?$/.test(p) && Array.isArray(body.chats)) {
+      if (body.chats.some((c) => c?.project != null)) needed.push("projects");
+      if (body.chats.some((c) => Array.isArray(c?.messages) && c.messages.some((m) => m?.bookmark != null)))
+        needed.push("bookmarks");
+    }
+    return needed;
+  }
   // Local OCR: the text reader's files (src/ocr-assets.js). What it reads
   // goes as a Documents attachment, so it needs Documents too.
   if (p === "/ocr" || p.startsWith("/ocr/")) return ["ocr", "documents"];

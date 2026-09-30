@@ -71,15 +71,16 @@ export function defaultExpiry(db, user, at) {
   const days = db.prepare("SELECT days FROM retention_defaults WHERE user_id=?").get(user)?.days;
   return days ? at + days * 86400000 : null;
 }
-// One checked chat (checkUploadedChat) saved as an ordinary conversation:
-// the chat and its words, in order, inside the caller's transaction. A
-// reply keeps the model that wrote it when one is given (Encrypted
-// Backup's restore); an import's replies have none. Returns the new ids.
-export function insertChat(db, user, chat, expires) {
+// One checked chat (checkUploadedChat) saved as a conversation: the chat
+// and its words, in order, inside the caller's transaction. An import is an
+// ordinary chat; Encrypted Backup's restore passes the mode it keeps, and a
+// reply keeps the model that wrote it when one is given (an import's
+// replies have none). Returns the new ids.
+export function insertChat(db, user, chat, expires, mode = "chat") {
   const id = uid("c_");
   db.prepare(
     "INSERT INTO conversations(id,user_id,title,mode,created,updated,expires) VALUES(?,?,?,?,?,?,?)",
-  ).run(id, user, chat.title, "chat", chat.created, chat.updated, expires);
+  ).run(id, user, chat.title, mode, chat.created, chat.updated, expires);
   const add = db.prepare(
     "INSERT INTO messages(id,conversation_id,role,content,model,cost,created,author_id) VALUES(?,?,?,?,?,?,?,?)",
   );

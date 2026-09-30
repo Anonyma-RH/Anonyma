@@ -10600,6 +10600,14 @@
       "es": "No se puede abrir la parte {0} de {1} de esta copia de seguridad. El archivo está dañado o se modificó después de hacerse."
     },
     {
+      "en": "{0} skipped: their chat wasn’t restored",
+      "es": "{0} omitidos: su chat no se restauró"
+    },
+    {
+      "en": "{0} came back as ordinary chats because their mode isn’t available on this account: {1}.",
+      "es": "{0} volvieron como chats normales porque su modo no está disponible en esta cuenta: {1}."
+    },
+    {
       "en": "{0} · settled receipt.",
       "es": "{0} · recibo liquidado."
     },

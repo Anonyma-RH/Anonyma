@@ -118,7 +118,10 @@ async function all(engine, kind) {
 // watches, vault chats. Never replaces or deletes anything: what's already
 // here is skipped. Routines and watches come back switched off. Resolves a
 // report per kind ({ added, duplicate, seed, limit, failed, message }) and
-// the error that stopped it, if one did.
+// the error that stopped it, if one did. Chats also say how many came back
+// as ordinary chats because their mode isn't live here (fallback, and which
+// modes), and bookmarks how many were skipped because their chat wasn't
+// restored (unlinked).
 // `saveVeil(id, state)` puts a restored chat's Veil map back in this browser
 // under its new id (never sent anywhere).
 export async function restoreBackup({ api, engine, choice, allowSeed = new Set(), vault = null, saveVeil = null, onProgress, signal }) {
@@ -180,17 +183,26 @@ export async function restoreBackup({ api, engine, choice, allowSeed = new Set()
 
     if (choice.has("chats")) {
       const r = tally("chats");
+      r.fallback = 0;
+      r.modes = [];
+      // Bookmarks ride on the message they marked, so each lands on that
+      // message of its restored chat. One whose chat isn't restored (already
+      // here, held back, over the limit) is skipped and counted.
       const notes = new Map();
       if (choice.has("bookmarks"))
         for (const b of await all(engine, "bookmarks")) if (!notes.has(b.message_id)) notes.set(b.message_id, b.note || "");
-      let bookmarks = 0;
+      const marks = choice.has("bookmarks") ? tally("bookmarks") : null;
+      if (marks) marks.unlinked = 0;
+      const marked = (c) => c.messages.filter((m) => m.id && notes.has(m.id)).length;
       for (let start = 0; ; start += 40) {
         const slice = await engine.get("chats", start, 40);
         if (!slice.length) break;
         const going = [];
         for (const c of slice) {
-          if (held("chats", c)) r.seed++;
-          else going.push(c);
+          if (held("chats", c)) {
+            r.seed++;
+            if (marks) marks.unlinked += marked(c);
+          } else going.push(c);
         }
         const from = new Map();
         const shaped = going.map((c) => {
@@ -203,16 +215,28 @@ export async function restoreBackup({ api, engine, choice, allowSeed = new Set()
           const answer = await api("/api/account/backup/restore/chats", { method: "POST", body: { chats: batch }, signal });
           for (const s of answer.saved || []) {
             r.added++;
-            bookmarks += s.bookmarks || 0;
             const item = from.get(batch[s.index]);
             if (item?.veil && s.id) saveVeil?.(s.id, item.veil);
+            // Kept as an ordinary chat: its mode isn't live on this server.
+            if (s.mode_fallback) {
+              r.fallback++;
+              if (!r.modes.includes(s.mode_fallback)) r.modes.push(s.mode_fallback);
+            }
+            if (marks) {
+              const sent = batch[s.index].messages.filter((m) => m.bookmark != null).length;
+              marks.added += s.bookmarks || 0;
+              // The account's bookmark limit.
+              marks.limit += Math.max(0, sent - (s.bookmarks || 0));
+            }
           }
-          for (const s of answer.skipped || []) skip("chats", { code: s.reason });
+          for (const s of answer.skipped || []) {
+            skip("chats", { code: s.reason });
+            if (marks) marks.unlinked += batch[s.index].messages.filter((m) => m.bookmark != null).length;
+          }
           step("chats");
         }
         if (slice.length < 40) break;
       }
-      if (choice.has("bookmarks")) tally("bookmarks").added = bookmarks;
     }
 
     if (choice.has("scrolls")) {

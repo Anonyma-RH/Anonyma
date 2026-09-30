@@ -10595,6 +10595,14 @@
     {
       "en": "Part {0} of {1} of this backup can't be opened. The file is damaged or was changed after it was made.",
       "zh": "这份备份的第 {0} 部分（共 {1} 部分）无法打开。文件已损坏，或在制作后被修改过。"
+    },
+    {
+      "en": "{0} skipped: their chat wasn’t restored",
+      "zh": "{0} 个已跳过：其会话未恢复"
+    },
+    {
+      "en": "{0} came back as ordinary chats because their mode isn’t available on this account: {1}.",
+      "zh": "{0} 个会话以普通会话恢复，因为此账户无法使用其模式：{1}。"
     }
   ]
 }

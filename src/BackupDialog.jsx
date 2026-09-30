@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Icon, Button, Modal, Notice } from "./ui.jsx";
-import { api, isReleased, readStore } from "./lib.js";
+import { api, isReleased, readStore, releaseUpdate } from "./lib.js";
 import { useDeviceVault } from "./DeviceVault.jsx";
 import { vaultReleased } from "./device-vault.js";
 import { decoyReleased } from "./decoy-vault.js";
@@ -15,6 +15,7 @@ import {
   MIN_BACKUP_PASSPHRASE,
   backupFileName,
   kindLive,
+  makeKinds,
 } from "./account-backup-spec.js";
 import { dayLabel } from "./AccountBackup.jsx";
 import { saveVeilState } from "./veil.js";
@@ -39,8 +40,9 @@ const LABELS = {
   bookmarks: "Bookmarks",
   vault: "Device Vault chats",
 };
-const MAKE_KINDS = ["chats", "projects", "scrolls", "instructions", "memory", "routines", "research", "watches"];
 const RESTORE_KINDS = ["projects", "chats", "bookmarks", "scrolls", "instructions", "memory", "routines", "research", "watches", "vault"];
+// The modes a chat can be saved in, as the restore summary names them.
+const MODE_NAMES = { code: "Code & Build", uncensored: "Uncensored Models", symposium: "Symposium" };
 // Kinds whose held-back items the person may still choose to restore (the
 // other kinds' own routes never save a seed phrase at all).
 const OVERRIDABLE = ["chats", "scrolls"];
@@ -143,7 +145,7 @@ function StrengthMeter({ passphrase }) {
 function MakeBackup({ config, status, vault, onClose }) {
   const counts = status?.counts || {};
   const released = (id) => isReleased(config, id);
-  const kinds = MAKE_KINDS.filter((k) => kindLive(k, released) && (counts[k] || 0) > 0);
+  const kinds = makeKinds(counts, released);
   const [include, setInclude] = useState(() => new Set(kinds)),
     [withVault, setWithVault] = useState(false),
     [pass, setPass] = useState(""),
@@ -171,7 +173,8 @@ function MakeBackup({ config, status, vault, onClose }) {
     e.preventDefault();
     if (problem || pass !== again || !understood || nothing) return;
     const chosen = new Set(include);
-    if (chosen.has("chats") && released("bookmarks")) chosen.add("bookmarks");
+    // Bookmarks go only with their chats.
+    if (!chosen.has("chats")) chosen.delete("bookmarks");
     if (withVault && vault?.unlocked) chosen.add("vault");
     setPhase("working");
     setError("");
@@ -250,8 +253,13 @@ function MakeBackup({ config, status, vault, onClose }) {
         <fieldset className="backup-kinds" disabled={phase === "working"}>
           <legend>What goes in</legend>
           {kinds.map((k) => (
-            <label key={k} className="backup-kind">
-              <input type="checkbox" checked={include.has(k)} onChange={() => toggle(k)} />
+            <label key={k} className={"backup-kind" + (k === "bookmarks" && !include.has("chats") ? " unavailable" : "")}>
+              <input
+                type="checkbox"
+                checked={include.has(k) && (k !== "bookmarks" || include.has("chats"))}
+                disabled={k === "bookmarks" && !include.has("chats")}
+                onChange={() => toggle(k)}
+              />
               <span>{LABELS[k]}</span>
               <small>{count(counts[k])}</small>
             </label>
@@ -354,7 +362,9 @@ function RestoreBackup({ config, status, vault, onClose }) {
   // What this account and browser can take back.
   const possible = (k) => (k === "vault" ? !!vault?.unlocked : kindLive(k, released));
   const counts = overview?.counts || {};
-  const offered = RESTORE_KINDS.filter((k) => counts[k] > 0 && (k !== "bookmarks" || choice.has("chats") || !possible("chats")));
+  const offered = RESTORE_KINDS.filter((k) => counts[k] > 0);
+  // Bookmarks come back only on their restored chats.
+  const choosable = (k) => possible(k) && (k !== "bookmarks" || (possible("chats") && choice.has("chats")));
 
   async function open(e) {
     e.preventDefault();
@@ -382,7 +392,7 @@ function RestoreBackup({ config, status, vault, onClose }) {
     }
   }
   async function restore() {
-    const chosen = new Set([...choice].filter(possible));
+    const chosen = new Set([...choice].filter(choosable));
     if (!chosen.size) return;
     setPhase("working");
     setError("");
@@ -433,6 +443,7 @@ function RestoreBackup({ config, status, vault, onClose }) {
                     {r.seed > 0 && <span>{`${count(r.seed)} held back by Seed Guard`}</span>}
                     {r.limit > 0 && <span>{`${count(r.limit)} over your account’s limit`}</span>}
                     {r.failed > 0 && <span>{`${count(r.failed)} not restored`}</span>}
+                    {r.unlinked > 0 && <span>{`${count(r.unlinked)} skipped: their chat wasn’t restored`}</span>}
                   </span>
                   {r.message && <small className="backup-report-why">{r.message}</small>}
                 </li>
@@ -440,6 +451,13 @@ function RestoreBackup({ config, status, vault, onClose }) {
             })}
           </ul>
           {done.report.chats?.added > 0 && <p className="backup-note">Restored chats are marked Restored in your chat list.</p>}
+          {done.report.chats?.fallback > 0 && (
+            <p className="backup-note">
+              {`${count(done.report.chats.fallback)} came back as ordinary chats because their mode isn’t available on this account: ${done.report.chats.modes
+                .map((m) => MODE_NAMES[m] || releaseUpdate(config, m)?.title || m)
+                .join(", ")}.`}
+            </p>
+          )}
           {off && (
             <p className="backup-note">
               Restored routines and watches are switched off, so nothing runs or
@@ -473,8 +491,8 @@ function RestoreBackup({ config, status, vault, onClose }) {
           <fieldset className="backup-kinds" disabled={phase === "working"}>
             <legend>In this backup</legend>
             {offered.map((k) => (
-              <label key={k} className={"backup-kind" + (possible(k) ? "" : " unavailable")}>
-                <input type="checkbox" checked={possible(k) && choice.has(k)} disabled={!possible(k)} onChange={() => toggle(k)} />
+              <label key={k} className={"backup-kind" + (choosable(k) ? "" : " unavailable")}>
+                <input type="checkbox" checked={choosable(k) && choice.has(k)} disabled={!choosable(k)} onChange={() => toggle(k)} />
                 <span>{LABELS[k]}</span>
                 <small>{count(counts[k])}</small>
               </label>

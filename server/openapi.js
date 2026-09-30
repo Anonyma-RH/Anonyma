@@ -2317,6 +2317,7 @@ route("get", "/api/account/backup/chats", "Encrypted Backup: saved chats, a page
       object({
         id: string,
         title: string,
+        mode: { ...string, description: "chat, code, uncensored or symposium: where the chat opens" },
         created: integer,
         updated: integer,
         project: nullableString,
@@ -2346,6 +2347,7 @@ route("post", "/api/account/backup/restore/chats", "Encrypted Backup: restore ch
               created: integer,
               updated: integer,
               project: { ...string, description: "A project of this account to file the chat in (needs Projects)" },
+              mode: { ...string, maxLength: 40, description: "The mode it was saved in; kept when this server has that mode's update live (code, uncensored, symposium), else saved as an ordinary chat and reported as mode_fallback" },
               messages: {
                 ...array(
                   object(
@@ -2373,12 +2375,24 @@ route("post", "/api/account/backup/restore/chats", "Encrypted Backup: restore ch
     ["chats"],
   ),
   response: object({
-    saved: array(object({ index: integer, id: string, project: string, bookmarks: integer }, ["index", "id"])),
+    saved: array(
+      object(
+        {
+          index: integer,
+          id: string,
+          mode: { ...string, description: "The mode it was saved in here" },
+          mode_fallback: { ...string, description: "The mode it asked for, when that isn't available here and it was saved as an ordinary chat" },
+          project: string,
+          bookmarks: integer,
+        },
+        ["index", "id", "mode"],
+      ),
+    ),
     skipped: backupSkip(["duplicate", "seed_phrase_blocked", "too_large", "empty", "invalid", "conversation_limit"]),
     room: integer,
   }),
   description:
-    "Each chat is checked and saved the way Chat Import saves one, as an ordinary saved chat marked as restored, with the account's auto-delete default. A restore adds and never replaces: duplicate (its words are already in the account), seed_phrase_blocked, too_large, empty, invalid and conversation_limit (the cap is never pruned) are skipped, not refused. At most 20 chats and 4,000,000 characters per request (413 import_too_large). Nothing about titles, words or hashes is logged.",
+    "Each chat is checked and saved the way Chat Import saves one, marked as restored, with the account's auto-delete default, in the mode it was saved in when that mode's update is live here (else as an ordinary chat, reported as mode_fallback). Symposium runs fill the Symposium cap. A restore adds and never replaces: duplicate (its words are already in the account), seed_phrase_blocked, too_large, empty, invalid and conversation_limit (the cap is never pruned) are skipped, not refused. At most 20 chats and 4,000,000 characters per request (413 import_too_large). Nothing about titles, words or hashes is logged.",
 });
 route("post", "/api/account/backup/restore/scrolls", "Encrypted Backup: restore chosen scrolls", {
   body: object(

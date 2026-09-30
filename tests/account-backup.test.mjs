@@ -39,6 +39,9 @@ import {
   messageText,
   readItem,
   restoreShape,
+  RESTORE_MODES,
+  makeKinds,
+  restoredMode,
 } from "../src/account-backup-spec.js";
 import { loadBackup, writerFor } from "../src/account-backup-engine.js";
 import { makeBackup, restoreBackup } from "../src/account-backup-run.js";
@@ -839,7 +842,7 @@ test("restoring sends only the chosen kinds, holds back Seed Guard's finds unles
   assert.ok(!JSON.stringify(sent).includes("abandon"));
   assert.equal(sent[0].project, undefined, "no project restored, so no project to file in");
   assert.equal(sent[0].messages[1].bookmark, "keep");
-  assert.deepEqual(only.report.chats, { added: 1, duplicate: 0, seed: 1, limit: 0, failed: 0, message: null });
+  assert.deepEqual(only.report.chats, { added: 1, duplicate: 0, seed: 1, limit: 0, failed: 0, message: null, fallback: 0, modes: [] });
   assert.equal(only.report.bookmarks.added, 1);
   // Everything, the seed-phrase chat allowed; the vault is unlocked.
   calls.length = 0;
@@ -1125,4 +1128,119 @@ test("Veil: a chat's unmask map travels inside the encrypted file and comes back
   assert.ok(sent[0].includes("[EMAIL_1]"), "the chat's words stay masked, as saved");
   // A malformed map in a file is dropped, not trusted.
   assert.equal(readItem({ t: "chat", messages: [], veil: { map: { A: { x: 1 } } } }).veil, undefined);
+});
+
+// ---- Modes and bookmarks ---------------------------------------------------------------
+
+test("a restored chat keeps its mode when this server has it live, and otherwise comes back as an ordinary chat that says so", async (t) => {
+  assert.deepEqual(Object.keys(RESTORE_MODES), ["chat", "code", "uncensored", "symposium"]);
+  const live = (ids) => (id) => ids.includes(id);
+  assert.deepEqual(restoredMode("code", live(["code"])), { mode: "code", fallback: false });
+  assert.deepEqual(restoredMode("code", live([])), { mode: "chat", fallback: true });
+  assert.deepEqual(restoredMode("debate", live(["debate"])), { mode: "chat", fallback: true }, "an unknown mode is never stored");
+  assert.deepEqual(restoredMode(undefined, live([])), { mode: "chat", fallback: false });
+  const s = fixture(t);
+  const a = await person(s.app);
+  // The backup's pages carry each chat's mode.
+  const code = savedChat(s, a.user.id, { title: "Landing page", mode: "code", words: ["make a page", "<html>…</html>"] });
+  savedChat(s, a.user.id, { title: "Run", mode: "symposium", words: ["compare", "one view"] });
+  const page = (await a.agent.get("/api/account/backup/chats").expect(200)).body.chats;
+  assert.deepEqual(page.map((c) => [c.title, c.mode]), [["Landing page", "code"], ["Run", "symposium"]]);
+  assert.equal(page[0].id, code.id);
+  // Everything live: kept.
+  const b = await person(s.app);
+  const res = (
+    await restoreChats(b, [
+      backupChat(1, { mode: "code" }),
+      backupChat(2, { mode: "symposium" }),
+      backupChat(3, { mode: "uncensored" }),
+      backupChat(4, { mode: "debate" }),
+      backupChat(5),
+    ]).expect(200)
+  ).body;
+  assert.deepEqual(res.saved.map((x) => [x.mode, x.mode_fallback ?? null]), [["code", null], ["symposium", null], ["uncensored", null], ["chat", "debate"], ["chat", null]]);
+  const modes = s.db.prepare("SELECT mode FROM conversations WHERE id IN (" + res.saved.map(() => "?").join(",") + ") ORDER BY created").all(...res.saved.map((x) => x.id));
+  assert.deepEqual(modes.map((m) => m.mode), ["code", "symposium", "uncensored", "chat", "chat"]);
+  // A Symposium run fills the Symposium cap, not the saved-chat room, and
+  // stays out of the chat list like any run.
+  assert.equal(res.room, (await b.agent.get("/api/import/status").expect(200)).body.room);
+  assert.ok(!(await b.agent.get("/api/conversations").expect(200)).body.data.some((c) => c.id === res.saved[1].id));
+  // Code & Build and Symposium not live here: ordinary chats, marked.
+  const early = fixture(t, UPDATES.map((u) => u.id).filter((id) => !["code", "symposium", "doublecheck"].includes(id)).join(","));
+  const c = await person(early.app);
+  const fell = (await restoreChats(c, [backupChat(1, { mode: "code" }), backupChat(2, { mode: "symposium" }), backupChat(3, { mode: "uncensored" })]).expect(200)).body;
+  assert.deepEqual(fell.saved.map((x) => [x.mode, x.mode_fallback ?? null]), [["chat", "code"], ["chat", "symposium"], ["uncensored", null]]);
+  // The page's run reports them.
+  const { bytes } = await sealed([
+    JSON.stringify({ t: "chat", id: "c1", mode: "code", title: "Site", messages: [{ id: "m1", role: "user", text: "site please" }] }) + "\n",
+    JSON.stringify({ t: "chat", id: "c2", mode: "symposium", title: "Run", messages: [{ id: "m2", role: "user", text: "compare please" }] }) + "\n",
+    JSON.stringify({ t: "chat", id: "c3", mode: "chat", title: "Plain", messages: [{ id: "m3", role: "user", text: "plain please" }] }) + "\n",
+  ]);
+  const engine = await engineFor();
+  await engine.open(bytes, PASS);
+  const d = await person(early.app);
+  const run = await restoreBackup({ api: apiFor(d.agent), engine, choice: new Set(["chats"]) });
+  assert.equal(run.error, null);
+  assert.equal(run.report.chats.added, 3);
+  assert.equal(run.report.chats.fallback, 2);
+  assert.deepEqual(run.report.chats.modes, ["code", "symposium"]);
+});
+
+test("bookmarks: listed in what goes in, back on the same message of their restored chat, and skipped (and counted) when their chat isn't restored", async (t) => {
+  const on = (ids) => (id) => ids.includes(id);
+  const counts = { chats: 3, bookmarks: 2, projects: 1, scrolls: 0 };
+  assert.deepEqual(makeKinds(counts, on(["bookmarks", "projects", "scrolls"])), ["chats", "bookmarks", "projects"]);
+  assert.deepEqual(makeKinds(counts, on(["projects"])), ["chats", "projects"], "not before Bookmarks is live");
+  assert.deepEqual(makeKinds({ bookmarks: 2 }, on(["bookmarks"])), [], "never without chats");
+  const dialog = readFileSync(new URL("../src/BackupDialog.jsx", import.meta.url), "utf8");
+  assert.match(dialog, /const kinds = makeKinds\(counts, released\);/);
+  assert.match(dialog, /if \(!chosen\.has\("chats"\)\) chosen\.delete\("bookmarks"\);/);
+  // One account with three chats, two bookmarked; another that already has
+  // the first chat.
+  const s = fixture(t);
+  const a = await person(s.app);
+  const chats = [0, 1, 2].map((i) => savedChat(s, a.user.id, { title: "Chat " + i, words: ["question " + i, "answer " + i, "more " + i] }));
+  await a.agent.post("/api/bookmarks").send({ message_id: chats[0].messages[1], note: "first" }).expect(201);
+  await a.agent.post("/api/bookmarks").send({ message_id: chats[2].messages[2], note: "third" }).expect(201);
+  assert.equal((await a.agent.get("/api/account/backup").expect(200)).body.counts.bookmarks, 2);
+  const made = await makeBackup({ api: apiFor(a.agent), engine: await engineFor(), passphrase: PASS, include: new Set(["chats", "bookmarks"]) });
+  const b = await person(s.app);
+  savedChat(s, b.user.id, { title: "Already", words: ["question 0", "answer 0", "more 0"] });
+  const engine = await engineFor();
+  const o = await engine.open(new Blob(made.pieces), PASS);
+  assert.equal(o.counts.bookmarks, 2);
+  const { report, error } = await restoreBackup({ api: apiFor(b.agent), engine, choice: new Set(["chats", "bookmarks"]) });
+  assert.equal(error, null);
+  assert.equal(report.chats.added, 2);
+  assert.equal(report.chats.duplicate, 1);
+  assert.equal(report.bookmarks.added, 1);
+  assert.equal(report.bookmarks.unlinked, 1, "the first chat was already here, so its bookmark is skipped");
+  const marks = (await b.agent.get("/api/bookmarks").expect(200)).body;
+  const list = marks.data || marks.bookmarks;
+  assert.equal(list.length, 1);
+  assert.equal(list[0].note, "third");
+  // It is on the same message: the third message of "Chat 2".
+  const row = s.db.prepare("SELECT m.content,c.title FROM bookmarks k JOIN messages m ON m.id=k.message_id JOIN conversations c ON c.id=m.conversation_id WHERE k.user_id=?").get(b.user.id);
+  assert.equal(row.title, "Chat 2");
+  assert.equal(messageText(JSON.parse(row.content)), "more 2");
+  // Without choosing bookmarks, none are sent.
+  const c = await person(s.app);
+  const none = await restoreBackup({ api: apiFor(c.agent), engine, choice: new Set(["chats"]) });
+  assert.equal(none.report.chats.added, 3);
+  assert.equal(none.report.bookmarks, undefined);
+  assert.equal(s.db.prepare("SELECT COUNT(*) n FROM bookmarks WHERE user_id=?").get(c.user.id).n, 0);
+});
+
+test("the new summary lines have Chinese and Spanish", () => {
+  const zh = compileDictionary(JSON.parse(readFileSync(new URL("../src/i18n/zh.json", import.meta.url), "utf8")));
+  const es = compileDictionary(JSON.parse(readFileSync(new URL("../src/i18n/es.json", import.meta.url), "utf8")), "es");
+  for (const text of [
+    "1 skipped: their chat wasn’t restored",
+    "2 came back as ordinary chats because their mode isn’t available on this account: Code & Build, Symposium.",
+    "1 came back as ordinary chats because their mode isn’t available on this account: Code & Build.",
+  ]) {
+    assert.match(translateText(text, zh) || "", /\p{Script=Han}/u, text);
+    const spanish = translateText(text, es) || "";
+    assert.ok(spanish && spanish !== text, text);
+  }
 });

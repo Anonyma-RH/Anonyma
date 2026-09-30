@@ -1,5 +1,6 @@
 import { uid, now, fail, hash, credits, transaction } from "../core.js";
 import { isReleased } from "../releases.js";
+import { capsFor } from "../holders.js";
 import { listRoutines } from "../routines.js";
 import { chatRoom, defaultExpiry, insertChat } from "./chat-import.js";
 import { MAX_TITLE, MAX_BODY, MAX_SCROLLS } from "./scrolls.js";
@@ -17,6 +18,7 @@ import {
   chatKey,
   isoDay,
   messageText,
+  restoredMode,
   scrollKey,
   validDay,
 } from "../../src/account-backup-spec.js";
@@ -192,7 +194,7 @@ export function accountBackupRoutes(ctx) {
     if (!Number.isSafeInteger(after) || after < 0) fail(400, "after must be the next value of the last page.", "invalid_request");
     const rows = db
       .prepare(
-        `SELECT c.rowid cursor,c.id,c.title,c.created,c.updated,pc.project_id project FROM conversations c
+        `SELECT c.rowid cursor,c.id,c.title,c.mode,c.created,c.updated,pc.project_id project FROM conversations c
          LEFT JOIN project_chats pc ON pc.conversation_id=c.id AND pc.user_id=c.user_id
          WHERE ${PERSONAL} AND c.rowid>? ORDER BY c.rowid LIMIT ?`,
       )
@@ -220,7 +222,7 @@ export function accountBackupRoutes(ctx) {
         size += text.length;
         return { id: m.id, role: m.role, text, model: m.role === "assistant" ? m.model || null : null, created: m.created };
       });
-      chats.push({ ...chat, title: chat.title || "", messages });
+      chats.push({ ...chat, mode: chat.mode || "chat", title: chat.title || "", messages });
     }
     res.json({ chats, next });
   });
@@ -247,9 +249,12 @@ export function accountBackupRoutes(ctx) {
     res.json(backupState(db, user));
   });
 
-  // Restoring chats: each through Chat Import's checks and insert, filed in
-  // a (restored) project of this account when one is given, with the notes
-  // of its bookmarks. Skipped, with a reason, rather than refused: invalid,
+  // Restoring chats: each through Chat Import's checks and insert, in the
+  // mode it was saved in when this server has that mode's update live (else
+  // as an ordinary chat, marked mode_fallback), filed in a (restored)
+  // project of this account when one is given, with the notes of its
+  // bookmarks. Symposium runs fill the Symposium cap, everything else the
+  // saved-chat cap. Skipped, with a reason, rather than refused: invalid,
   // empty, too_large, duplicate, seed_phrase_blocked, conversation_limit.
   app.post("/api/account/backup/restore/chats", requireUser, write, (req, res) => {
     const { chats } = req.body ?? {};
@@ -266,6 +271,12 @@ export function accountBackupRoutes(ctx) {
       seedGuard = isReleased(cfg, "seedguard");
     const expires = defaultExpiry(db, user, at);
     let { room } = chatRoom(db, cfg, user);
+    let runRoom = Math.max(
+      0,
+      capsFor(db, cfg, user).symposium -
+        count("SELECT COUNT(*) n FROM conversations WHERE user_id=? AND collab_id IS NULL AND mode='symposium'", user),
+    );
+    const released = (id) => isReleased(cfg, id);
     // Chats already here, by how many messages with words they have: only
     // those with the same number are read and hashed, once each.
     const byLength = new Map();
@@ -326,10 +337,13 @@ export function accountBackupRoutes(ctx) {
         return skipped.push({ index, reason: "duplicate" });
       if (seedGuard && !chat.allowSeed && uploadedSeedFinding(chat))
         return skipped.push({ index, reason: "seed_phrase_blocked" });
-      if (room <= 0) return skipped.push({ index, reason: "conversation_limit" });
+      const wanted = typeof raw.mode === "string" ? raw.mode.slice(0, 40) : "chat";
+      const { mode, fallback } = restoredMode(wanted, released);
+      const run = mode === "symposium";
+      if ((run ? runRoom : room) <= 0) return skipped.push({ index, reason: "conversation_limit" });
       const project = typeof raw.project === "string" && ownProject.get(raw.project, user) ? raw.project : null;
       const result = transaction(db, () => {
-        const made = insertChat(db, user, chat, expires);
+        const made = insertChat(db, user, chat, expires, mode);
         mark.run(made.id, user, key, at);
         if (project) file.run(made.id, project, user, at);
         let starred = 0;
@@ -345,8 +359,16 @@ export function accountBackupRoutes(ctx) {
         return { id: made.id, bookmarks: starred };
       });
       inRequest.add(key);
-      room--;
-      saved.push({ index, id: result.id, ...(project ? { project } : {}), bookmarks: result.bookmarks });
+      if (run) runRoom--;
+      else room--;
+      saved.push({
+        index,
+        id: result.id,
+        mode,
+        ...(fallback ? { mode_fallback: wanted } : {}),
+        ...(project ? { project } : {}),
+        bookmarks: result.bookmarks,
+      });
     });
     res.json({ saved, skipped, room });
   });

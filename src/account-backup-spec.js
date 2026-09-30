@@ -83,6 +83,28 @@ export const KIND_UPDATES = {
   vault: ["vault", "ephemeral"],
 };
 export const kindLive = (kind, released) => (KIND_UPDATES[kind] || []).every((id) => released(id));
+// "What goes in" when making a backup: the kinds this account has and the
+// server has released, in order. Bookmarks go only with their chats.
+const MAKE_ORDER = ["chats", "bookmarks", "projects", "scrolls", "instructions", "memory", "routines", "research", "watches"];
+export const makeKinds = (counts, released) =>
+  MAKE_ORDER.filter((k) => kindLive(k, released) && (counts?.[k] || 0) > 0 && (k !== "bookmarks" || (counts?.chats || 0) > 0));
+
+// The mode a restored chat keeps. A saved chat's mode decides where it opens
+// (Code & Build, Uncensored, Symposium runs); a restore keeps it when the
+// restoring server has that update live, and otherwise saves the chat as an
+// ordinary one and says so. Any other mode comes back as an ordinary chat
+// too. (A new batch's conversation mode is added here with its update.)
+export const RESTORE_MODES = {
+  chat: [],
+  code: ["code"],
+  uncensored: ["uncensored"],
+  symposium: ["symposium"],
+};
+export function restoredMode(mode, released) {
+  const wanted = typeof mode === "string" && mode ? mode : "chat";
+  const needs = Object.hasOwn(RESTORE_MODES, wanted) ? RESTORE_MODES[wanted] : null;
+  return needs && needs.every((id) => released(id)) ? { mode: wanted, fallback: false } : { mode: "chat", fallback: true };
+}
 
 // ---- Words -------------------------------------------------------------------
 
@@ -225,6 +247,7 @@ export function readItem(raw) {
       return {
         t: "chat",
         id: idOf(raw.id),
+        mode: optStr(raw.mode, 40) || "chat",
         title: typeof raw.title === "string" ? raw.title.slice(0, 200) : "",
         created: time(raw.created),
         updated: time(raw.updated),
@@ -335,14 +358,17 @@ export function readItem(raw) {
 export const kindOf = (item) => TYPE_KINDS[item?.t] || null;
 
 // ---- What a restore sends for a chat ----------------------------------------------
-// A backup chat as the restore route takes it: its words, dates and which
-// model answered, the project it goes back into (the new project's id), and
-// the notes of the bookmarks on its messages. Never its old ids.
+// A backup chat as the restore route takes it: its words, dates, mode and
+// which model answered, the project it goes back into (the new project's
+// id), and the notes of the bookmarks on its messages. Never its old ids:
+// a bookmark rides on the very message it marked in the file, so it lands
+// on that message of the restored chat.
 export function restoreShape(chat, { project = null, notes = null, allowSeed = false } = {}) {
   return {
     title: chat.title,
     created: chat.created,
     updated: chat.updated,
+    ...(chat.mode && chat.mode !== "chat" ? { mode: chat.mode } : {}),
     ...(project ? { project } : {}),
     messages: chat.messages.map((m) => ({
       role: m.role,
